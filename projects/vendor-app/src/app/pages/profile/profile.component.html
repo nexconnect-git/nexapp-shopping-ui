@@ -1,0 +1,281 @@
+<div class="profile-page fade-in">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1>Profile & Store Settings</h1>
+      <p class="page-subtitle">Manage your account details and store configuration</p>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading profile...</p>
+    </div>
+  } @else {
+
+    @if (successMsg()) {
+      <div class="alert alert-success">
+        <span class="material-icons-outlined">check_circle</span>
+        {{ successMsg() }}
+      </div>
+    }
+    @if (errorMsg()) {
+      <div class="alert alert-danger">
+        <span class="material-icons-outlined">error_outline</span>
+        {{ errorMsg() }}
+      </div>
+    }
+
+    <!-- Store Header Card -->
+    <div class="store-header-card">
+      <div class="store-avatar" (click)="logoInput.click()" [title]="logoUploading() ? 'Uploading...' : 'Click to update logo'">
+        @if (vendor.logo) {
+          <img [src]="vendor.logo" alt="store logo">
+        } @else {
+          {{ (vendor.store_name || 'S')[0].toUpperCase() }}
+        }
+        <div class="store-avatar-overlay">
+          @if (logoUploading()) {
+            <div class="logo-spinner"></div>
+          } @else {
+            <span class="material-icons-outlined">photo_camera</span>
+          }
+        </div>
+      </div>
+      <input #logoInput type="file" accept="image/*" hidden (change)="onLogoChange($event)">
+      <div class="store-header-info">
+        <div class="store-name-row">
+          <h2>{{ vendor.store_name || 'Your Store' }}</h2>
+          <span class="status-badge" [class]="'status-' + (vendor.status || 'pending')">
+            <span class="status-dot"></span>
+            {{ vendor.status || 'pending' }}
+          </span>
+        </div>
+        <p class="store-meta">{{ profile.first_name }} {{ profile.last_name }} &bull; {{ vendor.city || 'Location not set' }}</p>
+        <div class="store-stats">
+          <div class="stat-item">
+            <span class="stat-icon material-icons-outlined">star</span>
+            <span class="stat-value">{{ vendor.average_rating || '0.0' }}</span>
+            <span class="stat-label">Rating</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <span class="stat-icon material-icons-outlined">rate_review</span>
+            <span class="stat-value">{{ vendor.total_ratings || 0 }}</span>
+            <span class="stat-label">Reviews</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <span class="stat-icon material-icons-outlined">local_shipping</span>
+            <span class="stat-value">{{ vendor.delivery_radius_km || 0 }} km</span>
+            <span class="stat-label">Delivery Radius</span>
+          </div>
+        </div>
+      </div>
+      <div class="store-open-badge" [class.is-open]="vendor.is_open">
+        <span class="material-icons-outlined">{{ vendor.is_open ? 'store' : 'storefront' }}</span>
+        {{ vendor.is_open ? 'Open Now' : 'Closed' }}
+      </div>
+    </div>
+
+    <div class="profile-layout">
+
+      <!-- Left Column -->
+      <div class="profile-main">
+
+        <!-- Account Info -->
+        <div class="card">
+          <div class="card-header">
+            <h3>
+              <span class="material-icons-outlined">person</span>
+              Account Information
+            </h3>
+          </div>
+          <div class="card-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">First Name</label>
+                <input class="form-input" type="text" [(ngModel)]="profile.first_name" name="first_name" placeholder="First name">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Last Name</label>
+                <input class="form-input" type="text" [(ngModel)]="profile.last_name" name="last_name" placeholder="Last name">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Email Address</label>
+                <input class="form-input" type="email" [(ngModel)]="profile.email" name="email" placeholder="you@example.com">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Phone Number</label>
+                <input class="form-input" type="tel" [(ngModel)]="profile.phone" name="account_phone" placeholder="+234 800 0000 000">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Store Info -->
+        <div class="card">
+          <div class="card-header">
+            <h3>
+              <span class="material-icons-outlined">storefront</span>
+              Store Information
+            </h3>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label class="form-label">Store Name</label>
+              <input class="form-input" type="text" [(ngModel)]="vendor.store_name" name="store_name" placeholder="Your store name">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Description</label>
+              <textarea class="form-input form-textarea" [(ngModel)]="vendor.description" name="description" rows="3" placeholder="Tell customers what makes your store special..."></textarea>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Business Phone</label>
+                <input class="form-input" type="tel" [(ngModel)]="vendor.phone" name="phone" placeholder="+234 800 0000 000">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Business Email</label>
+                <input class="form-input" type="email" [(ngModel)]="vendor.email" name="vendor_email" placeholder="store@example.com">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Location -->
+        <div class="card">
+          <div class="card-header">
+            <h3>
+              <span class="material-icons-outlined">location_on</span>
+              Store Location
+            </h3>
+            <button type="button" class="map-toggle-link" (click)="showLocationMap.set(!showLocationMap())">
+              <span class="material-icons-outlined">{{ showLocationMap() ? 'expand_less' : 'map' }}</span>
+              {{ showLocationMap() ? 'Hide Map' : 'Pick on Map' }}
+            </button>
+          </div>
+          <div class="card-body">
+            @if (showLocationMap()) {
+              <div class="location-map-section">
+                <app-map-picker
+                  [height]="'260px'"
+                  [initialLat]="vendor.latitude || 6.5244"
+                  [initialLng]="vendor.longitude || 3.3792"
+                  (locationPicked)="onLocationPicked($event)">
+                </app-map-picker>
+                <p class="map-autofill-hint">Address fields below auto-fill when you pick a location.</p>
+              </div>
+            }
+            <div class="form-group">
+              <label class="form-label">Street Address</label>
+              <input class="form-input" type="text" [(ngModel)]="vendor.address" name="address" placeholder="123 Main Street">
+            </div>
+            <div class="form-row cols-3">
+              <div class="form-group">
+                <label class="form-label">City</label>
+                <input class="form-input" type="text" [(ngModel)]="vendor.city" name="city" placeholder="City">
+              </div>
+              <div class="form-group">
+                <label class="form-label">State</label>
+                <input class="form-input" type="text" [(ngModel)]="vendor.state" name="state" placeholder="State">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Postal Code</label>
+                <input class="form-input" type="text" [(ngModel)]="vendor.postal_code" name="postal_code" placeholder="10001">
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Sidebar -->
+      <div class="profile-sidebar">
+
+        <!-- Operating Hours -->
+        <div class="card">
+          <div class="card-header">
+            <h3>
+              <span class="material-icons-outlined">schedule</span>
+              Operating Hours
+            </h3>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label class="form-label">Opening Time</label>
+              <input class="form-input" type="time" [(ngModel)]="vendor.opening_time" name="opening_time">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Closing Time</label>
+              <input class="form-input" type="time" [(ngModel)]="vendor.closing_time" name="closing_time">
+            </div>
+            <div class="store-open-toggle">
+              <label for="is_open" class="toggle-label">Store is open</label>
+              <div class="toggle-wrapper">
+                <input type="checkbox" id="is_open" class="toggle-input" [(ngModel)]="vendor.is_open" name="is_open">
+                <label for="is_open" class="toggle-track">
+                  <span class="toggle-thumb"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Delivery Settings -->
+        <div class="card">
+          <div class="card-header">
+            <h3>
+              <span class="material-icons-outlined">local_shipping</span>
+              Delivery Settings
+            </h3>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label class="form-label">Minimum Order Amount (₦)</label>
+              <input class="form-input" type="number" [(ngModel)]="vendor.min_order_amount" name="min_order_amount" min="0" step="50" placeholder="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Delivery Radius (km)</label>
+              <input class="form-input" type="number" [(ngModel)]="vendor.delivery_radius_km" name="delivery_radius_km" min="0" step="0.5" placeholder="5">
+            </div>
+          </div>
+        </div>
+
+        <!-- Account Status -->
+        <div class="card status-card">
+          <div class="card-body">
+            <p class="status-card-label">Account Status</p>
+            <div class="status-badge-large" [class]="'status-' + (vendor.status || 'pending')">
+              <span class="status-dot"></span>
+              {{ vendor.status || 'pending' }}
+            </div>
+            @if (vendor.status === 'pending') {
+              <p class="status-note">Your store is awaiting admin approval. You'll be notified once reviewed.</p>
+            } @else if (vendor.status === 'approved') {
+              <p class="status-note success-note">Your store is live and accepting orders.</p>
+            } @else if (vendor.status === 'suspended') {
+              <p class="status-note danger-note">Your store has been suspended. Contact support.</p>
+            }
+          </div>
+        </div>
+
+        <!-- Save Button -->
+        <button class="btn-save" [disabled]="saving()" (click)="save()">
+          @if (saving()) {
+            <span class="spinner-inline"></span>
+            Saving...
+          } @else {
+            <span class="material-icons-outlined">save</span>
+            Save Changes
+          }
+        </button>
+
+      </div>
+    </div>
+  }
+</div>

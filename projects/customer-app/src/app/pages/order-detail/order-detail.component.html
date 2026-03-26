@@ -1,0 +1,349 @@
+<div class="page-content">
+  <div class="container">
+
+    @if (loading()) {
+      <div class="loading-spinner"></div>
+    } @else if (!order()) {
+      <div class="empty-state">
+        <div class="empty-icon-wrap">
+          <span class="material-icons-outlined">block</span>
+        </div>
+        <h3 class="empty-heading">Order not found</h3>
+        <a routerLink="/orders" class="btn btn-primary btn-sm">Back to Orders</a>
+      </div>
+    } @else {
+
+      <!-- Page Header -->
+      <div class="order-detail-header">
+        <a routerLink="/orders" class="back-link">
+          <span class="material-icons-outlined">arrow_back</span>
+          Orders
+        </a>
+        <div class="header-title-row">
+          <h1 class="order-title">Order #{{ order()!.order_number }}</h1>
+          <span class="status-badge status-{{ order()!.status }}">{{ order()!.status | titlecase }}</span>
+        </div>
+        <p class="order-placed-at">Placed {{ order()!.placed_at | date:'MMM d, y · h:mm a' }}</p>
+
+        @if (canCancel()) {
+          <button class="btn btn-cancel btn-sm" [disabled]="cancelling()" (click)="cancelOrder()">
+            <span class="material-icons-outlined">cancel</span>
+            {{ cancelling() ? 'Cancelling...' : 'Cancel Order' }}
+          </button>
+        }
+      </div>
+
+      <div class="order-layout">
+
+        <!-- ============================================================
+             LEFT: Order Details
+             ============================================================ -->
+        <div class="order-details-col">
+
+          <!-- Items card -->
+          <div class="detail-card">
+            <h3 class="card-section-title">
+              <span class="material-icons-outlined">shopping_bag</span>
+              Items from {{ order()!.vendor_name }}
+            </h3>
+
+            <div class="order-items-list">
+              @for (item of order()!.items; track item.id) {
+                <div class="order-item-row">
+                  <div class="item-thumb">
+                    <span class="material-icons-outlined">inventory_2</span>
+                  </div>
+                  <div class="item-info">
+                    <span class="item-name">{{ item.product_name }}</span>
+                    <span class="item-qty-label">Qty: {{ item.quantity }}</span>
+                  </div>
+                  <span class="item-price">${{ item.subtotal | number:'1.2-2' }}</span>
+                </div>
+              }
+            </div>
+
+            <div class="price-breakdown">
+              <div class="price-row">
+                <span>Subtotal</span>
+                <span>${{ order()!.subtotal | number:'1.2-2' }}</span>
+              </div>
+              <div class="price-row">
+                <span>Delivery fee</span>
+                <span>${{ order()!.delivery_fee | number:'1.2-2' }}</span>
+              </div>
+              @if (order()!.discount > 0) {
+                <div class="price-row discount">
+                  <span>Discount</span>
+                  <span>-${{ order()!.discount | number:'1.2-2' }}</span>
+                </div>
+              }
+              <div class="price-row total">
+                <span>Total</span>
+                <span>${{ order()!.total | number:'1.2-2' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Delivery address card -->
+          @if (order()!.delivery_address) {
+            <div class="detail-card">
+              <h3 class="card-section-title">
+                <span class="material-icons-outlined">location_on</span>
+                Delivery Address
+              </h3>
+              <p class="addr-name">{{ order()!.delivery_address.full_name }}</p>
+              <p class="addr-line">{{ order()!.delivery_address.address_line1 }}, {{ order()!.delivery_address.city }}, {{ order()!.delivery_address.state }} {{ order()!.delivery_address.postal_code }}</p>
+              <p class="addr-phone">{{ order()!.delivery_address.phone }}</p>
+            </div>
+          }
+
+          <!-- Order notes -->
+          @if (order()!.notes) {
+            <div class="detail-card">
+              <h3 class="card-section-title">
+                <span class="material-icons-outlined">notes</span>
+                Notes
+              </h3>
+              <p class="notes-text">{{ order()!.notes }}</p>
+            </div>
+          }
+
+        </div>
+
+        <!-- ============================================================
+             RIGHT: Status Timeline + ETA + Delivery Partner
+             ============================================================ -->
+        <div class="tracking-col">
+
+          <!-- Status Timeline Card -->
+          <div class="detail-card">
+            <h3 class="card-section-title">
+              <span class="material-icons-outlined">timeline</span>
+              Order Tracking
+            </h3>
+
+            <div class="status-timeline">
+
+              <!-- Step: placed -->
+              <div class="timeline-step"
+                [class.completed]="isStepCompleted('placed')"
+                [class.active]="order()!.status === 'placed'"
+                [class.pending]="isStepPending('placed')">
+                <div class="timeline-left">
+                  <div class="step-dot">
+                    @if (isStepCompleted('placed')) {
+                      <span class="material-icons-outlined">check</span>
+                    }
+                  </div>
+                  @if (!isLastStep('placed')) {
+                    <div class="step-connector" [class.filled]="isStepCompleted('placed')"></div>
+                  }
+                </div>
+                <div class="step-body">
+                  <span class="step-label">Order Placed</span>
+                  @if (order()!.status === 'placed') {
+                    <span class="step-time">{{ order()!.placed_at | date:'MMM d · h:mm a' }}</span>
+                  }
+                </div>
+              </div>
+
+              <!-- Step: confirmed -->
+              <div class="timeline-step"
+                [class.completed]="isStepCompleted('confirmed')"
+                [class.active]="order()!.status === 'confirmed'"
+                [class.pending]="isStepPending('confirmed')">
+                <div class="timeline-left">
+                  <div class="step-dot">
+                    @if (isStepCompleted('confirmed')) {
+                      <span class="material-icons-outlined">check</span>
+                    }
+                  </div>
+                  @if (!isLastStep('confirmed')) {
+                    <div class="step-connector" [class.filled]="isStepCompleted('confirmed')"></div>
+                  }
+                </div>
+                <div class="step-body">
+                  <span class="step-label">Confirmed</span>
+                </div>
+              </div>
+
+              <!-- Step: preparing -->
+              <div class="timeline-step"
+                [class.completed]="isStepCompleted('preparing')"
+                [class.active]="order()!.status === 'preparing'"
+                [class.pending]="isStepPending('preparing')">
+                <div class="timeline-left">
+                  <div class="step-dot">
+                    @if (isStepCompleted('preparing')) {
+                      <span class="material-icons-outlined">check</span>
+                    }
+                  </div>
+                  @if (!isLastStep('preparing')) {
+                    <div class="step-connector" [class.filled]="isStepCompleted('preparing')"></div>
+                  }
+                </div>
+                <div class="step-body">
+                  <span class="step-label">Preparing</span>
+                </div>
+              </div>
+
+              <!-- Step: picked_up -->
+              <div class="timeline-step"
+                [class.completed]="isStepCompleted('picked_up')"
+                [class.active]="order()!.status === 'picked_up'"
+                [class.pending]="isStepPending('picked_up')">
+                <div class="timeline-left">
+                  <div class="step-dot">
+                    @if (isStepCompleted('picked_up')) {
+                      <span class="material-icons-outlined">check</span>
+                    }
+                  </div>
+                  @if (!isLastStep('picked_up')) {
+                    <div class="step-connector" [class.filled]="isStepCompleted('picked_up')"></div>
+                  }
+                </div>
+                <div class="step-body">
+                  <span class="step-label">Picked Up</span>
+                </div>
+              </div>
+
+              <!-- Step: on_the_way -->
+              <div class="timeline-step"
+                [class.completed]="isStepCompleted('on_the_way')"
+                [class.active]="order()!.status === 'on_the_way'"
+                [class.pending]="isStepPending('on_the_way')">
+                <div class="timeline-left">
+                  <div class="step-dot">
+                    @if (isStepCompleted('on_the_way')) {
+                      <span class="material-icons-outlined">check</span>
+                    }
+                  </div>
+                  @if (!isLastStep('on_the_way')) {
+                    <div class="step-connector" [class.filled]="isStepCompleted('on_the_way')"></div>
+                  }
+                </div>
+                <div class="step-body">
+                  <span class="step-label">On the Way</span>
+                </div>
+              </div>
+
+              <!-- Step: delivered -->
+              <div class="timeline-step"
+                [class.completed]="isStepCompleted('delivered')"
+                [class.active]="order()!.status === 'delivered'"
+                [class.pending]="isStepPending('delivered')">
+                <div class="timeline-left">
+                  <div class="step-dot">
+                    @if (isStepCompleted('delivered')) {
+                      <span class="material-icons-outlined">check</span>
+                    }
+                  </div>
+                </div>
+                <div class="step-body">
+                  <span class="step-label">Delivered</span>
+                </div>
+              </div>
+
+              <!-- Cancelled state -->
+              @if (order()!.status === 'cancelled') {
+                <div class="timeline-step cancelled active">
+                  <div class="timeline-left">
+                    <div class="step-dot cancelled-dot">
+                      <span class="material-icons-outlined">close</span>
+                    </div>
+                  </div>
+                  <div class="step-body">
+                    <span class="step-label">Cancelled</span>
+                  </div>
+                </div>
+              }
+
+            </div>
+
+            <!-- Tracking events (API) -->
+            @if (tracking().length > 0) {
+              <div class="tracking-events-title">Activity Log</div>
+              <div class="tracking-timeline">
+                @for (event of tracking(); track event.id; let last = $last; let first = $first) {
+                  <div class="track-step" [class.completed]="!last" [class.active]="last">
+                    @if (!first) {
+                      <div class="track-line" [class.solid]="!last"></div>
+                    }
+                    <div class="track-dot" [class.completed]="!last" [class.active]="last"></div>
+                    <div class="track-content">
+                      <span class="track-label">{{ event.status | titlecase }}</span>
+                      @if (event.description) {
+                        <span class="track-desc">{{ event.description }}</span>
+                      }
+                      <span class="track-time">{{ event.timestamp | date:'MMM d · h:mm a' }}</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- ETA Card -->
+          @if (order()!.estimated_delivery_time) {
+            <div class="detail-card eta-card">
+              <div class="eta-icon-wrap">
+                <span class="material-icons-outlined">schedule</span>
+              </div>
+              <div class="eta-info">
+                <p class="eta-label">Estimated delivery</p>
+                <p class="eta-value">{{ order()!.estimated_delivery_time }} min</p>
+              </div>
+            </div>
+          }
+
+          <!-- Payment Method -->
+          <div class="detail-card payment-card">
+            <h3 class="card-section-title">
+              <span class="material-icons-outlined">payments</span>
+              Payment
+            </h3>
+            <div class="payment-row">
+              <span class="material-icons-outlined">money</span>
+              <span class="payment-label">Cash on Delivery (COD)</span>
+              <span class="payment-amount">${{ order()!.total | number:'1.2-2' }}</span>
+            </div>
+          </div>
+
+          <!-- Delivery OTP (shown when on_the_way) -->
+          @if (order()!.delivery_otp && ['picked_up', 'on_the_way'].includes(order()!.status)) {
+            <div class="detail-card otp-card">
+              <h3 class="card-section-title">
+                <span class="material-icons-outlined">pin</span>
+                Delivery OTP
+              </h3>
+              <p class="otp-hint">Share this code with your delivery partner to confirm delivery:</p>
+              <div class="otp-display">{{ order()!.delivery_otp }}</div>
+            </div>
+          }
+
+          <!-- Delivery Partner Card -->
+          @if (order()!.delivery_partner) {
+            <div class="detail-card delivery-partner-card">
+              <h3 class="card-section-title">
+                <span class="material-icons-outlined">directions_bike</span>
+                Delivery Partner
+              </h3>
+              <div class="partner-row">
+                <div class="partner-avatar">
+                  <span class="material-icons-outlined">person</span>
+                </div>
+                <div class="partner-info">
+                  <span class="partner-name">{{ $any(order()!.delivery_partner).name }}</span>
+                  <span class="partner-note">Track delivery in real-time</span>
+                </div>
+              </div>
+            </div>
+          }
+
+        </div>
+
+      </div>
+    }
+
+  </div>
+</div>

@@ -1,0 +1,49 @@
+@if (loading) {
+<div class="table-card loading-state">
+  <div class="loading-panel">
+    <div class="spinner"></div>
+  </div>
+</div>
+} @else if (data.length === 0) {
+<div class="empty-state">
+  <span class="material-icons-outlined empty-icon">{{ emptyIcon }}</span>
+  <p>{{ emptyMessage }}</p>
+  <span class="text-muted">{{ emptySubMessage }}</span>
+</div>
+} @else {
+<div class="table-card">
+  <div class="t-header" [style.grid-template-columns]="getGridTemplate()">
+    @for (col of columns; track col.key) {
+      <span>{{ col.label }}</span>
+    }
+  </div>
+
+  <div class="t-body">
+    @for (row of data; track row.id || $index) {
+      <div class="t-row" [style.grid-template-columns]="getGridTemplate()" [class.clickable]="clickableRows" (click)="clickableRows && rowClick.emit(row)">
+        @for (col of columns; track col.key) {
+          <div class="t-cell">
+            @if (getTemplate(col.key); as template) {
+              <ng-container *ngTemplateOutlet="template; context: { $implicit: row, value: row[col.key] }"></ng-container>
+            } @else {
+              {{ row[col.key] }}
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  @if (hasPagination && totalItems > itemsPerPage) {
+    <div class="pagination">
+      <button class="page-btn" [disabled]="page === 1" (click)="onPageChange(page - 1)">
+        <span class="material-icons-outlined">chevron_left</span> Previous
+      </button>
+      <span>Page {{ page }} of {{ Math.ceil(totalItems / itemsPerPage) }}</span>
+      <button class="page-btn" [disabled]="page * itemsPerPage >= totalItems" (click)="onPageChange(page + 1)">
+        Next <span class="material-icons-outlined">chevron_right</span>
+      </button>
+    </div>
+  }
+</div>
+}

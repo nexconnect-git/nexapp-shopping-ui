@@ -1,0 +1,56 @@
+/* ── Orders Page Styles ─────────────────────── */
+.order-id { font-weight: 700; font-family: monospace; color: var(--primary); }
+.price { font-weight: 700; color: var(--text-primary); }
+
+.status-select {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  background: white;
+  outline: none;
+  cursor: pointer;
+  &:focus { border-color: var(--primary); }
+}
+
+/* ── Order Details Modal ───────────────────── */
+.detail-section {
+  margin-bottom: 2rem;
+  &:last-child { margin-bottom: 0; }
+  
+  h3 { font-size: 0.875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 1rem; border-bottom: 1px solid var(--border-light); padding-bottom: 0.5rem; }
+  p { margin-bottom: 0.5rem; font-size: 0.9375rem; strong { color: var(--text-primary); margin-right: 0.5rem; } }
+}
+
+.items-list {
+  background: var(--bg-color);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+}
+.item-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px dashed var(--border-color);
+  font-size: 0.875rem;
+  &:last-child { border-bottom: none; }
+  &.total-row { border-top: 1px solid var(--border-color); margin-top: 0.5rem; padding-top: 1rem; font-size: 1rem; }
+}
+
+.tracking-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  position: relative;
+  padding-left: 1rem;
+  &::before { content: ''; position: absolute; left: 1.5rem; top: 0; bottom: 0; width: 2px; background: var(--border-light); }
+}
+.tracking-item {
+  position: relative;
+  padding-left: 2rem;
+  &::after { content: ''; position: absolute; left: calc(0.5rem - 1px); top: 0.5rem; width: 10px; height: 10px; border-radius: 50%; background: var(--border-color); border: 2px solid white; z-index: 1; }
+  
+  .track-status { margin-bottom: 0.25rem; }
+  .track-time { display: block; margin-bottom: 0.25rem; }
+  .track-desc { font-size: 0.875rem; color: var(--text-secondary); margin: 0; }
+}

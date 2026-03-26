@@ -1,0 +1,24 @@
+.stock-page { padding: 2rem; max-width: 1300px; margin: 0 auto; }
+.page-header { margin-bottom: 2rem; h1 { margin: 0; font-size: 1.75rem; color: var(--text-color); } .page-subtitle { color: var(--text-muted); margin: 0.25rem 0 0; } }
+.stock-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; align-items: start; }
+.card { border: 1px solid var(--border-color); background: white; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow-sm); }
+.card-header { padding: 1.25rem 1.5rem; background: var(--surface-hover); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 0.5rem; h3 { margin: 0; font-size: 1.1rem; } }
+.alert-header { background: rgba(245,158,11,0.05); border-bottom-color: rgba(245,158,11,0.2); }
+.count-badge { background: var(--warning); color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; margin-left: auto; }
+.card-body { padding: 1.5rem; }
+.card-body.p-0 { padding: 0; }
+.p-4 { padding: 1.5rem; }
+.table th { background: var(--surface-hover); padding: 1rem 1.5rem; text-align: left; font-size: 0.8125rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
+.table td { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+.stock-input { width: 80px; padding: 0.25rem 0.5rem; font-size: 0.9rem; }
+.badge { padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: 700; }
+.badge-success { background: rgba(16,185,129,0.1); color: var(--success); }
+.badge-warning { background: rgba(245,158,11,0.1); color: var(--warning); }
+.badge-danger { background: rgba(239,68,68,0.1); color: var(--danger); }
+.mr-2 { margin-right: 0.5rem; }
+.alert-list { display: flex; flex-direction: column; }
+.alert-item { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 1rem; }
+.alert-item:last-child { border-bottom: none; }
+.alert-info strong { display: block; color: var(--text-color); font-size: 0.95rem; margin-bottom: 0.25rem; }
+.alert-meta { font-size: 0.85rem; color: var(--text-muted); }
+.text-danger { color: var(--danger) !important; }

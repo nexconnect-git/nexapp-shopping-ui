@@ -1,0 +1,198 @@
+<div class="products-page">
+
+  <div class="products-layout">
+
+    <!-- ============================================================
+         FILTER SIDEBAR
+         ============================================================ -->
+    <aside class="filters-sidebar">
+      <div class="sidebar-header">
+        <h3 class="sidebar-title">
+          <span class="material-icons-outlined">filter_list</span>
+          Filters
+        </h3>
+        @if (categoryFilter || minPrice || maxPrice || inStockOnly) {
+          <button class="clear-all-btn" (click)="categoryFilter=null; minPrice=null; maxPrice=null; inStockOnly=false; applyFilters()">
+            Clear All
+          </button>
+        }
+      </div>
+
+      <!-- Category filter -->
+      <div class="filter-group">
+        <p class="filter-section-title">Category</p>
+        <label class="filter-option" [class.selected]="categoryFilter === null">
+          <input type="radio" name="category" [value]="null"
+            [(ngModel)]="categoryFilter" (change)="applyFilters()">
+          <span>All Categories</span>
+        </label>
+        @for (cat of categories(); track cat.id) {
+          <label class="filter-option" [class.selected]="categoryFilter === cat.id">
+            <input type="radio" name="category" [value]="cat.id"
+              [(ngModel)]="categoryFilter" (change)="applyFilters()">
+            <span>{{ cat.name }}</span>
+          </label>
+        }
+      </div>
+
+      <!-- Price range -->
+      <div class="filter-group">
+        <p class="filter-section-title">Price Range</p>
+        <div class="price-range-inputs">
+          <div class="price-input-wrap">
+            <span class="price-prefix">$</span>
+            <input class="form-input price-input" type="number" [(ngModel)]="minPrice" placeholder="Min" min="0" (change)="applyFilters()">
+          </div>
+          <span class="price-separator">–</span>
+          <div class="price-input-wrap">
+            <span class="price-prefix">$</span>
+            <input class="form-input price-input" type="number" [(ngModel)]="maxPrice" placeholder="Max" min="0" (change)="applyFilters()">
+          </div>
+        </div>
+      </div>
+
+      <!-- Availability -->
+      <div class="filter-group filter-group--last">
+        <p class="filter-section-title">Availability</p>
+        <label class="filter-toggle">
+          <input type="checkbox" [(ngModel)]="inStockOnly" (change)="applyFilters()">
+          <span class="toggle-track">
+            <span class="toggle-thumb"></span>
+          </span>
+          <span class="toggle-label">In stock only</span>
+        </label>
+      </div>
+    </aside>
+
+    <!-- ============================================================
+         MAIN PRODUCTS AREA
+         ============================================================ -->
+    <main class="products-main">
+
+      <!-- Toolbar -->
+      <div class="products-toolbar">
+        <div class="search-wrap">
+          <span class="material-icons-outlined search-icon-inner">search</span>
+          <input class="form-input toolbar-search" type="search"
+            [(ngModel)]="searchQuery" (input)="onSearch()"
+            placeholder="Search products...">
+          @if (searchQuery) {
+            <button class="search-clear" (click)="searchQuery=''; onSearch()">
+              <span class="material-icons-outlined">close</span>
+            </button>
+          }
+        </div>
+
+        <select class="form-input sort-select" [(ngModel)]="ordering" (change)="applyFilters()">
+          <option value="">Default</option>
+          <option value="price">Price: Low to High</option>
+          <option value="-price">Price: High to Low</option>
+          <option value="-average_rating">Top Rated</option>
+        </select>
+      </div>
+
+      <!-- Active filter chips -->
+      @if (categoryFilter || minPrice || maxPrice || inStockOnly) {
+        <div class="active-filters">
+          @if (categoryFilter) {
+            <span class="filter-chip">
+              Category
+              <button (click)="categoryFilter=null; applyFilters()" class="chip-remove">
+                <span class="material-icons-outlined">close</span>
+              </button>
+            </span>
+          }
+          @if (minPrice) {
+            <span class="filter-chip">
+              Min ${{ minPrice }}
+              <button (click)="minPrice=null; applyFilters()" class="chip-remove">
+                <span class="material-icons-outlined">close</span>
+              </button>
+            </span>
+          }
+          @if (maxPrice) {
+            <span class="filter-chip">
+              Max ${{ maxPrice }}
+              <button (click)="maxPrice=null; applyFilters()" class="chip-remove">
+                <span class="material-icons-outlined">close</span>
+              </button>
+            </span>
+          }
+          @if (inStockOnly) {
+            <span class="filter-chip">
+              In Stock
+              <button (click)="inStockOnly=false; applyFilters()" class="chip-remove">
+                <span class="material-icons-outlined">close</span>
+              </button>
+            </span>
+          }
+        </div>
+      }
+
+      <!-- Products Grid -->
+      @if (loading()) {
+        <div class="loading-spinner"></div>
+      } @else if (products().length === 0) {
+        <div class="empty-state">
+          <div class="empty-icon">&#128269;</div>
+          <h3>No products found</h3>
+          <p>Try adjusting your search terms or filters</p>
+        </div>
+      } @else {
+        <div class="products-grid">
+          @for (product of products(); track product.id) {
+            <a [routerLink]="['/product', product.id]" class="product-card">
+              <div class="product-image-wrap">
+                @if (product.primary_image) {
+                  <img [src]="product.primary_image" [alt]="product.name">
+                } @else {
+                  <div class="product-img-placeholder">
+                    <span class="material-icons-outlined">inventory_2</span>
+                  </div>
+                }
+                @if (product.discount_percentage > 0) {
+                  <span class="product-badge">-{{ product.discount_percentage }}%</span>
+                }
+                @if (!product.in_stock) {
+                  <div class="product-oos-overlay">Out of stock</div>
+                }
+              </div>
+              <div class="product-card-body">
+                <p class="product-vendor-name">{{ product.vendor_name }}</p>
+                <h4 class="product-card-name">{{ product.name }}</h4>
+                <div class="product-price-row">
+                  <span class="product-price">${{ product.price | number:'1.2-2' }}</span>
+                  @if (product.compare_price) {
+                    <span class="product-compare-price">${{ product.compare_price | number:'1.2-2' }}</span>
+                  }
+                </div>
+                @if (product.average_rating > 0) {
+                  <div class="product-rating">
+                    <span class="stars">{{ starsFor(product.average_rating) }}</span>
+                    <span class="rating-count">({{ product.total_ratings }})</span>
+                  </div>
+                }
+              </div>
+            </a>
+          }
+        </div>
+
+        <!-- Pagination -->
+        @if (totalPages() > 1) {
+          <div class="pagination">
+            <button class="page-btn" [disabled]="page() === 1" (click)="setPage(page()-1)">
+              <span class="material-icons-outlined">chevron_left</span>
+              Prev
+            </button>
+            <span class="pagination-info">Page {{ page() }} of {{ totalPages() }}</span>
+            <button class="page-btn" [disabled]="page() === totalPages()" (click)="setPage(page()+1)">
+              Next
+              <span class="material-icons-outlined">chevron_right</span>
+            </button>
+          </div>
+        }
+      }
+    </main>
+
+  </div>
+</div>

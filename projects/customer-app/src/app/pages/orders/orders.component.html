@@ -1,0 +1,72 @@
+<div class="orders-page">
+
+  <!-- Page Header -->
+  <div class="orders-header">
+    <h1 class="page-title">
+      My Orders
+      @if (orders().length > 0) {
+        <span class="order-count-badge">{{ orders().length }}</span>
+      }
+    </h1>
+  </div>
+
+  <!-- Status Tabs -->
+  <div class="status-tabs">
+    @for (tab of statusTabs; track tab.value) {
+      <button
+        class="status-tab"
+        [class.active]="activeStatus() === tab.value"
+        (click)="setStatus(tab.value)">
+        {{ tab.label }}
+      </button>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="loading-spinner"></div>
+  } @else if (orders().length === 0) {
+
+    <!-- Empty State -->
+    <div class="empty-state">
+      <div class="empty-icon-wrap">
+        <span class="material-icons-outlined empty-orders-icon">receipt_long</span>
+      </div>
+      <h3 class="empty-heading">No orders yet</h3>
+      <p class="empty-sub">Your orders will appear here once you place one</p>
+      <a routerLink="/shops" class="btn btn-primary btn-shop">
+        <span class="material-icons-outlined">storefront</span>
+        Start Shopping
+      </a>
+    </div>
+
+  } @else {
+    <div class="orders-list">
+      @for (order of orders(); track order.id) {
+        <a [routerLink]="['/order', order.id]" class="order-card status-{{ order.status }}">
+
+          <div class="order-top">
+            <span class="order-number">#{{ order.order_number }}</span>
+            <span class="status-badge status-{{ order.status }}">{{ order.status | titlecase }}</span>
+          </div>
+
+          <div class="order-mid">
+            <span class="vendor-name">{{ order.vendor_name }}</span>
+            @for (item of order.items.slice(0, 2); track item.id) {
+              <span class="item-chip">{{ item.product_name }}</span>
+            }
+            @if (order.items.length > 2) {
+              <span class="item-chip more">+{{ order.items.length - 2 }} more</span>
+            }
+          </div>
+
+          <div class="order-bottom">
+            <span class="order-total">${{ order.total | number:'1.2-2' }}</span>
+            <span class="order-date">{{ order.placed_at | date:'MMM d, y' }}</span>
+          </div>
+
+        </a>
+      }
+    </div>
+  }
+
+</div>

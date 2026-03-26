@@ -1,0 +1,162 @@
+@if (auth.isLoggedIn() && !isAuthRoute()) {
+  <div class="app-shell">
+    <!-- Sidebar -->
+    @if (!isPendingRoute()) {
+      <aside class="sidebar">
+        <!-- Brand -->
+        <div class="sidebar-brand">
+          <div class="brand-icon">
+            <span class="material-icons-outlined">storefront</span>
+          </div>
+          <div class="brand-text">
+            <span class="brand-name">NexConnect</span>
+            <span class="brand-sub">Vendor Portal</span>
+          </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="sidebar-nav">
+          <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="closeMobileSidebar()" class="nav-item">
+            <span class="material-icons-outlined">dashboard</span>
+            <span class="nav-label">Dashboard</span>
+          </a>
+          <a routerLink="/products" routerLinkActive="active" (click)="closeMobileSidebar()" class="nav-item">
+            <span class="material-icons-outlined">inventory_2</span>
+            <span class="nav-label">Products</span>
+          </a>
+          <a routerLink="/orders" routerLinkActive="active" (click)="closeMobileSidebar()" class="nav-item">
+            <span class="material-icons-outlined">receipt_long</span>
+            <span class="nav-label">Orders</span>
+          </a>
+          <a routerLink="/sales-report" routerLinkActive="active" (click)="closeMobileSidebar()" class="nav-item">
+            <span class="material-icons-outlined">trending_up</span>
+            <span class="nav-label">Sales Report</span>
+          </a>
+          <a routerLink="/stock-management" routerLinkActive="active" (click)="closeMobileSidebar()" class="nav-item">
+            <span class="material-icons-outlined">inventory</span>
+            <span class="nav-label">Stock Management</span>
+          </a>
+          <a routerLink="/payments" routerLinkActive="active" (click)="closeMobileSidebar()" class="nav-item">
+            <span class="material-icons-outlined">account_balance_wallet</span>
+            <span class="nav-label">Payments</span>
+          </a>
+          <a routerLink="/support" routerLinkActive="active" (click)="closeMobileSidebar()" class="nav-item">
+            <span class="material-icons-outlined">support_agent</span>
+            <span class="nav-label">Customer Care</span>
+          </a>
+          <a routerLink="/profile" routerLinkActive="active" (click)="closeMobileSidebar()" class="nav-item">
+            <span class="material-icons-outlined">manage_accounts</span>
+            <span class="nav-label">Profile & Store</span>
+          </a>
+        </nav>
+
+        <!-- Sidebar Footer -->
+        <div class="sidebar-footer">
+          <div class="sidebar-user">
+            <div class="user-avatar">
+              <span class="material-icons-outlined">person</span>
+            </div>
+            <div class="user-meta">
+              <span class="user-name">{{ auth.user()?.username }}</span>
+              <span class="user-role">Vendor</span>
+            </div>
+          </div>
+          <button class="logout-btn" (click)="logout()">
+            <span class="material-icons-outlined">logout</span>
+            <span class="nav-label">Sign Out</span>
+          </button>
+        </div>
+      </aside>
+    }
+
+    <!-- Main Area -->
+    <div class="main-area">
+      <!-- Top Bar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          @if (!isPendingRoute()) {
+            <div class="store-badge">
+              <span class="material-icons-outlined">store</span>
+              <span>{{ auth.user()?.username }}'s Store</span>
+            </div>
+          }
+        </div>
+        <div class="topbar-right">
+          @if (!isPendingRoute()) {
+            <div class="notif-wrapper" (click)="$event.stopPropagation()">
+              <button class="topbar-icon-btn notif-btn" (click)="toggleNotif($event)" title="Notifications">
+                <span class="material-icons-outlined">notifications_none</span>
+                @if (unreadCount() > 0) {
+                  <span class="notif-badge">{{ unreadCount() > 9 ? '9+' : unreadCount() }}</span>
+                }
+              </button>
+              @if (notifOpen()) {
+                <div class="notif-dropdown">
+                  <div class="notif-header">
+                    <span class="notif-title">Notifications</span>
+                    @if (unreadCount() > 0) {
+                      <button class="notif-mark-read" (click)="markAllRead()">Mark all read</button>
+                    }
+                  </div>
+                  @if (notifLoading()) {
+                    <div class="notif-loading"><div class="notif-spinner"></div></div>
+                  } @else if (notifications().length === 0) {
+                    <div class="notif-empty">
+                      <span class="material-icons-outlined">notifications_none</span>
+                      <span>No notifications</span>
+                    </div>
+                  } @else {
+                    <div class="notif-list">
+                      @for (n of notifications(); track n.id) {
+                        <div class="notif-item" [class.unread]="!n.is_read">
+                          <span class="material-icons-outlined notif-icon">receipt_long</span>
+                          <div class="notif-body">
+                            <p class="notif-msg">{{ n.title }}</p>
+                            <p class="notif-sub">{{ n.message }}</p>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+          <div class="profile-menu-wrapper" (click)="toggleProfile($event)">
+            <div class="topbar-avatar">
+              {{ (auth.user()?.first_name?.[0] || '') + (auth.user()?.last_name?.[0] || '') || auth.user()?.username?.[0]?.toUpperCase() || '?' }}
+            </div>
+            @if (profileOpen()) {
+              <div class="profile-dropdown" (click)="$event.stopPropagation()">
+                <div class="pd-header">
+                  <div class="pd-avatar-lg">
+                    {{ (auth.user()?.first_name?.[0] || '') + (auth.user()?.last_name?.[0] || '') || '?' }}
+                  </div>
+                  <div>
+                    <p class="pd-name">{{ auth.user()?.first_name }} {{ auth.user()?.last_name }}</p>
+                    <p class="pd-email">{{ auth.user()?.email }}</p>
+                  </div>
+                </div>
+                <div class="pd-divider"></div>
+                <a routerLink="/profile" class="pd-item" (click)="closeProfile()">
+                  <span class="material-icons-outlined">manage_accounts</span> Store Profile
+                </a>
+                <div class="pd-divider"></div>
+                <button class="pd-item danger" (click)="logout(); closeProfile()">
+                  <span class="material-icons-outlined">logout</span> Sign Out
+                </button>
+              </div>
+            }
+          </div>
+        </div>
+      </header>
+
+      <!-- Page Content -->
+      <main class="page-content">
+        <router-outlet />
+      </main>
+    </div>
+  </div>
+} @else {
+  <router-outlet />
+}

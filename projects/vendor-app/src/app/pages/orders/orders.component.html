@@ -1,0 +1,110 @@
+<div class="orders-page fade-in">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1>Orders</h1>
+      <p class="page-subtitle">View and manage customer orders</p>
+    </div>
+    <div class="header-controls">
+      <div class="filter-wrapper">
+        <span class="material-icons-outlined filter-icon">filter_list</span>
+        <select class="form-input form-select filter-select" [(ngModel)]="statusFilter" (change)="load()">
+          <option value="">All Statuses</option>
+          <option value="placed">Placed</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="preparing">Preparing</option>
+          <option value="ready">Ready</option>
+          <option value="delivered">Delivered</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading orders...</p>
+    </div>
+  } @else if (orders().length === 0) {
+    <div class="card">
+      <div class="empty-state">
+        <span class="material-icons-outlined">receipt_long</span>
+        <strong>No orders found</strong>
+        <p>{{ statusFilter ? 'No orders with status "' + statusFilter + '"' : 'You have no orders yet' }}</p>
+      </div>
+    </div>
+  } @else {
+    <div class="card">
+      <div class="card-header">
+        <span class="badge badge-secondary">{{ orders().length }} order(s)</span>
+      </div>
+      <div class="table-wrapper" style="border:none;border-radius:0;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Order #</th>
+              <th>Customer</th>
+              <th>Items</th>
+              <th>Total</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (order of orders(); track order.id) {
+              <tr>
+                <td>
+                  <a [routerLink]="[order.id]" class="order-link">#{{ order.order_number }}</a>
+                </td>
+                <td>
+                  <div class="customer-cell">
+                    <div class="customer-avatar">
+                      <span class="material-icons-outlined">person</span>
+                    </div>
+                    {{ order.customer_name }}
+                  </div>
+                </td>
+                <td class="text-muted">{{ order.items.length }} item(s)</td>
+                <td>
+                  <strong>${{ order.total | number:'1.2-2' }}</strong>
+                </td>
+                <td>
+                  <span class="badge badge-{{ order.status }}">{{ order.status }}</span>
+                </td>
+                <td class="text-muted">{{ order.placed_at | date:'MMM d, y' }}</td>
+                <td>
+                  <div class="order-actions">
+                    @if (order.status === 'placed') {
+                      <button class="status-btn confirm" (click)="updateStatus(order, 'confirmed')">
+                        <span class="material-icons-outlined">check</span>
+                        Confirm
+                      </button>
+                    }
+                    @if (order.status === 'confirmed') {
+                      <button class="status-btn prepare" (click)="updateStatus(order, 'preparing')">
+                        <span class="material-icons-outlined">local_fire_department</span>
+                        Prepare
+                      </button>
+                    }
+                    @if (order.status === 'preparing') {
+                      <button class="status-btn ready" (click)="updateStatus(order, 'ready')">
+                        <span class="material-icons-outlined">done_all</span>
+                        Ready
+                      </button>
+                    }
+                    <a [routerLink]="[order.id]" class="btn-ghost btn-sm" title="View details">
+                      <span class="material-icons-outlined">open_in_new</span>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>

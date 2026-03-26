@@ -1,0 +1,147 @@
+<div>
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Orders</h1>
+      <p class="page-subtitle">{{ total() }} total orders</p>
+    </div>
+    <div class="filters">
+      <input class="filter-input" type="search" [(ngModel)]="search"
+        (input)="onSearch()" placeholder="Search order #...">
+      <select class="filter-input" [(ngModel)]="statusFilter" (change)="load()">
+        <option value="">All Status</option>
+        <option value="placed">Placed</option>
+        <option value="confirmed">Confirmed</option>
+        <option value="preparing">Preparing</option>
+        <option value="ready">Ready</option>
+        <option value="picked_up">Picked Up</option>
+        <option value="on_the_way">On the Way</option>
+        <option value="delivered">Delivered</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
+    </div>
+  </div>
+
+  <app-dynamic-table
+    [loading]="loading()"
+    [data]="orders()"
+    [columns]="tableColumns"
+    emptyMessage="No orders found"
+    emptySubMessage="Try adjusting filters or wait for new orders."
+    emptyIcon="receipt_long"
+    [totalItems]="total()"
+    [itemsPerPage]="20"
+    [page]="page()"
+    (pageChange)="setPage($event)"
+  >
+    <!-- Custom order_number column -->
+    <ng-template tableCell="order_number" let-order>
+      <span class="order-id">#{{ order.order_number }}</span>
+    </ng-template>
+
+    <!-- Custom customer_name column -->
+    <ng-template tableCell="customer_name" let-order>
+      <span class="text-light">{{ order.customer_name }}</span>
+    </ng-template>
+
+    <!-- Custom vendor_name column -->
+    <ng-template tableCell="vendor_name" let-order>
+      <span class="text-muted">{{ order.vendor_name }}</span>
+    </ng-template>
+
+    <!-- Custom total column -->
+    <ng-template tableCell="total" let-order>
+      <span class="price">${{ order.total | number:'1.2-2' }}</span>
+    </ng-template>
+
+    <!-- Custom status column -->
+    <ng-template tableCell="status" let-order>
+      <span class="badge badge-{{ order.status }}">{{ order.status }}</span>
+    </ng-template>
+
+    <!-- Custom date column -->
+    <ng-template tableCell="date" let-order>
+      <span class="text-muted text-sm">{{ order.placed_at | date:'MMM d, y' }}</span>
+    </ng-template>
+
+    <!-- Custom actions column -->
+    <ng-template tableCell="actions" let-order>
+      <div class="actions">
+        <button class="action-btn" (click)="viewDetails(order)" title="View Details">
+          <span class="material-icons-outlined" style="font-size: 18px;">visibility</span>
+        </button>
+        <select class="status-select" [value]="order.status"
+          [disabled]="updatingId() === order.id"
+          (change)="updateStatus(order, $any($event.target).value)">
+          @for (s of statuses; track s) {
+            <option [value]="s">{{ s }}</option>
+          }
+        </select>
+      </div>
+    </ng-template>
+  </app-dynamic-table>
+
+  @if (showModal()) {
+    <div class="modal-backdrop" (click)="closeModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Order #{{ selectedOrder()?.order_number }} Details</h2>
+          <button class="close-btn" (click)="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          @if (loadingDetails()) {
+            <div class="loading-panel"><div class="spinner"></div></div>
+          } @else {
+            <div class="detail-section">
+              <h3>Customer Information</h3>
+              <p><strong>Name:</strong> {{ selectedOrder()?.customer_name }}</p>
+              @if (selectedOrder()?.delivery_address) {
+                <p><strong>Address:</strong> {{ selectedOrder()?.delivery_address?.street }}, {{ selectedOrder()?.delivery_address?.city }}</p>
+                <p><strong>Phone:</strong> {{ selectedOrder()?.delivery_address?.phone }}</p>
+              }
+            </div>
+
+            <div class="detail-section">
+              <h3>Vendor Information</h3>
+              <p><strong>Name:</strong> {{ selectedOrder()?.vendor_name }}</p>
+            </div>
+
+            <div class="detail-section">
+              <h3>Order Items</h3>
+              <div class="items-list">
+                @for (item of selectedOrder()?.items; track item.id) {
+                  <div class="item-row">
+                    <span>{{ item.quantity }}x {{ item.product_name }}</span>
+                    <span>${{ item.subtotal | number:'1.2-2' }}</span>
+                  </div>
+                }
+                <div class="item-row total-row">
+                  <strong>Total (incl. fee)</strong>
+                  <strong>${{ selectedOrder()?.total | number:'1.2-2' }}</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <h3>Tracking History</h3>
+              <div class="tracking-list">
+                @for (track of selectedOrder()?.tracking; track track.id) {
+                  <div class="tracking-item">
+                    <span class="track-status badge-{{ track.status }}">{{ track.status }}</span>
+                    <span class="track-time text-muted text-sm">{{ track.timestamp | date:'short' }}</span>
+                    <p class="track-desc">{{ track.description }}</p>
+                  </div>
+                }
+                @if (!selectedOrder()?.tracking || selectedOrder()?.tracking?.length === 0) {
+                  <p class="text-muted text-sm">No tracking history yet.</p>
+                }
+              </div>
+            </div>
+          }
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="closeModal()">Close</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

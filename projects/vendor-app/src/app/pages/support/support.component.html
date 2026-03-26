@@ -1,0 +1,95 @@
+<div class="support-page fade-in">
+  <div class="page-header">
+    <div>
+      <h1>Customer Care</h1>
+      <p class="page-subtitle">Contact admin support for help or disputes</p>
+    </div>
+  </div>
+
+  @if (errorMsg()) {
+    <div class="alert alert-danger" style="margin-bottom:1.5rem;">
+      <span class="material-icons-outlined">error_outline</span> {{ errorMsg() }}
+    </div>
+  }
+  @if (successMsg()) {
+    <div class="alert alert-success" style="margin-bottom:1.5rem;">
+      <span class="material-icons-outlined">check_circle</span> {{ successMsg() }}
+    </div>
+  }
+
+  <div class="support-layout">
+    <!-- Ticket Form -->
+    <div class="card create-ticket-card">
+      <div class="card-header">
+        <h3>Submit a Ticket</h3>
+      </div>
+      <div class="card-body">
+        <form (ngSubmit)="submitTicket()">
+          <div class="form-group">
+            <label class="form-label">Category</label>
+            <select class="form-select w-100" [(ngModel)]="form.category" name="category">
+              <option value="general">General Support</option>
+              <option value="billing">Billing & Payouts</option>
+              <option value="technical">Technical Issue</option>
+              <option value="dispute">Order Dispute</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Subject <span class="required">*</span></label>
+            <input type="text" class="form-input w-100" [(ngModel)]="form.subject" name="subject" required placeholder="Brief description of the issue">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Message <span class="required">*</span></label>
+            <textarea class="form-input w-100" [(ngModel)]="form.message" name="message" rows="5" required placeholder="Explain your issue in detail..."></textarea>
+          </div>
+          <button type="submit" class="btn-primary w-100" [disabled]="creating()">
+            @if (creating()) {
+              <span class="spinner-inline"></span> Submitting...
+            } @else {
+              <span class="material-icons-outlined">send</span> Submit Ticket
+            }
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Ticket History -->
+    <div class="card ticket-history-card">
+      <div class="card-header">
+        <h3>Ticket History</h3>
+      </div>
+      <div class="card-body p-0">
+        @if (loading()) {
+          <div class="p-4 text-center text-muted">Loading tickets...</div>
+        } @else if (!tickets().length) {
+          <div class="p-4 text-center text-muted">You haven't submitted any support tickets yet.</div>
+        } @else {
+          <div class="ticket-list">
+            @for (ticket of tickets(); track ticket.id) {
+              <div class="ticket-item">
+                <div class="ticket-content">
+                  <div class="ticket-title-row">
+                    <span class="badge" [class]="'badge-' + ticket.status">{{ ticket.status | uppercase }}</span>
+                    <span class="ticket-cat">[{{ ticket.category | uppercase }}]</span>
+                    <strong class="ticket-subj">{{ ticket.subject }}</strong>
+                  </div>
+                  <p class="ticket-desc">{{ ticket.message }}</p>
+                  @if (ticket.admin_response) {
+                    <div class="admin-reply">
+                      <strong>Admin Reply:</strong>
+                      <p>{{ ticket.admin_response }}</p>
+                    </div>
+                  }
+                </div>
+                <div class="ticket-meta">
+                  <span class="material-icons-outlined text-muted" style="font-size:16px;">schedule</span>
+                  <span>{{ ticket.created_at | date:'medium' }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,198 @@
+<div class="categories-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Categories</h1>
+      <p class="page-subtitle">{{ categories().length }} root categories</p>
+    </div>
+    <button class="btn-primary" (click)="openCreate(null)">
+      <span class="material-icons-outlined">add</span>
+      New Category
+    </button>
+  </div>
+
+  <!-- Table -->
+  <div class="table-card">
+    @if (loading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading categories…</p>
+      </div>
+    }
+
+    @if (!loading() && categories().length === 0) {
+      <div class="empty-state">
+        <span class="material-icons-outlined empty-icon">folder</span>
+        <p>No categories found</p>
+        <p class="text-muted">Create your first category to get started.</p>
+      </div>
+    }
+
+    @if (!loading() && categories().length > 0) {
+      <table class="cat-table">
+        <thead>
+          <tr>
+            <th style="width: 36px;"></th>
+            <th>Category</th>
+            <th>Type</th>
+            <th>Subcategories</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (cat of categories(); track cat.id) {
+            <!-- Root category row -->
+            <tr class="cat-row root-row" [class.expanded]="isExpanded(cat.id)">
+              <td class="expand-cell">
+                <button class="expand-btn" (click)="toggleExpand(cat)"
+                  [class.open]="isExpanded(cat.id)"
+                  [title]="isExpanded(cat.id) ? 'Collapse' : 'Expand subcategories'">
+                  <span class="material-icons-outlined">chevron_right</span>
+                </button>
+              </td>
+              <td>
+                <div class="cat-cell">
+                  <div class="cat-icon">
+                    @if (cat.image) { <img [src]="cat.image" [alt]="cat.name"> }
+                    @else { 📁 }
+                  </div>
+                  <div>
+                    <p class="cat-name">{{ cat.name }}</p>
+                    <p class="cat-slug">{{ cat.slug }}</p>
+                  </div>
+                </div>
+              </td>
+              <td><span class="type-badge root-type">Root</span></td>
+              <td><span class="text-muted text-sm">{{ cat.subcategory_count || 0 }}</span></td>
+              <td>
+                <span class="status-badge" [class.active]="cat.is_active" [class.inactive]="!cat.is_active">
+                  {{ cat.is_active ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td>
+                <div class="actions">
+                  <button class="action-btn" (click)="openCreate(cat.id)" title="Add subcategory">
+                    <span class="material-icons-outlined">create_new_folder</span>
+                  </button>
+                  <button class="action-btn" (click)="openEdit(cat)" title="Edit">
+                    <span class="material-icons-outlined">edit</span>
+                  </button>
+                  <button class="action-btn danger" (click)="delete(cat)" title="Delete">
+                    <span class="material-icons-outlined">delete_outline</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Subcategory rows (when expanded) -->
+            @if (isExpanded(cat.id)) {
+              @if (subcategoriesLoading()[cat.id]) {
+                <tr class="loading-row">
+                  <td colspan="6">
+                    <div class="loading-inline">
+                      <div class="spinner-sm"></div>
+                      <span>Loading subcategories…</span>
+                    </div>
+                  </td>
+                </tr>
+              }
+              @if (!subcategoriesLoading()[cat.id]) {
+                @for (sub of subcategories()[cat.id] || []; track sub.id) {
+                  <tr class="cat-row sub-row">
+                    <td class="expand-cell"></td>
+                    <td>
+                      <div class="cat-cell sub-indent">
+                        <div class="sub-connector"></div>
+                        <div class="cat-icon small">
+                          @if (sub.image) { <img [src]="sub.image" [alt]="sub.name"> }
+                          @else { 📂 }
+                        </div>
+                        <div>
+                          <p class="cat-name">{{ sub.name }}</p>
+                          <p class="cat-slug">{{ sub.slug }}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td><span class="type-badge sub-type">Sub</span></td>
+                    <td><span class="text-muted text-sm">—</span></td>
+                    <td>
+                      <span class="status-badge" [class.active]="sub.is_active" [class.inactive]="!sub.is_active">
+                        {{ sub.is_active ? 'Active' : 'Inactive' }}
+                      </span>
+                    </td>
+                    <td>
+                      <div class="actions">
+                        <button class="action-btn" (click)="openEdit(sub)" title="Edit">
+                          <span class="material-icons-outlined">edit</span>
+                        </button>
+                        <button class="action-btn danger" (click)="delete(sub)" title="Delete">
+                          <span class="material-icons-outlined">delete_outline</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+                @if ((subcategories()[cat.id] || []).length === 0) {
+                  <tr class="cat-row sub-row">
+                    <td colspan="6">
+                      <div class="no-subs">
+                        No subcategories yet.
+                        <button class="link-btn" (click)="openCreate(cat.id)">Add one</button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              }
+            }
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</div>
+
+<!-- Modal -->
+@if (showModal()) {
+  <div class="modal-backdrop" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="material-icons-outlined modal-icon">folder</span>
+          <h2>{{ editTarget() ? 'Edit Category' : (form.parent ? 'New Subcategory' : 'New Category') }}</h2>
+        </div>
+        <button class="modal-close" (click)="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        @if (error()) { <div class="alert-error"><span class="material-icons-outlined">error_outline</span>{{ error() }}</div> }
+        <div class="form-group">
+          <label class="form-label">Name *</label>
+          <input class="form-input" [(ngModel)]="form.name" (input)="autoSlug()" placeholder="Category name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Slug</label>
+          <input class="form-input" [(ngModel)]="form.slug" placeholder="category-slug">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea class="form-input" [(ngModel)]="form.description" rows="3" placeholder="Optional description"></textarea>
+        </div>
+        @if (form.parent) {
+          <div class="parent-note">
+            <span class="material-icons-outlined">info</span>
+            This will be created as a subcategory.
+          </div>
+        }
+        <div class="form-check-row">
+          <input type="checkbox" id="is_active" [(ngModel)]="form.is_active">
+          <label for="is_active">Active</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeModal()">Cancel</button>
+        <button class="btn-primary" [disabled]="saving()" (click)="save()">
+          {{ saving() ? 'Saving…' : (editTarget() ? 'Update' : 'Create') }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

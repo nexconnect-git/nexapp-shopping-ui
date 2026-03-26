@@ -1,0 +1,105 @@
+/* ── Dynamic Table Component ────────────────── */
+:host { display: block; }
+
+.table-card {
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  margin-top: 1rem;
+}
+
+.t-header {
+  display: grid;
+  background: var(--surface-hover);
+  border-bottom: 2px solid var(--border-light);
+  padding: 1rem 1.25rem;
+  span {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+  }
+}
+
+.t-body {
+  .t-row {
+    display: grid;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border-light);
+    transition: all 0.2s ease;
+    align-items: center;
+    background: white;
+    
+    &:last-child { border-bottom: none; }
+    
+    &.clickable { cursor: pointer; }
+    &.clickable:hover { background: rgba(79,70,229,0.02); }
+  }
+}
+
+.t-cell {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Pagination ───────────────────────────── */
+.pagination {
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface-hover);
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+.page-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border-color);
+  background: white;
+  border-radius: var(--radius-md);
+  font-family: var(--font-family);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+  &:not(:disabled):hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+  
+  .material-icons-outlined { font-size: 18px; }
+}
+
+/* ── States ───────────────────────────────── */
+.loading-state {
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.empty-state {
+  padding: 4rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.5rem;
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  
+  .empty-icon { font-size: 48px; color: var(--text-muted); opacity: 0.3; margin-bottom: 0.5rem; }
+  p { font-weight: 600; color: var(--text-primary); font-size: 1.125rem; }
+}

@@ -1,0 +1,119 @@
+<div class="shops-page">
+
+  <!-- Page header -->
+  <div class="shops-header">
+    <div class="shops-header-text">
+      <h1 class="page-title">Browse Shops</h1>
+      <p class="page-subtitle">Discover local vendors near you</p>
+    </div>
+    <div class="shops-search">
+      <span class="material-icons-outlined search-icon">search</span>
+      <input class="form-input search-input" type="search" [(ngModel)]="searchQuery"
+        (input)="onSearch()" placeholder="Search shops by name...">
+    </div>
+  </div>
+
+  <!-- Filters bar -->
+  <div class="filters-bar">
+    <select class="form-input filter-select" [(ngModel)]="cityFilter" (change)="load()">
+      <option value="">All Cities</option>
+      @for (city of cities(); track city) {
+        <option [value]="city">{{ city }}</option>
+      }
+    </select>
+
+    <label class="open-toggle">
+      <input type="checkbox" [(ngModel)]="openOnly" (change)="load()">
+      <span class="toggle-track">
+        <span class="toggle-thumb"></span>
+      </span>
+      <span class="toggle-text">Open now</span>
+    </label>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-spinner"></div>
+  } @else if (vendors().length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon">&#127978;</div>
+      <h3>No shops found</h3>
+      <p>Try adjusting your filters</p>
+    </div>
+  } @else {
+    <div class="shops-grid">
+      @for (vendor of vendors(); track vendor.id) {
+        <a class="shop-card" [routerLink]="['/shop', vendor.id]">
+
+          <!-- Image with overlay -->
+          <div class="shop-image-wrap">
+            @if (vendor.banner) {
+              <img [src]="vendor.banner" [alt]="vendor.store_name" class="shop-banner-img">
+            } @else {
+              <div class="shop-banner-placeholder"></div>
+            }
+
+            <!-- Gradient overlay -->
+            <div class="shop-overlay">
+              <div class="shop-name">{{ vendor.store_name }}</div>
+              @if (vendor.average_rating > 0) {
+                <div class="shop-rating">
+                  <span class="stars-small">&#9733;</span>
+                  {{ vendor.average_rating | number:'1.1-1' }}
+                </div>
+              }
+            </div>
+
+            <!-- Status badge -->
+            <span class="shop-status-badge" [class.closed]="!vendor.is_open">
+              {{ vendor.is_open ? 'Open' : 'Closed' }}
+            </span>
+
+            <!-- Logo thumbnail -->
+            @if (vendor.logo) {
+              <img class="shop-logo-thumb" [src]="vendor.logo" [alt]="vendor.store_name">
+            }
+          </div>
+
+          <!-- Card body -->
+          <div class="shop-info">
+            <p class="shop-location">
+              <span class="material-icons-outlined">location_on</span>
+              {{ vendor.city }}{{ vendor.state ? ', ' + vendor.state : '' }}
+            </p>
+            @if (vendor.description) {
+              <p class="shop-desc">{{ vendor.description }}</p>
+            }
+            <div class="shop-tags">
+              @if (vendor.min_order_amount) {
+                <span class="shop-tag">Min. ${{ vendor.min_order_amount }}</span>
+              }
+              @if (vendor.total_ratings > 0) {
+                <span class="shop-tag shop-tag-rating">
+                  <span class="stars-small">&#9733;</span>
+                  {{ vendor.total_ratings }} reviews
+                </span>
+              }
+            </div>
+          </div>
+
+        </a>
+      }
+    </div>
+  }
+
+  <!-- Pagination -->
+  @if (totalPages() > 1) {
+    <div class="pagination">
+      <button class="page-btn" [disabled]="page() === 1" (click)="setPage(page() - 1)">
+        <span class="material-icons-outlined">chevron_left</span>
+        Prev
+      </button>
+      <span class="pagination-info">Page {{ page() }} of {{ totalPages() }}</span>
+      <button class="page-btn" [disabled]="page() === totalPages()" (click)="setPage(page() + 1)">
+        Next
+        <span class="material-icons-outlined">chevron_right</span>
+      </button>
+    </div>
+  }
+
+</div>

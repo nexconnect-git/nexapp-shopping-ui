@@ -1,0 +1,238 @@
+<div class="customer-profile-page">
+
+  <!-- Breadcrumb -->
+  <nav class="breadcrumb">
+    <a routerLink="/customers" class="breadcrumb-link">
+      <span class="material-icons-outlined">arrow_back</span>
+      Customers
+    </a>
+    @if (!loading() && customer()) {
+      <span class="breadcrumb-sep">/</span>
+      <span class="breadcrumb-current">{{ customer().first_name }} {{ customer().last_name || customer().username }}</span>
+    }
+  </nav>
+
+  @if (loading()) {
+    <div class="loading-state"><div class="spinner"></div><p>Loading customer…</p></div>
+  }
+
+  @if (!loading() && customer()) {
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">{{ customer().first_name }} {{ customer().last_name }}</h1>
+        <p class="page-subtitle">&#64;{{ customer().username }} &bull; Customer since {{ customer().date_joined | date: 'MMM y' }}</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-secondary" (click)="openEdit()">
+          <span class="material-icons-outlined">edit</span>
+          Edit
+        </button>
+        <button class="btn btn-danger-outline" (click)="deleteCustomer()">
+          <span class="material-icons-outlined">delete_outline</span>
+          Delete
+        </button>
+      </div>
+    </div>
+
+    <!-- Hero Card -->
+    <div class="profile-hero-card">
+      <div class="hero-banner"></div>
+      <div class="hero-body">
+        <div class="hero-avatar-wrap">
+          <div class="hero-avatar" [style.background]="customer().avatar ? 'transparent' : avatarColor(customer().username)">
+            @if (customer().avatar) {
+              <img [src]="customer().avatar" alt="avatar">
+            } @else {
+              {{ initials(customer()) }}
+            }
+          </div>
+        </div>
+
+        <div class="hero-info">
+          <div class="hero-info-top">
+            <span class="badge" [class.badge-approved]="customer().is_verified" [class.badge-pending]="!customer().is_verified">
+              {{ customer().is_verified ? 'Verified' : 'Unverified' }}
+            </span>
+            <span class="badge" [class.badge-approved]="customer().is_active !== false" [class.badge-rejected]="customer().is_active === false">
+              {{ customer().is_active !== false ? 'Active' : 'Suspended' }}
+            </span>
+            <span class="role-badge">Customer</span>
+          </div>
+          <div class="hero-meta-row">
+            @if (customer().email) {
+              <span class="hero-meta-item">
+                <span class="material-icons-outlined">mail</span>
+                {{ customer().email }}
+              </span>
+            }
+            @if (customer().phone) {
+              <span class="hero-meta-item">
+                <span class="material-icons-outlined">phone</span>
+                {{ customer().phone }}
+              </span>
+            }
+            <span class="hero-meta-item">
+              <span class="material-icons-outlined">calendar_today</span>
+              Joined {{ customer().date_joined | date: 'MMM d, y' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Strip -->
+    <div class="tab-strip">
+      <button class="tab-btn" [class.active]="activeTab() === 'overview'" (click)="setTab('overview')">
+        <span class="material-icons-outlined">person</span>
+        Overview
+      </button>
+      <button class="tab-btn" [class.active]="activeTab() === 'orders'" (click)="setTab('orders')">
+        <span class="material-icons-outlined">receipt_long</span>
+        Orders
+      </button>
+    </div>
+
+    <!-- Tab: Overview -->
+    @if (activeTab() === 'overview') {
+      <div class="tab-content fade-in">
+        <div class="info-grid">
+          <div class="info-card">
+            <h3 class="info-card-title">
+              <span class="material-icons-outlined">person</span>
+              Account Details
+            </h3>
+            <div class="info-rows">
+              <div class="info-row">
+                <span class="info-label">Full Name</span>
+                <span class="info-value">{{ customer().first_name }} {{ customer().last_name }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Username</span>
+                <span class="info-value">{{ customer().username }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Email</span>
+                <span class="info-value">{{ customer().email || '—' }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Phone</span>
+                <span class="info-value">{{ customer().phone || '—' }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Email Verified</span>
+                <span class="info-value" [class.text-success]="customer().is_verified" [class.text-danger]="!customer().is_verified">
+                  {{ customer().is_verified ? 'Yes' : 'No' }}
+                </span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Account Status</span>
+                <span class="info-value" [class.text-success]="customer().is_active !== false" [class.text-danger]="customer().is_active === false">
+                  {{ customer().is_active !== false ? 'Active' : 'Suspended' }}
+                </span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Joined</span>
+                <span class="info-value">{{ customer().date_joined | date: 'MMM d, y, h:mm a' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Tab: Orders -->
+    @if (activeTab() === 'orders') {
+      <div class="tab-content fade-in">
+        <div class="tab-filters">
+          <select class="filter-select" [(ngModel)]="ordersStatusFilter" (change)="changeOrdersFilter()">
+            <option value="">All Status</option>
+            <option value="placed">Placed</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="preparing">Preparing</option>
+            <option value="ready">Ready</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+        <app-dynamic-table
+          [loading]="ordersLoading()"
+          [data]="orders()"
+          [columns]="orderColumns"
+          emptyMessage="No orders found"
+          emptyIcon="receipt_long"
+          [totalItems]="ordersTotal()"
+          [itemsPerPage]="20"
+          [page]="ordersPage()"
+          (pageChange)="changeOrdersPage($event)"
+        >
+          <ng-template tableCell="order_number" let-o>
+            <span class="font-mono text-sm">{{ o.order_number }}</span>
+          </ng-template>
+          <ng-template tableCell="vendor" let-o>
+            <span class="text-sm">{{ o.vendor_name || '—' }}</span>
+          </ng-template>
+          <ng-template tableCell="total" let-o>
+            <span class="font-medium">₦{{ o.total | number }}</span>
+          </ng-template>
+          <ng-template tableCell="status" let-o>
+            <span class="badge" [class]="orderStatusBadge(o.status)">{{ o.status }}</span>
+          </ng-template>
+          <ng-template tableCell="placed_at" let-o>
+            <span class="text-muted text-sm">{{ o.placed_at | date: 'MMM d, y' }}</span>
+          </ng-template>
+        </app-dynamic-table>
+      </div>
+    }
+
+    <!-- Edit Modal -->
+    @if (showEditModal()) {
+      <div class="modal-backdrop" (click)="closeEdit()">
+        <div class="modal" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h2>Edit Customer</h2>
+            <button class="modal-close" (click)="closeEdit()">&times;</button>
+          </div>
+          <div class="modal-body">
+            @if (editError()) { <div class="alert-error">{{ editError() }}</div> }
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">First Name</label>
+                <input class="form-input" [(ngModel)]="editForm.first_name">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Last Name</label>
+                <input class="form-input" [(ngModel)]="editForm.last_name">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <input class="form-input" type="email" [(ngModel)]="editForm.email">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Phone</label>
+              <input class="form-input" [(ngModel)]="editForm.phone">
+            </div>
+            <div class="form-check-group">
+              <label class="form-check">
+                <input type="checkbox" [(ngModel)]="editForm.is_verified">
+                Email Verified
+              </label>
+              <label class="form-check">
+                <input type="checkbox" [(ngModel)]="editForm.is_active">
+                Account Active
+              </label>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" (click)="closeEdit()">Cancel</button>
+            <button class="btn btn-primary" [disabled]="editSaving()" (click)="saveEdit()">
+              {{ editSaving() ? 'Saving...' : 'Save Changes' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  }
+</div>

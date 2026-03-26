@@ -1,0 +1,557 @@
+<div class="onboarding-page fade-in">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <a routerLink="/vendors" class="back-link">
+        <span class="material-icons-outlined">arrow_back</span>
+        Back to Vendors
+      </a>
+      <div>
+        <h1>Onboard New Vendor</h1>
+        <p class="page-subtitle">Complete all sections to register a new vendor on the platform</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step Progress Bar -->
+  <div class="stepper-card">
+    <div class="stepper">
+      @for (step of steps; track step.id) {
+        <button class="step-item"
+          [class.active]="currentStep() === step.id"
+          [class.done]="currentStep() > step.id"
+          (click)="goStep(step.id)">
+          <div class="step-circle">
+            @if (currentStep() > step.id) {
+              <span class="material-icons-outlined">check</span>
+            } @else {
+              <span class="material-icons-outlined">{{ step.icon }}</span>
+            }
+          </div>
+          <span class="step-label">{{ step.label }}</span>
+        </button>
+        @if (!$last) {
+          <div class="step-connector" [class.done]="currentStep() > step.id"></div>
+        }
+      }
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" [style.width.%]="progressPercent"></div>
+    </div>
+  </div>
+
+  <!-- Error Banner -->
+  @if (error()) {
+    <div class="alert-error">
+      <span class="material-icons-outlined">error_outline</span>
+      {{ error() }}
+    </div>
+  }
+
+  <!-- ── Step 1: Account Credentials ──────────────────────────────────────── -->
+  @if (currentStep() === 1) {
+    <div class="step-card fade-in">
+      <div class="step-card-header">
+        <span class="material-icons-outlined step-icon">manage_accounts</span>
+        <div>
+          <h2>Account Credentials</h2>
+          <p>Create login credentials for the vendor.</p>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group" [class.has-error]="fieldErr('username')">
+          <label class="form-label required">Username</label>
+          <input class="form-input" type="text" [(ngModel)]="s1.username" name="username"
+            placeholder="vendor_username" autocomplete="off">
+          @if (fieldErr('username')) { <span class="field-error">{{ fieldErr('username') }}</span> }
+        </div>
+        <div class="form-group"></div>
+
+        <div class="form-group" [class.has-error]="fieldErr('password')">
+          <label class="form-label required">Password</label>
+          <input class="form-input" type="password" [(ngModel)]="s1.password" name="password"
+            placeholder="Min 8 characters" autocomplete="new-password">
+          @if (fieldErr('password')) { <span class="field-error">{{ fieldErr('password') }}</span> }
+        </div>
+        <div class="form-group">
+          <label class="form-label required">Confirm Password</label>
+          <input class="form-input" type="password" [(ngModel)]="s1.confirm_password" name="confirm_password"
+            placeholder="Repeat password" autocomplete="new-password">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">First Name</label>
+          <input class="form-input" type="text" [(ngModel)]="s1.first_name" name="first_name" placeholder="John">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Last Name</label>
+          <input class="form-input" type="text" [(ngModel)]="s1.last_name" name="last_name" placeholder="Doe">
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ── Step 2: Basic Store Info ──────────────────────────────────────────── -->
+  @if (currentStep() === 2) {
+    <div class="step-card fade-in">
+      <div class="step-card-header">
+        <span class="material-icons-outlined step-icon">storefront</span>
+        <div>
+          <h2>Basic Store Information</h2>
+          <p>Core store details visible to customers.</p>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group" [class.has-error]="fieldErr('store_name')">
+          <label class="form-label required">Store / Business Name</label>
+          <input class="form-input" type="text" [(ngModel)]="s2.store_name" name="store_name"
+            placeholder="My Awesome Store">
+          @if (fieldErr('store_name')) { <span class="field-error">{{ fieldErr('store_name') }}</span> }
+        </div>
+        <div class="form-group">
+          <label class="form-label required">Vendor Type</label>
+          <select class="form-input" [(ngModel)]="s2.vendor_type" name="vendor_type">
+            <option value="individual">Individual</option>
+            <option value="company">Company</option>
+            <option value="partnership">Partnership</option>
+          </select>
+        </div>
+
+        <div class="form-group span-2">
+          <label class="form-label">Description</label>
+          <textarea class="form-input form-textarea" [(ngModel)]="s2.description" name="description" rows="3"
+            placeholder="Describe what this vendor sells..."></textarea>
+        </div>
+
+        <div class="form-group" [class.has-error]="fieldErr('phone')">
+          <label class="form-label required">Business Phone</label>
+          <input class="form-input" type="tel" [(ngModel)]="s2.phone" name="phone"
+            placeholder="+2348000000000">
+          @if (fieldErr('phone')) { <span class="field-error">{{ fieldErr('phone') }}</span> }
+        </div>
+        <div class="form-group" [class.has-error]="fieldErr('email')">
+          <label class="form-label required">Business Email</label>
+          <input class="form-input" type="email" [(ngModel)]="s2.email" name="email"
+            placeholder="store@example.com">
+          @if (fieldErr('email')) { <span class="field-error">{{ fieldErr('email') }}</span> }
+        </div>
+
+        <div class="section-divider span-2">Business Address</div>
+
+        <div class="form-group span-2">
+          <label class="form-label">Street Address</label>
+          <input class="form-input" type="text" [(ngModel)]="s2.address" name="address"
+            placeholder="123 Market Street">
+        </div>
+        <div class="form-group">
+          <label class="form-label">City</label>
+          <input class="form-input" type="text" [(ngModel)]="s2.city" name="city" placeholder="Lagos">
+        </div>
+        <div class="form-group">
+          <label class="form-label">State</label>
+          <input class="form-input" type="text" [(ngModel)]="s2.state" name="state" placeholder="Lagos">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Postal Code</label>
+          <input class="form-input" type="text" [(ngModel)]="s2.postal_code" name="postal_code" placeholder="10001">
+        </div>
+        <div class="form-group"></div>
+        <div class="form-group">
+          <label class="form-label">Latitude</label>
+          <input class="form-input" type="number" [(ngModel)]="s2.latitude" name="latitude" step="0.000001" placeholder="6.451000">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Longitude</label>
+          <input class="form-input" type="number" [(ngModel)]="s2.longitude" name="longitude" step="0.000001" placeholder="3.395000">
+        </div>
+
+        <div class="form-group span-2">
+          <label class="toggle-row">
+            <span class="form-label" style="margin:0">GST Registered</span>
+            <div class="toggle-switch">
+              <input type="checkbox" id="gst_reg" [(ngModel)]="s2.gst_registered" name="gst_registered">
+              <label for="gst_reg"></label>
+            </div>
+          </label>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ── Step 3: Legal & Compliance ────────────────────────────────────────── -->
+  @if (currentStep() === 3) {
+    <div class="step-card fade-in">
+      <div class="step-card-header">
+        <span class="material-icons-outlined step-icon">gavel</span>
+        <div>
+          <h2>Legal & Compliance</h2>
+          <p>Regulatory identifiers and compliance information.</p>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group span-2">
+          <label class="form-label">Legal Business Name</label>
+          <input class="form-input" type="text" [(ngModel)]="s3.legal_name" name="legal_name"
+            placeholder="Registered legal name (leave blank to use store name)">
+        </div>
+
+        <div class="section-divider span-2">Contact Person</div>
+        <div class="form-group">
+          <label class="form-label">Contact Person Name</label>
+          <input class="form-input" type="text" [(ngModel)]="s3.contact_person_name" name="cp_name"
+            placeholder="Full name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contact Person Phone</label>
+          <input class="form-input" type="tel" [(ngModel)]="s3.contact_person_phone" name="cp_phone"
+            placeholder="+2348000000000">
+        </div>
+        <div class="form-group span-2">
+          <label class="form-label">Contact Person Email</label>
+          <input class="form-input" type="email" [(ngModel)]="s3.contact_person_email" name="cp_email"
+            placeholder="contact@example.com">
+        </div>
+
+        <div class="section-divider span-2">Compliance Numbers</div>
+        <div class="form-group" [class.has-error]="fieldErr('pan_number')">
+          <label class="form-label">PAN Number</label>
+          <input class="form-input" type="text" [(ngModel)]="s3.pan_number" name="pan_number"
+            placeholder="AAAAA9999A" maxlength="10" style="text-transform:uppercase">
+          <span class="field-hint">Format: 5 letters + 4 digits + 1 letter</span>
+          @if (fieldErr('pan_number')) { <span class="field-error">{{ fieldErr('pan_number') }}</span> }
+        </div>
+        <div class="form-group" [class.has-error]="fieldErr('gstin')">
+          <label class="form-label">GSTIN {{ s2.gst_registered ? '(Required)' : '(Optional)' }}</label>
+          <input class="form-input" type="text" [(ngModel)]="s3.gstin" name="gstin"
+            placeholder="22AAAAA0000A1Z5" maxlength="15" style="text-transform:uppercase">
+          <span class="field-hint">15-character GST identification number</span>
+          @if (fieldErr('gstin')) { <span class="field-error">{{ fieldErr('gstin') }}</span> }
+        </div>
+        <div class="form-group">
+          <label class="form-label">CIN / Udyam Number</label>
+          <input class="form-input" type="text" [(ngModel)]="s3.cin_udyam" name="cin_udyam"
+            placeholder="CIN or Udyam registration">
+        </div>
+        <div class="form-group">
+          <label class="form-label">FSSAI License <span class="optional-tag">Food vendors</span></label>
+          <input class="form-input" type="text" [(ngModel)]="s3.fssai_license" name="fssai_license"
+            placeholder="14-digit FSSAI number">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Trademark Number <span class="optional-tag">Optional</span></label>
+          <input class="form-input" type="text" [(ngModel)]="s3.trademark_number" name="trademark"
+            placeholder="TM registration number">
+        </div>
+
+        <div class="section-divider span-2">Additional Business Addresses</div>
+        @for (addr of s3.business_addresses; track $index) {
+          <div class="address-block span-2">
+            <div class="address-block-header">
+              <span>Address {{ $index + 1 }}</span>
+              <button class="remove-btn" (click)="removeBusinessAddress($index)" type="button">
+                <span class="material-icons-outlined">close</span>
+              </button>
+            </div>
+            <div class="form-grid inner-grid">
+              <div class="form-group span-2">
+                <input class="form-input" type="text" [(ngModel)]="addr.line1" [name]="'addr_line1_'+$index"
+                  placeholder="Street address">
+              </div>
+              <div class="form-group">
+                <input class="form-input" type="text" [(ngModel)]="addr.city" [name]="'addr_city_'+$index"
+                  placeholder="City">
+              </div>
+              <div class="form-group">
+                <input class="form-input" type="text" [(ngModel)]="addr.state" [name]="'addr_state_'+$index"
+                  placeholder="State">
+              </div>
+              <div class="form-group">
+                <input class="form-input" type="text" [(ngModel)]="addr.pincode" [name]="'addr_pin_'+$index"
+                  placeholder="Pincode">
+              </div>
+            </div>
+          </div>
+        }
+        <div class="span-2">
+          <button class="btn-add-row" (click)="addBusinessAddress()" type="button">
+            <span class="material-icons-outlined">add</span> Add Address
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ── Step 4: Bank & Payment ─────────────────────────────────────────────── -->
+  @if (currentStep() === 4) {
+    <div class="step-card fade-in">
+      <div class="step-card-header">
+        <span class="material-icons-outlined step-icon">account_balance</span>
+        <div>
+          <h2>Bank & Payment Details</h2>
+          <p>Bank account information — account numbers are encrypted at rest.</p>
+        </div>
+      </div>
+      <div class="info-banner">
+        <span class="material-icons-outlined">lock</span>
+        Account numbers are encrypted using AES-256 before storage. Only masked numbers are displayed.
+      </div>
+      <div class="form-grid">
+        <div class="form-group span-2">
+          <label class="form-label">Account Holder Name</label>
+          <input class="form-input" type="text" [(ngModel)]="s4.account_holder_name" name="holder_name"
+            placeholder="Name as on bank account">
+        </div>
+        <div class="form-group" [class.has-error]="fieldErr('account_number')">
+          <label class="form-label">Account Number</label>
+          <input class="form-input" type="password" [(ngModel)]="s4.account_number" name="account_number"
+            placeholder="Enter account number" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirm Account Number</label>
+          <input class="form-input" type="password" [(ngModel)]="s4.confirm_account_number" name="confirm_acct"
+            placeholder="Re-enter account number" autocomplete="off">
+        </div>
+        <div class="form-group" [class.has-error]="fieldErr('ifsc_code')">
+          <label class="form-label">IFSC Code</label>
+          <input class="form-input" type="text" [(ngModel)]="s4.ifsc_code" name="ifsc"
+            placeholder="SBIN0001234" maxlength="11" style="text-transform:uppercase">
+          <span class="field-hint">Format: 4 letters + 0 + 6 alphanumeric</span>
+          @if (fieldErr('ifsc_code')) { <span class="field-error">{{ fieldErr('ifsc_code') }}</span> }
+        </div>
+        <div class="form-group">
+          <label class="form-label">Account Type</label>
+          <select class="form-input" [(ngModel)]="s4.account_type" name="account_type">
+            <option value="savings">Savings</option>
+            <option value="current">Current</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Bank Name</label>
+          <input class="form-input" type="text" [(ngModel)]="s4.bank_name" name="bank_name"
+            placeholder="State Bank of India">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Branch Name</label>
+          <input class="form-input" type="text" [(ngModel)]="s4.branch_name" name="branch_name"
+            placeholder="Main Branch">
+        </div>
+        <div class="form-group">
+          <label class="form-label">UPI ID <span class="optional-tag">Optional</span></label>
+          <input class="form-input" type="text" [(ngModel)]="s4.upi_id" name="upi_id"
+            placeholder="vendor@upi">
+        </div>
+
+        <div class="section-divider span-2">Settlement & Commission</div>
+        <div class="form-group">
+          <label class="form-label">Settlement Cycle</label>
+          <select class="form-input" [(ngModel)]="s4.settlement_cycle" name="settlement_cycle">
+            <option value="T+1">Next Day (T+1)</option>
+            <option value="T+7">Weekly (T+7)</option>
+            <option value="T+15">Fortnightly (T+15)</option>
+            <option value="T+30">Monthly (T+30)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Platform Commission (%)</label>
+          <input class="form-input" type="number" [(ngModel)]="s4.commission_percentage" name="commission"
+            min="0" max="50" step="0.5" placeholder="0">
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ── Step 5: Logistics & Fulfillment ────────────────────────────────────── -->
+  @if (currentStep() === 5) {
+    <div class="step-card fade-in">
+      <div class="step-card-header">
+        <span class="material-icons-outlined step-icon">local_shipping</span>
+        <div>
+          <h2>Logistics & Fulfillment</h2>
+          <p>How orders are fulfilled and where deliveries are available.</p>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Fulfillment Type</label>
+          <select class="form-input" [(ngModel)]="s5.fulfillment_type" name="fulfillment_type">
+            <option value="vendor">Vendor Fulfilled</option>
+            <option value="platform">Platform Fulfilled</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Dispatch SLA (hours)</label>
+          <input class="form-input" type="number" [(ngModel)]="s5.dispatch_sla_hours" name="sla"
+            min="1" max="168" placeholder="24">
+        </div>
+        <div class="form-group span-2">
+          <label class="form-label">Return Policy</label>
+          <textarea class="form-input form-textarea" [(ngModel)]="s5.return_policy" name="return_policy" rows="3"
+            placeholder="Describe the return and refund policy..."></textarea>
+        </div>
+        <div class="form-group span-2">
+          <label class="form-label">Packaging Preferences</label>
+          <textarea class="form-input form-textarea" [(ngModel)]="s5.packaging_preferences" name="packaging" rows="2"
+            placeholder="Any specific packaging requirements..."></textarea>
+        </div>
+
+        <div class="section-divider span-2">Serviceable Areas (Pincode-Based)</div>
+
+        <!-- Pincode input row -->
+        <div class="pincode-input-row span-2">
+          <input class="form-input" type="text" [(ngModel)]="s5.new_pincode" name="new_pincode"
+            placeholder="Pincode" maxlength="10" style="flex:1">
+          <input class="form-input" type="text" [(ngModel)]="s5.new_pincode_city" name="new_pincode_city"
+            placeholder="City" style="flex:2">
+          <input class="form-input" type="text" [(ngModel)]="s5.new_pincode_state" name="new_pincode_state"
+            placeholder="State" style="flex:1.5">
+          <button class="btn-add" (click)="addPincode()" type="button">
+            <span class="material-icons-outlined">add</span> Add
+          </button>
+        </div>
+
+        @if (s5.serviceable_pincodes.length > 0) {
+          <div class="chips-container span-2">
+            @for (area of s5.serviceable_pincodes; track area.pincode) {
+              <div class="chip">
+                <span class="material-icons-outlined chip-icon">place</span>
+                <span>{{ area.pincode }}{{ area.city ? ' — ' + area.city : '' }}</span>
+                <button class="chip-remove" (click)="removePincode($index)" type="button">
+                  <span class="material-icons-outlined">close</span>
+                </button>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="empty-hint span-2">No serviceable areas added yet. Add pincodes above.</p>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- ── Step 6: Operational Settings ──────────────────────────────────────── -->
+  @if (currentStep() === 6) {
+    <div class="step-card fade-in">
+      <div class="step-card-header">
+        <span class="material-icons-outlined step-icon">settings</span>
+        <div>
+          <h2>Operational Settings</h2>
+          <p>Store timings, order rules, tier and holiday calendar.</p>
+        </div>
+      </div>
+      <div class="form-grid">
+
+        <div class="section-divider span-2">Store Hours</div>
+        <div class="form-group">
+          <label class="form-label">Opening Time</label>
+          <input class="form-input" type="time" [(ngModel)]="s6.opening_time" name="opening_time">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Closing Time</label>
+          <input class="form-input" type="time" [(ngModel)]="s6.closing_time" name="closing_time">
+        </div>
+
+        <div class="section-divider span-2">Delivery & Orders</div>
+        <div class="form-group">
+          <label class="form-label">Min Order Amount (₦)</label>
+          <input class="form-input" type="number" [(ngModel)]="s6.min_order_amount" name="min_order" min="0" step="50">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Delivery Radius (km)</label>
+          <input class="form-input" type="number" [(ngModel)]="s6.delivery_radius_km" name="radius" min="0" step="0.5">
+        </div>
+        <div class="form-group span-2">
+          <label class="form-label">Cancellation Rules</label>
+          <textarea class="form-input form-textarea" [(ngModel)]="s6.cancellation_rules" name="cancel_rules" rows="2"
+            placeholder="Under what conditions can orders be cancelled?"></textarea>
+        </div>
+
+        <div class="section-divider span-2">Tier & Flags</div>
+        <div class="form-group">
+          <label class="form-label">Vendor Tier</label>
+          <select class="form-input" [(ngModel)]="s6.vendor_tier" name="vendor_tier">
+            <option value="basic">Basic</option>
+            <option value="silver">Silver</option>
+            <option value="gold">Gold</option>
+            <option value="platinum">Platinum</option>
+          </select>
+        </div>
+        <div class="form-group checkboxes-col">
+          <label class="toggle-row">
+            <span>Auto Accept Orders</span>
+            <div class="toggle-switch">
+              <input type="checkbox" id="auto_accept" [(ngModel)]="s6.auto_order_acceptance" name="auto_accept">
+              <label for="auto_accept"></label>
+            </div>
+          </label>
+          <label class="toggle-row">
+            <span>Store Open</span>
+            <div class="toggle-switch">
+              <input type="checkbox" id="is_open" [(ngModel)]="s6.is_open" name="is_open">
+              <label for="is_open"></label>
+            </div>
+          </label>
+          <label class="toggle-row">
+            <span>Featured Vendor</span>
+            <div class="toggle-switch">
+              <input type="checkbox" id="is_featured" [(ngModel)]="s6.is_featured" name="is_featured">
+              <label for="is_featured"></label>
+            </div>
+          </label>
+        </div>
+
+        <div class="section-divider span-2">Holiday Calendar</div>
+        <div class="pincode-input-row span-2">
+          <input class="form-input" type="date" [(ngModel)]="s6.new_holiday_date" name="new_holiday_date"
+            style="flex:1">
+          <input class="form-input" type="text" [(ngModel)]="s6.new_holiday_reason" name="new_holiday_reason"
+            placeholder="Reason (e.g. Public Holiday)" style="flex:3">
+          <button class="btn-add" (click)="addHoliday()" type="button">
+            <span class="material-icons-outlined">add</span> Add
+          </button>
+        </div>
+
+        @if (s6.holidays.length > 0) {
+          <div class="holidays-list span-2">
+            @for (h of s6.holidays; track h.date) {
+              <div class="holiday-row">
+                <span class="material-icons-outlined">event</span>
+                <span class="holiday-date">{{ h.date }}</span>
+                <span class="holiday-reason">{{ h.reason || '—' }}</span>
+                <button class="remove-btn-sm" (click)="removeHoliday($index)" type="button">
+                  <span class="material-icons-outlined">close</span>
+                </button>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="empty-hint span-2">No holidays added. Vendor will be open every day by default.</p>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Navigation Buttons -->
+  <div class="nav-buttons">
+    <button class="btn-back" [disabled]="currentStep() === 1" (click)="back()" type="button">
+      <span class="material-icons-outlined">chevron_left</span> Back
+    </button>
+    <div class="nav-right">
+      <span class="step-counter">Step {{ currentStep() }} of {{ steps.length }}</span>
+      @if (currentStep() < steps.length) {
+        <button class="btn-next" (click)="next()" type="button">
+          Next <span class="material-icons-outlined">chevron_right</span>
+        </button>
+      } @else {
+        <button class="btn-submit" [disabled]="saving()" (click)="submit()" type="button">
+          @if (saving()) {
+            <span class="spinner"></span> Creating Vendor...
+          } @else {
+            <span class="material-icons-outlined">check_circle</span> Create Vendor
+          }
+        </button>
+      }
+    </div>
+  </div>
+
+</div>

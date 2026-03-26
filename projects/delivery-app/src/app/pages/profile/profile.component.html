@@ -1,0 +1,127 @@
+<div class="page">
+  <div class="page-head">
+    <h1>My Profile</h1>
+    <p>Manage your delivery partner account</p>
+  </div>
+
+  @if (loading()) {
+    <div class="spinner-wrap">
+      <div class="spinner"></div>
+    </div>
+  } @else {
+    <!-- Profile Card -->
+    <div class="profile-hero">
+      <div class="avatar-large">{{ initials() }}</div>
+      <div class="hero-info">
+        <h2>{{ profile.first_name }} {{ profile.last_name }}</h2>
+        <p>
+          <span class="material-icons-outlined" style="font-size:14px">delivery_dining</span>
+          Delivery Partner
+        </p>
+        <span class="verified-badge" [class.unverified]="!profile.is_verified">
+          <span class="material-icons-outlined">{{ profile.is_verified ? 'verified' : 'pending' }}</span>
+          {{ profile.is_verified ? 'Verified' : 'Pending Verification' }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Alerts -->
+    @if (successMsg()) {
+      <div class="alert alert-success">
+        <span class="material-icons-outlined">check_circle</span>
+        {{ successMsg() }}
+      </div>
+    }
+    @if (errorMsg()) {
+      <div class="alert alert-error">
+        <span class="material-icons-outlined">error</span>
+        {{ errorMsg() }}
+      </div>
+    }
+
+    <!-- Form Card -->
+    <div class="form-card">
+      <div class="form-section-title">
+        <span class="material-icons-outlined">person</span>
+        Account Details
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">First Name</label>
+          <input class="form-control" type="text" [(ngModel)]="profile.first_name" name="first_name" placeholder="First name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Last Name</label>
+          <input class="form-control" type="text" [(ngModel)]="profile.last_name" name="last_name" placeholder="Last name">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input class="form-control" type="email" [(ngModel)]="profile.email" name="email" placeholder="your@email.com">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Phone Number</label>
+        <input class="form-control" type="tel" [(ngModel)]="profile.phone" name="phone" placeholder="+1 (555) 000-0000">
+      </div>
+
+      <button class="save-btn" [disabled]="saving()" (click)="save()">
+        @if (saving()) {
+          <span class="spinner spinner-sm"></span>
+          Saving...
+        } @else {
+          <span class="material-icons-outlined">save</span>
+          Save Changes
+        }
+      </button>
+    </div>
+
+    <!-- Base Location Card -->
+    <div class="form-card location-card">
+      <div class="form-section-title">
+        <span class="material-icons-outlined">location_on</span>
+        Base Location
+      </div>
+      <p class="location-desc">Set your home/base location so dispatchers know your area.</p>
+
+      @if (locationSaved()) {
+        <div class="alert alert-success">
+          <span class="material-icons-outlined">check_circle</span>
+          Base location updated!
+        </div>
+      }
+
+      @if (pickedLat()) {
+        <div class="location-preview">
+          <span class="material-icons-outlined">my_location</span>
+          <span>{{ pickedLat() | number:'1.4-4' }}, {{ pickedLng() | number:'1.4-4' }}</span>
+        </div>
+      }
+
+      <button class="map-open-btn" type="button" (click)="showMapPicker.set(!showMapPicker())">
+        <span class="material-icons-outlined">map</span>
+        {{ showMapPicker() ? 'Close Map' : (pickedLat() ? 'Update Location on Map' : 'Pick Location on Map') }}
+      </button>
+
+      @if (showMapPicker()) {
+        <div class="map-wrap">
+          <app-map-picker
+            [height]="'280px'"
+            (locationPicked)="onLocationPicked($event)">
+          </app-map-picker>
+          @if (pickedLat()) {
+            <button class="save-loc-btn" type="button" [disabled]="savingLocation()" (click)="saveLocation()">
+              @if (savingLocation()) {
+                <span class="spinner spinner-sm"></span> Saving...
+              } @else {
+                <span class="material-icons-outlined">save</span> Save Location
+              }
+            </button>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

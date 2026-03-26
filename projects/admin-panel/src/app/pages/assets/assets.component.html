@@ -1,0 +1,165 @@
+<div class="assets-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Assets</h1>
+      <p class="page-subtitle">{{ total() }} asset{{ total() !== 1 ? 's' : '' }} tracked</p>
+    </div>
+    <div class="header-actions">
+      <div class="filters">
+        <select class="filter-input" [(ngModel)]="typeFilter" (change)="load()">
+          <option value="">All Types</option>
+          @for (t of assetTypes; track t.value) {
+            <option [value]="t.value">{{ t.label }}</option>
+          }
+        </select>
+        <select class="filter-input" [(ngModel)]="statusFilter" (change)="load()">
+          <option value="">All Status</option>
+          @for (s of assetStatuses; track s.value) {
+            <option [value]="s.value">{{ s.label }}</option>
+          }
+        </select>
+      </div>
+      <button class="btn-create" (click)="openCreate()">
+        <span class="material-icons-outlined">add</span>
+        Add Asset
+      </button>
+    </div>
+  </div>
+
+  <app-dynamic-table
+    [loading]="loading()"
+    [data]="assets()"
+    [columns]="tableColumns"
+    emptyMessage="No assets found"
+    emptySubMessage="Add your first asset to get started."
+    emptyIcon="handyman"
+    [totalItems]="total()"
+    [itemsPerPage]="itemsPerPage"
+    [page]="page()"
+    (pageChange)="changePage($event)"
+  >
+    <ng-template tableCell="name" let-a>
+      <div class="asset-name-cell">
+        <span class="material-icons-outlined asset-icon">handyman</span>
+        <span class="font-medium">{{ a.name }}</span>
+      </div>
+    </ng-template>
+
+    <ng-template tableCell="type" let-a>
+      <span class="text-sm text-muted">{{ typeLabel(a.asset_type) }}</span>
+    </ng-template>
+
+    <ng-template tableCell="serial" let-a>
+      <span class="font-mono text-sm text-muted">{{ a.serial_number || '—' }}</span>
+    </ng-template>
+
+    <ng-template tableCell="assigned" let-a>
+      <span class="text-sm">{{ a.assigned_to_name || '—' }}</span>
+    </ng-template>
+
+    <ng-template tableCell="status" let-a>
+      <span class="badge" [class]="statusClass(a.status)">{{ statusLabel(a.status) }}</span>
+    </ng-template>
+
+    <ng-template tableCell="actions" let-a>
+      <div class="actions">
+        <button class="action-btn" (click)="openEdit(a)" title="Edit">
+          <span class="material-icons-outlined">edit</span>
+        </button>
+        <button class="action-btn danger" (click)="deleteAsset(a)" title="Delete">
+          <span class="material-icons-outlined">delete_outline</span>
+        </button>
+      </div>
+    </ng-template>
+  </app-dynamic-table>
+
+  <!-- Create / Edit Modal -->
+  @if (showModal()) {
+  <div class="modal-backdrop" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="material-icons-outlined modal-icon">handyman</span>
+          <h2>{{ isCreating() ? 'Add Asset' : 'Edit Asset' }}</h2>
+        </div>
+        <button class="close-btn" (click)="closeModal()">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        @if (modalError()) {
+          <div class="modal-error">
+            <span class="material-icons-outlined">error_outline</span>
+            {{ modalError() }}
+          </div>
+        }
+
+        <div class="form-row">
+          <div class="form-group full">
+            <label class="input-label required">Asset Name</label>
+            <input class="input-field" type="text" [(ngModel)]="editModel().name" placeholder="e.g. Yamaha Motorbike 001">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="input-label required">Type</label>
+            <select class="input-field" [(ngModel)]="editModel().asset_type">
+              @for (t of assetTypes; track t.value) {
+                <option [value]="t.value">{{ t.label }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="input-label">Serial Number</label>
+            <input class="input-field" type="text" [(ngModel)]="editModel().serial_number" placeholder="Optional">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="input-label">Status</label>
+            <select class="input-field" [(ngModel)]="editModel().status">
+              @for (s of assetStatuses; track s.value) {
+                <option [value]="s.value">{{ s.label }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="input-label">Purchase Date</label>
+            <input class="input-field" type="date" [(ngModel)]="editModel().purchase_date">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group full">
+            <label class="input-label">Assigned To</label>
+            <select class="input-field" [(ngModel)]="editModel().assigned_to">
+              <option [ngValue]="null">Unassigned</option>
+              @for (p of deliveryPartners(); track p.id) {
+                <option [value]="p.id">{{ p.user?.first_name || '' }} {{ p.user?.last_name || '' }} ({{ p.user?.username }})</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="input-label">Description</label>
+          <textarea class="input-field input-textarea" [(ngModel)]="editModel().description" rows="2" placeholder="Optional notes about this asset"></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeModal()">Cancel</button>
+        <button class="btn btn-primary" [disabled]="saving()" (click)="saveAsset()">
+          @if (saving()) {
+            <span class="btn-spinner"></span>
+            Saving...
+          } @else {
+            {{ isCreating() ? 'Add Asset' : 'Save Changes' }}
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+  }
+</div>

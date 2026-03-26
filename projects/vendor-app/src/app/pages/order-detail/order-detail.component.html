@@ -1,0 +1,233 @@
+<div class="order-detail-page fade-in">
+
+  <div class="page-header" style="margin-bottom:1.75rem;">
+    <a routerLink="/orders" class="btn-outline">
+      <span class="material-icons-outlined">arrow_back</span>
+      Back to Orders
+    </a>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading order details...</p>
+    </div>
+  } @else if (!order()) {
+    <div class="card">
+      <div class="empty-state">
+        <span class="material-icons-outlined">receipt_long</span>
+        <strong>Order not found</strong>
+        <p>This order may have been removed or you don't have access.</p>
+      </div>
+    </div>
+  } @else {
+
+    <!-- Order Header -->
+    <div class="order-header-card card" style="margin-bottom:1.5rem;">
+      <div class="card-body">
+        <div class="order-meta">
+          <div>
+            <h2 style="margin:0 0 0.25rem;">#{{ order()!.order_number }}</h2>
+            <p class="text-muted" style="margin:0;font-size:0.875rem;">{{ order()!.placed_at | date:'MMMM d, y — h:mm a' }}</p>
+          </div>
+          <div class="order-status-area">
+            <span class="badge badge-{{ order()!.status }}" style="font-size:0.875rem;padding:0.4rem 1rem;">{{ order()!.status }}</span>
+            <button class="btn-outline ml-3" (click)="downloadInvoice()" style="padding: 0.4rem 1rem; display: inline-flex; align-items: center; gap: 0.5rem; border-color: var(--border-color); background: white;">
+              <span class="material-icons-outlined" style="font-size: 18px;">download</span>
+              Invoice
+            </button>
+          </div>
+        </div>
+
+        @if (canUpdateStatus()) {
+          <div class="status-update-bar">
+            <p style="font-size:0.875rem;font-weight:500;color:var(--text-secondary);margin:0;">Update status:</p>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+              @if (order()!.status === 'placed') {
+                <button class="status-btn confirm" (click)="updateStatus('confirmed')">
+                  <span class="material-icons-outlined">check_circle</span>
+                  Confirm Order
+                </button>
+                <button class="status-btn reject" (click)="updateStatus('cancelled')">
+                  <span class="material-icons-outlined">cancel</span>
+                  Reject Order
+                </button>
+              }
+              @if (order()!.status === 'confirmed') {
+                <button class="status-btn prepare" (click)="updateStatus('preparing')">
+                  <span class="material-icons-outlined">local_fire_department</span>
+                  Start Preparing
+                </button>
+                <button class="status-btn reject" (click)="updateStatus('cancelled')">
+                  <span class="material-icons-outlined">cancel</span>
+                  Cancel Order
+                </button>
+              }
+              @if (order()!.status === 'preparing') {
+                <button class="status-btn ready" (click)="updateStatus('ready')">
+                  <span class="material-icons-outlined">done_all</span>
+                  Mark as Ready
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="order-layout">
+
+      <!-- Left: Items + Pricing -->
+      <div class="order-main">
+
+        <!-- Items -->
+        <div class="card">
+          <div class="card-header">
+            <h3>Order Items</h3>
+            <span class="badge badge-secondary">{{ order()!.items.length }} item(s)</span>
+          </div>
+          <div class="card-body" style="padding:0;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Unit Price</th>
+                  <th>Qty</th>
+                  <th style="text-align:right;">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of order()!.items; track item.id) {
+                  <tr>
+                    <td>
+                      <span class="item-name">{{ item.product_name }}</span>
+                    </td>
+                    <td class="text-muted">${{ item.product_price | number:'1.2-2' }}</td>
+                    <td>
+                      <span class="item-qty-badge">x{{ item.quantity }}</span>
+                    </td>
+                    <td style="text-align:right;">
+                      <strong>${{ item.subtotal | number:'1.2-2' }}</strong>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <div class="card-footer">
+            <div class="price-breakdown">
+              <div class="price-row">
+                <span>Subtotal</span>
+                <span>${{ order()!.subtotal | number:'1.2-2' }}</span>
+              </div>
+              <div class="price-row">
+                <span>Delivery Fee</span>
+                <span>${{ order()!.delivery_fee | number:'1.2-2' }}</span>
+              </div>
+              @if (order()!.discount) {
+                <div class="price-row discount">
+                  <span>Discount</span>
+                  <span>-${{ order()!.discount | number:'1.2-2' }}</span>
+                </div>
+              }
+              <div class="price-row total">
+                <span>Total</span>
+                <span>${{ order()!.total | number:'1.2-2' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notes -->
+        @if (order()!.notes) {
+          <div class="card" style="margin-top:1.25rem;">
+            <div class="card-header">
+              <h3>
+                <span class="material-icons-outlined" style="font-size:18px;vertical-align:middle;margin-right:0.375rem;color:var(--warning);">sticky_note_2</span>
+                Customer Notes
+              </h3>
+            </div>
+            <div class="card-body">
+              <p class="text-muted" style="margin:0;">{{ order()!.notes }}</p>
+            </div>
+          </div>
+        }
+
+      </div>
+
+      <!-- Right: Customer, Address, Timeline -->
+      <div class="order-side">
+
+        <!-- Customer -->
+        <div class="card">
+          <div class="card-header">
+            <h3>Customer</h3>
+          </div>
+          <div class="card-body">
+            <div style="display:flex;align-items:center;gap:0.75rem;">
+              <div style="width:40px;height:40px;background:var(--primary-light);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <span class="material-icons-outlined" style="font-size:22px;color:var(--primary);">person</span>
+              </div>
+              <div>
+                <strong style="font-size:0.9375rem;">{{ order()!.customer_name }}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Delivery Address -->
+        @if (order()!.delivery_address) {
+          <div class="card">
+            <div class="card-header">
+              <h3>
+                <span class="material-icons-outlined" style="font-size:18px;vertical-align:middle;margin-right:0.375rem;color:var(--primary);">location_on</span>
+                Delivery Address
+              </h3>
+            </div>
+            <div class="card-body">
+              <div class="address-block">
+                <p style="font-weight:500;color:var(--text-primary);margin-bottom:0.25rem;">{{ order()!.delivery_address.full_name }}</p>
+                <p style="color:var(--text-secondary);margin-bottom:0.125rem;">{{ order()!.delivery_address.address_line1 }}</p>
+                @if (order()!.delivery_address.address_line2) {
+                  <p style="color:var(--text-secondary);margin-bottom:0.125rem;">{{ order()!.delivery_address.address_line2 }}</p>
+                }
+                <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:0.125rem;">{{ order()!.delivery_address.city }}, {{ order()!.delivery_address.state }} {{ order()!.delivery_address.postal_code }}</p>
+                <p style="color:var(--text-muted);font-size:0.875rem;margin:0;">{{ order()!.delivery_address.phone }}</p>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- Order Timeline -->
+        @if (order()!.tracking.length) {
+          <div class="card">
+            <div class="card-header">
+              <h3>
+                <span class="material-icons-outlined" style="font-size:18px;vertical-align:middle;margin-right:0.375rem;color:var(--primary);">timeline</span>
+                Order Timeline
+              </h3>
+            </div>
+            <div class="card-body">
+              <div class="timeline">
+                @for (t of order()!.tracking; track t.id) {
+                  <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                      <span class="badge badge-{{ t.status }}" style="margin-bottom:0.25rem;">{{ t.status }}</span>
+                      @if (t.description) {
+                        <p style="font-size:0.875rem;color:var(--text-secondary);margin:0.125rem 0;">{{ t.description }}</p>
+                      }
+                      <p class="text-muted" style="font-size:0.8125rem;margin:0;">{{ t.timestamp | date:'MMM d, y — h:mm a' }}</p>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        }
+
+      </div>
+    </div>
+  }
+</div>

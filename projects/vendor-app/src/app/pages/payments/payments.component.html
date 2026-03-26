@@ -1,0 +1,73 @@
+<div class="payments-page fade-in">
+  <div class="page-header">
+    <div>
+      <h1>Payments &amp; Settlements</h1>
+      <p class="page-subtitle">Track your revenue payouts and download invoices</p>
+    </div>
+  </div>
+
+  @if (errorMsg()) {
+    <div class="alert alert-danger mb-4">
+      <span class="material-icons-outlined">error_outline</span> {{ errorMsg() }}
+    </div>
+  }
+
+  <div class="card payments-card">
+    <div class="card-header">
+      <h3>Payout History</h3>
+    </div>
+    <div class="card-body p-0">
+      @if (loading()) {
+        <div class="p-4 text-center text-muted">Loading settlement records...</div>
+      } @else if (payouts().length === 0) {
+        <div class="p-4 text-center text-muted">
+          <span class="material-icons-outlined" style="font-size:32px;display:block;margin-bottom:8px">account_balance_wallet</span>
+          No payouts have been processed yet.
+        </div>
+      } @else {
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Reference ID</th>
+                <th>Period</th>
+                <th>Gross Sales</th>
+                <th>Platform Commission</th>
+                <th>Net Payout</th>
+                <th>Status</th>
+                <th>Paid At</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (payout of payouts(); track payout.id) {
+                <tr>
+                  <td class="text-muted"><small>{{ payout.id.split('-')[0] }}</small></td>
+                  <td>{{ payout.period_start | date:'MMM d, y' }} - {{ payout.period_end | date:'MMM d, y' }}</td>
+                  <td>${{ payout.gross_sales | number:'1.2-2' }}</td>
+                  <td class="text-danger">-${{ payout.platform_commission | number:'1.2-2' }}</td>
+                  <td><strong>${{ payout.net_payout | number:'1.2-2' }}</strong></td>
+                  <td>
+                    <span class="badge" [class]="'badge-' + payout.status">{{ payout.status | uppercase }}</span>
+                  </td>
+                  <td>
+                    @if (payout.paid_at) {
+                      <span class="text-muted">{{ payout.paid_at | date:'mediumDate' }}</span>
+                    } @else {
+                      <span class="text-muted">-</span>
+                    }
+                  </td>
+                  <td>
+                    <button class="btn-icon" title="Download Invoice" (click)="downloadInvoice(payout)">
+                      <span class="material-icons-outlined">download</span>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </div>
+</div>

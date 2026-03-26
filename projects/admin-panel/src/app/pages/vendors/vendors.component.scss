@@ -1,0 +1,134 @@
+/* ── Vendors Page Styles ─────────────────────── */
+.vendors-page { animation: fadeIn 0.4s ease-out; }
+
+/* ── Custom Table Cells ────────────────────── */
+.vendor-cell {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  text-decoration: none;
+  &:hover .vendor-name-link { color: var(--primary); text-decoration: underline; }
+}
+
+.vendor-thumb {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 1rem;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
+}
+
+.vendor-name { font-weight: 600; font-size: 0.9375rem; color: var(--text-primary); margin: 0; }
+.vendor-email { margin: 0; font-size: 0.8125rem; }
+
+.stars-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.stars { color: #F59E0B; font-size: 0.875rem; letter-spacing: 1px; }
+
+/* ── Row Actions ───────────────────────────── */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.action-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: var(--surface-hover);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  
+  .material-icons-outlined { font-size: 18px; }
+  
+  &:hover { background: var(--border-light); color: var(--text-primary); }
+  &.approve:hover { background: var(--success-light); color: var(--success); }
+  &.reject:hover, &.danger:hover { background: var(--danger-light); color: var(--danger); }
+  &.suspend:hover { background: var(--warning-light); color: var(--warning); }
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
+}
+
+/* ── Modals ───────────────────────────────── */
+/* These extend the global .modal-* styles */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.4);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-content {
+  background: white;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  width: 90%;
+  max-width: 640px;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.modal-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  h2 { margin: 0; font-size: 1.25rem; font-weight: 700; }
+}
+.modal-icon { width: 40px; height: 40px; background: var(--primary-light); color: var(--primary); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+
+.modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modal-footer {
+  padding: 1.25rem 1.5rem;
+  background: var(--surface-hover);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+/* Form layouts inside modal */
+.form-section-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin: 1.5rem 0 0.75rem; &:first-child { margin-top: 0; } }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+.input-label { display: block; font-size: 0.8125rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.375rem; &.required::after { content: '*'; color: var(--danger); margin-left: 2px; } }
+.input-field { width: 100%; padding: 0.625rem 0.875rem; border: 1.5px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); font-size: 0.875rem; transition: all 0.2s ease; outline: none; &:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); } }
+.input-textarea { resize: vertical; min-height: 80px; }
+.form-divider { height: 1px; background: var(--border-light); margin: 1.5rem 0; }
+.checkboxes-row { display: flex; gap: 1.5rem; margin-top: 0.5rem; }
+.checkbox-label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.875rem; font-weight: 500; input { width: 18px; height: 18px; cursor: pointer; } }
+
+.modal-error { padding: 0.875rem 1rem; background: var(--danger-light); color: var(--danger); border-radius: var(--radius-md); font-size: 0.8125rem; display: flex; align-items: center; gap: 0.625rem; margin-bottom: 1.5rem; .material-icons-outlined { font-size: 18px; } }
+
+.btn-spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.6s linear infinite; }

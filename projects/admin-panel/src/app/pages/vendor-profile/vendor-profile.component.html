@@ -1,0 +1,423 @@
+<div class="vendor-profile-page">
+
+  <!-- Breadcrumb -->
+  <nav class="breadcrumb">
+    <a routerLink="/vendors" class="breadcrumb-link">
+      <span class="material-icons-outlined">arrow_back</span>
+      Vendors
+    </a>
+    @if (!loading() && vendor()) {
+      <span class="breadcrumb-sep">/</span>
+      <span class="breadcrumb-current">{{ vendor().store_name }}</span>
+    }
+  </nav>
+
+  <!-- Loading -->
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading vendor…</p>
+    </div>
+  }
+
+  <!-- Content -->
+  @if (!loading() && vendor()) {
+
+    <!-- Temp Password Warning -->
+    @if (vendor().user_info?.force_password_change) {
+      <div class="temp-password-banner">
+        <span class="material-icons-outlined">lock_clock</span>
+        <div class="temp-password-body">
+          <strong>Temporary password still active</strong>
+          <span>This vendor has not changed their auto-generated password yet.</span>
+          @if (vendor().user_info?.temp_password) {
+            <div class="temp-password-row">
+              <span class="temp-password-label">Temp password:</span>
+              <code class="temp-password-value">
+                {{ showTempPassword() ? vendor().user_info.temp_password : '••••••••••••' }}
+              </code>
+              <button type="button" class="temp-pw-icon-btn" (click)="toggleTempPassword()" [title]="showTempPassword() ? 'Hide' : 'Show'">
+                <span class="material-icons-outlined">{{ showTempPassword() ? 'visibility_off' : 'visibility' }}</span>
+              </button>
+              <button type="button" class="temp-pw-icon-btn" (click)="copyTempPassword()" title="Copy">
+                <span class="material-icons-outlined">{{ copied() ? 'check' : 'content_copy' }}</span>
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">{{ vendor().store_name }}</h1>
+        <p class="page-subtitle">{{ vendor().city }}{{ vendor().state ? ', ' + vendor().state : '' }} &bull; {{ vendor().vendor_type || 'Vendor' }}</p>
+      </div>
+      <div class="header-actions">
+        <a class="btn btn-secondary" [routerLink]="['/vendors', vendorId, 'edit']">
+          <span class="material-icons-outlined">edit</span>
+          Edit
+        </a>
+        @if (vendor().status === 'pending' || vendor().status === 'rejected' || vendor().status === 'suspended') {
+          <button class="btn btn-success" [disabled]="actionLoading()" (click)="setStatus('approved')">
+            <span class="material-icons-outlined">check_circle</span>
+            Approve
+          </button>
+        }
+        @if (vendor().status === 'approved') {
+          <button class="btn btn-danger" [disabled]="actionLoading()" (click)="setStatus('suspended')">
+            <span class="material-icons-outlined">block</span>
+            Suspend
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Profile Hero Card -->
+    <div class="profile-hero-card">
+      <div class="hero-banner"></div>
+      <div class="hero-body">
+        <div class="hero-avatar-wrap">
+          <div class="hero-avatar" [style.background]="vendor().logo ? 'transparent' : vendorColor(vendor().store_name)">
+            @if (vendor().logo) {
+              <img [src]="vendor().logo" alt="logo">
+            } @else {
+              {{ vendor().store_name[0].toUpperCase() }}
+            }
+            @if (logoUploading()) {
+              <div class="avatar-overlay uploading">
+                <div class="spinner-sm-white"></div>
+              </div>
+            } @else {
+              <button class="avatar-upload-btn" (click)="logoInput.click()" title="Upload logo">
+                <span class="material-icons-outlined">photo_camera</span>
+              </button>
+            }
+          </div>
+          <input #logoInput type="file" accept="image/*" hidden (change)="onLogoChange($event)">
+        </div>
+
+        <div class="hero-info">
+          <div class="hero-info-top">
+            <span class="badge" [class]="statusBadge(vendor().status)">{{ vendor().status }}</span>
+            @if (vendor().vendor_tier) {
+              <span class="tier-badge">{{ vendor().vendor_tier }}</span>
+            }
+            <span class="hero-open-badge" [class.open]="vendor().is_open">
+              <span class="dot"></span>
+              {{ vendor().is_open ? 'Open Now' : 'Closed' }}
+            </span>
+          </div>
+          <div class="hero-meta-row">
+            @if (vendor().email) {
+              <span class="hero-meta-item">
+                <span class="material-icons-outlined">mail</span>
+                {{ vendor().email }}
+              </span>
+            }
+            @if (vendor().phone) {
+              <span class="hero-meta-item">
+                <span class="material-icons-outlined">phone</span>
+                {{ vendor().phone }}
+              </span>
+            }
+            <span class="hero-meta-item">
+              <span class="material-icons-outlined">star</span>
+              {{ vendor().average_rating | number: '1.1-1' }} ({{ vendor().total_ratings }} reviews)
+            </span>
+          </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <span class="hero-stat-value">{{ vendor().average_rating | number: '1.1-1' }}</span>
+            <span class="hero-stat-label">Rating</span>
+          </div>
+          <div class="hero-stat-divider"></div>
+          <div class="hero-stat">
+            <span class="hero-stat-value">{{ vendor().min_order_amount | number }}</span>
+            <span class="hero-stat-label">Min Order (₦)</span>
+          </div>
+          <div class="hero-stat-divider"></div>
+          <div class="hero-stat">
+            <span class="hero-stat-value">{{ vendor().delivery_radius_km }} km</span>
+            <span class="hero-stat-label">Delivery Radius</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Strip -->
+    <div class="tab-strip">
+      <button class="tab-btn" [class.active]="activeTab() === 'overview'" (click)="setTab('overview')">
+        <span class="material-icons-outlined">info</span>
+        Overview
+      </button>
+      <button class="tab-btn" [class.active]="activeTab() === 'products'" (click)="setTab('products')">
+        <span class="material-icons-outlined">inventory_2</span>
+        Products
+      </button>
+      <button class="tab-btn" [class.active]="activeTab() === 'orders'" (click)="setTab('orders')">
+        <span class="material-icons-outlined">receipt_long</span>
+        Orders
+      </button>
+      <button class="tab-btn" [class.active]="activeTab() === 'report'" (click)="setTab('report')">
+        <span class="material-icons-outlined">bar_chart</span>
+        Sales Report
+      </button>
+    </div>
+
+    <!-- Tab: Overview -->
+    @if (activeTab() === 'overview') {
+      <div class="tab-content fade-in">
+        <div class="info-grid">
+          <!-- Store Details -->
+          <div class="info-card">
+            <h3 class="info-card-title">
+              <span class="material-icons-outlined">store</span>
+              Store Details
+            </h3>
+            <div class="info-rows">
+              @if (vendor().description) {
+                <div class="info-row">
+                  <span class="info-label">Description</span>
+                  <span class="info-value">{{ vendor().description }}</span>
+                </div>
+              }
+              <div class="info-row">
+                <span class="info-label">Type</span>
+                <span class="info-value">{{ vendor().vendor_type || '—' }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Address</span>
+                <span class="info-value">{{ vendor().address || '—' }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Postal Code</span>
+                <span class="info-value">{{ vendor().postal_code || '—' }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Opening Hours</span>
+                <span class="info-value">{{ vendor().opening_time || '—' }} — {{ vendor().closing_time || '—' }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Min Order</span>
+                <span class="info-value">₦{{ vendor().min_order_amount | number }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Delivery Radius</span>
+                <span class="info-value">{{ vendor().delivery_radius_km }} km</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Stats -->
+          <div class="info-card">
+            <h3 class="info-card-title">
+              <span class="material-icons-outlined">insights</span>
+              Quick Stats
+            </h3>
+            <div class="stats-grid">
+              <div class="stat-item">
+                <span class="stat-value">{{ vendor().average_rating | number: '1.1-1' }}</span>
+                <span class="stat-label">Avg Rating</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value">{{ vendor().total_ratings }}</span>
+                <span class="stat-label">Total Reviews</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value" [class.text-success]="vendor().is_open" [class.text-danger]="!vendor().is_open">
+                  {{ vendor().is_open ? 'Open' : 'Closed' }}
+                </span>
+                <span class="stat-label">Store Status</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value" [class.text-success]="vendor().is_featured">
+                  {{ vendor().is_featured ? 'Yes' : 'No' }}
+                </span>
+                <span class="stat-label">Featured</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Tab: Products -->
+    @if (activeTab() === 'products') {
+      <div class="tab-content fade-in">
+        <app-dynamic-table
+          [loading]="productsLoading()"
+          [data]="products()"
+          [columns]="productColumns"
+          emptyMessage="No products found"
+          emptyIcon="inventory_2"
+          [totalItems]="productsTotal()"
+          [itemsPerPage]="20"
+          [page]="productsPage()"
+          (pageChange)="changeProductsPage($event)"
+        >
+          <ng-template tableCell="name" let-p>
+            <span class="font-medium">{{ p.name }}</span>
+          </ng-template>
+          <ng-template tableCell="price" let-p>
+            <span>₦{{ p.price | number }}</span>
+          </ng-template>
+          <ng-template tableCell="stock" let-p>
+            <span [class.text-danger]="p.stock === 0">{{ p.stock }}</span>
+          </ng-template>
+          <ng-template tableCell="status" let-p>
+            <span class="badge" [class.badge-approved]="p.is_available" [class.badge-rejected]="!p.is_available">
+              {{ p.is_available ? 'Available' : 'Unavailable' }}
+            </span>
+          </ng-template>
+        </app-dynamic-table>
+      </div>
+    }
+
+    <!-- Tab: Orders -->
+    @if (activeTab() === 'orders') {
+      <div class="tab-content fade-in">
+        <div class="tab-filters">
+          <select class="filter-select" [(ngModel)]="ordersStatusFilter" (change)="changeOrdersFilter()">
+            <option value="">All Status</option>
+            <option value="placed">Placed</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="preparing">Preparing</option>
+            <option value="ready">Ready</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+        <app-dynamic-table
+          [loading]="ordersLoading()"
+          [data]="orders()"
+          [columns]="orderColumns"
+          emptyMessage="No orders found"
+          emptyIcon="receipt_long"
+          [totalItems]="ordersTotal()"
+          [itemsPerPage]="20"
+          [page]="ordersPage()"
+          (pageChange)="changeOrdersPage($event)"
+        >
+          <ng-template tableCell="order_number" let-o>
+            <span class="font-mono text-sm">{{ o.order_number }}</span>
+          </ng-template>
+          <ng-template tableCell="customer" let-o>
+            <span class="text-sm">{{ o.customer_name }}</span>
+          </ng-template>
+          <ng-template tableCell="total" let-o>
+            <span class="font-medium">₦{{ o.total | number }}</span>
+          </ng-template>
+          <ng-template tableCell="status" let-o>
+            <span class="badge" [class]="orderStatusBadge(o.status)">{{ o.status }}</span>
+          </ng-template>
+          <ng-template tableCell="placed_at" let-o>
+            <span class="text-muted text-sm">{{ o.placed_at | date: 'MMM d, y' }}</span>
+          </ng-template>
+        </app-dynamic-table>
+      </div>
+    }
+
+    <!-- Tab: Sales Report -->
+    @if (activeTab() === 'report') {
+      <div class="tab-content fade-in">
+        <div class="report-header">
+          <h3 class="report-title">Sales Report</h3>
+          <div class="period-selector">
+            <button class="period-btn" [class.active]="reportPeriod() === '30d'" (click)="setPeriod('30d')">30 Days</button>
+            <button class="period-btn" [class.active]="reportPeriod() === '90d'" (click)="setPeriod('90d')">90 Days</button>
+            <button class="period-btn" [class.active]="reportPeriod() === '12m'" (click)="setPeriod('12m')">12 Months</button>
+          </div>
+        </div>
+
+        @if (reportLoading()) {
+          <div class="loading-inline">
+            <div class="spinner-sm"></div>
+            <span>Loading report…</span>
+          </div>
+        }
+
+        @if (!reportLoading() && report()) {
+          <!-- Stats Cards -->
+          <div class="report-stats">
+            <div class="report-stat-card">
+              <span class="material-icons-outlined">payments</span>
+              <div>
+                <p class="report-stat-value">₦{{ report().total_revenue | number: '1.0-0' }}</p>
+                <p class="report-stat-label">Total Revenue</p>
+              </div>
+            </div>
+            <div class="report-stat-card">
+              <span class="material-icons-outlined">receipt</span>
+              <div>
+                <p class="report-stat-value">{{ report().total_orders }}</p>
+                <p class="report-stat-label">Total Orders</p>
+              </div>
+            </div>
+            <div class="report-stat-card">
+              <span class="material-icons-outlined">local_shipping</span>
+              <div>
+                <p class="report-stat-value">{{ report().delivered_orders }}</p>
+                <p class="report-stat-label">Delivered</p>
+              </div>
+            </div>
+            <div class="report-stat-card">
+              <span class="material-icons-outlined">trending_up</span>
+              <div>
+                <p class="report-stat-value">₦{{ report().average_order_value | number: '1.0-0' }}</p>
+                <p class="report-stat-label">Avg Order Value</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Monthly Chart -->
+          @if (report().monthly_data?.length) {
+            <div class="chart-card">
+              <h4 class="chart-title">Monthly Revenue</h4>
+              <div class="bar-chart">
+                @for (d of report().monthly_data; track d.month) {
+                  <div class="bar-col">
+                    <span class="bar-value">₦{{ d.revenue | number: '1.0-0' }}</span>
+                    <div class="bar-track">
+                      <div class="bar-fill" [style.height.%]="(d.revenue / maxBarValue()) * 100"></div>
+                    </div>
+                    <span class="bar-label">{{ d.month }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Top Products -->
+          @if (report().top_products?.length) {
+            <div class="top-products-card">
+              <h4 class="chart-title">Top Products</h4>
+              <table class="top-products-table">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Units Sold</th>
+                    <th>Revenue</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (p of report().top_products; track p.product_id) {
+                    <tr>
+                      <td>{{ p.name }}</td>
+                      <td>{{ p.total_sold }}</td>
+                      <td>₦{{ p.revenue | number: '1.0-0' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        }
+      </div>
+    }
+  }
+</div>

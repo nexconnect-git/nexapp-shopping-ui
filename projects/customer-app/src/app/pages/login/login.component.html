@@ -1,0 +1,70 @@
+<div class="auth-page">
+  <!-- Left panel: gradient branding (hidden on mobile) -->
+  <div class="auth-left">
+    <div class="auth-left-inner">
+      <div class="auth-brand">
+        <span class="brand-icon">&#9889;</span>
+        <span class="brand-name">NexConnect</span>
+      </div>
+      <h2 class="auth-left-headline">Order from local vendors, delivered to your door</h2>
+      <ul class="feature-list">
+        <li class="feature-item">
+          <span class="feature-icon">
+            <span class="material-icons-outlined">storefront</span>
+          </span>
+          500+ Local Vendors
+        </li>
+        <li class="feature-item">
+          <span class="feature-icon">
+            <span class="material-icons-outlined">local_shipping</span>
+          </span>
+          Fast Delivery
+        </li>
+        <li class="feature-item">
+          <span class="feature-icon">
+            <span class="material-icons-outlined">gps_fixed</span>
+          </span>
+          Track in Real Time
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Right panel: form -->
+  <div class="auth-right">
+    <div class="auth-card">
+      <div class="auth-header">
+        <span class="logo-icon">&#9889;</span>
+        <h1>Welcome back</h1>
+        <p>Sign in to your NexConnect account</p>
+      </div>
+
+      @if (error()) {
+        <div class="alert-error">{{ error() }}</div>
+      }
+
+      <form (ngSubmit)="onLogin()" #f="ngForm">
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input class="form-input" type="text" [(ngModel)]="username" name="username"
+            placeholder="Enter username" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input class="form-input" type="password" [(ngModel)]="password" name="password"
+            placeholder="Enter password" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block" [disabled]="loading()">
+          @if (loading()) { <span class="spinner"></span> Signing in... }
+          @else { Sign In }
+        </button>
+      </form>
+
+      <p class="auth-footer">
+        Don't have an account? <a routerLink="/register">Create one</a>
+      </p>
+    </div>
+  </div>
+</div>

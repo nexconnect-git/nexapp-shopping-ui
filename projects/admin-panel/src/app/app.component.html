@@ -1,0 +1,147 @@
+@if (auth.isLoggedIn()) {
+  <div class="admin-layout" [class.sidebar-collapsed]="sidebarCollapsed()">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="brand">
+          <span class="brand-icon">N</span>
+          @if (!sidebarCollapsed()) {
+            <span class="brand-text">NexConnect</span>
+          }
+        </div>
+        <button class="toggle-btn" (click)="toggleSidebar()">
+          <span class="material-icons-outlined">{{ sidebarCollapsed() ? 'chevron_right' : 'chevron_left' }}</span>
+        </button>
+      </div>
+
+      <nav class="sidebar-nav">
+        @for (item of navItems; track item.route) {
+          <a class="nav-item" [routerLink]="item.route" routerLinkActive="active"
+            [routerLinkActiveOptions]="{exact: item.route === '/'}">
+            <span class="material-icons-outlined">{{ item.icon }}</span>
+            @if (!sidebarCollapsed()) {
+              <span class="nav-label">{{ item.label }}</span>
+            }
+          </a>
+        }
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="nav-item logout-btn" (click)="logout()">
+          <span class="material-icons-outlined">logout</span>
+          @if (!sidebarCollapsed()) {
+            <span class="nav-label">Logout</span>
+          }
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-wrapper">
+      <!-- Top Bar -->
+      <header class="top-bar">
+        <button class="mobile-toggle" (click)="toggleSidebar()">
+          <span class="material-icons-outlined">menu</span>
+        </button>
+
+        <div class="search-box">
+          <span class="material-icons-outlined">search</span>
+          <input type="text" placeholder="Search..." />
+        </div>
+
+        <div class="top-bar-actions">
+
+          <!-- Notification Bell -->
+          <div class="notif-wrapper" (click)="$event.stopPropagation()">
+            <button class="btn-icon notification-btn" (click)="toggleNotif($event)" title="Notifications">
+              <span class="material-icons-outlined">notifications</span>
+              @if (unreadCount() > 0) {
+                <span class="notification-badge">{{ unreadCount() > 9 ? '9+' : unreadCount() }}</span>
+              }
+            </button>
+
+            @if (notifOpen()) {
+              <div class="notif-dropdown">
+                <div class="notif-header">
+                  <span class="notif-title">Notifications</span>
+                  @if (unreadCount() > 0) {
+                    <button class="notif-mark-read" (click)="markAllRead()">Mark all read</button>
+                  }
+                </div>
+
+                @if (notifLoading()) {
+                  <div class="notif-loading">
+                    <div class="notif-spinner"></div>
+                  </div>
+                } @else if (notifications().length === 0) {
+                  <div class="notif-empty">
+                    <span class="material-icons-outlined">notifications_none</span>
+                    <span>No notifications</span>
+                  </div>
+                } @else {
+                  <div class="notif-list">
+                    @for (n of notifications(); track n.id) {
+                      <div class="notif-item" [class.notif-unread]="!n.is_read">
+                        <div class="notif-icon-wrap">
+                          <span class="material-icons-outlined">{{ notifIcon(n.notification_type) }}</span>
+                        </div>
+                        <div class="notif-body">
+                          <p class="notif-message">{{ n.message }}</p>
+                          <span class="notif-time">{{ n.created_at | date: 'MMM d, h:mm a' }}</span>
+                        </div>
+                        @if (!n.is_read) {
+                          <span class="notif-dot"></span>
+                        }
+                      </div>
+                    }
+                  </div>
+                  <div class="notif-footer">
+                    <button class="notif-view-all" (click)="goToNotifications()">View all notifications</button>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Admin Profile -->
+          <div class="admin-profile" (click)="toggleProfile($event)">
+            <div class="avatar">{{ getInitials() }}</div>
+            @if (auth.user(); as user) {
+              <span class="admin-name">{{ user.first_name || user.username }}</span>
+            }
+            <span class="material-icons-outlined" style="font-size:18px;color:#94A3B8">expand_more</span>
+          </div>
+
+          @if (profileOpen()) {
+            <div class="profile-dropdown" (click)="$event.stopPropagation()">
+              <div class="profile-dropdown-header">
+                <div class="pd-avatar">{{ getInitials() }}</div>
+                <div>
+                  <p class="pd-name">{{ auth.user()?.first_name }} {{ auth.user()?.last_name }}</p>
+                  <p class="pd-email">{{ auth.user()?.email }}</p>
+                </div>
+              </div>
+              <div class="pd-divider"></div>
+              <button class="pd-item danger" (click)="logout()">
+                <span class="material-icons-outlined">logout</span> Sign Out
+              </button>
+            </div>
+          }
+
+        </div>
+      </header>
+
+      <!-- Page Content -->
+      <main class="main-content">
+        <router-outlet />
+      </main>
+    </div>
+  </div>
+
+  <!-- Mobile overlay -->
+  @if (mobileMenuOpen()) {
+    <div class="mobile-overlay" (click)="toggleSidebar()"></div>
+  }
+} @else {
+  <router-outlet />
+}

@@ -1,0 +1,188 @@
+<div class="cart-page">
+  <div class="cart-header">
+    <h1 class="page-title">
+      <span class="material-icons-outlined">shopping_cart</span>
+      Shopping Cart
+      @if (cart() && cart()!.items.length > 0) {
+        <span class="cart-count-badge">{{ cart()!.items.length }}</span>
+      }
+    </h1>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-spinner"></div>
+  }
+
+  @if (!loading() && (!cart() || cart()!.items.length === 0)) {
+    <div class="empty-state">
+      <div class="empty-icon-wrap">
+        <span class="material-icons-outlined empty-cart-icon">shopping_cart</span>
+      </div>
+      <h3 class="empty-heading">Your cart is empty</h3>
+      <p class="empty-sub">Discover amazing products from local shops</p>
+      <a routerLink="/shops" class="btn btn-primary btn-browse">
+        <span class="material-icons-outlined">storefront</span>
+        Browse Shops
+      </a>
+    </div>
+  }
+
+  @if (!loading() && cart() && cart()!.items.length > 0) {
+    <div class="cart-layout">
+
+      <!-- Left: items -->
+      <div class="cart-items">
+        <div class="cart-items-card">
+          @for (item of cart()!.items; track item.id) {
+            <div class="cart-item">
+              <div class="item-image">
+                <a [routerLink]="['/product', item.product.id]">
+                  @if (item.product.primary_image) {
+                    <img [src]="item.product.primary_image" [alt]="item.product.name">
+                  } @else {
+                    <div class="item-img-placeholder">
+                      <span class="material-icons-outlined">inventory_2</span>
+                    </div>
+                  }
+                </a>
+              </div>
+
+              <div class="item-info">
+                <a class="item-name" [routerLink]="['/product', item.product.id]">{{ item.product.name }}</a>
+                <span class="item-vendor">{{ item.product.vendor_name }}</span>
+                <span class="item-unit-price">${{ item.product.price | number:'1.2-2' }} each</span>
+                <div class="qty-control">
+                  <button
+                    (click)="updateQty(item, item.quantity - 1)"
+                    [disabled]="updatingId() === item.id">
+                    <span class="material-icons-outlined">remove</span>
+                  </button>
+                  <span>{{ item.quantity }}</span>
+                  <button
+                    (click)="updateQty(item, item.quantity + 1)"
+                    [disabled]="updatingId() === item.id || item.quantity >= item.product.stock">
+                    <span class="material-icons-outlined">add</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="item-right">
+                <span class="item-subtotal">${{ item.subtotal | number:'1.2-2' }}</span>
+                <button class="remove-btn" (click)="removeItem(item)" title="Remove item">
+                  <span class="material-icons-outlined">delete_outline</span>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="cart-actions">
+          <button class="btn btn-ghost btn-sm" (click)="clearCart()">
+            <span class="material-icons-outlined">delete_sweep</span>
+            Clear Cart
+          </button>
+          <a class="btn btn-ghost btn-sm" routerLink="/products">
+            <span class="material-icons-outlined">arrow_back</span>
+            Continue Shopping
+          </a>
+        </div>
+      </div>
+
+      <!-- Right: summary -->
+      <div class="order-summary">
+        <div class="summary-card">
+          <h3 class="summary-title">Order Summary</h3>
+
+          <div class="summary-lines">
+            <div class="summary-line">
+              <span>Subtotal ({{ cart()!.total_items }} items)</span>
+              <span>${{ cart()!.total_amount | number:'1.2-2' }}</span>
+            </div>
+            <div class="summary-line">
+              <span>Delivery Fee</span>
+              <span class="text-muted">Calculated at checkout</span>
+            </div>
+          </div>
+
+          <div class="summary-total">
+            <span>Estimated Total</span>
+            <span class="total-amount">${{ cart()!.total_amount | number:'1.2-2' }}</span>
+          </div>
+
+          <div class="summary-section">
+            <label class="summary-section-label">
+              <span class="material-icons-outlined">location_on</span>
+              Delivery Address
+            </label>
+            @if (addresses().length === 0) {
+              <div class="no-address-notice">
+                <span class="material-icons-outlined">info</span>
+                <span>No saved addresses. <a routerLink="/addresses">Add one</a></span>
+              </div>
+            } @else {
+              <select class="summary-select" [(ngModel)]="selectedAddressId">
+                <option [value]="null" disabled>Select address</option>
+                @for (addr of addresses(); track addr.id) {
+                  <option [value]="addr.id">
+                    {{ addr.label | titlecase }}: {{ addr.address_line1 }}, {{ addr.city }}
+                  </option>
+                }
+              </select>
+            }
+          </div>
+
+          <div class="summary-section">
+            <label class="summary-section-label">
+              <span class="material-icons-outlined">payments</span>
+              Payment Method
+            </label>
+            <div class="payment-method-box">
+              <span class="material-icons-outlined">money</span>
+              <span>Cash on Delivery (COD)</span>
+            </div>
+          </div>
+
+          <div class="summary-section">
+            <label class="summary-section-label">
+              <span class="material-icons-outlined">notes</span>
+              Order Notes <span class="optional-tag">(optional)</span>
+            </label>
+            <textarea class="summary-textarea" [(ngModel)]="notes" rows="2"
+              placeholder="Special instructions, allergies, or delivery notes..."></textarea>
+          </div>
+
+          @if (orderError()) {
+            <div class="alert alert-danger">
+              <span class="material-icons-outlined">error_outline</span>
+              {{ orderError() }}
+            </div>
+          }
+          @if (orderSuccess()) {
+            <div class="alert alert-success">
+              <span class="material-icons-outlined">check_circle</span>
+              Order placed! Redirecting to your orders...
+            </div>
+          }
+
+          <button class="btn btn-primary btn-block place-order-btn"
+            [disabled]="!selectedAddressId || placingOrder() || addresses().length === 0"
+            (click)="placeOrder()">
+            @if (placingOrder()) {
+              <span class="spinner-sm"></span>
+              Placing Order...
+            } @else {
+              <span class="material-icons-outlined">lock</span>
+              Place Order
+            }
+          </button>
+
+          <p class="secure-note">
+            <span class="material-icons-outlined">verified_user</span>
+            Secure checkout — your data is encrypted
+          </p>
+        </div>
+      </div>
+
+    </div>
+  }
+</div>

@@ -1,0 +1,144 @@
+<div class="dashboard">
+  <h1 class="page-title">Dashboard</h1>
+  <p class="page-subtitle">Platform overview</p>
+
+  @if (loadingStats()) {
+    <div class="loading-panel"><div class="spinner"></div></div>
+  } @else {
+    <div class="stats-grid">
+      <div class="stat-card accent" style="background: rgba(16,185,129,0.05); border-color: rgba(16,185,129,0.2);">
+        <div class="stat-top">
+          <span class="stat-icon" style="color: #059669;">&#128176;</span>
+        </div>
+        <p class="stat-value">${{ stats()?.total_revenue | number:'1.2-2' }}</p>
+        <p class="stat-label">Total Revenue</p>
+      </div>
+      <div class="stat-card">
+        <div class="stat-top">
+          <span class="stat-icon">&#128101;</span>
+          <a routerLink="/customers" class="stat-link">View &rarr;</a>
+        </div>
+        <p class="stat-value">{{ stats()?.customers ?? '—' }}</p>
+        <p class="stat-label">Customers</p>
+      </div>
+      <div class="stat-card">
+        <div class="stat-top">
+          <span class="stat-icon">&#127978;</span>
+          <a routerLink="/vendors" class="stat-link">View &rarr;</a>
+        </div>
+        <p class="stat-value">{{ stats()?.vendors ?? '—' }}</p>
+        <p class="stat-label">Vendors</p>
+      </div>
+      <div class="stat-card yellow">
+        <div class="stat-top">
+          <span class="stat-icon">&#9203;</span>
+          <a routerLink="/vendors" class="stat-link">View &rarr;</a>
+        </div>
+        <p class="stat-value">{{ stats()?.pending_vendors ?? '—' }}</p>
+        <p class="stat-label">Pending Vendors</p>
+      </div>
+      <div class="stat-card">
+        <div class="stat-top">
+          <span class="stat-icon">&#128722;</span>
+          <a routerLink="/products" class="stat-link">View &rarr;</a>
+        </div>
+        <p class="stat-value">{{ stats()?.products ?? '—' }}</p>
+        <p class="stat-label">Products</p>
+      </div>
+      <div class="stat-card">
+        <div class="stat-top">
+          <span class="stat-icon">&#128666;</span>
+          <a routerLink="/delivery-partners" class="stat-link">View &rarr;</a>
+        </div>
+        <p class="stat-value">{{ stats()?.delivery_partners ?? '—' }}</p>
+        <p class="stat-label">Delivery Partners</p>
+      </div>
+      <div class="stat-card yellow">
+        <div class="stat-top">
+          <span class="stat-icon">&#9203;</span>
+          <a routerLink="/delivery-partners" class="stat-link">View &rarr;</a>
+        </div>
+        <p class="stat-value">{{ stats()?.pending_delivery_partners ?? '—' }}</p>
+        <p class="stat-label">Pending Partners</p>
+      </div>
+      <div class="stat-card accent">
+        <div class="stat-top">
+          <span class="stat-icon">&#128196;</span>
+          <a routerLink="/orders" class="stat-link">View &rarr;</a>
+        </div>
+        <p class="stat-value">{{ stats()?.orders ?? '—' }}</p>
+        <p class="stat-label">Total Orders</p>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-top">
+          <span class="stat-icon">&#10003;</span>
+        </div>
+        <p class="stat-value">{{ stats()?.orders_delivered ?? '—' }}</p>
+        <p class="stat-label">Delivered</p>
+      </div>
+      <div class="stat-card yellow">
+        <div class="stat-top">
+          <span class="stat-icon">&#128204;</span>
+        </div>
+        <p class="stat-value">{{ stats()?.orders_delivering ?? '—' }}</p>
+        <p class="stat-label">In Transit</p>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-top">
+          <span class="stat-icon">&#9201;</span>
+        </div>
+        <p class="stat-value">{{ stats()?.orders_placed ?? '—' }}</p>
+        <p class="stat-label">Pending</p>
+      </div>
+    </div>
+  }
+
+  <div class="panels-row">
+    <div class="panel">
+      <div class="panel-header">
+        <h3>Recent Orders</h3>
+        <a routerLink="/orders" class="see-all">View all</a>
+      </div>
+      @if (loadingOrders()) {
+        <div class="mini-spinner"></div>
+      } @else {
+        <div class="mini-table">
+          <div class="mini-header">
+            <span>Order #</span><span>Customer</span><span>Total</span><span>Status</span>
+          </div>
+          @for (o of recentOrders(); track o.id) {
+            <div class="mini-row">
+              <span class="id-col">#{{ o.order_number }}</span>
+              <span>{{ o.customer_name }}</span>
+              <span>${{ o.total | number:'1.2-2' }}</span>
+              <span><span class="badge badge-{{ o.status }}">{{ o.status }}</span></span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <h3>Top Vendors</h3>
+        <a routerLink="/vendors" class="see-all">View all</a>
+      </div>
+      @if (loadingVendors()) {
+        <div class="mini-spinner"></div>
+      } @else {
+        @for (v of topVendors(); track v.id) {
+          <div class="vendor-row">
+            <div class="vendor-info">
+              <p class="vendor-name">{{ v.store_name }}</p>
+              <p class="vendor-city text-muted text-sm">{{ v.city }}</p>
+            </div>
+            <div class="vendor-stats">
+              <span class="stars">{{ starsFor(v.average_rating) }}</span>
+              <span class="text-sm text-muted">{{ v.total_ratings }} reviews</span>
+            </div>
+          </div>
+        }
+      }
+    </div>
+  </div>
+</div>

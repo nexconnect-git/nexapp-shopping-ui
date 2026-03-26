@@ -1,0 +1,178 @@
+<div class="addresses-page">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1 class="page-title">My Addresses</h1>
+    <button class="btn btn-primary" (click)="openForm()">
+      <span class="material-icons-outlined">add</span>
+      Add Address
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-spinner"></div>
+  } @else {
+
+    @if (addresses().length === 0 && !showForm()) {
+      <!-- Empty State -->
+      <div class="empty-state">
+        <div class="empty-icon-wrap">
+          <span class="material-icons-outlined empty-icon">location_off</span>
+        </div>
+        <h3 class="empty-heading">No addresses saved</h3>
+        <p class="empty-sub">Add a delivery address to place orders</p>
+        <button class="btn btn-primary" (click)="openForm()">
+          <span class="material-icons-outlined">add_location</span>
+          Add your first address
+        </button>
+      </div>
+    }
+
+    <div class="address-list">
+      @for (addr of addresses(); track addr.id) {
+        <div class="address-card" [class.is-default]="addr.is_default">
+
+          <div class="addr-location-icon">
+            <span class="material-icons-outlined">location_on</span>
+          </div>
+
+          <div class="addr-header">
+            <div class="addr-label-row">
+              <span class="label-badge label-{{ addr.label }}">{{ addr.label }}</span>
+              @if (addr.is_default) {
+                <span class="default-badge">Default</span>
+              }
+            </div>
+            <div class="addr-actions">
+              <button class="icon-btn" (click)="editAddress(addr)" title="Edit">
+                <span class="material-icons-outlined">edit</span>
+              </button>
+              <button class="icon-btn danger" (click)="deleteAddress(addr.id)" title="Delete">
+                <span class="material-icons-outlined">delete_outline</span>
+              </button>
+            </div>
+          </div>
+
+          <p class="addr-name">{{ addr.full_name }}</p>
+          <p class="addr-text">{{ addr.address_line1 }}@if (addr.address_line2) {, {{ addr.address_line2 }}}</p>
+          <p class="addr-text">{{ addr.city }}, {{ addr.state }} {{ addr.postal_code }}</p>
+          @if (addr.phone) {
+            <p class="addr-phone">{{ addr.phone }}</p>
+          }
+
+        </div>
+      }
+    </div>
+
+    <!-- Add / Edit Form -->
+    @if (showForm()) {
+      <div class="modal-backdrop" (click)="cancelForm()">
+        <div class="modal-card" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3 class="modal-title">
+              <span class="material-icons-outlined">{{ editing() ? 'edit_location' : 'add_location' }}</span>
+              {{ editing() ? 'Edit' : 'New' }} Address
+            </h3>
+            <button class="icon-btn" (click)="cancelForm()" title="Close">
+              <span class="material-icons-outlined">close</span>
+            </button>
+          </div>
+
+          @if (formError()) {
+            <div class="alert-error">{{ formError() }}</div>
+          }
+
+          <form (ngSubmit)="saveAddress()">
+            <div class="form-group">
+              <label class="form-label">Label</label>
+              <select class="form-input" [(ngModel)]="form.label" name="label">
+                <option value="home">Home</option>
+                <option value="work">Work</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Full Name</label>
+                <input class="form-input" type="text" [(ngModel)]="form.full_name" name="full_name" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Phone</label>
+                <input class="form-input" type="tel" [(ngModel)]="form.phone" name="phone">
+              </div>
+            </div>
+
+            <!-- Map Location Picker -->
+            <div class="map-section">
+              <div class="map-section-head">
+                <span class="map-section-label">
+                  <span class="material-icons-outlined">map</span>
+                  Pin on Map
+                </span>
+                <button type="button" class="map-toggle-btn" (click)="showMap.set(!showMap())">
+                  {{ showMap() ? 'Hide Map' : (form.latitude ? 'Change Location' : 'Pick on Map') }}
+                </button>
+              </div>
+              @if (form.latitude) {
+                <div class="map-coords-badge">
+                  <span class="material-icons-outlined">check_circle</span>
+                  Location pinned
+                </div>
+              }
+              @if (showMap()) {
+                <div class="map-picker-container">
+                  <app-map-picker
+                    [height]="'240px'"
+                    [initialLat]="form.latitude || 6.5244"
+                    [initialLng]="form.longitude || 3.3792"
+                    (locationPicked)="onMapLocation($event)">
+                  </app-map-picker>
+                  <p class="map-tip">Select your exact delivery location. Fields below will auto-fill.</p>
+                </div>
+              }
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Address Line 1</label>
+              <input class="form-input" type="text" [(ngModel)]="form.address_line1" name="address_line1" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Address Line 2 (optional)</label>
+              <input class="form-input" type="text" [(ngModel)]="form.address_line2" name="address_line2">
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">City</label>
+                <input class="form-input" type="text" [(ngModel)]="form.city" name="city" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">State</label>
+                <input class="form-input" type="text" [(ngModel)]="form.state" name="state">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Postal Code</label>
+                <input class="form-input" type="text" [(ngModel)]="form.postal_code" name="postal_code">
+              </div>
+            </div>
+
+            <label class="toggle-label">
+              <input type="checkbox" [(ngModel)]="form.is_default" name="is_default">
+              Set as default address
+            </label>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary" [disabled]="saving()">
+                {{ saving() ? 'Saving...' : (editing() ? 'Update Address' : 'Add Address') }}
+              </button>
+              <button type="button" class="btn btn-ghost" (click)="cancelForm()">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    }
+
+  }
+</div>

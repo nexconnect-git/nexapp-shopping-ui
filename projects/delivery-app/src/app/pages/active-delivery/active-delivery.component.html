@@ -1,0 +1,175 @@
+<div class="page">
+  <div class="page-head">
+    <h1>Active Deliveries</h1>
+    <p>Manage your current deliveries</p>
+  </div>
+
+  @if (loading()) {
+    <div class="spinner-wrap">
+      <div class="spinner"></div>
+    </div>
+  } @else if (orders().length === 0) {
+    <div class="empty-state">
+      <span class="material-icons-outlined">delivery_dining</span>
+      <h3>No active deliveries</h3>
+      <p>Accept an available order to start your first delivery</p>
+    </div>
+  } @else {
+    <div class="deliveries-list">
+      @for (order of orders(); track order.id) {
+        <div class="delivery-card">
+          <!-- Card Header -->
+          <div class="card-header">
+            <div class="order-id-group">
+              <span class="order-num">#{{ order.order_number }}</span>
+            </div>
+            <span class="status-badge status-{{ order.status }}">{{ order.status | titlecase }}</span>
+          </div>
+
+          <!-- Status Progression -->
+          <div class="status-steps">
+            <div class="status-step" [class.done]="['picked_up','on_the_way','delivered'].includes(order.status)" [class.active]="order.status === 'ready'">
+              <div class="step-dot"></div>
+              <span class="step-label">Ready</span>
+            </div>
+            <div class="step-track" [class.done]="['on_the_way','delivered'].includes(order.status)"></div>
+            <div class="status-step" [class.done]="['on_the_way','delivered'].includes(order.status)" [class.active]="order.status === 'picked_up'">
+              <div class="step-dot"></div>
+              <span class="step-label">Picked Up</span>
+            </div>
+            <div class="step-track" [class.done]="order.status === 'delivered'"></div>
+            <div class="status-step" [class.done]="order.status === 'delivered'" [class.active]="order.status === 'on_the_way'">
+              <div class="step-dot"></div>
+              <span class="step-label">Delivered</span>
+            </div>
+          </div>
+
+          <!-- Route Visualization -->
+          <div class="route-visual">
+            <div class="route-line-col">
+              <span class="route-dot pickup"></span>
+              <span class="route-connector"></span>
+              <span class="route-dot dropoff"></span>
+            </div>
+            <div class="route-info-col">
+              <div class="route-point">
+                <span class="route-label">Pickup from</span>
+                <span class="route-address">{{ order.vendor_name }}</span>
+              </div>
+              <div class="route-point">
+                <span class="route-label">Deliver to</span>
+                <span class="route-address">{{ order.delivery_address.address_line1 }}, {{ order.delivery_address.city }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Items Chips -->
+          <div class="items-chips">
+            @for (item of order.items.slice(0, 3); track item.id) {
+              <span class="item-chip">{{ item.quantity }}x {{ item.product_name }}</span>
+            }
+            @if (order.items.length > 3) {
+              <span class="item-chip more">+{{ order.items.length - 3 }} more</span>
+            }
+          </div>
+
+          <!-- Card Footer -->
+          <div class="card-footer">
+            <div class="total-row">
+              <span class="total-label">Order Total</span>
+              <span class="total-amount">${{ order.total | number:'1.2-2' }}</span>
+            </div>
+
+            <div class="action-btns">
+              @if (order.status === 'ready') {
+                <button class="action-btn pickup-btn" (click)="updateStatus(order, 'picked_up')">
+                  <span class="material-icons-outlined">shopping_bag</span>
+                  Mark Picked Up
+                </button>
+              }
+              @if (order.status === 'picked_up') {
+                <button class="action-btn onway-btn" (click)="updateStatus(order, 'on_the_way')">
+                  <span class="material-icons-outlined">directions_bike</span>
+                  On the Way
+                </button>
+              }
+              @if (order.status === 'on_the_way') {
+                <button class="action-btn delivered-btn" (click)="openConfirmModal(order)">
+                  <span class="material-icons-outlined">task_alt</span>
+                  Mark Delivered
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- ============================================================
+     DELIVERY CONFIRMATION MODAL (OTP + Photo)
+     ============================================================ -->
+@if (confirmModalOrder()) {
+  <div class="modal-overlay" (click)="closeConfirmModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Confirm Delivery</h3>
+        <button class="modal-close" (click)="closeConfirmModal()">
+          <span class="material-icons-outlined">close</span>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <p class="modal-order-num">Order #{{ confirmModalOrder()!.order_number }}</p>
+
+        <div class="form-group">
+          <label class="form-label">Delivery OTP <span class="required">*</span></label>
+          <input
+            class="form-input"
+            type="text"
+            maxlength="6"
+            inputmode="numeric"
+            placeholder="Enter 6-digit OTP from customer"
+            [value]="confirmOtp()"
+            (input)="confirmOtp.set($any($event.target).value)" />
+          <p class="form-hint">Ask the customer for the OTP shown on their order page.</p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Delivery Photo <span class="optional">(optional)</span></label>
+          <label class="photo-upload-area">
+            <input type="file" accept="image/*" capture="environment" (change)="onPhotoSelected($event)" style="display:none" />
+            @if (confirmPhoto()) {
+              <span class="material-icons-outlined photo-icon done">check_circle</span>
+              <span class="photo-label">{{ confirmPhoto()!.name }}</span>
+            } @else {
+              <span class="material-icons-outlined photo-icon">add_a_photo</span>
+              <span class="photo-label">Tap to take/upload photo</span>
+            }
+          </label>
+        </div>
+
+        @if (confirmError()) {
+          <div class="modal-error">
+            <span class="material-icons-outlined">error_outline</span>
+            {{ confirmError() }}
+          </div>
+        }
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancel-modal" (click)="closeConfirmModal()" [disabled]="confirming()">Cancel</button>
+        <button class="btn-confirm-delivery" (click)="submitDelivery()" [disabled]="confirming()">
+          @if (confirming()) {
+            <span class="spinner spinner-sm"></span>
+            Confirming...
+          } @else {
+            <span class="material-icons-outlined">task_alt</span>
+            Confirm Delivery
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}

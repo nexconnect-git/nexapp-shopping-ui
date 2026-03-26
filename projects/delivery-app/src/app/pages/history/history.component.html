@@ -1,0 +1,56 @@
+<div class="page">
+  <div class="page-head">
+    <h1>Delivery History</h1>
+    <p>All your past deliveries</p>
+  </div>
+
+  @if (loading()) {
+    <div class="spinner-wrap">
+      <div class="spinner"></div>
+    </div>
+  } @else if (orders().length === 0) {
+    <div class="empty-state">
+      <span class="material-icons-outlined">history</span>
+      <h3>No deliveries yet</h3>
+      <p>Your completed and cancelled deliveries will appear here</p>
+    </div>
+  } @else {
+    <div class="history-list">
+      @for (order of orders(); track order.id) {
+        <div class="history-card">
+          <!-- Status Icon -->
+          <div class="status-icon" [class.delivered]="order.status === 'delivered'" [class.cancelled]="order.status === 'cancelled'">
+            @if (order.status === 'delivered') {
+              <span class="material-icons-outlined">check</span>
+            } @else {
+              <span class="material-icons-outlined">close</span>
+            }
+          </div>
+
+          <!-- Order Info -->
+          <div class="order-info">
+            <div class="order-top-row">
+              <span class="order-num">#{{ order.order_number }}</span>
+              <span class="history-badge badge-{{ order.status }}">{{ order.status | titlecase }}</span>
+            </div>
+            <p class="route-text">
+              <span class="material-icons-outlined" style="font-size:13px">store</span>
+              {{ order.vendor_name }}
+              <span class="material-icons-outlined" style="font-size:13px">arrow_forward</span>
+              {{ order.delivery_address.city }}
+            </p>
+            <p class="date-text">{{ order.placed_at | date:'MMM d, y · h:mm a' }}</p>
+          </div>
+
+          <!-- Earnings -->
+          <div class="earn-col">
+            <span class="earn-amount" [class.cancelled]="order.status === 'cancelled'">
+              {{ order.status === 'cancelled' ? '' : '+' }}${{ order.delivery_fee | number:'1.2-2' }}
+            </span>
+            <span class="earn-label">fee</span>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

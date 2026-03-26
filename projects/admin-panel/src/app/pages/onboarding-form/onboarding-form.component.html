@@ -1,0 +1,75 @@
+<div class="onboarding-page">
+
+  <!-- Breadcrumb -->
+  <nav class="breadcrumb">
+    <a [routerLink]="backPath" class="breadcrumb-link">
+      <span class="material-icons-outlined">arrow_back</span>
+      {{ backLabel }}
+    </a>
+    <span class="breadcrumb-sep">/</span>
+    <span class="breadcrumb-current">{{ pageTitle }}</span>
+  </nav>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">{{ pageTitle }}</h1>
+      <p class="page-subtitle">{{ pageSubtitle }}</p>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading data…</p>
+    </div>
+  }
+
+  <!-- Temp Password Success -->
+  @if (success() && tempPassword()) {
+    <div class="temp-password-card">
+      <div class="temp-password-icon">
+        <span class="material-icons-outlined">check_circle</span>
+      </div>
+      <h2 class="temp-password-title">Account Created Successfully</h2>
+      <p class="temp-password-desc">
+        A temporary password has been generated. Share it securely with the user — they will be required to set a new password on first login.
+      </p>
+      <div class="temp-password-box">
+        <span class="temp-password-label">Temporary Password</span>
+        <div class="temp-password-row">
+          <code class="temp-password-value">{{ tempPassword() }}</code>
+          <button class="copy-btn" (click)="copyTempPassword()">
+            <span class="material-icons-outlined">content_copy</span>
+            Copy
+          </button>
+        </div>
+      </div>
+      <div class="temp-password-warning">
+        <span class="material-icons-outlined">warning</span>
+        This password will not be shown again after you leave this page.
+      </div>
+      <button class="proceed-btn" (click)="proceedAfterPassword()">
+        Done — Go to List
+        <span class="material-icons-outlined">arrow_forward</span>
+      </button>
+    </div>
+  }
+
+  <!-- Stepper -->
+  @if (!loading() && !tempPassword()) {
+    <app-dynamic-stepper
+      [config]="stepperConfig"
+      [loading]="saving()"
+      [serverErrors]="errors()"
+      [success]="success()"
+      [prefillData]="prefillData()"
+      [isEditMode]="mode === 'vendor-edit'"
+      successMessage="Done!"
+      [successSubmessage]="mode === 'vendor-edit' ? 'Returning to vendor profile…' : 'Redirecting…'"
+      (submitForm)="onSubmit($event)"
+      (cancel)="onCancel()"
+    />
+  }
+</div>

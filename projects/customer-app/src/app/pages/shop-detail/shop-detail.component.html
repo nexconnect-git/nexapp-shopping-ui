@@ -1,0 +1,173 @@
+@if (loading()) {
+  <div class="loading-spinner" style="margin-top:4rem"></div>
+} @else if (!vendor()) {
+  <div class="empty-state container" style="margin-top:4rem">
+    <div class="empty-icon">&#128683;</div>
+    <h3>Shop not found</h3>
+    <a routerLink="/shops" class="btn btn-primary mt-2">Back to Shops</a>
+  </div>
+} @else {
+
+  <div class="shop-detail-page">
+
+    <!-- Hero banner -->
+    <div class="shop-hero">
+      <div class="shop-hero-banner"
+        [style.background-image]="vendor()!.banner ? 'url(' + vendor()!.banner + ')' : null">
+        @if (!vendor()!.banner) {
+          <div class="hero-gradient-fallback"></div>
+        }
+        <div class="hero-overlay"></div>
+      </div>
+
+      <div class="shop-hero-body">
+        <div class="shop-logo-wrap">
+          @if (vendor()!.logo) {
+            <img class="shop-logo" [src]="vendor()!.logo" [alt]="vendor()!.store_name">
+          } @else {
+            <div class="shop-logo shop-logo-placeholder">
+              {{ vendor()!.store_name[0] || 'S' }}
+            </div>
+          }
+        </div>
+
+        <div class="shop-hero-info">
+          <div class="shop-name-row">
+            <h1 class="shop-name">{{ vendor()!.store_name }}</h1>
+            <span class="shop-status" [class.closed]="!vendor()!.is_open">
+              {{ vendor()!.is_open ? 'Open' : 'Closed' }}
+            </span>
+          </div>
+          @if (vendor()!.description) {
+            <p class="shop-description">{{ vendor()!.description }}</p>
+          }
+          <div class="shop-meta-row">
+            @if (vendor()!.city) {
+              <span class="meta-chip">
+                <span class="material-icons-outlined">location_on</span>
+                {{ vendor()!.city }}{{ vendor()!.state ? ', ' + vendor()!.state : '' }}
+              </span>
+            }
+            @if (vendor()!.phone) {
+              <span class="meta-chip">
+                <span class="material-icons-outlined">phone</span>
+                {{ vendor()!.phone }}
+              </span>
+            }
+            @if (vendor()!.opening_time && vendor()!.closing_time) {
+              <span class="meta-chip">
+                <span class="material-icons-outlined">schedule</span>
+                {{ vendor()!.opening_time }} – {{ vendor()!.closing_time }}
+              </span>
+            }
+            @if (vendor()!.average_rating > 0) {
+              <span class="meta-chip rating-chip">
+                <span class="star-icon">&#9733;</span>
+                {{ vendor()!.average_rating | number:'1.1-1' }}
+                <span class="rating-sub">({{ vendor()!.total_ratings }})</span>
+              </span>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info cards row -->
+    <div class="info-cards">
+      <div class="info-card">
+        <div class="info-card-icon">
+          <span class="material-icons-outlined">location_on</span>
+        </div>
+        <div>
+          <p class="info-label">Address</p>
+          <p class="info-value">{{ vendor()!.address }}, {{ vendor()!.city }}</p>
+        </div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-icon">
+          <span class="material-icons-outlined">schedule</span>
+        </div>
+        <div>
+          <p class="info-label">Hours</p>
+          <p class="info-value">{{ vendor()!.opening_time }} – {{ vendor()!.closing_time }}</p>
+        </div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-icon">
+          <span class="material-icons-outlined">local_shipping</span>
+        </div>
+        <div>
+          <p class="info-label">Min. Order</p>
+          <p class="info-value">${{ vendor()!.min_order_amount }}</p>
+        </div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-icon">
+          <span class="material-icons-outlined">call</span>
+        </div>
+        <div>
+          <p class="info-label">Phone</p>
+          <p class="info-value">{{ vendor()!.phone || '—' }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Products section -->
+    <div class="products-section">
+      <div class="section-header">
+        <h2 class="section-title">
+          <span class="material-icons-outlined">inventory_2</span>
+          Products
+        </h2>
+        @if (products().length > 0) {
+          <span class="products-count">{{ products().length }} items</span>
+        }
+      </div>
+
+      @if (products().length === 0) {
+        <div class="empty-state">
+          <div class="empty-icon">&#128722;</div>
+          <h3>No products listed</h3>
+          <p>This shop hasn't added products yet.</p>
+        </div>
+      } @else {
+        <div class="products-grid">
+          @for (product of products(); track product.id) {
+            <a [routerLink]="['/product', product.id]" class="product-card">
+              <div class="product-image-wrap">
+                @if (product.primary_image) {
+                  <img [src]="product.primary_image" [alt]="product.name">
+                } @else {
+                  <div class="product-img-placeholder">
+                    <span class="material-icons-outlined">inventory_2</span>
+                  </div>
+                }
+                @if (product.discount_percentage > 0) {
+                  <span class="product-badge">-{{ product.discount_percentage }}%</span>
+                }
+                @if (!product.in_stock) {
+                  <div class="product-oos-overlay">Out of stock</div>
+                }
+              </div>
+              <div class="product-card-body">
+                <h4 class="product-card-name">{{ product.name }}</h4>
+                <div class="product-price-row">
+                  <span class="product-price">${{ product.price | number:'1.2-2' }}</span>
+                  @if (product.compare_price) {
+                    <span class="product-compare-price">${{ product.compare_price | number:'1.2-2' }}</span>
+                  }
+                </div>
+                @if (product.average_rating > 0) {
+                  <div class="product-rating">
+                    <span class="stars">{{ starsFor(product.average_rating) }}</span>
+                  </div>
+                }
+              </div>
+            </a>
+          }
+        </div>
+      }
+    </div>
+
+  </div>
+}

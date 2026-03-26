@@ -1,0 +1,104 @@
+<div>
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Notifications</h1>
+      <p class="page-subtitle">{{ total() }} total notifications sent</p>
+    </div>
+    <div class="filters">
+      <input class="filter-input" type="search" [(ngModel)]="search" (input)="onSearch()" placeholder="Search username, title...">
+      <select class="filter-input" [(ngModel)]="typeFilter" (change)="load()">
+        <option value="">All Types</option>
+        <option value="order_update">Order Update</option>
+        <option value="promo">Promo</option>
+        <option value="alert">Alert</option>
+        <option value="info">Info</option>
+      </select>
+      <button class="btn btn-primary" (click)="openSendModal()">Create New</button>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-panel"><div class="spinner"></div></div>
+  } @else if (notifications().length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon">&#128276;</div>
+      <h3>No notifications found</h3>
+      <p class="text-muted text-sm mt-2">Click 'Create New' to send the first notification.</p>
+    </div>
+  } @else {
+    <div class="table-card">
+      <div class="t-header">
+        <span>Type</span><span>Title</span><span>Message</span><span>Recipient</span><span>Sent At</span><span>Actions</span>
+      </div>
+      @for (n of notifications(); track n.id) {
+        <div class="t-row">
+          <span><span class="badge badge-{{ n.notification_type }}">{{ n.notification_type }}</span></span>
+          <span class="text-light">{{ n.title }}</span>
+          <span class="text-muted text-sm message-cell" [title]="n.message">{{ n.message }}</span>
+          <span>
+            @if (n.user) {
+              <span class="user-pill">{{ n.username || 'User #' + n.user }}</span>
+            } @else {
+              <span class="broadcast-pill">Broadcast</span>
+            }
+          </span>
+          <span class="text-muted text-sm">{{ n.created_at | date:'MMM d, hh:mm a' }}</span>
+          <div class="actions">
+            <button class="action-btn danger" (click)="deleteNotification(n.id)">Delete</button>
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (totalPages() > 1) {
+      <div class="pagination">
+        <button class="page-btn" [disabled]="page() === 1" (click)="setPage(page()-1)">&#8592;</button>
+        <span class="text-muted text-sm">{{ page() }} / {{ totalPages() }}</span>
+        <button class="page-btn" [disabled]="page() === totalPages()" (click)="setPage(page()+1)">&#8594;</button>
+      </div>
+    }
+  }
+
+  @if (showModal()) {
+    <div class="modal-backdrop" (click)="closeModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Send Notification</h2>
+          <button class="close-btn" (click)="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="input-label">Title *</label>
+            <input class="input-field" type="text" [(ngModel)]="newNotification().title" placeholder="E.g., Special Weekend Promo!">
+          </div>
+          <div class="form-group">
+            <label class="input-label">Message *</label>
+            <textarea class="input-field" rows="4" [(ngModel)]="newNotification().message" placeholder="Type notification content..."></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="input-label">Notification Type</label>
+              <select class="input-field" [(ngModel)]="newNotification().notification_type">
+                <option value="info">Info</option>
+                <option value="promo">Promo</option>
+                <option value="alert">Alert</option>
+                <option value="order_update">Order Update</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="input-label">Recipient (User ID, optional)</label>
+              <input class="input-field" type="number" [(ngModel)]="newNotification().user_id" placeholder="Leave blank for all users">
+              <span class="text-xs text-muted mt-1" style="font-size: 0.75rem;">Leave empty to broadcast to everyone.</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="closeModal()">Cancel</button>
+          <button class="btn btn-primary" [disabled]="sending() || !newNotification().title || !newNotification().message" (click)="sendNotification()">
+            {{ sending() ? 'Sending...' : 'Send Notification' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

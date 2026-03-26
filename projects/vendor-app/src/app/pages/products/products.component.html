@@ -1,0 +1,116 @@
+<div class="products-page fade-in">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1>Products</h1>
+      <p class="page-subtitle">Manage your store inventory</p>
+    </div>
+    <a routerLink="/products/new" class="btn-primary">
+      <span class="material-icons-outlined">add</span>
+      Add Product
+    </a>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading products...</p>
+    </div>
+  } @else if (products().length === 0) {
+    <div class="card">
+      <div class="empty-state">
+        <span class="material-icons-outlined">inventory_2</span>
+        <strong>No products yet</strong>
+        <p>Add your first product to start selling to customers.</p>
+        <a routerLink="/products/new" class="btn-primary" style="margin-top:0.5rem;">
+          <span class="material-icons-outlined">add</span>
+          Add Your First Product
+        </a>
+      </div>
+    </div>
+  } @else {
+    <div class="card">
+      <div class="card-header">
+        <div class="products-count">
+          <span class="badge badge-secondary">{{ products().length }} products</span>
+        </div>
+      </div>
+      <div class="table-wrapper" style="border:none;border-radius:0;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Category</th>
+              <th>Price</th>
+              <th>Stock</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (product of products(); track product.id) {
+              <tr>
+                <td>
+                  <div class="product-cell">
+                    <div class="product-thumb">
+                      @if (product.primary_image) {
+                        <img [src]="product.primary_image" [alt]="product.name">
+                      } @else {
+                        <div class="img-placeholder" style="width:44px;height:44px;">
+                          <span class="material-icons-outlined">image</span>
+                        </div>
+                      }
+                    </div>
+                    <div class="product-info">
+                      <span class="product-name">{{ product.name }}</span>
+                      @if (product.sku) {
+                        <span class="product-sku">SKU: {{ product.sku }}</span>
+                      }
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  @if (product.category) {
+                    <span class="badge badge-secondary">{{ product.category.name }}</span>
+                  } @else {
+                    <span class="text-muted">—</span>
+                  }
+                </td>
+                <td>
+                  <div class="price-cell">
+                    <span class="price-main">${{ product.price | number:'1.2-2' }}</span>
+                    @if (product.compare_price) {
+                      <span class="price-compare">${{ product.compare_price | number:'1.2-2' }}</span>
+                    }
+                  </div>
+                </td>
+                <td>
+                  <span [class]="product.in_stock ? 'stock-ok' : 'stock-out'">
+                    {{ product.stock }} {{ product.unit }}
+                  </span>
+                </td>
+                <td>
+                  <span [class]="product.is_available ? 'status-active' : 'status-inactive'">
+                    <span class="status-dot"></span>
+                    {{ product.is_available ? 'Active' : 'Inactive' }}
+                  </span>
+                </td>
+                <td>
+                  <div class="actions-cell">
+                    <a [routerLink]="['/products/edit', product.id]" class="btn-ghost btn-sm" title="Edit">
+                      <span class="material-icons-outlined">edit</span>
+                    </a>
+                    <button class="btn-ghost btn-sm danger-hover" (click)="deleteProduct(product)" title="Delete">
+                      <span class="material-icons-outlined">delete_outline</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>

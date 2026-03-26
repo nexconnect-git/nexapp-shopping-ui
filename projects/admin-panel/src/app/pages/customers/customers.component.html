@@ -1,0 +1,120 @@
+<div>
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Customers</h1>
+      <p class="page-subtitle">{{ total() }} registered customers</p>
+    </div>
+    <div class="filters">
+      <input class="filter-input" type="search" [(ngModel)]="search"
+        (input)="onSearch()" placeholder="Search by name, email, username...">
+      <select class="filter-input" [(ngModel)]="verifiedFilter" (change)="load()">
+        <option value="">All</option>
+        <option value="true">Verified</option>
+        <option value="false">Unverified</option>
+      </select>
+    </div>
+  </div>
+
+  <app-dynamic-table
+    [loading]="loading()"
+    [data]="customers()"
+    [columns]="tableColumns"
+    emptyMessage="No customers found"
+    emptySubMessage="Try adjusting your filters or wait for new registrations."
+    emptyIcon="people"
+    [totalItems]="total()"
+    [itemsPerPage]="20"
+    [page]="page()"
+    [clickableRows]="true"
+    (pageChange)="setPage($event)"
+    (rowClick)="goToProfile($event)"
+  >
+    <!-- Custom name column -->
+    <ng-template tableCell="name" let-c>
+      <div class="customer-link">
+        <span class="customer-thumb">{{ (c.first_name || c.username || '?')[0].toUpperCase() }}</span>
+        <span class="customer-name font-semibold">{{ c.first_name }} {{ c.last_name }}</span>
+      </div>
+    </ng-template>
+
+    <!-- Custom username column -->
+    <ng-template tableCell="username" let-c>
+      <span class="username">{{ c.username }}</span>
+    </ng-template>
+
+    <!-- Custom email column -->
+    <ng-template tableCell="email" let-c>
+      <span class="text-muted text-sm">{{ c.email }}</span>
+    </ng-template>
+
+    <!-- Custom phone column -->
+    <ng-template tableCell="phone" let-c>
+      <span class="text-muted text-sm">{{ c.phone || '—' }}</span>
+    </ng-template>
+
+    <!-- Custom verified column -->
+    <ng-template tableCell="verified" let-c>
+      <span class="badge" [class.badge-approved]="c.is_verified" [class.badge-rejected]="!c.is_verified">
+        {{ c.is_verified ? 'Verified' : 'Unverified' }}
+      </span>
+    </ng-template>
+
+    <!-- Custom actions column -->
+    <ng-template tableCell="actions" let-c>
+      <div class="actions" (click)="$event.stopPropagation()">
+        <button class="action-btn" (click)="openEdit(c)" title="Edit">
+          <span class="material-icons-outlined">edit</span>
+        </button>
+        <button class="action-btn danger" (click)="deleteCustomer(c)" title="Delete">
+          <span class="material-icons-outlined">delete_outline</span>
+        </button>
+      </div>
+    </ng-template>
+  </app-dynamic-table>
+</div>
+
+<!-- Edit Modal -->
+@if (showModal()) {
+  <div class="modal-backdrop" (click)="closeModal()"></div>
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Edit Customer</h2>
+      <button class="modal-close" (click)="closeModal()">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      @if (error()) { <div class="alert-error">{{ error() }}</div> }
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">First Name</label>
+          <input class="form-input" [(ngModel)]="form.first_name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Last Name</label>
+          <input class="form-input" [(ngModel)]="form.last_name">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" type="email" [(ngModel)]="form.email">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Phone</label>
+        <input class="form-input" [(ngModel)]="form.phone">
+      </div>
+      <div class="form-check">
+        <input type="checkbox" id="is_verified" [(ngModel)]="form.is_verified">
+        <label for="is_verified">Email Verified</label>
+      </div>
+      <div class="form-check">
+        <input type="checkbox" id="is_active" [(ngModel)]="form.is_active">
+        <label for="is_active">Account Active</label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeModal()">Cancel</button>
+      <button class="btn-primary" [disabled]="saving()" (click)="save()">
+        {{ saving() ? 'Saving...' : 'Update' }}
+      </button>
+    </div>
+  </div>
+}

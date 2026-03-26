@@ -1,0 +1,25 @@
+<div class="map-picker-wrap">
+  <div class="map-toolbar">
+    <button type="button" class="map-locate-btn" (click)="useMyLocation()" [disabled]="locating()">
+      <span class="material-icons-outlined">{{ locating() ? 'hourglass_empty' : 'my_location' }}</span>
+      {{ locating() ? 'Locating...' : 'Use my location' }}
+    </button>
+    @if (geocoding()) {
+      <span class="map-geocoding">
+        <span class="map-spinner"></span>
+        Detecting address...
+      </span>
+    }
+  </div>
+
+  <div #mapContainer class="map-container" [style.height]="height"></div>
+
+  @if (pickedAddress()) {
+    <div class="map-address-preview">
+      <span class="material-icons-outlined">location_on</span>
+      <span>{{ pickedAddress() }}</span>
+    </div>
+  } @else if (mapReady()) {
+    <p class="map-hint">Click on the map or drag the pin to select your location</p>
+  }
+</div>

@@ -1,0 +1,86 @@
+<div class="login-page">
+  <!-- Left Panel -->
+  <div class="login-left">
+    <div class="left-content">
+      <!-- Truck icon -->
+      <div class="brand-icon-wrap">
+        <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="1" y="3" width="15" height="13" rx="2"/>
+          <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
+          <circle cx="5.5" cy="18.5" r="2.5"/>
+          <circle cx="18.5" cy="18.5" r="2.5"/>
+        </svg>
+      </div>
+
+      <h1 class="left-heading">NexConnect Delivery</h1>
+      <p class="left-subtitle">Your delivery partner platform</p>
+
+      <!-- Feature bullets -->
+      <ul class="feature-list">
+        <li class="feature-item">
+          <span class="feature-icon material-icons-outlined">bolt</span>
+          <div>
+            <strong>Fast Payouts</strong>
+            <span>Get paid quickly after every delivery</span>
+          </div>
+        </li>
+        <li class="feature-item">
+          <span class="feature-icon material-icons-outlined">gps_fixed</span>
+          <div>
+            <strong>Live Tracking</strong>
+            <span>Real-time route guidance built in</span>
+          </div>
+        </li>
+        <li class="feature-item">
+          <span class="feature-icon material-icons-outlined">schedule</span>
+          <div>
+            <strong>Flexible Schedule</strong>
+            <span>Work whenever you choose</span>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Right Panel -->
+  <div class="login-right">
+    <div class="login-form-card">
+      <div class="form-card-header">
+        <h2>Partner Sign In</h2>
+        <p>Access your delivery dashboard</p>
+      </div>
+
+      @if (error()) {
+        <div class="error-msg">
+          <span class="material-icons-outlined">error_outline</span>
+          {{ error() }}
+        </div>
+      }
+
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" [(ngModel)]="username" placeholder="Enter your username" autocomplete="username">
+      </div>
+
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" [(ngModel)]="password" placeholder="Enter your password" autocomplete="current-password">
+      </div>
+
+      <button class="signin-btn" (click)="onLogin()" [disabled]="loading()">
+        @if (loading()) {
+          <span class="btn-spinner"></span>
+          Signing In...
+        } @else {
+          <span class="material-icons-outlined">login</span>
+          Sign in
+        }
+      </button>
+
+      <p class="admin-note">
+        <span class="material-icons-outlined">info</span>
+        Contact administrator for access
+      </p>
+    </div>
+  </div>
+</div>

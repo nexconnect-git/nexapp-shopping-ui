@@ -1,0 +1,157 @@
+<div>
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Products</h1>
+      <p class="page-subtitle">{{ total() }} products across all vendors</p>
+    </div>
+    <div class="header-actions">
+      <input class="search-input" type="search" [(ngModel)]="search"
+        (input)="onSearch()" placeholder="Search products...">
+      <button class="btn-primary" (click)="openCreate()">+ New Product</button>
+    </div>
+  </div>
+
+  <app-dynamic-table
+    [loading]="loading()"
+    [data]="products()"
+    [columns]="tableColumns"
+    emptyMessage="No products found"
+    emptySubMessage="There are no products matching your search or none have been created yet."
+    emptyIcon="shopping_cart"
+    [totalItems]="total()"
+    [itemsPerPage]="20"
+    [page]="page()"
+    (pageChange)="setPage($event)"
+  >
+    <!-- Custom product column -->
+    <ng-template tableCell="product" let-p>
+      <div class="product-cell">
+        <div class="product-thumb" style="width: 36px; height: 36px; border-radius: 8px; background: #E2E8F0; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #475569; font-size: 0.95rem; flex-shrink: 0; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);">{{ p.name[0] }}</div>
+        <span class="product-name" style="font-weight: 600; color: #0F172A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;" [title]="p.name">{{ p.name }}</span>
+      </div>
+    </ng-template>
+
+    <!-- Custom vendor column -->
+    <ng-template tableCell="vendor" let-p>
+      <span class="text-muted">{{ p.vendor_name }}</span>
+    </ng-template>
+
+    <!-- Custom category column -->
+    <ng-template tableCell="category" let-p>
+      <span class="text-muted text-sm">{{ p.category?.name || '—' }}</span>
+    </ng-template>
+
+    <!-- Custom price column -->
+    <ng-template tableCell="price" let-p>
+      <span class="price">${{ p.price | number:'1.2-2' }}</span>
+    </ng-template>
+
+    <!-- Custom stock column -->
+    <ng-template tableCell="stock" let-p>
+      <span [class]="p.in_stock ? 'stock-ok' : 'stock-out'">{{ p.stock }}</span>
+    </ng-template>
+
+    <!-- Custom status column -->
+    <ng-template tableCell="status" let-p>
+      <span class="badge" [class.active]="p.is_available" [class.inactive]="!p.is_available"
+        style="cursor:pointer" (click)="toggleAvailability(p)" title="Toggle Availability">
+        {{ p.is_available ? 'Active' : 'Inactive' }}
+      </span>
+    </ng-template>
+
+    <!-- Custom actions column -->
+    <ng-template tableCell="actions" let-p>
+      <div class="actions">
+        <button class="action-btn" (click)="openEdit(p)" title="Edit">
+          <span class="material-icons-outlined" style="font-size: 18px;">edit</span>
+        </button>
+        <button class="action-btn danger" (click)="delete(p)" title="Delete">
+          <span class="material-icons-outlined" style="font-size: 18px;">delete_outline</span>
+        </button>
+      </div>
+    </ng-template>
+  </app-dynamic-table>
+</div>
+
+<!-- Modal -->
+@if (showModal()) {
+  <div class="modal-backdrop" (click)="closeModal()"></div>
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h2>{{ editTarget() ? 'Edit Product' : 'New Product' }}</h2>
+      <button class="modal-close" (click)="closeModal()">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      @if (error()) { <div class="alert-error">{{ error() }}</div> }
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Name *</label>
+          <input class="form-input" [(ngModel)]="form.name" placeholder="Product name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">SKU</label>
+          <input class="form-input" [(ngModel)]="form.sku" placeholder="SKU">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea class="form-input" [(ngModel)]="form.description" rows="3"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Price *</label>
+          <input class="form-input" type="number" [(ngModel)]="form.price" min="0" step="0.01">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Compare Price</label>
+          <input class="form-input" type="number" [(ngModel)]="form.compare_price" min="0" step="0.01">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Stock</label>
+          <input class="form-input" type="number" [(ngModel)]="form.stock" min="0">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Unit</label>
+          <input class="form-input" [(ngModel)]="form.unit" placeholder="pcs, kg, etc.">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Weight</label>
+          <input class="form-input" [(ngModel)]="form.weight" placeholder="e.g. 500g">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select class="form-input" [(ngModel)]="form.category">
+            <option [ngValue]="null">— None —</option>
+            @for (cat of categories(); track cat.id) {
+              <option [ngValue]="cat.id">{{ cat.name }}</option>
+            }
+          </select>
+        </div>
+      </div>
+      @if (!editTarget()) {
+        <div class="form-group">
+          <label class="form-label">Vendor ID</label>
+          <input class="form-input" type="number" [(ngModel)]="form.vendor_id" placeholder="Vendor ID">
+        </div>
+      }
+      <div class="form-row form-checks">
+        <div class="form-check">
+          <input type="checkbox" id="is_available" [(ngModel)]="form.is_available">
+          <label for="is_available">Available</label>
+        </div>
+        <div class="form-check">
+          <input type="checkbox" id="is_featured" [(ngModel)]="form.is_featured">
+          <label for="is_featured">Featured</label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeModal()">Cancel</button>
+      <button class="btn-primary" [disabled]="saving()" (click)="save()">
+        {{ saving() ? 'Saving...' : (editTarget() ? 'Update' : 'Create') }}
+      </button>
+    </div>
+  </div>
+}

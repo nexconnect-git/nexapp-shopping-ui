@@ -1,0 +1,213 @@
+@if (loading()) {
+  <div class="loading-spinner" style="padding:5rem 0; text-align:center;">
+    <span class="spinner" style="width:40px;height:40px;border-width:4px;"></span>
+  </div>
+} @else if (!product()) {
+  <div class="empty-state container" style="padding-top:6rem">
+    <div class="empty-icon text-muted" style="font-size: 3rem; margin-bottom: 1rem;">
+      <span class="material-icons-outlined">sentiment_dissatisfied</span>
+    </div>
+    <h3 style="font-weight: 800; color: var(--text);">Product not found</h3>
+    <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">This product may have been removed or doesn't exist.</p>
+    <a routerLink="/products" class="btn btn-primary" style="font-weight: 700;">Back to Products</a>
+  </div>
+} @else {
+  <div class="product-detail-page">
+
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb">
+      <a routerLink="/products" class="breadcrumb-item">
+        <span class="material-icons-outlined">grid_view</span>
+        Products
+      </a>
+      <span class="breadcrumb-sep material-icons-outlined">chevron_right</span>
+      <a [routerLink]="['/shop', product()!.vendor?.id]" class="breadcrumb-item">
+        {{ product()!.vendor_name || 'Vendor' }}
+      </a>
+      <span class="breadcrumb-sep material-icons-outlined">chevron_right</span>
+      <span class="breadcrumb-current">{{ product()!.name }}</span>
+    </nav>
+
+    <!-- Main product layout -->
+    <div class="product-layout">
+
+      <!-- Gallery panel -->
+      <div class="gallery-panel">
+        <div class="main-image-wrap">
+          @if (product()!.discount_percentage > 0) {
+            <div class="gallery-discount-badge">-{{ product()!.discount_percentage }}%</div>
+          }
+          @if (selectedImage()) {
+            <img [src]="selectedImage()!" [alt]="product()!.name" class="gallery-main-img">
+          } @else {
+            <div class="gallery-placeholder">
+              <span class="material-icons-outlined">inventory_2</span>
+            </div>
+          }
+        </div>
+
+        @if (product()!.images?.length > 1) {
+          <div class="thumbnails-row">
+            @for (img of product()!.images; track img.id) {
+              <button class="thumb" [class.active]="selectedImage() === img.image"
+                (click)="selectedImage.set(img.image)">
+                <img [src]="img.image" [alt]="product()!.name">
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Info panel -->
+      <div class="info-panel">
+
+        <!-- Vendor pill -->
+        <a [routerLink]="['/shop', product()!.vendor?.id]" class="vendor-pill">
+          <span class="material-icons-outlined">storefront</span>
+          {{ product()!.vendor_name || 'Official Vendor' }}
+        </a>
+
+        <!-- Product name -->
+        <h1 class="detail-product-name">{{ product()!.name }}</h1>
+
+        <!-- Stars + review count -->
+        @if (product()!.average_rating > 0) {
+          <div class="detail-rating">
+            <span class="stars">{{ starsFor(product()!.average_rating) }}</span>
+            <span class="rating-value">{{ product()!.average_rating | number:'1.1-1' }} / 5.0</span>
+            <span class="rating-count">({{ product()!.total_ratings }} verified reviews)</span>
+          </div>
+        }
+
+        <!-- Price block -->
+        <div class="detail-price-section">
+          <span class="detail-price">${{ product()!.price | number:'1.2-2' }}</span>
+          @if (product()!.compare_price) {
+            <span class="detail-compare-price">${{ product()!.compare_price | number:'1.2-2' }}</span>
+          }
+        </div>
+
+        <!-- Stock badge -->
+        @if (!product()!.in_stock) {
+          <div class="stock-indicator out-of-stock">
+            <span class="material-icons-outlined">remove_shopping_cart</span>
+            Out of Stock
+          </div>
+        } @else {
+          <div class="stock-indicator in-stock">
+            <span class="material-icons-outlined">check_circle</span>
+            In Stock &mdash; {{ product()!.stock }} {{ product()!.unit }} ready to ship
+          </div>
+        }
+
+        <!-- Description -->
+        @if (product()!.description) {
+          <p class="detail-description">{{ product()!.description }}</p>
+        }
+
+        <!-- Qty + Add to Cart -->
+        @if (product()!.in_stock) {
+          <div class="detail-purchase">
+            <div class="qty-section">
+              <label class="qty-label">Select Quantity</label>
+              <div class="qty-control">
+                <button class="qty-btn" (click)="decQty()" [disabled]="qty <= 1">
+                  <span class="material-icons-outlined">remove</span>
+                </button>
+                <span class="qty-value">{{ qty }}</span>
+                <button class="qty-btn" (click)="incQty()" [disabled]="qty >= product()!.stock">
+                  <span class="material-icons-outlined">add</span>
+                </button>
+              </div>
+            </div>
+
+            @if (cartSuccess()) {
+              <div class="alert alert-success">
+                <span class="material-icons-outlined">check_circle</span>
+                Added to cart successfully!
+              </div>
+            }
+            @if (cartError()) {
+              <div class="alert alert-error">
+                <span class="material-icons-outlined">error</span>
+                {{ cartError() }}
+              </div>
+            }
+
+            <div class="detail-actions">
+              <button class="btn btn-primary detail-add-btn"
+                [disabled]="addingToCart()" (click)="addToCart()">
+                @if (addingToCart()) {
+                  <span class="spinner"></span> Processing...
+                } @else {
+                  <span class="material-icons-outlined">shopping_bag</span>
+                  Add to Cart
+                }
+              </button>
+              <a routerLink="/cart" class="btn btn-outline" style="border-width: 2px; font-weight: 700;">
+                <span class="material-icons-outlined">shopping_cart_checkout</span>
+                Checkout
+              </a>
+            </div>
+          </div>
+        }
+
+        <!-- Meta table -->
+        <div class="meta-table">
+          <div class="meta-row">
+            <span class="meta-key">Category</span>
+            <span class="meta-val">{{ product()!.category?.name || 'Accessories' }}</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-key">SKU Code</span>
+            <span class="meta-val">{{ product()!.sku || 'N/A' }}</span>
+          </div>
+          @if (product()!.weight) {
+            <div class="meta-row">
+              <span class="meta-key">Pack Weight</span>
+              <span class="meta-val">{{ product()!.weight }}</span>
+            </div>
+          }
+          <div class="meta-row">
+            <span class="meta-key">Sold By</span>
+            <span class="meta-val meta-val--link" [routerLink]="['/shop', product()!.vendor?.id]">
+              {{ product()!.vendor_name }}
+            </span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Reviews section — full width -->
+    @if (product()!.total_ratings > 0) {
+      <section class="reviews-section">
+        <h2 class="reviews-title">
+          <span class="material-icons-outlined">hotel_class</span>
+          Customer Reviews
+        </h2>
+
+        <div class="reviews-grid">
+          @for (review of reviews(); track review.id) {
+            <div class="review-card">
+              <div class="review-header">
+                <div class="reviewer-avatar">{{ (review.customer_name || 'C')[0].toUpperCase() }}</div>
+                <div class="reviewer-info">
+                  <span class="reviewer-name">{{ review.customer_name || 'Verified Buyer' }}</span>
+                  <span class="stars review-stars">
+                    {{ starsFor(review.rating) }}
+                    <span class="rating-num">{{ review.rating }}.0</span>
+                  </span>
+                </div>
+              </div>
+              @if (review.comment) {
+                <p class="review-body">{{ review.comment }}</p>
+              }
+            </div>
+          }
+        </div>
+      </section>
+    }
+
+  </div>
+}

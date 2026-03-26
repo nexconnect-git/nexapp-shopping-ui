@@ -1,0 +1,196 @@
+<!-- ============================================================
+     DESKTOP NAVBAR
+     ============================================================ -->
+<nav class="top-nav" [class.scrolled]="true">
+  <div class="top-nav-inner">
+
+    <!-- Logo -->
+    <a routerLink="/" class="nav-logo">
+      <span class="nav-logo-icon">
+        <span class="material-icons-outlined">bolt</span>
+      </span>
+      <span class="nav-logo-text">NexConnect</span>
+    </a>
+
+    <!-- Center links -->
+    <div class="nav-center-links">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" class="nav-link">
+        <span class="material-icons-outlined">home</span>
+        <span>Home</span>
+      </a>
+      <a routerLink="/shops" routerLinkActive="active" class="nav-link">
+        <span class="material-icons-outlined">storefront</span>
+        <span>Shops</span>
+      </a>
+      <a routerLink="/products" routerLinkActive="active" class="nav-link">
+        <span class="material-icons-outlined">grid_view</span>
+        <span>Products</span>
+      </a>
+    </div>
+
+    <!-- Right actions -->
+    <div class="nav-actions">
+      @if (auth.isLoggedIn()) {
+        <!-- Cart -->
+        <a routerLink="/cart" class="nav-icon-btn" title="Cart">
+          <span class="material-icons-outlined">shopping_cart</span>
+          @if (api.cartCount() > 0) {
+            <span class="nav-badge">{{ api.cartCount() > 9 ? '9+' : api.cartCount() }}</span>
+          }
+        </a>
+
+        <!-- Orders/Notifications -->
+        <a routerLink="/orders" class="nav-icon-btn" title="Orders" (click)="clearNotifBadge()">
+          <span class="material-icons-outlined">receipt_long</span>
+          @if (api.unreadNotifications() > 0) {
+            <span class="nav-badge">{{ api.unreadNotifications() > 9 ? '9+' : api.unreadNotifications() }}</span>
+          }
+        </a>
+
+        <!-- User menu -->
+        <div class="user-menu-wrapper">
+          <button class="user-avatar-btn" (click)="toggleUserMenu($event)" aria-label="Account menu">
+            <span class="user-avatar-circle">{{ userInitials() }}</span>
+          </button>
+
+          @if (userMenuOpen()) {
+            <div class="user-dropdown" role="menu">
+              <div class="dropdown-header">
+                <div class="dropdown-avatar">{{ userInitials() }}</div>
+                <div class="dropdown-user-info">
+                  <strong>{{ auth.user()?.first_name }} {{ auth.user()?.last_name }}</strong>
+                  <span>{{ auth.user()?.email }}</span>
+                </div>
+              </div>
+              <div class="dropdown-body">
+                <a routerLink="/profile" class="dropdown-item" (click)="toggleUserMenu()">
+                  <span class="dropdown-item-icon"><span class="material-icons-outlined">person</span></span>
+                  Profile
+                </a>
+                <a routerLink="/orders" class="dropdown-item" (click)="toggleUserMenu(); clearNotifBadge()">
+                  <span class="dropdown-item-icon"><span class="material-icons-outlined">receipt_long</span></span>
+                  My Orders
+                </a>
+                <a routerLink="/addresses" class="dropdown-item" (click)="toggleUserMenu()">
+                  <span class="dropdown-item-icon"><span class="material-icons-outlined">location_on</span></span>
+                  Addresses
+                </a>
+                <div class="dropdown-divider"></div>
+                <button class="dropdown-item danger" (click)="logout()">
+                  <span class="dropdown-item-icon"><span class="material-icons-outlined">logout</span></span>
+                  Sign Out
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <a routerLink="/login" class="btn btn-ghost btn-sm">Sign In</a>
+        <a routerLink="/register" class="btn btn-primary btn-sm">Get Started</a>
+      }
+    </div>
+  </div>
+</nav>
+
+<!-- ============================================================
+     MOBILE HEADER
+     ============================================================ -->
+<header class="mobile-header">
+  <div class="mobile-header-inner">
+    <a routerLink="/" class="nav-logo">
+      <span class="nav-logo-icon">
+        <span class="material-icons-outlined">bolt</span>
+      </span>
+      <span class="nav-logo-text">NexConnect</span>
+    </a>
+
+    <div class="mobile-header-actions">
+      @if (auth.isLoggedIn()) {
+        <a routerLink="/cart" class="nav-icon-btn" title="Cart">
+          <span class="material-icons-outlined">shopping_cart</span>
+          @if (api.cartCount() > 0) {
+            <span class="nav-badge">{{ api.cartCount() > 9 ? '9+' : api.cartCount() }}</span>
+          }
+        </a>
+        <button class="user-avatar-btn" (click)="toggleUserMenu($event)" aria-label="Account menu">
+          <span class="user-avatar-circle">{{ userInitials() }}</span>
+        </button>
+        @if (userMenuOpen()) {
+          <div class="user-dropdown mobile-dropdown" role="menu">
+            <div class="dropdown-header">
+              <div class="dropdown-avatar">{{ userInitials() }}</div>
+              <div class="dropdown-user-info">
+                <strong>{{ auth.user()?.first_name }} {{ auth.user()?.last_name }}</strong>
+                <span>{{ auth.user()?.email }}</span>
+              </div>
+            </div>
+            <div class="dropdown-body">
+              <a routerLink="/profile" class="dropdown-item" (click)="toggleUserMenu()">
+                <span class="dropdown-item-icon"><span class="material-icons-outlined">person</span></span>
+                Profile
+              </a>
+              <a routerLink="/orders" class="dropdown-item" (click)="toggleUserMenu(); clearNotifBadge()">
+                <span class="dropdown-item-icon"><span class="material-icons-outlined">receipt_long</span></span>
+                My Orders
+              </a>
+              <a routerLink="/addresses" class="dropdown-item" (click)="toggleUserMenu()">
+                <span class="dropdown-item-icon"><span class="material-icons-outlined">location_on</span></span>
+                Addresses
+              </a>
+              <div class="dropdown-divider"></div>
+              <button class="dropdown-item danger" (click)="logout()">
+                <span class="dropdown-item-icon"><span class="material-icons-outlined">logout</span></span>
+                Sign Out
+              </button>
+            </div>
+          </div>
+        }
+      } @else {
+        <a routerLink="/login" class="btn btn-primary btn-sm">Sign In</a>
+      }
+    </div>
+  </div>
+</header>
+
+<!-- ============================================================
+     MAIN CONTENT
+     ============================================================ -->
+<main class="main-content">
+  <router-outlet />
+</main>
+
+<!-- ============================================================
+     MOBILE BOTTOM NAV
+     ============================================================ -->
+<nav class="bottom-nav">
+  <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" class="nav-tab">
+    <span class="material-icons-outlined">home</span>
+    <span>Home</span>
+  </a>
+  <a routerLink="/shops" routerLinkActive="active" class="nav-tab">
+    <span class="material-icons-outlined">explore</span>
+    <span>Explore</span>
+  </a>
+  <a routerLink="/cart" routerLinkActive="active" class="nav-tab cart-tab">
+    <span class="material-icons-outlined">shopping_cart</span>
+    <span>Cart</span>
+    @if (api.cartCount() > 0) {
+      <span class="nav-badge cart-badge">{{ api.cartCount() > 9 ? '9+' : api.cartCount() }}</span>
+    }
+  </a>
+  <a routerLink="/orders" routerLinkActive="active" class="nav-tab" (click)="clearNotifBadge()">
+    <span class="material-icons-outlined">receipt_long</span>
+    <span>Orders</span>
+  </a>
+  @if (auth.isLoggedIn()) {
+    <a routerLink="/profile" routerLinkActive="active" class="nav-tab">
+      <span class="material-icons-outlined">person</span>
+      <span>Profile</span>
+    </a>
+  } @else {
+    <a routerLink="/login" routerLinkActive="active" class="nav-tab">
+      <span class="material-icons-outlined">login</span>
+      <span>Sign In</span>
+    </a>
+  }
+</nav>

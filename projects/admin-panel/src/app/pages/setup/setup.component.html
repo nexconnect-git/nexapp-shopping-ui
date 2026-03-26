@@ -1,0 +1,57 @@
+<div class="setup-container">
+  <div class="glass-card setup-card">
+    
+    <div class="brand">
+      <div class="brand-icon">N</div>
+      <span class="brand-text">NexConnect</span>
+    </div>
+
+    <div *ngIf="isLoading" class="loading-state">
+      <div class="spinner"></div>
+      <p>Verifying system status...</p>
+    </div>
+
+    <div *ngIf="!isLoading">
+      <h1 class="title">Initial System Setup</h1>
+      <p class="subtitle">Welcome to NexConnect! Create your primary superuser account to get started.</p>
+
+      <div class="alert alert-danger" *ngIf="errorMsg">
+        <i class="fi fi-rr-exclamation"></i>
+        <span>{{ errorMsg }}</span>
+      </div>
+
+      <form [formGroup]="setupForm" (ngSubmit)="onSubmit()" class="setup-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label>First Name</label>
+            <input type="text" formControlName="first_name" class="form-control" placeholder="Admin First Name">
+          </div>
+          <div class="form-group">
+            <label>Last Name</label>
+            <input type="text" formControlName="last_name" class="form-control" placeholder="Admin Last Name">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" formControlName="email" class="form-control" placeholder="admin@example.com">
+        </div>
+
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" formControlName="username" class="form-control" placeholder="admin">
+        </div>
+
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" formControlName="password" class="form-control" placeholder="Secure password (min 8 chars)">
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block" [disabled]="setupForm.invalid || isSubmitting">
+          <span class="spinner-small" *ngIf="isSubmitting"></span>
+          {{ isSubmitting ? 'Creating Account & Logging In...' : 'Create Superuser & Initial Setup' }}
+        </button>
+      </form>
+    </div>
+  </div>
+</div>

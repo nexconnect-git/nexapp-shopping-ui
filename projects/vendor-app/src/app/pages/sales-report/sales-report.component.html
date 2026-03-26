@@ -1,0 +1,120 @@
+<div class="sales-report-page fade-in">
+  <div class="page-header">
+    <div>
+      <h1>Sales Report</h1>
+      <p class="page-subtitle">Analyze your business performance</p>
+    </div>
+    <div class="header-actions">
+      <select class="form-select" [ngModel]="dateRange()" (ngModelChange)="dateRange.set($event); onRangeChange()">
+        <option value="7">Last 7 Days</option>
+        <option value="30">Last 30 Days</option>
+        <option value="90">Last 90 Days</option>
+        <option value="all">All Time</option>
+      </select>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading your sales data...</p>
+    </div>
+  } @else if (errorMsg()) {
+    <div class="alert alert-danger">
+      <span class="material-icons-outlined">error_outline</span> {{ errorMsg() }}
+    </div>
+  } @else {
+    <div class="report-grid">
+      
+      <!-- Key Metrics -->
+      <div class="metrics-row">
+        <div class="metric-card">
+          <div class="metric-icon primary"><span class="material-icons-outlined">attach_money</span></div>
+          <div class="metric-info">
+            <span class="label">Total Revenue</span>
+            <span class="value">${{ stats()?.total_revenue | number:'1.2-2' }}</span>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon success"><span class="material-icons-outlined">shopping_cart</span></div>
+          <div class="metric-info">
+            <span class="label">Total Orders</span>
+            <span class="value">{{ stats()?.total_orders }}</span>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon info"><span class="material-icons-outlined">analytics</span></div>
+          <div class="metric-info">
+            <span class="label">Avg Order Value</span>
+            <span class="value">${{ stats()?.average_order_value | number:'1.2-2' }}</span>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon warning"><span class="material-icons-outlined">check_circle</span></div>
+          <div class="metric-info">
+            <span class="label">Delivered Orders</span>
+            <span class="value">{{ stats()?.delivered_orders }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Products and Chart area -->
+      <div class="dashboard-widgets">
+        <div class="widget-card full-width">
+          <div class="widget-header">
+            <h3>Monthly Trend</h3>
+          </div>
+          <div class="widget-body">
+            @if (stats()?.monthly_data?.length) {
+              <div class="trend-chart-placeholder">
+                <div class="bars">
+                  @for (month of stats().monthly_data; track month.month) {
+                    <div class="bar-col">
+                      <!-- max bar height 150px representing max value roughly -->
+                      <div class="bar" [style.height.px]="mathMax(10, month.revenue / stats().total_revenue * 300)"></div>
+                      <span class="bar-label">{{ month.month | date:'MMM' }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            } @else {
+              <div class="empty-state">No trend data available for this range.</div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Products Table -->
+      <div class="widget-card">
+        <div class="widget-header">
+          <h3>Top Selling Products</h3>
+        </div>
+        <div class="widget-body p-0">
+          @if (stats()?.top_products?.length) {
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th class="text-right">Units Sold</th>
+                  <th class="text-right">Revenue</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (prod of stats().top_products; track prod.product_id) {
+                  <tr>
+                    <td>{{ prod.name }}</td>
+                    <td class="text-right">{{ prod.total_sold }}</td>
+                    <td class="text-right">${{ prod.revenue | number:'1.2-2' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          } @else {
+            <div class="empty-state p-4">No product sales yet.</div>
+          }
+        </div>
+      </div>
+      
+    </div>
+  }
+</div>

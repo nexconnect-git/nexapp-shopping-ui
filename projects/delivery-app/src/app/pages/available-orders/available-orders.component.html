@@ -1,0 +1,98 @@
+<div class="page">
+  <!-- Page Header -->
+  <div class="page-head">
+    <div>
+      <h1>Available Orders</h1>
+      <p>New delivery requests near you</p>
+    </div>
+    <button class="refresh-btn" (click)="load()" [disabled]="loading()">
+      <span class="material-icons-outlined">refresh</span>
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="spinner-wrap">
+      <div class="spinner"></div>
+    </div>
+  } @else if (orders().length === 0) {
+    <div class="empty-state">
+      <span class="material-icons-outlined">local_shipping</span>
+      <h3>No available orders</h3>
+      <p>Check back soon for new delivery requests in your area</p>
+      <button class="btn-outline-refresh" (click)="load()">
+        <span class="material-icons-outlined">refresh</span>
+        Refresh
+      </button>
+    </div>
+  } @else {
+    <p class="pull-hint">
+      <span class="material-icons-outlined">expand_more</span>
+      Pull to refresh for latest orders
+    </p>
+
+    <div class="orders-list">
+      @for (order of orders(); track order.id) {
+        <div class="order-card">
+          <!-- Card Top Row -->
+          <div class="order-top">
+            <div class="order-id-row">
+              <span class="order-num">#{{ order.order_number }}</span>
+              @if (order.distance_km) {
+                <span class="distance-pill">
+                  <span class="material-icons-outlined">near_me</span>
+                  {{ order.distance_km | number:'1.1-1' }} km
+                </span>
+              }
+            </div>
+            <span class="delivery-fee">${{ order.delivery_fee | number:'1.2-2' }}</span>
+          </div>
+
+          <!-- Route Visualization -->
+          <div class="route-visual">
+            <div class="route-line-col">
+              <span class="route-dot pickup"></span>
+              <span class="route-connector"></span>
+              <span class="route-dot dropoff"></span>
+            </div>
+            <div class="route-info-col">
+              <div class="route-point">
+                <span class="route-label">Pickup</span>
+                <span class="route-address">{{ order.vendor_name }}</span>
+              </div>
+              <div class="route-point">
+                <span class="route-label">Dropoff</span>
+                <span class="route-address">{{ order.delivery_address.address_line1 }}, {{ order.delivery_address.city }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Meta -->
+          <div class="order-meta">
+            <span class="meta-chip">
+              <span class="material-icons-outlined">inventory_2</span>
+              {{ order.items.length }} item(s)
+            </span>
+            <span class="meta-chip">
+              <span class="material-icons-outlined">receipt</span>
+              Order: ${{ order.total | number:'1.2-2' }}
+            </span>
+          </div>
+
+          <!-- Accept Button -->
+          <button
+            class="accept-btn"
+            [disabled]="acceptingId() === order.id"
+            (click)="accept(order)">
+            @if (acceptingId() === order.id) {
+              <span class="spinner spinner-sm"></span>
+              Accepting...
+            } @else {
+              <span class="material-icons-outlined">check_circle</span>
+              Accept Delivery
+            }
+          </button>
+        </div>
+      }
+    </div>
+  }
+</div>

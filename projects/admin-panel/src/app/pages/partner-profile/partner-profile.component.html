@@ -1,0 +1,264 @@
+<div class="partner-profile-page">
+
+  <!-- Breadcrumb -->
+  <nav class="breadcrumb">
+    <a routerLink="/delivery-partners" class="breadcrumb-link">
+      <span class="material-icons-outlined">arrow_back</span>
+      Delivery Partners
+    </a>
+    @if (!loading() && partner()) {
+      <span class="breadcrumb-sep">/</span>
+      <span class="breadcrumb-current">{{ partner().user?.first_name || partner().user?.username }}</span>
+    }
+  </nav>
+
+  @if (loading()) {
+    <div class="loading-state"><div class="spinner"></div><p>Loading partner…</p></div>
+  }
+
+  @if (!loading() && partner()) {
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">{{ partner().user?.first_name }} {{ partner().user?.last_name }}</h1>
+        <p class="page-subtitle">&#64;{{ partner().user?.username }} &bull; {{ partner().vehicle_type | titlecase }} delivery</p>
+      </div>
+      <div class="header-actions">
+        <a class="btn btn-secondary" [routerLink]="['/delivery-partners/onboard']">
+          <span class="material-icons-outlined">edit</span>
+          Edit
+        </a>
+        @if (!partner().is_approved) {
+          <button class="btn btn-success" [disabled]="actionLoading()" (click)="approve()">
+            <span class="material-icons-outlined">check_circle</span>
+            Approve
+          </button>
+        } @else {
+          <button class="btn btn-danger" [disabled]="actionLoading()" (click)="revoke()">
+            <span class="material-icons-outlined">cancel</span>
+            Revoke
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Hero Card -->
+    <div class="profile-hero-card">
+      <div class="hero-banner"></div>
+      <div class="hero-body">
+        <div class="hero-avatar-wrap">
+          <div class="hero-avatar" [style.background]="avatarColor(partner().user?.username || 'D')">
+            {{ (partner().user?.first_name || partner().user?.username || 'D')[0].toUpperCase() }}
+          </div>
+        </div>
+
+        <div class="hero-info">
+          <div class="hero-info-top">
+            <span class="badge" [class]="statusBadge(partner().status)">{{ partner().status }}</span>
+            <span class="badge" [class.badge-approved]="partner().is_approved" [class.badge-pending]="!partner().is_approved">
+              {{ partner().is_approved ? 'Approved' : 'Pending' }}
+            </span>
+          </div>
+          <div class="hero-meta-row">
+            @if (partner().user?.email) {
+              <span class="hero-meta-item">
+                <span class="material-icons-outlined">mail</span>
+                {{ partner().user?.email }}
+              </span>
+            }
+            @if (partner().user?.phone) {
+              <span class="hero-meta-item">
+                <span class="material-icons-outlined">phone</span>
+                {{ partner().user?.phone }}
+              </span>
+            }
+            <span class="hero-meta-item">
+              <span class="material-icons-outlined">two_wheeler</span>
+              {{ partner().vehicle_type | titlecase }} &bull; {{ partner().vehicle_number || 'No plate' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <span class="hero-stat-value">{{ starsFor(partner().average_rating || 0) }}</span>
+            <span class="hero-stat-label">Rating</span>
+          </div>
+          <div class="hero-stat-divider"></div>
+          <div class="hero-stat">
+            <span class="hero-stat-value">{{ partner().total_deliveries || 0 }}</span>
+            <span class="hero-stat-label">Deliveries</span>
+          </div>
+          <div class="hero-stat-divider"></div>
+          <div class="hero-stat">
+            <span class="hero-stat-value">{{ partner().average_rating | number: '1.1-1' }}</span>
+            <span class="hero-stat-label">Avg Rating</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Strip -->
+    <div class="tab-strip">
+      <button class="tab-btn" [class.active]="activeTab() === 'overview'" (click)="setTab('overview')">
+        <span class="material-icons-outlined">person</span>
+        Overview
+      </button>
+      <button class="tab-btn" [class.active]="activeTab() === 'deliveries'" (click)="setTab('deliveries')">
+        <span class="material-icons-outlined">local_shipping</span>
+        Deliveries
+      </button>
+      <button class="tab-btn" [class.active]="activeTab() === 'assets'" (click)="setTab('assets')">
+        <span class="material-icons-outlined">handyman</span>
+        Assigned Assets
+      </button>
+    </div>
+
+    <!-- Tab: Overview -->
+    @if (activeTab() === 'overview') {
+      <div class="tab-content fade-in">
+        <div class="info-grid">
+          <!-- Account Details -->
+          <div class="info-card">
+            <h3 class="info-card-title">
+              <span class="material-icons-outlined">person</span>
+              Account Details
+            </h3>
+            <div class="info-rows">
+              <div class="info-row">
+                <span class="info-label">Name</span>
+                <span class="info-value">{{ partner().user?.first_name }} {{ partner().user?.last_name }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Username</span>
+                <span class="info-value">{{ partner().user?.username }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Email</span>
+                <span class="info-value">{{ partner().user?.email || '—' }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Phone</span>
+                <span class="info-value">{{ partner().user?.phone || '—' }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Status</span>
+                <span class="info-value"><span class="badge" [class]="statusBadge(partner().status)">{{ partner().status }}</span></span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Approved</span>
+                <span class="info-value" [class.text-success]="partner().is_approved" [class.text-danger]="!partner().is_approved">
+                  {{ partner().is_approved ? 'Yes' : 'No' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Vehicle Details -->
+          <div class="info-card">
+            <h3 class="info-card-title">
+              <span class="material-icons-outlined">two_wheeler</span>
+              Vehicle Details
+            </h3>
+            <div class="info-rows">
+              <div class="info-row">
+                <span class="info-label">Vehicle Type</span>
+                <span class="info-value">{{ partner().vehicle_type | titlecase }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Vehicle Number</span>
+                <span class="info-value">{{ partner().vehicle_number || '—' }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">License Number</span>
+                <span class="info-value">{{ partner().license_number || '—' }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Total Deliveries</span>
+                <span class="info-value">{{ partner().total_deliveries || 0 }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Average Rating</span>
+                <span class="info-value">{{ partner().average_rating | number: '1.1-1' }} / 5</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Tab: Deliveries -->
+    @if (activeTab() === 'deliveries') {
+      <div class="tab-content fade-in">
+        <div class="tab-filters">
+          <select class="filter-select" [(ngModel)]="deliveriesStatusFilter" (change)="changeDeliveriesFilter()">
+            <option value="">All Status</option>
+            <option value="picked_up">Picked Up</option>
+            <option value="on_the_way">On the Way</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+        <app-dynamic-table
+          [loading]="deliveriesLoading()"
+          [data]="deliveries()"
+          [columns]="deliveryColumns"
+          emptyMessage="No deliveries found"
+          emptyIcon="local_shipping"
+          [totalItems]="deliveriesTotal()"
+          [itemsPerPage]="20"
+          [page]="deliveriesPage()"
+          (pageChange)="changeDeliveriesPage($event)"
+        >
+          <ng-template tableCell="order_number" let-o>
+            <span class="font-mono text-sm">{{ o.order_number }}</span>
+          </ng-template>
+          <ng-template tableCell="customer" let-o>
+            <span class="text-sm">{{ o.customer_name || '—' }}</span>
+          </ng-template>
+          <ng-template tableCell="vendor" let-o>
+            <span class="text-sm">{{ o.vendor_name || '—' }}</span>
+          </ng-template>
+          <ng-template tableCell="total" let-o>
+            <span class="font-medium">₦{{ o.total | number }}</span>
+          </ng-template>
+          <ng-template tableCell="status" let-o>
+            <span class="badge" [class]="orderStatusBadge(o.status)">{{ o.status }}</span>
+          </ng-template>
+          <ng-template tableCell="placed_at" let-o>
+            <span class="text-muted text-sm">{{ o.placed_at | date: 'MMM d, y' }}</span>
+          </ng-template>
+        </app-dynamic-table>
+      </div>
+    }
+
+    <!-- Tab: Assets -->
+    @if (activeTab() === 'assets') {
+      <div class="tab-content fade-in">
+        <app-dynamic-table
+          [loading]="assetsLoading()"
+          [data]="assets()"
+          [columns]="assetColumns"
+          emptyMessage="No assets assigned"
+          emptySubMessage="Assets can be assigned from the Assets management page."
+          emptyIcon="handyman"
+        >
+          <ng-template tableCell="name" let-a>
+            <span class="font-medium">{{ a.name }}</span>
+          </ng-template>
+          <ng-template tableCell="asset_type" let-a>
+            <span class="text-sm text-muted">{{ a.asset_type | titlecase }}</span>
+          </ng-template>
+          <ng-template tableCell="serial_number" let-a>
+            <span class="font-mono text-sm">{{ a.serial_number || '—' }}</span>
+          </ng-template>
+          <ng-template tableCell="status" let-a>
+            <span class="badge" [class]="assetStatusBadge(a.status)">{{ a.status }}</span>
+          </ng-template>
+        </app-dynamic-table>
+      </div>
+    }
+  }
+</div>

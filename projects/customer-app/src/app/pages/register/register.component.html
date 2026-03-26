@@ -1,0 +1,96 @@
+<div class="auth-page">
+  <!-- Left panel: gradient branding (hidden on mobile) -->
+  <div class="auth-left">
+    <div class="auth-left-inner">
+      <div class="auth-brand">
+        <span class="brand-icon">&#9889;</span>
+        <span class="brand-name">NexConnect</span>
+      </div>
+      <h2 class="auth-left-headline">Join NexConnect</h2>
+      <p class="auth-left-sub">Shop from hundreds of local vendors and get everything delivered fast.</p>
+      <ul class="feature-list">
+        <li class="feature-item">
+          <span class="feature-icon">
+            <span class="material-icons-outlined">storefront</span>
+          </span>
+          500+ Local Vendors
+        </li>
+        <li class="feature-item">
+          <span class="feature-icon">
+            <span class="material-icons-outlined">local_shipping</span>
+          </span>
+          Fast Delivery
+        </li>
+        <li class="feature-item">
+          <span class="feature-icon">
+            <span class="material-icons-outlined">gps_fixed</span>
+          </span>
+          Track in Real Time
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Right panel: form -->
+  <div class="auth-right">
+    <div class="auth-card">
+      <div class="auth-header">
+        <span class="logo-icon">&#9889;</span>
+        <div class="auth-breadcrumb">Create Account</div>
+        <p class="auth-subtitle">Fill in your details to get started</p>
+      </div>
+
+      @if (error()) {
+        <div class="alert-error">{{ error() }}</div>
+      }
+
+      <form (ngSubmit)="onRegister()">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">First Name</label>
+            <input class="form-input" type="text" [(ngModel)]="form.first_name" name="first_name"
+              placeholder="First name" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Last Name</label>
+            <input class="form-input" type="text" [(ngModel)]="form.last_name" name="last_name"
+              placeholder="Last name" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input class="form-input" type="text" [(ngModel)]="form.username" name="username"
+            placeholder="Choose a username" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" type="email" [(ngModel)]="form.email" name="email"
+            placeholder="your@email.com" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Phone</label>
+          <input class="form-input" type="tel" [(ngModel)]="form.phone" name="phone"
+            placeholder="+1234567890">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input class="form-input" type="password" [(ngModel)]="form.password" name="password"
+            placeholder="Create a password" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block" [disabled]="loading()">
+          @if (loading()) { <span class="spinner"></span> Creating account... }
+          @else { Create Account }
+        </button>
+      </form>
+
+      <p class="auth-footer">
+        Already have an account? <a routerLink="/login">Sign in</a>
+      </p>
+    </div>
+  </div>
+</div>

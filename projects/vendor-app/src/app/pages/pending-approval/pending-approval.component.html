@@ -1,0 +1,63 @@
+<div class="pending-page">
+  <div class="pending-card">
+    <div class="brand">
+      <span class="material-icons-outlined brand-icon">storefront</span>
+      <span class="brand-name">NexConnect</span>
+    </div>
+
+    @if (loading()) {
+      <div class="spinner-wrap"><div class="spinner"></div></div>
+    } @else {
+      <div class="status-icon" [class]="'status-icon--' + status()">
+        @if (status() === 'pending') {
+          <span class="material-icons-outlined">hourglass_top</span>
+        } @else if (status() === 'rejected') {
+          <span class="material-icons-outlined">cancel</span>
+        } @else if (status() === 'suspended') {
+          <span class="material-icons-outlined">block</span>
+        } @else {
+          <span class="material-icons-outlined">check_circle</span>
+        }
+      </div>
+
+      <h1 class="title">{{ statusLabel }}</h1>
+
+      @if (storeName()) {
+        <p class="store-name">{{ storeName() }}</p>
+      }
+
+      <p class="message">{{ statusMessage }}</p>
+
+      <div class="status-badge status-badge--{{ status() }}">
+        Account Status: <strong>{{ statusLabel }}</strong>
+      </div>
+
+      @if (status() === 'pending') {
+        <div class="info-list">
+          <div class="info-item">
+            <span class="material-icons-outlined">check</span>
+            <span>Store details submitted</span>
+          </div>
+          <div class="info-item info-item--waiting">
+            <span class="material-icons-outlined">schedule</span>
+            <span>Admin review in progress</span>
+          </div>
+          <div class="info-item info-item--pending">
+            <span class="material-icons-outlined">lock_open</span>
+            <span>Access granted upon approval</span>
+          </div>
+        </div>
+        <p class="poll-note">This page checks for updates automatically every 30 seconds.</p>
+      }
+
+      @if (status() === 'rejected' || status() === 'suspended') {
+        <a href="mailto:support@nexconnect.com" class="btn btn-outline">Contact Support</a>
+      }
+
+      <button class="btn btn-logout" (click)="logout()">
+        <span class="material-icons-outlined">logout</span>
+        Sign Out
+      </button>
+    }
+  </div>
+</div>

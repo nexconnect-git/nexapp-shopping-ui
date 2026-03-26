@@ -1,0 +1,121 @@
+<div class="payouts-page fade-in">
+  <div class="page-header">
+    <div>
+      <h1>Payout Analysis &amp; Processing</h1>
+      <p class="page-subtitle">Manage settlements for vendors and delivery partners</p>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs-nav">
+    <button class="tab-btn" [class.active]="activeTab() === 'vendors'" (click)="setTab('vendors')">
+      <span class="material-icons-outlined">storefront</span> Vendor Payouts
+    </button>
+    <button class="tab-btn" [class.active]="activeTab() === 'delivery'" (click)="setTab('delivery')">
+      <span class="material-icons-outlined">two_wheeler</span> Delivery Payouts
+    </button>
+  </div>
+
+  @if (errorMsg()) {
+    <div class="alert alert-danger mb-4">
+      <span class="material-icons-outlined">error_outline</span> {{ errorMsg() }}
+    </div>
+  }
+
+  <div class="payout-layout">
+    <!-- Payout List -->
+    <div class="card payout-list-card">
+      <div class="card-header">
+        <h3>{{ activeTab() === 'vendors' ? 'Vendor Settlements' : 'Delivery Partner Earnings' }}</h3>
+      </div>
+      <div class="card-body p-0">
+        @if (loading()) {
+          <div class="p-4 text-center text-muted">Loading payouts...</div>
+        } @else if (payouts().length === 0) {
+          <div class="p-4 text-center text-muted">No payouts found.</div>
+        } @else {
+          <table class="table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>{{ activeTab() === 'vendors' ? 'Vendor ID' : 'Partner ID' }}</th>
+                <th>Period</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (payout of payouts(); track payout.id) {
+                <tr>
+                  <td class="text-muted"><small>{{ payout.id.split('-')[0] }}</small></td>
+                  <td>{{ activeTab() === 'vendors' ? payout.vendor : payout.delivery_partner }}</td>
+                  <td>{{ payout.period_start | date:'MMM d' }} - {{ payout.period_end | date:'MMM d' }}</td>
+                  <td>
+                    <strong>${{ (activeTab() === 'vendors' ? payout.net_payout : payout.total_earnings) | number:'1.2-2' }}</strong>
+                  </td>
+                  <td>
+                    <span class="badge" [class]="'badge-' + payout.status">{{ payout.status | uppercase }}</span>
+                  </td>
+                  <td>
+                    @if (payout.status !== 'paid') {
+                      <button class="btn-sm btn-primary" (click)="markPaid(payout)">Mark Paid</button>
+                    } @else {
+                      <span class="text-success material-icons-outlined" style="font-size:18px;">check_circle</span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </div>
+    </div>
+
+    <!-- Create Payout Stub Form -->
+    <div class="card create-payout-card">
+      <div class="card-header">
+        <h3>Create New Payout</h3>
+      </div>
+      <div class="card-body">
+        <form (ngSubmit)="submitPayout()">
+          @if (activeTab() === 'vendors') {
+            <div class="form-group">
+              <label class="form-label">Vendor ID</label>
+              <input type="text" class="form-input w-100" [(ngModel)]="createFormObj.vendor_id" name="vendor_id" required>
+            </div>
+          } @else {
+            <div class="form-group">
+              <label class="form-label">Delivery Partner ID</label>
+              <input type="text" class="form-input w-100" [(ngModel)]="createFormObj.delivery_partner_id" name="delivery_partner_id" required>
+            </div>
+          }
+          
+          <div class="form-row">
+            <div class="form-group w-50" style="padding-right:0.5rem">
+              <label class="form-label">Start Date</label>
+              <input type="date" class="form-input w-100" [(ngModel)]="createFormObj.period_start" name="period_start" required>
+            </div>
+            <div class="form-group w-50" style="padding-left:0.5rem">
+              <label class="form-label">End Date</label>
+              <input type="date" class="form-input w-100" [(ngModel)]="createFormObj.period_end" name="period_end" required>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Payout Amount ($)</label>
+            <input type="number" class="form-input w-100" [(ngModel)]="createFormObj.amount" name="amount" required step="0.01">
+          </div>
+
+          <button type="submit" class="btn-primary w-100" [disabled]="creating()">
+            @if (creating()) {
+              <span class="spinner-inline"></span> Creating...
+            } @else {
+              <span class="material-icons-outlined">add</span> Create Payout
+            }
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

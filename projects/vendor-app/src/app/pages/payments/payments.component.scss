@@ -1,0 +1,18 @@
+.payments-page { padding: 2rem; max-width: 1200px; margin: 0 auto; }
+.page-header { margin-bottom: 2rem; h1 { margin: 0; font-size: 1.75rem; color: var(--text-color); } .page-subtitle { color: var(--text-muted); margin: 0.25rem 0 0; } }
+.card { border: 1px solid var(--border-color); background: white; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow-sm); }
+.card-header { padding: 1.25rem 1.5rem; background: var(--surface-hover); border-bottom: 1px solid var(--border-color); h3 { margin: 0; font-size: 1.1rem; } }
+.card-body.p-0 { padding: 0; }
+.p-4 { padding: 1.5rem; }
+.table-responsive { overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; }
+.table th { background: var(--surface-hover); padding: 1rem 1.5rem; text-align: left; font-size: 0.8125rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); white-space: nowrap; }
+.table td { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); vertical-align: middle; white-space: nowrap; }
+.badge { padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+.badge-pending { background: rgba(245,158,11,0.1); color: var(--warning); }
+.badge-processing { background: rgba(14,165,233,0.1); color: var(--info); }
+.badge-paid { background: rgba(16,185,129,0.1); color: var(--success); }
+.badge-failed { background: rgba(239,68,68,0.1); color: var(--danger); }
+.text-danger { color: var(--danger); }
+.btn-icon { background: none; border: none; color: var(--primary); cursor: pointer; padding: 0.25rem; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; transition: background 0.2s ease; }
+.btn-icon:hover { background: rgba(82,113,255,0.1); }

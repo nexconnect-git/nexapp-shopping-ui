@@ -1,0 +1,109 @@
+<div class="sales-report-page fade-in">
+  <div class="page-header">
+    <div>
+      <h1>Overall Sales Report</h1>
+      <p class="page-subtitle">Platform-wide performance &amp; revenue metrics</p>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading platform data...</p>
+    </div>
+  } @else if (errorMsg()) {
+    <div class="alert alert-danger">
+      <span class="material-icons-outlined">error_outline</span> {{ errorMsg() }}
+    </div>
+  } @else {
+    <div class="report-grid">
+      
+      <!-- Key Metrics -->
+      <div class="metrics-row">
+        <div class="metric-card">
+          <div class="metric-icon primary"><span class="material-icons-outlined">storefront</span></div>
+          <div class="metric-info">
+            <span class="label">Total Vendors</span>
+            <span class="value">{{ stats()?.total_vendors || 0 }}</span>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon success"><span class="material-icons-outlined">inventory_2</span></div>
+          <div class="metric-info">
+            <span class="label">Total Products</span>
+            <span class="value">{{ stats()?.total_products || 0 }}</span>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon warning"><span class="material-icons-outlined">people</span></div>
+          <div class="metric-info">
+            <span class="label">Total Customers</span>
+            <span class="value">{{ stats()?.total_customers || 0 }}</span>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon info"><span class="material-icons-outlined">receipt_long</span></div>
+          <div class="metric-info">
+            <span class="label">Total Orders</span>
+            <span class="value">{{ stats()?.total_orders || 0 }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Extended Metrics -->
+      <div class="metrics-row secondary-metrics">
+        <div class="metric-card">
+          <div class="metric-info">
+            <span class="label text-success">Completed Orders</span>
+            <span class="value">{{ stats()?.completed_orders || 0 }}</span>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-info">
+            <span class="label text-danger">Cancelled Orders</span>
+            <span class="value">{{ stats()?.cancelled_orders || 0 }}</span>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-info">
+            <span class="label">Total Delivery Partners</span>
+            <span class="value">{{ stats()?.total_delivery_partners || 0 }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="widget-card">
+        <div class="widget-header">
+          <h3>Orders Breakdown by Status</h3>
+        </div>
+        <div class="widget-body">
+          <div class="status-bars">
+            <!-- Simplified representation for admin stats (since we don't have monthly_data in getAdminStats by default) -->
+            <div class="status-bar-row">
+              <span class="status-label">Pending</span>
+              <div class="bar-track">
+                <div class="bar-fill bg-warning" [style.width.%]="(stats()?.pending_orders / (stats()?.total_orders || 1)) * 100"></div>
+              </div>
+              <span class="status-count">{{ stats()?.pending_orders || 0 }}</span>
+            </div>
+            <div class="status-bar-row">
+              <span class="status-label">Completed</span>
+              <div class="bar-track">
+                <div class="bar-fill bg-success" [style.width.%]="(stats()?.completed_orders / (stats()?.total_orders || 1)) * 100"></div>
+              </div>
+              <span class="status-count">{{ stats()?.completed_orders || 0 }}</span>
+            </div>
+            <div class="status-bar-row">
+              <span class="status-label">Cancelled</span>
+              <div class="bar-track">
+                <div class="bar-fill bg-danger" [style.width.%]="(stats()?.cancelled_orders / (stats()?.total_orders || 1)) * 100"></div>
+              </div>
+              <span class="status-count">{{ stats()?.cancelled_orders || 0 }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+  }
+</div>

@@ -1,0 +1,99 @@
+<div class="profile-page">
+
+  @if (loading()) {
+    <div class="loading-spinner"></div>
+  } @else {
+
+    <!-- Hero banner -->
+    <div class="profile-hero">
+      <div class="hero-banner"></div>
+      <div class="hero-body">
+        <div class="avatar-wrap">
+          <div class="avatar avatar-clickable"
+            (click)="avatarInput.click()"
+            [title]="avatarUploading() ? 'Uploading...' : 'Click to change photo'">
+            @if (avatarPreview()) {
+              <img [src]="avatarPreview()" alt="avatar">
+            } @else {
+              {{ initials() }}
+            }
+            <div class="avatar-overlay">
+              @if (avatarUploading()) {
+                <div class="avatar-spinner"></div>
+              } @else {
+                <span class="material-icons-outlined">photo_camera</span>
+              }
+            </div>
+          </div>
+          <input #avatarInput type="file" accept="image/*" hidden (change)="onAvatarChange($event)">
+        </div>
+        <div class="hero-info">
+          <h2 class="hero-name">{{ form.first_name }} {{ form.last_name }}</h2>
+          <p class="hero-username">&#64;{{ form.username }}</p>
+          <div class="hero-meta">
+            @if (form.email) {
+              <span class="hero-meta-item">
+                <span class="material-icons-outlined">mail</span>
+                {{ form.email }}
+              </span>
+            }
+            @if (form.phone) {
+              <span class="hero-meta-item">
+                <span class="material-icons-outlined">phone</span>
+                {{ form.phone }}
+              </span>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form card -->
+    <div class="form-card">
+      @if (successMsg()) {
+        <div class="alert-success">{{ successMsg() }}</div>
+      }
+      @if (errorMsg()) {
+        <div class="alert-error">{{ errorMsg() }}</div>
+      }
+
+      <h3 class="form-section-title">
+        <span class="material-icons-outlined">person</span>
+        Account Details
+      </h3>
+
+      <form (ngSubmit)="save()">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">First Name</label>
+            <input class="form-input" type="text" [(ngModel)]="form.first_name" name="first_name">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Last Name</label>
+            <input class="form-input" type="text" [(ngModel)]="form.last_name" name="last_name">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input class="form-input" type="text" [(ngModel)]="form.username" name="username" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" type="email" [(ngModel)]="form.email" name="email" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Phone</label>
+          <input class="form-input" type="tel" [(ngModel)]="form.phone" name="phone">
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block" [disabled]="saving()">
+          @if (saving()) { Saving... } @else { Save Changes }
+        </button>
+      </form>
+    </div>
+
+  }
+</div>

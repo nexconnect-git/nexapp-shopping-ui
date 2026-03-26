@@ -1,0 +1,156 @@
+<!-- Mobile header (shown ≤768px, only when logged in) -->
+@if (auth.isLoggedIn()) {
+  <header class="mobile-header">
+    <span class="mobile-brand">NexConnect <b>Delivery</b></span>
+    <div class="header-actions">
+      <!-- Notification Bell -->
+      <div class="notif-wrapper" (click)="$event.stopPropagation()">
+        <button class="notif-btn" (click)="toggleNotif($event)" title="Notifications">
+          <span class="material-icons-outlined">notifications_none</span>
+          @if (unreadCount() > 0) {
+            <span class="notif-badge">{{ unreadCount() > 9 ? '9+' : unreadCount() }}</span>
+          }
+        </button>
+        @if (notifOpen()) {
+          <div class="notif-dropdown">
+            <div class="notif-header">
+              <span class="notif-title">Notifications</span>
+              @if (unreadCount() > 0) {
+                <button class="notif-mark-read" (click)="markAllRead()">Mark all read</button>
+              }
+            </div>
+            @if (notifLoading()) {
+              <div class="notif-loading"><div class="notif-spinner"></div></div>
+            } @else if (notifications().length === 0) {
+              <div class="notif-empty">
+                <span class="material-icons-outlined">notifications_none</span>
+                <span>No notifications</span>
+              </div>
+            } @else {
+              <div class="notif-list">
+                @for (n of notifications(); track n.id) {
+                  <div class="notif-item" [class.unread]="!n.is_read">
+                    <span class="material-icons-outlined notif-icon">local_shipping</span>
+                    <div class="notif-body">
+                      <p class="notif-msg">{{ n.title }}</p>
+                      <p class="notif-sub">{{ n.message }}</p>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+      <div class="profile-menu-wrapper" (click)="toggleProfile($event)">
+        <button class="avatar-btn">
+          <span class="avatar avatar-sm">
+            {{ (auth.user()?.first_name?.[0] || '') + (auth.user()?.last_name?.[0] || '') || auth.user()?.username?.[0]?.toUpperCase() || '?' }}
+          </span>
+        </button>
+        @if (profileOpen()) {
+          <div class="profile-dropdown" (click)="$event.stopPropagation()">
+            <div class="pd-header">
+              <div class="pd-avatar-lg">
+                {{ (auth.user()?.first_name?.[0] || '') + (auth.user()?.last_name?.[0] || '') || '?' }}
+              </div>
+              <div>
+                <p class="pd-name">{{ auth.user()?.first_name }} {{ auth.user()?.last_name }}</p>
+                <p class="pd-email">{{ auth.user()?.email }}</p>
+              </div>
+            </div>
+            <div class="pd-divider"></div>
+            <a routerLink="/profile" class="pd-item" (click)="closeProfile()">
+              <span class="material-icons-outlined">person</span> My Profile
+            </a>
+            <div class="pd-divider"></div>
+            <button class="pd-item danger" (click)="auth.logout(); closeProfile()">
+              <span class="material-icons-outlined">logout</span> Sign Out
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  </header>
+
+  <!-- Desktop sidebar (shown >768px) -->
+  <aside class="sidebar">
+    <!-- Brand -->
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon">
+        <span class="material-icons-outlined">delivery_dining</span>
+      </div>
+      <div class="sidebar-brand-text">
+        <span class="sidebar-brand-name">NexConnect</span>
+        <span class="sidebar-brand-sub">Delivery</span>
+      </div>
+    </div>
+
+    <!-- Nav items -->
+    <nav class="sidebar-nav">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" class="sidebar-nav-item">
+        <span class="material-icons-outlined">dashboard</span>
+        <span>Dashboard</span>
+      </a>
+      <a routerLink="/available" routerLinkActive="active" class="sidebar-nav-item">
+        <span class="material-icons-outlined">local_shipping</span>
+        <span>Available Orders</span>
+      </a>
+      <a routerLink="/active" routerLinkActive="active" class="sidebar-nav-item">
+        <span class="material-icons-outlined">delivery_dining</span>
+        <span>Active Delivery</span>
+      </a>
+      <a routerLink="/history" routerLinkActive="active" class="sidebar-nav-item">
+        <span class="material-icons-outlined">history</span>
+        <span>History</span>
+      </a>
+      <a routerLink="/earnings" routerLinkActive="active" class="sidebar-nav-item">
+        <span class="material-icons-outlined">payments</span>
+        <span>Earnings</span>
+      </a>
+    </nav>
+
+    <!-- Profile + Logout at bottom -->
+    <div class="sidebar-footer">
+      <a routerLink="/profile" routerLinkActive="active" class="sidebar-nav-item">
+        <span class="material-icons-outlined">person</span>
+        <span>Profile</span>
+      </a>
+      <button class="sidebar-nav-item sidebar-logout" (click)="auth.logout()">
+        <span class="material-icons-outlined">logout</span>
+        <span>Logout</span>
+      </button>
+    </div>
+  </aside>
+}
+
+<!-- Main content -->
+<main class="main-content" [class.with-sidebar]="auth.isLoggedIn()">
+  <router-outlet />
+</main>
+
+<!-- Mobile bottom nav (shown ≤768px, only when logged in) -->
+@if (auth.isLoggedIn()) {
+  <nav class="bottom-nav">
+    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" class="bottom-nav-item">
+      <span class="material-icons-outlined">dashboard</span>
+      <span>Dashboard</span>
+    </a>
+    <a routerLink="/available" routerLinkActive="active" class="bottom-nav-item">
+      <span class="material-icons-outlined">local_shipping</span>
+      <span>Available</span>
+    </a>
+    <a routerLink="/active" routerLinkActive="active" class="bottom-nav-item">
+      <span class="material-icons-outlined">delivery_dining</span>
+      <span>Active</span>
+    </a>
+    <a routerLink="/history" routerLinkActive="active" class="bottom-nav-item">
+      <span class="material-icons-outlined">history</span>
+      <span>History</span>
+    </a>
+    <a routerLink="/earnings" routerLinkActive="active" class="bottom-nav-item">
+      <span class="material-icons-outlined">payments</span>
+      <span>Earnings</span>
+    </a>
+  </nav>
+}

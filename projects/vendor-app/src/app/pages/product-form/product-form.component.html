@@ -1,0 +1,218 @@
+<div class="product-form-page fade-in">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1>{{ isEdit() ? 'Edit Product' : 'Add Product' }}</h1>
+      <p class="page-subtitle">{{ isEdit() ? 'Update your product details' : 'Add a new item to your store' }}</p>
+    </div>
+    <a routerLink="/products" class="btn-outline">
+      <span class="material-icons-outlined">arrow_back</span>
+      Back to Products
+    </a>
+  </div>
+
+  @if (errorMsg()) {
+    <div class="alert alert-danger" style="margin-bottom:1.5rem;">
+      <span class="material-icons-outlined">error_outline</span>
+      {{ errorMsg() }}
+    </div>
+  }
+  @if (successMsg()) {
+    <div class="alert alert-success" style="margin-bottom:1.5rem;">
+      <span class="material-icons-outlined">check_circle</span>
+      {{ successMsg() }}
+    </div>
+  }
+
+  <form (ngSubmit)="save()" class="form-layout">
+
+    <!-- Left Column -->
+    <div class="form-main">
+
+      <!-- Basic Info -->
+      <div class="card">
+        <div class="card-header">
+          <h3>
+            <span class="material-icons-outlined" style="font-size:18px;color:var(--primary);vertical-align:middle;margin-right:0.375rem;">info</span>
+            Basic Information
+          </h3>
+        </div>
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">Product Name <span class="required">*</span></label>
+            <input class="form-input" type="text" [(ngModel)]="form.name" name="name" placeholder="e.g. Fresh Organic Apples" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Description</label>
+            <textarea class="form-input form-textarea" [(ngModel)]="form.description" name="description" rows="4" placeholder="Describe your product to customers..."></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Category</label>
+            <select class="form-input form-select" [(ngModel)]="form.category" name="category">
+              <option [value]="null">Select a category</option>
+              @for (cat of categories(); track cat.id) {
+                <option [value]="cat.id">{{ cat.name }}</option>
+              }
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pricing -->
+      <div class="card">
+        <div class="card-header">
+          <h3>
+            <span class="material-icons-outlined" style="font-size:18px;color:var(--primary);vertical-align:middle;margin-right:0.375rem;">attach_money</span>
+            Pricing
+          </h3>
+        </div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Selling Price <span class="required">*</span></label>
+              <div class="input-with-prefix">
+                <span class="input-prefix">$</span>
+                <input class="form-input" type="number" [(ngModel)]="form.price" name="price" min="0" step="0.01" placeholder="0.00" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Compare Price</label>
+              <div class="input-with-prefix">
+                <span class="input-prefix">$</span>
+                <input class="form-input" type="number" [(ngModel)]="form.compare_price" name="compare_price" min="0" step="0.01" placeholder="Original price">
+              </div>
+              <div class="form-hint">Show a strikethrough original price</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Inventory -->
+      <div class="card">
+        <div class="card-header">
+          <h3>
+            <span class="material-icons-outlined" style="font-size:18px;color:var(--primary);vertical-align:middle;margin-right:0.375rem;">inventory</span>
+            Inventory
+          </h3>
+        </div>
+        <div class="card-body">
+          <div class="form-row cols-3">
+            <div class="form-group">
+              <label class="form-label">Stock Quantity <span class="required">*</span></label>
+              <input class="form-input" type="number" [(ngModel)]="form.stock" name="stock" min="0" placeholder="0" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Unit</label>
+              <input class="form-input" type="text" [(ngModel)]="form.unit" name="unit" placeholder="pcs, kg, litre...">
+            </div>
+            <div class="form-group">
+              <label class="form-label">SKU</label>
+              <input class="form-input" type="text" [(ngModel)]="form.sku" name="sku" placeholder="Stock keeping unit">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Weight</label>
+            <input class="form-input" type="text" [(ngModel)]="form.weight" name="weight" placeholder="e.g. 500g, 1kg">
+          </div>
+        </div>
+      </div>
+
+      <!-- Images -->
+      @if (productId) {
+        <div class="card">
+          <div class="card-header">
+            <h3>
+              <span class="material-icons-outlined" style="font-size:18px;color:var(--primary);vertical-align:middle;margin-right:0.375rem;">image</span>
+              Product Images
+            </h3>
+          </div>
+          <div class="card-body">
+            <div class="image-gallery">
+              @for (img of images(); track img.id) {
+                <div class="image-card">
+                  <img [src]="img.image" alt="Product Image">
+                  @if (img.is_ai_generated) {
+                    <span class="ai-badge">AI Generated</span>
+                  }
+                  <button type="button" class="btn-icon delete-btn" (click)="deleteImage(img.id)">
+                    <span class="material-icons-outlined">delete</span>
+                  </button>
+                </div>
+              }
+            </div>
+
+            <div class="image-actions">
+              <div class="upload-box">
+                <input type="file" id="imageUpload" (change)="onFileSelected($event)" accept="image/*" hidden>
+                <label for="imageUpload" class="btn-primary">
+                  <span class="material-icons-outlined">upload</span> Upload Photo
+                </label>
+                <p class="hint">Max 5 photos allowed.</p>
+              </div>
+
+              <div class="ai-box">
+                <h4>Generate with AI ✨</h4>
+                <div class="ai-input-group">
+                  <input type="text" class="form-input" [(ngModel)]="aiPrompt" name="aiPrompt" placeholder="Describe the image you want...">
+                  <button type="button" class="btn-primary" (click)="generateAiImage()" [disabled]="generatingAi()">
+                    @if (generatingAi()) {
+                      <span class="spinner-inline"></span>
+                    } @else {
+                      <span class="material-icons-outlined">auto_awesome</span> Generate
+                    }
+                  </button>
+                </div>
+                <p class="hint">Max 2 AI photos allowed.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+    </div>
+
+    <!-- Right Column -->
+    <div class="form-sidebar">
+
+      <!-- Visibility -->
+      <div class="card">
+        <div class="card-header">
+          <h3>Visibility</h3>
+        </div>
+        <div class="card-body">
+          <div class="visibility-option" style="margin-bottom:0.875rem;">
+            <div class="form-check">
+              <input type="checkbox" id="is_available" [(ngModel)]="form.is_available" name="is_available">
+              <label for="is_available">Available for sale</label>
+            </div>
+            <p style="font-size:0.8125rem;color:var(--text-muted);margin-top:0.25rem;margin-left:1.5rem;">Customers can see and order this product</p>
+          </div>
+          <div class="visibility-option">
+            <div class="form-check">
+              <input type="checkbox" id="is_featured" [(ngModel)]="form.is_featured" name="is_featured">
+              <label for="is_featured">Featured product</label>
+            </div>
+            <p style="font-size:0.8125rem;color:var(--text-muted);margin-top:0.25rem;margin-left:1.5rem;">Highlight this product in your store</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="form-actions-card">
+        <button type="submit" class="btn-primary w-100" [disabled]="saving()">
+          @if (saving()) {
+            <span class="spinner-inline"></span>
+            Saving...
+          } @else {
+            <span class="material-icons-outlined">{{ isEdit() ? 'save' : 'add_circle' }}</span>
+            {{ isEdit() ? 'Update Product' : 'Add Product' }}
+          }
+        </button>
+        <a routerLink="/products" class="btn-outline w-100">Cancel</a>
+      </div>
+
+    </div>
+
+  </form>
+</div>

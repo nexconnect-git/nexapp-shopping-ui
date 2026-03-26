@@ -1,0 +1,115 @@
+<div class="dashboard">
+
+  <!-- Welcome Card -->
+  <div class="welcome-card">
+    <div class="welcome-left">
+      <p class="welcome-greeting">Hello, {{ auth.user()?.first_name || auth.user()?.username }}</p>
+      <p class="welcome-sub">Ready to deliver today?</p>
+
+      <!-- Availability toggle pill -->
+      <label class="availability-toggle" [class.available]="isAvailable()">
+        <input type="checkbox" [checked]="isAvailable()" (change)="toggleAvailability()">
+        <span class="toggle-track">
+          <span class="toggle-thumb"></span>
+        </span>
+        <span class="toggle-text">{{ isAvailable() ? 'Available' : 'Offline' }}</span>
+      </label>
+    </div>
+
+    <div class="welcome-icon-wrap">
+      <span class="material-icons-outlined welcome-icon">local_shipping</span>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="spinner-wrap">
+      <div class="spinner"></div>
+    </div>
+  } @else if (stats()) {
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon orange">
+          <span class="material-icons-outlined">local_shipping</span>
+        </div>
+        <p class="stat-value">{{ stats()!.total_deliveries }}</p>
+        <p class="stat-label">Total Deliveries</p>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green">
+          <span class="material-icons-outlined">payments</span>
+        </div>
+        <p class="stat-value">${{ stats()!.total_earnings }}</p>
+        <p class="stat-label">Total Earnings</p>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon amber">
+          <span class="material-icons-outlined">star</span>
+        </div>
+        <p class="stat-value">{{ stats()!.average_rating }}</p>
+        <p class="stat-label">Avg. Rating</p>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon blue">
+          <span class="material-icons-outlined">delivery_dining</span>
+        </div>
+        <p class="stat-value">{{ stats()!.active_orders.length }}</p>
+        <p class="stat-label">Active Orders</p>
+      </div>
+    </div>
+
+    <!-- Active Deliveries Section -->
+    @if (stats()!.active_orders.length > 0) {
+      <div class="section-header">
+        <div class="section-title-row">
+          <span class="pulse-dot"></span>
+          <span class="section-title">Active Deliveries</span>
+        </div>
+        <a routerLink="/active" class="view-all-link">View All</a>
+      </div>
+
+      <div class="active-orders-list">
+        @for (order of stats()!.active_orders; track order.id) {
+          <a routerLink="/active" class="active-order-card">
+            <div class="active-order-left">
+              <p class="order-num">#{{ order.order_number }}</p>
+              <p class="order-route">
+                <span class="material-icons-outlined">store</span>
+                {{ order.vendor_name }}
+                <span class="material-icons-outlined">arrow_forward</span>
+                {{ order.delivery_address.city }}
+              </p>
+            </div>
+            <span class="status-badge status-{{ order.status }}">{{ order.status | titlecase }}</span>
+          </a>
+        }
+      </div>
+    }
+
+    <!-- Quick Actions -->
+    <div class="quick-actions-header">Quick Actions</div>
+    <div class="quick-actions">
+      <a routerLink="/available" class="quick-action-btn primary">
+        <span class="material-icons-outlined">local_shipping</span>
+        Available Orders
+      </a>
+      <a routerLink="/history" class="quick-action-btn">
+        <span class="material-icons-outlined">history</span>
+        History
+      </a>
+      <a routerLink="/earnings" class="quick-action-btn">
+        <span class="material-icons-outlined">payments</span>
+        Earnings
+      </a>
+    </div>
+
+  } @else {
+    <div class="empty-state">
+      <span class="material-icons-outlined">dashboard</span>
+      <h3>Dashboard unavailable</h3>
+      <p>Could not load your stats. Please try again.</p>
+    </div>
+  }
+
+</div>
