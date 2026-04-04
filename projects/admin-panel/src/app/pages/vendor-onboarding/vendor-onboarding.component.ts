@@ -128,13 +128,15 @@ export class VendorOnboardingComponent {
         if (!this.s2.email.trim()) return 'Email is required.';
         if (!/\S+@\S+\.\S+/.test(this.s2.email)) return 'Enter a valid email address.';
         break;
+      case 3:
+        if (this.s3.pan_number && !/^[A-Z]{5}[0-9]{4}[A-Z]$/i.test(this.s3.pan_number))
+          return 'Invalid PAN format. Must be 5 letters, 4 digits, 1 letter.';
+        break;
       case 4:
         if (this.s4.account_number && this.s4.account_number !== this.s4.confirm_account_number)
           return 'Account numbers do not match.';
         if (this.s4.ifsc_code && !/^[A-Z]{4}0[A-Z0-9]{6}$/i.test(this.s4.ifsc_code))
           return 'Invalid IFSC code format (e.g. SBIN0001234).';
-        if (this.s4.pan_number && !/^[A-Z]{5}[0-9]{4}[A-Z]$/i.test(this.s3.pan_number))
-          break; // PAN is in step 3
         break;
     }
     return '';
@@ -252,7 +254,7 @@ export class VendorOnboardingComponent {
       holidays:              this.s6.holidays,
     };
 
-    this.api.onboardAdminVendor(payload).subscribe({
+    this.api.onboardVendor(payload).subscribe({
       next: (res: any) => {
         this.saving.set(false);
         if (res.auto_generated_password) {
@@ -260,9 +262,9 @@ export class VendorOnboardingComponent {
         }
         this.router.navigate(['/vendors']);
       },
-      error: (err) => {
+      error: (err: any) => {
         this.saving.set(false);
-        const e = err.error;
+        const e = err.error || err;
         if (typeof e === 'object' && !Array.isArray(e)) {
           const flat: Record<string, string> = {};
           for (const [k, v] of Object.entries(e)) {
@@ -295,5 +297,10 @@ export class VendorOnboardingComponent {
 
   get progressPercent(): number {
     return ((this.currentStep() - 1) / (this.steps.length - 1)) * 100;
+  }
+
+  clearErrors() {
+    this.error.set('');
+    this.fieldErrors.set({});
   }
 }

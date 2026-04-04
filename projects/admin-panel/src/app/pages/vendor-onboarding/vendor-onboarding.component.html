@@ -59,7 +59,7 @@
           <p>Create login credentials for the vendor.</p>
         </div>
       </div>
-      <div class="form-grid">
+      <div class="form-grid" (input)="clearErrors()">
         <div class="form-group" [class.has-error]="fieldErr('username')">
           <label class="form-label required">Username</label>
           <input class="form-input" type="text" [(ngModel)]="s1.username" name="username"
@@ -102,7 +102,7 @@
           <p>Core store details visible to customers.</p>
         </div>
       </div>
-      <div class="form-grid">
+      <div class="form-grid" (input)="clearErrors()">
         <div class="form-group" [class.has-error]="fieldErr('store_name')">
           <label class="form-label required">Store / Business Name</label>
           <input class="form-input" type="text" [(ngModel)]="s2.store_name" name="store_name"
@@ -189,7 +189,7 @@
           <p>Regulatory identifiers and compliance information.</p>
         </div>
       </div>
-      <div class="form-grid">
+      <div class="form-grid" (input)="clearErrors()">
         <div class="form-group span-2">
           <label class="form-label">Legal Business Name</label>
           <input class="form-input" type="text" [(ngModel)]="s3.legal_name" name="legal_name"
@@ -296,7 +296,7 @@
         <span class="material-icons-outlined">lock</span>
         Account numbers are encrypted using AES-256 before storage. Only masked numbers are displayed.
       </div>
-      <div class="form-grid">
+      <div class="form-grid" (input)="clearErrors()">
         <div class="form-group span-2">
           <label class="form-label">Account Holder Name</label>
           <input class="form-input" type="text" [(ngModel)]="s4.account_holder_name" name="holder_name"
@@ -371,7 +371,7 @@
           <p>How orders are fulfilled and where deliveries are available.</p>
         </div>
       </div>
-      <div class="form-grid">
+      <div class="form-grid" (input)="clearErrors()">
         <div class="form-group">
           <label class="form-label">Fulfillment Type</label>
           <select class="form-input" [(ngModel)]="s5.fulfillment_type" name="fulfillment_type">
@@ -439,7 +439,7 @@
           <p>Store timings, order rules, tier and holiday calendar.</p>
         </div>
       </div>
-      <div class="form-grid">
+      <div class="form-grid" (input)="clearErrors()">
 
         <div class="section-divider span-2">Store Hours</div>
         <div class="form-group">
