@@ -1,1 +1,314 @@
-/* Component styles — uses global design system */
+.dynamic-stepper-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  border-radius: var(--radius-md);
+  
+  strong { display: block; font-size: 1rem; margin-bottom: 0.25rem; }
+  p, ul { margin: 0; font-size: 0.875rem; }
+  ul { padding-left: 1.5rem; margin-top: 0.5rem; }
+}
+
+.banner-success {
+  background: var(--success-light);
+  color: var(--success);
+  border: 1px solid rgba(16,185,129,0.2);
+  .banner-icon { font-size: 1.5rem; font-weight: bold; }
+}
+
+.banner-error {
+  background: var(--danger-light);
+  color: var(--danger);
+  border: 1px solid rgba(239,68,68,0.2);
+}
+
+.wizard-layout {
+  display: flex;
+  gap: 2rem;
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+  min-height: 500px;
+}
+
+.step-sidebar {
+  width: 240px;
+  padding: 2rem 1.5rem;
+  background: var(--surface-hover);
+  border-right: 1px solid var(--border-color);
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.step-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  
+  &:hover { opacity: 0.8; }
+  
+  &.active {
+    opacity: 1;
+    .step-circle {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-light);
+    }
+    .step-label { font-weight: 600; color: var(--primary); }
+  }
+  
+  &.done {
+    opacity: 1;
+    .step-circle {
+      background: var(--success);
+      color: white;
+      border-color: var(--success);
+    }
+  }
+}
+
+.step-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  
+  .material-icons-outlined { font-size: 16px; }
+}
+
+.step-label {
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+.wizard-body {
+  flex: 1;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.step-card {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.step-heading {
+  display: flex;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+  
+  h2 { margin: 0 0 0.25rem; font-size: 1.5rem; }
+  p { margin: 0; color: var(--text-muted); }
+}
+
+.step-num {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--primary-light);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.section-divider {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 2rem 0 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-primary);
+}
+
+.section-desc {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  
+  &.inline {
+    align-items: end;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) auto;
+  }
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  
+  &.full { grid-column: 1 / -1; }
+  
+  label {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    
+    .req { color: var(--danger); margin-left: 2px; }
+    .opt { color: var(--text-muted); font-weight: normal; margin-left: 4px; font-size: 0.75rem; }
+  }
+}
+
+.has-error {
+  border-color: var(--danger) !important;
+  &:focus { box-shadow: 0 0 0 3px var(--danger-light) !important; }
+}
+
+.field-error {
+  font-size: 0.75rem;
+  color: var(--danger);
+  margin-top: 0.25rem;
+}
+
+.checkboxes-row {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+.dynamic-list {
+  background: var(--surface-hover);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.list-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: white;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  
+  &-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    
+    strong { font-size: 0.9375rem; }
+    span { font-size: 0.8125rem; color: var(--text-muted); }
+  }
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  
+  &.danger { color: var(--danger); }
+  &:hover { background: rgba(0,0,0,0.05); }
+}
+
+/* Review Step */
+.review-section {
+  margin-bottom: 2rem;
+  
+  h3 {
+    font-size: 1.125rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+  }
+}
+
+.review-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem 1.5rem;
+}
+
+.review-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  
+  &.full { grid-column: 1 / -1; }
+  
+  span { font-size: 0.8125rem; color: var(--text-muted); }
+  strong { font-size: 0.9375rem; color: var(--text-primary); word-break: break-all; }
+}
+
+.wizard-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem 2rem;
+  border-top: 1px solid var(--border-color);
+  margin-top: auto;
+}
+
+.flex-spacer { flex: 1; }
+
+.spinner-small {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-right: 0.5rem;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 768px) {
+  .wizard-layout { flex-direction: column; }
+  .step-sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border-color); border-radius: var(--radius-lg) var(--radius-lg) 0 0; padding: 1.5rem; }
+  .form-grid { grid-template-columns: 1fr; }
+  .review-grid { grid-template-columns: 1fr; }
+}
