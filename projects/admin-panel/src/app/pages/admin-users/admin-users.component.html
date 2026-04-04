@@ -1,28 +1,28 @@
-<div class="admin-users-container">
+<div class="admin-users-container fade-in">
   <div class="page-header">
     <div class="header-content">
       <div class="header-icon">
-        <i class="fi fi-rr-users-alt"></i>
+        <span class="material-icons-outlined">admin_panel_settings</span>
       </div>
       <div class="header-text">
         <h1 class="page-title">Admin Management</h1>
-        <p class="page-subtitle">Manage administrative and superuser accounts for the NexConnect platform.</p>
+        <p class="page-subtitle">Manage administrative and superuser accounts stack.</p>
       </div>
     </div>
     
     <button class="btn btn-primary" (click)="showForm = !showForm" *ngIf="auth.isSuperUser()">
-      <i class="fi" [ngClass]="showForm ? 'fi-rr-cross' : 'fi-rr-plus'"></i>
+      <span class="material-icons-outlined">{{ showForm ? 'close' : 'add' }}</span>
       {{ showForm ? 'Cancel' : 'Create New Account' }}
     </button>
   </div>
 
   <div class="alert alert-danger" *ngIf="errorMsg">
-    <i class="fi fi-rr-exclamation"></i>
+    <span class="material-icons-outlined">error_outline</span>
     <span>{{ errorMsg }}</span>
   </div>
 
   <div class="alert alert-success" *ngIf="successMsg">
-    <i class="fi fi-rr-check"></i>
+    <span class="material-icons-outlined">check_circle</span>
     <span>{{ successMsg }}</span>
   </div>
 
@@ -70,7 +70,7 @@
 
         <div class="form-actions">
           <button type="submit" class="btn btn-primary" [disabled]="createForm.invalid || isSubmitting">
-            <i class="fi fi-rr-spinner form-spinner" *ngIf="isSubmitting"></i>
+            <span class="spinner-inline" *ngIf="isSubmitting"></span>
             {{ isSubmitting ? 'Creating...' : 'Create Account' }}
           </button>
         </div>
@@ -79,7 +79,7 @@
 
     <!-- Users List -->
     <div class="glass-card list-card">
-      <div class="card-header">
+      <div class="card-header-styled">
         <h2 class="card-title">Current Administrative Accounts</h2>
         <div class="badge badge-info">{{ adminUsers.length }} Total</div>
       </div>
@@ -90,7 +90,7 @@
       </div>
 
       <div class="empty-state" *ngIf="!isLoading && adminUsers.length === 0">
-        <i class="fi fi-rr-users"></i>
+        <span class="material-icons-outlined empty-icon">manage_accounts</span>
         <p>No administrative accounts found.</p>
       </div>
 
@@ -102,7 +102,7 @@
               <th>Contact Info</th>
               <th>Role</th>
               <th>Status</th>
-              <th>Created Joined</th>
+              <th>Joined</th>
               <th class="text-right">Actions</th>
             </tr>
           </thead>
@@ -114,7 +114,7 @@
                     <img [src]="user.avatar" alt="Avatar">
                   </div>
                   <div class="avatar-placeholder" *ngIf="!user.avatar">
-                    {{ user.first_name?.charAt(0) || user.username?.charAt(0) }}
+                    {{ user.first_name?.charAt(0) || user.username?.charAt(0) | uppercase }}
                   </div>
                   <div class="user-details">
                     <span class="user-name">{{ user.first_name }} {{ user.last_name }}</span>
@@ -124,8 +124,8 @@
               </td>
               <td>
                 <div class="contact-info">
-                  <span class="email"><i class="fi fi-rr-envelope"></i> {{ user.email }}</span>
-                  <span class="phone" *ngIf="user.phone"><i class="fi fi-rr-phone-call"></i> {{ user.phone }}</span>
+                  <span class="contact-item"><span class="material-icons-outlined">email</span> {{ user.email }}</span>
+                  <span class="contact-item" *ngIf="user.phone"><span class="material-icons-outlined">phone</span> {{ user.phone }}</span>
                 </div>
               </td>
               <td>
@@ -134,7 +134,7 @@
                 </span>
               </td>
               <td>
-                <span class="status-badge" [ngClass]="user.is_active ? 'status-active' : 'status-inactive'">
+                <span class="badge" [ngClass]="user.is_active ? 'active' : 'inactive'">
                   {{ user.is_active ? 'Active' : 'Inactive' }}
                 </span>
               </td>
@@ -142,15 +142,14 @@
                 <span class="date">{{ user.created_at | date:'mediumDate' }}</span>
               </td>
               <td class="text-right">
-                <!-- Cannot delete yourself -->
-                <button class="action-btn action-delete" 
+                <button class="action-btn danger" 
                         *ngIf="(auth.user()?.id !== user.id)"
                         (click)="deleteUser(user.id)" 
                         title="Delete Account">
-                  <i class="fi fi-rr-trash"></i>
+                  <span class="material-icons-outlined">delete_outline</span>
                 </button>
-                <span class="action-btn disabled-action" *ngIf="(auth.user()?.id === user.id)" title="Current Session">
-                  <i class="fi fi-rr-user"></i>
+                <span class="action-btn disabled-action" *ngIf="(auth.user()?.id === user.id)" title="Current Session (You)">
+                  <span class="material-icons-outlined">person</span>
                 </span>
               </td>
             </tr>

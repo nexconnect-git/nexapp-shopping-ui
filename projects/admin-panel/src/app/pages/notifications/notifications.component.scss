@@ -1,1 +1,217 @@
-/* Component styles — uses global design system */
+.filters {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.filter-input {
+  padding: 0.625rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  outline: none;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  min-width: 200px;
+  background: white;
+
+  &:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-light);
+  }
+}
+
+.empty-state {
+  background: white;
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--border-color);
+  padding: 4rem 2rem;
+  text-align: center;
+  
+  .empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+  }
+
+  h3 { margin: 0; color: var(--text-primary); }
+}
+
+.table-card {
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.t-header, .t-row {
+  display: grid;
+  grid-template-columns: 120px 2fr 3fr 150px 150px 100px;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  align-items: center;
+}
+
+.t-header {
+  background: var(--surface-hover);
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.t-row {
+  border-bottom: 1px solid var(--border-light);
+  font-size: 0.9375rem;
+  transition: background 0.2s ease;
+
+  &:hover { background: var(--surface-hover); }
+  &:last-child { border-bottom: none; }
+}
+
+.message-cell {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-pill {
+  background: var(--info-light);
+  color: var(--info);
+  padding: 0.25rem 0.625rem;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.broadcast-pill {
+  background: var(--warning-light);
+  color: var(--warning);
+  padding: 0.25rem 0.625rem;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge-info { background: var(--info-light); color: var(--info); }
+.badge-alert { background: var(--danger-light); color: var(--danger); }
+.badge-order_update { background: var(--primary-light); color: var(--primary); }
+.badge-promo { background: var(--warning-light); color: var(--warning); }
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.page-btn {
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover:not(:disabled) {
+    background: var(--surface-hover);
+    color: var(--primary);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+/* Modal Styles specific to Notifications (overriding global if needed) */
+.modal-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  width: 90%;
+  max-width: 540px;
+  z-index: 1001;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translate(-50%, -45%); }
+  to { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+.modal-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  h2 { margin: 0; font-size: 1.25rem; font-weight: 600; }
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--text-muted);
+  cursor: pointer;
+  
+  &:hover { color: var(--text-primary); }
+}
+
+.modal-body { padding: 1.5rem; }
+
+.form-group { margin-bottom: 1.25rem; }
+
+.input-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.input-field {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: 0.9375rem;
+  outline: none;
+
+  &:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-light);
+  }
+}
+
+textarea.input-field { resize: vertical; }
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.modal-footer {
+  padding: 1.5rem;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  background: var(--surface-hover);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
