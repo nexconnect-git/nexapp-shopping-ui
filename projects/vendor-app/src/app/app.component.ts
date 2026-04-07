@@ -1,14 +1,14 @@
 import { Component, inject, signal, HostListener, OnInit, DestroyRef } from '@angular/core';
-import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterOutlet, RouterLink, RouterLinkActive, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { timer } from 'rxjs';
-import { AuthService, ApiService } from '@shared/public-api';
+import { AuthService, ApiService, ToastComponent, NotificationPollingService } from '@shared/public-api';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, ToastComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
@@ -17,6 +17,7 @@ export class AppComponent implements OnInit {
   api = inject(ApiService);
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
+  private notifPolling = inject(NotificationPollingService);
   sidebarCollapsed = signal(true);
   profileOpen = signal(false);
   notifOpen = signal(false);
@@ -25,13 +26,28 @@ export class AppComponent implements OnInit {
   unreadCount = signal(0);
 
   ngOnInit() {
-    if (this.auth.isLoggedIn()) {
-      timer(0, 30000).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.loadUnreadCount());
-    }
+    if (this.auth.isLoggedIn()) this.startPolling();
+    // Keep badge in sync on a light 30 s cycle (NotificationPollingService handles toasts)
+    timer(0, 30000).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      if (this.auth.isLoggedIn()) {
+        this.api.getUnreadCount().subscribe({
+          next: (r) => this.unreadCount.set(r.count ?? 0),
+          error: () => {},
+        });
+      }
+    });
   }
 
-  loadUnreadCount() {
-    this.api.getUnreadCount().subscribe({ next: (r) => this.unreadCount.set(r.count ?? 0), error: () => {} });
+  private startPolling() {
+    this.notifPolling.start((n) => {
+      if (n.notification_type === 'order' && n.related_entity_id) {
+        return { label: 'View', url: `/orders/${n.related_entity_id}` };
+      }
+      if (n.notification_type === 'order' && n.data?.order_id) {
+        return { label: 'View', url: `/orders/${n.data.order_id}` };
+      }
+      return null;
+    });
   }
 
   toggleProfile(event?: Event) {
@@ -73,7 +89,7 @@ export class AppComponent implements OnInit {
 
   isAuthRoute(): boolean {
     const url = this.router.url;
-    return url.includes('/login') || url.includes('/register');
+    return url.includes('/login') || url.includes('/register') || url.includes('/change-password');
   }
 
   isPendingRoute(): boolean {
@@ -88,7 +104,28 @@ export class AppComponent implements OnInit {
     this.sidebarCollapsed.set(true);
   }
 
+  handleNotificationClick(n: any) {
+    if (!n.is_read) {
+      this.api.markNotificationRead(n.id).subscribe({
+        next: () => {
+          this.unreadCount.update(c => Math.max(0, c - 1));
+          this.notifications.update(list =>
+            list.map(item => item.id === n.id ? { ...item, is_read: true } : item)
+          );
+        },
+      });
+    }
+    this.notifOpen.set(false);
+    if (n.notification_type === 'order' && (n.data?.order_id || n.related_entity_id)) {
+      this.router.navigate(['/orders', n.data?.order_id || n.related_entity_id]);
+    } else {
+      this.router.navigate(['/']);
+    }
+  }
+
   logout() {
     this.auth.logout();
   }
 }
+
+

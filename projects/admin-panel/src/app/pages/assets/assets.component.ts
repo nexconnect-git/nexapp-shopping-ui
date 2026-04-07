@@ -1,4 +1,5 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { Subscription, timer } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '@shared/public-api';
@@ -11,7 +12,7 @@ import { DynamicTableComponent, TableCellDirective } from '../../shared/componen
   templateUrl: './assets.component.html',
   styleUrl: './assets.component.scss'
 })
-export class AssetsComponent implements OnInit {
+export class AssetsComponent implements OnInit, OnDestroy {
   private api = inject(ApiService);
 
   assets = signal<any[]>([]);
@@ -22,6 +23,10 @@ export class AssetsComponent implements OnInit {
 
   typeFilter = '';
   statusFilter = '';
+
+  lastRefreshed = signal<Date | null>(null);
+  autoReload = signal(true);
+  private reloadSub?: Subscription;
 
   actionId = signal<string | null>(null);
   showModal = signal(false);
@@ -57,9 +62,16 @@ export class AssetsComponent implements OnInit {
   ];
 
   ngOnInit() {
-    this.load();
     this.loadPartners();
+    this.reloadSub = timer(0, 15000).subscribe(() => {
+      if (this.autoReload() && !this.showModal()) this.load();
+    });
   }
+
+  ngOnDestroy() { this.reloadSub?.unsubscribe(); }
+
+  manualReload() { this.page.set(1); this.load(); }
+  toggleAutoReload() { this.autoReload.update(v => !v); }
 
   load() {
     this.loading.set(true);
@@ -71,8 +83,9 @@ export class AssetsComponent implements OnInit {
         this.assets.set(r.results || r);
         this.total.set(r.count || (r.results || r).length);
         this.loading.set(false);
+        this.lastRefreshed.set(new Date());
       },
-      error: () => this.loading.set(false)
+      error: () => this.loading.set(false),
     });
   }
 

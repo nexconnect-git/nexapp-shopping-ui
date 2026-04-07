@@ -6,10 +6,23 @@
       <h1>Orders</h1>
       <p class="page-subtitle">View and manage customer orders</p>
     </div>
+    <div class="reload-bar">
+      @if (lastRefreshed()) {
+        <span class="reload-timestamp">Updated {{ lastRefreshed() | date:'HH:mm:ss' }}</span>
+      }
+      <button class="btn-icon" (click)="manualReload()" [disabled]="loading()" title="Reload">
+        <span class="material-icons-outlined" [class.spin]="loading()">refresh</span>
+      </button>
+      <button class="reload-toggle" [class.active]="autoReload()" (click)="toggleAutoReload()"
+              title="Toggle auto-reload">
+        <span class="material-icons-outlined">{{ autoReload() ? 'pause_circle' : 'play_circle' }}</span>
+        {{ autoReload() ? 'Auto' : 'Paused' }}
+      </button>
+    </div>
     <div class="header-controls">
       <div class="filter-wrapper">
         <span class="material-icons-outlined filter-icon">filter_list</span>
-        <select class="form-input form-select filter-select" [(ngModel)]="statusFilter" (change)="load()">
+        <select class="form-input form-select filter-select" [(ngModel)]="statusFilter" (change)="load()" aria-label="select">
           <option value="">All Statuses</option>
           <option value="placed">Placed</option>
           <option value="confirmed">Confirmed</option>
@@ -69,7 +82,7 @@
                 </td>
                 <td class="text-muted">{{ order.items.length }} item(s)</td>
                 <td>
-                  <strong>${{ order.total | number:'1.2-2' }}</strong>
+                  <strong>{{ order.total | appCurrency }}</strong>
                 </td>
                 <td>
                   <span class="badge badge-{{ order.status }}">{{ order.status }}</span>

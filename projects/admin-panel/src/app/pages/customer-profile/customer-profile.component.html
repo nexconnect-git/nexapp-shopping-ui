@@ -121,6 +121,10 @@
                 <span class="info-value">{{ customer().phone || '—' }}</span>
               </div>
               <div class="info-row">
+                <span class="info-label">Country</span>
+                <span class="info-value">{{ customer().country || 'US' }}</span>
+              </div>
+              <div class="info-row">
                 <span class="info-label">Email Verified</span>
                 <span class="info-value" [class.text-success]="customer().is_verified" [class.text-danger]="!customer().is_verified">
                   {{ customer().is_verified ? 'Yes' : 'No' }}
@@ -174,7 +178,7 @@
             <span class="text-sm">{{ o.vendor_name || '—' }}</span>
           </ng-template>
           <ng-template tableCell="total" let-o>
-            <span class="font-medium">₦{{ o.total | number }}</span>
+            <span class="font-medium">{{ o.total | appCurrency }}</span>
           </ng-template>
           <ng-template tableCell="status" let-o>
             <span class="badge" [class]="orderStatusBadge(o.status)">{{ o.status }}</span>

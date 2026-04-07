@@ -7,6 +7,7 @@ export interface User {
   role: 'customer' | 'vendor' | 'delivery' | 'admin';
   phone: string;
   avatar: string | null;
+  country?: string;
   is_verified: boolean;
   is_active: boolean;
   is_superuser?: boolean;
@@ -61,6 +62,7 @@ export interface Vendor {
   is_featured: boolean;
   distance_km?: number;
   products?: Product[];
+  vendor_tier?: string;
   user_info?: User;
 }
 
@@ -93,6 +95,7 @@ export interface Product {
   compare_price: number | null;
   sku: string;
   stock: number;
+  low_stock_threshold: number;
   unit: string;
   weight: string;
   is_available: boolean;
@@ -139,12 +142,31 @@ export interface OrderTracking {
   timestamp: string;
 }
 
+export interface VendorInfo {
+  id: string;
+  store_name: string;
+  address: string;
+  latitude: string | null;
+  longitude: string | null;
+  phone: string;
+}
+
+export interface DeliveryPartnerInfo {
+  id: string;
+  name: string;
+  phone: string;
+  vehicle_type: string;
+  vehicle_number: string;
+  average_rating: string;
+}
+
 export interface Order {
   id: string;
   order_number: string;
   customer_name: string;
   vendor_name: string;
-  vendor: Vendor;
+  vendor: string;
+  vendor_info: VendorInfo;
   status: string;
   payment_method: string;
   subtotal: number;
@@ -152,6 +174,7 @@ export interface Order {
   discount: number;
   total: number;
   notes: string;
+  pickup_otp?: string;
   delivery_otp?: string;
   delivery_photo?: string | null;
   estimated_delivery_time: number | null;
@@ -161,9 +184,40 @@ export interface Order {
   items: OrderItem[];
   tracking: OrderTracking[];
   delivery_address: Address;
-  delivery_partner?: { id: string; name: string; phone?: string };
+  delivery_partner?: string | null;
+  delivery_partner_info?: DeliveryPartnerInfo | null;
+  assignment_status?: string | null;
   placed_at: string;
   distance_km?: number;
+}
+
+export interface AssignmentOrderItem {
+  name: string;
+  quantity: number;
+  price: string;
+}
+
+export interface DeliveryAssignment {
+  id: string;
+  status: string;
+  current_radius_km: number;
+  order: string;
+  order_number: string;
+  vendor_name: string;
+  vendor_lat: string;
+  vendor_lng: string;
+  vendor_address: string;
+  order_total: string;
+  order_items: AssignmentOrderItem[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PaymentQR {
+  order_number: string;
+  amount: string;
+  qr_base64: string;
+  upi_string: string;
 }
 
 export interface DeliveryPartner {
@@ -219,6 +273,11 @@ export interface DashboardStats {
   average_rating: number;
   total_ratings: number;
   recent_orders: Order[];
+  is_open: boolean;
+  closing_time: string | null;
+  require_stock_check: boolean;
+  low_stock_count: number;
+  low_stock_products: Product[];
 }
 
 export interface DeliveryDashboard {
@@ -226,4 +285,7 @@ export interface DeliveryDashboard {
   total_earnings: string;
   average_rating: string;
   active_orders: Order[];
+  partner_status: 'available' | 'offline' | 'on_delivery';
 }
+
+

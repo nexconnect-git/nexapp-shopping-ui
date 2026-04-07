@@ -1,0 +1,200 @@
+<div class="co-wrap">
+
+  <!-- ── Top Bar ────────────────────────────────────────── -->
+  <div class="co-topbar">
+    <button class="co-back" (click)="goBack()">
+      <span class="material-icons-outlined">arrow_back</span>
+    </button>
+    <div>
+      <div class="co-title">Payment Options</div>
+      @if (cart()) {
+        <div class="co-sub">{{ cart()!.total_items }} items · {{ cart()!.total_amount | appCurrency }}</div>
+      }
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="co-loading"><div class="co-spinner"></div></div>
+  } @else {
+
+    <!-- ── Delivery Address ────────────────────────────── -->
+    <div class="co-section">
+      <div class="co-delivery-row">
+        <div class="co-delivery-icon">
+          <span class="material-icons-outlined">location_on</span>
+        </div>
+        <div class="co-delivery-info">
+          @if (selectedAddress) {
+            <div class="co-delivery-label">Deliver to {{ selectedAddress.label | titlecase }}</div>
+            <div class="co-delivery-addr">{{ selectedAddress.address_line1 }}, {{ selectedAddress.city }}</div>
+          } @else {
+            <div class="co-delivery-label">No address selected</div>
+          }
+        </div>
+        <a routerLink="/addresses" class="co-change-btn">Change</a>
+      </div>
+    </div>
+
+    <!-- ── Address Picker ─────────────────────────────── -->
+    @if (addresses().length > 1) {
+      <div class="co-section co-addr-section">
+        <div class="co-section-title">Select Delivery Address</div>
+        @for (addr of addresses(); track addr.id) {
+          <label class="co-addr-option" [class.selected]="selectedAddressId === addr.id">
+            <input type="radio" [value]="addr.id" [(ngModel)]="selectedAddressId" hidden>
+            <div class="co-addr-radio" [class.active]="selectedAddressId === addr.id">
+              <div class="co-addr-dot"></div>
+            </div>
+            <div class="co-addr-text">
+              <span class="co-addr-tag">{{ addr.label | titlecase }}</span>
+              <span class="co-addr-detail">{{ addr.address_line1 }}, {{ addr.city }}</span>
+            </div>
+          </label>
+        }
+      </div>
+    }
+
+    <!-- ── Payment Methods ────────────────────────────── -->
+    <div class="co-section">
+      <div class="co-section-title">Payment Method</div>
+
+      <div class="co-methods">
+        @for (pm of paymentMethods; track pm.id) {
+          <label class="co-method" [class.selected]="selectedPayment === pm.id" [class.disabled]="!!pm.disabled">
+            <input type="radio" [value]="pm.id" [(ngModel)]="selectedPayment" [disabled]="!!pm.disabled" hidden>
+            <div class="co-method-icon">
+              <span class="material-icons-outlined">{{ pm.icon }}</span>
+            </div>
+            <div class="co-method-text">
+              <span class="co-method-label">{{ pm.label }}</span>
+              @if (pm.sub) {
+                <span class="co-method-sub">{{ pm.disabled ? 'Coming soon' : pm.sub }}</span>
+              }
+            </div>
+            <div class="co-method-radio" [class.active]="selectedPayment === pm.id">
+              <div class="co-method-dot"></div>
+            </div>
+          </label>
+        }
+      </div>
+    </div>
+
+    <!-- ── Apply Coupon ──────────────────────────────── -->
+    <div class="co-section co-coupon-section">
+      <div class="co-section-title">Apply Coupon</div>
+
+      @if (appliedCoupon()) {
+        <div class="co-coupon-applied">
+          <div class="co-coupon-applied-left">
+            <span class="material-icons-outlined">confirmation_number</span>
+            <div>
+              <div class="co-coupon-code">{{ appliedCoupon().code }}</div>
+              <div class="co-coupon-msg">{{ appliedCoupon().message }}</div>
+            </div>
+          </div>
+          <button class="co-coupon-remove" (click)="removeCoupon()">
+            <span class="material-icons-outlined">close</span>
+          </button>
+        </div>
+      } @else {
+        <div class="co-coupon-row">
+          <input
+            class="co-coupon-input"
+            [(ngModel)]="couponCode"
+            placeholder="Enter coupon code"
+            (keyup.enter)="applyCoupon()"
+            autocomplete="off"
+            autocapitalize="characters">
+          <button
+            class="co-coupon-btn"
+            (click)="applyCoupon()"
+            [disabled]="couponLoading() || !couponCode.trim()">
+            @if (couponLoading()) {
+              <span class="co-btn-spinner"></span>
+            } @else {
+              Apply
+            }
+          </button>
+        </div>
+        @if (couponError()) {
+          <div class="co-coupon-error">
+            <span class="material-icons-outlined">error_outline</span>
+            {{ couponError() }}
+          </div>
+        }
+        <a routerLink="/offers" class="co-view-offers">
+          <span class="material-icons-outlined">local_offer</span>
+          View all offers & coupons
+        </a>
+      }
+    </div>
+
+    <!-- ── Bill Summary ───────────────────────────────── -->
+    @if (cart()) {
+      <div class="co-section co-bill">
+        <div class="co-section-title">Bill Summary</div>
+        <div class="co-bill-row">
+          <span>Item Total</span>
+          <span>{{ cart()!.total_amount | appCurrency }}</span>
+        </div>
+        @if (appliedCoupon()) {
+          <div class="co-bill-row co-bill-savings">
+            <span>Coupon ({{ appliedCoupon().code }})</span>
+            <span>− {{ appliedCoupon().discount | appCurrency }}</span>
+          </div>
+        }
+        <div class="co-bill-row">
+          <span>Delivery Fee</span>
+          <span class="co-bill-free">FREE</span>
+        </div>
+        <div class="co-bill-divider"></div>
+        <div class="co-bill-row co-bill-total">
+          <span>To Pay</span>
+          <span>{{ discountedTotal | appCurrency }}</span>
+        </div>
+      </div>
+    }
+
+    <!-- ── Order Notes ────────────────────────────────── -->
+    <div class="co-section">
+      <div class="co-section-title">Order Notes <span class="co-optional">(optional)</span></div>
+      <textarea
+        class="co-notes"
+        [(ngModel)]="notes"
+        rows="2"
+        placeholder="Delivery instructions, allergies…"></textarea>
+    </div>
+
+    @if (orderError()) {
+      <div class="co-error">
+        <span class="material-icons-outlined">error_outline</span>
+        {{ orderError() }}
+      </div>
+    }
+
+    <div style="height: 100px;"></div>
+  }
+
+  <!-- ── Place Order Bar ───────────────────────────────── -->
+  <div class="co-place-bar">
+    @if (selectedAddress) {
+      <div class="co-place-addr">
+        <span class="material-icons-outlined">near_me</span>
+        Delivering to {{ selectedAddress.address_line1 | slice:0:30 }}…
+      </div>
+    }
+    <button
+      class="co-place-btn"
+      [disabled]="!selectedAddressId || placingOrder() || addresses().length === 0"
+      (click)="placeOrder()">
+      @if (placingOrder()) {
+        <span class="co-btn-spinner"></span>
+        Placing Order…
+      } @else {
+        <span>Place Order</span>
+        <span class="co-place-total">{{ discountedTotal | appCurrency }}</span>
+      }
+    </button>
+  </div>
+
+</div>

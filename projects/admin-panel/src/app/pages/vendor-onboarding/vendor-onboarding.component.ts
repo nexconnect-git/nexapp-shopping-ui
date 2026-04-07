@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { ApiService } from '@shared/public-api';
+import { ApiService, AppCurrencyPipe } from '@shared/public-api';
 
 interface StepConfig {
   id: number;
@@ -13,10 +13,9 @@ interface StepConfig {
 @Component({
   selector: 'app-vendor-onboarding',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, AppCurrencyPipe],
   templateUrl: './vendor-onboarding.component.html',
-  styleUrl:    './vendor-onboarding.component.scss',
-})
+  styleUrl:    './vendor-onboarding.component.scss' })
 export class VendorOnboardingComponent {
   private api    = inject(ApiService);
   private router = inject(Router);
@@ -38,8 +37,7 @@ export class VendorOnboardingComponent {
   // ── Step 1: Account credentials ──────────────────────────────────────────
   s1 = {
     username: '', password: '', confirm_password: '',
-    first_name: '', last_name: '',
-  };
+    first_name: '', last_name: '' };
 
   // ── Step 2: Basic store info ──────────────────────────────────────────────
   s2 = {
@@ -47,8 +45,7 @@ export class VendorOnboardingComponent {
     phone: '', email: '',
     address: '', city: '', state: '', postal_code: '',
     latitude: 0, longitude: 0,
-    gst_registered: false,
-  };
+    gst_registered: false };
 
   // ── Step 3: Legal & compliance ────────────────────────────────────────────
   s3 = {
@@ -56,8 +53,7 @@ export class VendorOnboardingComponent {
     contact_person_name: '', contact_person_email: '', contact_person_phone: '',
     pan_number: '', gstin: '', cin_udyam: '',
     fssai_license: '', trademark_number: '',
-    business_addresses: [] as { line1: string; city: string; state: string; pincode: string }[],
-  };
+    business_addresses: [] as { line1: string; city: string; state: string; pincode: string }[] };
 
   // ── Step 4: Bank & payment ────────────────────────────────────────────────
   s4 = {
@@ -66,8 +62,7 @@ export class VendorOnboardingComponent {
     ifsc_code: '', bank_name: '', branch_name: '',
     account_type: 'current', upi_id: '',
     settlement_cycle: 'T+7',
-    commission_percentage: 0,
-  };
+    commission_percentage: 0 };
 
   // ── Step 5: Logistics & fulfillment ──────────────────────────────────────
   s5 = {
@@ -76,8 +71,7 @@ export class VendorOnboardingComponent {
     return_policy: '',
     packaging_preferences: '',
     serviceable_pincodes: [] as { pincode: string; city: string; state: string }[],
-    new_pincode: '', new_pincode_city: '', new_pincode_state: '',
-  };
+    new_pincode: '', new_pincode_city: '', new_pincode_state: '' };
 
   // ── Step 6: Operational settings ─────────────────────────────────────────
   s6 = {
@@ -88,8 +82,7 @@ export class VendorOnboardingComponent {
     vendor_tier: 'basic',
     is_open: true, is_featured: false,
     holidays: [] as { date: string; reason: string }[],
-    new_holiday_date: '', new_holiday_reason: '',
-  };
+    new_holiday_date: '', new_holiday_reason: '' };
 
   // ── Navigation ────────────────────────────────────────────────────────────
   goStep(n: number) {
@@ -150,8 +143,7 @@ export class VendorOnboardingComponent {
     this.s5.serviceable_pincodes.push({
       pincode: p,
       city:  this.s5.new_pincode_city.trim(),
-      state: this.s5.new_pincode_state.trim(),
-    });
+      state: this.s5.new_pincode_state.trim() });
     this.s5.new_pincode = '';
     this.s5.new_pincode_city = '';
     this.s5.new_pincode_state = '';
@@ -251,8 +243,7 @@ export class VendorOnboardingComponent {
       vendor_tier:           this.s6.vendor_tier,
       is_open:               this.s6.is_open,
       is_featured:           this.s6.is_featured,
-      holidays:              this.s6.holidays,
-    };
+      holidays:              this.s6.holidays };
 
     this.api.onboardVendor(payload).subscribe({
       next: (res: any) => {
@@ -278,8 +269,7 @@ export class VendorOnboardingComponent {
             3: ['legal_name', 'pan_number', 'gstin', 'cin_udyam', 'fssai_license'],
             4: ['account_holder_name', 'account_number', 'ifsc_code', 'bank_name', 'settlement_cycle'],
             5: ['fulfillment_type', 'dispatch_sla_hours', 'return_policy'],
-            6: ['opening_time', 'closing_time', 'vendor_tier'],
-          };
+            6: ['opening_time', 'closing_time', 'vendor_tier'] };
           for (let i = 1; i <= 6; i++) {
             if (stepFields[i].some(f => flat[f])) { this.currentStep.set(i); break; }
           }
@@ -287,8 +277,7 @@ export class VendorOnboardingComponent {
         } else {
           this.error.set(typeof e === 'string' ? e : 'Failed to create vendor. Please try again.');
         }
-      },
-    });
+      } });
   }
 
   fieldErr(key: string): string {
@@ -304,3 +293,5 @@ export class VendorOnboardingComponent {
     this.fieldErrors.set({});
   }
 }
+
+

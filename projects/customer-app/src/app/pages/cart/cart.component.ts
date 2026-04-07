@@ -1,13 +1,13 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { ApiService, Cart, Address } from '@shared/public-api';
+import { ApiService, AppCurrencyPipe, Cart } from '@shared/public-api';
 
 @Component({
   selector: 'app-cart',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule, AppCurrencyPipe],
   templateUrl: './cart.component.html',
   styleUrl: './cart.component.scss'
 })
@@ -16,30 +16,43 @@ export class CartComponent implements OnInit {
   private router = inject(Router);
 
   cart = signal<Cart | null>(null);
-  addresses = signal<Address[]>([]);
   loading = signal(true);
   updatingId = signal<string | null>(null);
-  placingOrder = signal(false);
-  orderSuccess = signal(false);
-  orderError = signal('');
-  selectedAddressId: string | null = null;
-  notes = '';
+  suggestions = signal<any[]>([]);
+  addingSuggId = signal<string | null>(null);
+
+  // Savings display (mock saving for UI)
+  savings = computed(() => {
+    const total = Number(this.cart()?.total_amount || 0);
+    return total > 500 ? Math.round(total * 0.05) : 0;
+  });
 
   ngOnInit() {
     this.loadCart();
-    this.api.getAddresses().subscribe({ next: (r) => {
-      const addrs: Address[] = r.results || r;
-      this.addresses.set(addrs);
-      const def = addrs.find(a => a.is_default);
-      if (def) this.selectedAddressId = def.id;
-      else if (addrs.length) this.selectedAddressId = addrs[0].id;
-    }});
   }
 
   loadCart() {
     this.api.getCart().subscribe({
-      next: (c) => { this.cart.set(c); this.loading.set(false); },
+      next: (c) => {
+        this.cart.set(c);
+        this.loading.set(false);
+        if (c.items?.length > 0) {
+          const vendorId = c.items[0]?.product?.vendor as any;
+          if (vendorId) this.loadSuggestions(typeof vendorId === 'string' ? vendorId : vendorId?.id);
+        }
+      },
       error: () => this.loading.set(false)
+    });
+  }
+
+  loadSuggestions(vendorId?: string) {
+    if (!vendorId) return;
+    this.api.getVendor(vendorId).subscribe({
+      next: (v) => {
+        const cartProductIds = new Set((this.cart()?.items || []).map((i: any) => i.product.id));
+        const prods = (v.products || []).filter((p: any) => !cartProductIds.has(p.id)).slice(0, 8);
+        this.suggestions.set(prods);
+      }
     });
   }
 
@@ -60,21 +73,19 @@ export class CartComponent implements OnInit {
     this.api.clearCart().subscribe({ next: () => this.loadCart() });
   }
 
-  placeOrder() {
-    if (!this.selectedAddressId) return;
-    this.placingOrder.set(true);
-    this.orderError.set('');
-    this.api.createOrder({ delivery_address_id: this.selectedAddressId, notes: this.notes }).subscribe({
-      next: (orders) => {
-        this.orderSuccess.set(true);
-        this.placingOrder.set(false);
+  addSuggestion(product: any) {
+    this.addingSuggId.set(product.id);
+    this.api.addToCart(product.id, 1).subscribe({
+      next: () => {
+        this.addingSuggId.set(null);
+        this.loadCart();
         this.api.refreshCartCount();
-        setTimeout(() => this.router.navigate(['/orders']), 1500);
       },
-      error: (err) => {
-        this.orderError.set(err.error?.detail || err.error?.non_field_errors?.[0] || 'Could not place order.');
-        this.placingOrder.set(false);
-      }
+      error: () => this.addingSuggId.set(null)
     });
+  }
+
+  proceedToCheckout() {
+    this.router.navigate(['/checkout']);
   }
 }

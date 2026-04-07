@@ -2,16 +2,33 @@
   <div class="page-header">
     <div>
       <h1>Payments &amp; Settlements</h1>
-      <p class="page-subtitle">Track your revenue payouts and download invoices</p>
+      <p class="page-subtitle">Track your revenue payouts and settle pending approvals</p>
     </div>
   </div>
 
-  @if (errorMsg()) {
-    <div class="alert alert-danger mb-4">
-      <span class="material-icons-outlined">error_outline</span> {{ errorMsg() }}
+  <!-- ── Approval Banner ─────────────────────────────────────────── -->
+  @if (pendingApproval().length > 0) {
+    <div class="action-banner approval-banner">
+      <span class="banner-icon material-icons-outlined">notifications_active</span>
+      <div class="banner-body">
+        <p class="banner-title">{{ pendingApproval().length }} Payout{{ pendingApproval().length > 1 ? 's' : '' }} Require Your Approval</p>
+        <p class="banner-sub">Review and approve payouts initiated by the platform before they are scheduled for processing.</p>
+      </div>
     </div>
   }
 
+  <!-- ── Verify Credit Banner ────────────────────────────────────── -->
+  @if (pendingVerify().length > 0) {
+    <div class="action-banner verify-banner">
+      <span class="banner-icon material-icons-outlined">account_balance</span>
+      <div class="banner-body">
+        <p class="banner-title">{{ pendingVerify().length }} Payout{{ pendingVerify().length > 1 ? 's' : '' }} Awaiting Credit Verification</p>
+        <p class="banner-sub">The platform has sent your payout. Please verify that you received the credit in your bank account.</p>
+      </div>
+    </div>
+  }
+
+  <!-- ── Payout Table ─────────────────────────────────────────────── -->
   <div class="card payments-card">
     <div class="card-header">
       <h3>Payout History</h3>
@@ -32,7 +49,7 @@
                 <th>Reference ID</th>
                 <th>Period</th>
                 <th>Gross Sales</th>
-                <th>Platform Commission</th>
+                <th>Commission</th>
                 <th>Net Payout</th>
                 <th>Status</th>
                 <th>Paid At</th>
@@ -41,26 +58,47 @@
             </thead>
             <tbody>
               @for (payout of payouts(); track payout.id) {
-                <tr>
+                <tr [class.highlight-row]="payout.status === 'pending_approval' || payout.status === 'paid'">
                   <td class="text-muted"><small>{{ payout.id.split('-')[0] }}</small></td>
-                  <td>{{ payout.period_start | date:'MMM d, y' }} - {{ payout.period_end | date:'MMM d, y' }}</td>
-                  <td>${{ payout.gross_sales | number:'1.2-2' }}</td>
-                  <td class="text-danger">-${{ payout.platform_commission | number:'1.2-2' }}</td>
-                  <td><strong>${{ payout.net_payout | number:'1.2-2' }}</strong></td>
+                  <td>{{ payout.period_start | date:'MMM d, y' }} – {{ payout.period_end | date:'MMM d, y' }}</td>
+                  <td>{{ payout.gross_sales | appCurrency }}</td>
+                  <td class="text-danger">−{{ payout.platform_commission | appCurrency }}</td>
+                  <td><strong>{{ payout.net_payout | appCurrency }}</strong></td>
                   <td>
-                    <span class="badge" [class]="'badge-' + payout.status">{{ payout.status | uppercase }}</span>
+                    <span class="badge" [class]="'badge-' + payout.status">{{ statusLabel(payout.status) }}</span>
                   </td>
                   <td>
                     @if (payout.paid_at) {
                       <span class="text-muted">{{ payout.paid_at | date:'mediumDate' }}</span>
                     } @else {
-                      <span class="text-muted">-</span>
+                      <span class="text-muted">—</span>
                     }
                   </td>
-                  <td>
+                  <td class="actions-cell">
+                    <!-- Download Invoice (all statuses) -->
                     <button class="btn-icon" title="Download Invoice" (click)="downloadInvoice(payout)">
                       <span class="material-icons-outlined">download</span>
                     </button>
+
+                    <!-- Approval actions -->
+                    @if (payout.status === 'pending_approval') {
+                      <button class="payout-action-btn approve-btn" (click)="approvePayout(payout)">
+                        <span class="material-icons-outlined">check_circle</span>
+                        Approve
+                      </button>
+                      <button class="payout-action-btn decline-btn" (click)="openDeclineModal(payout)">
+                        <span class="material-icons-outlined">cancel</span>
+                        Decline
+                      </button>
+                    }
+
+                    <!-- Verify credit -->
+                    @if (payout.status === 'paid') {
+                      <button class="payout-action-btn verify-btn" (click)="verifyCredit(payout)">
+                        <span class="material-icons-outlined">verified</span>
+                        Verify Credit
+                      </button>
+                    }
                   </td>
                 </tr>
               }
@@ -71,3 +109,37 @@
     </div>
   </div>
 </div>
+
+<!-- ── Decline Reason Modal ─────────────────────────────────────── -->
+@if (showDeclineModal()) {
+  <div class="modal-backdrop" (click)="closeDeclineModal()">
+    <div class="modal-panel modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-header-icon decline-icon">
+          <span class="material-icons-outlined">cancel</span>
+        </div>
+        <div>
+          <h2 class="modal-title">Decline Payout</h2>
+          <p class="modal-sub">Tell us why you're declining this payout</p>
+        </div>
+        <button class="modal-close-btn" (click)="closeDeclineModal()">
+          <span class="material-icons-outlined">close</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="field-group">
+          <label class="field-label">Reason <span class="text-muted">(optional)</span></label>
+          <textarea class="field-input" rows="3" [(ngModel)]="declineReason"
+                    placeholder="e.g. Amount looks incorrect, wrong period…"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="cancel-btn" (click)="closeDeclineModal()">Cancel</button>
+          <button class="payout-action-btn decline-btn" (click)="confirmDecline()">
+            <span class="material-icons-outlined">cancel</span>
+            Confirm Decline
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

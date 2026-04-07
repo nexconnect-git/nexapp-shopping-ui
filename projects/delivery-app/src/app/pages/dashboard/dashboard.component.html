@@ -1,61 +1,90 @@
-<div class="dashboard">
+<div class="dashboard fade-in">
 
-  <!-- Welcome Card -->
-  <div class="welcome-card">
+  <!-- Elegant Welcome Card -->
+  <div class="welcome-card card">
     <div class="welcome-left">
       <p class="welcome-greeting">Hello, {{ auth.user()?.first_name || auth.user()?.username }}</p>
-      <p class="welcome-sub">Ready to deliver today?</p>
+      <p class="welcome-sub">Your delivery dashboard is ready.</p>
 
-      <!-- Availability toggle pill -->
-      <label class="availability-toggle" [class.available]="isAvailable()">
+      <!-- Soft Pill Availability Toggle -->
+      <label class="stylish-availability-toggle" [class.available]="isAvailable()">
         <input type="checkbox" [checked]="isAvailable()" (change)="toggleAvailability()">
-        <span class="toggle-track">
-          <span class="toggle-thumb"></span>
+        <span class="s-toggle-track">
+          <span class="s-toggle-thumb"></span>
         </span>
-        <span class="toggle-text">{{ isAvailable() ? 'Available' : 'Offline' }}</span>
+        <span class="s-toggle-text">{{ isAvailable() ? 'Taking Orders' : 'Offline' }}</span>
       </label>
+
+      <!-- Live location status indicator -->
+      @if (isAvailable()) {
+        @if (locationStatus() === 'watching') {
+          <div class="location-status watching">
+            <span class="loc-dot"></span>
+            <span>Live location on</span>
+          </div>
+        } @else if (locationStatus() === 'denied') {
+          <div class="location-status denied">
+            <span class="material-icons-outlined" style="font-size:14px;">location_off</span>
+            <span>Location permission denied</span>
+          </div>
+        } @else if (locationStatus() === 'error') {
+          <div class="location-status error">
+            <span class="material-icons-outlined" style="font-size:14px;">gps_off</span>
+            <span>GPS unavailable</span>
+          </div>
+        }
+      }
     </div>
 
     <div class="welcome-icon-wrap">
-      <span class="material-icons-outlined welcome-icon">local_shipping</span>
+      <span class="material-icons-outlined welcome-icon pulse">local_shipping</span>
     </div>
   </div>
 
   @if (loading()) {
-    <div class="spinner-wrap">
+    <div class="loading-state card">
       <div class="spinner"></div>
+      <p>Syncing latest deliveries...</p>
     </div>
   } @else if (stats()) {
 
-    <!-- Stats Grid -->
+    <!-- Soft Metrics Grid -->
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-icon orange">
+        <div class="stat-icon-wrap bg-primary-soft text-primary">
           <span class="material-icons-outlined">local_shipping</span>
         </div>
-        <p class="stat-value">{{ stats()!.total_deliveries }}</p>
-        <p class="stat-label">Total Deliveries</p>
+        <div class="stat-details">
+          <p class="stat-value">{{ stats()!.total_deliveries }}</p>
+          <p class="stat-label">Total Deliveries</p>
+        </div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon green">
+        <div class="stat-icon-wrap bg-success-soft text-success">
           <span class="material-icons-outlined">payments</span>
         </div>
-        <p class="stat-value">${{ stats()!.total_earnings }}</p>
-        <p class="stat-label">Total Earnings</p>
+        <div class="stat-details">
+          <p class="stat-value">{{ stats()!.total_earnings | appCurrency }}</p>
+          <p class="stat-label">Earnings</p>
+        </div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon amber">
+        <div class="stat-icon-wrap bg-warning-soft text-warning">
           <span class="material-icons-outlined">star</span>
         </div>
-        <p class="stat-value">{{ stats()!.average_rating }}</p>
-        <p class="stat-label">Avg. Rating</p>
+        <div class="stat-details">
+          <p class="stat-value">{{ stats()!.average_rating | number:'1.1-1' }}</p>
+          <p class="stat-label">Avg. Rating</p>
+        </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon blue">
+      <div class="stat-card highlight-card">
+        <div class="stat-icon-wrap bg-white text-primary">
           <span class="material-icons-outlined">delivery_dining</span>
         </div>
-        <p class="stat-value">{{ stats()!.active_orders.length }}</p>
-        <p class="stat-label">Active Orders</p>
+        <div class="stat-details">
+          <p class="stat-value text-white">{{ stats()!.active_orders.length }}</p>
+          <p class="stat-label text-light">Active Orders</p>
+        </div>
       </div>
     </div>
 
@@ -64,52 +93,64 @@
       <div class="section-header">
         <div class="section-title-row">
           <span class="pulse-dot"></span>
-          <span class="section-title">Active Deliveries</span>
+          <h2 class="section-title">Active Orders</h2>
         </div>
-        <a routerLink="/active" class="view-all-link">View All</a>
+        <a routerLink="/active" class="btn btn-ghost btn-sm">View Map</a>
       </div>
 
       <div class="active-orders-list">
         @for (order of stats()!.active_orders; track order.id) {
-          <a routerLink="/active" class="active-order-card">
-            <div class="active-order-left">
-              <p class="order-num">#{{ order.order_number }}</p>
-              <p class="order-route">
-                <span class="material-icons-outlined">store</span>
-                {{ order.vendor_name }}
-                <span class="material-icons-outlined">arrow_forward</span>
-                {{ order.delivery_address.city }}
-              </p>
+          <a routerLink="/active" class="order-card card">
+            <div class="order-info">
+              <span class="order-num">#{{ order.order_number }}</span>
+              <div class="order-route">
+                <div class="route-point">
+                  <span class="material-icons-outlined text-muted">store</span>
+                  <span>{{ order.vendor_name }}</span>
+                </div>
+                <span class="route-line"></span>
+                <div class="route-point">
+                  <span class="material-icons-outlined text-primary">location_on</span>
+                  <span>{{ order.delivery_address.city }}</span>
+                </div>
+              </div>
             </div>
-            <span class="status-badge status-{{ order.status }}">{{ order.status | titlecase }}</span>
+            <div class="order-status">
+              <span class="badge badge-{{ order.status }}">{{ order.status | titlecase }}</span>
+              <span class="material-icons-outlined text-muted arrow">chevron_right</span>
+            </div>
           </a>
         }
       </div>
     }
 
-    <!-- Quick Actions -->
-    <div class="quick-actions-header">Quick Actions</div>
-    <div class="quick-actions">
-      <a routerLink="/available" class="quick-action-btn primary">
-        <span class="material-icons-outlined">local_shipping</span>
-        Available Orders
+    <!-- Quick Actions (Soft grid) -->
+    <div class="section-header mt-4">
+      <h2 class="section-title">Quick Actions</h2>
+    </div>
+    <div class="quick-actions-grid">
+      <a routerLink="/available" class="action-card primary">
+        <div class="action-icon"><span class="material-icons-outlined">radar</span></div>
+        <span>Find Orders</span>
       </a>
-      <a routerLink="/history" class="quick-action-btn">
-        <span class="material-icons-outlined">history</span>
-        History
+      <a routerLink="/history" class="action-card">
+        <div class="action-icon"><span class="material-icons-outlined">history</span></div>
+        <span>History</span>
       </a>
-      <a routerLink="/earnings" class="quick-action-btn">
-        <span class="material-icons-outlined">payments</span>
-        Earnings
+      <a routerLink="/earnings" class="action-card">
+        <div class="action-icon"><span class="material-icons-outlined">account_balance_wallet</span></div>
+        <span>Wallet</span>
       </a>
     </div>
 
   } @else {
-    <div class="empty-state">
-      <span class="material-icons-outlined">dashboard</span>
-      <h3>Dashboard unavailable</h3>
-      <p>Could not load your stats. Please try again.</p>
+    <div class="empty-state card text-center p-4">
+      <span class="material-icons-outlined text-muted" style="font-size: 48px">signal_wifi_off</span>
+      <h3>Connection Lost</h3>
+      <p>Working offline or server unreachable.</p>
     </div>
   }
 
 </div>
+
+<!-- aria-label -->

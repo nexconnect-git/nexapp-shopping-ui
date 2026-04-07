@@ -1,8 +1,8 @@
 import { Routes } from '@angular/router';
-import { authGuard, guestGuard } from '@shared/public-api';
+import { authGuard, unauthGuard } from '@shared/public-api';
 
 export const routes: Routes = [
-  { path: 'login', loadComponent: () => import('./pages/login/login.component').then(m => m.LoginComponent), canActivate: [guestGuard] },
+  { path: 'login', loadComponent: () => import('./pages/login/login.component').then(m => m.LoginComponent), canActivate: [unauthGuard] },
   { path: 'change-password', loadComponent: () => import('./pages/change-password/change-password.component').then(m => m.ChangePasswordComponent), canActivate: [authGuard] },
   { path: '', loadComponent: () => import('./pages/dashboard/dashboard.component').then(m => m.DashboardComponent), canActivate: [authGuard] },
   { path: 'available', loadComponent: () => import('./pages/available-orders/available-orders.component').then(m => m.AvailableOrdersComponent), canActivate: [authGuard] },
@@ -12,3 +12,5 @@ export const routes: Routes = [
   { path: 'profile', loadComponent: () => import('./pages/profile/profile.component').then(m => m.ProfileComponent), canActivate: [authGuard] },
   { path: '**', redirectTo: '' }
 ];
+
+

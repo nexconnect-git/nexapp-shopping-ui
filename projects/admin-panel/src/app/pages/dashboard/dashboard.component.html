@@ -1,144 +1,186 @@
-<div class="dashboard">
-  <h1 class="page-title">Dashboard</h1>
-  <p class="page-subtitle">Platform overview</p>
+<div class="dashboard fade-in">
+  
+  <div class="header-banner">
+    <div class="hb-left">
+      <h1 class="page-title">Executive Overview</h1>
+      <p class="page-subtitle">Platform-wide statistics and system health.</p>
+    </div>
+    <div class="hb-right">
+      <div class="report-badge">
+        <span class="material-icons-outlined">calendar_today</span>
+        Today
+      </div>
+    </div>
+  </div>
 
   @if (loadingStats()) {
-    <div class="loading-panel"><div class="spinner"></div></div>
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Aggregating platform data...</p>
+    </div>
   } @else {
-    <div class="stats-grid">
-      <div class="stat-card accent" style="background: rgba(16,185,129,0.05); border-color: rgba(16,185,129,0.2);">
-        <div class="stat-top">
-          <span class="stat-icon" style="color: #059669;">&#128176;</span>
+    <!-- Sophisticated Metrics Grid -->
+    <div class="metrics-grid">
+      
+      <!-- Primary Core Metric -->
+      <div class="metric-card highlight-card">
+        <div class="mc-top">
+          <span class="material-icons-outlined">monitoring</span>
+          <span class="trend positive"><span class="material-icons-outlined">trending_up</span></span>
         </div>
-        <p class="stat-value">${{ stats()?.total_revenue | number:'1.2-2' }}</p>
-        <p class="stat-label">Total Revenue</p>
+        <p class="mc-label">Net Revenue</p>
+        <h2 class="mc-value">{{ stats()?.total_revenue | appCurrency }}</h2>
+        <a routerLink="/sales-report" class="card-link"></a>
       </div>
-      <div class="stat-card">
-        <div class="stat-top">
-          <span class="stat-icon">&#128101;</span>
-          <a routerLink="/customers" class="stat-link">View &rarr;</a>
+
+      <div class="metric-card">
+        <div class="mc-icon-wrap bg-blue-soft"><span class="material-icons-outlined">group</span></div>
+        <div class="mc-info">
+          <p class="mc-label">Total Customers</p>
+          <h3 class="mc-value">{{ stats()?.customers ?? '—' }}</h3>
         </div>
-        <p class="stat-value">{{ stats()?.customers ?? '—' }}</p>
-        <p class="stat-label">Customers</p>
+        <a routerLink="/customers" class="card-link"></a>
       </div>
-      <div class="stat-card">
-        <div class="stat-top">
-          <span class="stat-icon">&#127978;</span>
-          <a routerLink="/vendors" class="stat-link">View &rarr;</a>
+
+      <div class="metric-card">
+        <div class="mc-icon-wrap bg-indigo-soft"><span class="material-icons-outlined">storefront</span></div>
+        <div class="mc-info">
+          <p class="mc-label">Active Vendors</p>
+          <h3 class="mc-value">{{ stats()?.vendors ?? '—' }}</h3>
         </div>
-        <p class="stat-value">{{ stats()?.vendors ?? '—' }}</p>
-        <p class="stat-label">Vendors</p>
+        <a routerLink="/vendors" class="card-link"></a>
       </div>
-      <div class="stat-card yellow">
-        <div class="stat-top">
-          <span class="stat-icon">&#9203;</span>
-          <a routerLink="/vendors" class="stat-link">View &rarr;</a>
+
+      <div class="metric-card">
+        <div class="mc-icon-wrap bg-emerald-soft"><span class="material-icons-outlined">inventory_2</span></div>
+        <div class="mc-info">
+          <p class="mc-label">Items Listed</p>
+          <h3 class="mc-value">{{ stats()?.products ?? '—' }}</h3>
         </div>
-        <p class="stat-value">{{ stats()?.pending_vendors ?? '—' }}</p>
-        <p class="stat-label">Pending Vendors</p>
+        <a routerLink="/products" class="card-link"></a>
       </div>
-      <div class="stat-card">
-        <div class="stat-top">
-          <span class="stat-icon">&#128722;</span>
-          <a routerLink="/products" class="stat-link">View &rarr;</a>
+
+      <div class="metric-card">
+        <div class="mc-icon-wrap bg-teal-soft"><span class="material-icons-outlined">local_shipping</span></div>
+        <div class="mc-info">
+          <p class="mc-label">Delivery Partners</p>
+          <h3 class="mc-value">{{ stats()?.delivery_partners ?? '—' }}</h3>
         </div>
-        <p class="stat-value">{{ stats()?.products ?? '—' }}</p>
-        <p class="stat-label">Products</p>
+        <a routerLink="/delivery-partners" class="card-link"></a>
       </div>
-      <div class="stat-card">
-        <div class="stat-top">
-          <span class="stat-icon">&#128666;</span>
-          <a routerLink="/delivery-partners" class="stat-link">View &rarr;</a>
+
+      <!-- Action Required metrics -->
+      <div class="metric-card action-card">
+        <div class="mc-icon-wrap bg-warning-soft"><span class="material-icons-outlined text-warning">how_to_reg</span></div>
+        <div class="mc-info">
+          <p class="mc-label">Pending Vendors</p>
+          <h3 class="mc-value">{{ stats()?.pending_vendors ?? '0' }}</h3>
         </div>
-        <p class="stat-value">{{ stats()?.delivery_partners ?? '—' }}</p>
-        <p class="stat-label">Delivery Partners</p>
+        @if(stats()?.pending_vendors) { <span class="indicator blink"></span> }
+        <a routerLink="/vendors" class="card-link"></a>
       </div>
-      <div class="stat-card yellow">
-        <div class="stat-top">
-          <span class="stat-icon">&#9203;</span>
-          <a routerLink="/delivery-partners" class="stat-link">View &rarr;</a>
+
+      <div class="metric-card action-card">
+        <div class="mc-icon-wrap bg-warning-soft"><span class="material-icons-outlined text-warning">bike_scooter</span></div>
+        <div class="mc-info">
+          <p class="mc-label">Pending Delivery Partners</p>
+          <h3 class="mc-value">{{ stats()?.pending_delivery_partners ?? '0' }}</h3>
         </div>
-        <p class="stat-value">{{ stats()?.pending_delivery_partners ?? '—' }}</p>
-        <p class="stat-label">Pending Partners</p>
-      </div>
-      <div class="stat-card accent">
-        <div class="stat-top">
-          <span class="stat-icon">&#128196;</span>
-          <a routerLink="/orders" class="stat-link">View &rarr;</a>
-        </div>
-        <p class="stat-value">{{ stats()?.orders ?? '—' }}</p>
-        <p class="stat-label">Total Orders</p>
-      </div>
-      <div class="stat-card green">
-        <div class="stat-top">
-          <span class="stat-icon">&#10003;</span>
-        </div>
-        <p class="stat-value">{{ stats()?.orders_delivered ?? '—' }}</p>
-        <p class="stat-label">Delivered</p>
-      </div>
-      <div class="stat-card yellow">
-        <div class="stat-top">
-          <span class="stat-icon">&#128204;</span>
-        </div>
-        <p class="stat-value">{{ stats()?.orders_delivering ?? '—' }}</p>
-        <p class="stat-label">In Transit</p>
-      </div>
-      <div class="stat-card blue">
-        <div class="stat-top">
-          <span class="stat-icon">&#9201;</span>
-        </div>
-        <p class="stat-value">{{ stats()?.orders_placed ?? '—' }}</p>
-        <p class="stat-label">Pending</p>
+        @if(stats()?.pending_delivery_partners) { <span class="indicator blink"></span> }
+        <a routerLink="/delivery-partners" class="card-link"></a>
       </div>
     </div>
   }
 
-  <div class="panels-row">
-    <div class="panel">
-      <div class="panel-header">
-        <h3>Recent Orders</h3>
-        <a routerLink="/orders" class="see-all">View all</a>
+  <!-- Lower Data Panels -->
+  <div class="dashboard-panels-row mt-4">
+    <!-- Recent Orders -->
+    <div class="card panel">
+      <div class="card-header">
+        <h3>Recent Transactions</h3>
+        <a routerLink="/orders" class="btn btn-ghost btn-sm">View all</a>
       </div>
-      @if (loadingOrders()) {
-        <div class="mini-spinner"></div>
-      } @else {
-        <div class="mini-table">
-          <div class="mini-header">
-            <span>Order #</span><span>Customer</span><span>Total</span><span>Status</span>
+      <div class="card-body p-0">
+        @if (loadingOrders()) {
+          <div class="p-4 text-center"><div class="spinner"></div></div>
+        } @else if (ordersError()) {
+          <div class="p-4 text-center text-muted" style="color:#E94560;">
+            <span class="material-icons-outlined" style="font-size:32px;opacity:.6;">error_outline</span>
+            <p style="margin:.25rem 0 0;">{{ ordersError() }}</p>
           </div>
-          @for (o of recentOrders(); track o.id) {
-            <div class="mini-row">
-              <span class="id-col">#{{ o.order_number }}</span>
-              <span>{{ o.customer_name }}</span>
-              <span>${{ o.total | number:'1.2-2' }}</span>
-              <span><span class="badge badge-{{ o.status }}">{{ o.status }}</span></span>
-            </div>
-          }
-        </div>
-      }
-    </div>
-
-    <div class="panel">
-      <div class="panel-header">
-        <h3>Top Vendors</h3>
-        <a routerLink="/vendors" class="see-all">View all</a>
-      </div>
-      @if (loadingVendors()) {
-        <div class="mini-spinner"></div>
-      } @else {
-        @for (v of topVendors(); track v.id) {
-          <div class="vendor-row">
-            <div class="vendor-info">
-              <p class="vendor-name">{{ v.store_name }}</p>
-              <p class="vendor-city text-muted text-sm">{{ v.city }}</p>
-            </div>
-            <div class="vendor-stats">
-              <span class="stars">{{ starsFor(v.average_rating) }}</span>
-              <span class="text-sm text-muted">{{ v.total_ratings }} reviews</span>
-            </div>
+        } @else if (recentOrders().length > 0) {
+          <div class="table-wrapper no-radius">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th style="width: 20%;">ID</th>
+                  <th style="width: 40%;">Entity</th>
+                  <th style="width: 20%;">Amount</th>
+                  <th style="width: 20%;">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (o of recentOrders(); track o.id) {
+                  <tr [routerLink]="['/orders', o.id]" style="cursor: pointer;">
+                    <td><span class="font-monospace">#{{ o.order_number }}</span></td>
+                    <td class="font-weight-600">{{ o.customer_name }}</td>
+                    <td class="font-weight-600">{{ o.total | appCurrency }}</td>
+                    <td><span class="badge badge-{{ o.status }}">{{ o.status }}</span></td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <div class="p-5 text-center text-muted" style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+            <span class="material-icons-outlined" style="font-size: 40px; opacity: 0.5;">receipt_long</span>
+            <p style="margin: 0;">No active transactions</p>
           </div>
         }
-      }
+      </div>
+    </div>
+
+    <!-- Top Vendors -->
+    <div class="card panel">
+      <div class="card-header">
+        <h3>Top Vendors</h3>
+        <a routerLink="/vendors" class="btn btn-ghost btn-sm">View all</a>
+      </div>
+      <div class="card-body p-0">
+        @if (loadingVendors()) {
+          <div class="p-4 text-center"><div class="spinner"></div></div>
+        } @else if (vendorsError()) {
+          <div class="p-4 text-center text-muted" style="color:#E94560;">
+            <span class="material-icons-outlined" style="font-size:32px;opacity:.6;">error_outline</span>
+            <p style="margin:.25rem 0 0;">{{ vendorsError() }}</p>
+          </div>
+        } @else if (topVendors().length > 0) {
+          <div class="ranking-list">
+            @for (v of topVendors(); track v.id) {
+              <div class="rank-row hover-shadow" [routerLink]="['/vendors', v.id]" style="cursor: pointer; padding: 10px; border-radius: 8px; transition: background 0.2s;">
+                <div class="rank-avatar">
+                  <span class="material-icons-outlined">store</span>
+                </div>
+                <div class="v-meta">
+                  <span class="v-name">{{ v.store_name }}</span>
+                  <span class="v-city text-muted">{{ v.city }}</span>
+                </div>
+                <div class="v-score">
+                  <span class="score-stars"><span class="material-icons-outlined text-warning">star</span> {{ v.average_rating | number:'1.1-1' }}</span>
+                  <span class="score-reviews text-muted">{{ v.total_ratings }} revs</span>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="p-5 text-center text-muted" style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+            <span class="material-icons-outlined" style="font-size: 40px; opacity: 0.5;">storefront</span>
+            <p style="margin: 0;">No vendors ranked yet</p>
+          </div>
+        }
+      </div>
     </div>
   </div>
 </div>
+
+<!-- aria-label -->

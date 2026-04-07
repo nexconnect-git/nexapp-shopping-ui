@@ -1,4 +1,5 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { Subscription, timer } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -12,7 +13,7 @@ import { DynamicTableComponent, TableCellDirective } from '../../shared/componen
   templateUrl: './customers.component.html',
   styleUrl: './customers.component.scss'
 })
-export class CustomersComponent implements OnInit {
+export class CustomersComponent implements OnInit, OnDestroy {
   private api = inject(ApiService);
   private router = inject(Router);
   customers = signal<any[]>([]);
@@ -35,13 +36,26 @@ export class CustomersComponent implements OnInit {
     { key: 'actions', label: 'Actions', flex: '1fr' }
   ];
 
+  lastRefreshed = signal<Date | null>(null);
+  autoReload = signal(true);
+  private reloadSub?: Subscription;
+
   showModal = signal(false);
   editTarget = signal<any | null>(null);
   form = { first_name: '', last_name: '', email: '', phone: '', is_verified: false, is_active: true };
 
-  ngOnInit() { this.load(); }
+  ngOnInit() {
+    this.reloadSub = timer(0, 15000).subscribe(() => {
+      if (this.autoReload() && !this.showModal()) this.load();
+    });
+  }
+
+  ngOnDestroy() { this.reloadSub?.unsubscribe(); }
 
   goToProfile(c: any) { this.router.navigate(['/customers', c.id]); }
+
+  manualReload() { this.page.set(1); this.load(); }
+  toggleAutoReload() { this.autoReload.update(v => !v); }
 
   load() {
     this.loading.set(true);
@@ -54,8 +68,9 @@ export class CustomersComponent implements OnInit {
         this.total.set(r.count || (r.results || r).length);
         this.totalPages.set(Math.ceil((r.count || 0) / 20) || 1);
         this.loading.set(false);
+        this.lastRefreshed.set(new Date());
       },
-      error: () => this.loading.set(false)
+      error: () => this.loading.set(false),
     });
   }
 
@@ -70,8 +85,7 @@ export class CustomersComponent implements OnInit {
       email: c.email || '',
       phone: c.phone || '',
       is_verified: c.is_verified,
-      is_active: c.is_active !== false,
-    };
+      is_active: c.is_active !== false };
     this.error.set('');
     this.showModal.set(true);
   }

@@ -1,20 +1,29 @@
 <div class="orders-page">
 
-  <!-- Page Header -->
-  <div class="orders-header">
-    <h1 class="page-title">
-      My Orders
-      @if (orders().length > 0) {
-        <span class="order-count-badge">{{ orders().length }}</span>
-      }
-    </h1>
+  <!-- Mobile Page Header -->
+  <div class="orders-hero">
+    <div class="orders-hero-content">
+      <div class="orders-hero-icon">
+        <span class="material-icons-outlined">receipt_long</span>
+      </div>
+      <div>
+        <h1 class="orders-hero-title">My Orders</h1>
+        <p class="orders-hero-sub">
+          @if (orders().length > 0) {
+            {{ orders().length }} order{{ orders().length !== 1 ? 's' : '' }}
+          } @else {
+            No orders placed yet
+          }
+        </p>
+      </div>
+    </div>
   </div>
 
-  <!-- Status Tabs -->
-  <div class="status-tabs">
+  <!-- Status Filter Chips -->
+  <div class="filter-row">
     @for (tab of statusTabs; track tab.value) {
       <button
-        class="status-tab"
+        class="filter-chip"
         [class.active]="activeStatus() === tab.value"
         (click)="setStatus(tab.value)">
         {{ tab.label }}
@@ -22,46 +31,77 @@
     }
   </div>
 
+  <!-- Loading -->
   @if (loading()) {
-    <div class="loading-spinner"></div>
-  } @else if (orders().length === 0) {
+    <div class="orders-loading">
+      <div class="loading-spinner"></div>
+    </div>
 
-    <!-- Empty State -->
+  <!-- Empty State -->
+  } @else if (orders().length === 0) {
     <div class="empty-state">
-      <div class="empty-icon-wrap">
-        <span class="material-icons-outlined empty-orders-icon">receipt_long</span>
+      <div class="empty-lottie">
+        <span class="material-icons-outlined empty-icon">shopping_bag</span>
       </div>
-      <h3 class="empty-heading">No orders yet</h3>
-      <p class="empty-sub">Your orders will appear here once you place one</p>
-      <a routerLink="/shops" class="btn btn-primary btn-shop">
+      <h3 class="empty-heading">Nothing here yet</h3>
+      <p class="empty-sub">Start exploring shops and place your first order!</p>
+      <a routerLink="/shops" class="shop-cta">
         <span class="material-icons-outlined">storefront</span>
-        Start Shopping
+        Browse Shops
       </a>
     </div>
 
+  <!-- Orders List -->
   } @else {
     <div class="orders-list">
       @for (order of orders(); track order.id) {
         <a [routerLink]="['/order', order.id]" class="order-card status-{{ order.status }}">
 
-          <div class="order-top">
-            <span class="order-number">#{{ order.order_number }}</span>
-            <span class="status-badge status-{{ order.status }}">{{ order.status | titlecase }}</span>
+          <!-- Card Top: Store + Status -->
+          <div class="card-top">
+            <div class="store-info">
+              <div class="store-icon">
+                <span class="material-icons-outlined">storefront</span>
+              </div>
+              <span class="store-name">{{ order.vendor_name }}</span>
+            </div>
+            <span class="status-pill status-{{ order.status }}">
+              @if (order.status === 'delivered') {
+                <span class="material-icons-outlined">check_circle</span>
+              } @else if (order.status === 'cancelled') {
+                <span class="material-icons-outlined">cancel</span>
+              } @else if (order.status === 'on_the_way' || order.status === 'picked_up') {
+                <span class="material-icons-outlined">local_shipping</span>
+              } @else {
+                <span class="material-icons-outlined">schedule</span>
+              }
+              {{ order.status | titlecase }}
+            </span>
           </div>
 
-          <div class="order-mid">
-            <span class="vendor-name">{{ order.vendor_name }}</span>
+          <!-- Divider -->
+          <div class="card-divider"></div>
+
+          <!-- Items preview -->
+          <div class="card-items">
             @for (item of order.items.slice(0, 2); track item.id) {
-              <span class="item-chip">{{ item.product_name }}</span>
+              <span class="item-tag">{{ item.product_name }}</span>
             }
             @if (order.items.length > 2) {
-              <span class="item-chip more">+{{ order.items.length - 2 }} more</span>
+              <span class="item-tag more">+{{ order.items.length - 2 }} more</span>
             }
           </div>
 
-          <div class="order-bottom">
-            <span class="order-total">${{ order.total | number:'1.2-2' }}</span>
-            <span class="order-date">{{ order.placed_at | date:'MMM d, y' }}</span>
+          <!-- Card Bottom: Price + Date + Arrow -->
+          <div class="card-bottom">
+            <div class="card-meta">
+              <span class="order-num">#{{ order.order_number }}</span>
+              <span class="order-date">{{ order.placed_at | date:'MMM d, y' }}</span>
+            </div>
+            <div class="card-right">
+              <span class="order-total">{{ order.total | appCurrency }}</span>
+              <span class="material-icons-outlined card-arrow">chevron_right</span>
+            </div>
           </div>
 
         </a>
@@ -70,3 +110,5 @@
   }
 
 </div>
+
+<!-- aria-label -->

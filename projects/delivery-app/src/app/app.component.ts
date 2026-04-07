@@ -1,20 +1,22 @@
 import { Component, inject, signal, HostListener, OnInit, DestroyRef } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { timer } from 'rxjs';
-import { AuthService, ApiService } from '@shared/public-api';
+import { AuthService, ApiService, ToastComponent, NotificationPollingService } from '@shared/public-api';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, ToastComponent],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
   auth = inject(AuthService);
   api = inject(ApiService);
+  private router = inject(Router);
   private destroyRef = inject(DestroyRef);
+  private notifPolling = inject(NotificationPollingService);
   profileOpen = signal(false);
   notifOpen = signal(false);
   notifications = signal<any[]>([]);
@@ -23,12 +25,19 @@ export class AppComponent implements OnInit {
 
   ngOnInit() {
     if (this.auth.isLoggedIn()) {
-      timer(0, 30000).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.loadUnreadCount());
+      this.notifPolling.start((n) => {
+        if (n.notification_type === 'order') return { label: 'View', url: '/orders' };
+        return null;
+      });
     }
-  }
-
-  loadUnreadCount() {
-    this.api.getUnreadCount().subscribe({ next: (r) => this.unreadCount.set(r.count ?? 0), error: () => {} });
+    timer(0, 30000).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      if (this.auth.isLoggedIn()) {
+        this.api.getUnreadCount().subscribe({
+          next: (r) => this.unreadCount.set(r.count ?? 0),
+          error: () => {},
+        });
+      }
+    });
   }
 
   toggleProfile(event?: Event) {
@@ -67,4 +76,30 @@ export class AppComponent implements OnInit {
   closeDropdowns() { this.profileOpen.set(false); this.notifOpen.set(false); }
 
   closeProfile() { this.profileOpen.set(false); }
+
+  handleNotificationClick(n: any) {
+    if (!n.is_read) {
+      this.api.markNotificationRead(n.id).subscribe({
+        next: () => {
+          this.unreadCount.update(c => Math.max(0, c - 1));
+          this.notifications.update(list =>
+            list.map(item => item.id === n.id ? { ...item, is_read: true } : item)
+          );
+        },
+      });
+    }
+    this.notifOpen.set(false);
+    if (n.notification_type === 'order') {
+      this.router.navigate(['/orders']);
+    } else {
+      this.router.navigate(['/']);
+    }
+  }
+
+  isAuthRoute(): boolean {
+    const url = this.router.url;
+    return url.includes('/login') || url.includes('/change-password');
+  }
 }
+
+

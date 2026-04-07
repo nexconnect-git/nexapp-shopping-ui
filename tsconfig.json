@@ -20,7 +20,10 @@
     "baseUrl": ".",
     "paths": {
       "@shared/*": ["projects/shared/src/*"]
-    }
+    },
+    "typeRoots": [
+      "./node_modules/@types"
+    ]
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

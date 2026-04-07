@@ -1,272 +1,221 @@
-<!-- ============================================================
-     HERO SECTION — App-style with location detection
-     ============================================================ -->
-<section class="app-hero">
-  <div class="hero-bg-shape" aria-hidden="true"></div>
-  <div class="hero-bg-shape2" aria-hidden="true"></div>
-  <div class="container">
-
-    <!-- Location Bar -->
-    <div class="location-bar">
-      <button class="loc-btn" (click)="detectLocation()" [disabled]="locationLoading()">
-        <span class="loc-icon-wrap" [class.spinning]="locationLoading()">
-          <span class="material-icons-outlined">{{ locationLoading() ? 'hourglass_empty' : 'my_location' }}</span>
-        </span>
-        <div class="loc-text">
-          <span class="loc-label">Delivering to</span>
-          <span class="loc-value">{{ locationDisplay() }}</span>
-        </div>
-        <span class="material-icons-outlined loc-caret">keyboard_arrow_down</span>
-      </button>
-    </div>
-
-    <!-- Headline -->
-    <div class="hero-content">
-      <h1 class="hero-title">What are you <span class="hero-hl">craving today?</span></h1>
-      <p class="hero-sub">Order from local vendors — delivered fast to your door.</p>
-    </div>
-
-    <!-- Search Bar -->
-    <a routerLink="/shops" class="hero-search-bar">
-      <span class="material-icons-outlined search-icon">search</span>
-      <span class="search-ph">Restaurants, groceries, electronics...</span>
-      <span class="search-go">
-        <span class="material-icons-outlined">arrow_forward</span>
-      </span>
-    </a>
-
-    <!-- Quick Stats -->
-    <div class="hero-stats">
-      <div class="hero-stat">
-        <span class="stat-num">{{ allVendors().length }}+</span>
-        <span class="stat-lbl">Stores</span>
-      </div>
-      <div class="stat-sep"></div>
-      <div class="hero-stat">
-        <span class="stat-num">30</span>
-        <span class="stat-lbl">Min delivery</span>
-      </div>
-      <div class="stat-sep"></div>
-      <div class="hero-stat">
-        <span class="stat-num">COD</span>
-        <span class="stat-lbl">Pay on delivery</span>
-      </div>
-    </div>
-
-  </div>
-</section>
-
-<!-- ============================================================
-     CATEGORY PILLS
-     ============================================================ -->
-<section class="cats-section" id="explore-shops">
-  <div class="cats-container">
-    <div class="cats-scroll">
-      @for (cat of categories(); track cat.id) {
-        <button
-          class="cat-pill"
-          [class.active]="selectedCategory() === cat.id"
-          (click)="selectCategory(cat.id)">
-          <span class="cat-icon" [style.background]="selectedCategory() === cat.id ? cat.color : cat.bg">
-            <span class="material-icons-outlined" [style.color]="selectedCategory() === cat.id ? '#fff' : cat.color">
-              {{ cat.icon }}
-            </span>
+<!-- ── Location + Search Header ─────────────────────────────── -->
+<div class="nx-header">
+  <div class="nx-loc-row">
+    <button class="nx-loc-btn" (click)="detectLocation()" [disabled]="locationLoading()">
+      <span class="material-icons-outlined nx-loc-pin">location_on</span>
+      <div class="nx-loc-text">
+        <span class="nx-loc-name">
+          {{ locationDisplay() }}
+          <span class="material-icons-outlined nx-loc-chevron" [class.spin]="locationLoading()">
+            {{ locationLoading() ? 'sync' : 'keyboard_arrow_down' }}
           </span>
-          <span class="cat-label">{{ cat.name }}</span>
-        </button>
-      }
-    </div>
+        </span>
+        <span class="nx-loc-sub">Delivering to</span>
+      </div>
+    </button>
+  </div>
+
+  <a routerLink="/search" class="nx-search">
+    <span class="material-icons-outlined nx-search-icon">search</span>
+    <span class="nx-search-ph">Search for shops, food, essentials...</span>
+    <span class="material-icons-outlined nx-mic">mic</span>
+  </a>
+</div>
+
+<!-- ── Category Tiles ──────────────────────────────────────── -->
+<section class="nx-cats">
+  <div class="nx-cats-scroll">
+    @for (cat of categories(); track cat.id) {
+      <button
+        class="nx-cat"
+        [class.active]="selectedCategory() === cat.id"
+        (click)="selectCategory(cat.id)">
+        <div class="nx-cat-icon" [style.background]="cat.bg">
+          <span class="material-icons-outlined" [style.color]="cat.color">{{ cat.icon }}</span>
+        </div>
+        <span class="nx-cat-name">{{ cat.name }}</span>
+      </button>
+    }
   </div>
 </section>
 
-<!-- ============================================================
-     STORES SECTION
-     ============================================================ -->
-<section class="stores-section">
-  <div class="container">
+<!-- ── Promo Banner ─────────────────────────────────────────── -->
+<div class="nx-promo-banner">
+  <div class="nx-promo-content">
+    <div class="nx-promo-badge">FAST DELIVERY</div>
+    <h2 class="nx-promo-title">Delivery<br>Under 30 Mins</h2>
+    <p class="nx-promo-sub">Enjoy fast delivery on your favourite dishes</p>
+    <a routerLink="/shops" class="nx-promo-cta">Order Now</a>
+  </div>
+  <div class="nx-promo-art">
+    <span class="material-icons-outlined">delivery_dining</span>
+  </div>
+</div>
 
-    <div class="stores-header">
-      <div class="stores-header-left">
-        <h2 class="stores-title">
-          @if (selectedCategory() !== 'all' && selectedCategoryObj) {
-            <span class="cat-filter-badge">{{ selectedCategoryObj.name }}</span>
-          }
-          {{ sectionTitle }}
-        </h2>
-        <p class="stores-sub">
-          @if (userLat) { Sorted by distance from your location }
-          @else { Showing all available stores }
-        </p>
-      </div>
-      <label class="open-toggle-wrap">
-        <input type="checkbox" class="toggle-input" [(ngModel)]="openOnly" (change)="toggleOpenFilter()">
-        <span class="toggle-track">
-          <span class="toggle-thumb"></span>
-        </span>
-        <span class="toggle-lbl">Open now</span>
-      </label>
+<!-- ── Top Picks ───────────────────────────────────────────── -->
+@if (!loadingVendors() && topPicks().length > 0) {
+  <section class="nx-picks">
+    <div class="nx-section-hd">
+      <h2>Top Picks For You <span class="nx-emoji">👍</span></h2>
     </div>
-
-    <!-- Skeleton Loading -->
-    @if (loadingVendors()) {
-      <div class="stores-grid">
-        @for (i of [1,2,3,4,5,6]; track i) {
-          <div class="store-skeleton">
-            <div class="sk-banner"></div>
-            <div class="sk-body">
-              <div class="sk-line w70"></div>
-              <div class="sk-line w50"></div>
-              <div class="sk-line w40"></div>
+    <div class="nx-picks-scroll">
+      @for (v of topPicks(); track v.id) {
+        <a [routerLink]="['/shop', v.id]" class="nx-pick">
+          <div class="nx-pick-img">
+            @if (v.banner) {
+              <img [src]="v.banner" alt="{{v.store_name}}" loading="lazy">
+            } @else {
+              <div class="nx-pick-ph">
+                <span class="material-icons-outlined">storefront</span>
+              </div>
+            }
+            @if (v.is_featured) {
+              <span class="nx-pick-tag">Featured</span>
+            }
+            @if (!v.is_open) {
+              <div class="nx-pick-closed">Closed</div>
+            }
+          </div>
+          <div class="nx-pick-info">
+            <div class="nx-pick-name">{{ v.store_name }}</div>
+            <div class="nx-pick-meta">
+              <span class="nx-rating-pill">
+                <span class="material-icons-outlined">star</span>
+                {{ v.average_rating | number:'1.1-1' }}
+              </span>
+              @if (v.distance_km) {
+                <span class="nx-pick-dist">{{ v.distance_km }} km</span>
+              }
             </div>
           </div>
-        }
-      </div>
-    }
-
-    <!-- Empty State -->
-    @else if (filteredVendors().length === 0) {
-      <div class="empty-state">
-        <span class="material-icons-outlined empty-icon">store_mall_directory</span>
-        <h3>No stores found</h3>
-        @if (selectedCategory() !== 'all') {
-          <p>No stores sell this category near you.</p>
-          <button class="btn-view-all" (click)="selectCategory('all')">View all stores</button>
-        } @else {
-          <p>No approved stores available. Check back soon!</p>
-        }
-      </div>
-    }
-
-    <!-- Stores Grid -->
-    @else {
-      <div class="stores-grid">
-        @for (vendor of filteredVendors(); track vendor.id) {
-          <a [routerLink]="['/shop', vendor.id]" class="store-card">
-
-            <!-- Banner -->
-            <div class="store-banner">
-              @if (vendor.banner) {
-                <img [src]="vendor.banner" [alt]="vendor.store_name" class="store-banner-img" loading="lazy">
-              } @else {
-                <div class="store-banner-ph">
-                  <span class="material-icons-outlined">storefront</span>
-                </div>
-              }
-              <div class="store-banner-grad"></div>
-
-              <!-- Open/Closed badge -->
-              <span class="store-status-badge" [class.closed]="!vendor.is_open">
-                <span class="status-dot"></span>
-                {{ vendor.is_open ? 'Open' : 'Closed' }}
-              </span>
-
-              <!-- Featured -->
-              @if (vendor.is_featured) {
-                <span class="store-featured-badge">
-                  <span class="material-icons-outlined">star</span>
-                  Featured
-                </span>
-              }
-
-              <!-- Logo -->
-              @if (vendor.logo) {
-                <img [src]="vendor.logo" [alt]="vendor.store_name" class="store-logo" loading="lazy">
-              }
-            </div>
-
-            <!-- Card Body -->
-            <div class="store-body">
-              <h3 class="store-name">{{ vendor.store_name }}</h3>
-              <div class="store-meta">
-                <span class="meta-item">
-                  <span class="material-icons-outlined">star</span>
-                  {{ vendor.average_rating | number: '1.1-1' }}
-                  <span class="meta-count">({{ vendor.total_ratings }})</span>
-                </span>
-                @if (vendor.distance_km) {
-                  <span class="meta-sep">·</span>
-                  <span class="meta-item">
-                    <span class="material-icons-outlined">near_me</span>
-                    {{ vendor.distance_km }} km
-                  </span>
-                }
-                <span class="meta-sep">·</span>
-                <span class="meta-item">
-                  <span class="material-icons-outlined">location_on</span>
-                  {{ vendor.city }}
-                </span>
-              </div>
-              @if (vendor.min_order_amount) {
-                <p class="store-min">Min. order ₦{{ vendor.min_order_amount | number }}</p>
-              }
-            </div>
-
-          </a>
-        }
-      </div>
-    }
-
-  </div>
-</section>
-
-<!-- ============================================================
-     HOW IT WORKS
-     ============================================================ -->
-<section class="how-section">
-  <div class="container">
-    <div class="section-header centered">
-      <h2>How It Works</h2>
-      <p class="section-sub">Order in three simple steps</p>
-    </div>
-
-    <div class="how-steps">
-      <div class="how-step">
-        <div class="how-step-num">1</div>
-        <div class="how-step-icon">
-          <span class="material-icons-outlined">storefront</span>
-        </div>
-        <h3>Select a Shop</h3>
-        <p>Browse categories and pick a top-rated vendor near you.</p>
-      </div>
-      <div class="how-connector" aria-hidden="true"></div>
-      <div class="how-step">
-        <div class="how-step-num secondary">2</div>
-        <div class="how-step-icon secondary">
-          <span class="material-icons-outlined">add_shopping_cart</span>
-        </div>
-        <h3>Add to Cart</h3>
-        <p>Explore the catalog and add your favourite items.</p>
-      </div>
-      <div class="how-connector" aria-hidden="true"></div>
-      <div class="how-step">
-        <div class="how-step-num success">3</div>
-        <div class="how-step-icon success">
-          <span class="material-icons-outlined">local_shipping</span>
-        </div>
-        <h3>Fast Delivery</h3>
-        <p>Place your order and track it live to your door.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============================================================
-     FOOTER CTA (unauthenticated users only)
-     ============================================================ -->
-@if (!auth.isLoggedIn()) {
-  <section class="cta-section">
-    <div class="container">
-      <div class="cta-inner">
-        <h2>Ready to start ordering?</h2>
-        <p>Join thousands of customers who shop from local vendors every day.</p>
-        <div class="cta-actions">
-          <a routerLink="/register" class="cta-btn-primary">
-            <span class="material-icons-outlined">person_add</span>
-            Create Free Account
-          </a>
-          <a routerLink="/login" class="cta-btn-ghost">Sign In</a>
-        </div>
-      </div>
+        </a>
+      }
     </div>
   </section>
+}
+
+<!-- ── Shops Near You ──────────────────────────────────────── -->
+<section class="nx-shops stores-section">
+  <div class="nx-shops-hd">
+    <h2>
+      @if (selectedCategory() !== 'all' && selectedCategoryObj) {
+        {{ selectedCategoryObj.name }} Shops
+      } @else if (userLat) {
+        Shops Near You
+      } @else {
+        All Shops
+      }
+    </h2>
+    @if (!loadingVendors()) {
+      <span class="nx-shops-count">{{ filteredVendors().length }} shops</span>
+    }
+  </div>
+
+  <!-- Filter Chips -->
+  <div class="nx-filter-row">
+    <label class="nx-fchip" [class.active]="openOnly">
+      <input type="checkbox" [(ngModel)]="openOnly" (change)="toggleOpenFilter()" hidden>
+      <span class="material-icons-outlined">schedule</span>
+      Open Now
+    </label>
+    @if (selectedCategory() !== 'all') {
+      <button class="nx-fchip nx-fchip-active" (click)="selectCategory('all')">
+        <span class="material-icons-outlined">close</span>
+        {{ selectedCategoryObj?.name }}
+      </button>
+    }
+    @for (cat of categories().slice(1, 6); track cat.id) {
+      @if (selectedCategory() !== cat.id) {
+        <button class="nx-fchip" (click)="selectCategory(cat.id)">
+          {{ cat.name }}
+        </button>
+      }
+    }
+  </div>
+
+  <!-- Skeleton -->
+  @if (loadingVendors()) {
+    <div class="nx-vlist">
+      @for (i of [1,2,3]; track i) {
+        <div class="nx-vskel shimmer"></div>
+      }
+    </div>
+  }
+
+  <!-- Empty -->
+  @else if (filteredVendors().length === 0) {
+    <div class="nx-empty">
+      <span class="material-icons-outlined">search_off</span>
+      <p>No shops found</p>
+      @if (selectedCategory() !== 'all') {
+        <button (click)="selectCategory('all')">View all shops</button>
+      }
+    </div>
+  }
+
+  <!-- Vendor List -->
+  @else {
+    <div class="nx-vlist">
+      @for (v of filteredVendors(); track v.id) {
+        <a [routerLink]="['/shop', v.id]" class="nx-vcard">
+          <div class="nx-vcard-img">
+            @if (v.banner) {
+              <img [src]="v.banner" alt="{{v.store_name}}" loading="lazy">
+            } @else {
+              <div class="nx-vcard-ph">
+                <span class="material-icons-outlined">storefront</span>
+              </div>
+            }
+            @if (v.is_featured) {
+              <div class="nx-vcard-badge">
+                <span class="material-icons-outlined">bolt</span>
+                Featured
+              </div>
+            }
+            @if (!v.is_open) {
+              <div class="nx-vcard-closed">Currently Closed</div>
+            }
+          </div>
+          <div class="nx-vcard-info">
+            <h3 class="nx-vcard-name">{{ v.store_name }}</h3>
+            <div class="nx-vcard-meta">
+              <span class="nx-rating-pill">
+                <span class="material-icons-outlined">star</span>
+                {{ v.average_rating | number:'1.1-1' }}
+              </span>
+              <span class="nx-mdot">·</span>
+              @if (v.distance_km) {
+                <span class="nx-vmeta-text">{{ v.distance_km }} km</span>
+                <span class="nx-mdot">·</span>
+              }
+              <span class="nx-vmeta-text">{{ v.city }}</span>
+            </div>
+            @if (v.is_featured) {
+              <div class="nx-vcard-offer">
+                <span class="material-icons-outlined">local_offer</span>
+                Free delivery on first order
+              </div>
+            }
+          </div>
+        </a>
+      }
+    </div>
+  }
+</section>
+
+<!-- ── Join CTA (guests only) ─────────────────────────────── -->
+@if (!auth.isLoggedIn()) {
+  <div class="nx-join">
+    <div class="nx-join-content">
+      <div class="nx-join-icon">
+        <span class="material-icons-outlined">bolt</span>
+      </div>
+      <h3>New to NexConnect?</h3>
+      <p>Join thousands enjoying fast local delivery</p>
+      <div class="nx-join-btns">
+        <a routerLink="/register" class="nx-join-primary">Get Started</a>
+        <a routerLink="/login" class="nx-join-ghost">Sign In</a>
+      </div>
+    </div>
+  </div>
 }

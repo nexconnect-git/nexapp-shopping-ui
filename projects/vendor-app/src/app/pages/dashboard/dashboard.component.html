@@ -1,168 +1,298 @@
-<div class="dashboard fade-in">
+<div class="dashboard-page fade-in">
 
-  <!-- Page Header -->
   <div class="page-header">
-    <div>
-      <h1>Dashboard</h1>
-      <p class="page-subtitle">Welcome back! Here's what's happening with your store.</p>
+    <div class="ph-left">
+      <h1 class="page-title">Vendor Dashboard</h1>
+      <p class="page-subtitle">Welcome back! Here's what's happening with your store today.</p>
     </div>
-    <div style="display:flex;gap:0.75rem;">
-      <a routerLink="/products/new" class="btn-primary">
-        <span class="material-icons-outlined">add</span>
-        Add Product
-      </a>
-      <a routerLink="/orders" class="btn-outline">
-        <span class="material-icons-outlined">receipt_long</span>
-        View Orders
-      </a>
+    <div class="ph-right">
+      <!-- Store Toggle -->
+      @if (stats()) {
+        <button
+          class="store-toggle-btn"
+          [class.open]="stats()!.is_open"
+          [disabled]="storeToggling()"
+          (click)="toggleStore()">
+          @if (storeToggling()) {
+            <span class="btn-spinner"></span>
+          } @else {
+            <span class="toggle-dot"></span>
+          }
+          {{ stats()!.is_open ? 'Store Online' : 'Store Offline' }}
+          @if (stats()!.is_open && stats()!.closing_time) {
+            <span class="closing-tag">Closes {{ stats()!.closing_time }}</span>
+          }
+        </button>
+      }
     </div>
   </div>
 
   @if (loading()) {
     <div class="loading-state">
       <div class="spinner"></div>
-      <p>Loading dashboard...</p>
+      <p>Loading analytics...</p>
     </div>
   } @else if (stats()) {
 
-    <!-- Stat Cards -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-card-icon green">
-          <span class="material-icons-outlined">receipt_long</span>
+    <!-- Low Stock Warning Banner -->
+    @if (stats()!.low_stock_count > 0) {
+      <div class="low-stock-banner">
+        <span class="material-icons-outlined">warning_amber</span>
+        <span>
+          <strong>{{ stats()!.low_stock_count }} product{{ stats()!.low_stock_count > 1 ? 's are' : ' is' }} running low on stock.</strong>
+          Check inventory to avoid disappointing customers.
+        </span>
+        <a routerLink="/products" class="banner-link">View Products</a>
+      </div>
+    }
+
+    <!-- Metric Cards -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="mc-icon-wrap bg-primary-soft">
+          <span class="material-icons-outlined text-primary">shopping_bag</span>
         </div>
-        <div class="stat-card-content">
-          <div class="stat-card-label">Total Orders</div>
-          <div class="stat-card-value">{{ stats()!.total_orders }}</div>
-          <div class="stat-card-sub">All time orders</div>
+        <div class="mc-details">
+          <p class="mc-label">Total Orders</p>
+          <h3 class="mc-value">{{ stats()!.total_orders }}</h3>
         </div>
       </div>
-
-      <div class="stat-card">
-        <div class="stat-card-icon blue">
-          <span class="material-icons-outlined">inventory_2</span>
+      <div class="metric-card">
+        <div class="mc-icon-wrap bg-success-soft">
+          <span class="material-icons-outlined text-success">inventory_2</span>
         </div>
-        <div class="stat-card-content">
-          <div class="stat-card-label">Total Products</div>
-          <div class="stat-card-value">{{ stats()!.total_products }}</div>
-          <div class="stat-card-sub">Listed in your store</div>
+        <div class="mc-details">
+          <p class="mc-label">Total Products</p>
+          <h3 class="mc-value">{{ stats()!.total_products }}</h3>
         </div>
       </div>
-
-      <div class="stat-card">
-        <div class="stat-card-icon amber">
-          <span class="material-icons-outlined">star</span>
+      <div class="metric-card">
+        <div class="mc-icon-wrap bg-warning-soft">
+          <span class="material-icons-outlined text-warning">star_rate</span>
         </div>
-        <div class="stat-card-content">
-          <div class="stat-card-label">Average Rating</div>
-          <div class="stat-card-value">{{ stats()!.average_rating | number:'1.1-1' }}</div>
-          <div class="stat-card-sub">{{ stats()!.total_ratings }} total reviews</div>
+        <div class="mc-details">
+          <p class="mc-label">Store Rating</p>
+          <h3 class="mc-value">{{ stats()!.average_rating | number:'1.1-1' }} <span class="mc-sub">/ 5.0</span></h3>
         </div>
       </div>
-
-      <div class="stat-card">
-        <div class="stat-card-icon emerald">
-          <span class="material-icons-outlined">trending_up</span>
+      <div class="metric-card" [class.warn-card]="stats()!.low_stock_count > 0">
+        <div class="mc-icon-wrap" [class]="stats()!.low_stock_count > 0 ? 'bg-warning-soft' : 'bg-info-soft'">
+          <span class="material-icons-outlined" [class]="stats()!.low_stock_count > 0 ? 'text-warning' : 'text-info'">
+            {{ stats()!.low_stock_count > 0 ? 'warning_amber' : 'reviews' }}
+          </span>
         </div>
-        <div class="stat-card-content">
-          <div class="stat-card-label">Recent Orders</div>
-          <div class="stat-card-value">{{ stats()!.recent_orders.length }}</div>
-          <div class="stat-card-sub">In current batch</div>
+        <div class="mc-details">
+          <p class="mc-label">{{ stats()!.low_stock_count > 0 ? 'Low Stock' : 'Total Reviews' }}</p>
+          <h3 class="mc-value">{{ stats()!.low_stock_count > 0 ? stats()!.low_stock_count : stats()!.total_ratings }}</h3>
         </div>
       </div>
     </div>
 
-    <!-- Recent Orders -->
-    <div class="card" style="margin-top:2rem;">
-      <div class="card-header">
-        <h3>Recent Orders</h3>
-        <a routerLink="/orders" class="btn-outline btn-sm">
-          View All
-          <span class="material-icons-outlined">arrow_forward</span>
-        </a>
+    <!-- Dashboard Grid -->
+    <div class="dashboard-grid mt-4">
+
+      <!-- Recent Orders -->
+      <div class="card panel-card">
+        <div class="card-header">
+          <h3>Recent Orders</h3>
+          <a routerLink="/orders" class="btn btn-ghost btn-sm">View All</a>
+        </div>
+        <div class="card-body p-0">
+          @if (stats()!.recent_orders.length > 0) {
+            <div class="table-wrapper no-border-radius">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (order of stats()!.recent_orders; track order.id) {
+                    <tr class="order-row" (click)="viewOrder(order.id)">
+                      <td class="font-weight-600 font-monospace">#{{ order.order_number }}</td>
+                      <td>{{ order.customer_name }}</td>
+                      <td class="font-weight-600">{{ order.total | appCurrency }}</td>
+                      <td>
+                        <span class="badge badge-{{ order.status }}">{{ order.status | titlecase }}</span>
+                      </td>
+                      <td>
+                        <a [routerLink]="['/orders', order.id]" class="view-btn" (click)="$event.stopPropagation()">
+                          <span class="material-icons-outlined">chevron_right</span>
+                        </a>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else {
+            <div class="empty-panel">
+              <span class="material-icons-outlined text-muted text-4xl mb-2">receipt_long</span>
+              <p class="text-muted m-0">No recent orders found.</p>
+            </div>
+          }
+        </div>
       </div>
 
-      @if (stats()!.recent_orders.length === 0) {
-        <div class="empty-state">
-          <span class="material-icons-outlined">receipt_long</span>
-          <strong>No orders yet</strong>
-          <p>Orders from customers will appear here</p>
+      <!-- Quick Links -->
+      <div class="card panel-card actions-card">
+        <div class="card-header"><h3>Quick Links</h3></div>
+        <div class="card-body">
+          <div class="qa-grid">
+            <a routerLink="/products/new" class="qa-btn">
+              <div class="qa-icon"><span class="material-icons-outlined">add_circle</span></div>
+              <span>Add Product</span>
+            </a>
+            <a routerLink="/orders" class="qa-btn">
+              <div class="qa-icon"><span class="material-icons-outlined">list_alt</span></div>
+              <span>View Orders</span>
+            </a>
+            <a routerLink="/payouts" class="qa-btn">
+              <div class="qa-icon"><span class="material-icons-outlined">payments</span></div>
+              <span>Payouts</span>
+            </a>
+            <a routerLink="/profile" class="qa-btn">
+              <div class="qa-icon"><span class="material-icons-outlined">storefront</span></div>
+              <span>Store Settings</span>
+            </a>
+          </div>
         </div>
-      } @else {
-        <div class="table-wrapper" style="border:none;border-radius:0;">
-          <table class="data-table">
+      </div>
+
+    </div>
+
+  } @else {
+    <div class="card empty-state p-5 text-center mt-4">
+      <span class="material-icons-outlined text-muted" style="font-size: 48px">analytics</span>
+      <h3 class="mt-3">Unable to load dashboard</h3>
+      <p class="text-muted">There was a problem fetching your store analytics.</p>
+    </div>
+  }
+
+</div>
+
+<!-- ══ Store Open Modal ══ -->
+@if (showStoreModal()) {
+  <div class="modal-backdrop" (click)="showStoreModal.set(false)">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title-row">
+          <span class="material-icons-outlined modal-icon">storefront</span>
+          <h2>Open Your Store</h2>
+        </div>
+        <button class="modal-close" (click)="showStoreModal.set(false)">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc">Set today's closing time before going online. Customers will see your store as available until then.</p>
+        <div class="form-group">
+          <label class="form-label required">Closing Time</label>
+          <input class="form-input" type="time" [(ngModel)]="closingTime" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="showStoreModal.set(false)">Cancel</button>
+        <button class="btn-success" [disabled]="!closingTime || storeToggling()" (click)="confirmOpenStore()">
+          @if (storeToggling()) { <span class="btn-spinner-dark"></span> }
+          Open Store
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ══ Stock Check Modal ══ -->
+@if (showStockModal()) {
+  <div class="modal-backdrop">
+    <div class="modal-box modal-wide" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title-row">
+          <span class="material-icons-outlined modal-icon">inventory_2</span>
+          <h2>Update Today's Stock</h2>
+        </div>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc">Review your inventory before going online. Customers can only order items with available stock.</p>
+
+        <div class="stock-mode-row">
+          <label class="stock-mode-option" [class.selected]="stockMode === 'previous'">
+            <input type="radio" name="stockMode" value="previous" [(ngModel)]="stockMode" (change)="onStockModeChange()">
+            <span class="material-icons-outlined">history</span>
+            <div>
+              <strong>Use Previous Stock</strong>
+              <span>Update quantities from last session</span>
+            </div>
+          </label>
+          <label class="stock-mode-option" [class.selected]="stockMode === 'new'">
+            <input type="radio" name="stockMode" value="new" [(ngModel)]="stockMode" (change)="onStockModeChange()">
+            <span class="material-icons-outlined">refresh</span>
+            <div>
+              <strong>Fresh Stock for Today</strong>
+              <span>Enter new quantities for all products</span>
+            </div>
+          </label>
+        </div>
+
+        @if (stockHasWarnings()) {
+          <div class="stock-warning-bar">
+            <span class="material-icons-outlined">warning_amber</span>
+            Some products are at or below their low-stock threshold. Update quantities or they won't be listed as available.
+          </div>
+        }
+
+        <div class="stock-table-wrap">
+          <table class="stock-table">
             <thead>
               <tr>
-                <th>Order #</th>
-                <th>Customer</th>
-                <th>Items</th>
-                <th>Total</th>
-                <th>Status</th>
-                <th>Date</th>
-                <th></th>
+                <th>Product</th>
+                <th>Threshold</th>
+                <th style="width:140px;">Stock Qty</th>
               </tr>
             </thead>
             <tbody>
-              @for (order of stats()!.recent_orders; track order.id) {
-                <tr>
+              @for (p of stockProducts(); track p.id) {
+                <tr [class.low-stock-row]="isLowStock(p)">
                   <td>
-                    <span class="order-number">#{{ order.order_number }}</span>
+                    <div class="stock-product-cell">
+                      <span class="stock-product-name">{{ p.name }}</span>
+                      @if (isLowStock(p)) {
+                        <span class="low-badge">Low Stock</span>
+                      }
+                    </div>
                   </td>
-                  <td>{{ order.customer_name }}</td>
-                  <td class="text-muted">{{ order.items.length }} item(s)</td>
-                  <td>
-                    <strong>${{ order.total | number:'1.2-2' }}</strong>
+                  <td class="threshold-cell">
+                    {{ p.low_stock_threshold > 0 ? p.low_stock_threshold : '—' }} {{ p.unit }}
                   </td>
                   <td>
-                    <span class="badge badge-{{ order.status }}">{{ order.status }}</span>
-                  </td>
-                  <td class="text-muted">{{ order.placed_at | date:'MMM d, y' }}</td>
-                  <td>
-                    <a [routerLink]="['/orders', order.id]" class="btn-ghost btn-sm">
-                      <span class="material-icons-outlined">open_in_new</span>
-                    </a>
+                    <input
+                      class="stock-input"
+                      [class.stock-input-warn]="isLowStock(p)"
+                      type="number"
+                      min="0"
+                      [(ngModel)]="p.newStock"
+                      (input)="onStockInput()" />
                   </td>
                 </tr>
               }
             </tbody>
           </table>
         </div>
-      }
-    </div>
-
-    <!-- Quick Actions -->
-    <div class="quick-actions">
-      <h3>Quick Actions</h3>
-      <div class="quick-actions-grid">
-        <a routerLink="/products/new" class="quick-action-card">
-          <div class="qa-icon green">
-            <span class="material-icons-outlined">add_box</span>
-          </div>
-          <div>
-            <strong>Add Product</strong>
-            <p>List a new item in your store</p>
-          </div>
-        </a>
-        <a routerLink="/orders" class="quick-action-card">
-          <div class="qa-icon blue">
-            <span class="material-icons-outlined">manage_history</span>
-          </div>
-          <div>
-            <strong>Manage Orders</strong>
-            <p>View and update order statuses</p>
-          </div>
-        </a>
-        <a routerLink="/profile" class="quick-action-card">
-          <div class="qa-icon amber">
-            <span class="material-icons-outlined">settings</span>
-          </div>
-          <div>
-            <strong>Store Settings</strong>
-            <p>Update your store profile</p>
-          </div>
-        </a>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="showStockModal.set(false); showStoreModal.set(false)">Cancel</button>
+        <button
+          class="btn-success"
+          [disabled]="stockHasWarnings() || stockSubmitting()"
+          (click)="submitStock()">
+          @if (stockSubmitting()) { <span class="btn-spinner-dark"></span> }
+          {{ stockHasWarnings() ? 'Fix Warnings First' : 'Save & Go Online' }}
+        </button>
       </div>
     </div>
+  </div>
+}
 
-  }
-</div>
+<!-- aria-label -->

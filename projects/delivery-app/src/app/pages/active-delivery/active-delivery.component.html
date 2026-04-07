@@ -5,65 +5,42 @@
   </div>
 
   @if (loading()) {
-    <div class="spinner-wrap">
-      <div class="spinner"></div>
-    </div>
+    <div class="spinner-wrap"><div class="spinner"></div></div>
   } @else if (orders().length === 0) {
     <div class="empty-state">
       <span class="material-icons-outlined">delivery_dining</span>
       <h3>No active deliveries</h3>
-      <p>Accept an available order to start your first delivery</p>
+      <p>Accept a delivery request to get started</p>
     </div>
   } @else {
     <div class="deliveries-list">
       @for (order of orders(); track order.id) {
         <div class="delivery-card">
-          <!-- Card Header -->
+          <!-- Header -->
           <div class="card-header">
             <div class="order-id-group">
               <span class="order-num">#{{ order.order_number }}</span>
+              <span class="earn-label">Earn ₹{{ order.delivery_fee | number:'1.2-2' }}</span>
             </div>
             <span class="status-badge status-{{ order.status }}">{{ order.status | titlecase }}</span>
           </div>
 
-          <!-- Status Progression -->
+          <!-- Step Tracker -->
           <div class="status-steps">
             <div class="status-step" [class.done]="['picked_up','on_the_way','delivered'].includes(order.status)" [class.active]="order.status === 'ready'">
-              <div class="step-dot"></div>
-              <span class="step-label">Ready</span>
+              <div class="step-dot"></div><span class="step-label">Go to Vendor</span>
             </div>
             <div class="step-track" [class.done]="['on_the_way','delivered'].includes(order.status)"></div>
             <div class="status-step" [class.done]="['on_the_way','delivered'].includes(order.status)" [class.active]="order.status === 'picked_up'">
-              <div class="step-dot"></div>
-              <span class="step-label">Picked Up</span>
+              <div class="step-dot"></div><span class="step-label">Picked Up</span>
             </div>
             <div class="step-track" [class.done]="order.status === 'delivered'"></div>
             <div class="status-step" [class.done]="order.status === 'delivered'" [class.active]="order.status === 'on_the_way'">
-              <div class="step-dot"></div>
-              <span class="step-label">Delivered</span>
+              <div class="step-dot"></div><span class="step-label">Delivered</span>
             </div>
           </div>
 
-          <!-- Route Visualization -->
-          <div class="route-visual">
-            <div class="route-line-col">
-              <span class="route-dot pickup"></span>
-              <span class="route-connector"></span>
-              <span class="route-dot dropoff"></span>
-            </div>
-            <div class="route-info-col">
-              <div class="route-point">
-                <span class="route-label">Pickup from</span>
-                <span class="route-address">{{ order.vendor_name }}</span>
-              </div>
-              <div class="route-point">
-                <span class="route-label">Deliver to</span>
-                <span class="route-address">{{ order.delivery_address.address_line1 }}, {{ order.delivery_address.city }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Items Chips -->
+          <!-- Items -->
           <div class="items-chips">
             @for (item of order.items.slice(0, 3); track item.id) {
               <span class="item-chip">{{ item.quantity }}x {{ item.product_name }}</span>
@@ -73,48 +50,82 @@
             }
           </div>
 
-          <!-- Card Footer -->
-          <div class="card-footer">
-            <div class="total-row">
-              <span class="total-label">Order Total</span>
-              <span class="total-amount">${{ order.total | number:'1.2-2' }}</span>
+          <!-- ════════ READY: Show pickup OTP + navigate to vendor ════════ -->
+          @if (order.status === 'ready') {
+            <div class="otp-box">
+              <div class="otp-label">
+                <span class="material-icons-outlined">lock</span>
+                Your Pickup OTP — tell this to the vendor
+              </div>
+              <div class="otp-code">{{ order.pickup_otp || '------' }}</div>
+              <p class="otp-hint">The vendor will enter this OTP to hand over the order</p>
             </div>
 
-            <div class="action-btns">
-              @if (order.status === 'ready') {
-                <button class="action-btn pickup-btn" (click)="updateStatus(order, 'picked_up')">
-                  <span class="material-icons-outlined">shopping_bag</span>
-                  Mark Picked Up
-                </button>
-              }
-              @if (order.status === 'picked_up') {
-                <button class="action-btn onway-btn" (click)="updateStatus(order, 'on_the_way')">
-                  <span class="material-icons-outlined">directions_bike</span>
-                  On the Way
-                </button>
-              }
-              @if (order.status === 'on_the_way') {
-                <button class="action-btn delivered-btn" (click)="openConfirmModal(order)">
-                  <span class="material-icons-outlined">task_alt</span>
-                  Mark Delivered
-                </button>
-              }
+            <div class="action-col">
+              <button class="action-btn map-btn" (click)="navigateToVendor(order)">
+                <span class="material-icons-outlined">near_me</span>
+                Navigate to {{ order.vendor_info.store_name || order.vendor_name }}
+              </button>
+              <button class="action-btn cancel-btn" (click)="cancelAssignment(order)">
+                <span class="material-icons-outlined">cancel</span>
+                Cancel Assignment
+              </button>
             </div>
-          </div>
+          }
+
+          <!-- ════════ PICKED UP: Navigate to customer ════════ -->
+          @if (order.status === 'picked_up') {
+            <div class="route-visual">
+              <div class="route-line-col">
+                <span class="route-dot dropoff"></span>
+              </div>
+              <div class="route-info-col">
+                <div class="route-point">
+                  <span class="route-label">Deliver to</span>
+                  <span class="route-address">{{ order.delivery_address.address_line1 }}, {{ order.delivery_address.city }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="action-col">
+              <button class="action-btn map-btn" (click)="navigateToCustomer(order)">
+                <span class="material-icons-outlined">navigation</span>
+                Navigate to Customer
+              </button>
+              <button class="action-btn onway-btn" (click)="setOnTheWay(order)">
+                <span class="material-icons-outlined">directions_bike</span>
+                I'm On the Way
+              </button>
+            </div>
+          }
+
+          <!-- ════════ ON THE WAY: Deliver ════════ -->
+          @if (order.status === 'on_the_way') {
+            <div class="action-col">
+              <button class="action-btn map-btn" (click)="navigateToCustomer(order)">
+                <span class="material-icons-outlined">navigation</span>
+                Navigate to Customer
+              </button>
+              <button class="action-btn delivered-btn" (click)="openConfirmModal(order)">
+                <span class="material-icons-outlined">task_alt</span>
+                Complete Delivery
+              </button>
+            </div>
+          }
         </div>
       }
     </div>
   }
 </div>
 
-<!-- ============================================================
-     DELIVERY CONFIRMATION MODAL (OTP + Photo)
-     ============================================================ -->
+<!-- ══════════════════════════════════════════════════════
+     DELIVERY COMPLETION MODAL
+     ══════════════════════════════════════════════════════ -->
 @if (confirmModalOrder()) {
   <div class="modal-overlay" (click)="closeConfirmModal()">
     <div class="modal-card" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h3>Confirm Delivery</h3>
+        <h3>Complete Delivery</h3>
         <button class="modal-close" (click)="closeConfirmModal()">
           <span class="material-icons-outlined">close</span>
         </button>
@@ -123,8 +134,32 @@
       <div class="modal-body">
         <p class="modal-order-num">Order #{{ confirmModalOrder()!.order_number }}</p>
 
-        <div class="form-group">
-          <label class="form-label">Delivery OTP <span class="required">*</span></label>
+        <!-- Step 1: Payment QR -->
+        <div class="modal-section">
+          <div class="modal-section-title">
+            <span class="material-icons-outlined">qr_code_2</span>
+            Step 1 — Customer Pays
+          </div>
+          @if (loadingQR()) {
+            <div class="qr-placeholder">
+              <div class="spinner spinner-sm"></div>
+              <span>Loading QR...</span>
+            </div>
+          } @else if (paymentQR()) {
+            <div class="qr-container">
+              <img [src]="paymentQR()!.qr_base64" alt="Payment QR" class="qr-img" />
+              <div class="qr-amount">Amount: ₹{{ paymentQR()!.amount }}</div>
+              <p class="qr-hint">Show this QR to the customer for UPI payment</p>
+            </div>
+          }
+        </div>
+
+        <!-- Step 2: OTP from customer -->
+        <div class="modal-section">
+          <div class="modal-section-title">
+            <span class="material-icons-outlined">pin</span>
+            Step 2 — Get OTP from Customer
+          </div>
           <input
             class="form-input"
             type="text"
@@ -136,8 +171,12 @@
           <p class="form-hint">Ask the customer for the OTP shown on their order page.</p>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Delivery Photo <span class="optional">(optional)</span></label>
+        <!-- Step 3: Delivery photo -->
+        <div class="modal-section">
+          <div class="modal-section-title">
+            <span class="material-icons-outlined">add_a_photo</span>
+            Step 3 — Take Delivery Photo
+          </div>
           <label class="photo-upload-area">
             <input type="file" accept="image/*" capture="environment" (change)="onPhotoSelected($event)" style="display:none" />
             @if (confirmPhoto()) {
@@ -145,7 +184,7 @@
               <span class="photo-label">{{ confirmPhoto()!.name }}</span>
             } @else {
               <span class="material-icons-outlined photo-icon">add_a_photo</span>
-              <span class="photo-label">Tap to take/upload photo</span>
+              <span class="photo-label">Tap to take photo at customer's location</span>
             }
           </label>
         </div>
@@ -162,11 +201,10 @@
         <button class="btn-cancel-modal" (click)="closeConfirmModal()" [disabled]="confirming()">Cancel</button>
         <button class="btn-confirm-delivery" (click)="submitDelivery()" [disabled]="confirming()">
           @if (confirming()) {
-            <span class="spinner spinner-sm"></span>
-            Confirming...
+            <span class="spinner spinner-sm"></span> Confirming...
           } @else {
             <span class="material-icons-outlined">task_alt</span>
-            Confirm Delivery
+            Complete Delivery
           }
         </button>
       </div>

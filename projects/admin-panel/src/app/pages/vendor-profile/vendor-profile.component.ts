@@ -2,7 +2,7 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
-import { ApiService } from '@shared/public-api';
+import { ApiService, AppCurrencyPipe } from '@shared/public-api';
 import { DynamicTableComponent, TableCellDirective } from '../../shared/components/dynamic-table/dynamic-table.component';
 
 type Tab = 'overview' | 'products' | 'orders' | 'report';
@@ -11,7 +11,7 @@ type Period = '30d' | '90d' | '12m';
 @Component({
   selector: 'app-vendor-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, DynamicTableComponent, TableCellDirective, DecimalPipe],
+  imports: [CommonModule, FormsModule, RouterLink, DynamicTableComponent, TableCellDirective, DecimalPipe, AppCurrencyPipe],
   templateUrl: './vendor-profile.component.html',
   styleUrl: './vendor-profile.component.scss'
 })
@@ -163,6 +163,14 @@ export class VendorProfileComponent implements OnInit {
     });
   }
 
+  toggleRequireStockCheck() {
+    const current = this.vendor()?.require_stock_check;
+    this.api.adminUpdateVendor(this.vendorId, { require_stock_check: !current }).subscribe({
+      next: () => this.vendor.update(v => ({ ...v, require_stock_check: !current })),
+      error: () => {}
+    });
+  }
+
   vendorColor(name: string): string {
     const colors = ['#3B82F6','#8B5CF6','#EC4899','#F59E0B','#10B981','#EF4444','#06B6D4'];
     let hash = 0;
@@ -205,3 +213,5 @@ export class VendorProfileComponent implements OnInit {
     this.loadOrders();
   }
 }
+
+

@@ -6,10 +6,25 @@
       <h1>Products</h1>
       <p class="page-subtitle">Manage your store inventory</p>
     </div>
-    <a routerLink="/products/new" class="btn-primary">
-      <span class="material-icons-outlined">add</span>
-      Add Product
-    </a>
+    <div class="header-right">
+      <div class="reload-bar">
+        @if (lastRefreshed()) {
+          <span class="reload-timestamp">Updated {{ lastRefreshed() | date:'HH:mm:ss' }}</span>
+        }
+        <button class="btn-icon" (click)="manualReload()" [disabled]="loading()" title="Reload">
+          <span class="material-icons-outlined" [class.spin]="loading()">refresh</span>
+        </button>
+        <button class="reload-toggle" [class.active]="autoReload()" (click)="toggleAutoReload()"
+                title="Toggle auto-reload">
+          <span class="material-icons-outlined">{{ autoReload() ? 'pause_circle' : 'play_circle' }}</span>
+          {{ autoReload() ? 'Auto' : 'Paused' }}
+        </button>
+      </div>
+      <a routerLink="/products/new" class="btn-primary">
+        <span class="material-icons-outlined">add</span>
+        Add Product
+      </a>
+    </div>
   </div>
 
   @if (loading()) {
@@ -30,6 +45,18 @@
       </div>
     </div>
   } @else {
+
+    <!-- Low stock warning -->
+    @if (products().some(isLowStock)) {
+      <div class="low-stock-alert">
+        <span class="material-icons-outlined">warning_amber</span>
+        <span>
+          <strong>{{ products().filter(isLowStock).length }} product{{ products().filter(isLowStock).length > 1 ? 's are' : ' is' }} low on stock.</strong>
+          Update inventory to keep selling.
+        </span>
+      </div>
+    }
+
     <div class="card">
       <div class="card-header">
         <div class="products-count">
@@ -55,7 +82,7 @@
                   <div class="product-cell">
                     <div class="product-thumb">
                       @if (product.primary_image) {
-                        <img [src]="product.primary_image" [alt]="product.name">
+                        <img [src]="product.primary_image" alt="{{product.name}}">
                       } @else {
                         <div class="img-placeholder" style="width:44px;height:44px;">
                           <span class="material-icons-outlined">image</span>
@@ -79,16 +106,24 @@
                 </td>
                 <td>
                   <div class="price-cell">
-                    <span class="price-main">${{ product.price | number:'1.2-2' }}</span>
+                    <span class="price-main">{{ product.price | appCurrency }}</span>
                     @if (product.compare_price) {
-                      <span class="price-compare">${{ product.compare_price | number:'1.2-2' }}</span>
+                      <span class="price-compare">{{ product.compare_price | appCurrency }}</span>
                     }
                   </div>
                 </td>
                 <td>
-                  <span [class]="product.in_stock ? 'stock-ok' : 'stock-out'">
-                    {{ product.stock }} {{ product.unit }}
-                  </span>
+                  <div class="stock-cell">
+                    <span [class]="product.in_stock ? 'stock-ok' : 'stock-out'">
+                      {{ product.stock }} {{ product.unit }}
+                    </span>
+                    @if (isLowStock(product)) {
+                      <span class="low-stock-badge">
+                        <span class="material-icons-outlined">warning_amber</span>
+                        Low
+                      </span>
+                    }
+                  </div>
                 </td>
                 <td>
                   <span [class]="product.is_available ? 'status-active' : 'status-inactive'">
@@ -101,7 +136,7 @@
                     <a [routerLink]="['/products/edit', product.id]" class="btn-ghost btn-sm" title="Edit">
                       <span class="material-icons-outlined">edit</span>
                     </a>
-                    <button class="btn-ghost btn-sm danger-hover" (click)="deleteProduct(product)" title="Delete">
+                    <button class="btn-ghost btn-sm danger-hover" (click)="confirmDelete(product)" title="Delete">
                       <span class="material-icons-outlined">delete_outline</span>
                     </button>
                   </div>
@@ -114,3 +149,26 @@
     </div>
   }
 </div>
+
+<!-- Delete Confirm Modal -->
+@if (deleteTarget()) {
+  <div class="modal-backdrop" (click)="cancelDelete()">
+    <div class="delete-modal" (click)="$event.stopPropagation()">
+      <div class="delete-modal-icon">
+        <span class="material-icons-outlined">delete_outline</span>
+      </div>
+      <h3 class="delete-modal-title">Delete Product?</h3>
+      <p class="delete-modal-desc">
+        Are you sure you want to delete <strong>"{{ deleteTarget()!.name }}"</strong>?
+        This action cannot be undone.
+      </p>
+      <div class="delete-modal-actions">
+        <button class="btn-secondary" (click)="cancelDelete()" [disabled]="deleting()">Cancel</button>
+        <button class="btn-danger" (click)="doDelete()" [disabled]="deleting()">
+          @if (deleting()) { <span class="btn-spinner"></span> }
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+}

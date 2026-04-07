@@ -104,7 +104,7 @@
           }
           @if (minPrice) {
             <span class="filter-chip">
-              Min ${{ minPrice }}
+              Min {{ minPrice | appCurrency }}
               <button (click)="minPrice=null; applyFilters()" class="chip-remove">
                 <span class="material-icons-outlined">close</span>
               </button>
@@ -112,7 +112,7 @@
           }
           @if (maxPrice) {
             <span class="filter-chip">
-              Max ${{ maxPrice }}
+              Max {{ maxPrice | appCurrency }}
               <button (click)="maxPrice=null; applyFilters()" class="chip-remove">
                 <span class="material-icons-outlined">close</span>
               </button>
@@ -144,7 +144,7 @@
             <a [routerLink]="['/product', product.id]" class="product-card">
               <div class="product-image-wrap">
                 @if (product.primary_image) {
-                  <img [src]="product.primary_image" [alt]="product.name">
+                  <img [src]="product.primary_image" alt="{{product.name}}">
                 } @else {
                   <div class="product-img-placeholder">
                     <span class="material-icons-outlined">inventory_2</span>
@@ -161,9 +161,9 @@
                 <p class="product-vendor-name">{{ product.vendor_name }}</p>
                 <h4 class="product-card-name">{{ product.name }}</h4>
                 <div class="product-price-row">
-                  <span class="product-price">${{ product.price | number:'1.2-2' }}</span>
+                  <span class="product-price">{{ product.price | appCurrency }}</span>
                   @if (product.compare_price) {
-                    <span class="product-compare-price">${{ product.compare_price | number:'1.2-2' }}</span>
+                    <span class="product-compare-price">{{ product.compare_price | appCurrency }}</span>
                   }
                 </div>
                 @if (product.average_rating > 0) {

@@ -16,7 +16,7 @@
 
       <nav class="sidebar-nav">
         @for (item of navItems; track item.route) {
-          <a class="nav-item" [routerLink]="item.route" routerLinkActive="active"
+          <a class="menu-item" [routerLink]="item.route" routerLinkActive="active"
             [routerLinkActiveOptions]="{exact: item.route === '/'}">
             <span class="material-icons-outlined">{{ item.icon }}</span>
             @if (!sidebarCollapsed()) {
@@ -27,7 +27,7 @@
       </nav>
 
       <div class="sidebar-footer">
-        <button class="nav-item logout-btn" (click)="logout()">
+        <button class="menu-item logout-btn" (click)="logout()">
           <span class="material-icons-outlined">logout</span>
           @if (!sidebarCollapsed()) {
             <span class="nav-label">Logout</span>
@@ -81,7 +81,7 @@
                 } @else {
                   <div class="notif-list">
                     @for (n of notifications(); track n.id) {
-                      <div class="notif-item" [class.notif-unread]="!n.is_read">
+                      <div class="notif-item" [class.notif-unread]="!n.is_read" (click)="handleNotificationClick(n)" style="cursor: pointer;">
                         <div class="notif-icon-wrap">
                           <span class="material-icons-outlined">{{ notifIcon(n.notification_type) }}</span>
                         </div>
@@ -145,3 +145,6 @@
 } @else {
   <router-outlet />
 }
+
+<app-toast />
+

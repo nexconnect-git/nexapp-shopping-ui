@@ -1,20 +1,21 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService } from '@shared/public-api';
+import { ApiService, AppCurrencyPipe, ToastService } from '@shared/public-api';
 
 @Component({
   selector: 'app-stock-management',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AppCurrencyPipe],
   templateUrl: './stock-management.component.html',
   styleUrl: './stock-management.component.scss'
 })
 export class StockManagementComponent implements OnInit {
   private api = inject(ApiService);
+  private toast = inject(ToastService);
 
   loading = signal(true);
-  errorMsg = signal('');
+
   
   products = signal<any[]>([]);
   lowStockAlerts = signal<any[]>([]);
@@ -41,7 +42,7 @@ export class StockManagementComponent implements OnInit {
         this.loadLowStock();
       },
       error: () => {
-        this.errorMsg.set('Failed to load products for stock management.');
+        this.toast.show('Failed to load products for stock management.', 'error');
         this.loading.set(false);
       }
     });
@@ -82,7 +83,7 @@ export class StockManagementComponent implements OnInit {
         // Refresh low stock alerts
         this.loadLowStock();
       },
-      error: () => alert('Failed to update stock.')
+      error: () => this.toast.show('Failed to update stock.', 'error')
     });
   }
 }

@@ -1,4 +1,5 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { Subscription, timer } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService, Category } from '@shared/public-api';
@@ -10,7 +11,7 @@ import { ApiService, Category } from '@shared/public-api';
   templateUrl: './categories.component.html',
   styleUrl: './categories.component.scss'
 })
-export class CategoriesComponent implements OnInit {
+export class CategoriesComponent implements OnInit, OnDestroy {
   private api = inject(ApiService);
   categories = signal<Category[]>([]);
   loading = signal(true);
@@ -22,19 +23,35 @@ export class CategoriesComponent implements OnInit {
   subcategories = signal<Record<string, Category[]>>({});
   subcategoriesLoading = signal<Record<string, boolean>>({});
 
+  lastRefreshed = signal<Date | null>(null);
+  autoReload = signal(true);
+  private reloadSub?: Subscription;
+
   showModal = signal(false);
   editTarget = signal<Category | null>(null);
 
   form = { name: '', slug: '', description: '', is_active: true, parent: null as string | null };
 
-  ngOnInit() { this.load(); }
+  ngOnInit() {
+    this.reloadSub = timer(0, 15000).subscribe(() => {
+      if (this.autoReload() && !this.showModal()) this.load();
+    });
+  }
+
+  ngOnDestroy() { this.reloadSub?.unsubscribe(); }
+
+  manualReload() { this.load(); }
+  toggleAutoReload() { this.autoReload.update(v => !v); }
 
   load() {
     this.loading.set(true);
-    // Load root categories only
     this.api.getAdminCategories({ parent: 'root' }).subscribe({
-      next: (r) => { this.categories.set(r.results || r); this.loading.set(false); },
-      error: () => this.loading.set(false)
+      next: (r) => {
+        this.categories.set(r.results || r);
+        this.loading.set(false);
+        this.lastRefreshed.set(new Date());
+      },
+      error: () => this.loading.set(false),
     });
   }
 

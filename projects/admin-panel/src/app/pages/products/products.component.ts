@@ -1,17 +1,18 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { Subscription, timer } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService, Category } from '@shared/public-api';
+import { ApiService, AppCurrencyPipe, Category } from '@shared/public-api';
 import { DynamicTableComponent, TableCellDirective } from '../../shared/components/dynamic-table/dynamic-table.component';
 
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, FormsModule, DynamicTableComponent, TableCellDirective],
+  imports: [CommonModule, FormsModule, DynamicTableComponent, TableCellDirective, AppCurrencyPipe],
   templateUrl: './products.component.html',
   styleUrl: './products.component.scss'
 })
-export class ProductsComponent implements OnInit {
+export class ProductsComponent implements OnInit, OnDestroy {
   private api = inject(ApiService);
   products = signal<any[]>([]);
   categories = signal<Category[]>([]);
@@ -34,11 +35,25 @@ export class ProductsComponent implements OnInit {
     { key: 'actions', label: 'Actions', flex: '1fr' }
   ];
 
+  lastRefreshed = signal<Date | null>(null);
+  autoReload = signal(true);
+  private reloadSub?: Subscription;
+
   showModal = signal(false);
   editTarget = signal<any | null>(null);
   form: any = { name: '', description: '', price: '', compare_price: '', sku: '', stock: 0, unit: 'pcs', weight: '', is_available: true, is_featured: false, category: null, vendor_id: null };
 
-  ngOnInit() { this.load(); this.loadCategories(); }
+  ngOnInit() {
+    this.loadCategories();
+    this.reloadSub = timer(0, 15000).subscribe(() => {
+      if (this.autoReload() && !this.showModal()) this.load();
+    });
+  }
+
+  ngOnDestroy() { this.reloadSub?.unsubscribe(); }
+
+  manualReload() { this.page.set(1); this.load(); }
+  toggleAutoReload() { this.autoReload.update(v => !v); }
 
   loadCategories() {
     this.api.getAdminCategories().subscribe({ next: (r) => this.categories.set(r.results || r) });
@@ -54,8 +69,9 @@ export class ProductsComponent implements OnInit {
         this.total.set(r.count || 0);
         this.totalPages.set(Math.ceil((r.count || 0) / 20) || 1);
         this.loading.set(false);
+        this.lastRefreshed.set(new Date());
       },
-      error: () => this.loading.set(false)
+      error: () => this.loading.set(false),
     });
   }
 

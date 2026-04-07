@@ -1,6 +1,6 @@
 import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ApiService, Order } from '@shared/public-api';
+import { ApiService, DeliveryAssignment } from '@shared/public-api';
 import { timer, Subscription } from 'rxjs';
 
 @Component({
@@ -12,9 +12,10 @@ import { timer, Subscription } from 'rxjs';
 })
 export class AvailableOrdersComponent implements OnInit, OnDestroy {
   private api = inject(ApiService);
-  orders = signal<Order[]>([]);
+
+  requests = signal<DeliveryAssignment[]>([]);
   loading = signal(true);
-  acceptingId = signal<string | null>(null);
+  actionId = signal<string | null>(null);
   private sub?: Subscription;
 
   ngOnInit() {
@@ -27,17 +28,33 @@ export class AvailableOrdersComponent implements OnInit, OnDestroy {
 
   load() {
     this.loading.set(true);
-    this.api.getAvailableOrders().subscribe({
-      next: (r) => { this.orders.set(r.results || r); this.loading.set(false); },
+    this.api.getDeliveryRequests().subscribe({
+      next: (r) => { this.requests.set(r.results || r); this.loading.set(false); },
       error: () => this.loading.set(false)
     });
   }
 
-  accept(order: Order) {
-    this.acceptingId.set(order.id);
-    this.api.acceptDelivery(order.id).subscribe({
-      next: () => { this.acceptingId.set(null); this.load(); },
-      error: () => this.acceptingId.set(null)
+  accept(req: DeliveryAssignment) {
+    this.actionId.set(req.id);
+    this.api.acceptDeliveryRequest(req.id).subscribe({
+      next: () => { this.actionId.set(null); this.load(); },
+      error: () => this.actionId.set(null)
     });
+  }
+
+  reject(req: DeliveryAssignment) {
+    this.actionId.set(req.id);
+    this.api.rejectDeliveryRequest(req.id).subscribe({
+      next: () => { this.actionId.set(null); this.load(); },
+      error: () => this.actionId.set(null)
+    });
+  }
+
+  openVendorMap(req: DeliveryAssignment) {
+    const lat = req.vendor_lat;
+    const lng = req.vendor_lng;
+    if (lat && lng) {
+      window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
+    }
   }
 }

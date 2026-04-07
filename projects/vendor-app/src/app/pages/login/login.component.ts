@@ -38,16 +38,16 @@ export class LoginComponent {
           this.loading.set(false);
           return;
         }
-        if (res.user.force_password_change) {
-          this.router.navigate(['/change-password']);
-          this.loading.set(false);
-          return;
-        }
         this.api.getVendorProfile().subscribe({
           next: (profile) => {
             localStorage.setItem('vendor_status', profile.status);
+            
             if (profile.status === 'approved') {
-              this.router.navigate(['/']);
+              if (res.user.force_password_change) {
+                this.router.navigate(['/change-password']);
+              } else {
+                this.router.navigate(['/']);
+              }
             } else {
               this.router.navigate(['/pending-approval']);
             }
@@ -66,3 +66,5 @@ export class LoginComponent {
     });
   }
 }
+
+

@@ -9,8 +9,7 @@ import {
   ElementRef,
   ViewChild,
   PLATFORM_ID,
-  inject,
-} from '@angular/core';
+  inject } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 
 export interface MapLocation {
@@ -29,8 +28,7 @@ declare const google: any;
   standalone: true,
   imports: [CommonModule],
   templateUrl: './map-picker.component.html',
-  styleUrl: './map-picker.component.scss',
-})
+  styleUrl: './map-picker.component.scss' })
 export class MapPickerComponent implements AfterViewInit, OnDestroy {
   @Input() initialLat = 6.5244;
   @Input() initialLng = 3.3792;
@@ -91,21 +89,19 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
     const container = this.mapContainerRef?.nativeElement;
     if (!container || this.map) return;
 
-    const center = { lat: this.initialLat, lng: this.initialLng };
+    const center = { lat: +this.initialLat, lng: +this.initialLng };
 
     this.map = new google.maps.Map(container, {
       center,
       zoom: 13,
       mapTypeControl: false,
       streetViewControl: false,
-      fullscreenControl: false,
-    });
+      fullscreenControl: false });
 
     this.marker = new google.maps.Marker({
       position: center,
       map: this.map,
-      draggable: true,
-    });
+      draggable: true });
 
     this.geocoder = new google.maps.Geocoder();
 
@@ -123,8 +119,10 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
 
     this.mapReady.set(true);
 
-    if (this.initialLat !== 6.5244 || this.initialLng !== 3.3792) {
-      this.reverseGeocode(this.initialLat, this.initialLng);
+    const lat = +this.initialLat;
+    const lng = +this.initialLng;
+    if (lat !== 6.5244 || lng !== 3.3792) {
+      this.reverseGeocode(lat, lng);
     }
   }
 
@@ -149,9 +147,17 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
         const postal_code = get('postal_code');
 
         this.pickedAddress.set(result.formatted_address || '');
-        this.locationPicked.emit({ lat, lng, address, city, state, postal_code });
+        this.locationPicked.emit({ 
+          lat: Number(lat.toFixed(6)), 
+          lng: Number(lng.toFixed(6)), 
+          address, city, state, postal_code 
+        });
       } else {
-        this.locationPicked.emit({ lat, lng, address: '', city: '', state: '', postal_code: '' });
+        this.locationPicked.emit({ 
+          lat: Number(lat.toFixed(6)), 
+          lng: Number(lng.toFixed(6)), 
+          address: '', city: '', state: '', postal_code: '' 
+        });
       }
     });
   }

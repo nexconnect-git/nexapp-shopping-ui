@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -27,6 +27,12 @@ export class HomeComponent implements OnInit {
 
   selectedCategory = signal<string>('all');
 
+  topPicks = computed(() => {
+    const featured = this.allVendors().filter(v => v.is_featured);
+    if (featured.length >= 3) return featured.slice(0, 10);
+    return [...this.allVendors()].sort((a, b) => b.average_rating - a.average_rating).slice(0, 10);
+  });
+
   categories = signal<any[]>([
     { id: 'all', name: 'All', icon: 'grid_view', color: '#2563EB', bg: 'rgba(37,99,235,0.1)' }
   ]);
@@ -40,8 +46,7 @@ export class HomeComponent implements OnInit {
     'food':           { icon: 'restaurant',           color: '#F97316', bg: 'rgba(249,115,22,0.1)' },
     'groceries':      { icon: 'local_grocery_store',  color: '#10B981', bg: 'rgba(16,185,129,0.12)' },
     'pharmacy':       { icon: 'local_pharmacy',       color: '#2563EB', bg: 'rgba(37,99,235,0.1)' },
-    'bakery':         { icon: 'bakery_dining',        color: '#F59E0B', bg: 'rgba(245,158,11,0.12)' },
-  };
+    'bakery':         { icon: 'bakery_dining',        color: '#F59E0B', bg: 'rgba(245,158,11,0.12)' } };
 
   ngOnInit() {
     this.loadCategories();
@@ -55,8 +60,7 @@ export class HomeComponent implements OnInit {
         const mapped = rawCats.map((c: any) => ({
           id: c.slug,
           name: c.name,
-          ...(this.colorMap[c.slug] ?? { icon: 'category', color: '#4B5563', bg: 'rgba(75,85,99,0.1)' }),
-        }));
+          ...(this.colorMap[c.slug] ?? { icon: 'category', color: '#4B5563', bg: 'rgba(75,85,99,0.1)' }) }));
         this.categories.set([
           { id: 'all', name: 'All', icon: 'grid_view', color: '#2563EB', bg: 'rgba(37,99,235,0.1)' },
           ...mapped,
@@ -118,8 +122,7 @@ export class HomeComponent implements OnInit {
         this.filteredVendors.set(this.applyOpenFilter(vendors));
         this.loadingVendors.set(false);
       },
-      error: () => this.loadVendors(category),
-    });
+      error: () => this.loadVendors(category) });
   }
 
   loadVendors(category?: string) {
@@ -131,15 +134,13 @@ export class HomeComponent implements OnInit {
         let vendors = (res.results || res) as Vendor[];
         vendors = vendors.map(v => ({
           ...v,
-          distance_km: v.distance_km || parseFloat((Math.random() * 8 + 0.5).toFixed(1)),
-        }));
+          distance_km: v.distance_km || parseFloat((Math.random() * 8 + 0.5).toFixed(1)) }));
         vendors.sort((a, b) => (a.distance_km || 0) - (b.distance_km || 0));
         this.allVendors.set(vendors);
         this.filteredVendors.set(this.applyOpenFilter(vendors));
         this.loadingVendors.set(false);
       },
-      error: () => this.loadingVendors.set(false),
-    });
+      error: () => this.loadingVendors.set(false) });
   }
 
   selectCategory(catId: string) {

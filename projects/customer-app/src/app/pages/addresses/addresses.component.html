@@ -54,7 +54,7 @@
           </div>
 
           <p class="addr-name">{{ addr.full_name }}</p>
-          <p class="addr-text">{{ addr.address_line1 }}@if (addr.address_line2) {, {{ addr.address_line2 }}}</p>
+          <p class="addr-text">{{ addr.address_line1 }}@if (addr.address_line2) {  {{ addr.address_line2 }}}</p>
           <p class="addr-text">{{ addr.city }}, {{ addr.state }} {{ addr.postal_code }}</p>
           @if (addr.phone) {
             <p class="addr-phone">{{ addr.phone }}</p>

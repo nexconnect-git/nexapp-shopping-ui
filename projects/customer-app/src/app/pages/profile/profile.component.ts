@@ -1,31 +1,46 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService, AuthService, User } from '@shared/public-api';
+import { RouterLink, Router } from '@angular/router';
+import { ApiService, AuthService, ToastService } from '@shared/public-api';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.scss'
 })
 export class ProfileComponent implements OnInit {
   private api = inject(ApiService);
-  private auth = inject(AuthService);
+  auth = inject(AuthService);
+  private toast = inject(ToastService);
+  private router = inject(Router);
 
   form: any = {};
   avatarPreview = signal<string | null>(null);
   loading = signal(true);
   saving = signal(false);
   avatarUploading = signal(false);
-  successMsg = signal('');
-  errorMsg = signal('');
+  isEditing = false;
+  recentOrders = signal<any[]>([]);
 
   ngOnInit() {
     this.api.getProfile().subscribe({
-      next: (u) => { this.form = { ...u }; if (u.avatar) this.avatarPreview.set(u.avatar); this.loading.set(false); },
+      next: (u) => {
+        this.form = { ...u };
+        if (u.avatar) this.avatarPreview.set(u.avatar);
+        this.loading.set(false);
+      },
       error: () => this.loading.set(false)
+    });
+
+    this.api.getOrders().subscribe({
+      next: (res) => {
+        const orders = (res.results || res) as any[];
+        this.recentOrders.set(orders.slice(0, 5));
+      },
+      error: () => { /* ignore */ }
     });
   }
 
@@ -44,25 +59,45 @@ export class ProfileComponent implements OnInit {
 
   save() {
     this.saving.set(true);
-    this.successMsg.set('');
-    this.errorMsg.set('');
     this.api.updateProfile(this.form).subscribe({
       next: (u) => {
         this.auth.updateUserData(u);
-        this.successMsg.set('Profile updated successfully.');
+        this.toast.show('Profile updated successfully.', 'success');
         this.saving.set(false);
+        this.isEditing = false;
       },
       error: (err) => {
         const e = err.error;
-        this.errorMsg.set(typeof e === 'object' ? Object.values(e).flat().join(' ') : 'Update failed.');
+        this.toast.show(typeof e === 'object' ? Object.values(e).flat().join(' ') : 'Update failed.', 'error');
         this.saving.set(false);
       }
     });
+  }
+
+  logout() {
+    this.auth.logout();
+    this.router.navigate(['/login']);
   }
 
   initials() {
     const u = this.form;
     if (!u) return '?';
     return ((u.first_name?.[0] || '') + (u.last_name?.[0] || '')).toUpperCase() || u.username?.[0]?.toUpperCase() || '?';
+  }
+
+  orderStatusLabel(status: string): string {
+    const map: Record<string, string> = {
+      placed: 'Placed', confirmed: 'Confirmed', preparing: 'Preparing',
+      picked_up: 'Picked Up', on_the_way: 'On the Way',
+      delivered: 'Delivered', cancelled: 'Cancelled'
+    };
+    return map[status] || status;
+  }
+
+  orderStatusClass(status: string): string {
+    if (status === 'delivered') return 'delivered';
+    if (status === 'cancelled') return 'cancelled';
+    if (['on_the_way', 'picked_up'].includes(status)) return 'transit';
+    return 'active';
   }
 }

@@ -8,12 +8,13 @@ export class ApiService {
 
   readonly cartCount = signal(0);
   readonly unreadNotifications = signal(0);
+  readonly activeIssue = signal<any>(null);
 
   constructor(private http: HttpClient) {}
 
   refreshCartCount() {
     this.getCart().subscribe({
-      next: (cart) => this.cartCount.set(cart.total_items || 0),
+      next: (cart) => this.cartCount.set((cart.items || []).length),
       error: () => {}
     });
   }
@@ -130,7 +131,7 @@ export class ApiService {
         }
       });
     }
-    return this.http.get(`${this.baseUrl}/vendors/dashboard/stats/`, { params: httpParams });
+    return this.http.get(`${this.baseUrl}/vendors/dashboard/`, { params: httpParams });
   }
 
   getVendorProfile(): Observable<any> {
@@ -185,14 +186,30 @@ export class ApiService {
     return this.http.get(`${this.baseUrl}/products/low-stock/`);
   }
 
-  getVendorOrders(status?: string): Observable<any> {
+  bulkUpdateVendorStock(updates: { id: string; stock: number }[]): Observable<any> {
+    return this.http.post(`${this.baseUrl}/vendors/bulk-update-stock/`, { updates });
+  }
+
+  setStoreStatus(isOpen: boolean, closingTime?: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/vendors/store-status/`, {
+      is_open: isOpen,
+      closing_time: closingTime });
+  }
+
+    getVendorOrders(status?: string): Observable<any> {
     let params = new HttpParams();
     if (status) params = params.set('status', status);
     return this.http.get(`${this.baseUrl}/vendors/orders/`, { params });
   }
 
-  updateOrderStatus(orderId: string, status: string): Observable<any> {
-    return this.http.patch(`${this.baseUrl}/vendors/orders/${orderId}/status/`, { status });
+  getVendorOrder(id: string): Observable<any> {
+    return this.http.get(`${this.baseUrl}/vendors/orders/${id}/`);
+  }
+
+  updateOrderStatus(orderId: string, status: string, cancelReason?: string): Observable<any> {
+    const body: any = { status };
+    if (cancelReason) body.cancel_reason = cancelReason;
+    return this.http.patch(`${this.baseUrl}/vendors/orders/${orderId}/status/`, body);
   }
 
   getVendorPayouts(): Observable<any> {
@@ -208,8 +225,8 @@ export class ApiService {
     return this.http.post(`${this.baseUrl}/invoices/generate/`, data);
   }
 
-  downloadInvoiceUrl(invoiceId: string): string {
-    return `${this.baseUrl}/invoices/${invoiceId}/download/`;
+  downloadInvoice(invoiceId: string): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/invoices/${invoiceId}/download/`, { responseType: 'blob' });
   }
 
   // Push Notifications (FCM)
@@ -286,6 +303,95 @@ export class ApiService {
     return this.http.get(`${this.baseUrl}/orders/${id}/tracking/`);
   }
 
+  submitOrderRating(orderId: string, rating: number): Observable<any> {
+    return this.http.post(`${this.baseUrl}/orders/${orderId}/rate/`, { rating });
+  }
+
+  // Order Issues
+  getMyIssues(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/orders/issues/`);
+  }
+
+  getMyIssue(id: string): Observable<any> {
+    return this.http.get(`${this.baseUrl}/orders/issues/${id}/`);
+  }
+
+  createIssue(data: { order: string; issue_type: string; description: string }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/orders/issues/`, data);
+  }
+
+  sendIssueMessage(issueId: string, message: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/orders/issues/${issueId}/messages/`, { message });
+  }
+
+  // Admin Issues
+  getAdminIssues(params?: any): Observable<any> {
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.keys(params).forEach(k => {
+        if (params[k] !== null && params[k] !== undefined && params[k] !== '') {
+          httpParams = httpParams.set(k, params[k]);
+        }
+      });
+    }
+    return this.http.get(`${this.baseUrl}/admin/issues/`, { params: httpParams });
+  }
+
+  getAdminIssue(id: string): Observable<any> {
+    return this.http.get(`${this.baseUrl}/admin/issues/${id}/`);
+  }
+
+  updateAdminIssue(id: string, data: any): Observable<any> {
+    return this.http.patch(`${this.baseUrl}/admin/issues/${id}/`, data);
+  }
+
+  sendAdminIssueMessage(issueId: string, message: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/admin/issues/${issueId}/messages/`, { message });
+  }
+
+  // Coupons
+  getCoupons(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/orders/coupons/`);
+  }
+
+  validateCoupon(code: string, cartTotal: number): Observable<any> {
+    return this.http.post(`${this.baseUrl}/orders/coupons/validate/`, { code, cart_total: cartTotal });
+  }
+
+  // Vendor coupons
+  getVendorCoupons(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/vendors/coupons/`);
+  }
+
+  createVendorCoupon(data: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/vendors/coupons/`, data);
+  }
+
+  updateVendorCoupon(id: string, data: any): Observable<any> {
+    return this.http.patch(`${this.baseUrl}/vendors/coupons/${id}/`, data);
+  }
+
+  deleteVendorCoupon(id: string): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/vendors/coupons/${id}/`);
+  }
+
+  // Admin coupons
+  getAdminCoupons(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/admin/coupons/`);
+  }
+
+  createAdminCoupon(data: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/admin/coupons/`, data);
+  }
+
+  updateAdminCoupon(id: string, data: any): Observable<any> {
+    return this.http.patch(`${this.baseUrl}/admin/coupons/${id}/`, data);
+  }
+
+  deleteAdminCoupon(id: string): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/admin/coupons/${id}/`);
+  }
+
   // Delivery
   registerDeliveryPartner(data: any): Observable<any> {
     return this.http.post(`${this.baseUrl}/delivery/register/`, data);
@@ -318,12 +424,52 @@ export class ApiService {
     return this.http.post(`${this.baseUrl}/delivery/update-location/`, { latitude, longitude });
   }
 
+  setAvailability(isOnline: boolean): Observable<any> {
+    return this.http.post(`${this.baseUrl}/delivery/set-availability/`, { is_online: isOnline });
+  }
+
   getDeliveryHistory(): Observable<any> {
     return this.http.get(`${this.baseUrl}/delivery/history/`);
   }
 
   getDeliveryEarnings(): Observable<any> {
     return this.http.get(`${this.baseUrl}/delivery/earnings/`);
+  }
+
+  // Assignment-based delivery flow
+  getDeliveryRequests(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/delivery/requests/`);
+  }
+
+  acceptDeliveryRequest(assignmentId: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/delivery/requests/${assignmentId}/accept/`, {});
+  }
+
+  rejectDeliveryRequest(assignmentId: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/delivery/requests/${assignmentId}/reject/`, {});
+  }
+
+  cancelDeliveryAssignment(orderId: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/delivery/${orderId}/cancel-assignment/`, {});
+  }
+
+  setDeliveryOnTheWay(orderId: string): Observable<any> {
+    return this.http.patch(`${this.baseUrl}/delivery/update-status/${orderId}/`, { status: 'on_the_way' });
+  }
+
+  // Vendor: verify pickup OTP from delivery partner
+  verifyPickupOtp(orderId: string, otp: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/vendors/orders/${orderId}/verify-pickup-otp/`, { otp });
+  }
+
+  // Vendor: retrigger delivery partner search after timeout
+  retriggerPickup(orderId: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/vendors/orders/${orderId}/retrigger-pickup/`, {});
+  }
+
+  // Payment QR code
+  getPaymentQR(orderId: string): Observable<any> {
+    return this.http.get(`${this.baseUrl}/orders/${orderId}/payment-qr/`);
   }
 
   // Notifications
@@ -385,6 +531,10 @@ export class ApiService {
     return this.http.post(`${this.baseUrl}/admin/vendors/${id}/status/`, { status });
   }
 
+  adminUpdateVendor(id: string, data: any): Observable<any> {
+    return this.http.patch(`${this.baseUrl}/admin/vendors/${id}/`, data);
+  }
+
   getAdminCustomers(params?: any): Observable<any> {
     let httpParams = new HttpParams();
     if (params) {
@@ -439,6 +589,13 @@ export class ApiService {
 
   deleteAdminDeliveryPartner(id: string): Observable<any> {
     return this.http.delete(`${this.baseUrl}/admin/delivery-partners/${id}/`);
+  }
+
+  getAdminDeliveryPartnerEarnings(id: string, startDate?: string, endDate?: string): Observable<any> {
+    let params = new HttpParams();
+    if (startDate) params = params.set('start_date', startDate);
+    if (endDate) params = params.set('end_date', endDate);
+    return this.http.get(`${this.baseUrl}/admin/delivery-partners/${id}/calculate-earnings/`, { params });
   }
 
   // Admin Vendors
@@ -732,6 +889,79 @@ export class ApiService {
   updateAdminDeliveryPayout(id: string, data: any): Observable<any> {
     return this.http.patch(`${this.baseUrl}/admin/payouts/delivery/${id}/`, data);
   }
+
+  // ── Payout Lifecycle — Vendor ────────────────────────────────────────────
+  approvePayout(id: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/vendors/payouts/${id}/approve/`, {});
+  }
+
+  declinePayout(id: string, reason: string = ''): Observable<any> {
+    return this.http.post(`${this.baseUrl}/vendors/payouts/${id}/decline/`, { reason });
+  }
+
+  verifyPayoutCredit(id: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/vendors/payouts/${id}/verify-credit/`, {});
+  }
+
+  // ── Payout Lifecycle — Admin (vendor) ────────────────────────────────────
+  scheduleAdminVendorPayout(id: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/admin/payouts/vendors/${id}/schedule/`, {});
+  }
+
+  sendAdminVendorPayment(id: string, transactionRef?: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/admin/payouts/vendors/${id}/send-payment/`, { transaction_ref: transactionRef || '' });
+  }
+
+  forceAdminVendorPayoutPaid(id: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/admin/payouts/vendors/${id}/force-paid/`, {});
+  }
+
+  // ── Payout Lifecycle — Admin (delivery) ──────────────────────────────────
+  scheduleAdminDeliveryPayout(id: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/admin/payouts/delivery/${id}/schedule/`, {});
+  }
+
+  sendAdminDeliveryPayment(id: string, transactionRef?: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/admin/payouts/delivery/${id}/send-payment/`, { transaction_ref: transactionRef || '' });
+  }
+
+  forceAdminDeliveryPayoutPaid(id: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/admin/payouts/delivery/${id}/force-paid/`, {});
+  }
+
+  // ── Payout Lifecycle — Delivery Partner (self) ───────────────────────────
+  getDeliveryPartnerPayouts(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/delivery/payouts/`);
+  }
+
+  approveDeliveryPayout(id: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/delivery/payouts/${id}/approve/`, {});
+  }
+
+  declineDeliveryPayout(id: string, reason: string = ''): Observable<any> {
+    return this.http.post(`${this.baseUrl}/delivery/payouts/${id}/decline/`, { reason });
+  }
+
+  verifyDeliveryPayoutCredit(id: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/delivery/payouts/${id}/verify-credit/`, {});
+  }
+
+  // Scheduled Tasks
+  getScheduledTasks(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/admin/scheduled-tasks/`);
+  }
+
+  createScheduledTask(data: { task_key: string; scheduled_time?: string; repeat?: number; kwargs: Record<string, any> }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/admin/scheduled-tasks/`, data);
+  }
+
+  cancelScheduledTask(jobId: string): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/admin/scheduled-tasks/${jobId}/`);
+  }
 }
+
+
+
+
 
 

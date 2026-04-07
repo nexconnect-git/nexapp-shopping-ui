@@ -1,5 +1,5 @@
 <!-- Mobile header (shown ≤768px, only when logged in) -->
-@if (auth.isLoggedIn()) {
+@if (auth.isLoggedIn() && !isAuthRoute()) {
   <header class="mobile-header">
     <span class="mobile-brand">NexConnect <b>Delivery</b></span>
     <div class="header-actions">
@@ -29,7 +29,8 @@
             } @else {
               <div class="notif-list">
                 @for (n of notifications(); track n.id) {
-                  <div class="notif-item" [class.unread]="!n.is_read">
+                  <div class="notif-item" [class.unread]="!n.is_read"
+                       (click)="handleNotificationClick(n)" style="cursor:pointer;">
                     <span class="material-icons-outlined notif-icon">local_shipping</span>
                     <div class="notif-body">
                       <p class="notif-msg">{{ n.title }}</p>
@@ -88,23 +89,23 @@
 
     <!-- Nav items -->
     <nav class="sidebar-nav">
-      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" class="sidebar-nav-item">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" class="sidebar-menu-item">
         <span class="material-icons-outlined">dashboard</span>
         <span>Dashboard</span>
       </a>
-      <a routerLink="/available" routerLinkActive="active" class="sidebar-nav-item">
+      <a routerLink="/available" routerLinkActive="active" class="sidebar-menu-item">
         <span class="material-icons-outlined">local_shipping</span>
         <span>Available Orders</span>
       </a>
-      <a routerLink="/active" routerLinkActive="active" class="sidebar-nav-item">
+      <a routerLink="/active" routerLinkActive="active" class="sidebar-menu-item">
         <span class="material-icons-outlined">delivery_dining</span>
         <span>Active Delivery</span>
       </a>
-      <a routerLink="/history" routerLinkActive="active" class="sidebar-nav-item">
+      <a routerLink="/history" routerLinkActive="active" class="sidebar-menu-item">
         <span class="material-icons-outlined">history</span>
         <span>History</span>
       </a>
-      <a routerLink="/earnings" routerLinkActive="active" class="sidebar-nav-item">
+      <a routerLink="/earnings" routerLinkActive="active" class="sidebar-menu-item">
         <span class="material-icons-outlined">payments</span>
         <span>Earnings</span>
       </a>
@@ -112,11 +113,11 @@
 
     <!-- Profile + Logout at bottom -->
     <div class="sidebar-footer">
-      <a routerLink="/profile" routerLinkActive="active" class="sidebar-nav-item">
+      <a routerLink="/profile" routerLinkActive="active" class="sidebar-menu-item">
         <span class="material-icons-outlined">person</span>
         <span>Profile</span>
       </a>
-      <button class="sidebar-nav-item sidebar-logout" (click)="auth.logout()">
+      <button class="sidebar-menu-item sidebar-logout" (click)="auth.logout()">
         <span class="material-icons-outlined">logout</span>
         <span>Logout</span>
       </button>
@@ -125,32 +126,36 @@
 }
 
 <!-- Main content -->
-<main class="main-content" [class.with-sidebar]="auth.isLoggedIn()">
+<main class="main-content" [class.with-sidebar]="auth.isLoggedIn() && !isAuthRoute()">
   <router-outlet />
 </main>
 
 <!-- Mobile bottom nav (shown ≤768px, only when logged in) -->
-@if (auth.isLoggedIn()) {
+@if (auth.isLoggedIn() && !isAuthRoute()) {
   <nav class="bottom-nav">
-    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" class="bottom-nav-item">
+    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" class="bottom-menu-item">
       <span class="material-icons-outlined">dashboard</span>
       <span>Dashboard</span>
     </a>
-    <a routerLink="/available" routerLinkActive="active" class="bottom-nav-item">
+    <a routerLink="/available" routerLinkActive="active" class="bottom-menu-item">
       <span class="material-icons-outlined">local_shipping</span>
       <span>Available</span>
     </a>
-    <a routerLink="/active" routerLinkActive="active" class="bottom-nav-item">
+    <a routerLink="/active" routerLinkActive="active" class="bottom-menu-item">
       <span class="material-icons-outlined">delivery_dining</span>
       <span>Active</span>
     </a>
-    <a routerLink="/history" routerLinkActive="active" class="bottom-nav-item">
+    <a routerLink="/history" routerLinkActive="active" class="bottom-menu-item">
       <span class="material-icons-outlined">history</span>
       <span>History</span>
     </a>
-    <a routerLink="/earnings" routerLinkActive="active" class="bottom-nav-item">
+    <a routerLink="/earnings" routerLinkActive="active" class="bottom-menu-item">
       <span class="material-icons-outlined">payments</span>
       <span>Earnings</span>
     </a>
   </nav>
 }
+
+<app-toast />
+
+<!-- aria-label -->

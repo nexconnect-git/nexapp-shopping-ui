@@ -1,19 +1,24 @@
-import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService, Order } from '@shared/public-api';
+import { ApiService, AppCurrencyPipe, Order } from '@shared/public-api';
 import { timer, Subscription } from 'rxjs';
 import { DynamicTableComponent, TableCellDirective } from '../../shared/components/dynamic-table/dynamic-table.component';
+
+// Google Maps loaded via <script> tag in index.html — no @types/google.maps needed
+declare const google: any;
 
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [CommonModule, FormsModule, DynamicTableComponent, TableCellDirective],
+  imports: [CommonModule, FormsModule, DynamicTableComponent, TableCellDirective, AppCurrencyPipe],
   templateUrl: './orders.component.html',
   styleUrl: './orders.component.scss'
 })
 export class OrdersComponent implements OnInit, OnDestroy {
   private api = inject(ApiService);
+  private zone = inject(NgZone);
+
   orders = signal<Order[]>([]);
   loading = signal(true);
   total = signal(0);
@@ -33,22 +38,50 @@ export class OrdersComponent implements OnInit, OnDestroy {
     { key: 'actions', label: 'Update Status', flex: '1.5fr' }
   ];
 
+  lastRefreshed = signal<Date | null>(null);
+  autoReload = signal(true);
+
   showModal = signal(false);
   selectedOrder = signal<any>(null);
   loadingDetails = signal(false);
 
-  private timer: any;
+  // Live tracking
+  showTrackingMap = signal(false);
 
+  private gmMap: any;
+  private gmDriverMarker: any;
+  private gmVendorMarker: any;
+  private gmCustomerMarker: any;
+  private gmDirectionsService: any;
+  private gmDirectionsRenderer: any;
+  private driverPos?: {lat: number; lng: number};
+  private vendorPos?: {lat: number; lng: number};
+  private customerPos?: {lat: number; lng: number};
+  private lastDirectionsTime = 0;
+
+  private ws: WebSocket | null = null;
+  private animFrameId?: number;
+  private timer: any;
   readonly statuses = ['placed', 'confirmed', 'preparing', 'ready', 'picked_up', 'on_the_way', 'delivered', 'cancelled'];
   private sub?: Subscription;
 
-  ngOnInit() { 
-    this.sub = timer(0, 15000).subscribe(() => this.load());
+  ngOnInit() {
+    this.sub = timer(0, 15000).subscribe(() => {
+      if (this.autoReload() && !this.showModal() && !this.updatingId()) {
+        this.load();
+      }
+    });
   }
 
   ngOnDestroy() {
     this.sub?.unsubscribe();
+    this.closeWs();
+    if (this.animFrameId) cancelAnimationFrame(this.animFrameId);
+    this.gmDirectionsRenderer?.setMap(null);
   }
+
+  manualReload() { this.page.set(1); this.load(); }
+  toggleAutoReload() { this.autoReload.update(v => !v); }
 
   load() {
     this.loading.set(true);
@@ -61,6 +94,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
         this.total.set(r.count || (r.results || r).length);
         this.totalPages.set(Math.ceil((r.count || 0) / 20) || 1);
         this.loading.set(false);
+        this.lastRefreshed.set(new Date());
       },
       error: () => this.loading.set(false)
     });
@@ -82,17 +116,167 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.loadingDetails.set(true);
     this.showModal.set(true);
     this.selectedOrder.set(o);
+    this.closeTrackingMap();
     this.api.getAdminOrder(o.id).subscribe({
-      next: (fullOrder) => {
-        this.selectedOrder.set(fullOrder);
-        this.loadingDetails.set(false);
-      },
+      next: (fullOrder) => { this.selectedOrder.set(fullOrder); this.loadingDetails.set(false); },
       error: () => this.loadingDetails.set(false)
     });
   }
 
+  canTrackOrder(): boolean {
+    const s = this.selectedOrder()?.status;
+    return s === 'ready' || s === 'picked_up' || s === 'on_the_way';
+  }
+
+  openTrackingMap() {
+    if (!this.canTrackOrder()) return;
+    this.showTrackingMap.set(true);
+    const o = this.selectedOrder();
+    if (o?.vendor_info?.latitude && o?.vendor_info?.longitude) {
+      this.vendorPos = {lat: parseFloat(o.vendor_info.latitude), lng: parseFloat(o.vendor_info.longitude)};
+    }
+    if (o?.delivery_latitude && o?.delivery_longitude) {
+      this.customerPos = {lat: o.delivery_latitude, lng: o.delivery_longitude};
+    }
+    this.connectWebSocket(o.id);
+    // Use document.getElementById — reliable after Angular renders the signal-driven div
+    // requestAnimationFrame fires after the browser has painted the next frame
+    requestAnimationFrame(() => requestAnimationFrame(() => this.initNativeMap()));
+  }
+
+  closeTrackingMap() {
+    this.showTrackingMap.set(false);
+    this.closeWs();
+    this.destroyMap();
+  }
+
+  private initNativeMap() {
+    const el = document.getElementById('admin-tracking-map');
+    if (!el) return;
+    const center = this.vendorPos ?? {lat: 12.9716, lng: 77.5946};
+    this.gmMap = new google.maps.Map(el, {
+      center, zoom: 13,
+      zoomControl: true, streetViewControl: false, fullscreenControl: false, mapTypeControl: false, clickableIcons: false,
+    });
+    if (this.vendorPos) {
+      this.gmVendorMarker = new google.maps.Marker({
+        position: this.vendorPos, map: this.gmMap,
+        icon: {url: 'https://maps.google.com/mapfiles/ms/icons/restaurant.png', scaledSize: new google.maps.Size(30, 30)},
+        title: 'Vendor', zIndex: 5,
+      });
+    }
+    if (this.customerPos) {
+      this.gmCustomerMarker = new google.maps.Marker({
+        position: this.customerPos, map: this.gmMap,
+        icon: {url: 'https://maps.google.com/mapfiles/ms/icons/homegardenbusiness.png', scaledSize: new google.maps.Size(30, 30)},
+        title: 'Customer', zIndex: 5,
+      });
+    }
+    // Fit bounds to known points
+    const pts = [this.vendorPos, this.customerPos].filter(Boolean);
+    if (pts.length >= 2) {
+      const bounds = new google.maps.LatLngBounds();
+      pts.forEach((p: any) => bounds.extend(p));
+      this.gmMap.fitBounds(bounds, 40);
+    }
+    // Setup directions renderer
+    this.gmDirectionsService = new google.maps.DirectionsService();
+    this.gmDirectionsRenderer = new google.maps.DirectionsRenderer({
+      suppressMarkers: true,
+      preserveViewport: false,
+      polylineOptions: {strokeColor: '#06B6D4', strokeWeight: 4, strokeOpacity: 0.85},
+    });
+    this.gmDirectionsRenderer.setMap(this.gmMap);
+    this.lastDirectionsTime = 0;
+    this.requestDirections();
+  }
+
+  private requestDirections() {
+    if (!this.gmDirectionsService || !this.gmDirectionsRenderer) return;
+    const origin = this.driverPos ?? this.vendorPos;
+    const destination = this.customerPos;
+    if (!origin || !destination) return;
+    const now = Date.now();
+    if (now - this.lastDirectionsTime < 20000) return;
+    this.lastDirectionsTime = now;
+    this.gmDirectionsService.route(
+      {origin, destination, travelMode: google.maps.TravelMode.DRIVING},
+      (result: any, status: any) => {
+        if (status === google.maps.DirectionsStatus.OK && result) {
+          this.zone.run(() => this.gmDirectionsRenderer?.setDirections(result));
+        }
+      }
+    );
+  }
+
+  private connectWebSocket(orderId: string) {
+    this.closeWs();
+    const token = localStorage.getItem('token') || '';
+    const wsUrl = `ws://${window.location.host}/ws/delivery/${orderId}/tracking/?token=${token}`;
+    this.ws = new WebSocket(wsUrl);
+    this.ws.onmessage = (msg) => {
+      const data = JSON.parse(msg.data);
+      if (data.type === 'location_update' && data.lat && data.lng) {
+        const target = {lat: data.lat as number, lng: data.lng as number};
+        this.zone.run(() => {
+          if (this.driverPos && this.gmMap) {
+            this.animateMarker(this.driverPos, target);
+          } else {
+            this.driverPos = target;
+            if (this.gmMap) {
+              this.gmDriverMarker = new google.maps.Marker({
+                position: target, map: this.gmMap,
+                icon: {url: 'https://maps.google.com/mapfiles/ms/micons/motorcycling.png', scaledSize: new google.maps.Size(36, 36), anchor: new google.maps.Point(18, 18)},
+                title: 'Delivery Partner', zIndex: 10,
+              });
+              this.lastDirectionsTime = 0;
+              this.requestDirections();
+            }
+          }
+        });
+      }
+    };
+  }
+
+  private animateMarker(from: {lat: number; lng: number}, to: {lat: number; lng: number}) {
+    if (this.animFrameId) cancelAnimationFrame(this.animFrameId);
+    const startTime = performance.now();
+    const duration = 1500;
+    const step = (now: number) => {
+      const t = Math.min((now - startTime) / duration, 1);
+      const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+      const pos = {lat: from.lat + (to.lat - from.lat) * ease, lng: from.lng + (to.lng - from.lng) * ease};
+      this.zone.run(() => { this.driverPos = pos; this.gmDriverMarker?.setPosition(pos); });
+      if (t < 1) {
+        this.animFrameId = requestAnimationFrame(step);
+      } else {
+        this.zone.run(() => { this.driverPos = to; this.gmDriverMarker?.setPosition(to); this.requestDirections(); });
+      }
+    };
+    this.animFrameId = requestAnimationFrame(step);
+  }
+
+  private destroyMap() {
+    this.gmDirectionsRenderer?.setMap(null);
+    this.gmDriverMarker?.setMap(null);
+    this.gmVendorMarker?.setMap(null);
+    this.gmCustomerMarker?.setMap(null);
+    this.gmMap = undefined;
+    this.gmDriverMarker = undefined;
+    this.gmVendorMarker = undefined;
+    this.gmCustomerMarker = undefined;
+    this.gmDirectionsRenderer = undefined;
+    this.gmDirectionsService = undefined;
+    this.driverPos = undefined;
+    this.vendorPos = undefined;
+    this.customerPos = undefined;
+  }
+
+  private closeWs() { if (this.ws) { this.ws.close(); this.ws = null; } }
+
   closeModal() {
     this.showModal.set(false);
     this.selectedOrder.set(null);
+    this.closeTrackingMap();
   }
 }

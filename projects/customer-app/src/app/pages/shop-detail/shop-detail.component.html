@@ -1,173 +1,287 @@
 @if (loading()) {
-  <div class="loading-spinner" style="margin-top:4rem"></div>
+  <div class="sd-loading">
+    <div class="sd-spinner"></div>
+  </div>
 } @else if (!vendor()) {
-  <div class="empty-state container" style="margin-top:4rem">
-    <div class="empty-icon">&#128683;</div>
+  <div class="sd-not-found">
+    <span class="material-icons-outlined">storefront</span>
     <h3>Shop not found</h3>
-    <a routerLink="/shops" class="btn btn-primary mt-2">Back to Shops</a>
+    <a routerLink="/shops">Browse Shops</a>
   </div>
 } @else {
 
-  <div class="shop-detail-page">
-
-    <!-- Hero banner -->
-    <div class="shop-hero">
-      <div class="shop-hero-banner"
-        [style.background-image]="vendor()!.banner ? 'url(' + vendor()!.banner + ')' : null">
-        @if (!vendor()!.banner) {
-          <div class="hero-gradient-fallback"></div>
-        }
-        <div class="hero-overlay"></div>
-      </div>
-
-      <div class="shop-hero-body">
-        <div class="shop-logo-wrap">
-          @if (vendor()!.logo) {
-            <img class="shop-logo" [src]="vendor()!.logo" [alt]="vendor()!.store_name">
-          } @else {
-            <div class="shop-logo shop-logo-placeholder">
-              {{ vendor()!.store_name[0] || 'S' }}
-            </div>
-          }
-        </div>
-
-        <div class="shop-hero-info">
-          <div class="shop-name-row">
-            <h1 class="shop-name">{{ vendor()!.store_name }}</h1>
-            <span class="shop-status" [class.closed]="!vendor()!.is_open">
-              {{ vendor()!.is_open ? 'Open' : 'Closed' }}
-            </span>
-          </div>
-          @if (vendor()!.description) {
-            <p class="shop-description">{{ vendor()!.description }}</p>
-          }
-          <div class="shop-meta-row">
-            @if (vendor()!.city) {
-              <span class="meta-chip">
-                <span class="material-icons-outlined">location_on</span>
-                {{ vendor()!.city }}{{ vendor()!.state ? ', ' + vendor()!.state : '' }}
-              </span>
-            }
-            @if (vendor()!.phone) {
-              <span class="meta-chip">
-                <span class="material-icons-outlined">phone</span>
-                {{ vendor()!.phone }}
-              </span>
-            }
-            @if (vendor()!.opening_time && vendor()!.closing_time) {
-              <span class="meta-chip">
-                <span class="material-icons-outlined">schedule</span>
-                {{ vendor()!.opening_time }} – {{ vendor()!.closing_time }}
-              </span>
-            }
-            @if (vendor()!.average_rating > 0) {
-              <span class="meta-chip rating-chip">
-                <span class="star-icon">&#9733;</span>
-                {{ vendor()!.average_rating | number:'1.1-1' }}
-                <span class="rating-sub">({{ vendor()!.total_ratings }})</span>
-              </span>
-            }
-          </div>
-        </div>
-      </div>
+  <!-- ── Top Bar ────────────────────────────────────────── -->
+  <div class="sd-topbar">
+    <button class="sd-back-btn" (click)="goBack()">
+      <span class="material-icons-outlined">arrow_back</span>
+    </button>
+    <div class="sd-topbar-info">
+      <span class="sd-topbar-name">{{ vendor()!.store_name }}</span>
+      <span class="sd-topbar-sub">
+        <span class="sd-rating-pill">
+          <span class="material-icons-outlined">star</span>
+          {{ vendor()!.average_rating | number:'1.1-1' }}
+        </span>
+        <span class="sd-mdot">·</span>
+        {{ vendor()!.city }}
+      </span>
     </div>
+    <button class="sd-search-btn" (click)="toggleSearch()">
+      <span class="material-icons-outlined">{{ showSearch() ? 'close' : 'search' }}</span>
+    </button>
+    <a routerLink="/cart" class="sd-cart-icon">
+      <span class="material-icons-outlined">shopping_cart</span>
+      @if (api.cartCount() > 0) {
+        <span class="sd-cart-badge">{{ api.cartCount() > 9 ? '9+' : api.cartCount() }}</span>
+      }
+    </a>
+  </div>
 
-    <!-- Info cards row -->
-    <div class="info-cards">
-      <div class="info-card">
-        <div class="info-card-icon">
-          <span class="material-icons-outlined">location_on</span>
-        </div>
-        <div>
-          <p class="info-label">Address</p>
-          <p class="info-value">{{ vendor()!.address }}, {{ vendor()!.city }}</p>
-        </div>
-      </div>
-      <div class="info-card">
-        <div class="info-card-icon">
-          <span class="material-icons-outlined">schedule</span>
-        </div>
-        <div>
-          <p class="info-label">Hours</p>
-          <p class="info-value">{{ vendor()!.opening_time }} – {{ vendor()!.closing_time }}</p>
-        </div>
-      </div>
-      <div class="info-card">
-        <div class="info-card-icon">
-          <span class="material-icons-outlined">local_shipping</span>
-        </div>
-        <div>
-          <p class="info-label">Min. Order</p>
-          <p class="info-value">${{ vendor()!.min_order_amount }}</p>
-        </div>
-      </div>
-      <div class="info-card">
-        <div class="info-card-icon">
-          <span class="material-icons-outlined">call</span>
-        </div>
-        <div>
-          <p class="info-label">Phone</p>
-          <p class="info-value">{{ vendor()!.phone || '—' }}</p>
-        </div>
-      </div>
+  <!-- ── Search Bar ─────────────────────────────────────── -->
+  @if (showSearch()) {
+    <div class="sd-search-bar">
+      <span class="material-icons-outlined">search</span>
+      <input
+        class="sd-search-input"
+        [(ngModel)]="searchQuery"
+        placeholder="Search in {{ vendor()!.store_name }}…"
+        autofocus
+        autocomplete="off">
+      @if (searchQuery) {
+        <button (click)="searchQuery = ''" class="sd-search-clear">
+          <span class="material-icons-outlined">close</span>
+        </button>
+      }
     </div>
+  }
 
-    <!-- Products section -->
-    <div class="products-section">
-      <div class="section-header">
-        <h2 class="section-title">
-          <span class="material-icons-outlined">inventory_2</span>
-          Products
-        </h2>
-        @if (products().length > 0) {
-          <span class="products-count">{{ products().length }} items</span>
-        }
-      </div>
-
-      @if (products().length === 0) {
-        <div class="empty-state">
-          <div class="empty-icon">&#128722;</div>
-          <h3>No products listed</h3>
-          <p>This shop hasn't added products yet.</p>
-        </div>
-      } @else {
-        <div class="products-grid">
-          @for (product of products(); track product.id) {
-            <a [routerLink]="['/product', product.id]" class="product-card">
-              <div class="product-image-wrap">
-                @if (product.primary_image) {
-                  <img [src]="product.primary_image" [alt]="product.name">
-                } @else {
-                  <div class="product-img-placeholder">
-                    <span class="material-icons-outlined">inventory_2</span>
-                  </div>
-                }
-                @if (product.discount_percentage > 0) {
-                  <span class="product-badge">-{{ product.discount_percentage }}%</span>
-                }
-                @if (!product.in_stock) {
-                  <div class="product-oos-overlay">Out of stock</div>
-                }
-              </div>
-              <div class="product-card-body">
-                <h4 class="product-card-name">{{ product.name }}</h4>
-                <div class="product-price-row">
-                  <span class="product-price">${{ product.price | number:'1.2-2' }}</span>
-                  @if (product.compare_price) {
-                    <span class="product-compare-price">${{ product.compare_price | number:'1.2-2' }}</span>
-                  }
-                </div>
-                @if (product.average_rating > 0) {
-                  <div class="product-rating">
-                    <span class="stars">{{ starsFor(product.average_rating) }}</span>
-                  </div>
-                }
-              </div>
-            </a>
-          }
+  <!-- ── Hero ──────────────────────────────────────────── -->
+  <div class="sd-hero">
+    <div class="sd-hero-img"
+      [style.background-image]="vendor()!.banner ? 'url(' + vendor()!.banner + ')' : ''">
+      @if (!vendor()!.banner) {
+        <div class="sd-hero-fallback">
+          <span class="material-icons-outlined">storefront</span>
         </div>
       }
     </div>
+    <div class="sd-hero-meta">
+      <div class="sd-hero-left">
+        @if (vendor()!.logo) {
+          <img class="sd-logo" [src]="vendor()!.logo" alt="{{vendor()!.store_name}}">
+        } @else {
+          <div class="sd-logo sd-logo-ph">{{ vendor()!.store_name[0] }}</div>
+        }
+        <div>
+          <div class="sd-hero-name">{{ vendor()!.store_name }}</div>
+          <div class="sd-hero-cats">{{ vendor()!.description || vendor()!.city }}</div>
+        </div>
+      </div>
+      <button class="sd-info-btn" (click)="toggleInfo()">
+        <span class="material-icons-outlined">{{ showInfo() ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}</span>
+      </button>
+    </div>
 
+    <!-- Collapsible Details -->
+    @if (showInfo()) {
+      <div class="sd-info-panel">
+        <div class="sd-info-row">
+          <span class="material-icons-outlined">schedule</span>
+          <span>{{ vendor()!.opening_time }} – {{ vendor()!.closing_time }}</span>
+          <span class="sd-status-badge" [class.closed]="!vendor()!.is_open">
+            {{ vendor()!.is_open ? 'Open Now' : 'Closed' }}
+          </span>
+        </div>
+        <div class="sd-info-row">
+          <span class="material-icons-outlined">location_on</span>
+          <span>{{ vendor()!.address }}, {{ vendor()!.city }}</span>
+        </div>
+        <div class="sd-info-row">
+          <span class="material-icons-outlined">shopping_bag</span>
+          <span>Min order: {{ vendor()!.min_order_amount | appCurrency }}</span>
+        </div>
+        @if (vendor()!.phone) {
+          <div class="sd-info-row">
+            <span class="material-icons-outlined">call</span>
+            <span>{{ vendor()!.phone }}</span>
+          </div>
+        }
+      </div>
+    }
   </div>
+
+  <!-- ── Filter Chips ────────────────────────────────────── -->
+  <div class="sd-filter-row">
+    <label class="sd-fchip" [class.active]="filterRating">
+      <input type="checkbox" [(ngModel)]="filterRating" hidden>
+      <span class="material-icons-outlined">star</span>
+      Ratings 4.0+
+    </label>
+    @if (searchQuery || filterRating) {
+      <span class="sd-filter-count">{{ filteredProducts().length }} items</span>
+    }
+  </div>
+
+  <!-- ── Products ────────────────────────────────────────── -->
+  <div class="sd-products">
+    <div class="sd-section-head">
+      Recommended
+      <span class="sd-count">({{ filteredProducts().length }})</span>
+    </div>
+
+    @if (filteredProducts().length === 0) {
+      <div class="sd-empty">
+        <span class="material-icons-outlined">search_off</span>
+        <p>No items found</p>
+      </div>
+    } @else {
+      @for (product of filteredProducts(); track product.id) {
+        <div class="sd-item" [class.oos]="product.is_available === false">
+          <!-- Left: Content -->
+          <div class="sd-item-content">
+            @if (product.average_rating >= 4.5) {
+              <span class="sd-bestseller">
+                <span class="material-icons-outlined">star</span>
+                Bestseller
+              </span>
+            }
+            <h4 class="sd-item-name">{{ product.name }}</h4>
+            @if (product.description) {
+              <p class="sd-item-desc">{{ product.description }}</p>
+            }
+            <div class="sd-item-price">
+              {{ product.price | appCurrency }}
+              @if (product.compare_price && product.compare_price > product.price) {
+                <span class="sd-item-compare">{{ product.compare_price | appCurrency }}</span>
+              }
+            </div>
+            @if (product.average_rating > 0) {
+              <div class="sd-item-rating">
+                <span class="material-icons-outlined">star</span>
+                {{ product.average_rating | number:'1.1-1' }}
+              </div>
+            }
+          </div>
+
+          <!-- Right: Image + Controls -->
+          <div class="sd-item-img-wrap">
+            @if (product.primary_image) {
+              <img class="sd-item-img" [src]="product.primary_image" alt="{{product.name}}" loading="lazy">
+            } @else {
+              <div class="sd-item-img-ph">
+                <span class="material-icons-outlined">fastfood</span>
+              </div>
+            }
+
+            @if (product.discount_percentage > 0) {
+              <span class="sd-discount-badge">{{ product.discount_percentage }}% OFF</span>
+            }
+
+            @if (product.is_available !== false) {
+              <div class="sd-qty-overlay">
+                @if (getQty(product.id) === 0) {
+                  <button class="sd-add-btn" (click)="add(product)" [disabled]="addingId() === product.id">
+                    @if (addingId() === product.id) { <span class="sd-btn-spinner"></span> } @else { ADD }
+                  </button>
+                } @else {
+                  <div class="sd-qty-ctrl">
+                    <button class="sd-qty-btn" (click)="decrement(product)">
+                      <span class="material-icons-outlined">{{ getQty(product.id) === 1 ? 'delete_outline' : 'remove' }}</span>
+                    </button>
+                    <span class="sd-qty-val">{{ getQty(product.id) }}</span>
+                    <button class="sd-qty-btn" (click)="increment(product)">
+                      <span class="material-icons-outlined">add</span>
+                    </button>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="sd-oos-overlay">Out of stock</div>
+            }
+          </div>
+        </div>
+      }
+    }
+  </div>
+
+  <!-- ── People Pair This With ──────────────────────────── -->
+  @if (suggestions().length > 0 && !searchQuery) {
+    <div class="sd-pairs">
+      <div class="sd-section-head">
+        People usually pair this with
+        <span class="material-icons-outlined sd-pairs-chevron">keyboard_arrow_up</span>
+      </div>
+      <div class="sd-pairs-scroll">
+        @for (p of suggestions(); track p.id) {
+          <div class="sd-pair-card">
+            <div class="sd-pair-img-wrap">
+              @if (p.primary_image) {
+                <img [src]="p.primary_image" alt="{{p.name}}" loading="lazy">
+              } @else {
+                <div class="sd-pair-img-ph">
+                  <span class="material-icons-outlined">fastfood</span>
+                </div>
+              }
+              @if (p.average_rating >= 4.5) {
+                <span class="sd-pair-badge">★ Bestseller</span>
+              }
+            </div>
+            <div class="sd-pair-info">
+              <div class="sd-pair-name">{{ p.name }}</div>
+              <div class="sd-pair-price">{{ p.price | appCurrency }}</div>
+            </div>
+            <div class="sd-pair-add">
+              @if (getQty(p.id) === 0) {
+                <button class="sd-pair-add-btn" (click)="add(p)">+</button>
+              } @else {
+                <div class="sd-pair-qty">
+                  <button (click)="decrement(p)">−</button>
+                  <span>{{ getQty(p.id) }}</span>
+                  <button (click)="increment(p)">+</button>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Bottom spacer for cart bar -->
+  <div style="height: 100px;"></div>
+
+  <!-- ── Sticky Cart Bar ────────────────────────────────── -->
+  @if (totalCartItems() > 0) {
+    <div class="sd-cart-bar" (click)="goToCart()">
+      <span class="sd-cart-bar-count">{{ totalCartItems() }} item{{ totalCartItems() > 1 ? 's' : '' }} added</span>
+      <span class="sd-cart-bar-action">
+        View Cart
+        <span class="material-icons-outlined">arrow_forward</span>
+      </span>
+    </div>
+  }
+
+  <!-- ── Replace Cart Dialog ───────────────────────────── -->
+  @if (showReplaceDialog()) {
+    <div class="sd-dialog-backdrop" (click)="cancelReplace()">
+      <div class="sd-dialog" (click)="$event.stopPropagation()">
+        <div class="sd-dialog-icon">
+          <span class="material-icons-outlined">shopping_cart</span>
+        </div>
+        <h3 class="sd-dialog-title">Start a new order?</h3>
+        <p class="sd-dialog-msg">
+          Your cart has items from
+          <strong>{{ cartVendorName() }}</strong>.
+          Adding this item will clear your current cart.
+        </p>
+        <div class="sd-dialog-actions">
+          <button class="sd-dialog-cancel" (click)="cancelReplace()">Keep current cart</button>
+          <button class="sd-dialog-confirm" (click)="confirmReplace()" [disabled]="clearing()">
+            @if (clearing()) { <span class="sd-btn-spinner"></span> }
+            Start new order
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 }

@@ -2,12 +2,12 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { ApiService, Product, Category } from '@shared/public-api';
+import { ApiService, AppCurrencyPipe, Product, Category } from '@shared/public-api';
 
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule, AppCurrencyPipe],
   templateUrl: './products.component.html',
   styleUrl: './products.component.scss'
 })

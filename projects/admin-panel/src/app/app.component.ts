@@ -3,12 +3,12 @@ import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/rou
 import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { timer } from 'rxjs';
-import { AuthService, ApiService } from '@shared/public-api';
+import { AuthService, ApiService, ToastComponent, NotificationPollingService } from '@shared/public-api';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, ToastComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
@@ -17,6 +17,7 @@ export class AppComponent implements OnInit {
   api = inject(ApiService);
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
+  private notifPolling = inject(NotificationPollingService);
 
   sidebarCollapsed = signal(false);
   mobileMenuOpen = signal(false);
@@ -36,6 +37,9 @@ export class AppComponent implements OnInit {
       { route: '/assets', icon: 'handyman', label: 'Assets' },
       { route: '/sales-report', icon: 'trending_up', label: 'Sales Report' },
       { route: '/payouts', icon: 'payments', label: 'Payouts' },
+      { route: '/issues', icon: 'report_problem', label: 'Order Issues' },
+      { route: '/coupons', icon: 'confirmation_number', label: 'Coupons' },
+      { route: '/scheduled-tasks', icon: 'schedule_send', label: 'Scheduled Tasks' },
       { route: '/notifications', icon: 'notifications', label: 'Notifications' },
     ];
     
@@ -48,14 +52,28 @@ export class AppComponent implements OnInit {
 
   ngOnInit() {
     if (this.auth.isLoggedIn()) {
-      timer(0, 30000).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.loadUnreadCount());
+      this.startPolling();
     }
   }
 
-  loadUnreadCount() {
-    this.api.getUnreadCount().subscribe({
-      next: (r) => this.unreadCount.set(r.count ?? 0),
-      error: () => {}
+  private startPolling() {
+    // Unread badge (light poll every 30 s for header counter)
+    timer(0, 30000).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.api.getUnreadCount().subscribe({
+        next: (r) => this.unreadCount.set(r.count ?? 0),
+        error: () => {},
+      });
+    });
+
+    // Live toast notifications via polling service
+    this.notifPolling.start((n) => {
+      if (n.notification_type === 'order' && n.related_entity_id) {
+        return { label: 'View Order', url: `/orders/${n.related_entity_id}` };
+      }
+      if (n.notification_type === 'delivery' && n.related_entity_id) {
+        return { label: 'View Partner', url: `/delivery-partners/${n.related_entity_id}` };
+      }
+      return { label: 'View', url: '/notifications' };
     });
   }
 
@@ -127,8 +145,7 @@ export class AppComponent implements OnInit {
       order: 'receipt_long',
       delivery: 'local_shipping',
       promo: 'local_offer',
-      system: 'info',
-    };
+      system: 'info' };
     return map[type] || 'notifications';
   }
 
@@ -136,4 +153,26 @@ export class AppComponent implements OnInit {
     this.notifOpen.set(false);
     this.router.navigate(['/notifications']);
   }
+
+  handleNotificationClick(n: any) {
+    if (!n.is_read) {
+      this.api.markNotificationRead(n.id).subscribe({
+        next: () => {
+          this.unreadCount.update(c => Math.max(0, c - 1));
+          this.notifications.update(list => list.map(item => item.id === n.id ? { ...item, is_read: true } : item));
+        }
+      });
+    }
+    this.notifOpen.set(false);
+    
+    if (n.notification_type === 'order' && n.related_entity_id) {
+       this.router.navigate(['/orders', n.related_entity_id]);
+    } else if (n.notification_type === 'delivery' && n.related_entity_id) {
+       this.router.navigate(['/delivery-partners', n.related_entity_id]);
+    } else {
+       this.router.navigate(['/notifications']);
+    }
+  }
 }
+
+

@@ -53,3 +53,5 @@ export class ChangePasswordComponent {
     this.auth.logout();
   }
 }
+
+

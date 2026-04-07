@@ -2,7 +2,7 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
-import { ApiService } from '@shared/public-api';
+import { ApiService, AppCurrencyPipe } from '@shared/public-api';
 import { DynamicTableComponent, TableCellDirective } from '../../shared/components/dynamic-table/dynamic-table.component';
 
 type Tab = 'overview' | 'orders';
@@ -10,7 +10,7 @@ type Tab = 'overview' | 'orders';
 @Component({
   selector: 'app-customer-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, DynamicTableComponent, TableCellDirective, DecimalPipe],
+  imports: [CommonModule, FormsModule, RouterLink, DynamicTableComponent, TableCellDirective, DecimalPipe, AppCurrencyPipe],
   templateUrl: './customer-profile.component.html',
   styleUrl: './customer-profile.component.scss'
 })
@@ -92,8 +92,7 @@ export class CustomerProfileComponent implements OnInit {
       email: c.email || '',
       phone: c.phone || '',
       is_verified: c.is_verified,
-      is_active: c.is_active !== false,
-    };
+      is_active: c.is_active !== false };
     this.editError.set('');
     this.showEditModal.set(true);
   }

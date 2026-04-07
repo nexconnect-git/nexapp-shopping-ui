@@ -54,7 +54,6 @@ export class AddressesComponent implements OnInit {
     if (loc.city) this.form.city = loc.city;
     if (loc.state) this.form.state = loc.state;
     if (loc.postal_code) this.form.postal_code = loc.postal_code;
-    this.showMap.set(false);
   }
 
   saveAddress() {

@@ -1,4 +1,5 @@
 @if (auth.isLoggedIn() && !isAuthRoute()) {
+  <app-toast></app-toast>
   <div class="app-shell">
     <!-- Sidebar -->
     @if (!isPendingRoute()) {
@@ -16,35 +17,39 @@
 
         <!-- Navigation -->
         <nav class="sidebar-nav">
-          <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="closeMobileSidebar()" class="nav-item">
+          <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="closeMobileSidebar()" class="menu-item">
             <span class="material-icons-outlined">dashboard</span>
             <span class="nav-label">Dashboard</span>
           </a>
-          <a routerLink="/products" routerLinkActive="active" (click)="closeMobileSidebar()" class="nav-item">
+          <a routerLink="/products" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
             <span class="material-icons-outlined">inventory_2</span>
             <span class="nav-label">Products</span>
           </a>
-          <a routerLink="/orders" routerLinkActive="active" (click)="closeMobileSidebar()" class="nav-item">
+          <a routerLink="/orders" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
             <span class="material-icons-outlined">receipt_long</span>
             <span class="nav-label">Orders</span>
           </a>
-          <a routerLink="/sales-report" routerLinkActive="active" (click)="closeMobileSidebar()" class="nav-item">
+          <a routerLink="/sales-report" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
             <span class="material-icons-outlined">trending_up</span>
             <span class="nav-label">Sales Report</span>
           </a>
-          <a routerLink="/stock-management" routerLinkActive="active" (click)="closeMobileSidebar()" class="nav-item">
+          <a routerLink="/stock-management" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
             <span class="material-icons-outlined">inventory</span>
             <span class="nav-label">Stock Management</span>
           </a>
-          <a routerLink="/payments" routerLinkActive="active" (click)="closeMobileSidebar()" class="nav-item">
+          <a routerLink="/coupons" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
+            <span class="material-icons-outlined">confirmation_number</span>
+            <span class="nav-label">Coupons</span>
+          </a>
+          <a routerLink="/payments" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
             <span class="material-icons-outlined">account_balance_wallet</span>
             <span class="nav-label">Payments</span>
           </a>
-          <a routerLink="/support" routerLinkActive="active" (click)="closeMobileSidebar()" class="nav-item">
+          <a routerLink="/support" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
             <span class="material-icons-outlined">support_agent</span>
             <span class="nav-label">Customer Care</span>
           </a>
-          <a routerLink="/profile" routerLinkActive="active" (click)="closeMobileSidebar()" class="nav-item">
+          <a routerLink="/profile" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
             <span class="material-icons-outlined">manage_accounts</span>
             <span class="nav-label">Profile & Store</span>
           </a>
@@ -108,7 +113,8 @@
                   } @else {
                     <div class="notif-list">
                       @for (n of notifications(); track n.id) {
-                        <div class="notif-item" [class.unread]="!n.is_read">
+                        <div class="notif-item" [class.unread]="!n.is_read"
+                             (click)="handleNotificationClick(n)" style="cursor:pointer;">
                           <span class="material-icons-outlined notif-icon">receipt_long</span>
                           <div class="notif-body">
                             <p class="notif-msg">{{ n.title }}</p>
@@ -158,5 +164,8 @@
     </div>
   </div>
 } @else {
+  <app-toast></app-toast>
   <router-outlet />
 }
+
+<!-- aria-label -->

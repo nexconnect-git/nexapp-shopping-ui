@@ -4,6 +4,19 @@
       <h1 class="page-title">Products</h1>
       <p class="page-subtitle">{{ total() }} products across all vendors</p>
     </div>
+    <div class="reload-bar">
+      @if (lastRefreshed()) {
+        <span class="reload-timestamp">Updated {{ lastRefreshed() | date:'HH:mm:ss' }}</span>
+      }
+      <button class="btn btn-ghost btn-sm" (click)="manualReload()" [disabled]="loading()">
+        <span class="material-icons-outlined" [class.spin]="loading()">refresh</span>
+      </button>
+      <button class="btn btn-sm" [class.btn-ghost]="!autoReload()" [class.btn-primary-soft]="autoReload()"
+              (click)="toggleAutoReload()">
+        <span class="material-icons-outlined">{{ autoReload() ? 'pause_circle' : 'play_circle' }}</span>
+        {{ autoReload() ? 'Auto' : 'Paused' }}
+      </button>
+    </div>
     <div class="header-actions">
       <input class="search-input" type="search" [(ngModel)]="search"
         (input)="onSearch()" placeholder="Search products...">
@@ -43,7 +56,7 @@
 
     <!-- Custom price column -->
     <ng-template tableCell="price" let-p>
-      <span class="price">${{ p.price | number:'1.2-2' }}</span>
+      <span class="price">{{ p.price | appCurrency }}</span>
     </ng-template>
 
     <!-- Custom stock column -->

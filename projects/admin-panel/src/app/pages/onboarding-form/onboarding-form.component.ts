@@ -326,8 +326,7 @@ export class OnboardingFormComponent implements OnInit {
           cancellation_rules: vendor.cancellation_rules || '',
           is_open: vendor.is_open ?? true,
           auto_order_acceptance: vendor.auto_order_acceptance || false,
-          is_featured: vendor.is_featured || false,
-        });
+          is_featured: vendor.is_featured || false });
       },
       error: () => {
         this.loading.set(false);

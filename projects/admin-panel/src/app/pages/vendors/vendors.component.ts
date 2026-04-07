@@ -1,18 +1,19 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { ApiService } from '@shared/public-api';
+import { ApiService, AppCurrencyPipe } from '@shared/public-api';
 import { DynamicTableComponent, TableCellDirective } from '../../shared/components/dynamic-table/dynamic-table.component';
+import { Subscription, timer } from 'rxjs';
 
 @Component({
   selector: 'app-vendors',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, DynamicTableComponent, TableCellDirective],
+  imports: [CommonModule, FormsModule, RouterLink, DynamicTableComponent, TableCellDirective, AppCurrencyPipe],
   templateUrl: './vendors.component.html',
   styleUrl: './vendors.component.scss'
 })
-export class VendorsComponent implements OnInit {
+export class VendorsComponent implements OnInit, OnDestroy {
   private api = inject(ApiService);
   vendors = signal<any[]>([]);
   loading = signal(true);
@@ -33,6 +34,10 @@ export class VendorsComponent implements OnInit {
     { key: 'min_order', label: 'Min Order', flex: '1fr' },
     { key: 'actions', label: 'Actions', flex: '1.5fr' }
   ];
+
+  lastRefreshed = signal<Date | null>(null);
+  autoReload = signal(true);
+  private reloadSub?: Subscription;
 
   showModal = signal(false);
   isCreating = signal(false);
@@ -59,7 +64,16 @@ export class VendorsComponent implements OnInit {
 
   private timer: any;
 
-  ngOnInit() { this.load(); }
+  ngOnInit() {
+    this.reloadSub = timer(0, 15000).subscribe(() => {
+      if (this.autoReload() && !this.showModal()) this.load();
+    });
+  }
+
+  ngOnDestroy() { this.reloadSub?.unsubscribe(); }
+
+  manualReload() { this.page.set(1); this.load(); }
+  toggleAutoReload() { this.autoReload.update(v => !v); }
 
   load() {
     this.loading.set(true);
@@ -67,7 +81,12 @@ export class VendorsComponent implements OnInit {
     if (this.search) params.search = this.search;
     if (this.statusFilter) params.status = this.statusFilter;
     this.api.getAdminVendors(params).subscribe({
-      next: (r) => { this.vendors.set(r.results || r); this.total.set(r.count || (r.results || r).length); this.loading.set(false); },
+      next: (r) => {
+        this.vendors.set(r.results || r);
+        this.total.set(r.count || (r.results || r).length);
+        this.loading.set(false);
+        this.lastRefreshed.set(new Date());
+      },
       error: () => this.loading.set(false)
     });
   }
@@ -146,3 +165,5 @@ export class VendorsComponent implements OnInit {
 
   starsFor(r: number) { const f = Math.round(r); return '★'.repeat(f) + '☆'.repeat(5 - f); }
 }
+
+

@@ -2,12 +2,12 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { ApiService, AuthService } from '@shared/public-api';
+import { ApiService, AppCurrencyPipe, AuthService } from '@shared/public-api';
 
 @Component({
   selector: 'app-product-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule, AppCurrencyPipe],
   templateUrl: './product-detail.component.html',
   styleUrl: './product-detail.component.scss'
 })
@@ -70,7 +70,27 @@ export class ProductDetailComponent implements OnInit {
     });
   }
 
+  buyNow() {
+    if (!this.auth.isLoggedIn()) { this.router.navigate(['/login']); return; }
+    const p = this.product();
+    if (!p) return;
+
+    this.addingToCart.set(true);
+    this.cartError.set('');
+    this.api.addToCart(p.id, this.qty).subscribe({
+      next: () => {
+        this.addingToCart.set(false);
+        this.api.refreshCartCount();
+        this.router.navigate(['/cart']);
+      },
+      error: (err) => {
+        this.cartError.set(err.error?.detail || 'Could not add to cart.');
+        this.addingToCart.set(false);
+      }
+    });
+  }
+
   decQty() { if (this.qty > 1) this.qty--; }
-  incQty() { const p = this.product(); if (p && this.qty < p.stock) this.qty++; }
+  incQty() { const p = this.product(); if (p && (p.stock === 0 || this.qty < p.stock)) this.qty++; }
   starsFor(r: number) { const f = Math.round(r); return '★'.repeat(f) + '☆'.repeat(5 - f); }
 }

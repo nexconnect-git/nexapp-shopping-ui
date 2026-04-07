@@ -18,6 +18,31 @@
 
   @if (!loading() && partner()) {
 
+    <!-- Temp Password Warning -->
+    @if (partner().user?.force_password_change) {
+      <div class="temp-password-banner">
+        <span class="material-icons-outlined">lock_clock</span>
+        <div class="temp-password-body">
+          <strong>Temporary password still active</strong>
+          <span>This delivery partner has not changed their auto-generated password yet.</span>
+          @if (partner().user?.temp_password) {
+            <div class="temp-password-row">
+              <span class="temp-password-label">Temp password:</span>
+              <code class="temp-password-value">
+                {{ showTempPassword() ? partner().user.temp_password : '••••••••••••' }}
+              </code>
+              <button type="button" class="temp-pw-icon-btn" (click)="toggleTempPassword()" [title]="showTempPassword() ? 'Hide' : 'Show'">
+                <span class="material-icons-outlined">{{ showTempPassword() ? 'visibility_off' : 'visibility' }}</span>
+              </button>
+              <button type="button" class="temp-pw-icon-btn" (click)="copyTempPassword()" title="Copy">
+                <span class="material-icons-outlined">{{ copied() ? 'check' : 'content_copy' }}</span>
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
     <!-- Page Header -->
     <div class="page-header">
       <div>
@@ -193,7 +218,7 @@
     @if (activeTab() === 'deliveries') {
       <div class="tab-content fade-in">
         <div class="tab-filters">
-          <select class="filter-select" [(ngModel)]="deliveriesStatusFilter" (change)="changeDeliveriesFilter()">
+          <select class="filter-select" [(ngModel)]="deliveriesStatusFilter" (change)="changeDeliveriesFilter()" aria-label="select">
             <option value="">All Status</option>
             <option value="picked_up">Picked Up</option>
             <option value="on_the_way">On the Way</option>
@@ -222,7 +247,7 @@
             <span class="text-sm">{{ o.vendor_name || '—' }}</span>
           </ng-template>
           <ng-template tableCell="total" let-o>
-            <span class="font-medium">₦{{ o.total | number }}</span>
+            <span class="font-medium">{{ o.total | appCurrency }}</span>
           </ng-template>
           <ng-template tableCell="status" let-o>
             <span class="badge" [class]="orderStatusBadge(o.status)">{{ o.status }}</span>

@@ -1,6 +1,7 @@
-import { Component, EventEmitter, Input, Output, signal, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, Output, signal, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ToastService } from '@shared/public-api';
 
 export interface StepperField {
   key: string;
@@ -74,12 +75,19 @@ export class DynamicStepperComponent implements OnChanges {
   listStates: Record<string, any> = {};
   errors = signal<Record<string, string>>({});
 
+  private toast = inject(ToastService);
+
   ngOnChanges(changes: SimpleChanges) {
     if (changes['config'] && this.config) {
       this.initializeModel();
     }
     if (changes['prefillData'] && this.prefillData) {
       Object.assign(this.model, this.prefillData);
+    }
+    if (changes['serverErrors'] && this.serverErrors && Object.keys(this.serverErrors).length > 0) {
+      for (const key of Object.keys(this.serverErrors)) {
+        this.toast.show(`${key}: ${this.serverErrors[key]}`, 'error');
+      }
     }
   }
 

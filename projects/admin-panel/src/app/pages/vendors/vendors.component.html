@@ -4,6 +4,19 @@
       <h1 class="page-title">Vendors</h1>
       <p class="page-subtitle">{{ total() }} vendor{{ total() !== 1 ? 's' : '' }} registered</p>
     </div>
+    <div class="reload-bar">
+      @if (lastRefreshed()) {
+        <span class="reload-timestamp">Updated {{ lastRefreshed() | date:'HH:mm:ss' }}</span>
+      }
+      <button class="btn btn-ghost btn-sm" (click)="manualReload()" [disabled]="loading()" title="Reload">
+        <span class="material-icons-outlined" [class.spin]="loading()">refresh</span>
+      </button>
+      <button class="btn btn-sm" [class.btn-ghost]="!autoReload()" [class.btn-primary-soft]="autoReload()"
+              (click)="toggleAutoReload()" title="Toggle auto-reload every 15 s">
+        <span class="material-icons-outlined">{{ autoReload() ? 'pause_circle' : 'play_circle' }}</span>
+        {{ autoReload() ? 'Auto' : 'Paused' }}
+      </button>
+    </div>
     <div class="header-actions">
       <div class="filters">
         <input class="filter-input" type="search" [(ngModel)]="search" (input)="onSearch()"
@@ -72,7 +85,7 @@
 
     <!-- Custom min_order column -->
     <ng-template tableCell="min_order" let-v>
-      <span class="text-sm">₦{{ v.min_order_amount | number }}</span>
+      <span class="text-sm">{{ v.min_order_amount | appCurrency }}</span>
     </ng-template>
 
     <!-- Custom actions column -->
@@ -213,7 +226,7 @@
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label class="input-label">Min Order (₦)</label>
+            <label class="input-label">Min Order ({{ 0 | appCurrency:true }})</label>
             <input class="input-field" type="number" [(ngModel)]="editModel().min_order_amount" min="0">
           </div>
           <div class="form-group">

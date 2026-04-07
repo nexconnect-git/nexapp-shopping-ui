@@ -2,7 +2,7 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
-import { ApiService } from '@shared/public-api';
+import { ApiService, AppCurrencyPipe } from '@shared/public-api';
 import { DynamicTableComponent, TableCellDirective } from '../../shared/components/dynamic-table/dynamic-table.component';
 
 type Tab = 'overview' | 'deliveries' | 'assets';
@@ -10,7 +10,7 @@ type Tab = 'overview' | 'deliveries' | 'assets';
 @Component({
   selector: 'app-partner-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, DynamicTableComponent, TableCellDirective, DecimalPipe],
+  imports: [CommonModule, FormsModule, RouterLink, DynamicTableComponent, TableCellDirective, DecimalPipe, AppCurrencyPipe],
   templateUrl: './partner-profile.component.html',
   styleUrl: './partner-profile.component.scss'
 })
@@ -23,6 +23,9 @@ export class PartnerProfileComponent implements OnInit {
   partner = signal<any>(null);
   loading = signal(true);
   actionLoading = signal(false);
+
+  showTempPassword = signal(false);
+  copied = signal(false);
 
   activeTab = signal<Tab>('overview');
 
@@ -112,6 +115,17 @@ export class PartnerProfileComponent implements OnInit {
     });
   }
 
+  toggleTempPassword() { this.showTempPassword.update(v => !v); }
+
+  copyTempPassword() {
+    const pwd = this.partner()?.user?.temp_password;
+    if (!pwd) return;
+    navigator.clipboard.writeText(pwd).then(() => {
+      this.copied.set(true);
+      setTimeout(() => this.copied.set(false), 2000);
+    });
+  }
+
   revoke() {
     if (!confirm('Revoke approval for this partner?')) return;
     this.actionLoading.set(true);
@@ -145,3 +159,5 @@ export class PartnerProfileComponent implements OnInit {
 
   starsFor(r: number) { const f = Math.round(r); return '★'.repeat(f) + '☆'.repeat(5 - f); }
 }
+
+

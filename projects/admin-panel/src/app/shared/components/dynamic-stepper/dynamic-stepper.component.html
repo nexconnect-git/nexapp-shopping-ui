@@ -10,16 +10,7 @@
     </div>
   }
 
-  @if (serverErrors && !success) {
-    <div class="banner banner-error">
-      <strong>Please fix the following errors:</strong>
-      <ul>
-        @for (k of objectKeys(serverErrors); track k) {
-          <li><b>{{ k }}</b>: {{ serverErrors[k] }}</li>
-        }
-      </ul>
-    </div>
-  }
+
 
   <div class="wizard-layout">
     

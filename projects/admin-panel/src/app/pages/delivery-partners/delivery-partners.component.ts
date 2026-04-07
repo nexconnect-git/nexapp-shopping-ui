@@ -1,4 +1,5 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { Subscription, timer } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -12,7 +13,7 @@ import { DynamicTableComponent, TableCellDirective } from '../../shared/componen
   templateUrl: './delivery-partners.component.html',
   styleUrl: './delivery-partners.component.scss'
 })
-export class DeliveryPartnersComponent implements OnInit {
+export class DeliveryPartnersComponent implements OnInit, OnDestroy {
   private api = inject(ApiService);
   private router = inject(Router);
   partners = signal<any[]>([]);
@@ -51,14 +52,25 @@ export class DeliveryPartnersComponent implements OnInit {
     phone: '',
     vehicle_type: '',
     vehicle_number: '',
-    license_number: '',
-  };
+    license_number: '' };
 
   private timer: any;
+  lastRefreshed = signal<Date | null>(null);
+  autoReload = signal(true);
+  private reloadSub?: Subscription;
 
-  ngOnInit() { this.load(); }
+  ngOnInit() {
+    this.reloadSub = timer(0, 15000).subscribe(() => {
+      if (this.autoReload() && !this.showModal() && !this.showCreateModal()) this.load();
+    });
+  }
+
+  ngOnDestroy() { this.reloadSub?.unsubscribe(); }
 
   goToProfile(p: any) { this.router.navigate(['/delivery-partners', p.id]); }
+
+  manualReload() { this.page.set(1); this.load(); }
+  toggleAutoReload() { this.autoReload.update(v => !v); }
 
   load() {
     this.loading.set(true);
@@ -72,8 +84,9 @@ export class DeliveryPartnersComponent implements OnInit {
         this.total.set(r.count || (r.results || r).length);
         this.totalPages.set(Math.ceil((r.count || 0) / 20) || 1);
         this.loading.set(false);
+        this.lastRefreshed.set(new Date());
       },
-      error: () => this.loading.set(false)
+      error: () => this.loading.set(false),
     });
   }
 
@@ -153,3 +166,5 @@ export class DeliveryPartnersComponent implements OnInit {
 
   starsFor(r: number) { const f = Math.round(r); return '★'.repeat(f) + '☆'.repeat(5 - f); }
 }
+
+

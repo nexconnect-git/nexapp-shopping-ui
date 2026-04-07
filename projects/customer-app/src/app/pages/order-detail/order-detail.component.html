@@ -9,29 +9,137 @@
           <span class="material-icons-outlined">block</span>
         </div>
         <h3 class="empty-heading">Order not found</h3>
-        <a routerLink="/orders" class="btn btn-primary btn-sm">Back to Orders</a>
+        <a routerLink="/profile/orders" class="btn btn-primary btn-sm">Back to Orders</a>
       </div>
     } @else {
 
       <!-- Page Header -->
       <div class="order-detail-header">
-        <a routerLink="/orders" class="back-link">
+        <a routerLink="/profile/orders" class="back-link">
           <span class="material-icons-outlined">arrow_back</span>
           Orders
         </a>
         <div class="header-title-row">
-          <h1 class="order-title">Order #{{ order()!.order_number }}</h1>
+          <h1 class="order-title">
+            Order #{{ order()!.order_number }}
+            <a [routerLink]="['/order', order()!.id, 'tracking']" class="info-link-btn" title="View Full Tracking">
+              <span class="material-icons-outlined">{{ order()!.status === 'delivered' ? 'info' : 'radar' }}</span>
+            </a>
+          </h1>
           <span class="status-badge status-{{ order()!.status }}">{{ order()!.status | titlecase }}</span>
         </div>
         <p class="order-placed-at">Placed {{ order()!.placed_at | date:'MMM d, y · h:mm a' }}</p>
 
-        @if (canCancel()) {
-          <button class="btn btn-cancel btn-sm" [disabled]="cancelling()" (click)="cancelOrder()">
-            <span class="material-icons-outlined">cancel</span>
-            {{ cancelling() ? 'Cancelling...' : 'Cancel Order' }}
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+          @if (isActiveOrder()) {
+            <a [routerLink]="['/order', order()!.id, 'help']" class="btn btn-primary btn-sm">
+              <span class="material-icons-outlined">support_agent</span>
+              Help
+            </a>
+          }
+
+          <button class="btn btn-outline btn-sm" (click)="downloadInvoice()" style="background: white;">
+            <span class="material-icons-outlined">download</span>
+            Download Invoice
           </button>
-        }
+          
+          @if (canCancel()) {
+            <button class="btn btn-cancel btn-sm" [disabled]="cancelling()" (click)="cancelOrder()">
+              <span class="material-icons-outlined">cancel</span>
+              {{ cancelling() ? 'Cancelling...' : 'Cancel' }}
+            </button>
+          }
+
+          @if (order()!.status === 'delivered') {
+            <a [routerLink]="['/order', order()!.id, 'issue']" class="btn btn-report btn-sm">
+              <span class="material-icons-outlined">report_problem</span>
+              Report Issue
+            </a>
+          }
+        </div>
       </div>
+
+      <!-- ══ Swiggy-style Live Tracking Hero ══ -->
+      @if (showLiveMap()) {
+        <div class="live-tracking-hero">
+
+          <!-- ETA / status banner -->
+          <div class="eta-banner">
+            <div class="eta-left">
+              <div class="eta-icon-wrap">
+                <span class="material-icons-outlined">delivery_dining</span>
+              </div>
+              <div class="eta-text-block">
+                @if (order()!.status === 'on_the_way') {
+                  <span class="eta-headline">Your order is on the way!</span>
+                } @else if (order()!.status === 'picked_up') {
+                  <span class="eta-headline">Order picked up</span>
+                } @else if (order()!.status === 'ready') {
+                  <span class="eta-headline">Ready — finding a partner&hellip;</span>
+                } @else {
+                  <span class="eta-headline">{{ order()!.vendor_name }} is preparing your order</span>
+                }
+                @if (etaMinutes()) {
+                  <span class="eta-sub">Estimated arrival: <strong>~{{ etaMinutes() }} min</strong></span>
+                } @else if (order()!.delivery_partner_info) {
+                  <span class="eta-sub">{{ order()!.delivery_partner_info!.name }} is on the way</span>
+                }
+              </div>
+            </div>
+            @if (order()!.delivery_partner_info) {
+              <div class="partner-pill">
+                <span class="material-icons-outlined">person</span>
+                {{ order()!.delivery_partner_info!.name }}
+              </div>
+            }
+          </div>
+
+          <!-- Map -->
+          <div class="live-map-wrap">
+            <google-map height="380px" width="100%" [center]="center" [zoom]="zoom" [options]="mapOptions"
+              (mapInitialized)="onMapReady($event)">
+              @if (vendorPosition) {
+                <map-marker [position]="vendorPosition" [options]="vendorMarkerOptions"></map-marker>
+              }
+              @if (customerPosition) {
+                <map-marker [position]="customerPosition" [options]="customerMarkerOptions"></map-marker>
+              }
+              @if (driverPosition) {
+                <map-marker [position]="driverPosition" [options]="driverMarkerOptions"></map-marker>
+              }
+            </google-map>
+            <!-- Map legend -->
+            <div class="map-legend">
+              <div class="legend-item"><span class="legend-dot legend-vendor"></span>Store</div>
+              <div class="legend-item"><span class="legend-dot legend-driver"></span>Partner</div>
+              <div class="legend-item"><span class="legend-dot legend-customer"></span>You</div>
+            </div>
+          </div>
+
+          <!-- Driver strip -->
+          @if (order()!.delivery_partner_info) {
+            <div class="driver-strip">
+              <div class="driver-avatar">
+                <span class="material-icons-outlined">delivery_dining</span>
+              </div>
+              <div class="driver-details">
+                <span class="driver-name">{{ order()!.delivery_partner_info!.name }}</span>
+                <span class="driver-meta">
+                  {{ order()!.delivery_partner_info!.vehicle_type | titlecase }}
+                  @if (order()!.delivery_partner_info!.vehicle_number) {
+                    &nbsp;·&nbsp;{{ order()!.delivery_partner_info!.vehicle_number }}
+                  }
+                </span>
+              </div>
+              <div class="driver-rating">
+                <span class="material-icons-outlined">star</span>
+                {{ order()!.delivery_partner_info!.average_rating }}
+              </div>
+            </div>
+          }
+
+        </div>
+      }
 
       <div class="order-layout">
 
@@ -57,7 +165,7 @@
                     <span class="item-name">{{ item.product_name }}</span>
                     <span class="item-qty-label">Qty: {{ item.quantity }}</span>
                   </div>
-                  <span class="item-price">${{ item.subtotal | number:'1.2-2' }}</span>
+                  <span class="item-price">{{ item.subtotal | appCurrency }}</span>
                 </div>
               }
             </div>
@@ -65,21 +173,21 @@
             <div class="price-breakdown">
               <div class="price-row">
                 <span>Subtotal</span>
-                <span>${{ order()!.subtotal | number:'1.2-2' }}</span>
+                <span>{{ order()!.subtotal | appCurrency }}</span>
               </div>
               <div class="price-row">
                 <span>Delivery fee</span>
-                <span>${{ order()!.delivery_fee | number:'1.2-2' }}</span>
+                <span>{{ order()!.delivery_fee | appCurrency }}</span>
               </div>
               @if (order()!.discount > 0) {
                 <div class="price-row discount">
                   <span>Discount</span>
-                  <span>-${{ order()!.discount | number:'1.2-2' }}</span>
+                  <span>-{{ order()!.discount | appCurrency }}</span>
                 </div>
               }
               <div class="price-row total">
                 <span>Total</span>
-                <span>${{ order()!.total | number:'1.2-2' }}</span>
+                <span>{{ order()!.total | appCurrency }}</span>
               </div>
             </div>
           </div>
@@ -116,11 +224,12 @@
         <div class="tracking-col">
 
           <!-- Status Timeline Card -->
-          <div class="detail-card">
-            <h3 class="card-section-title">
-              <span class="material-icons-outlined">timeline</span>
-              Order Tracking
-            </h3>
+          @if (order()!.status !== 'delivered') {
+            <div class="detail-card">
+              <h3 class="card-section-title">
+                <span class="material-icons-outlined">timeline</span>
+                Order Tracking
+              </h3>
 
             <div class="status-timeline">
 
@@ -184,6 +293,27 @@
                 </div>
                 <div class="step-body">
                   <span class="step-label">Preparing</span>
+                </div>
+              </div>
+
+              <!-- Step: ready -->
+              <div class="timeline-step"
+                [class.completed]="isStepCompleted('ready')"
+                [class.active]="order()!.status === 'ready'"
+                [class.pending]="isStepPending('ready')">
+                <div class="timeline-left">
+                  <div class="step-dot">
+                    @if (isStepCompleted('ready')) {
+                      <span class="material-icons-outlined">check</span>
+                    }
+                  </div>
+                  <div class="step-connector" [class.filled]="isStepCompleted('ready')"></div>
+                </div>
+                <div class="step-body">
+                  <span class="step-label">Ready for Pickup</span>
+                  @if (order()!.status === 'ready') {
+                    <span class="step-sub">Finding a delivery partner…</span>
+                  }
                 </div>
               </div>
 
@@ -282,6 +412,7 @@
               </div>
             }
           </div>
+          }
 
           <!-- ETA Card -->
           @if (order()!.estimated_delivery_time) {
@@ -305,7 +436,7 @@
             <div class="payment-row">
               <span class="material-icons-outlined">money</span>
               <span class="payment-label">Cash on Delivery (COD)</span>
-              <span class="payment-amount">${{ order()!.total | number:'1.2-2' }}</span>
+              <span class="payment-amount">{{ order()!.total | appCurrency }}</span>
             </div>
           </div>
 
@@ -322,7 +453,7 @@
           }
 
           <!-- Delivery Partner Card -->
-          @if (order()!.delivery_partner) {
+          @if (order()!.delivery_partner_info && order()!.status !== 'delivered') {
             <div class="detail-card delivery-partner-card">
               <h3 class="card-section-title">
                 <span class="material-icons-outlined">directions_bike</span>
@@ -333,8 +464,17 @@
                   <span class="material-icons-outlined">person</span>
                 </div>
                 <div class="partner-info">
-                  <span class="partner-name">{{ $any(order()!.delivery_partner).name }}</span>
-                  <span class="partner-note">Track delivery in real-time</span>
+                  <span class="partner-name">{{ order()!.delivery_partner_info!.name }}</span>
+                  <span class="partner-note">
+                    {{ order()!.delivery_partner_info!.vehicle_type | titlecase }}
+                    @if (order()!.delivery_partner_info!.vehicle_number) {
+                      · {{ order()!.delivery_partner_info!.vehicle_number }}
+                    }
+                  </span>
+                  <span class="partner-note">
+                    <span class="material-icons-outlined" style="font-size:14px;vertical-align:middle;">star</span>
+                    {{ order()!.delivery_partner_info!.average_rating }}
+                  </span>
                 </div>
               </div>
             </div>
@@ -347,3 +487,5 @@
 
   </div>
 </div>
+
+<!-- aria-label -->

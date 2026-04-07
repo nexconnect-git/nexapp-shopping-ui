@@ -95,7 +95,7 @@
               </button>
             }
           </div>
-          <input #logoInput type="file" accept="image/*" hidden (change)="onLogoChange($event)">
+          <input #logoInput type="file" accept="image/*" hidden (change)="onLogoChange($event)" aria-label="input">
         </div>
 
         <div class="hero-info">
@@ -138,7 +138,7 @@
           <div class="hero-stat-divider"></div>
           <div class="hero-stat">
             <span class="hero-stat-value">{{ vendor().min_order_amount | number }}</span>
-            <span class="hero-stat-label">Min Order (₦)</span>
+            <span class="hero-stat-label">Min Order ({{ 0 | appCurrency:true }})</span>
           </div>
           <div class="hero-stat-divider"></div>
           <div class="hero-stat">
@@ -204,7 +204,7 @@
               </div>
               <div class="info-row">
                 <span class="info-label">Min Order</span>
-                <span class="info-value">₦{{ vendor().min_order_amount | number }}</span>
+                <span class="info-value">{{ vendor().min_order_amount | appCurrency }}</span>
               </div>
               <div class="info-row">
                 <span class="info-label">Delivery Radius</span>
@@ -213,32 +213,61 @@
             </div>
           </div>
 
-          <!-- Quick Stats -->
-          <div class="info-card">
-            <h3 class="info-card-title">
-              <span class="material-icons-outlined">insights</span>
-              Quick Stats
-            </h3>
-            <div class="stats-grid">
-              <div class="stat-item">
-                <span class="stat-value">{{ vendor().average_rating | number: '1.1-1' }}</span>
-                <span class="stat-label">Avg Rating</span>
+          <!-- Quick Stats + Admin Controls -->
+          <div>
+            <div class="info-card" style="margin-bottom:1.5rem;">
+              <h3 class="info-card-title">
+                <span class="material-icons-outlined">insights</span>
+                Quick Stats
+              </h3>
+              <div class="stats-grid">
+                <div class="stat-item">
+                  <span class="stat-value">{{ vendor().average_rating | number: '1.1-1' }}</span>
+                  <span class="stat-label">Avg Rating</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value">{{ vendor().total_ratings }}</span>
+                  <span class="stat-label">Total Reviews</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value" [class.text-success]="vendor().is_open" [class.text-danger]="!vendor().is_open">
+                    {{ vendor().is_open ? 'Open' : 'Closed' }}
+                  </span>
+                  <span class="stat-label">Store Status</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value" [class.text-success]="vendor().is_featured">
+                    {{ vendor().is_featured ? 'Yes' : 'No' }}
+                  </span>
+                  <span class="stat-label">Featured</span>
+                </div>
               </div>
-              <div class="stat-item">
-                <span class="stat-value">{{ vendor().total_ratings }}</span>
-                <span class="stat-label">Total Reviews</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-value" [class.text-success]="vendor().is_open" [class.text-danger]="!vendor().is_open">
-                  {{ vendor().is_open ? 'Open' : 'Closed' }}
-                </span>
-                <span class="stat-label">Store Status</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-value" [class.text-success]="vendor().is_featured">
-                  {{ vendor().is_featured ? 'Yes' : 'No' }}
-                </span>
-                <span class="stat-label">Featured</span>
+            </div>
+
+            <!-- Admin Controls -->
+            <div class="info-card">
+              <h3 class="info-card-title">
+                <span class="material-icons-outlined">admin_panel_settings</span>
+                Admin Controls
+              </h3>
+              <div class="info-rows">
+                <div class="info-row">
+                  <span class="info-label">Require Stock Check Before Going Online</span>
+                  <div class="toggle-row">
+                    <button
+                      class="toggle-btn"
+                      [class.active]="vendor().require_stock_check"
+                      (click)="toggleRequireStockCheck()">
+                      <span class="toggle-track">
+                        <span class="toggle-thumb"></span>
+                      </span>
+                      {{ vendor().require_stock_check ? 'Enabled' : 'Disabled' }}
+                    </button>
+                    <span class="info-hint">
+                      When enabled, vendor must update inventory before opening the store each day.
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -264,7 +293,7 @@
             <span class="font-medium">{{ p.name }}</span>
           </ng-template>
           <ng-template tableCell="price" let-p>
-            <span>₦{{ p.price | number }}</span>
+            <span>{{ p.price | appCurrency }}</span>
           </ng-template>
           <ng-template tableCell="stock" let-p>
             <span [class.text-danger]="p.stock === 0">{{ p.stock }}</span>
@@ -310,7 +339,7 @@
             <span class="text-sm">{{ o.customer_name }}</span>
           </ng-template>
           <ng-template tableCell="total" let-o>
-            <span class="font-medium">₦{{ o.total | number }}</span>
+            <span class="font-medium">{{ o.total | appCurrency }}</span>
           </ng-template>
           <ng-template tableCell="status" let-o>
             <span class="badge" [class]="orderStatusBadge(o.status)">{{ o.status }}</span>
@@ -347,7 +376,7 @@
             <div class="report-stat-card">
               <span class="material-icons-outlined">payments</span>
               <div>
-                <p class="report-stat-value">₦{{ report().total_revenue | number: '1.0-0' }}</p>
+                <p class="report-stat-value">{{ report().total_revenue | appCurrency }}</p>
                 <p class="report-stat-label">Total Revenue</p>
               </div>
             </div>
@@ -368,7 +397,7 @@
             <div class="report-stat-card">
               <span class="material-icons-outlined">trending_up</span>
               <div>
-                <p class="report-stat-value">₦{{ report().average_order_value | number: '1.0-0' }}</p>
+                <p class="report-stat-value">{{ report().average_order_value | appCurrency }}</p>
                 <p class="report-stat-label">Avg Order Value</p>
               </div>
             </div>
@@ -381,7 +410,7 @@
               <div class="bar-chart">
                 @for (d of report().monthly_data; track d.month) {
                   <div class="bar-col">
-                    <span class="bar-value">₦{{ d.revenue | number: '1.0-0' }}</span>
+                    <span class="bar-value">{{ d.revenue | appCurrency }}</span>
                     <div class="bar-track">
                       <div class="bar-fill" [style.height.%]="(d.revenue / maxBarValue()) * 100"></div>
                     </div>
@@ -409,7 +438,7 @@
                     <tr>
                       <td>{{ p.name }}</td>
                       <td>{{ p.total_sold }}</td>
-                      <td>₦{{ p.revenue | number: '1.0-0' }}</td>
+                      <td>{{ p.revenue | appCurrency }}</td>
                     </tr>
                   }
                 </tbody>

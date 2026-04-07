@@ -4,10 +4,25 @@
       <h1 class="page-title">Categories</h1>
       <p class="page-subtitle">{{ categories().length }} root categories</p>
     </div>
-    <button class="btn-primary" (click)="openCreate(null)">
-      <span class="material-icons-outlined">add</span>
-      New Category
-    </button>
+    <div style="display:flex;align-items:center;gap:0.5rem;">
+      <div class="reload-bar">
+        @if (lastRefreshed()) {
+          <span class="reload-timestamp">Updated {{ lastRefreshed() | date:'HH:mm:ss' }}</span>
+        }
+        <button class="btn btn-ghost btn-sm" (click)="manualReload()" [disabled]="loading()">
+          <span class="material-icons-outlined" [class.spin]="loading()">refresh</span>
+        </button>
+        <button class="btn btn-sm" [class.btn-ghost]="!autoReload()" [class.btn-primary-soft]="autoReload()"
+                (click)="toggleAutoReload()">
+          <span class="material-icons-outlined">{{ autoReload() ? 'pause_circle' : 'play_circle' }}</span>
+          {{ autoReload() ? 'Auto' : 'Paused' }}
+        </button>
+      </div>
+      <button class="btn-primary" (click)="openCreate(null)">
+        <span class="material-icons-outlined">add</span>
+        New Category
+      </button>
+    </div>
   </div>
 
   <!-- Table -->
@@ -53,7 +68,7 @@
               <td>
                 <div class="cat-cell">
                   <div class="cat-icon">
-                    @if (cat.image) { <img [src]="cat.image" [alt]="cat.name"> }
+                    @if (cat.image) { <img [src]="cat.image" alt="{{cat.name}}"> }
                     @else { 📁 }
                   </div>
                   <div>
@@ -104,7 +119,7 @@
                       <div class="cat-cell sub-indent">
                         <div class="sub-connector"></div>
                         <div class="cat-icon small">
-                          @if (sub.image) { <img [src]="sub.image" [alt]="sub.name"> }
+                          @if (sub.image) { <img [src]="sub.image" alt="{{sub.name}}"> }
                           @else { 📂 }
                         </div>
                         <div>

@@ -1,13 +1,13 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CommonModule, DecimalPipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { ApiService, AuthService, MapPickerComponent, MapLocation } from '@shared/public-api';
 
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [FormsModule, RouterLink, CommonModule, DecimalPipe, MapPickerComponent],
+  imports: [FormsModule, RouterLink, CommonModule, MapPickerComponent],
   templateUrl: './register.component.html',
   styleUrl: './register.component.scss'
 })
@@ -102,3 +102,5 @@ export class RegisterComponent {
     });
   }
 }
+
+

@@ -1,7 +1,7 @@
 import { Component, inject, signal, OnInit, HostListener, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
-import { AuthService, ApiService } from '@shared/public-api';
+import { AuthService, ApiService, ToastService, ToastComponent, NotificationPollingService } from '@shared/public-api';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { timer } from 'rxjs';
 import { filter } from 'rxjs/operators';
@@ -9,18 +9,22 @@ import { filter } from 'rxjs/operators';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, ToastComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
 export class AppComponent implements OnInit {
   auth = inject(AuthService);
   api = inject(ApiService);
-  private router = inject(Router);
+  toastService = inject(ToastService);
+  router = inject(Router);
   private destroyRef = inject(DestroyRef);
+  private notifPolling = inject(NotificationPollingService);
 
   mobileMenuOpen = signal(false);
   userMenuOpen = signal(false);
+  notifMenuOpen = signal(false);
+  notifications = signal<any[]>([]);
 
   userInitials = () => {
     const u = this.auth.user();
@@ -30,16 +34,47 @@ export class AppComponent implements OnInit {
 
   ngOnInit() {
     if (this.auth.isLoggedIn()) {
-      this.api.refreshCartCount();
-      // Poll unread notification count every 30s
-      timer(0, 30000).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.api.refreshUnreadCount());
+      this.notifPolling.start((n) => {
+        if (n.notification_type === 'order' && n.related_entity_id) {
+          return { label: 'View', url: `/order/${n.related_entity_id}` };
+        }
+        if (n.notification_type === 'order' && n.data?.order_id) {
+          return { label: 'View', url: `/order/${n.data.order_id}` };
+        }
+        return null;
+      });
     }
+
+    // Light badge poll every 30 s
+    timer(0, 30000).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      if (!this.auth.isLoggedIn()) return;
+      this.api.getUnreadCount().subscribe({
+        next: (r) => this.api.unreadNotifications.set(r.count ?? 0),
+      });
+    });
+
     // Refresh counts on every navigation
     this.router.events.pipe(filter(e => e instanceof NavigationEnd)).subscribe(() => {
       if (this.auth.isLoggedIn()) {
         this.api.refreshCartCount();
         this.api.refreshUnreadCount();
+        this.checkActiveIssue();
       }
+    });
+
+    if (this.auth.isLoggedIn()) {
+      this.checkActiveIssue();
+    }
+  }
+
+  checkActiveIssue() {
+    this.api.getMyIssues().subscribe({
+      next: (res) => {
+        const issues = res.results || res;
+        const open = issues.find((i: any) => ['open', 'in_review'].includes(i.status));
+        this.api.activeIssue.set(open || null);
+      },
+      error: () => {}
     });
   }
 
@@ -51,10 +86,27 @@ export class AppComponent implements OnInit {
   toggleUserMenu(event?: Event) {
     event?.stopPropagation();
     this.userMenuOpen.update(v => !v);
+    this.notifMenuOpen.set(false);
+  }
+
+  toggleNotifMenu(event?: Event) {
+    event?.stopPropagation();
+    this.notifMenuOpen.update(v => !v);
+    this.userMenuOpen.set(false);
+    if (this.notifMenuOpen()) {
+      this.api.getNotifications().subscribe({
+        next: (r: any) => this.notifications.set(r.results || r)
+      });
+      // automatically clear badge when opening
+      this.clearNotifBadge();
+    }
   }
 
   @HostListener('document:click')
-  closeDropdowns() { this.userMenuOpen.set(false); }
+  closeDropdowns() { 
+    this.userMenuOpen.set(false); 
+    this.notifMenuOpen.set(false);
+  }
 
   closeMobile() {
     this.mobileMenuOpen.set(false);

@@ -173,7 +173,12 @@
             "styles": [
               "projects/customer-app/src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [],
+            "stylePreprocessorOptions": {
+              "includePaths": [
+                "projects/shared/src/styles"
+              ]
+            }
           },
           "configurations": {
             "production": {
@@ -290,7 +295,12 @@
             "styles": [
               "projects/vendor-app/src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [],
+            "stylePreprocessorOptions": {
+              "includePaths": [
+                "projects/shared/src/styles"
+              ]
+            }
           },
           "configurations": {
             "production": {
@@ -407,7 +417,12 @@
             "styles": [
               "projects/delivery-app/src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [],
+            "stylePreprocessorOptions": {
+              "includePaths": [
+                "projects/shared/src/styles"
+              ]
+            }
           },
           "configurations": {
             "production": {
@@ -524,7 +539,12 @@
             "styles": [
               "projects/admin-panel/src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [],
+            "stylePreprocessorOptions": {
+              "includePaths": [
+                "projects/shared/src/styles"
+              ]
+            }
           },
           "configurations": {
             "production": {

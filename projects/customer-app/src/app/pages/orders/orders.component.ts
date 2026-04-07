@@ -2,12 +2,12 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { ApiService, Order } from '@shared/public-api';
+import { ApiService, AppCurrencyPipe, Order } from '@shared/public-api';
 
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule, AppCurrencyPipe],
   templateUrl: './orders.component.html',
   styleUrl: './orders.component.scss'
 })

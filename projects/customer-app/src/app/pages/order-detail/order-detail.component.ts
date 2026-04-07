@@ -1,25 +1,48 @@
-import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy, AfterViewInit, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
-import { ApiService, Order, OrderTracking } from '@shared/public-api';
+import { ApiService, AuthService, AppCurrencyPipe, Order, OrderTracking } from '@shared/public-api';
 import { timer, Subscription } from 'rxjs';
+import { GoogleMapsModule } from '@angular/google-maps';
 
 @Component({
   selector: 'app-order-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, AppCurrencyPipe, GoogleMapsModule],
   templateUrl: './order-detail.component.html',
   styleUrl: './order-detail.component.scss'
 })
-export class OrderDetailComponent implements OnInit, OnDestroy {
+export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   private api = inject(ApiService);
+  private auth = inject(AuthService);
   private route = inject(ActivatedRoute);
+  private zone = inject(NgZone);
 
   order = signal<Order | null>(null);
   tracking = signal<OrderTracking[]>([]);
   loading = signal(true);
   cancelling = signal(false);
   private sub?: Subscription;
+
+  // Live tracking map
+  center: google.maps.LatLngLiteral = {lat: 12.9716, lng: 77.5946};
+  zoom = 14;
+  driverPosition?: google.maps.LatLngLiteral;
+  vendorPosition?: google.maps.LatLngLiteral;
+  customerPosition?: google.maps.LatLngLiteral;
+  driverMarkerOptions: google.maps.MarkerOptions = {};
+  vendorMarkerOptions: google.maps.MarkerOptions = {};
+  customerMarkerOptions: google.maps.MarkerOptions = {};
+  mapOptions: google.maps.MapOptions = {};
+  etaMinutes = signal<number | null>(null);
+
+  private directionsService?: google.maps.DirectionsService;
+  private directionsRenderer?: google.maps.DirectionsRenderer;
+  private lastDirectionsTime = 0;
+  private ws: WebSocket | null = null;
+  private animFrameId?: number;
+
+  readonly orderSteps = ['placed', 'confirmed', 'preparing', 'ready', 'picked_up', 'on_the_way', 'delivered'];
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id')!;
@@ -29,8 +52,9 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
           this.order.set(o);
           this.tracking.set(o.tracking || []);
           this.loading.set(false);
-          // refresh tracking
           this.api.getOrderTracking(id).subscribe({ next: (t) => this.tracking.set(t.results || t) });
+          this.updateMapPositions(o);
+          if (o.estimated_delivery_time) this.etaMinutes.set(o.estimated_delivery_time);
         },
         error: () => this.loading.set(false)
       });
@@ -39,37 +63,169 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.sub?.unsubscribe();
+    this.closeWs();
+    if (this.animFrameId) cancelAnimationFrame(this.animFrameId);
+    this.directionsRenderer?.setMap(null);
   }
 
-  readonly orderSteps = ['placed', 'confirmed', 'preparing', 'picked_up', 'on_the_way', 'delivered'];
+  ngAfterViewInit() {
+    this.initMarkerOptions();
+    this.connectWebSocket(this.route.snapshot.paramMap.get('id')!);
+  }
+
+  /** Fired by (mapInitialized) on <google-map> once the native map is ready. */
+  onMapReady(nativeMap: google.maps.Map) {
+    this.directionsRenderer?.setMap(null);
+    this.directionsService = new google.maps.DirectionsService();
+    this.directionsRenderer = new google.maps.DirectionsRenderer({
+      suppressMarkers: true,
+      preserveViewport: false,
+      polylineOptions: {strokeColor: '#6C63FF', strokeWeight: 5, strokeOpacity: 0.85},
+    });
+    this.directionsRenderer.setMap(nativeMap);
+    this.lastDirectionsTime = 0;
+
+    const pts = [this.vendorPosition, this.driverPosition, this.customerPosition].filter(Boolean) as google.maps.LatLngLiteral[];
+    if (pts.length >= 2) {
+      const bounds = new google.maps.LatLngBounds();
+      pts.forEach(p => bounds.extend(p));
+      nativeMap.fitBounds(bounds, 60);
+    } else if (pts.length === 1) {
+      nativeMap.setCenter(pts[0]);
+    }
+    this.requestDirections();
+  }
+
+  private initMarkerOptions() {
+    this.mapOptions = {zoomControl: true, streetViewControl: false, fullscreenControl: false, mapTypeControl: false, clickableIcons: false};
+    this.driverMarkerOptions = {
+      icon: {url: 'https://maps.google.com/mapfiles/ms/micons/motorcycling.png', scaledSize: new google.maps.Size(42, 42), anchor: new google.maps.Point(21, 21)},
+      zIndex: 10, title: 'Delivery Partner',
+    };
+    this.vendorMarkerOptions = {
+      icon: {url: 'https://maps.google.com/mapfiles/ms/icons/restaurant.png', scaledSize: new google.maps.Size(34, 34)},
+      zIndex: 5, title: 'Store',
+    };
+    this.customerMarkerOptions = {
+      icon: {url: 'https://maps.google.com/mapfiles/ms/icons/homegardenbusiness.png', scaledSize: new google.maps.Size(34, 34)},
+      zIndex: 5, title: 'Your Location',
+    };
+  }
+
+  private updateMapPositions(o: Order) {
+    if (o.vendor_info?.latitude && o.vendor_info?.longitude) {
+      this.vendorPosition = {lat: parseFloat(o.vendor_info.latitude as string), lng: parseFloat(o.vendor_info.longitude as string)};
+    }
+    if (o.delivery_latitude && o.delivery_longitude) {
+      this.customerPosition = {lat: o.delivery_latitude, lng: o.delivery_longitude};
+    }
+    if (this.vendorPosition) this.center = this.vendorPosition;
+    this.requestDirections();
+  }
+
+  private requestDirections() {
+    if (!this.directionsService || !this.directionsRenderer) return;
+    const origin = this.driverPosition ?? this.vendorPosition;
+    const destination = this.customerPosition;
+    if (!origin || !destination) return;
+    const now = Date.now();
+    if (now - this.lastDirectionsTime < 20000) return;
+    this.lastDirectionsTime = now;
+    this.directionsService.route(
+      {origin, destination, travelMode: google.maps.TravelMode.DRIVING},
+      (result, status) => {
+        if (status === google.maps.DirectionsStatus.OK && result) {
+          this.zone.run(() => this.directionsRenderer?.setDirections(result));
+        }
+      }
+    );
+  }
+
+  private connectWebSocket(orderId: string) {
+    const wsUrl = `ws://${window.location.host}/ws/delivery/${orderId}/tracking/?token=${this.auth.getToken()}`;
+    this.ws = new WebSocket(wsUrl);
+    this.ws.onmessage = (msg) => {
+      const data = JSON.parse(msg.data);
+      if (data.type === 'location_update' && data.lat && data.lng) {
+        const target: google.maps.LatLngLiteral = {lat: data.lat, lng: data.lng};
+        this.zone.run(() => {
+          if (this.driverPosition) {
+            this.animateToPosition(this.driverPosition, target);
+          } else {
+            this.driverPosition = target;
+            this.lastDirectionsTime = 0;
+            this.requestDirections();
+          }
+        });
+      }
+      if (data.type === 'eta_update' && data.eta_minutes != null) {
+        this.zone.run(() => this.etaMinutes.set(data.eta_minutes));
+      }
+    };
+  }
+
+  private animateToPosition(from: google.maps.LatLngLiteral, to: google.maps.LatLngLiteral) {
+    if (this.animFrameId) cancelAnimationFrame(this.animFrameId);
+    const startTime = performance.now();
+    const duration = 1500;
+    const step = (now: number) => {
+      const t = Math.min((now - startTime) / duration, 1);
+      const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+      this.zone.run(() => {
+        this.driverPosition = {lat: from.lat + (to.lat - from.lat) * ease, lng: from.lng + (to.lng - from.lng) * ease};
+      });
+      if (t < 1) {
+        this.animFrameId = requestAnimationFrame(step);
+      } else {
+        this.zone.run(() => { this.driverPosition = to; this.requestDirections(); });
+      }
+    };
+    this.animFrameId = requestAnimationFrame(step);
+  }
+
+  private closeWs() { if (this.ws) { this.ws.close(); this.ws = null; } }
+
+  showLiveMap(): boolean {
+    const s = this.order()?.status;
+    return ['confirmed', 'preparing', 'ready', 'picked_up', 'on_the_way'].includes(s ?? '');
+  }
 
   isStepCompleted(step: string): boolean {
     const status = this.order()?.status;
     if (!status) return false;
-    const currentIdx = this.orderSteps.indexOf(status);
-    const stepIdx = this.orderSteps.indexOf(step);
-    return stepIdx < currentIdx;
+    return this.orderSteps.indexOf(step) < this.orderSteps.indexOf(status);
   }
 
   isStepPending(step: string): boolean {
     const status = this.order()?.status;
     if (!status) return true;
-    const currentIdx = this.orderSteps.indexOf(status);
-    const stepIdx = this.orderSteps.indexOf(step);
-    return stepIdx > currentIdx;
+    return this.orderSteps.indexOf(step) > this.orderSteps.indexOf(status);
   }
 
-  isLastStep(step: string): boolean {
-    return step === 'delivered';
-  }
-
+  isLastStep(step: string): boolean { return step === 'delivered'; }
   canCancel() { return this.order()?.status === 'placed'; }
+
+  isActiveOrder() {
+    const status = this.order()?.status;
+    return status && ['placed', 'confirmed', 'preparing', 'ready', 'picked_up', 'on_the_way'].includes(status);
+  }
 
   cancelOrder() {
     this.cancelling.set(true);
     this.api.cancelOrder(this.order()!.id).subscribe({
       next: (o) => { this.order.set(o); this.cancelling.set(false); },
       error: () => this.cancelling.set(false)
+    });
+  }
+
+  downloadInvoice() {
+    const o = this.order(); if (!o) return;
+    this.api.generateInvoice({invoice_type: 'customer_receipt', order: o.id, amount: o.total, notes: `Receipt for Order #${o.order_number}`}).subscribe({
+      next: (inv) => this.api.downloadInvoice(inv.id).subscribe({
+        next: (blob) => { const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `invoice-${o.order_number}.pdf`; a.click(); URL.revokeObjectURL(url); },
+        error: () => alert('Failed to download invoice.')
+      }),
+      error: () => alert('Failed to generate invoice.')
     });
   }
 }

@@ -1,7 +1,7 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService } from '@shared/public-api';
+import { ApiService, ToastService } from '@shared/public-api';
 
 @Component({
   selector: 'app-sales-report',
@@ -12,9 +12,10 @@ import { ApiService } from '@shared/public-api';
 })
 export class SalesReportComponent implements OnInit {
   private api = inject(ApiService);
+  private toast = inject(ToastService);
 
   loading = signal(true);
-  errorMsg = signal('');
+
   
   stats = signal<any>(null);
 
@@ -24,14 +25,13 @@ export class SalesReportComponent implements OnInit {
 
   loadStats() {
     this.loading.set(true);
-    this.errorMsg.set('');
     this.api.getAdminStats().subscribe({
       next: (res) => {
         this.stats.set(res);
         this.loading.set(false);
       },
       error: (err) => {
-        this.errorMsg.set('Failed to load platform sales report.');
+        this.toast.show('Failed to load platform sales report.', 'error');
         this.loading.set(false);
       }
     });

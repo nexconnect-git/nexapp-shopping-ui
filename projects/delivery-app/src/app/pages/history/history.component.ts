@@ -1,11 +1,11 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ApiService, Order } from '@shared/public-api';
+import { ApiService, AppCurrencyPipe, Order } from '@shared/public-api';
 
 @Component({
   selector: 'app-history',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, AppCurrencyPipe],
   templateUrl: './history.component.html',
   styleUrls: ['./history.component.scss']
 })

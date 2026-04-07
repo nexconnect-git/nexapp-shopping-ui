@@ -54,8 +54,7 @@ export class PendingApprovalComponent implements OnInit, OnDestroy {
       pending: 'Pending Review',
       approved: 'Approved',
       rejected: 'Rejected',
-      suspended: 'Suspended',
-    };
+      suspended: 'Suspended' };
     return labels[this.status()] ?? this.status();
   }
 
@@ -63,8 +62,7 @@ export class PendingApprovalComponent implements OnInit, OnDestroy {
     const messages: Record<string, string> = {
       pending: 'Your store registration is under review. Our team will verify your details and get back to you shortly.',
       rejected: 'Your application was not approved. Please contact support for more information.',
-      suspended: 'Your vendor account has been suspended. Please contact support.',
-    };
+      suspended: 'Your vendor account has been suspended. Please contact support.' };
     return messages[this.status()] ?? '';
   }
 }

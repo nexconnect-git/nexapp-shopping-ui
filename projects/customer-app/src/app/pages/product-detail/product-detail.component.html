@@ -38,7 +38,7 @@
             <div class="gallery-discount-badge">-{{ product()!.discount_percentage }}%</div>
           }
           @if (selectedImage()) {
-            <img [src]="selectedImage()!" [alt]="product()!.name" class="gallery-main-img">
+            <img [src]="selectedImage()!" alt="{{product()!.name}}" class="gallery-main-img">
           } @else {
             <div class="gallery-placeholder">
               <span class="material-icons-outlined">inventory_2</span>
@@ -51,7 +51,7 @@
             @for (img of product()!.images; track img.id) {
               <button class="thumb" [class.active]="selectedImage() === img.image"
                 (click)="selectedImage.set(img.image)">
-                <img [src]="img.image" [alt]="product()!.name">
+                <img [src]="img.image" alt="{{product()!.name}}">
               </button>
             }
           </div>
@@ -64,7 +64,7 @@
         <!-- Vendor pill -->
         <a [routerLink]="['/shop', product()!.vendor?.id]" class="vendor-pill">
           <span class="material-icons-outlined">storefront</span>
-          {{ product()!.vendor_name || 'Official Vendor' }}
+          {{ product()!.vendor?.store_name || 'Official Vendor' }}
         </a>
 
         <!-- Product name -->
@@ -81,14 +81,14 @@
 
         <!-- Price block -->
         <div class="detail-price-section">
-          <span class="detail-price">${{ product()!.price | number:'1.2-2' }}</span>
+          <span class="detail-price">{{ (product()!.price || 0) | appCurrency }}</span>
           @if (product()!.compare_price) {
-            <span class="detail-compare-price">${{ product()!.compare_price | number:'1.2-2' }}</span>
+            <span class="detail-compare-price">{{ product()!.compare_price | appCurrency }}</span>
           }
         </div>
 
         <!-- Stock badge -->
-        @if (!product()!.in_stock) {
+        @if (product()!.in_stock === false || product()!.is_available === false) {
           <div class="stock-indicator out-of-stock">
             <span class="material-icons-outlined">remove_shopping_cart</span>
             Out of Stock
@@ -96,7 +96,7 @@
         } @else {
           <div class="stock-indicator in-stock">
             <span class="material-icons-outlined">check_circle</span>
-            In Stock &mdash; {{ product()!.stock }} {{ product()!.unit }} ready to ship
+            In Stock
           </div>
         }
 
@@ -106,7 +106,7 @@
         }
 
         <!-- Qty + Add to Cart -->
-        @if (product()!.in_stock) {
+        @if (product()!.in_stock !== false && product()!.is_available !== false) {
           <div class="detail-purchase">
             <div class="qty-section">
               <label class="qty-label">Select Quantity</label>
@@ -115,7 +115,7 @@
                   <span class="material-icons-outlined">remove</span>
                 </button>
                 <span class="qty-value">{{ qty }}</span>
-                <button class="qty-btn" (click)="incQty()" [disabled]="qty >= product()!.stock">
+                <button class="qty-btn" (click)="incQty()" [disabled]="product()!.stock > 0 && qty >= product()!.stock">
                   <span class="material-icons-outlined">add</span>
                 </button>
               </div>
@@ -144,10 +144,10 @@
                   Add to Cart
                 }
               </button>
-              <a routerLink="/cart" class="btn btn-outline" style="border-width: 2px; font-weight: 700;">
+              <button (click)="buyNow()" [disabled]="addingToCart()" class="btn btn-outline" style="border-width: 2px; font-weight: 700;">
                 <span class="material-icons-outlined">shopping_cart_checkout</span>
                 Checkout
-              </a>
+              </button>
             </div>
           </div>
         }

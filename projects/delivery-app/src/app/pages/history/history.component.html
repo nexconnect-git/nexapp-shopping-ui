@@ -45,7 +45,7 @@
           <!-- Earnings -->
           <div class="earn-col">
             <span class="earn-amount" [class.cancelled]="order.status === 'cancelled'">
-              {{ order.status === 'cancelled' ? '' : '+' }}${{ order.delivery_fee | number:'1.2-2' }}
+              {{ order.status === 'cancelled' ? '' : '+' }}{{ order.delivery_fee | appCurrency }}
             </span>
             <span class="earn-label">fee</span>
           </div>
@@ -54,3 +54,5 @@
     </div>
   }
 </div>
+
+<!-- aria-label -->

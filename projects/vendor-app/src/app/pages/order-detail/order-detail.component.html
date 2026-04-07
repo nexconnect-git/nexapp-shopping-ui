@@ -103,12 +103,12 @@
                     <td>
                       <span class="item-name">{{ item.product_name }}</span>
                     </td>
-                    <td class="text-muted">${{ item.product_price | number:'1.2-2' }}</td>
+                    <td class="text-muted">{{ item.product_price | appCurrency }}</td>
                     <td>
                       <span class="item-qty-badge">x{{ item.quantity }}</span>
                     </td>
                     <td style="text-align:right;">
-                      <strong>${{ item.subtotal | number:'1.2-2' }}</strong>
+                      <strong>{{ item.subtotal | appCurrency }}</strong>
                     </td>
                   </tr>
                 }
@@ -119,25 +119,116 @@
             <div class="price-breakdown">
               <div class="price-row">
                 <span>Subtotal</span>
-                <span>${{ order()!.subtotal | number:'1.2-2' }}</span>
+                <span>{{ order()!.subtotal | appCurrency }}</span>
               </div>
               <div class="price-row">
                 <span>Delivery Fee</span>
-                <span>${{ order()!.delivery_fee | number:'1.2-2' }}</span>
+                <span>{{ order()!.delivery_fee | appCurrency }}</span>
               </div>
               @if (order()!.discount) {
                 <div class="price-row discount">
                   <span>Discount</span>
-                  <span>-${{ order()!.discount | number:'1.2-2' }}</span>
+                  <span>-{{ order()!.discount | appCurrency }}</span>
                 </div>
               }
               <div class="price-row total">
                 <span>Total</span>
-                <span>${{ order()!.total | number:'1.2-2' }}</span>
+                <span>{{ order()!.total | appCurrency }}</span>
               </div>
             </div>
           </div>
         </div>
+
+        <!-- ══ Delivery Assignment Status (when ready, no partner yet) ══ -->
+        @if (order()!.status === 'ready' && !order()!.delivery_partner) {
+          @if (order()!.assignment_status === 'timed_out' || order()!.assignment_status === 'failed') {
+            <!-- Timeout / failed — vendor must retrigger -->
+            <div class="assignment-alert timed-out" style="margin-top:1.25rem;">
+              <div class="assignment-alert-icon">
+                <span class="material-icons-outlined">timer_off</span>
+              </div>
+              <div class="assignment-alert-body">
+                <strong>No delivery partner responded</strong>
+                <p>Nobody accepted this order within 1 minute. Tap below to search again.</p>
+                @if (retriggerError()) {
+                  <p class="retrigger-error">{{ retriggerError() }}</p>
+                }
+              </div>
+              <button class="btn-retrigger" [disabled]="retriggering()" (click)="retriggerPickup()">
+                @if (retriggering()) {
+                  <span class="spinner spinner-xs"></span>
+                  Searching...
+                } @else {
+                  <span class="material-icons-outlined">refresh</span>
+                  Retrigger Pickup
+                }
+              </button>
+            </div>
+          } @else {
+            <!-- Actively searching -->
+            <div class="assignment-alert searching" style="margin-top:1.25rem;">
+              <div class="assignment-alert-icon pulse-icon">
+                <span class="material-icons-outlined">delivery_dining</span>
+              </div>
+              <div class="assignment-alert-body">
+                <strong>Searching for delivery partner…</strong>
+                <p>We're looking for the nearest available partner. This page updates automatically.</p>
+              </div>
+              <div class="search-spinner"></div>
+            </div>
+          }
+        }
+
+        <!-- ══ Pickup OTP Verification (when ready + partner assigned) ══ -->
+        @if (order()!.status === 'ready' && order()!.delivery_partner) {
+          <div class="card otp-card" style="margin-top:1.25rem;">
+            <div class="card-header">
+              <h3>
+                <span class="material-icons-outlined" style="font-size:18px;vertical-align:middle;margin-right:0.375rem;color:var(--primary);">verified</span>
+                Verify Pickup OTP
+              </h3>
+            </div>
+            <div class="card-body">
+              @if (otpSuccess()) {
+                <div class="otp-success-msg">
+                  <span class="material-icons-outlined">check_circle</span>
+                  OTP verified! Order marked as Picked Up.
+                </div>
+              } @else {
+                <p style="font-size:0.875rem;color:var(--text-secondary);margin:0 0 1rem;">
+                  Ask the delivery partner for their 6-digit OTP and enter it below to hand over the order.
+                </p>
+                @if (order()!.delivery_partner_info) {
+                  <div class="partner-info">
+                    <span class="material-icons-outlined">delivery_dining</span>
+                    <strong>{{ order()!.delivery_partner_info!.name }}</strong>
+                    <span class="partner-vehicle">{{ order()!.delivery_partner_info!.vehicle_type }}</span>
+                  </div>
+                }
+                <div style="display:flex;gap:0.75rem;margin-top:1rem;">
+                  <input
+                    class="form-input otp-input"
+                    type="text"
+                    maxlength="6"
+                    inputmode="numeric"
+                    placeholder="Enter 6-digit OTP"
+                    [value]="otpInput()"
+                    (input)="otpInput.set($any($event.target).value)" />
+                  <button class="status-btn confirm" [disabled]="verifying()" (click)="verifyPickupOtp()" style="white-space:nowrap;">
+                    @if (verifying()) {
+                      <span class="spinner spinner-xs"></span> Verifying...
+                    } @else {
+                      <span class="material-icons-outlined">check</span> Verify
+                    }
+                  </button>
+                </div>
+                @if (otpError()) {
+                  <p style="color:var(--danger);font-size:0.8125rem;font-weight:600;margin:0.5rem 0 0;">{{ otpError() }}</p>
+                }
+              }
+            </div>
+          </div>
+        }
 
         <!-- Notes -->
         @if (order()!.notes) {
@@ -158,6 +249,48 @@
 
       <!-- Right: Customer, Address, Timeline -->
       <div class="order-side">
+
+        @if (showLiveMap()) {
+          <div class="card map-card" style="margin-bottom:1.25rem;overflow:hidden;">
+            <!-- Map header banner -->
+            <div style="display:flex;align-items:center;gap:0.625rem;padding:0.75rem 1rem;background:linear-gradient(135deg,#6C63FF,#8B83FF);color:white;">
+              <span class="material-icons-outlined" style="font-size:18px;">radar</span>
+              <span style="font-size:0.875rem;font-weight:800;">Live Driver Tracking</span>
+              @if (order()!.delivery_partner_info) {
+                <span style="margin-left:auto;font-size:0.75rem;font-weight:600;opacity:0.9;">
+                  {{ order()!.delivery_partner_info!.name }}
+                </span>
+              }
+            </div>
+            <!-- Map -->
+            <div style="height:280px;width:100%;overflow:hidden;position:relative;">
+              <google-map height="280px" width="100%" [center]="center" [zoom]="zoom" [options]="mapOptions"
+                (mapInitialized)="onMapReady($event)">
+                @if (vendorPosition) {
+                  <map-marker [position]="vendorPosition" [options]="vendorMarkerOptions"></map-marker>
+                }
+                @if (customerPosition) {
+                  <map-marker [position]="customerPosition" [options]="customerMarkerOptions"></map-marker>
+                }
+                @if (driverPosition) {
+                  <map-marker [position]="driverPosition" [options]="driverMarkerOptions"></map-marker>
+                }
+              </google-map>
+            </div>
+            <!-- Legend -->
+            <div style="display:flex;gap:1rem;padding:0.625rem 1rem;background:#fafafa;border-top:1px solid var(--border-light);flex-wrap:wrap;">
+              <div style="display:flex;align-items:center;gap:0.375rem;font-size:0.75rem;font-weight:700;color:var(--text-secondary);">
+                <span style="width:10px;height:10px;border-radius:50%;background:#FF6B35;display:inline-block;"></span>Your Store
+              </div>
+              <div style="display:flex;align-items:center;gap:0.375rem;font-size:0.75rem;font-weight:700;color:var(--text-secondary);">
+                <span style="width:10px;height:10px;border-radius:50%;background:#6C63FF;display:inline-block;"></span>Partner
+              </div>
+              <div style="display:flex;align-items:center;gap:0.375rem;font-size:0.75rem;font-weight:700;color:var(--text-secondary);">
+                <span style="width:10px;height:10px;border-radius:50%;background:#10B981;display:inline-block;"></span>Customer
+              </div>
+            </div>
+          </div>
+        }
 
         <!-- Customer -->
         <div class="card">
@@ -230,4 +363,54 @@
       </div>
     </div>
   }
+
+  <!-- Cancel Order Modal -->
+  @if (showCancelModal()) {
+    <div class="cancel-modal-backdrop" (click)="closeCancelModal()">
+      <div class="cancel-modal" (click)="$event.stopPropagation()">
+        <div class="cancel-modal-header">
+          <div class="cancel-modal-icon">
+            <span class="material-icons-outlined">cancel</span>
+          </div>
+          <div>
+            <h3 class="cancel-modal-title">Cancel Order</h3>
+            <p class="cancel-modal-sub">Order #{{ order()!.order_number }}</p>
+          </div>
+        </div>
+
+        <p class="cancel-modal-desc">
+          Please provide a reason for cancellation. This will be shown to the customer.
+        </p>
+
+        <div class="cancel-reason-group">
+          <label class="cancel-reason-label">Reason for cancellation <span class="required">*</span></label>
+          <textarea
+            class="cancel-reason-input"
+            rows="3"
+            placeholder="e.g. Out of stock, store closing early, item unavailable..."
+            [(ngModel)]="cancelReason"
+            [disabled]="cancelling()"
+          ></textarea>
+          @if (cancelError()) {
+            <p class="cancel-error">{{ cancelError() }}</p>
+          }
+        </div>
+
+        <div class="cancel-modal-footer">
+          <button class="cancel-modal-btn cancel-modal-btn-secondary" (click)="closeCancelModal()" [disabled]="cancelling()">
+            Keep Order
+          </button>
+          <button class="cancel-modal-btn cancel-modal-btn-danger" (click)="confirmCancel()" [disabled]="cancelling()">
+            @if (cancelling()) {
+              <span class="spinner-xs-red"></span> Cancelling...
+            } @else {
+              <span class="material-icons-outlined">cancel</span> Confirm Cancel
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 </div>
+
+<!-- aria-label -->

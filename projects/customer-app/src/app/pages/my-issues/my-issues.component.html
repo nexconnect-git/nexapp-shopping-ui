@@ -1,0 +1,43 @@
+<div class="mi-page">
+
+  <!-- Top Bar -->
+  <div class="mi-topbar">
+    <button class="mi-back" (click)="goBack()">
+      <span class="material-icons-outlined">arrow_back</span>
+    </button>
+    <div class="mi-title">My Issues</div>
+  </div>
+
+  @if (loading()) {
+    <div class="mi-loading"><div class="mi-spinner"></div></div>
+  } @else if (issues().length === 0) {
+    <div class="mi-empty">
+      <span class="material-icons-outlined">inbox</span>
+      <p>No issues raised yet</p>
+      <span>Issues you raise on delivered orders will appear here.</span>
+    </div>
+  } @else {
+    <div class="mi-list">
+      @for (iss of issues(); track iss.id) {
+        <button class="mi-card" (click)="open(iss)">
+          <div class="mi-card-icon">
+            <span class="material-icons-outlined">{{ typeIcons[iss.issue_type] || 'help_outline' }}</span>
+          </div>
+          <div class="mi-card-info">
+            <div class="mi-card-title">{{ iss.issue_type_display }}</div>
+            <div class="mi-card-order">Order #{{ iss.order_number }}</div>
+            <div class="mi-card-date">{{ iss.created_at | date:'MMM d, y' }}</div>
+          </div>
+          <div class="mi-card-right">
+            <span class="mi-status-dot" [style.background]="statusColor(iss.status)"></span>
+            <span class="mi-status-label" [style.color]="statusColor(iss.status)">{{ iss.status_display }}</span>
+            <span class="material-icons-outlined mi-arrow">chevron_right</span>
+          </div>
+        </button>
+      }
+    </div>
+  }
+
+</div>
+
+<!-- aria-label -->

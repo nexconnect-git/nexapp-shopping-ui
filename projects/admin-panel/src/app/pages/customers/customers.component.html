@@ -4,6 +4,19 @@
       <h1 class="page-title">Customers</h1>
       <p class="page-subtitle">{{ total() }} registered customers</p>
     </div>
+    <div class="reload-bar">
+      @if (lastRefreshed()) {
+        <span class="reload-timestamp">Updated {{ lastRefreshed() | date:'HH:mm:ss' }}</span>
+      }
+      <button class="btn btn-ghost btn-sm" (click)="manualReload()" [disabled]="loading()" title="Reload">
+        <span class="material-icons-outlined" [class.spin]="loading()">refresh</span>
+      </button>
+      <button class="btn btn-sm" [class.btn-ghost]="!autoReload()" [class.btn-primary-soft]="autoReload()"
+              (click)="toggleAutoReload()" title="Toggle auto-reload every 15 s">
+        <span class="material-icons-outlined">{{ autoReload() ? 'pause_circle' : 'play_circle' }}</span>
+        {{ autoReload() ? 'Auto' : 'Paused' }}
+      </button>
+    </div>
     <div class="filters">
       <input class="filter-input" type="search" [(ngModel)]="search"
         (input)="onSearch()" placeholder="Search by name, email, username...">

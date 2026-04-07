@@ -4,6 +4,19 @@
       <h1 class="page-title">Orders</h1>
       <p class="page-subtitle">{{ total() }} total orders</p>
     </div>
+    <div class="reload-bar">
+      @if (lastRefreshed()) {
+        <span class="reload-timestamp">Updated {{ lastRefreshed() | date:'HH:mm:ss' }}</span>
+      }
+      <button class="btn btn-ghost btn-sm" (click)="manualReload()" [disabled]="loading()" title="Reload">
+        <span class="material-icons-outlined" [class.spin]="loading()">refresh</span>
+      </button>
+      <button class="btn btn-sm" [class.btn-ghost]="!autoReload()" [class.btn-primary-soft]="autoReload()"
+              (click)="toggleAutoReload()" title="Toggle auto-reload every 15 s">
+        <span class="material-icons-outlined">{{ autoReload() ? 'pause_circle' : 'play_circle' }}</span>
+        {{ autoReload() ? 'Auto' : 'Paused' }}
+      </button>
+    </div>
     <div class="filters">
       <input class="filter-input" type="search" [(ngModel)]="search"
         (input)="onSearch()" placeholder="Search order #...">
@@ -50,7 +63,7 @@
 
     <!-- Custom total column -->
     <ng-template tableCell="total" let-order>
-      <span class="price">${{ order.total | number:'1.2-2' }}</span>
+      <span class="price">{{ order.total | appCurrency }}</span>
     </ng-template>
 
     <!-- Custom status column -->
@@ -91,6 +104,56 @@
           @if (loadingDetails()) {
             <div class="loading-panel"><div class="spinner"></div></div>
           } @else {
+
+            <!-- Live Tracking Map -->
+            @if (canTrackOrder()) {
+              <div class="detail-section tracking-section">
+                <div class="tracking-section-header">
+                  <h3>
+                    <span class="material-icons-outlined" style="font-size:16px;vertical-align:middle;margin-right:0.25rem;">radar</span>
+                    Live Tracking
+                  </h3>
+                  @if (!showTrackingMap()) {
+                    <button class="btn btn-track" (click)="openTrackingMap()">
+                      <span class="material-icons-outlined">map</span>
+                      Track on Map
+                    </button>
+                  } @else {
+                    <button class="btn btn-track-close" (click)="closeTrackingMap()">
+                      <span class="material-icons-outlined">close</span>
+                      Hide Map
+                    </button>
+                  }
+                </div>
+                @if (showTrackingMap()) {
+                  <div class="tracking-map-wrap">
+                    <div id="admin-tracking-map" class="native-map"></div>
+                    <div class="map-legend-row">
+                      <span class="legend-chip"><span class="dot dot-vendor"></span>Vendor</span>
+                      <span class="legend-chip"><span class="dot dot-driver"></span>Partner</span>
+                      <span class="legend-chip"><span class="dot dot-customer"></span>Customer</span>
+                    </div>
+                    @if (selectedOrder()?.delivery_partner_info) {
+                      <div class="partner-bar">
+                        <span class="material-icons-outlined">delivery_dining</span>
+                        <span>{{ selectedOrder()!.delivery_partner_info!.name }}</span>
+                        <span class="text-muted" style="font-size:0.8125rem;">
+                          · {{ selectedOrder()!.delivery_partner_info!.vehicle_type }}
+                          @if (selectedOrder()!.delivery_partner_info!.vehicle_number) {
+                            &nbsp;{{ selectedOrder()!.delivery_partner_info!.vehicle_number }}
+                          }
+                        </span>
+                        <span class="partner-rating">
+                          <span class="material-icons-outlined">star</span>
+                          {{ selectedOrder()!.delivery_partner_info!.average_rating }}
+                        </span>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+
             <div class="detail-section">
               <h3>Customer Information</h3>
               <p><strong>Name:</strong> {{ selectedOrder()?.customer_name }}</p>
@@ -111,12 +174,12 @@
                 @for (item of selectedOrder()?.items; track item.id) {
                   <div class="item-row">
                     <span>{{ item.quantity }}x {{ item.product_name }}</span>
-                    <span>${{ item.subtotal | number:'1.2-2' }}</span>
+                    <span>{{ item.subtotal | appCurrency }}</span>
                   </div>
                 }
                 <div class="item-row total-row">
                   <strong>Total (incl. fee)</strong>
-                  <strong>${{ selectedOrder()?.total | number:'1.2-2' }}</strong>
+                  <strong>{{ selectedOrder()?.total | appCurrency }}</strong>
                 </div>
               </div>
             </div>

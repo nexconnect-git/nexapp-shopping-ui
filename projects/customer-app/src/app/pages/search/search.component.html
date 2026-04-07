@@ -1,0 +1,148 @@
+<div class="search-wrap">
+
+  <!-- ── Input Bar ──────────────────────────────────── -->
+  <div class="search-topbar">
+    <button class="s-back" (click)="goBack()">
+      <span class="material-icons-outlined">arrow_back_ios</span>
+    </button>
+    <input
+      #searchInput
+      class="s-input"
+      type="search"
+      [(ngModel)]="queryValue"
+      (ngModelChange)="onSearch()"
+      placeholder="Search for shops, products..."
+      autocomplete="off"
+    />
+    @if (queryValue) {
+      <button class="s-clear" (click)="queryValue = ''; storeResults.set([]); itemResults.set([])">
+        <span class="material-icons-outlined">close</span>
+      </button>
+    }
+  </div>
+
+  <!-- ── Empty State (no query) ──────────────────────── -->
+  @if (!queryValue) {
+
+    <!-- Past searches -->
+    @if (pastSearches().length > 0) {
+      <div class="s-section">
+        <h3 class="s-section-title">Your Past Searches</h3>
+        <div class="s-chips">
+          @for (q of pastSearches(); track q) {
+            <button class="s-chip" (click)="selectSearch(q)">
+              <span class="material-icons-outlined s-chip-icon">history</span>
+              <span class="s-chip-text">{{ q }}</span>
+              <span class="s-chip-remove" (click)="removeSearch(q, $event)">
+                <span class="material-icons-outlined">close</span>
+              </span>
+            </button>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Popular shops -->
+    <div class="s-section">
+      <h3 class="s-section-title">Most Searched And Bought</h3>
+      <div class="s-pop-list">
+        @for (v of popularVendors(); track v.id) {
+          <button class="s-pop-item" (click)="selectVendor(v.id)">
+            <div class="s-pop-img">
+              @if (v.logo) {
+                <img [src]="v.logo" alt="{{v.store_name}}" loading="lazy">
+              } @else {
+                <span class="material-icons-outlined">storefront</span>
+              }
+            </div>
+            <span class="s-pop-name">{{ v.store_name }}</span>
+            <span class="material-icons-outlined s-pop-arrow">north_east</span>
+          </button>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- ── Searching indicator ─────────────────────────── -->
+  @if (queryValue && searching()) {
+    <div class="s-loading">
+      <div class="s-spinner"></div>
+    </div>
+  }
+
+  <!-- ── Results ─────────────────────────────────────── -->
+  @if (queryValue && !searching()) {
+    <div class="s-results">
+
+      <!-- Stores -->
+      @if (storeResults().length > 0) {
+        <div class="s-group-label">
+          <span class="material-icons-outlined">storefront</span>
+          Stores
+        </div>
+        @for (v of storeResults(); track v.id) {
+          <button class="s-result" (click)="selectVendor(v.id)">
+            <div class="s-result-img">
+              @if (v.logo) {
+                <img [src]="v.logo" alt="{{v.store_name}}" loading="lazy">
+              } @else {
+                <span class="material-icons-outlined">storefront</span>
+              }
+            </div>
+            <div class="s-result-body">
+              <span class="s-result-name" [innerHTML]="highlight(v.store_name)"></span>
+              @if (v.city) {
+                <span class="s-result-sub">{{ v.city }}</span>
+              }
+            </div>
+            <span class="material-icons-outlined s-result-arrow">chevron_right</span>
+          </button>
+        }
+      }
+
+      <!-- Items in stores -->
+      @if (itemResults().length > 0) {
+        <div class="s-group-label">
+          <span class="material-icons-outlined">restaurant_menu</span>
+          Items
+        </div>
+        @for (p of itemResults(); track p.id) {
+          <button class="s-result" (click)="selectVendor(p.vendor)">
+            <div class="s-result-img">
+              @if (p.primary_image) {
+                <img [src]="p.primary_image" alt="{{p.name}}" loading="lazy">
+              } @else {
+                <span class="material-icons-outlined">fastfood</span>
+              }
+            </div>
+            <div class="s-result-body">
+              <span class="s-result-name" [innerHTML]="highlight(p.name)"></span>
+              <span class="s-result-sub">
+                <span class="material-icons-outlined">storefront</span>
+                {{ p.vendor_name }}
+              </span>
+            </div>
+            <span class="s-item-price">₦{{ p.price }}</span>
+          </button>
+        }
+      }
+
+      @if (!hasResults) {
+        <div class="s-no-results">
+          <span class="material-icons-outlined">search_off</span>
+          <p>No results for "{{ queryValue }}"</p>
+        </div>
+      }
+
+      <!-- Show all -->
+      @if (hasResults) {
+        <button class="s-show-all" (click)="showAll()">
+          <span class="material-icons-outlined">search</span>
+          Show all results for
+          <strong>{{ queryValue }}</strong>
+        </button>
+      }
+    </div>
+  }
+
+</div>

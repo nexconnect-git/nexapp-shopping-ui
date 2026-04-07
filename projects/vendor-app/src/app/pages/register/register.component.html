@@ -1,111 +1,145 @@
-
-    <div class="register-page">
-      <div class="register-card">
-        <div class="register-header">
-          <span class="material-icons-outlined logo-icon">storefront</span>
-          <h1>Register Your Store</h1>
-          <p>Join NexConnect as a vendor partner</p>
-        </div>
-
-        <div class="steps">
-          @for (s of ['Personal Info', 'Store Details', 'Location']; track s; let i = $index) {
-            <div class="step" [class.active]="step() === i + 1" [class.done]="step() > i + 1">
-              <div class="step-num">{{ step() > i + 1 ? '&#10003;' : i + 1 }}</div>
-              <span class="step-label">{{ s }}</span>
-            </div>
-          }
-        </div>
-
-        @if (error()) {
-          <div class="alert alert-error">{{ error() }}</div>
-        }
-
-        @if (success()) {
-          <div class="alert alert-success">{{ success() }}</div>
-        }
-
-        <form (ngSubmit)="onSubmit()">
-          @switch (step()) {
-            @case (1) {
-              <div class="form-group">
-                <label>Username</label>
-                <input type="text" [(ngModel)]="form.username" name="username" placeholder="Choose a username" required>
-              </div>
-              <div class="form-group">
-                <label>Email</label>
-                <input type="email" [(ngModel)]="form.email" name="email" placeholder="your@email.com" required>
-              </div>
-              <div class="form-group">
-                <label>Password</label>
-                <input type="password" [(ngModel)]="form.password" name="password" placeholder="Min 8 characters" required>
-              </div>
-              <div class="form-group">
-                <label>Phone</label>
-                <input type="tel" [(ngModel)]="form.phone" name="phone" placeholder="+1 (555) 000-0000" required>
-              </div>
-              <button type="button" class="btn-primary" (click)="nextStep()">Continue</button>
-            }
-            @case (2) {
-              <div class="form-group">
-                <label>Store Name <span class="req">*</span></label>
-                <input type="text" [(ngModel)]="form.store_name" name="store_name" placeholder="Your store name" required>
-              </div>
-              <div class="form-group">
-                <label>Description</label>
-                <textarea [(ngModel)]="form.description" name="description" placeholder="Tell customers about your store" rows="3"></textarea>
-              </div>
-              <div class="form-group">
-                <label>Business Email (optional)</label>
-                <input type="email" [(ngModel)]="form.vendor_email" name="vendor_email" placeholder="store@example.com">
-              </div>
-              <div class="btn-row">
-                <button type="button" class="btn-secondary" (click)="prevStep()">Back</button>
-                <button type="button" class="btn-primary" (click)="nextStep()">Continue</button>
-              </div>
-            }
-            @case (3) {
-              <div class="form-group map-group">
-                <label>Store Location <span class="req">*</span></label>
-                <p class="field-hint">Click on the map or drag the pin to set your store's exact location. Address fields will auto-fill.</p>
-                <app-map-picker
-                  [height]="'280px'"
-                  (locationPicked)="onLocationPicked($event)">
-                </app-map-picker>
-                @if (form.latitude) {
-                  <div class="coords-preview">
-                    <span class="material-icons-outlined">check_circle</span>
-                    Location set: {{ form.latitude | number:'1.4-4' }}, {{ form.longitude | number:'1.4-4' }}
-                  </div>
-                }
-              </div>
-
-              <div class="form-row">
-                <div class="form-group">
-                  <label>City (auto-filled)</label>
-                  <input type="text" [(ngModel)]="form.city" name="city" placeholder="City">
-                </div>
-                <div class="form-group">
-                  <label>State (auto-filled)</label>
-                  <input type="text" [(ngModel)]="form.state" name="state" placeholder="State">
-                </div>
-              </div>
-
-              <div class="btn-row">
-                <button type="button" class="btn-secondary" (click)="prevStep()">Back</button>
-                <button type="submit" class="btn-primary" [disabled]="loading()">
-                  @if (loading()) {
-                    <span class="spinner"></span> Registering...
-                  } @else {
-                    Register Store
-                  }
-                </button>
-              </div>
-            }
-          }
-        </form>
-
-        <div class="register-footer">
-          <p>Already have an account? <a routerLink="/login">Sign in</a></p>
+<div class="register-page fade-in">
+  <div class="register-container card">
+    
+    <!-- Stylish Left Panel -->
+    <div class="register-left">
+      <div class="brand">
+        <span class="material-icons-outlined">storefront</span>
+        <span class="brand-text">NexConnect</span>
+      </div>
+      <div class="left-content">
+        <h1>Partner With Us.</h1>
+        <p>Unlock new revenue streams by joining our elite network of local vendors and restaurants.</p>
+        
+        <div class="progress-indicator">
+          <div class="step" [class.active]="step() === 1" [class.completed]="step() > 1">
+            <div class="step-icon"><span class="material-icons-outlined">{{ step() > 1 ? 'check' : 'person' }}</span></div>
+            <div class="step-text">Account Details</div>
+          </div>
+          <div class="step-line" [class.filled]="step() > 1"></div>
+          <div class="step" [class.active]="step() === 2" [class.completed]="step() > 2">
+            <div class="step-icon"><span class="material-icons-outlined">{{ step() > 2 ? 'check' : 'store' }}</span></div>
+            <div class="step-text">Store Profile</div>
+          </div>
+          <div class="step-line" [class.filled]="step() > 2"></div>
+          <div class="step" [class.active]="step() === 3">
+            <div class="step-icon"><span class="material-icons-outlined">location_on</span></div>
+            <div class="step-text">Store Location</div>
+          </div>
         </div>
       </div>
     </div>
+
+    <!-- Right Panel (Form) -->
+    <div class="register-right">
+      <div class="form-wrapper">
+        <h2 class="step-title">
+          {{ step() === 1 ? 'Create your account' : step() === 2 ? 'Store settings' : 'Location details' }}
+        </h2>
+        <p class="step-subtitle">
+          {{ step() === 1 ? 'Start by setting up your credentials.' : step() === 2 ? 'Tell us about your business.' : 'Pinpoint your exact store location.' }}
+        </p>
+
+        @if (error()) {
+          <div class="alert alert-error">
+            <span class="material-icons-outlined">error_outline</span>
+            <span>{{ error() }}</span>
+          </div>
+        }
+
+        <form (ngSubmit)="onSubmit()">
+
+          <!-- STEP 1: Account -->
+          <div class="form-step fade-in" *ngIf="step() === 1">
+            <div class="form-group">
+              <label>Username</label>
+              <input type="text" [(ngModel)]="form.username" name="username" class="form-input" placeholder="e.g. coffee_shop" required>
+            </div>
+            <div class="form-group">
+              <label>Email Address</label>
+              <input type="email" [(ngModel)]="form.email" name="email" class="form-input" placeholder="store@example.com" required>
+            </div>
+            <div class="form-group">
+              <label>Phone Number</label>
+              <input type="tel" [(ngModel)]="form.phone" name="phone" class="form-input" placeholder="+1 555 123 4567" required>
+            </div>
+            <div class="form-group">
+              <label>Password</label>
+              <input type="password" [(ngModel)]="form.password" name="password" class="form-input" placeholder="••••••••" required minlength="8">
+            </div>
+            <div class="form-group mt-4">
+              <button type="button" class="btn btn-primary w-100 btn-lg" (click)="nextStep()">
+                Continue to Store Profile
+                <span class="material-icons-outlined">arrow_forward</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- STEP 2: Store Profile -->
+          <div class="form-step fade-in" *ngIf="step() === 2">
+            <div class="form-group">
+              <label>Store Name</label>
+              <input type="text" [(ngModel)]="form.store_name" name="store_name" class="form-input" placeholder="The Daily Grind" required>
+            </div>
+            <div class="form-group">
+              <label>Description (Optional)</label>
+              <textarea [(ngModel)]="form.description" name="description" class="form-input" placeholder="Tell customers about what you sell..." rows="3"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Public Contact Email (Optional)</label>
+              <input type="email" [(ngModel)]="form.vendor_email" name="vendor_email" class="form-input" placeholder="contact@thedailygrind.com">
+            </div>
+            <div class="form-actions mt-4">
+              <button type="button" class="btn btn-secondary" (click)="prevStep()">Back</button>
+              <button type="button" class="btn btn-primary" (click)="nextStep()">
+                Continue to Location
+                <span class="material-icons-outlined">arrow_forward</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- STEP 3: Location -->
+          <div class="form-step fade-in" *ngIf="step() === 3">
+            <app-map-picker
+              [initialLat]="form.latitude"
+              [initialLng]="form.longitude"
+              (locationPicked)="onLocationPicked($event)"
+            ></app-map-picker>
+            
+            <div class="form-group mt-3">
+              <label>Street Address</label>
+              <input type="text" [(ngModel)]="form.address" name="address" class="form-input" placeholder="123 Main St" required>
+            </div>
+            <div style="display:flex;gap:10px;">
+              <div class="form-group" style="flex:1;">
+                <label>City</label>
+                <input type="text" [(ngModel)]="form.city" name="city" class="form-input" placeholder="Metropolis" required>
+              </div>
+              <div class="form-group" style="flex:1;">
+                <label>Postal Code</label>
+                <input type="text" [(ngModel)]="form.postal_code" name="postal_code" class="form-input" placeholder="10001">
+              </div>
+            </div>
+
+            <div class="form-actions mt-4">
+              <button type="button" class="btn btn-secondary" (click)="prevStep()">Back</button>
+              <button type="submit" class="btn btn-primary" [disabled]="loading() || !form.latitude">
+                @if (loading()) {
+                  <span class="spinner"></span> Processing...
+                } @else {
+                  Complete Registration <span class="material-icons-outlined">check_circle</span>
+                }
+              </button>
+            </div>
+          </div>
+
+        </form>
+        
+        <p class="login-prompt mt-4 text-center">
+          Already have a partner account? <a routerLink="/login">Log in here</a>
+        </p>
+
+      </div>
+    </div>
+  </div>
+</div>

@@ -16,14 +16,14 @@
           <span class="material-icons-outlined">account_balance_wallet</span>
         </div>
         <p class="summary-label">Total Earnings</p>
-        <p class="summary-value">${{ totalEarnings() | number:'1.2-2' }}</p>
+        <p class="summary-value">{{ totalEarnings() | appCurrency }}</p>
       </div>
       <div class="summary-card">
         <div class="summary-icon secondary">
           <span class="material-icons-outlined">calendar_month</span>
         </div>
         <p class="summary-label">This Month</p>
-        <p class="summary-value accent">${{ monthEarnings() | number:'1.2-2' }}</p>
+        <p class="summary-value accent">{{ monthEarnings() | appCurrency }}</p>
       </div>
       <div class="summary-card">
         <div class="summary-icon info">
@@ -34,35 +34,121 @@
       </div>
     </div>
 
-    @if (earnings().length === 0) {
-      <div class="empty-state">
-        <span class="material-icons-outlined">payments</span>
-        <h3>No earnings yet</h3>
-        <p>Complete deliveries to start earning money</p>
-      </div>
-    } @else {
-      <div class="section-title">Transaction History</div>
+    <!-- Tabs -->
+    <div class="tabs-nav">
+      <button class="tab-btn" [class.active]="activeTab() === 'history'" (click)="activeTab.set('history')">
+        <span class="material-icons-outlined">receipt_long</span>
+        Transaction History
+      </button>
+      <button class="tab-btn" [class.active]="activeTab() === 'payouts'" (click)="activeTab.set('payouts')">
+        <span class="material-icons-outlined">account_balance</span>
+        Payout Settlements
+      </button>
+    </div>
 
-      <div class="earnings-table">
-        <div class="table-header">
-          <span>Order</span>
-          <span>Date</span>
-          <span>Amount</span>
-          <span>Status</span>
+    <!-- History Tab -->
+    @if (activeTab() === 'history') {
+      @if (earnings().length === 0) {
+        <div class="empty-state">
+          <span class="material-icons-outlined">payments</span>
+          <h3>No earnings yet</h3>
+          <p>Complete deliveries to start earning money</p>
         </div>
-        @for (e of earnings(); track e.id) {
-          <div class="table-row">
-            <span class="order-ref">#{{ e.order_number || e.order }}</span>
-            <span class="date-cell">{{ e.created_at | date:'MMM d, y' }}</span>
-            <span class="earn-cell">${{ e.amount | number:'1.2-2' }}</span>
-            <span>
-              <span class="pay-badge" [class.paid]="e.is_paid" [class.pending]="!e.is_paid">
-                {{ e.is_paid ? 'Paid' : 'Pending' }}
-              </span>
-            </span>
+      } @else {
+        <div class="earnings-table">
+          <div class="table-header">
+            <span>Order</span>
+            <span>Date</span>
+            <span>Amount</span>
+            <span>Status</span>
           </div>
-        }
-      </div>
+          @for (e of earnings(); track e.id) {
+            <div class="table-row">
+              <span class="order-ref">#{{ e.order_number || e.order }}</span>
+              <span class="date-cell">{{ e.created_at | date:'MMM d, y' }}</span>
+              <span class="earn-cell">{{ e.amount | appCurrency }}</span>
+              <span>
+                <span class="pay-badge" [class.paid]="e.is_paid" [class.pending]="!e.is_paid">
+                  {{ e.is_paid ? 'Settled' : 'Pending Payout' }}
+                </span>
+              </span>
+            </div>
+          }
+        </div>
+      }
+    }
+
+    <!-- Payouts Tab -->
+    @if (activeTab() === 'payouts') {
+      @if (payouts().length === 0) {
+        <div class="empty-state">
+          <span class="material-icons-outlined">account_balance_wallet</span>
+          <h3>No payouts yet</h3>
+          <p>Once your earnings accumulate, platform will initiate settlements.</p>
+        </div>
+      } @else {
+        <div class="earnings-table payouts-table">
+          <div class="table-header payouts-header">
+            <span>Period</span>
+            <span>Amount</span>
+            <span>Status</span>
+            <span>Paid On</span>
+            <span>Actions</span>
+          </div>
+          @for (payout of payouts(); track payout.id) {
+            <div class="table-row payouts-row" [class.highlight-row]="['pending_approval','paid'].includes(payout.status)">
+              <span class="period-cell">{{ payout.period_start | date:'MMM d' }} – {{ payout.period_end | date:'MMM d, y' }}</span>
+              <span class="earn-cell">{{ payout.total_earnings | appCurrency }}</span>
+              <span>
+                <span class="badge" [class]="'badge-' + payout.status">{{ statusLabel(payout.status) }}</span>
+              </span>
+              <span class="date-cell">{{ payout.paid_at ? (payout.paid_at | date:'MMM d, y') : '—' }}</span>
+              <span class="actions-cell">
+                @if (payout.status === 'pending_approval') {
+                  <button class="p-action-btn approve-btn" (click)="approvePayout(payout)"><span class="material-icons-outlined">check_circle</span> Approve</button>
+                  <button class="p-action-btn decline-btn" (click)="openDeclineModal(payout)"><span class="material-icons-outlined">cancel</span> Decline</button>
+                }
+                @if (payout.status === 'paid') {
+                  <button class="p-action-btn verify-btn" (click)="verifyCredit(payout)"><span class="material-icons-outlined">verified</span> Verify Credit</button>
+                }
+              </span>
+            </div>
+          }
+        </div>
+      }
     }
   }
 </div>
+
+<!-- ── Decline Reason Modal ─────────────────────────────────────── -->
+@if (showDeclineModal()) {
+  <div class="modal-backdrop" (click)="closeDeclineModal()">
+    <div class="modal-panel modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-header-icon decline-icon">
+          <span class="material-icons-outlined">cancel</span>
+        </div>
+        <div>
+          <h2 class="modal-title">Decline Payout</h2>
+          <p class="modal-sub">Tell us why you're declining this payout</p>
+        </div>
+        <button class="modal-close-btn" (click)="closeDeclineModal()">
+          <span class="material-icons-outlined">close</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="field-group">
+          <label class="field-label">Reason <span class="text-muted">(optional)</span></label>
+          <textarea class="field-input" rows="3" [(ngModel)]="declineReason"
+                    placeholder="e.g. Amount looks incorrect, missing deliveries…"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="cancel-btn" (click)="closeDeclineModal()">Cancel</button>
+          <button class="p-action-btn decline-btn" (click)="confirmDecline()">
+            <span class="material-icons-outlined">cancel</span> Confirm Decline
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

@@ -16,15 +16,7 @@
     </button>
   </div>
 
-  <div class="alert alert-danger" *ngIf="errorMsg">
-    <span class="material-icons-outlined">error_outline</span>
-    <span>{{ errorMsg }}</span>
-  </div>
 
-  <div class="alert alert-success" *ngIf="successMsg">
-    <span class="material-icons-outlined">check_circle</span>
-    <span>{{ successMsg }}</span>
-  </div>
 
   <div class="content-body" *ngIf="auth.isSuperUser()">
     

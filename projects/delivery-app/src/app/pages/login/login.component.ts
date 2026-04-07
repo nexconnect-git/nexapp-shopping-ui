@@ -1,11 +1,11 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { AuthService } from '@shared/public-api';
 
 @Component({
   selector: 'app-login',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule,],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss']
 })
@@ -44,3 +44,5 @@ export class LoginComponent {
     });
   }
 }
+
+

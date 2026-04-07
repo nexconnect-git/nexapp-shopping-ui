@@ -1,10 +1,10 @@
 import { Routes } from '@angular/router';
-import { authGuard } from '@shared/public-api';
+import { authGuard, unauthGuard } from '@shared/public-api';
 import { superuserGuard } from './guards/superuser.guard';
 
 export const routes: Routes = [
-  { path: 'login', loadComponent: () => import('./pages/login/login.component').then(m => m.LoginComponent) },
-  { path: 'setup', loadComponent: () => import('./pages/setup/setup.component').then(m => m.SetupComponent) },
+  { path: 'login', loadComponent: () => import('./pages/login/login.component').then(m => m.LoginComponent), canActivate: [unauthGuard] },
+  { path: 'setup', loadComponent: () => import('./pages/setup/setup.component').then(m => m.SetupComponent), canActivate: [unauthGuard] },
   { path: '', loadComponent: () => import('./pages/dashboard/dashboard.component').then(m => m.DashboardComponent), canActivate: [authGuard] },
   { path: 'vendors', loadComponent: () => import('./pages/vendors/vendors.component').then(m => m.VendorsComponent), canActivate: [authGuard] },
   // vendors/onboard MUST be before vendors/:id to avoid conflict
@@ -23,6 +23,9 @@ export const routes: Routes = [
   { path: 'assets', loadComponent: () => import('./pages/assets/assets.component').then(m => m.AssetsComponent), canActivate: [authGuard] },
   { path: 'sales-report', loadComponent: () => import('./pages/sales-report/sales-report.component').then(m => m.SalesReportComponent), canActivate: [authGuard] },
   { path: 'payouts', loadComponent: () => import('./pages/payouts/payouts.component').then(m => m.PayoutsComponent), canActivate: [authGuard] },
+  { path: 'scheduled-tasks', loadComponent: () => import('./pages/scheduled-tasks/scheduled-tasks.component').then(m => m.ScheduledTasksComponent), canActivate: [authGuard] },
+  { path: 'issues', loadComponent: () => import('./pages/issues/issues.component').then(m => m.IssuesComponent), canActivate: [authGuard] },
+  { path: 'coupons', loadComponent: () => import('./pages/coupons/coupons.component').then(m => m.CouponsComponent), canActivate: [authGuard] },
   { path: 'admin-users', loadComponent: () => import('./pages/admin-users/admin-users.component').then(m => m.AdminUsersComponent), canActivate: [superuserGuard] },
   { path: '**', redirectTo: '' }
 ];

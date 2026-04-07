@@ -1,11 +1,11 @@
 import { Routes } from '@angular/router';
-import { authGuard, roleGuard, approvedVendorGuard } from '@shared/public-api';
+import { authGuard, roleGuard, approvedVendorGuard, unauthGuard } from '@shared/public-api';
 
 const vendorGuard = [authGuard, roleGuard('vendor'), approvedVendorGuard];
 
 export const routes: Routes = [
-  { path: 'login', loadComponent: () => import('./pages/login/login.component').then(m => m.LoginComponent) },
-  { path: 'register', loadComponent: () => import('./pages/register/register.component').then(m => m.RegisterComponent) },
+  { path: 'login', loadComponent: () => import('./pages/login/login.component').then(m => m.LoginComponent), canActivate: [unauthGuard] },
+  { path: 'register', loadComponent: () => import('./pages/register/register.component').then(m => m.RegisterComponent), canActivate: [unauthGuard] },
   { path: 'change-password', loadComponent: () => import('./pages/change-password/change-password.component').then(m => m.ChangePasswordComponent), canActivate: [authGuard] },
   { path: 'pending-approval', loadComponent: () => import('./pages/pending-approval/pending-approval.component').then(m => m.PendingApprovalComponent), canActivate: [authGuard, roleGuard('vendor')] },
   { path: '', loadComponent: () => import('./pages/dashboard/dashboard.component').then(m => m.DashboardComponent), canActivate: vendorGuard },
@@ -18,6 +18,9 @@ export const routes: Routes = [
   { path: 'sales-report', loadComponent: () => import('./pages/sales-report/sales-report.component').then(m => m.SalesReportComponent), canActivate: vendorGuard },
   { path: 'stock-management', loadComponent: () => import('./pages/stock-management/stock-management.component').then(m => m.StockManagementComponent), canActivate: vendorGuard },
   { path: 'payments', loadComponent: () => import('./pages/payments/payments.component').then(m => m.PaymentsComponent), canActivate: vendorGuard },
+  { path: 'coupons', loadComponent: () => import('./pages/coupons/coupons.component').then(m => m.CouponsComponent), canActivate: vendorGuard },
   { path: 'support', loadComponent: () => import('./pages/support/support.component').then(m => m.SupportComponent), canActivate: vendorGuard },
   { path: '**', redirectTo: '' }
 ];
+
+
