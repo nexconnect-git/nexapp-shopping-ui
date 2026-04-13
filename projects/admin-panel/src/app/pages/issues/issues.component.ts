@@ -115,7 +115,8 @@ export class IssuesComponent implements OnInit, OnDestroy {
   connectWebSocket(issueId: string) {
     this.closeWebSocket();
     const token = localStorage.getItem('access_token') || '';
-    const wsUrl = `ws://localhost:8000/ws/issues/${issueId}/?token=${token}`;
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws/issues/${issueId}/?token=${token}`;
     this.ws = new WebSocket(wsUrl);
 
     this.ws.onmessage = (event) => {

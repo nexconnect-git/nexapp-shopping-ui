@@ -4,7 +4,7 @@ import { Observable, shareReplay } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
-  private baseUrl = 'http://localhost:8000/api';
+  private baseUrl = '/api';
 
   readonly cartCount = signal(0);
   readonly unreadNotifications = signal(0);
