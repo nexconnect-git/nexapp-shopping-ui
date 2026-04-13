@@ -1,97 +1,113 @@
-import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
-import { Subscription, timer } from 'rxjs';
+import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService, AppCurrencyPipe, Category } from '@shared/public-api';
-import { DynamicTableComponent, TableCellDirective } from '../../shared/components/dynamic-table/dynamic-table.component';
+import { ApiService, AppCurrencyPipe } from '@shared/public-api';
+
+interface ProductRow {
+  id: string;
+  name: string;
+  category: any;
+  price: number;
+  stock: number;
+  status: string;
+  is_available: boolean;
+  vendor: any;
+  vendor_name: string;
+}
+
+interface VendorGroup {
+  vendorId: string;
+  vendorName: string;
+  city: string;
+  products: ProductRow[];
+  collapsed: boolean;
+}
 
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, FormsModule, DynamicTableComponent, TableCellDirective, AppCurrencyPipe],
+  imports: [CommonModule, FormsModule, AppCurrencyPipe],
   templateUrl: './products.component.html',
   styleUrl: './products.component.scss'
 })
-export class ProductsComponent implements OnInit, OnDestroy {
+export class ProductsComponent implements OnInit {
   private api = inject(ApiService);
-  products = signal<any[]>([]);
-  categories = signal<Category[]>([]);
+
+  allProducts = signal<ProductRow[]>([]);
   loading = signal(true);
-  saving = signal(false);
-  total = signal(0);
-  page = signal(1);
-  totalPages = signal(1);
   search = '';
-  error = signal('');
-  private timer: any;
+  statusFilter = 'all';
+  private searchTimer: any;
 
-  tableColumns = [
-    { key: 'product', label: 'Product', flex: '2fr' },
-    { key: 'vendor', label: 'Vendor', flex: '1.5fr' },
-    { key: 'category', label: 'Category', flex: '1.5fr' },
-    { key: 'price', label: 'Price', flex: '1fr' },
-    { key: 'stock', label: 'Stock', flex: '1fr' },
-    { key: 'status', label: 'Status', flex: '1fr' },
-    { key: 'actions', label: 'Actions', flex: '1fr' }
-  ];
+  vendorGroups = signal<VendorGroup[]>([]);
 
-  lastRefreshed = signal<Date | null>(null);
-  autoReload = signal(true);
-  private reloadSub?: Subscription;
+  page = signal(1);
+  total = signal(0);
+  totalPages = signal(1);
+  readonly PAGE_SIZE = 100; // load more at once to group properly
 
+  // Modal for edit
   showModal = signal(false);
+  saving = signal(false);
   editTarget = signal<any | null>(null);
-  form: any = { name: '', description: '', price: '', compare_price: '', sku: '', stock: 0, unit: 'pcs', weight: '', is_available: true, is_featured: false, category: null, vendor_id: null };
+  error = signal('');
+  categories = signal<any[]>([]);
+  form: any = { name: '', description: '', price: '', compare_price: '', sku: '', stock: 0, unit: 'pcs', weight: '', is_available: true, status: 'active', is_featured: false, category: null };
 
   ngOnInit() {
-    this.loadCategories();
-    this.reloadSub = timer(0, 15000).subscribe(() => {
-      if (this.autoReload() && !this.showModal()) this.load();
-    });
-  }
-
-  ngOnDestroy() { this.reloadSub?.unsubscribe(); }
-
-  manualReload() { this.page.set(1); this.load(); }
-  toggleAutoReload() { this.autoReload.update(v => !v); }
-
-  loadCategories() {
     this.api.getAdminCategories().subscribe({ next: (r) => this.categories.set(r.results || r) });
+    this.load();
   }
 
   load() {
     this.loading.set(true);
-    const params: any = { page: this.page() };
+    const params: any = { page: 1, page_size: this.PAGE_SIZE };
     if (this.search) params.search = this.search;
+    if (this.statusFilter !== 'all') params.status = this.statusFilter;
+
     this.api.getAdminProducts(params).subscribe({
       next: (r) => {
-        this.products.set(r.results || r);
-        this.total.set(r.count || 0);
-        this.totalPages.set(Math.ceil((r.count || 0) / 20) || 1);
+        const products: ProductRow[] = r.results || r;
+        this.allProducts.set(products);
+        this.total.set(r.count || products.length);
+        this.buildGroups(products);
         this.loading.set(false);
-        this.lastRefreshed.set(new Date());
       },
       error: () => this.loading.set(false),
     });
   }
 
-  onSearch() { clearTimeout(this.timer); this.timer = setTimeout(() => { this.page.set(1); this.load(); }, 400); }
-  setPage(p: number) { this.page.set(p); this.load(); }
-
-  openCreate() {
-    this.editTarget.set(null);
-    this.form = { name: '', description: '', price: '', compare_price: '', sku: '', stock: 0, unit: 'pcs', weight: '', is_available: true, is_featured: false, category: null, vendor_id: null };
-    this.error.set('');
-    this.showModal.set(true);
+  buildGroups(products: ProductRow[]) {
+    const map = new Map<string, VendorGroup>();
+    for (const p of products) {
+      const vid = p.vendor?.id ?? 'unknown';
+      const vname = p.vendor_name || p.vendor?.store_name || 'Unknown Vendor';
+      const city = p.vendor?.city || '';
+      if (!map.has(vid)) {
+        map.set(vid, { vendorId: vid, vendorName: vname, city, products: [], collapsed: false });
+      }
+      map.get(vid)!.products.push(p);
+    }
+    this.vendorGroups.set(Array.from(map.values()));
   }
+
+  onSearch() {
+    clearTimeout(this.searchTimer);
+    this.searchTimer = setTimeout(() => this.load(), 400);
+  }
+
+  onFilterChange() { this.load(); }
+
+  toggleGroup(group: VendorGroup) { group.collapsed = !group.collapsed; }
 
   openEdit(p: any) {
     this.editTarget.set(p);
     this.form = {
-      name: p.name, description: p.description || '', price: p.price, compare_price: p.compare_price || '',
-      sku: p.sku || '', stock: p.stock, unit: p.unit || 'pcs', weight: p.weight || '',
-      is_available: p.is_available, is_featured: p.is_featured,
-      category: p.category?.id ?? null, vendor_id: p.vendor?.id ?? null
+      name: p.name, description: p.description || '', price: p.price,
+      compare_price: p.compare_price || '', sku: p.sku || '', stock: p.stock,
+      unit: p.unit || 'pcs', weight: p.weight || '', is_available: p.is_available,
+      status: p.status || 'active', is_featured: p.is_featured,
+      category: p.category?.id ?? null
     };
     this.error.set('');
     this.showModal.set(true);
@@ -100,34 +116,41 @@ export class ProductsComponent implements OnInit, OnDestroy {
   closeModal() { this.showModal.set(false); }
 
   save() {
-    if (!this.form.name.trim()) { this.error.set('Name is required.'); return; }
+    if (!this.form.name?.trim()) { this.error.set('Name is required.'); return; }
     if (!this.form.price) { this.error.set('Price is required.'); return; }
     this.saving.set(true);
     this.error.set('');
     const data: any = {
       name: this.form.name, description: this.form.description, price: this.form.price,
       stock: this.form.stock, unit: this.form.unit, is_available: this.form.is_available,
-      is_featured: this.form.is_featured, category: this.form.category
+      status: this.form.status, is_featured: this.form.is_featured, category: this.form.category
     };
     if (this.form.compare_price) data.compare_price = this.form.compare_price;
     if (this.form.sku) data.sku = this.form.sku;
     if (this.form.weight) data.weight = this.form.weight;
     const target = this.editTarget();
-    const req = target
-      ? this.api.updateAdminProduct(target.id, data)
-      : this.api.createAdminProduct({ ...data, vendor_id: this.form.vendor_id });
-    req.subscribe({
+    this.api.updateAdminProduct(target.id, data).subscribe({
       next: () => { this.saving.set(false); this.showModal.set(false); this.load(); },
-      error: (err) => { this.saving.set(false); this.error.set(err.error?.detail || err.error?.name?.[0] || 'Save failed.'); }
+      error: (err) => { this.saving.set(false); this.error.set(err.error?.detail || 'Save failed.'); }
     });
   }
 
-  toggleAvailability(p: any) {
-    this.api.updateAdminProduct(p.id, { is_available: !p.is_available }).subscribe({ next: () => this.load() });
+  delete(p: any) {
+    if (!confirm(`Delete "${p.name}"? This cannot be undone.`)) return;
+    this.api.deleteAdminProduct(p.id).subscribe({ next: () => this.load() });
   }
 
-  delete(p: any) {
-    if (!confirm(`Delete product "${p.name}"? This cannot be undone.`)) return;
-    this.api.deleteAdminProduct(p.id).subscribe({ next: () => this.load() });
+  statusLabel(s: string): string {
+    return ({ active: 'Active', draft: 'Draft', sold_out: 'Sold Out', coming_soon: 'Coming Soon', archived: 'Archived' })[s] || s;
+  }
+
+  statusClass(s: string): string {
+    return ({ active: 'chip-active', draft: 'chip-draft', sold_out: 'chip-sold-out', coming_soon: 'chip-coming-soon', archived: 'chip-archived' })[s] || '';
+  }
+
+  stockClass(p: ProductRow): string {
+    if (p.stock === 0) return 'stock-empty';
+    if (p.stock < 10) return 'stock-low';
+    return 'stock-ok';
   }
 }

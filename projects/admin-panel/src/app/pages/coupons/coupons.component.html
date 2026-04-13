@@ -22,97 +22,83 @@
   }
 
   <!-- ── Table Card ──────────────────────────────────────── -->
-  <div class="table-card">
-    @if (loading()) {
-      <div class="loading-state">
-        <div class="spinner"></div>
-        <p>Loading coupons…</p>
-      </div>
-    } @else if (coupons().length === 0) {
-      <div class="empty-state">
-        <span class="material-icons-outlined empty-icon">confirmation_number</span>
-        <strong>No coupons yet</strong>
-        <p>Create your first coupon to get started.</p>
-        <button class="btn-primary" (click)="openCreate()">
-          <span class="material-icons-outlined">add</span> Create Coupon
-        </button>
-      </div>
-    } @else {
-      <div class="table-wrapper">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Code</th>
-              <th>Title</th>
-              <th>Discount</th>
-              <th>Scope</th>
-              <th>Used</th>
-              <th>Valid Until</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (c of coupons(); track c.id) {
-              <tr class="data-row">
-                <td>
-                  <span class="code-badge">{{ c.code }}</span>
-                </td>
-                <td>
-                  <div class="coupon-title">{{ c.title }}</div>
-                  @if (c.description) {
-                    <div class="coupon-desc">{{ c.description }}</div>
-                  }
-                </td>
-                <td>
-                  <span class="discount-badge" [class]="c.discount_type">{{ discountLabel(c) }}</span>
-                </td>
-                <td>
-                  <span class="scope-badge" [class.platform]="!c.vendor" [class.vendor]="c.vendor">
-                    {{ scopeLabel(c) }}
-                  </span>
-                </td>
-                <td class="text-muted">
-                  {{ c.used_count }}{{ c.usage_limit ? ' / ' + c.usage_limit : '' }}
-                </td>
-                <td class="text-muted">
-                  @if (c.valid_until) {
-                    {{ c.valid_until | date:'mediumDate' }}
-                  } @else {
-                    <span class="no-expiry">No expiry</span>
-                  }
-                </td>
-                <td>
-                  @if (isExpired(c)) {
-                    <span class="status-badge expired">Expired</span>
-                  } @else if (c.is_active) {
-                    <span class="status-badge active">Active</span>
-                  } @else {
-                    <span class="status-badge inactive">Inactive</span>
-                  }
-                </td>
-                <td>
-                  <div class="actions">
-                    <button class="action-btn" title="Edit" (click)="openEdit(c)">
-                      <span class="material-icons-outlined">edit</span>
-                    </button>
-                    <button class="action-btn danger" title="Delete"
-                      [disabled]="deleting() === c.id"
-                      (click)="delete(c.id)">
-                      @if (deleting() === c.id) {
-                        <span class="spinner-sm"></span>
-                      } @else {
-                        <span class="material-icons-outlined">delete_outline</span>
-                      }
-                    </button>
-                  </div>
-                </td>
-              </tr>
+  <div class="table-card" style="padding: 0; background: transparent; box-shadow: none;">
+    <app-dynamic-table
+      [columns]="tableColumns"
+      [data]="coupons()"
+      [loading]="loading()"
+      [totalItems]="totalItems"
+      [itemsPerPage]="20"
+      [page]="page"
+      emptyMessage="No coupons yet"
+      emptySubMessage="Create your first coupon to get started."
+      emptyIcon="confirmation_number"
+      (pageChange)="onPageChange($event)">
+
+      <ng-template tableCell="code" let-row="row">
+        <span class="code-badge">{{ row.code }}</span>
+      </ng-template>
+
+      <ng-template tableCell="details" let-row="row">
+        <div class="coupon-title">{{ row.title }}</div>
+        @if (row.description) {
+          <div class="coupon-desc">{{ row.description }}</div>
+        }
+      </ng-template>
+
+      <ng-template tableCell="discount" let-row="row">
+        <span class="discount-badge" [class]="row.discount_type">{{ discountLabel(row) }}</span>
+      </ng-template>
+
+      <ng-template tableCell="scope" let-row="row">
+        <span class="scope-badge" [class.platform]="!row.vendor" [class.vendor]="row.vendor">
+          {{ scopeLabel(row) }}
+        </span>
+      </ng-template>
+
+      <ng-template tableCell="limits" let-row="row">
+        <span class="text-muted">
+          {{ row.used_count }}{{ row.usage_limit ? ' / ' + row.usage_limit : '' }}
+        </span>
+      </ng-template>
+
+      <ng-template tableCell="status" let-row="row">
+        <div>
+          <div class="text-muted" style="margin-bottom: 4px; font-size: 0.8rem;">
+            @if (row.valid_until) {
+              Until {{ row.valid_until | date:'mediumDate' }}
+            } @else {
+              <span class="no-expiry">No expiry</span>
             }
-          </tbody>
-        </table>
-      </div>
-    }
+          </div>
+          @if (isExpired(row)) {
+            <span class="status-badge expired">Expired</span>
+          } @else if (row.is_active) {
+            <span class="status-badge active">Active</span>
+          } @else {
+            <span class="status-badge inactive">Inactive</span>
+          }
+        </div>
+      </ng-template>
+
+      <ng-template tableCell="actions" let-row="row">
+        <div class="actions" style="justify-content: flex-end;">
+          <button class="action-btn" title="Edit" (click)="openEdit(row)">
+            <span class="material-icons-outlined">edit</span>
+          </button>
+          <button class="action-btn danger" title="Delete"
+            [disabled]="deleting() === row.id"
+            (click)="delete(row.id)">
+            @if (deleting() === row.id) {
+              <span class="spinner-sm"></span>
+            } @else {
+              <span class="material-icons-outlined">delete_outline</span>
+            }
+          </button>
+        </div>
+      </ng-template>
+
+    </app-dynamic-table>
   </div>
 
   <!-- ── Create / Edit Modal ─────────────────────────────── -->

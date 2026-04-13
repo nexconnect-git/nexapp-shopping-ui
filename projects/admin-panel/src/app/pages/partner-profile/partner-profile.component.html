@@ -54,17 +54,21 @@
           <span class="material-icons-outlined">edit</span>
           Edit
         </a>
-        @if (!partner().is_approved) {
-          <button class="btn btn-success" [disabled]="actionLoading()" (click)="approve()">
-            <span class="material-icons-outlined">check_circle</span>
-            Approve
-          </button>
-        } @else {
-          <button class="btn btn-danger" [disabled]="actionLoading()" (click)="revoke()">
-            <span class="material-icons-outlined">cancel</span>
-            Revoke
-          </button>
-        }
+        <div class="status-select-wrap">
+          <label class="status-select-label" for="partner-status-select">Account Status</label>
+          <select
+            id="partner-status-select"
+            class="status-select"
+            [value]="partnerAccountStatus()"
+            (change)="onAccountStatusChange($event)"
+            [disabled]="actionLoading()"
+            aria-label="Partner account status"
+          >
+            <option value="active">Active</option>
+            <option value="suspended">Suspended</option>
+            <option value="pending">Pending (Not Approved)</option>
+          </select>
+        </div>
       </div>
     </div>
 
@@ -173,9 +177,22 @@
                 <span class="info-value"><span class="badge" [class]="statusBadge(partner().status)">{{ partner().status }}</span></span>
               </div>
               <div class="info-row">
-                <span class="info-label">Approved</span>
-                <span class="info-value" [class.text-success]="partner().is_approved" [class.text-danger]="!partner().is_approved">
-                  {{ partner().is_approved ? 'Yes' : 'No' }}
+                <span class="info-label">Account Status</span>
+                <span class="info-value">
+                  <select
+                    id="partner-inline-status"
+                    class="inline-status-select"
+                    [class.status-active]="partner().user?.is_active !== false"
+                    [class.status-suspended]="partner().user?.is_active === false"
+                    [value]="partnerAccountStatus()"
+                    (change)="onAccountStatusChange($event)"
+                    [disabled]="actionLoading()"
+                    aria-label="Account status"
+                  >
+                    <option value="active">Active</option>
+                    <option value="suspended">Suspended</option>
+                    <option value="pending">Pending (Not Approved)</option>
+                  </select>
                 </span>
               </div>
             </div>

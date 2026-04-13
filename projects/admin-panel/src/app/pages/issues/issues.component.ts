@@ -3,11 +3,12 @@ import { Subscription, timer } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '@shared/public-api';
+import { DynamicTableComponent, TableCellDirective } from '../../shared/components/dynamic-table/dynamic-table.component';
 
 @Component({
   selector: 'app-issues',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DynamicTableComponent, TableCellDirective],
   templateUrl: './issues.component.html',
   styleUrl: './issues.component.scss' })
 export class IssuesComponent implements OnInit, OnDestroy {
@@ -17,6 +18,14 @@ export class IssuesComponent implements OnInit, OnDestroy {
   loading = signal(true);
   totalCount = signal(0);
   page = signal(1);
+
+  tableColumns = [
+    { key: 'issue', label: 'Issue', flex: '2fr' },
+    { key: 'order', label: 'Order', flex: '1.5fr' },
+    { key: 'type', label: 'Type', flex: '1fr' },
+    { key: 'status', label: 'Status', flex: '1fr' },
+    { key: 'date', label: 'Date', flex: '1fr' }
+  ];
 
   filterType = signal('');
   filterStatus = signal('');
@@ -87,6 +96,11 @@ export class IssuesComponent implements OnInit, OnDestroy {
     clearTimeout(this.timer);
     this.page.set(1);
     this.timer = setTimeout(() => this.load(), 350);
+  }
+
+  onPageChange(newPage: number) {
+    this.page.set(newPage);
+    this.load();
   }
 
   onFilterChange() { this.page.set(1); this.load(); }

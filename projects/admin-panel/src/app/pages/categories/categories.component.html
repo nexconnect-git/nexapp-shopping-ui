@@ -162,6 +162,17 @@
           }
         </tbody>
       </table>
+      @if (totalItems() > 20) {
+        <div class="pagination" style="padding: 1rem; border-top: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; gap: 1rem;">
+          <button class="btn btn-sm btn-ghost" [disabled]="page() === 1" (click)="onPageChange(page() - 1)" style="display: flex; align-items: center; gap: 4px;">
+            <span class="material-icons-outlined">chevron_left</span> Previous
+          </button>
+          <span style="font-size: 0.85rem; color: var(--text-color-muted)">Page {{ page() }} of {{ Math.ceil(totalItems() / 20) }}</span>
+          <button class="btn btn-sm btn-ghost" [disabled]="page() * 20 >= totalItems()" (click)="onPageChange(page() + 1)" style="display: flex; align-items: center; gap: 4px;">
+            Next <span class="material-icons-outlined">chevron_right</span>
+          </button>
+        </div>
+      }
     }
   </div>
 </div>

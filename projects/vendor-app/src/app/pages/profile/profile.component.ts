@@ -46,7 +46,7 @@ export class ProfileComponent implements OnInit {
   onLocationPicked(loc: MapLocation) {
     this.vendor.latitude = loc.lat;
     this.vendor.longitude = loc.lng;
-    if (loc.address) this.vendor.address = loc.address;
+    this.vendor.address = loc.address || this.vendor.address;
     if (loc.city) this.vendor.city = loc.city;
     if (loc.state) this.vendor.state = loc.state;
     if (loc.postal_code) this.vendor.postal_code = loc.postal_code;

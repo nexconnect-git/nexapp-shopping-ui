@@ -2,6 +2,7 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '@shared/public-api';
+import { DynamicTableComponent, TableCellDirective } from '../../shared/components/dynamic-table/dynamic-table.component';
 
 interface CouponForm {
   code: string;
@@ -22,7 +23,7 @@ interface CouponForm {
 @Component({
   selector: 'app-coupons',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DynamicTableComponent, TableCellDirective],
   templateUrl: './coupons.component.html',
   styleUrl: './coupons.component.scss'
 })
@@ -38,6 +39,19 @@ export class CouponsComponent implements OnInit {
   error = signal('');
   success = signal('');
 
+  totalItems = 0;
+  page = 1;
+
+  tableColumns = [
+    { key: 'code', label: 'Code', flex: '1fr' },
+    { key: 'details', label: 'Details', flex: '1.5fr' },
+    { key: 'discount', label: 'Discount', flex: '1fr' },
+    { key: 'scope', label: 'Scope', flex: '1fr' },
+    { key: 'limits', label: 'Used / Limit', flex: '1fr' },
+    { key: 'status', label: 'Status', flex: '1.5fr' },
+    { key: 'actions', label: 'Actions', flex: '0.5fr' }
+  ];
+
   form: CouponForm = this.blankForm();
 
   readonly discountTypes = [
@@ -50,9 +64,18 @@ export class CouponsComponent implements OnInit {
 
   load() {
     this.loading.set(true);
-    this.api.getAdminCoupons().subscribe({
-      next: (res) => { this.coupons.set(res.results || res); this.loading.set(false); },
+    this.api.getAdminCoupons({ page: this.page }).subscribe({
+      next: (res) => {
+        this.coupons.set(res.results || res);
+        this.totalItems = res.count || this.coupons().length;
+        this.loading.set(false);
+      },
       error: () => this.loading.set(false) });
+  }
+
+  onPageChange(page: number) {
+    this.page = page;
+    this.load();
   }
 
   blankForm(): CouponForm {

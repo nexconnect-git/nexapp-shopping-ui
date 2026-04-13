@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ApiService, AuthService, ToastService } from '@shared/public-api';
 import { NgIf, NgFor, NgClass } from '@angular/common';
+import { DynamicTableComponent, TableCellDirective } from '../../shared/components/dynamic-table/dynamic-table.component';
 
 @Component({
   selector: 'app-admin-users',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgIf, NgFor, NgClass],
+  imports: [CommonModule, ReactiveFormsModule, NgIf, NgClass, DynamicTableComponent, TableCellDirective],
   templateUrl: './admin-users.component.html',
   styleUrls: ['./admin-users.component.scss']
 })
@@ -22,6 +23,18 @@ export class AdminUsersComponent implements OnInit {
   isSubmitting = false;
   createForm: FormGroup;
   showForm = false;
+
+  totalItems = 0;
+  page = 1;
+
+  tableColumns = [
+    { key: 'user', label: 'User', flex: '2fr' },
+    { key: 'contact', label: 'Contact Info', flex: '1.5fr' },
+    { key: 'role', label: 'Role', flex: '1fr' },
+    { key: 'status', label: 'Status', flex: '1fr' },
+    { key: 'joined', label: 'Joined', flex: '1fr' },
+    { key: 'actions', label: 'Actions', flex: '0.5fr' }
+  ];
 
   constructor() {
     this.createForm = this.fb.group({
@@ -44,9 +57,10 @@ export class AdminUsersComponent implements OnInit {
 
   loadUsers() {
     this.isLoading = true;
-    this.api.getAdminUsers().subscribe({
+    this.api.getAdminUsers({ page: this.page }).subscribe({
       next: (res: any) => {
         this.adminUsers = res.results || res;
+        this.totalItems = res.count || this.adminUsers.length;
         this.isLoading = false;
       },
       error: (err) => {
@@ -55,6 +69,11 @@ export class AdminUsersComponent implements OnInit {
         console.error(err);
       }
     });
+  }
+
+  onPageChange(page: number) {
+    this.page = page;
+    this.loadUsers();
   }
 
   onSubmit() {

@@ -3,11 +3,12 @@ import { Subscription, timer } from 'rxjs';
 import { CommonModule, DecimalPipe, TitleCasePipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService, AppCurrencyPipe, ToastService } from '@shared/public-api';
+import { DynamicTableComponent, TableCellDirective } from '../../shared/components/dynamic-table/dynamic-table.component';
 
 @Component({
   selector: 'app-payouts',
   standalone: true,
-  imports: [CommonModule, FormsModule, AppCurrencyPipe, DecimalPipe, TitleCasePipe, DatePipe],
+  imports: [CommonModule, FormsModule, AppCurrencyPipe, DecimalPipe, TitleCasePipe, DatePipe, DynamicTableComponent, TableCellDirective],
   templateUrl: './payouts.component.html',
   styleUrl: './payouts.component.scss'
 })
@@ -19,6 +20,32 @@ export class PayoutsComponent implements OnInit, OnDestroy {
   activeTab = signal<'vendors' | 'delivery'>('vendors');
   loading = signal(false);
   payouts = signal<any[]>([]);
+  totalItems = signal(0);
+  page = signal(1);
+
+  get tableColumns() {
+    if (this.activeTab() === 'vendors') {
+      return [
+        { key: 'id', label: 'ID', flex: '0.5fr' },
+        { key: 'entity', label: 'Vendor', flex: '1.5fr' },
+        { key: 'period', label: 'Period', flex: '1.5fr' },
+        { key: 'gross', label: 'Gross Sales', flex: '1fr' },
+        { key: 'commission', label: 'Commission', flex: '1fr' },
+        { key: 'net', label: 'Net Payout', flex: '1fr' },
+        { key: 'status', label: 'Status', flex: '1fr' },
+        { key: 'actions', label: 'Actions', flex: '1.5fr' }
+      ];
+    } else {
+      return [
+        { key: 'id', label: 'ID', flex: '0.5fr' },
+        { key: 'entity', label: 'Partner', flex: '1.5fr' },
+        { key: 'period', label: 'Period', flex: '1.5fr' },
+        { key: 'net', label: 'Net Payout', flex: '1fr' },
+        { key: 'status', label: 'Status', flex: '1fr' },
+        { key: 'actions', label: 'Actions', flex: '1.5fr' }
+      ];
+    }
+  }
 
   vendors = signal<any[]>([]);
   partners = signal<any[]>([]);
@@ -43,6 +70,10 @@ export class PayoutsComponent implements OnInit, OnDestroy {
   selectedVendor = signal<any | null>(null);
   vendorBank = signal<any | null>(null);
   bankLoading = signal(false);
+
+  // ── Vendor sales summary (auto-fetched on date+vendor change) ─
+  vendorSalesSummary = signal<any | null>(null);
+  loadingSales = signal(false);
 
   // ── Computed commission values ────────────────────────────────
   commissionPct = computed(() => {
@@ -102,7 +133,13 @@ export class PayoutsComponent implements OnInit, OnDestroy {
   // ── Tab switching ─────────────────────────────────────────────
   setTab(tab: 'vendors' | 'delivery') {
     this.activeTab.set(tab);
+    this.page.set(1);
     this.resetForm();
+    this.loadPayouts();
+  }
+
+  onPageChange(page: number) {
+    this.page.set(page);
     this.loadPayouts();
   }
 
@@ -126,8 +163,8 @@ export class PayoutsComponent implements OnInit, OnDestroy {
   loadPayouts() {
     this.loading.set(true);
     const req = this.activeTab() === 'vendors'
-      ? this.api.getAdminVendorPayouts()
-      : this.api.getAdminDeliveryPayouts();
+      ? this.api.getAdminVendorPayouts({ page: this.page() })
+      : this.api.getAdminDeliveryPayouts({ page: this.page() });
 
     req.subscribe({
       next: (res: any) => {
@@ -137,6 +174,7 @@ export class PayoutsComponent implements OnInit, OnDestroy {
           partner_name: p.partner_name || p.delivery_partner || '—'
         }));
         this.payouts.set(list);
+        this.totalItems.set(res.count ?? list.length);
         this.loading.set(false);
         this.lastRefreshed.set(new Date());
       },
@@ -147,12 +185,12 @@ export class PayoutsComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ── Vendor selection ──────────────────────────────────────────
   onVendorChange(event: Event) {
     const vendorId = (event.target as HTMLSelectElement).value;
     const vendor = this.vendors().find((v: any) => v.id === vendorId);
     this.selectedVendor.set(vendor || null);
     this.vendorBank.set(null);
+    this.vendorSalesSummary.set(null);
     if (!vendorId) return;
 
     this.bankLoading.set(true);
@@ -160,12 +198,41 @@ export class PayoutsComponent implements OnInit, OnDestroy {
       next: (bank: any) => { this.vendorBank.set(bank); this.bankLoading.set(false); },
       error: () => { this.bankLoading.set(false); }
     });
+
+    // Auto-calculate if dates are already filled
+    if (this.createFormObj.period_start && this.createFormObj.period_end) {
+      this.calculateVendorSales();
+    }
   }
 
   recalculate() {
     if (this.activeTab() === 'delivery') {
       this.calculateDeliveryEarnings();
+    } else {
+      this.calculateVendorSales();
     }
+  }
+
+  calculateVendorSales() {
+    const vendorId = this.createFormObj.vendor_id;
+    const start = this.createFormObj.period_start;
+    const end = this.createFormObj.period_end;
+    if (!vendorId || !start || !end) return;
+
+    this.loadingSales.set(true);
+    this.vendorSalesSummary.set(null);
+    this.api.getAdminVendorSalesSummary(vendorId, start, end).subscribe({
+      next: (res: any) => {
+        this.vendorSalesSummary.set(res);
+        // Auto-fill with gross sales (revenue from non-cancelled orders)
+        this.createFormObj.amount = res.total_revenue;
+        this.loadingSales.set(false);
+      },
+      error: () => {
+        this.toast.show('Failed to fetch sales data for this period.', 'error');
+        this.loadingSales.set(false);
+      }
+    });
   }
 
   calculateDeliveryEarnings() {
@@ -231,6 +298,7 @@ export class PayoutsComponent implements OnInit, OnDestroy {
     this.createFormObj = { vendor_id: '', delivery_partner_id: '', amount: null, period_start: '', period_end: '' };
     this.selectedVendor.set(null);
     this.vendorBank.set(null);
+    this.vendorSalesSummary.set(null);
     this.isEditMode.set(false);
     this.editingId.set(null);
   }

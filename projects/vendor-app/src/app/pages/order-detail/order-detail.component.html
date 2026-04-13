@@ -1,176 +1,169 @@
-<div class="order-detail-page fade-in">
+<div class="order-detail-page">
 
-  <div class="page-header" style="margin-bottom:1.75rem;">
-    <a routerLink="/orders" class="btn-outline">
-      <span class="material-icons-outlined">arrow_back</span>
-      Back to Orders
+  <!-- Breadcrumb -->
+  <nav class="breadcrumb">
+    <a routerLink="/orders" class="btn-back">
+      <span class="material-icons-outlined">arrow_back_ios</span>
+      Orders
     </a>
-  </div>
+    @if (!loading() && order()) {
+      <span class="breadcrumb-sep">/</span>
+      <span class="breadcrumb-current">#{{ order()!.order_number }}</span>
+    }
+  </nav>
 
+  <!-- Loading -->
   @if (loading()) {
     <div class="loading-state">
       <div class="spinner"></div>
-      <p>Loading order details...</p>
+      <p>Loading order details…</p>
     </div>
-  } @else if (!order()) {
-    <div class="card">
-      <div class="empty-state">
-        <span class="material-icons-outlined">receipt_long</span>
-        <strong>Order not found</strong>
-        <p>This order may have been removed or you don't have access.</p>
-      </div>
-    </div>
-  } @else {
+  }
 
-    <!-- Order Header -->
-    <div class="order-header-card card" style="margin-bottom:1.5rem;">
-      <div class="card-body">
-        <div class="order-meta">
-          <div>
-            <h2 style="margin:0 0 0.25rem;">#{{ order()!.order_number }}</h2>
-            <p class="text-muted" style="margin:0;font-size:0.875rem;">{{ order()!.placed_at | date:'MMMM d, y — h:mm a' }}</p>
-          </div>
-          <div class="order-status-area">
-            <span class="badge badge-{{ order()!.status }}" style="font-size:0.875rem;padding:0.4rem 1rem;">{{ order()!.status }}</span>
-            <button class="btn-outline ml-3" (click)="downloadInvoice()" style="padding: 0.4rem 1rem; display: inline-flex; align-items: center; gap: 0.5rem; border-color: var(--border-color); background: white;">
-              <span class="material-icons-outlined" style="font-size: 18px;">download</span>
-              Invoice
-            </button>
-          </div>
+  <!-- Not found -->
+  @else if (!order()) {
+    <div class="empty-state">
+      <span class="material-icons-outlined">receipt_long</span>
+      <strong>Order not found</strong>
+      <p>This order may have been removed or you don't have access.</p>
+    </div>
+  }
+
+  @else {
+
+    <!-- ══ Page Header ══ -->
+    <div class="page-header">
+      <div>
+        <div class="title-row">
+          <h1 class="page-title">#{{ order()!.order_number }}</h1>
+          <span [class]="orderStatusBadge(order()!.status)">{{ order()!.status | titlecase }}</span>
         </div>
-
-        @if (canUpdateStatus()) {
-          <div class="status-update-bar">
-            <p style="font-size:0.875rem;font-weight:500;color:var(--text-secondary);margin:0;">Update status:</p>
-            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-              @if (order()!.status === 'placed') {
-                <button class="status-btn confirm" (click)="updateStatus('confirmed')">
-                  <span class="material-icons-outlined">check_circle</span>
-                  Confirm Order
-                </button>
-                <button class="status-btn reject" (click)="updateStatus('cancelled')">
-                  <span class="material-icons-outlined">cancel</span>
-                  Reject Order
-                </button>
-              }
-              @if (order()!.status === 'confirmed') {
-                <button class="status-btn prepare" (click)="updateStatus('preparing')">
-                  <span class="material-icons-outlined">local_fire_department</span>
-                  Start Preparing
-                </button>
-                <button class="status-btn reject" (click)="updateStatus('cancelled')">
-                  <span class="material-icons-outlined">cancel</span>
-                  Cancel Order
-                </button>
-              }
-              @if (order()!.status === 'preparing') {
-                <button class="status-btn ready" (click)="updateStatus('ready')">
-                  <span class="material-icons-outlined">done_all</span>
-                  Mark as Ready
-                </button>
-              }
-            </div>
-          </div>
-        }
+        <p class="page-subtitle">
+          <span class="material-icons-outlined">calendar_today</span>
+          {{ order()!.placed_at | date:'MMMM d, y — h:mm a' }}
+        </p>
+      </div>
+      <div class="header-actions">
+        <button id="btn-download-invoice" class="btn-invoice" (click)="downloadInvoice()">
+          <span class="material-icons-outlined">download</span>
+          Invoice
+        </button>
       </div>
     </div>
 
-    <!-- Main Layout -->
-    <div class="order-layout">
+    <!-- ══ Vendor Status Action Bar ══ -->
+    @if (canUpdateStatus()) {
+      <div class="status-update-bar">
+        <span class="status-label">Update order status:</span>
+        <div class="status-actions">
+          @if (order()!.status === 'placed') {
+            <button id="btn-confirm-order" class="status-btn confirm" (click)="updateStatus('confirmed')">
+              <span class="material-icons-outlined">check_circle</span>
+              Confirm Order
+            </button>
+          }
+          @if (order()!.status === 'confirmed') {
+            <button id="btn-start-preparing" class="status-btn prepare" (click)="updateStatus('preparing')">
+              <span class="material-icons-outlined">local_fire_department</span>
+              Start Preparing
+            </button>
+          }
+          @if (order()!.status === 'preparing') {
+            <button id="btn-mark-ready" class="status-btn ready" (click)="updateStatus('ready')">
+              <span class="material-icons-outlined">done_all</span>
+              Mark as Ready
+            </button>
+          }
+        </div>
+        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-light); font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.375rem;">
+          <span class="material-icons-outlined" style="font-size: 1.125rem; color: var(--info);">info</span>
+          Need to cancel this order? Please contact the help desk.
+        </div>
+      </div>
+    }
 
-      <!-- Left: Items + Pricing -->
-      <div class="order-main">
+    <!-- ══ Main Grid ══ -->
+    <div class="detail-grid">
 
-        <!-- Items -->
+      <!-- LEFT column -->
+      <div class="detail-col">
+
+        <!-- Order Items -->
         <div class="card">
           <div class="card-header">
             <h3>Order Items</h3>
-            <span class="badge badge-secondary">{{ order()!.items.length }} item(s)</span>
+            <span class="chip">{{ order()!.items.length }} item(s)</span>
           </div>
-          <div class="card-body" style="padding:0;">
-            <table class="data-table">
-              <thead>
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Unit Price</th>
+                <th>Qty</th>
+                <th style="text-align:right;">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of order()!.items; track item.id) {
                 <tr>
-                  <th>Product</th>
-                  <th>Unit Price</th>
-                  <th>Qty</th>
-                  <th style="text-align:right;">Subtotal</th>
+                  <td class="item-name-cell">{{ item.product_name }}</td>
+                  <td class="text-muted">{{ item.product_price | appCurrency }}</td>
+                  <td><span class="qty-badge">×{{ item.quantity }}</span></td>
+                  <td class="text-right"><strong>{{ item.subtotal | appCurrency }}</strong></td>
                 </tr>
-              </thead>
-              <tbody>
-                @for (item of order()!.items; track item.id) {
-                  <tr>
-                    <td>
-                      <span class="item-name">{{ item.product_name }}</span>
-                    </td>
-                    <td class="text-muted">{{ item.product_price | appCurrency }}</td>
-                    <td>
-                      <span class="item-qty-badge">x{{ item.quantity }}</span>
-                    </td>
-                    <td style="text-align:right;">
-                      <strong>{{ item.subtotal | appCurrency }}</strong>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-          <div class="card-footer">
-            <div class="price-breakdown">
-              <div class="price-row">
-                <span>Subtotal</span>
-                <span>{{ order()!.subtotal | appCurrency }}</span>
-              </div>
-              <div class="price-row">
-                <span>Delivery Fee</span>
-                <span>{{ order()!.delivery_fee | appCurrency }}</span>
-              </div>
-              @if (order()!.discount) {
-                <div class="price-row discount">
-                  <span>Discount</span>
-                  <span>-{{ order()!.discount | appCurrency }}</span>
-                </div>
               }
-              <div class="price-row total">
-                <span>Total</span>
-                <span>{{ order()!.total | appCurrency }}</span>
+            </tbody>
+          </table>
+          <div class="price-breakdown">
+            <div class="price-row">
+              <span>Subtotal</span>
+              <span>{{ order()!.subtotal | appCurrency }}</span>
+            </div>
+            <div class="price-row">
+              <span>Delivery Fee</span>
+              <span>{{ order()!.delivery_fee | appCurrency }}</span>
+            </div>
+            @if (order()!.discount) {
+              <div class="price-row discount">
+                <span>Discount</span>
+                <span>-{{ order()!.discount | appCurrency }}</span>
               </div>
+            }
+            <div class="price-row total">
+              <span>Total</span>
+              <span>{{ order()!.total | appCurrency }}</span>
             </div>
           </div>
         </div>
 
-        <!-- ══ Delivery Assignment Status (when ready, no partner yet) ══ -->
+        <!-- Delivery Assignment Alert (ready, no partner yet) -->
         @if (order()!.status === 'ready' && !order()!.delivery_partner) {
           @if (order()!.assignment_status === 'timed_out' || order()!.assignment_status === 'failed') {
-            <!-- Timeout / failed — vendor must retrigger -->
-            <div class="assignment-alert timed-out" style="margin-top:1.25rem;">
-              <div class="assignment-alert-icon">
+            <div class="assignment-alert timed-out">
+              <div class="alert-icon">
                 <span class="material-icons-outlined">timer_off</span>
               </div>
-              <div class="assignment-alert-body">
+              <div class="alert-body">
                 <strong>No delivery partner responded</strong>
                 <p>Nobody accepted this order within 1 minute. Tap below to search again.</p>
                 @if (retriggerError()) {
-                  <p class="retrigger-error">{{ retriggerError() }}</p>
+                  <p class="alert-error">{{ retriggerError() }}</p>
                 }
               </div>
-              <button class="btn-retrigger" [disabled]="retriggering()" (click)="retriggerPickup()">
+              <button id="btn-retrigger" class="btn-retrigger" [disabled]="retriggering()" (click)="retriggerPickup()">
                 @if (retriggering()) {
-                  <span class="spinner spinner-xs"></span>
-                  Searching...
+                  <span class="spinner-xs"></span> Searching…
                 } @else {
-                  <span class="material-icons-outlined">refresh</span>
-                  Retrigger Pickup
+                  <span class="material-icons-outlined">refresh</span> Retrigger Pickup
                 }
               </button>
             </div>
           } @else {
-            <!-- Actively searching -->
-            <div class="assignment-alert searching" style="margin-top:1.25rem;">
-              <div class="assignment-alert-icon pulse-icon">
+            <div class="assignment-alert searching">
+              <div class="alert-icon pulse">
                 <span class="material-icons-outlined">delivery_dining</span>
               </div>
-              <div class="assignment-alert-body">
+              <div class="alert-body">
                 <strong>Searching for delivery partner…</strong>
                 <p>We're looking for the nearest available partner. This page updates automatically.</p>
               </div>
@@ -179,92 +172,89 @@
           }
         }
 
-        <!-- ══ Pickup OTP Verification (when ready + partner assigned) ══ -->
+        <!-- OTP Verification (ready + partner assigned) -->
         @if (order()!.status === 'ready' && order()!.delivery_partner) {
-          <div class="card otp-card" style="margin-top:1.25rem;">
+          <div class="card otp-card">
             <div class="card-header">
               <h3>
-                <span class="material-icons-outlined" style="font-size:18px;vertical-align:middle;margin-right:0.375rem;color:var(--primary);">verified</span>
+                <span class="material-icons-outlined">verified</span>
                 Verify Pickup OTP
               </h3>
             </div>
-            <div class="card-body">
-              @if (otpSuccess()) {
-                <div class="otp-success-msg">
-                  <span class="material-icons-outlined">check_circle</span>
-                  OTP verified! Order marked as Picked Up.
-                </div>
-              } @else {
-                <p style="font-size:0.875rem;color:var(--text-secondary);margin:0 0 1rem;">
+            @if (otpSuccess()) {
+              <div class="otp-success-msg">
+                <span class="material-icons-outlined">check_circle</span>
+                OTP verified! Order marked as Picked Up.
+              </div>
+            } @else {
+              <div class="otp-body">
+                <p style="font-size:0.875rem;color:#464554;margin:0 0 1rem;font-weight:500;">
                   Ask the delivery partner for their 6-digit OTP and enter it below to hand over the order.
                 </p>
                 @if (order()!.delivery_partner_info) {
                   <div class="partner-info">
                     <span class="material-icons-outlined">delivery_dining</span>
                     <strong>{{ order()!.delivery_partner_info!.name }}</strong>
-                    <span class="partner-vehicle">{{ order()!.delivery_partner_info!.vehicle_type }}</span>
+                    <span class="partner-vehicle">{{ order()!.delivery_partner_info!.vehicle_type | titlecase }}</span>
                   </div>
                 }
-                <div style="display:flex;gap:0.75rem;margin-top:1rem;">
+                <div class="otp-input-row">
                   <input
-                    class="form-input otp-input"
+                    id="otp-input"
+                    class="otp-input"
                     type="text"
                     maxlength="6"
                     inputmode="numeric"
-                    placeholder="Enter 6-digit OTP"
+                    placeholder="• • • • • •"
                     [value]="otpInput()"
                     (input)="otpInput.set($any($event.target).value)" />
-                  <button class="status-btn confirm" [disabled]="verifying()" (click)="verifyPickupOtp()" style="white-space:nowrap;">
+                  <button id="btn-verify-otp" class="btn-verify" [disabled]="verifying()" (click)="verifyPickupOtp()">
                     @if (verifying()) {
-                      <span class="spinner spinner-xs"></span> Verifying...
+                      <span class="spinner-xs"></span> Verifying…
                     } @else {
                       <span class="material-icons-outlined">check</span> Verify
                     }
                   </button>
                 </div>
                 @if (otpError()) {
-                  <p style="color:var(--danger);font-size:0.8125rem;font-weight:600;margin:0.5rem 0 0;">{{ otpError() }}</p>
+                  <p class="otp-error-msg">{{ otpError() }}</p>
                 }
-              }
-            </div>
+              </div>
+            }
           </div>
         }
 
-        <!-- Notes -->
+        <!-- Customer Notes -->
         @if (order()!.notes) {
-          <div class="card" style="margin-top:1.25rem;">
+          <div class="card">
             <div class="card-header">
               <h3>
-                <span class="material-icons-outlined" style="font-size:18px;vertical-align:middle;margin-right:0.375rem;color:var(--warning);">sticky_note_2</span>
+                <span class="material-icons-outlined">notes</span>
                 Customer Notes
               </h3>
             </div>
-            <div class="card-body">
-              <p class="text-muted" style="margin:0;">{{ order()!.notes }}</p>
-            </div>
+            <p class="notes-text">"{{ order()!.notes }}"</p>
           </div>
         }
 
       </div>
 
-      <!-- Right: Customer, Address, Timeline -->
-      <div class="order-side">
+      <!-- RIGHT column -->
+      <div class="detail-col">
 
+        <!-- Live Map -->
         @if (showLiveMap()) {
-          <div class="card map-card" style="margin-bottom:1.25rem;overflow:hidden;">
-            <!-- Map header banner -->
-            <div style="display:flex;align-items:center;gap:0.625rem;padding:0.75rem 1rem;background:linear-gradient(135deg,#6C63FF,#8B83FF);color:white;">
-              <span class="material-icons-outlined" style="font-size:18px;">radar</span>
-              <span style="font-size:0.875rem;font-weight:800;">Live Driver Tracking</span>
+          <div class="map-card">
+            <div class="map-header-banner">
+              <span class="material-icons-outlined">radar</span>
+              <span class="map-title">Live Driver Tracking</span>
               @if (order()!.delivery_partner_info) {
-                <span style="margin-left:auto;font-size:0.75rem;font-weight:600;opacity:0.9;">
-                  {{ order()!.delivery_partner_info!.name }}
-                </span>
+                <span class="map-partner">{{ order()!.delivery_partner_info!.name }}</span>
               }
             </div>
-            <!-- Map -->
-            <div style="height:280px;width:100%;overflow:hidden;position:relative;">
-              <google-map height="280px" width="100%" [center]="center" [zoom]="zoom" [options]="mapOptions"
+            <div class="map-el">
+              <google-map height="280px" width="100%"
+                [center]="center" [zoom]="zoom" [options]="mapOptions"
                 (mapInitialized)="onMapReady($event)">
                 @if (vendorPosition) {
                   <map-marker [position]="vendorPosition" [options]="vendorMarkerOptions"></map-marker>
@@ -277,17 +267,10 @@
                 }
               </google-map>
             </div>
-            <!-- Legend -->
-            <div style="display:flex;gap:1rem;padding:0.625rem 1rem;background:#fafafa;border-top:1px solid var(--border-light);flex-wrap:wrap;">
-              <div style="display:flex;align-items:center;gap:0.375rem;font-size:0.75rem;font-weight:700;color:var(--text-secondary);">
-                <span style="width:10px;height:10px;border-radius:50%;background:#FF6B35;display:inline-block;"></span>Your Store
-              </div>
-              <div style="display:flex;align-items:center;gap:0.375rem;font-size:0.75rem;font-weight:700;color:var(--text-secondary);">
-                <span style="width:10px;height:10px;border-radius:50%;background:#6C63FF;display:inline-block;"></span>Partner
-              </div>
-              <div style="display:flex;align-items:center;gap:0.375rem;font-size:0.75rem;font-weight:700;color:var(--text-secondary);">
-                <span style="width:10px;height:10px;border-radius:50%;background:#10B981;display:inline-block;"></span>Customer
-              </div>
+            <div class="map-legend">
+              <span class="leg-item"><span class="leg-dot" style="background:#FF6B35;"></span>Your Store</span>
+              <span class="leg-item"><span class="leg-dot" style="background:#6366F1;"></span>Partner</span>
+              <span class="leg-item"><span class="leg-dot" style="background:#10B981;"></span>Customer</span>
             </div>
           </div>
         }
@@ -295,17 +278,13 @@
         <!-- Customer -->
         <div class="card">
           <div class="card-header">
-            <h3>Customer</h3>
+            <h3><span class="material-icons-outlined">person</span>Customer</h3>
           </div>
-          <div class="card-body">
-            <div style="display:flex;align-items:center;gap:0.75rem;">
-              <div style="width:40px;height:40px;background:var(--primary-light);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                <span class="material-icons-outlined" style="font-size:22px;color:var(--primary);">person</span>
-              </div>
-              <div>
-                <strong style="font-size:0.9375rem;">{{ order()!.customer_name }}</strong>
-              </div>
+          <div class="customer-hero">
+            <div class="customer-avatar">
+              <span class="material-icons-outlined">person</span>
             </div>
+            <span class="customer-name">{{ order()!.customer_name }}</span>
           </div>
         </div>
 
@@ -313,22 +292,26 @@
         @if (order()!.delivery_address) {
           <div class="card">
             <div class="card-header">
-              <h3>
-                <span class="material-icons-outlined" style="font-size:18px;vertical-align:middle;margin-right:0.375rem;color:var(--primary);">location_on</span>
-                Delivery Address
-              </h3>
+              <h3><span class="material-icons-outlined">location_on</span>Delivery Address</h3>
             </div>
-            <div class="card-body">
-              <div class="address-block">
-                <p style="font-weight:500;color:var(--text-primary);margin-bottom:0.25rem;">{{ order()!.delivery_address.full_name }}</p>
-                <p style="color:var(--text-secondary);margin-bottom:0.125rem;">{{ order()!.delivery_address.address_line1 }}</p>
+            <p class="info-row">
+              <strong>Name</strong>
+              <span>{{ order()!.delivery_address.full_name }}</span>
+            </p>
+            <p class="info-row">
+              <strong>Address</strong>
+              <span>
+                {{ order()!.delivery_address.address_line1 }}
                 @if (order()!.delivery_address.address_line2) {
-                  <p style="color:var(--text-secondary);margin-bottom:0.125rem;">{{ order()!.delivery_address.address_line2 }}</p>
+                  , {{ order()!.delivery_address.address_line2 }}
                 }
-                <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:0.125rem;">{{ order()!.delivery_address.city }}, {{ order()!.delivery_address.state }} {{ order()!.delivery_address.postal_code }}</p>
-                <p style="color:var(--text-muted);font-size:0.875rem;margin:0;">{{ order()!.delivery_address.phone }}</p>
-              </div>
-            </div>
+                <br/>{{ order()!.delivery_address.city }}, {{ order()!.delivery_address.state }} {{ order()!.delivery_address.postal_code }}
+              </span>
+            </p>
+            <p class="info-row">
+              <strong>Phone</strong>
+              <span>{{ order()!.delivery_address.phone }}</span>
+            </p>
           </div>
         }
 
@@ -336,26 +319,21 @@
         @if (order()!.tracking.length) {
           <div class="card">
             <div class="card-header">
-              <h3>
-                <span class="material-icons-outlined" style="font-size:18px;vertical-align:middle;margin-right:0.375rem;color:var(--primary);">timeline</span>
-                Order Timeline
-              </h3>
+              <h3><span class="material-icons-outlined">timeline</span>Order Timeline</h3>
             </div>
-            <div class="card-body">
-              <div class="timeline">
-                @for (t of order()!.tracking; track t.id) {
-                  <div class="timeline-item">
-                    <div class="timeline-dot"></div>
-                    <div class="timeline-content">
-                      <span class="badge badge-{{ t.status }}" style="margin-bottom:0.25rem;">{{ t.status }}</span>
-                      @if (t.description) {
-                        <p style="font-size:0.875rem;color:var(--text-secondary);margin:0.125rem 0;">{{ t.description }}</p>
-                      }
-                      <p class="text-muted" style="font-size:0.8125rem;margin:0;">{{ t.timestamp | date:'MMM d, y — h:mm a' }}</p>
-                    </div>
+            <div class="tracking-list">
+              @for (t of order()!.tracking; track t.id; let last = $last) {
+                <div class="tracking-item">
+                  <div class="t-dot" [class.active]="last"></div>
+                  <div class="t-body">
+                    <span [class]="orderStatusBadge(t.status)" style="font-size:0.65rem;align-self:flex-start;">{{ t.status | titlecase }}</span>
+                    @if (t.description) {
+                      <p class="t-desc">{{ t.description }}</p>
+                    }
+                    <span class="t-time">{{ t.timestamp | date:'MMM d, y — h:mm a' }}</span>
                   </div>
-                }
-              </div>
+                </div>
+              }
             </div>
           </div>
         }
@@ -364,7 +342,7 @@
     </div>
   }
 
-  <!-- Cancel Order Modal -->
+  <!-- ══ Cancel Order Modal ══ -->
   @if (showCancelModal()) {
     <div class="cancel-modal-backdrop" (click)="closeCancelModal()">
       <div class="cancel-modal" (click)="$event.stopPropagation()">
@@ -377,32 +355,32 @@
             <p class="cancel-modal-sub">Order #{{ order()!.order_number }}</p>
           </div>
         </div>
-
         <p class="cancel-modal-desc">
-          Please provide a reason for cancellation. This will be shown to the customer.
+          Please provide a reason for cancellation. This will be communicated to the customer.
         </p>
-
         <div class="cancel-reason-group">
-          <label class="cancel-reason-label">Reason for cancellation <span class="required">*</span></label>
+          <label class="cancel-reason-label">
+            Reason for cancellation <span class="required">*</span>
+          </label>
           <textarea
+            id="cancel-reason-input"
             class="cancel-reason-input"
             rows="3"
-            placeholder="e.g. Out of stock, store closing early, item unavailable..."
+            placeholder="e.g. Out of stock, store closing early, item unavailable…"
             [(ngModel)]="cancelReason"
-            [disabled]="cancelling()"
-          ></textarea>
+            [disabled]="cancelling()">
+          </textarea>
           @if (cancelError()) {
             <p class="cancel-error">{{ cancelError() }}</p>
           }
         </div>
-
         <div class="cancel-modal-footer">
-          <button class="cancel-modal-btn cancel-modal-btn-secondary" (click)="closeCancelModal()" [disabled]="cancelling()">
+          <button id="btn-keep-order" class="cancel-modal-btn secondary" (click)="closeCancelModal()" [disabled]="cancelling()">
             Keep Order
           </button>
-          <button class="cancel-modal-btn cancel-modal-btn-danger" (click)="confirmCancel()" [disabled]="cancelling()">
+          <button id="btn-confirm-cancel" class="cancel-modal-btn danger" (click)="confirmCancel()" [disabled]="cancelling()">
             @if (cancelling()) {
-              <span class="spinner-xs-red"></span> Cancelling...
+              <span class="spinner-xs-red"></span> Cancelling…
             } @else {
               <span class="material-icons-outlined">cancel</span> Confirm Cancel
             }
@@ -411,6 +389,5 @@
       </div>
     </div>
   }
-</div>
 
-<!-- aria-label -->
+</div>

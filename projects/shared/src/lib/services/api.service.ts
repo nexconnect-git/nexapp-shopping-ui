@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, shareReplay } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -9,6 +9,11 @@ export class ApiService {
   readonly cartCount = signal(0);
   readonly unreadNotifications = signal(0);
   readonly activeIssue = signal<any>(null);
+
+  /** Shared cached request for admin stats — expires after 30s. */
+  private _adminStatsCache$?: Observable<any>;
+  private _adminStatsCacheTime = 0;
+  private readonly _STATS_TTL_MS = 30_000;
 
   constructor(private http: HttpClient) {}
 
@@ -142,8 +147,16 @@ export class ApiService {
     return this.http.patch(`${this.baseUrl}/vendors/profile/`, data);
   }
 
-  getVendorProducts(): Observable<any> {
-    return this.http.get(`${this.baseUrl}/vendors/products/`);
+  getVendorProducts(params?: any): Observable<any> {
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.keys(params).forEach(k => {
+        if (params[k] !== null && params[k] !== undefined && params[k] !== '') {
+          httpParams = httpParams.set(k, params[k]);
+        }
+      });
+    }
+    return this.http.get(`${this.baseUrl}/vendors/products/`, { params: httpParams });
   }
 
   createProduct(data: any): Observable<any> {
@@ -196,10 +209,15 @@ export class ApiService {
       closing_time: closingTime });
   }
 
-    getVendorOrders(status?: string): Observable<any> {
-    let params = new HttpParams();
-    if (status) params = params.set('status', status);
-    return this.http.get(`${this.baseUrl}/vendors/orders/`, { params });
+    getVendorOrders(params?: { status?: string; page?: number; page_size?: number; search?: string }): Observable<any> {
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.keys(params).forEach(k => {
+        const v = (params as any)[k];
+        if (v !== null && v !== undefined && v !== '') httpParams = httpParams.set(k, v);
+      });
+    }
+    return this.http.get(`${this.baseUrl}/vendors/orders/`, { params: httpParams });
   }
 
   getVendorOrder(id: string): Observable<any> {
@@ -212,8 +230,16 @@ export class ApiService {
     return this.http.patch(`${this.baseUrl}/vendors/orders/${orderId}/status/`, body);
   }
 
-  getVendorPayouts(): Observable<any> {
-    return this.http.get(`${this.baseUrl}/vendors/payouts/`);
+  getVendorPayouts(params?: any): Observable<any> {
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.keys(params).forEach(k => {
+        if (params[k] !== null && params[k] !== undefined && params[k] !== '') {
+          httpParams = httpParams.set(k, params[k]);
+        }
+      });
+    }
+    return this.http.get(`${this.baseUrl}/vendors/payouts/`, { params: httpParams });
   }
 
   // Invoices
@@ -359,8 +385,16 @@ export class ApiService {
   }
 
   // Vendor coupons
-  getVendorCoupons(): Observable<any> {
-    return this.http.get(`${this.baseUrl}/vendors/coupons/`);
+  getVendorCoupons(params?: any): Observable<any> {
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.keys(params).forEach(k => {
+        if (params[k] !== null && params[k] !== undefined && params[k] !== '') {
+          httpParams = httpParams.set(k, params[k]);
+        }
+      });
+    }
+    return this.http.get(`${this.baseUrl}/vendors/coupons/`, { params: httpParams });
   }
 
   createVendorCoupon(data: any): Observable<any> {
@@ -376,8 +410,8 @@ export class ApiService {
   }
 
   // Admin coupons
-  getAdminCoupons(): Observable<any> {
-    return this.http.get(`${this.baseUrl}/admin/coupons/`);
+  getAdminCoupons(params?: any): Observable<any> {
+    return this.http.get(`${this.baseUrl}/admin/coupons/`, { params });
   }
 
   createAdminCoupon(data: any): Observable<any> {
@@ -512,7 +546,14 @@ export class ApiService {
 
   // Admin
   getAdminStats(): Observable<any> {
-    return this.http.get(`${this.baseUrl}/admin/stats/`);
+    const now = Date.now();
+    if (!this._adminStatsCache$ || now - this._adminStatsCacheTime > this._STATS_TTL_MS) {
+      this._adminStatsCacheTime = now;
+      this._adminStatsCache$ = this.http
+        .get(`${this.baseUrl}/admin/stats/`)
+        .pipe(shareReplay(1));
+    }
+    return this._adminStatsCache$;
   }
 
   getAdminVendors(params?: any): Observable<any> {
@@ -695,6 +736,14 @@ export class ApiService {
       });
     }
     return this.http.get(`${this.baseUrl}/admin/vendors/${id}/sales-report/`, { params: httpParams });
+  }
+
+  /** Fetch gross sales + order stats for a vendor over a specific date range (used by payout modal). */
+  getAdminVendorSalesSummary(vendorId: string, startDate: string, endDate: string): Observable<any> {
+    const params = new HttpParams()
+      .set('start_date', startDate)
+      .set('end_date', endDate);
+    return this.http.get(`${this.baseUrl}/admin/vendors/${vendorId}/sales-report/`, { params });
   }
 
   // Admin Categories

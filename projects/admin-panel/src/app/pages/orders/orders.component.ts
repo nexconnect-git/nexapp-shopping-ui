@@ -58,6 +58,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
   private vendorPos?: {lat: number; lng: number};
   private customerPos?: {lat: number; lng: number};
   private lastDirectionsTime = 0;
+  private directionsEnabled = true;
 
   private ws: WebSocket | null = null;
   private animFrameId?: number;
@@ -132,15 +133,20 @@ export class OrdersComponent implements OnInit, OnDestroy {
     if (!this.canTrackOrder()) return;
     this.showTrackingMap.set(true);
     const o = this.selectedOrder();
-    if (o?.vendor_info?.latitude && o?.vendor_info?.longitude) {
-      this.vendorPos = {lat: parseFloat(o.vendor_info.latitude), lng: parseFloat(o.vendor_info.longitude)};
+
+    const vLat = parseFloat(o?.vendor_info?.latitude);
+    const vLng = parseFloat(o?.vendor_info?.longitude);
+    if (!isNaN(vLat) && !isNaN(vLng)) {
+      this.vendorPos = { lat: vLat, lng: vLng };
     }
-    if (o?.delivery_latitude && o?.delivery_longitude) {
-      this.customerPos = {lat: o.delivery_latitude, lng: o.delivery_longitude};
+
+    const cLat = parseFloat(o?.delivery_latitude);
+    const cLng = parseFloat(o?.delivery_longitude);
+    if (!isNaN(cLat) && !isNaN(cLng)) {
+      this.customerPos = { lat: cLat, lng: cLng };
     }
+
     this.connectWebSocket(o.id);
-    // Use document.getElementById — reliable after Angular renders the signal-driven div
-    // requestAnimationFrame fires after the browser has painted the next frame
     requestAnimationFrame(() => requestAnimationFrame(() => this.initNativeMap()));
   }
 
@@ -192,6 +198,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
   }
 
   private requestDirections() {
+    if (!this.directionsEnabled) return;
     if (!this.gmDirectionsService || !this.gmDirectionsRenderer) return;
     const origin = this.driverPos ?? this.vendorPos;
     const destination = this.customerPos;
@@ -204,6 +211,9 @@ export class OrdersComponent implements OnInit, OnDestroy {
       (result: any, status: any) => {
         if (status === google.maps.DirectionsStatus.OK && result) {
           this.zone.run(() => this.gmDirectionsRenderer?.setDirections(result));
+        } else if (status === 'REQUEST_DENIED' || status === 'NOT_FOUND') {
+          this.directionsEnabled = false;
+          console.warn('[Map] Directions API not available:', status, '— enable it in GCP Console. Markers only.');
         }
       }
     );

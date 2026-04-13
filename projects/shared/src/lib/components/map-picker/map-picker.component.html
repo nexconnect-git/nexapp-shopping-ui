@@ -1,4 +1,19 @@
 <div class="map-picker-wrap">
+
+  <!-- ── Search Bar ── -->
+  @if (mapReady()) {
+    <div class="map-search-bar">
+      <span class="material-icons-outlined search-icon">search</span>
+      <input
+        #searchInput
+        type="text"
+        class="map-search-input"
+        placeholder="Search for a location…"
+        autocomplete="off" />
+    </div>
+  }
+
+  <!-- ── Toolbar ── -->
   <div class="map-toolbar">
     <button type="button" class="map-locate-btn" (click)="useMyLocation()" [disabled]="locating()">
       <span class="material-icons-outlined">{{ locating() ? 'hourglass_empty' : 'my_location' }}</span>
@@ -12,8 +27,10 @@
     }
   </div>
 
+  <!-- ── Map Canvas ── -->
   <div #mapContainer class="map-container" [style.height]="height"></div>
 
+  <!-- ── Result preview ── -->
   @if (pickedAddress()) {
     <div class="map-address-preview">
       <span class="material-icons-outlined">location_on</span>
@@ -22,4 +39,5 @@
   } @else if (mapReady()) {
     <p class="map-hint">Click on the map or drag the pin to select your location</p>
   }
+
 </div>

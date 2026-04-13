@@ -43,6 +43,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
   private vendorPos?: {lat: number; lng: number};
   private customerPos?: {lat: number; lng: number};
   private lastDirectionsTime = 0;
+  private directionsEnabled = true;
   private ws: WebSocket | null = null;
   private animFrameId?: number;
 
@@ -97,11 +98,16 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
   }
 
   private extractPositions(o: Order) {
-    if (o.vendor_info?.latitude && o.vendor_info?.longitude) {
-      this.vendorPos = {lat: parseFloat(o.vendor_info.latitude as string), lng: parseFloat(o.vendor_info.longitude as string)};
+    const vLat = parseFloat(o.vendor_info?.latitude as any);
+    const vLng = parseFloat(o.vendor_info?.longitude as any);
+    if (!isNaN(vLat) && !isNaN(vLng)) {
+      this.vendorPos = { lat: vLat, lng: vLng };
     }
-    if (o.delivery_latitude && o.delivery_longitude) {
-      this.customerPos = {lat: o.delivery_latitude, lng: o.delivery_longitude};
+
+    const cLat = parseFloat(o.delivery_latitude as any);
+    const cLng = parseFloat(o.delivery_longitude as any);
+    if (!isNaN(cLat) && !isNaN(cLng)) {
+      this.customerPos = { lat: cLat, lng: cLng };
     }
   }
 
@@ -145,6 +151,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
   }
 
   private requestDirections() {
+    if (!this.directionsEnabled) return;
     if (!this.gmDirectionsService || !this.gmDirectionsRenderer) return;
     const origin = this.driverPos ?? this.vendorPos;
     const destination = this.customerPos;
@@ -155,8 +162,11 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
     this.gmDirectionsService.route(
       {origin, destination, travelMode: google.maps.TravelMode.DRIVING},
       (result: any, status: any) => {
-        if (status === google.maps.DirectionsStatus.OK) {
+        if (status === google.maps.DirectionsStatus.OK && result) {
           this.zone.run(() => this.gmDirectionsRenderer?.setDirections(result));
+        } else if (status === 'REQUEST_DENIED' || status === 'NOT_FOUND') {
+          this.directionsEnabled = false;
+          console.warn('[Map] Directions API not available:', status, '— enable it in GCP Console. Markers only.');
         }
       }
     );

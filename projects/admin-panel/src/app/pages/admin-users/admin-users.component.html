@@ -76,78 +76,71 @@
         <div class="badge badge-info">{{ adminUsers.length }} Total</div>
       </div>
 
-      <div class="loading-state" *ngIf="isLoading">
-        <div class="spinner"></div>
-        <p>Loading accounts...</p>
-      </div>
+      <app-dynamic-table
+        [columns]="tableColumns"
+        [data]="adminUsers"
+        [loading]="isLoading"
+        [totalItems]="totalItems"
+        [itemsPerPage]="20"
+        [page]="page"
+        emptyMessage="No administrative accounts found."
+        emptySubMessage="Try adjusting your filters or create a new account."
+        emptyIcon="manage_accounts"
+        (pageChange)="onPageChange($event)">
 
-      <div class="empty-state" *ngIf="!isLoading && adminUsers.length === 0">
-        <span class="material-icons-outlined empty-icon">manage_accounts</span>
-        <p>No administrative accounts found.</p>
-      </div>
+        <ng-template tableCell="user" let-row="row">
+          <div class="user-cell">
+            <div class="avatar" *ngIf="row.avatar">
+              <img [src]="row.avatar" alt="Avatar">
+            </div>
+            <div class="avatar-placeholder" *ngIf="!row.avatar">
+              {{ row.first_name?.charAt(0) || row.username?.charAt(0) | uppercase }}
+            </div>
+            <div class="user-details">
+              <span class="user-name">{{ row.first_name }} {{ row.last_name }}</span>
+              <span class="user-username">&#64;{{ row.username }}</span>
+            </div>
+          </div>
+        </ng-template>
 
-      <div class="table-responsive" *ngIf="!isLoading && adminUsers.length > 0">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>User</th>
-              <th>Contact Info</th>
-              <th>Role</th>
-              <th>Status</th>
-              <th>Joined</th>
-              <th class="text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let user of adminUsers">
-              <td>
-                <div class="user-cell">
-                  <div class="avatar" *ngIf="user.avatar">
-                    <img [src]="user.avatar" alt="Avatar">
-                  </div>
-                  <div class="avatar-placeholder" *ngIf="!user.avatar">
-                    {{ user.first_name?.charAt(0) || user.username?.charAt(0) | uppercase }}
-                  </div>
-                  <div class="user-details">
-                    <span class="user-name">{{ user.first_name }} {{ user.last_name }}</span>
-                    <span class="user-username">&#64;{{ user.username }}</span>
-                  </div>
-                </div>
-              </td>
-              <td>
-                <div class="contact-info">
-                  <span class="contact-item"><span class="material-icons-outlined">email</span> {{ user.email }}</span>
-                  <span class="contact-item" *ngIf="user.phone"><span class="material-icons-outlined">phone</span> {{ user.phone }}</span>
-                </div>
-              </td>
-              <td>
-                <span class="role-badge" [ngClass]="user.is_superuser ? 'role-super' : 'role-admin'">
-                  {{ user.is_superuser ? 'Superuser' : 'Administrator' }}
-                </span>
-              </td>
-              <td>
-                <span class="badge" [ngClass]="user.is_active ? 'active' : 'inactive'">
-                  {{ user.is_active ? 'Active' : 'Inactive' }}
-                </span>
-              </td>
-              <td>
-                <span class="date">{{ user.created_at | date:'mediumDate' }}</span>
-              </td>
-              <td class="text-right">
-                <button class="action-btn danger" 
-                        *ngIf="(auth.user()?.id !== user.id)"
-                        (click)="deleteUser(user.id)" 
-                        title="Delete Account">
-                  <span class="material-icons-outlined">delete_outline</span>
-                </button>
-                <span class="action-btn disabled-action" *ngIf="(auth.user()?.id === user.id)" title="Current Session (You)">
-                  <span class="material-icons-outlined">person</span>
-                </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+        <ng-template tableCell="contact" let-row="row">
+          <div class="contact-info">
+            <span class="contact-item"><span class="material-icons-outlined">email</span> {{ row.email }}</span>
+            <span class="contact-item" *ngIf="row.phone"><span class="material-icons-outlined">phone</span> {{ row.phone }}</span>
+          </div>
+        </ng-template>
+
+        <ng-template tableCell="role" let-row="row">
+          <span class="role-badge" [ngClass]="row.is_superuser ? 'role-super' : 'role-admin'">
+            {{ row.is_superuser ? 'Superuser' : 'Administrator' }}
+          </span>
+        </ng-template>
+
+        <ng-template tableCell="status" let-row="row">
+          <span class="badge" [ngClass]="row.is_active ? 'active' : 'inactive'">
+            {{ row.is_active ? 'Active' : 'Inactive' }}
+          </span>
+        </ng-template>
+
+        <ng-template tableCell="joined" let-row="row">
+          <span class="date">{{ row.created_at | date:'mediumDate' }}</span>
+        </ng-template>
+
+        <ng-template tableCell="actions" let-row="row">
+          <div style="display: flex; justify-content: flex-end;">
+            <button class="action-btn danger" 
+                    *ngIf="(auth.user()?.id !== row.id)"
+                    (click)="deleteUser(row.id)" 
+                    title="Delete Account">
+              <span class="material-icons-outlined">delete_outline</span>
+            </button>
+            <span class="action-btn disabled-action" *ngIf="(auth.user()?.id === row.id)" title="Current Session (You)">
+              <span class="material-icons-outlined">person</span>
+            </span>
+          </div>
+        </ng-template>
+        
+      </app-dynamic-table>
     </div>
     
   </div>

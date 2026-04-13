@@ -27,7 +27,7 @@
 
           <!-- Step Tracker -->
           <div class="status-steps">
-            <div class="status-step" [class.done]="['picked_up','on_the_way','delivered'].includes(order.status)" [class.active]="order.status === 'ready'">
+            <div class="status-step" [class.done]="['picked_up','on_the_way','delivered'].includes(order.status)" [class.active]="['placed','confirmed','preparing','ready'].includes(order.status)">
               <div class="step-dot"></div><span class="step-label">Go to Vendor</span>
             </div>
             <div class="step-track" [class.done]="['on_the_way','delivered'].includes(order.status)"></div>
@@ -50,8 +50,8 @@
             }
           </div>
 
-          <!-- ════════ READY: Show pickup OTP + navigate to vendor ════════ -->
-          @if (order.status === 'ready') {
+          <!-- ════════ PRE-READY & READY: Show pickup OTP + navigate to vendor ════════ -->
+          @if (['placed','confirmed','preparing','ready'].includes(order.status)) {
             <div class="otp-box">
               <div class="otp-label">
                 <span class="material-icons-outlined">lock</span>
@@ -64,7 +64,7 @@
             <div class="action-col">
               <button class="action-btn map-btn" (click)="navigateToVendor(order)">
                 <span class="material-icons-outlined">near_me</span>
-                Navigate to {{ order.vendor_info.store_name || order.vendor_name }}
+                Navigate to {{ order.vendor_info?.store_name || order.vendor_name || 'Vendor' }}
               </button>
               <button class="action-btn cancel-btn" (click)="cancelAssignment(order)">
                 <span class="material-icons-outlined">cancel</span>

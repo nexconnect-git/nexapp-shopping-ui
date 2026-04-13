@@ -256,15 +256,23 @@
     <span class="material-icons-outlined">search</span>
     <span>Search</span>
   </a>
+  
+  <!-- Central FAB Cart -->
   <a routerLink="/cart" routerLinkActive="active" class="nav-tab cart-tab">
-    <span class="material-icons-outlined">shopping_cart</span>
-    <span>Cart</span>
-    @if (api.cartCount() > 0) {
-      <span class="nav-badge cart-badge">{{ api.cartCount() > 9 ? '9+' : api.cartCount() }}</span>
-    }
+    <div class="cart-fab">
+      <span class="material-icons-outlined">shopping_bag</span>
+      @if (api.cartCount() > 0) {
+        <span class="cart-badge">{{ api.cartCount() > 9 ? '9+' : api.cartCount() }}</span>
+      }
+    </div>
   </a>
 
+  <!-- Orders replacing old profile? Actually orders should be there. Let's keep Orders instead of just profile if logged in -->
   @if (auth.isLoggedIn()) {
+    <a routerLink="/orders" routerLinkActive="active" class="nav-tab">
+      <span class="material-icons-outlined">receipt_long</span>
+      <span>Orders</span>
+    </a>
     <a routerLink="/profile" routerLinkActive="active" class="nav-tab">
       <span class="material-icons-outlined">person</span>
       <span>Profile</span>

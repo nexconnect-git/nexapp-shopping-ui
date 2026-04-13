@@ -11,7 +11,8 @@
   top: 0;
   z-index: 100;
   background: white;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: none;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.02);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -119,7 +120,8 @@
 /* ── Hero ────────────────────────────────────────────── */
 .sd-hero {
   background: white;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: none;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.03);
   margin-bottom: 8px;
 }
 
@@ -261,10 +263,10 @@
   .material-icons-outlined { font-size: 14px; }
 
   &.active {
-    background: #e8fff1;
-    border-color: #48c479;
-    color: #15803d;
-    .material-icons-outlined { color: #48c479; }
+    background: var(--primary-light);
+    border-color: var(--primary);
+    color: var(--primary-dark);
+    .material-icons-outlined { color: var(--primary); }
   }
 }
 
@@ -278,7 +280,7 @@
 
 /* ── Products Section ────────────────────────────────── */
 .sd-products {
-  background: white;
+  background: transparent;
   margin-bottom: 8px;
 }
 
@@ -312,12 +314,17 @@
   display: flex;
   gap: 0.75rem;
   padding: 1rem;
-  border-bottom: 1px solid #f5f5f5;
+  margin: 0.5rem 1rem;
+  border-radius: var(--radius-xl);
+  background: white;
+  border-bottom: none;
+  box-shadow: var(--shadow-sm);
   align-items: flex-start;
   position: relative;
+  transition: transform 0.15s, box-shadow 0.15s;
 
+  &:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
   &.oos { opacity: 0.55; }
-  &:last-child { border-bottom: none; }
 }
 
 .sd-item-content {
@@ -629,7 +636,7 @@
   bottom: 72px;
   left: 0;
   right: 0;
-  background: var(--primary);
+  background: var(--primary-gradient);
   color: white;
   display: flex;
   align-items: center;
@@ -661,7 +668,7 @@
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.5);
-  z-index: 300;
+  z-index: 1100; /* Must be above .bottom-nav (z-index: 1000) */
   display: flex;
   align-items: flex-end;
   justify-content: center;

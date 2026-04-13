@@ -132,8 +132,20 @@
               </div>
               <div class="info-row">
                 <span class="info-label">Account Status</span>
-                <span class="info-value" [class.text-success]="customer().is_active !== false" [class.text-danger]="customer().is_active === false">
-                  {{ customer().is_active !== false ? 'Active' : 'Suspended' }}
+                <span class="info-value">
+                  <select
+                    id="customer-status-select"
+                    class="inline-status-select"
+                    [class.status-active]="customer().is_active !== false"
+                    [class.status-suspended]="customer().is_active === false"
+                    [value]="customer().is_active !== false ? 'true' : 'false'"
+                    (change)="quickSetStatus($event)"
+                    [disabled]="actionLoading()"
+                    aria-label="Account status"
+                  >
+                    <option value="true">Active</option>
+                    <option value="false">Suspended</option>
+                  </select>
                 </span>
               </div>
               <div class="info-row">
@@ -218,15 +230,12 @@
               <label class="form-label">Phone</label>
               <input class="form-input" [(ngModel)]="editForm.phone">
             </div>
-            <div class="form-check-group">
-              <label class="form-check">
-                <input type="checkbox" [(ngModel)]="editForm.is_verified">
-                Email Verified
-              </label>
-              <label class="form-check">
-                <input type="checkbox" [(ngModel)]="editForm.is_active">
-                Account Active
-              </label>
+            <div class="form-group">
+              <label class="form-label" for="edit-customer-status">Account Status</label>
+              <select id="edit-customer-status" class="form-input" [(ngModel)]="editForm.is_active">
+                <option [ngValue]="true">Active</option>
+                <option [ngValue]="false">Suspended</option>
+              </select>
             </div>
           </div>
           <div class="modal-footer">

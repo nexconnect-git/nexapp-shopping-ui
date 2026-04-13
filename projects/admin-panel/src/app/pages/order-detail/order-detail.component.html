@@ -3,7 +3,7 @@
   <!-- Breadcrumb -->
   <nav class="breadcrumb">
     <a routerLink="/orders" class="breadcrumb-link">
-      <span class="material-icons-outlined">arrow_back</span>
+      <span class="material-icons-outlined">arrow_back_ios</span>
       Orders
     </a>
     @if (!loading() && order()) {
@@ -12,8 +12,12 @@
     }
   </nav>
 
+  <!-- Loading -->
   @if (loading()) {
-    <div class="loading-state"><div class="spinner"></div><p>Loading order…</p></div>
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading order…</p>
+    </div>
   }
 
   @if (!loading() && order()) {
@@ -25,26 +29,23 @@
           <h1 class="page-title">#{{ order()!.order_number }}</h1>
           <span [class]="statusBadgeClass(order()!.status)">{{ order()!.status | titlecase }}</span>
         </div>
-        <p class="page-subtitle">{{ order()!.placed_at | date:'MMMM d, y — h:mm a' }}</p>
+        <p class="page-subtitle">
+          <span class="material-icons-outlined" style="font-size:15px;vertical-align:middle;margin-right:4px;color:#767586;">calendar_today</span>
+          {{ order()!.placed_at | date:'MMMM d, y — h:mm a' }}
+        </p>
       </div>
-      <!-- Status update -->
+
+      <!-- Admin: status read-only display -->
       <div class="header-actions">
-        @if (updateError()) {
-          <span class="update-error">{{ updateError() }}</span>
-        }
-        <select class="status-select" [value]="order()!.status" [disabled]="updating()"
-          (change)="updateStatus($any($event.target).value)">
-          @for (s of statuses; track s) {
-            <option [value]="s">{{ s | titlecase }}</option>
-          }
-        </select>
-        @if (updating()) {
-          <div class="spinner-sm"></div>
-        }
+        <div class="status-readonly-pill">
+          <span class="material-icons-outlined">flag</span>
+          <span class="status-readonly-label">Status</span>
+          <span [class]="statusBadgeClass(order()!.status)" style="font-size:0.75rem;">{{ order()!.status | titlecase }}</span>
+        </div>
       </div>
     </div>
 
-    <!-- ══ Live Tracking Map ══ -->
+    <!-- ══ Live Tracking Banner ══ -->
     @if (canTrack()) {
       <div class="map-section">
         <div class="map-section-header">
@@ -52,17 +53,18 @@
             <span class="material-icons-outlined">radar</span>
             Live Delivery Tracking
           </div>
-          <button class="btn-map-toggle" (click)="toggleMap()">
-            <span class="material-icons-outlined">{{ showMap() ? 'map' : 'map' }}</span>
+          <button id="btn-toggle-map" class="btn-map-toggle" (click)="toggleMap()">
+            <span class="material-icons-outlined">{{ showMap() ? 'visibility_off' : 'map' }}</span>
             {{ showMap() ? 'Hide Map' : 'Show Live Map' }}
           </button>
         </div>
+
         @if (showMap()) {
           <div class="map-container">
             <div id="admin-order-map" class="map-el"></div>
             <div class="map-legend">
               <span class="leg-item"><span class="leg-dot" style="background:#FF6B35;"></span>Vendor</span>
-              <span class="leg-item"><span class="leg-dot" style="background:#06B6D4;"></span>Partner</span>
+              <span class="leg-item"><span class="leg-dot" style="background:#6366F1;"></span>Partner</span>
               <span class="leg-item"><span class="leg-dot" style="background:#10B981;"></span>Customer</span>
             </div>
           </div>
@@ -86,7 +88,7 @@
       </div>
     }
 
-    <!-- ══ Main Grid ══ -->
+    <!-- ══ Main 2-Column Grid ══ -->
     <div class="detail-grid">
 
       <!-- LEFT column -->
@@ -100,7 +102,12 @@
           </div>
           <table class="items-table">
             <thead>
-              <tr><th>Product</th><th>Unit</th><th>Qty</th><th>Subtotal</th></tr>
+              <tr>
+                <th>Product</th>
+                <th>Unit Price</th>
+                <th>Qty</th>
+                <th style="text-align:right;">Subtotal</th>
+              </tr>
             </thead>
             <tbody>
               @for (item of order()!.items; track item.id) {
@@ -114,20 +121,37 @@
             </tbody>
           </table>
           <div class="price-breakdown">
-            <div class="price-row"><span>Subtotal</span><span>{{ order()!.subtotal | appCurrency }}</span></div>
-            <div class="price-row"><span>Delivery fee</span><span>{{ order()!.delivery_fee | appCurrency }}</span></div>
+            <div class="price-row">
+              <span>Subtotal</span>
+              <span>{{ order()!.subtotal | appCurrency }}</span>
+            </div>
+            <div class="price-row">
+              <span>Delivery fee</span>
+              <span>{{ order()!.delivery_fee | appCurrency }}</span>
+            </div>
             @if (order()!.discount > 0) {
-              <div class="price-row discount"><span>Discount</span><span>-{{ order()!.discount | appCurrency }}</span></div>
+              <div class="price-row discount">
+                <span>Discount</span>
+                <span>-{{ order()!.discount | appCurrency }}</span>
+              </div>
             }
-            <div class="price-row total"><span>Total</span><span>{{ order()!.total | appCurrency }}</span></div>
+            <div class="price-row total">
+              <span>Total</span>
+              <span>{{ order()!.total | appCurrency }}</span>
+            </div>
           </div>
         </div>
 
-        <!-- Notes -->
+        <!-- Customer Notes -->
         @if (order()!.notes) {
           <div class="card">
-            <div class="card-header"><h3>Customer Notes</h3></div>
-            <p class="notes-text">{{ order()!.notes }}</p>
+            <div class="card-header">
+              <h3>
+                <span class="material-icons-outlined">notes</span>
+                Customer Notes
+              </h3>
+            </div>
+            <p class="notes-text">"{{ order()!.notes }}"</p>
           </div>
         }
 
@@ -141,26 +165,42 @@
           <div class="card-header">
             <h3><span class="material-icons-outlined">person</span>Customer</h3>
           </div>
-          <p class="info-row"><strong>Name</strong><span>{{ order()!.customer_name }}</span></p>
+          <p class="info-row">
+            <strong>Name</strong>
+            <span>{{ order()!.customer_name }}</span>
+          </p>
           @if (order()!.delivery_address) {
-            <p class="info-row"><strong>Address</strong>
+            <p class="info-row">
+              <strong>Address</strong>
               <span>{{ order()!.delivery_address.address_line1 }}, {{ order()!.delivery_address.city }}, {{ order()!.delivery_address.state }} {{ order()!.delivery_address.postal_code }}</span>
             </p>
-            <p class="info-row"><strong>Phone</strong><span>{{ order()!.delivery_address.phone }}</span></p>
+            <p class="info-row">
+              <strong>Phone</strong>
+              <span>{{ order()!.delivery_address.phone }}</span>
+            </p>
           }
         </div>
 
         <!-- Vendor -->
         <div class="card">
           <div class="card-header">
-            <h3><span class="material-icons-outlined">store</span>Vendor</h3>
+            <h3><span class="material-icons-outlined">storefront</span>Vendor</h3>
           </div>
-          <p class="info-row"><strong>Name</strong><span>{{ order()!.vendor_name }}</span></p>
-          @if (order()!.vendor_info?.address) {
-            <p class="info-row"><strong>Address</strong><span>{{ order()!.vendor_info.address }}</span></p>
+          <p class="info-row">
+            <strong>Name</strong>
+            <span>{{ order()!.vendor_name }}</span>
+          </p>
+          @if (order()!.vendor_info.address) {
+            <p class="info-row">
+              <strong>Address</strong>
+              <span>{{ order()!.vendor_info.address }}</span>
+            </p>
           }
-          @if (order()!.vendor_info?.phone) {
-            <p class="info-row"><strong>Phone</strong><span>{{ order()!.vendor_info.phone }}</span></p>
+          @if (order()!.vendor_info.phone) {
+            <p class="info-row">
+              <strong>Phone</strong>
+              <span>{{ order()!.vendor_info.phone }}</span>
+            </p>
           }
         </div>
 
@@ -170,8 +210,12 @@
             <div class="card-header">
               <h3><span class="material-icons-outlined">delivery_dining</span>Delivery Partner</h3>
             </div>
-            <p class="info-row"><strong>Name</strong><span>{{ order()!.delivery_partner_info!.name }}</span></p>
-            <p class="info-row"><strong>Vehicle</strong>
+            <p class="info-row">
+              <strong>Name</strong>
+              <span>{{ order()!.delivery_partner_info!.name }}</span>
+            </p>
+            <p class="info-row">
+              <strong>Vehicle</strong>
               <span>{{ order()!.delivery_partner_info!.vehicle_type | titlecase }}
                 @if (order()!.delivery_partner_info!.vehicle_number) {
                   · {{ order()!.delivery_partner_info!.vehicle_number }}
@@ -188,7 +232,7 @@
           </div>
         }
 
-        <!-- Tracking Timeline -->
+        <!-- Tracking History -->
         @if (order()!.tracking && order()!.tracking.length > 0) {
           <div class="card">
             <div class="card-header">
@@ -196,11 +240,13 @@
             </div>
             <div class="tracking-list">
               @for (t of order()!.tracking; track t.id; let last = $last) {
-                <div class="tracking-item" [class.active]="last">
+                <div class="tracking-item">
                   <div class="t-dot" [class.active]="last"></div>
                   <div class="t-body">
-                    <span [class]="statusBadgeClass(t.status)" style="font-size:0.7rem;">{{ t.status }}</span>
-                    @if (t.description) { <p class="t-desc">{{ t.description }}</p> }
+                    <span [class]="statusBadgeClass(t.status)" style="font-size:0.65rem;align-self:flex-start;">{{ t.status | titlecase }}</span>
+                    @if (t.description) {
+                      <p class="t-desc">{{ t.description }}</p>
+                    }
                     <span class="t-time">{{ t.timestamp | date:'MMM d, y — h:mm a' }}</span>
                   </div>
                 </div>

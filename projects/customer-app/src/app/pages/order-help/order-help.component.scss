@@ -25,7 +25,8 @@
   gap: 1rem;
   padding: 1rem 1.25rem;
   background: white;
-  border-bottom: 1px solid var(--border-light);
+  border-bottom: none;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.03);
   z-index: 10;
 }
 
@@ -115,9 +116,9 @@
   &.bot-bubble {
     background: white;
     color: var(--text-primary);
-    border: 1px solid var(--border-color);
+    border: none;
     border-bottom-left-radius: 0.25rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.03);
   }
 }
 
@@ -141,9 +142,9 @@
 /* ── Input Area / Quick Questions ───────────────────────────── */
 .chat-input-area {
   background: white;
-  border-top: 1px solid var(--border-light);
+  border-top: none;
   padding: 1rem 1.25rem;
-  box-shadow: 0 -4px 12px rgba(0,0,0,0.02);
+  box-shadow: 0 -4px 16px rgba(0,0,0,0.03);
 }
 
 .quick-questions {

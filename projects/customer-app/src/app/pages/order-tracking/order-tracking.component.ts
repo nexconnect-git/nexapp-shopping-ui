@@ -44,6 +44,7 @@ export class OrderTrackingComponent implements OnInit, OnDestroy, AfterViewInit 
   private directionsService?: google.maps.DirectionsService;
   private directionsRenderer?: google.maps.DirectionsRenderer;
   private lastDirectionsTime = 0;
+  private directionsEnabled = true;
 
   private ws: WebSocket | null = null;
   private animFrameId?: number;
@@ -146,35 +147,35 @@ export class OrderTrackingComponent implements OnInit, OnDestroy, AfterViewInit 
   }
 
   private updateMapPositions(o: Order) {
-    if (o.vendor_info?.latitude && o.vendor_info?.longitude) {
-      this.vendorPosition = {
-        lat: parseFloat(o.vendor_info.latitude as string),
-        lng: parseFloat(o.vendor_info.longitude as string),
-      };
+    const vLat = parseFloat(o.vendor_info?.latitude as any);
+    const vLng = parseFloat(o.vendor_info?.longitude as any);
+    if (!isNaN(vLat) && !isNaN(vLng)) {
+      this.vendorPosition = { lat: vLat, lng: vLng };
     }
-    if (o.delivery_latitude && o.delivery_longitude) {
-      this.customerPosition = {lat: o.delivery_latitude, lng: o.delivery_longitude};
+
+    const cLat = parseFloat(o.delivery_latitude as any);
+    const cLng = parseFloat(o.delivery_longitude as any);
+    if (!isNaN(cLat) && !isNaN(cLng)) {
+      this.customerPosition = { lat: cLat, lng: cLng };
     }
-    // Center on vendor for initial view if map not ready yet
+
     if (this.vendorPosition) this.center = this.vendorPosition;
-    // Request updated route (directionsService may be undefined if map not ready yet — that's OK)
     this.requestDirections();
   }
 
   private requestDirections() {
+    if (!this.directionsEnabled) return;
     if (!this.directionsService || !this.directionsRenderer) return;
 
     const origin = this.driverPosition ?? this.vendorPosition;
     const destination = this.customerPosition;
     if (!origin || !destination) return;
 
-    // Throttle: max once every 20 seconds
     const now = Date.now();
     if (now - this.lastDirectionsTime < 20000) return;
     this.lastDirectionsTime = now;
 
     const waypoints: google.maps.DirectionsWaypoint[] = [];
-    // If driver is heading to pick up (status ready), route: driver → vendor → customer
     if (this.driverPosition && this.vendorPosition && this.order()?.status === 'ready') {
       waypoints.push({location: new google.maps.LatLng(this.vendorPosition.lat, this.vendorPosition.lng), stopover: false});
     }
@@ -184,6 +185,9 @@ export class OrderTrackingComponent implements OnInit, OnDestroy, AfterViewInit 
       (result, status) => {
         if (status === google.maps.DirectionsStatus.OK && result) {
           this.zone.run(() => this.directionsRenderer?.setDirections(result));
+        } else if (status === 'REQUEST_DENIED' || status === 'NOT_FOUND') {
+          this.directionsEnabled = false;
+          console.warn('[Map] Directions API not available:', status, '— enable it in GCP Console. Markers only.');
         }
       }
     );

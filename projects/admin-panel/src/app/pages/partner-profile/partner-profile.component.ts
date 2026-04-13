@@ -1,8 +1,8 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
-import { ApiService, AppCurrencyPipe } from '@shared/public-api';
+import { ApiService, ToastService, AppCurrencyPipe } from '@shared/public-api';
 import { DynamicTableComponent, TableCellDirective } from '../../shared/components/dynamic-table/dynamic-table.component';
 
 type Tab = 'overview' | 'deliveries' | 'assets';
@@ -15,7 +15,8 @@ type Tab = 'overview' | 'deliveries' | 'assets';
   styleUrl: './partner-profile.component.scss'
 })
 export class PartnerProfileComponent implements OnInit {
-  private api = inject(ApiService);
+  private api   = inject(ApiService);
+  private toast = inject(ToastService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
@@ -23,6 +24,15 @@ export class PartnerProfileComponent implements OnInit {
   partner = signal<any>(null);
   loading = signal(true);
   actionLoading = signal(false);
+
+  /** Derived status for the select: active | suspended | pending */
+  partnerAccountStatus = computed(() => {
+    const p = this.partner();
+    if (!p) return 'pending';
+    if (!p.is_approved) return 'pending';
+    if (p.user?.is_active === false) return 'suspended';
+    return 'active';
+  });
 
   showTempPassword = signal(false);
   copied = signal(false);
@@ -110,9 +120,42 @@ export class PartnerProfileComponent implements OnInit {
   approve() {
     this.actionLoading.set(true);
     this.api.approveDeliveryPartner(this.partnerId, 'approve').subscribe({
-      next: () => { this.actionLoading.set(false); this.loadPartner(); },
-      error: () => this.actionLoading.set(false)
+      next: () => { this.toast.show('Partner approved.', 'success'); this.actionLoading.set(false); this.loadPartner(); },
+      error: () => { this.toast.show('Failed to approve.', 'error'); this.actionLoading.set(false); }
     });
+  }
+
+  onAccountStatusChange(event: Event) {
+    const value = (event.target as HTMLSelectElement).value;
+    if (value === this.partnerAccountStatus()) return;
+    if (!confirm(`Set partner account status to "${value}"?`)) {
+      this.partner.update(p => ({ ...p })); // reset select
+      return;
+    }
+    this.actionLoading.set(true);
+
+    if (value === 'active') {
+      // Approve + set user active
+      this.api.approveDeliveryPartner(this.partnerId, 'approve').subscribe({
+        next: () => this.api.updateAdminDeliveryPartner(this.partnerId, { user_is_active: true }).subscribe({
+          next: () => { this.toast.show('Partner activated.', 'success'); this.actionLoading.set(false); this.loadPartner(); },
+          error: () => { this.toast.show('Failed to activate.', 'error'); this.actionLoading.set(false); }
+        }),
+        error: () => { this.toast.show('Failed to approve.', 'error'); this.actionLoading.set(false); }
+      });
+    } else if (value === 'suspended') {
+      // Keep approved but suspend the user account
+      this.api.updateAdminDeliveryPartner(this.partnerId, { user_is_active: false }).subscribe({
+        next: () => { this.toast.show('Partner suspended.', 'info'); this.actionLoading.set(false); this.loadPartner(); },
+        error: () => { this.toast.show('Failed to suspend.', 'error'); this.actionLoading.set(false); }
+      });
+    } else {
+      // pending = revoke approval
+      this.api.approveDeliveryPartner(this.partnerId, 'reject').subscribe({
+        next: () => { this.toast.show('Partner set to pending.', 'info'); this.actionLoading.set(false); this.loadPartner(); },
+        error: () => { this.toast.show('Failed to update.', 'error'); this.actionLoading.set(false); }
+      });
+    }
   }
 
   toggleTempPassword() { this.showTempPassword.update(v => !v); }

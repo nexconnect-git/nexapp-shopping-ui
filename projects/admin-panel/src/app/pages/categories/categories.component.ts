@@ -14,9 +14,12 @@ import { ApiService, Category } from '@shared/public-api';
 export class CategoriesComponent implements OnInit, OnDestroy {
   private api = inject(ApiService);
   categories = signal<Category[]>([]);
+  totalItems = signal(0);
+  page = signal(1);
   loading = signal(true);
   saving = signal(false);
   error = signal('');
+  Math = Math;
 
   // Subcategory expand state: parentId -> subcategory[]
   expanded = signal<Set<string>>(new Set());
@@ -45,14 +48,22 @@ export class CategoriesComponent implements OnInit, OnDestroy {
 
   load() {
     this.loading.set(true);
-    this.api.getAdminCategories({ parent: 'root' }).subscribe({
+    this.api.getAdminCategories({ parent: 'root', page: this.page() }).subscribe({
       next: (r) => {
         this.categories.set(r.results || r);
+        this.totalItems.set(r.count ?? (r.results || r).length);
         this.loading.set(false);
         this.lastRefreshed.set(new Date());
       },
       error: () => this.loading.set(false),
     });
+  }
+
+  onPageChange(newPage: number) {
+    if (newPage >= 1 && newPage <= Math.ceil(this.totalItems() / 20)) {
+      this.page.set(newPage);
+      this.load();
+    }
   }
 
   toggleExpand(cat: Category) {

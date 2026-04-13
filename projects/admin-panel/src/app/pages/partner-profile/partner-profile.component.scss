@@ -16,8 +16,8 @@
   display: flex; align-items: flex-start; gap: 1rem; color: var(--warning);
   .material-icons-outlined { font-size: 24px; padding-top: 2px; }
   .temp-password-body { display: flex; flex-direction: column; gap: 0.25rem;
-    strong { font-size: 0.9375rem; font-weight: 800; color: darken(#f59e0b, 20%); }
-    span { font-size: 0.875rem; color: darken(#f59e0b, 10%); font-weight: 500; }
+    strong { font-size: 0.9375rem; font-weight: 800; color: color-mix(in srgb, #f59e0b, black 20%); }
+    span { font-size: 0.875rem; color: color-mix(in srgb, #f59e0b, black 10%); font-weight: 500; }
   }
   .temp-password-row {
     display: flex; align-items: center; gap: 0.75rem; margin-top: 0.75rem;

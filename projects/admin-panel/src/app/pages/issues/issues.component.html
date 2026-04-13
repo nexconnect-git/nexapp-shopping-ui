@@ -23,54 +23,56 @@
   </div>
 
   <!-- ── Table ────────────────────────────────────────── -->
-  <div class="table-card">
-    @if (loading()) {
-      <div class="loading-state"><div class="spinner"></div><p>Loading issues…</p></div>
-    } @else if (issues().length === 0) {
-      <div class="empty-state">
-        <span class="material-icons-outlined empty-icon">inbox</span>
-        <strong>No issues found</strong>
-        <p>No order issues match your filters.</p>
-      </div>
-    } @else {
-      <div class="table-wrapper">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Order</th>
-              <th>Customer</th>
-              <th>Type</th>
-              <th>Status</th>
-              <th>Date</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (iss of issues(); track iss.id) {
-              <tr class="data-row" [class.selected]="selectedIssue()?.id === iss.id">
-                <td><span class="order-num">{{ iss.order_number }}</span></td>
-                <td>
-                  <div class="customer-name">{{ iss.customer_name || iss.customer_username }}</div>
-                </td>
-                <td>
-                  <span class="type-badge">
-                    <span class="material-icons-outlined">{{ typeIcon(iss.issue_type) }}</span>
-                    {{ typeLabel(iss.issue_type) }}
-                  </span>
-                </td>
-                <td><span class="status-badge {{ statusClass(iss.status) }}">{{ iss.status_display }}</span></td>
-                <td class="text-muted">{{ iss.created_at | date:'MMM d, y' }}</td>
-                <td>
-                  <button class="action-btn" (click)="openIssue(iss)" title="Open">
-                    <span class="material-icons-outlined">open_in_new</span>
-                  </button>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    }
+  <div class="table-card" style="padding: 0; background: transparent; box-shadow: none;">
+    <app-dynamic-table
+      [columns]="tableColumns"
+      [data]="issues()"
+      [loading]="loading()"
+      [totalItems]="totalCount()"
+      [itemsPerPage]="20"
+      [page]="page()"
+      emptyMessage="No issues found"
+      emptySubMessage="No order issues match your filters."
+      emptyIcon="inbox"
+      (pageChange)="onPageChange($event)">
+
+      <ng-template tableCell="issue" let-row="row">
+        <div class="customer-name" style="font-weight: 500;">
+          {{ row.customer_name || row.customer_username }}
+        </div>
+        <div class="text-muted" style="font-size: 0.85rem; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 300px;" [title]="row.description">
+          {{ row.description }}
+        </div>
+      </ng-template>
+
+      <ng-template tableCell="order" let-row="row">
+        <span class="order-num">{{ row.order_number }}</span>
+      </ng-template>
+
+      <ng-template tableCell="type" let-row="row">
+        <span class="type-badge" style="display: inline-flex; align-items: center; gap: 4px;">
+          <span class="material-icons-outlined" style="font-size: 16px;">{{ typeIcon(row.issue_type) }}</span>
+          {{ typeLabel(row.issue_type) }}
+        </span>
+      </ng-template>
+
+      <ng-template tableCell="status" let-row="row">
+        <span class="status-badge {{ statusClass(row.status) }}">
+          {{ row.status_display }}
+        </span>
+      </ng-template>
+
+      <ng-template tableCell="date" let-row="row">
+        <div class="text-muted">{{ row.created_at | date:'MMM d, y' }}</div>
+      </ng-template>
+
+      <ng-template tableCell="actions" let-row="row">
+        <button class="action-btn" (click)="openIssue(row)" title="Open Details">
+          <span class="material-icons-outlined">open_in_new</span>
+        </button>
+      </ng-template>
+
+    </app-dynamic-table>
   </div>
 
 </div>

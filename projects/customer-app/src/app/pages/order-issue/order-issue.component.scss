@@ -3,7 +3,8 @@
 /* ── Top Bar ──────────────────────────────────────── */
 .oi-topbar {
   display: flex; align-items: center; gap: 0.875rem;
-  padding: 0.875rem 1rem; background: white; border-bottom: 1px solid #f0f0f0;
+  padding: 0.875rem 1rem; background: white; border-bottom: none;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.03);
   position: sticky; top: 60px; z-index: 10;
 }
 .oi-back {
@@ -23,10 +24,11 @@
 .oi-type-list { display: flex; flex-direction: column; gap: 0.625rem; }
 .oi-type-card {
   display: flex; align-items: center; gap: 1rem;
-  background: white; border: 1.5px solid #eee; border-radius: 14px;
-  padding: 1rem 1rem 1rem 1rem; cursor: pointer; text-align: left;
-  font-family: var(--font-family); transition: border-color 0.15s, box-shadow 0.15s;
-  &:hover { border-color: var(--primary); box-shadow: 0 2px 12px rgba(108,99,255,0.1); }
+  background: white; border: none; border-radius: var(--radius-xl);
+  padding: 1rem 1.25rem; cursor: pointer; text-align: left;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.03);
+  font-family: var(--font-family); transition: transform 0.15s, box-shadow 0.15s;
+  &:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(108,99,255,0.1); }
 }
 .oi-type-icon {
   width: 44px; height: 44px; border-radius: 12px;
@@ -79,7 +81,8 @@
 .oi-status-banner {
   display: flex; align-items: center; gap: 0.75rem;
   margin: 0.75rem 1rem; padding: 0.875rem 1rem;
-  border: 1px solid; border-radius: 12px; background: white;
+  border: none; border-radius: var(--radius-xl); background: white;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.03);
 }
 .oi-status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 .oi-status-label { font-size: 0.875rem; font-weight: 800; color: #111; }
@@ -112,7 +115,7 @@
   .oi-msg-text {
     padding: 0.625rem 0.875rem; border-radius: 14px;
     font-size: 0.9375rem; font-weight: 500; line-height: 1.5; color: #111;
-    background: white; border: 1px solid #f0f0f0;
+    background: white; border: none; box-shadow: 0 4px 16px rgba(0,0,0,0.03);
   }
   .oi-msg-time { font-size: 0.6875rem; color: #bbb; font-weight: 500; margin-top: 0.25rem; text-align: right; }
 }
@@ -132,7 +135,8 @@
 /* Input bar */
 .oi-input-bar {
   display: flex; align-items: flex-end; gap: 0.5rem;
-  padding: 0.75rem 1rem; background: white; border-top: 1px solid #f0f0f0;
+  padding: 0.75rem 1rem; background: white; border-top: none;
+  box-shadow: 0 -4px 16px rgba(0,0,0,0.03);
   position: sticky; bottom: 72px;
 }
 .oi-chat-input {
@@ -153,7 +157,6 @@
 .oi-closed-notice {
   display: flex; align-items: center; gap: 0.5rem; justify-content: center;
   padding: 1rem; background: #f9fafb; color: #888; font-size: 0.875rem; font-weight: 600;
-  border-top: 1px solid #f0f0f0;
   .material-icons-outlined { font-size: 16px; }
 }
 

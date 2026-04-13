@@ -1,0 +1,33 @@
+# Stage 1: Build the Angular applications
+FROM node:20-alpine AS build
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+
+# Build all applications with their respective base hrefs
+RUN npx ng build customer-app --configuration production
+RUN npx ng build admin-panel --configuration production --base-href /admin/
+RUN npx ng build vendor-app --configuration production --base-href /vendor/
+RUN npx ng build delivery-app --configuration production --base-href /delivery/
+
+# Stage 2: Serve with Nginx
+FROM nginx:alpine
+
+# Remove default nginx config
+RUN rm /etc/nginx/conf.d/default.conf
+
+# Copy custom nginx config (make sure to provide it via docker-compose volume or copy it here)
+# We will volume mount it in docker-compose.prod.yml
+
+# Copy built artifacts. Angular 17+ Application builder outputs to dist/project_name/browser
+COPY --from=build /app/dist/customer-app/browser /usr/share/nginx/html/customer
+COPY --from=build /app/dist/admin-panel/browser /usr/share/nginx/html/admin
+COPY --from=build /app/dist/vendor-app/browser /usr/share/nginx/html/vendor
+COPY --from=build /app/dist/delivery-app/browser /usr/share/nginx/html/delivery
+
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

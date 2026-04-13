@@ -59,18 +59,23 @@
           <span class="material-icons-outlined">edit</span>
           Edit
         </a>
-        @if (vendor().status === 'pending' || vendor().status === 'rejected' || vendor().status === 'suspended') {
-          <button class="btn btn-success" [disabled]="actionLoading()" (click)="setStatus('approved')">
-            <span class="material-icons-outlined">check_circle</span>
-            Approve
-          </button>
-        }
-        @if (vendor().status === 'approved') {
-          <button class="btn btn-danger" [disabled]="actionLoading()" (click)="setStatus('suspended')">
-            <span class="material-icons-outlined">block</span>
-            Suspend
-          </button>
-        }
+        <div class="status-select-wrap">
+          <label class="status-select-label" for="vendor-status-select">Account Status</label>
+          <select
+            id="vendor-status-select"
+            class="status-select"
+            [class]="'status-select status-' + vendor().status"
+            [value]="vendor().status"
+            (change)="onStatusChange($event)"
+            [disabled]="actionLoading()"
+            aria-label="Vendor status"
+          >
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="suspended">Suspended</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
       </div>
     </div>
 

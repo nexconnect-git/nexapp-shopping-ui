@@ -39,103 +39,106 @@
         <div class="spinner"></div>
         <p>Loading payouts…</p>
       </div>
-    } @else if (payouts().length === 0) {
-      <div class="empty-state">
-        <span class="material-icons-outlined empty-icon">payments</span>
-        <p class="empty-title">No payouts found</p>
-        <p class="empty-sub">Click <strong>New Payout</strong> to create a settlement record.</p>
-      </div>
     } @else {
-      <div class="table-wrap">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>{{ activeTab() === 'vendors' ? 'Vendor' : 'Partner' }}</th>
-              <th>Period</th>
+      <div class="table-wrap" style="padding: 0; background: transparent; box-shadow: none;">
+        <app-dynamic-table
+          [columns]="tableColumns"
+          [data]="payouts()"
+          [loading]="loading()"
+          [totalItems]="totalItems()"
+          [itemsPerPage]="20"
+          [page]="page()"
+          emptyMessage="No payouts found"
+          emptySubMessage="Click New Payout to create a settlement record."
+          emptyIcon="payments"
+          (pageChange)="onPageChange($event)">
+
+          <ng-template tableCell="id" let-row="row">
+            <span class="id-cell">{{ row.id.split('-')[0] }}</span>
+          </ng-template>
+
+          <ng-template tableCell="entity" let-row="row">
+            <span class="entity-cell">{{ activeTab() === 'vendors' ? row.vendor_name : row.partner_name }}</span>
+          </ng-template>
+
+          <ng-template tableCell="period" let-row="row">
+            <span class="period-range period-cell">
+              {{ row.period_start | date:'MMM d' }} → {{ row.period_end | date:'MMM d, y' }}
+            </span>
+          </ng-template>
+
+          <ng-template tableCell="gross" let-row="row">
+            <span class="amount-cell muted">{{ row.gross_sales | appCurrency }}</span>
+          </ng-template>
+
+          <ng-template tableCell="commission" let-row="row">
+            <div class="commission-cell">
+              <span class="commission-badge">{{ row.platform_commission | appCurrency }}</span>
+            </div>
+          </ng-template>
+
+          <ng-template tableCell="net" let-row="row">
+            <span class="amount-cell">
+              {{ (activeTab() === 'vendors' ? row.net_payout : row.total_earnings) | appCurrency }}
+            </span>
+          </ng-template>
+
+          <ng-template tableCell="status" let-row="row">
+            <span class="badge" [class]="'badge-' + row.status">{{ row.status | uppercase }}</span>
+          </ng-template>
+
+          <ng-template tableCell="actions" let-row="row">
+            <div class="actions-cell">
               @if (activeTab() === 'vendors') {
-                <th>Gross Sales</th>
-                <th>Commission</th>
+                <button class="action-icon-btn" title="View Invoice" (click)="viewInvoice(row)">
+                  <span class="material-icons-outlined">receipt_long</span>
+                </button>
               }
-              <th>Net Payout</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (payout of payouts(); track payout.id) {
-              <tr>
-                <td class="id-cell">{{ payout.id.split('-')[0] }}</td>
-                <td class="entity-cell">{{ activeTab() === 'vendors' ? payout.vendor_name : payout.partner_name }}</td>
-                <td class="period-cell">
-                  <span class="period-range">
-                    {{ payout.period_start | date:'MMM d' }} → {{ payout.period_end | date:'MMM d, y' }}
-                  </span>
-                </td>
-                @if (activeTab() === 'vendors') {
-                  <td class="amount-cell muted">{{ payout.gross_sales | appCurrency }}</td>
-                  <td class="commission-cell">
-                    <span class="commission-badge">{{ payout.platform_commission | appCurrency }}</span>
-                  </td>
+              <!-- Edit (only on non-final statuses) -->
+              @if (!['verified','paid','failed'].includes(row.status)) {
+                <button class="action-icon-btn" title="Edit Payout" (click)="editPayout(row)">
+                  <span class="material-icons-outlined">edit</span>
+                </button>
+              }
+              <!-- Lifecycle actions -->
+              @switch (getPayoutAction(row)) {
+                @case ('schedule') {
+                  <button class="lifecycle-btn schedule-btn" (click)="schedulePayout(row)">
+                    <span class="material-icons-outlined">event_available</span>
+                    Schedule
+                  </button>
                 }
-                <td class="amount-cell">
-                  {{ (activeTab() === 'vendors' ? payout.net_payout : payout.total_earnings) | appCurrency }}
-                </td>
-                <td>
-                  <span class="badge" [class]="'badge-' + payout.status">{{ payout.status | uppercase }}</span>
-                </td>
-                <td class="actions-cell">
-                  @if (activeTab() === 'vendors') {
-                    <button class="action-icon-btn" title="View Invoice" (click)="viewInvoice(payout)">
-                      <span class="material-icons-outlined">receipt_long</span>
-                    </button>
+                @case ('send-payment') {
+                  <button class="lifecycle-btn send-btn" (click)="openSendPaymentModal(row)">
+                    <span class="material-icons-outlined">send_money</span>
+                    Send Payment
+                  </button>
+                }
+                @case ('awaiting') {
+                  <span class="awaiting-chip" [title]="'Override unlocks ' + (overrideAvailableAt(row) | date:'MMM d, HH:mm')">
+                    <span class="material-icons-outlined">hourglass_top</span>
+                    Awaiting Vendor · <em>Override: {{ overrideAvailableAt(row) | date:'MMM d' }}</em>
+                  </span>
+                }
+                @case ('force-paid') {
+                  <button class="lifecycle-btn force-btn" (click)="openForcePaidModal(row)">
+                    <span class="material-icons-outlined">warning</span>
+                    Force Mark Paid
+                  </button>
+                }
+                @case ('none') {
+                  @if (row.status === 'verified') {
+                    <span class="paid-check">
+                      <span class="material-icons-outlined">check_circle</span>
+                      Verified
+                    </span>
                   }
-                  <!-- Edit (only on non-final statuses) -->
-                  @if (!['verified','paid','failed'].includes(payout.status)) {
-                    <button class="action-icon-btn" title="Edit Payout" (click)="editPayout(payout)">
-                      <span class="material-icons-outlined">edit</span>
-                    </button>
-                  }
-                  <!-- Lifecycle actions -->
-                  @switch (getPayoutAction(payout)) {
-                    @case ('schedule') {
-                      <button class="lifecycle-btn schedule-btn" (click)="schedulePayout(payout)">
-                        <span class="material-icons-outlined">event_available</span>
-                        Schedule
-                      </button>
-                    }
-                    @case ('send-payment') {
-                      <button class="lifecycle-btn send-btn" (click)="openSendPaymentModal(payout)">
-                        <span class="material-icons-outlined">send_money</span>
-                        Send Payment
-                      </button>
-                    }
-                    @case ('awaiting') {
-                      <span class="awaiting-chip" [title]="'Override unlocks ' + (overrideAvailableAt(payout) | date:'MMM d, HH:mm')">
-                        <span class="material-icons-outlined">hourglass_top</span>
-                        Awaiting Vendor · <em>Override: {{ overrideAvailableAt(payout) | date:'MMM d' }}</em>
-                      </span>
-                    }
-                    @case ('force-paid') {
-                      <button class="lifecycle-btn force-btn" (click)="openForcePaidModal(payout)">
-                        <span class="material-icons-outlined">warning</span>
-                        Force Mark Paid
-                      </button>
-                    }
-                    @case ('none') {
-                      @if (payout.status === 'verified') {
-                        <span class="paid-check">
-                          <span class="material-icons-outlined">check_circle</span>
-                          Verified
-                        </span>
-                      }
-                    }
-                  }
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
+                }
+              }
+            </div>
+          </ng-template>
+
+        </app-dynamic-table>
       </div>
     }
   </div>
@@ -376,11 +379,54 @@
             </div>
           </div>
 
+          <!-- Vendor Sales Summary Card (auto-fetched) -->
+          @if (activeTab() === 'vendors') {
+            @if (loadingSales()) {
+              <div class="sales-summary-loading">
+                <div class="mini-spinner"></div>
+                <span>Fetching sales data for this period…</span>
+              </div>
+            } @else if (vendorSalesSummary()) {
+              <div class="sales-summary-card">
+                <div class="sales-summary-title">
+                  <span class="material-icons-outlined">bar_chart</span>
+                  Sales Summary · {{ createFormObj.period_start | date:'MMM d' }} – {{ createFormObj.period_end | date:'MMM d, y' }}
+                </div>
+                <div class="sales-summary-grid">
+                  <div class="sales-stat">
+                    <span class="sales-stat-label">Gross Revenue</span>
+                    <span class="sales-stat-value green">{{ vendorSalesSummary()!.total_revenue | appCurrency }}</span>
+                  </div>
+                  <div class="sales-stat">
+                    <span class="sales-stat-label">Total Orders</span>
+                    <span class="sales-stat-value">{{ vendorSalesSummary()!.total_orders }}</span>
+                  </div>
+                  <div class="sales-stat">
+                    <span class="sales-stat-label">Delivered</span>
+                    <span class="sales-stat-value">{{ vendorSalesSummary()!.delivered_orders }}</span>
+                  </div>
+                  <div class="sales-stat">
+                    <span class="sales-stat-label">Cancelled</span>
+                    <span class="sales-stat-value red">{{ vendorSalesSummary()!.cancelled_orders }}</span>
+                  </div>
+                  <div class="sales-stat">
+                    <span class="sales-stat-label">Avg. Order Value</span>
+                    <span class="sales-stat-value">{{ vendorSalesSummary()!.average_order_value | appCurrency }}</span>
+                  </div>
+                </div>
+                <p class="sales-summary-hint">
+                  <span class="material-icons-outlined">check_circle</span>
+                  Gross sales pre-filled from delivered order revenue. Adjust if needed.
+                </p>
+              </div>
+            }
+          }
+
           <!-- Amount Input -->
           <div class="field-group">
             <label class="field-label flex-label">
               <span>@if (activeTab() === 'vendors') { GROSS SALES AMOUNT } @else { TOTAL DELIVERY EARNINGS } <span class="required">*</span></span>
-              @if (calculatingDeliveryEarnings()) {
+              @if (calculatingDeliveryEarnings() || loadingSales()) {
                 <span class="mini-spinner ml-2"></span>
               }
             </label>
@@ -394,6 +440,7 @@
                      (input)="recalculate()">
             </div>
           </div>
+
 
           <!-- Commission Breakdown (vendor tab only) -->
           @if (activeTab() === 'vendors' && createFormObj.amount && createFormObj.amount > 0) {

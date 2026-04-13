@@ -22,7 +22,7 @@
     <div class="header-controls">
       <div class="filter-wrapper">
         <span class="material-icons-outlined filter-icon">filter_list</span>
-        <select class="form-input form-select filter-select" [(ngModel)]="statusFilter" (change)="load()" aria-label="select">
+        <select class="form-input form-select filter-select" [(ngModel)]="statusFilter" (change)="onFilterChange()" aria-label="select">
           <option value="">All Statuses</option>
           <option value="placed">Placed</option>
           <option value="confirmed">Confirmed</option>
@@ -118,6 +118,32 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Pagination -->
+      @if (totalPages() > 1) {
+        <div class="pagination-bar">
+          <span class="pagination-info">
+            Showing {{ (page() - 1) * pageSize + 1 }}–{{ Math.min(page() * pageSize, total()) }} of {{ total() }} orders
+          </span>
+          <div class="pagination-controls">
+            <button class="page-btn" (click)="setPage(1)" [disabled]="page() === 1" title="First">
+              <span class="material-icons-outlined">first_page</span>
+            </button>
+            <button class="page-btn" (click)="setPage(page() - 1)" [disabled]="page() === 1" title="Previous">
+              <span class="material-icons-outlined">chevron_left</span>
+            </button>
+            @for (n of pageNumbers(); track n) {
+              <button class="page-btn" [class.active]="n === page()" (click)="setPage(n)">{{ n }}</button>
+            }
+            <button class="page-btn" (click)="setPage(page() + 1)" [disabled]="page() === totalPages()" title="Next">
+              <span class="material-icons-outlined">chevron_right</span>
+            </button>
+            <button class="page-btn" (click)="setPage(totalPages())" [disabled]="page() === totalPages()" title="Last">
+              <span class="material-icons-outlined">last_page</span>
+            </button>
+          </div>
+        </div>
+      }
     </div>
   }
 </div>

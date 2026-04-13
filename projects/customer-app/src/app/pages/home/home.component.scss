@@ -9,7 +9,8 @@
 .nx-header {
   background: white;
   padding: 1rem 1rem 0.875rem;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: none;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.03);
 }
 
 .nx-loc-row { margin-bottom: 0.75rem; }
@@ -88,8 +89,9 @@
 ══════════════════════════════════════════════════ */
 .nx-cats {
   background: white;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: none;
   padding: 1rem 0;
+  margin-bottom: 0.5rem;
 }
 
 .nx-cats-scroll {
@@ -173,7 +175,7 @@
   background: white;
   padding: 1.25rem 0 1rem;
   margin-top: 0.5rem;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: none;
 }
 
 .nx-picks-scroll {
@@ -364,11 +366,14 @@
   display: block;
   text-decoration: none;
   padding: 1rem 0;
-  border-bottom: 1px solid #f2f2f2;
-  transition: opacity 0.18s;
+  border-bottom: none;
+  background: #FFFFFF;
+  margin-bottom: 0.5rem;
+  border-radius: var(--radius-xl);
+  transition: transform 0.2s, box-shadow 0.2s;
 
-  &:last-child { border-bottom: none; }
-  &:hover { opacity: 0.9; }
+  &:last-child { margin-bottom: 0; }
+  &:hover { box-shadow: var(--shadow-sm); transform: translateY(-2px); }
   &:hover .nx-vcard-name { color: var(--primary); }
 }
 
@@ -559,42 +564,43 @@
    DESKTOP ADAPTATIONS
 ══════════════════════════════════════════════════ */
 @media (min-width: 901px) {
-  .nx-header { padding: 1.25rem 2rem; }
+  .nx-header { padding: 1.25rem 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.02); border: none; }
   .nx-cats-scroll { padding: 0 2rem; gap: 0.5rem; }
   .nx-section-hd { padding: 0 2rem; }
   .nx-picks-scroll { padding: 0.25rem 2rem 0.75rem; }
   .nx-pick { width: 165px; }
-  .nx-pick-img { height: 115px; }
+  .nx-pick-img { height: 115px; border-radius: var(--radius-lg); }
   .nx-shops-hd { padding: 1.5rem 2rem 0.5rem; }
   .nx-filter-row { padding: 0.75rem 2rem 1rem; }
 
   .nx-vlist {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1.25rem;
-    padding: 0.5rem 2rem 1rem;
+    gap: 1.5rem;
+    padding: 0.5rem 2rem 2rem;
     max-width: 1280px;
     margin: 0 auto;
   }
 
   .nx-vcard {
     border-bottom: none;
-    border: 1px solid #f0f0f0;
-    border-radius: 16px;
+    border: none;
+    border-radius: var(--radius-xl);
     padding: 0;
     overflow: hidden;
     background: white;
+    box-shadow: var(--shadow-sm);
     transition: box-shadow 0.2s, transform 0.2s;
 
     &:hover {
-      box-shadow: 0 8px 32px rgba(0,0,0,0.08);
-      transform: translateY(-3px);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-4px);
       opacity: 1;
     }
   }
 
-  .nx-vcard-img { border-radius: 0; margin-bottom: 0; height: 160px; }
-  .nx-vcard-info { padding: 0.875rem 1rem 1rem; }
+  .nx-vcard-img { border-radius: 0; margin-bottom: 0; height: 180px; }
+  .nx-vcard-info { padding: 1.25rem; }
   .nx-vcard-closed { border-radius: 0; }
 }
 
@@ -602,16 +608,17 @@
    PROMO BANNER
 ══════════════════════════════════════════════════ */
 .nx-promo-banner {
-  margin: 0.75rem 1rem;
-  border-radius: 16px;
-  background: linear-gradient(135deg, #4338ca 0%, var(--primary) 50%, #7c3aed 100%);
+  margin: 1rem;
+  border-radius: var(--radius-xl);
+  background: var(--primary-gradient);
   color: white;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.25rem 1rem 1.25rem 1.25rem;
+  padding: 1.5rem 1rem 1.5rem 1.25rem;
   overflow: hidden;
   position: relative;
+  box-shadow: var(--shadow-sm);
 }
 
 .nx-promo-content { flex: 1; }

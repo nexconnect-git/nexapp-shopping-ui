@@ -1,4 +1,4 @@
-@import 'design-system';
+@use 'design-system';
 
 /* ── Admin panel — accent override ──────────────── */
 :root {
@@ -58,3 +58,59 @@
 
 @keyframes spin { to { transform: rotate(360deg); } }
 .spin { animation: spin 0.8s linear infinite; }
+
+/* ── Account/Vendor status select ─────────────────────────── */
+.status-select-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+
+  .status-select-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+}
+
+.status-select {
+  appearance: none;
+  padding: 0.4rem 2rem 0.4rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border: 1.5px solid var(--border-color);
+  background: var(--bg-color) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M0 0l6 8 6-8z' fill='%2394A3B8'/%3E%3C/svg%3E") no-repeat right 0.6rem center;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  min-width: 140px;
+
+  &:focus { outline: none; box-shadow: 0 0 0 3px var(--primary-light); border-color: var(--primary); }
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  &.status-approved, &.status-active { border-color: #22c55e; color: #15803d; background-color: #f0fdf4; }
+  &.status-pending   { border-color: #f59e0b; color: #b45309; background-color: #fffbeb; }
+  &.status-suspended { border-color: #ef4444; color: #b91c1c; background-color: #fef2f2; }
+  &.status-rejected  { border-color: #6b7280; color: #374151; background-color: #f9fafb; }
+}
+
+/* Compact inline version used inside info-row cells */
+.inline-status-select {
+  appearance: none;
+  padding: 0.25rem 1.8rem 0.25rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border: 1.5px solid var(--border-color);
+  background: var(--bg-color) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M0 0l6 8 6-8z' fill='%2394A3B8'/%3E%3C/svg%3E") no-repeat right 0.5rem center;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  min-width: 110px;
+
+  &:focus { outline: none; box-shadow: 0 0 0 3px var(--primary-light); border-color: var(--primary); }
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  &.status-active   { border-color: #22c55e; color: #15803d; background-color: #f0fdf4; }
+  &.status-suspended { border-color: #ef4444; color: #b91c1c; background-color: #fef2f2; }
+}

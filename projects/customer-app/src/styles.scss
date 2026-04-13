@@ -1,16 +1,64 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 @import 'design-system';
 
-/* ── Customer app — accent override ──────────────── */
+/* ── Customer app — accent override (Vibrant Market) ─────────────── */
 :root {
-  --primary: #6C63FF;
-  --primary-hover: #5A52E8;
-  --primary-dark: #4840D6;
-  --primary-light: rgba(108, 99, 255, 0.08);
-  --primary-gradient: linear-gradient(135deg, #6C63FF 0%, #9C93FF 100%);
-  --primary-shadow: rgba(108, 99, 255, 0.28);
-  --sidebar-text-active: #6C63FF;
-  --sidebar-item-active-bg: rgba(108, 99, 255, 0.08);
-  --login-gradient: linear-gradient(135deg, #6C63FF 0%, #5A52E8 50%, #9C93FF 100%);
+  --primary: #6b33ee;
+  --primary-hover: #8c5cff;
+  --primary-dark: #4a148c;
+  --primary-light: #FFEDD5;
+  --primary-gradient: linear-gradient(135deg, #6b33ee 0%, #8c5cff 100%);
+  --primary-shadow: rgba(67, 0, 250, 0.582);
+  --sidebar-text-active: #6b33ee;
+  --sidebar-item-active-bg: rgba(107, 51, 238, 0.08);
+  --login-gradient: linear-gradient(135deg, #6b33ee 0%, #8c5cff 100%);
+
+  --info: #0EA5E9;
+  --info-light: #E0F2FE;
+
+  --bg-color: #FAFAFA;
+  --surface-color: #FFFFFF;
+  --surface-hover: #F1F5F9;
+
+  --font-family: 'Plus Jakarta Sans', sans-serif;
+  --font-heading: 'Plus Jakarta Sans', sans-serif;
+
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 28px;
+
+  --shadow-sm: 0 4px 20px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 8px 32px rgba(249, 115, 22, 0.08);
+  --shadow-focus: 0 0 0 4px rgba(249, 115, 22, 0.15);
+}
+
+.card {
+  border: none !important;
+  box-shadow: var(--shadow-sm) !important;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  background: var(--surface-color);
+  border-radius: var(--radius-xl);
+
+  &:hover {
+    box-shadow: var(--shadow-md) !important;
+    transform: translateY(-2px);
+  }
+}
+
+.form-input,
+input:not([type="checkbox"]),
+textarea,
+select {
+  background: #F3F4F6 !important;
+  border: none !important;
+  border-bottom: 2px solid transparent !important;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+
+  &:focus {
+    background: #FFFFFF !important;
+    border-bottom: 2px solid var(--primary) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05) !important;
+  }
 }
 
 /* ═══════════════════════════════════════════════
@@ -18,19 +66,39 @@
    ═══════════════════════════════════════════════ */
 
 /* ── Login / Register ─────────────────────────── */
-.login-page, .register-page {
-  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+.login-page,
+.register-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: var(--bg-color);
   padding: 2rem;
 }
 
 /* ── Responsive ───────────────────────────────── */
 @media (max-width: 768px) {
-  .top-nav { display: none; }
-  .mobile-header { display: block; }
-  .bottom-nav { display: flex; }
-  .main-content { padding: 1rem; padding-bottom: 78px; min-height: calc(100vh - 56px - 62px); }
-  .nav-center-links { display: none; }
+  .top-nav {
+    display: none;
+  }
+
+  .mobile-header {
+    display: block;
+  }
+
+  .bottom-nav {
+    display: flex;
+  }
+
+  .main-content {
+    padding: 1rem;
+    padding-bottom: 78px;
+    min-height: calc(100vh - 56px - 62px);
+  }
+
+  .nav-center-links {
+    display: none;
+  }
 }
 
 /* ── Profile Tabs ─────────────────────────────── */
@@ -53,6 +121,6 @@
     background: var(--text-primary) !important;
     color: white !important;
     border-color: var(--text-primary) !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
   }
 }

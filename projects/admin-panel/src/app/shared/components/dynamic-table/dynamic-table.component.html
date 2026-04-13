@@ -24,7 +24,7 @@
         @for (col of columns; track col.key) {
           <div class="t-cell">
             @if (getTemplate(col.key); as template) {
-              <ng-container *ngTemplateOutlet="template; context: { $implicit: row, value: row[col.key] }"></ng-container>
+              <ng-container *ngTemplateOutlet="template; context: { $implicit: row, row: row, value: row[col.key] }"></ng-container>
             } @else {
               {{ row[col.key] }}
             }

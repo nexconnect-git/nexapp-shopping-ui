@@ -154,17 +154,30 @@
     <div class="form-sidebar">
 
       <!-- Visibility -->
+      <!-- Visibility & Status -->
       <div class="card">
         <div class="card-header">
-          <h3>Visibility</h3>
+          <h3>Visibility & Status</h3>
         </div>
         <div class="card-body">
+          <div class="form-group visibility-option" style="margin-bottom:1.2rem;">
+            <label class="form-label" for="product_status" style="margin-bottom:0.5rem; display:block;">Product Status</label>
+            <select class="form-input form-select" [(ngModel)]="form.status" name="status" id="product_status" style="width: 100%;">
+              <option value="active">Active</option>
+              <option value="draft">Draft</option>
+              <option value="sold_out">Sold Out</option>
+              <option value="coming_soon">Coming Soon</option>
+              <option value="archived">Archived</option>
+            </select>
+            <p style="font-size:0.8125rem;color:var(--text-muted);margin-top:0.35rem;">Categorize exactly how this item behaves physically within the global catalog.</p>
+          </div>
+
           <div class="visibility-option" style="margin-bottom:0.875rem;">
             <div class="form-check">
               <input type="checkbox" id="is_available" [(ngModel)]="form.is_available" name="is_available">
               <label for="is_available">Available for sale</label>
             </div>
-            <p style="font-size:0.8125rem;color:var(--text-muted);margin-top:0.25rem;margin-left:1.5rem;">Customers can see and order this product</p>
+            <p style="font-size:0.8125rem;color:var(--text-muted);margin-top:0.25rem;margin-left:1.5rem;">Legacy flag toggle for core visibility constraints.</p>
           </div>
           <div class="visibility-option">
             <div class="form-check">

@@ -2,7 +2,7 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
-import { ApiService, AppCurrencyPipe } from '@shared/public-api';
+import { ApiService, ToastService, AppCurrencyPipe } from '@shared/public-api';
 import { DynamicTableComponent, TableCellDirective } from '../../shared/components/dynamic-table/dynamic-table.component';
 
 type Tab = 'overview' | 'orders';
@@ -10,12 +10,13 @@ type Tab = 'overview' | 'orders';
 @Component({
   selector: 'app-customer-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, DynamicTableComponent, TableCellDirective, DecimalPipe, AppCurrencyPipe],
+  imports: [CommonModule, FormsModule, RouterLink, DynamicTableComponent, TableCellDirective, AppCurrencyPipe],
   templateUrl: './customer-profile.component.html',
   styleUrl: './customer-profile.component.scss'
 })
 export class CustomerProfileComponent implements OnInit {
-  private api = inject(ApiService);
+  private api   = inject(ApiService);
+  private toast = inject(ToastService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
@@ -105,6 +106,19 @@ export class CustomerProfileComponent implements OnInit {
     this.api.updateAdminCustomer(this.customerId, this.editForm).subscribe({
       next: (c) => { this.customer.set(c); this.editSaving.set(false); this.closeEdit(); },
       error: (err) => { this.editSaving.set(false); this.editError.set(err.error?.detail || 'Update failed.'); }
+    });
+  }
+
+  quickSetStatus(event: Event) {
+    const isActive = (event.target as HTMLSelectElement).value === 'true';
+    this.actionLoading.set(true);
+    this.api.updateAdminCustomer(this.customerId, { is_active: isActive }).subscribe({
+      next: (c) => {
+        this.customer.set(c);
+        this.toast.show(`Account ${isActive ? 'activated' : 'suspended'}.`, isActive ? 'success' : 'info');
+        this.actionLoading.set(false);
+      },
+      error: () => { this.toast.show('Failed to update status.', 'error'); this.actionLoading.set(false); }
     });
   }
 

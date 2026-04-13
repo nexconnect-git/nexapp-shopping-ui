@@ -133,22 +133,6 @@
                       <span class="legend-chip"><span class="dot dot-driver"></span>Partner</span>
                       <span class="legend-chip"><span class="dot dot-customer"></span>Customer</span>
                     </div>
-                    @if (selectedOrder()?.delivery_partner_info) {
-                      <div class="partner-bar">
-                        <span class="material-icons-outlined">delivery_dining</span>
-                        <span>{{ selectedOrder()!.delivery_partner_info!.name }}</span>
-                        <span class="text-muted" style="font-size:0.8125rem;">
-                          · {{ selectedOrder()!.delivery_partner_info!.vehicle_type }}
-                          @if (selectedOrder()!.delivery_partner_info!.vehicle_number) {
-                            &nbsp;{{ selectedOrder()!.delivery_partner_info!.vehicle_number }}
-                          }
-                        </span>
-                        <span class="partner-rating">
-                          <span class="material-icons-outlined">star</span>
-                          {{ selectedOrder()!.delivery_partner_info!.average_rating }}
-                        </span>
-                      </div>
-                    }
                   </div>
                 }
               </div>
@@ -167,6 +151,22 @@
               <h3>Vendor Information</h3>
               <p><strong>Name:</strong> {{ selectedOrder()?.vendor_name }}</p>
             </div>
+
+            @if (selectedOrder()?.delivery_partner_info) {
+              <div class="detail-section">
+                <h3>Delivery Partner Information</h3>
+                <p><strong>Name:</strong> {{ selectedOrder()?.delivery_partner_info?.name }}</p>
+                <p><strong>Vehicle:</strong> {{ selectedOrder()?.delivery_partner_info?.vehicle_type | titlecase }} 
+                  @if (selectedOrder()?.delivery_partner_info?.vehicle_number) {
+                    ({{ selectedOrder()?.delivery_partner_info?.vehicle_number }})
+                  }
+                </p>
+                <p><strong>Rating:</strong> 
+                  <span class="material-icons-outlined" style="font-size: 14px; vertical-align: text-bottom; color: #fbbf24;">star</span> 
+                  {{ selectedOrder()?.delivery_partner_info?.average_rating }}
+                </p>
+              </div>
+            }
 
             <div class="detail-section">
               <h3>Order Items</h3>

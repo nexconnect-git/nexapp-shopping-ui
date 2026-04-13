@@ -2,7 +2,8 @@
 
 .mi-topbar {
   display: flex; align-items: center; gap: 0.875rem;
-  padding: 0.875rem 1rem; background: white; border-bottom: 1px solid #f0f0f0;
+  padding: 0.875rem 1rem; background: white; border-bottom: none;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.03);
   position: sticky; top: 60px; z-index: 10;
 }
 .mi-back {
@@ -27,10 +28,11 @@
 
 .mi-card {
   display: flex; align-items: center; gap: 1rem;
-  background: white; border: none; border-radius: 14px; padding: 1rem;
+  background: white; border: none; border-radius: var(--radius-xl); padding: 1.25rem;
   cursor: pointer; text-align: left; width: 100%; font-family: var(--font-family);
-  transition: box-shadow 0.15s;
-  &:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.07); }
+  box-shadow: 0 4px 16px rgba(0,0,0,0.03);
+  transition: transform 0.15s, box-shadow 0.15s;
+  &:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.07); }
 }
 
 .mi-card-icon {

@@ -37,6 +37,13 @@ export class CouponsComponent implements OnInit {
   error = signal('');
   success = signal('');
 
+  // Pagination
+  page = signal(1);
+  total = signal(0);
+  totalPages = signal(1);
+  readonly pageSize = 20;
+  Math = Math;
+
   form: CouponForm = this.blankForm();
 
   readonly discountTypes = [
@@ -48,9 +55,28 @@ export class CouponsComponent implements OnInit {
   ngOnInit() { this.load(); }
 
   load() {
-    this.api.getVendorCoupons().subscribe({
-      next: (res) => { this.coupons.set(res.results || res); this.loading.set(false); },
-      error: () => this.loading.set(false) });
+    this.loading.set(true);
+    this.api.getVendorCoupons({ page: this.page() }).subscribe({
+      next: (res) => {
+        this.coupons.set(res.results || res);
+        this.total.set(res.count || (res.results || res).length);
+        this.totalPages.set(Math.ceil((res.count || (res.results || res).length) / this.pageSize) || 1);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false)
+    });
+  }
+
+  setPage(p: number) {
+    if (p >= 1 && p <= this.totalPages()) { this.page.set(p); this.load(); }
+  }
+
+  pageNumbers(): number[] {
+    const total = this.totalPages();
+    const cur = this.page();
+    const range: number[] = [];
+    for (let i = Math.max(1, cur - 2); i <= Math.min(total, cur + 2); i++) range.push(i);
+    return range;
   }
 
   blankForm(): CouponForm {

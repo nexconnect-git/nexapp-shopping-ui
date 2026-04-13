@@ -15,11 +15,20 @@ import { timer, Subscription } from 'rxjs';
 export class OrdersComponent implements OnInit, OnDestroy {
   private api = inject(ApiService);
   private toast = inject(ToastService);
+
   orders = signal<Order[]>([]);
   loading = signal(true);
   lastRefreshed = signal<Date | null>(null);
   autoReload = signal(true);
   updatingId = signal<string | null>(null);
+
+  // Pagination
+  page = signal(1);
+  total = signal(0);
+  totalPages = signal(1);
+  readonly pageSize = 20;
+  Math = Math;
+
   statusFilter = '';
   private sub?: Subscription;
 
@@ -29,7 +38,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
     });
   }
 
-  manualReload() { this.load(); }
+  manualReload() { this.page.set(1); this.load(); }
   toggleAutoReload() { this.autoReload.update(v => !v); }
 
   ngOnDestroy() {
@@ -38,14 +47,38 @@ export class OrdersComponent implements OnInit, OnDestroy {
 
   load() {
     this.loading.set(true);
-    this.api.getVendorOrders(this.statusFilter || undefined).subscribe({
+    const params: any = { page: this.page() };
+    if (this.statusFilter) params.status = this.statusFilter;
+    this.api.getVendorOrders(params).subscribe({
       next: (r) => {
         this.orders.set(r.results || r);
+        this.total.set(r.count || (r.results || r).length);
+        this.totalPages.set(Math.ceil((r.count || (r.results || r).length) / this.pageSize) || 1);
         this.loading.set(false);
         this.lastRefreshed.set(new Date());
       },
       error: () => this.loading.set(false),
     });
+  }
+
+  onFilterChange() { this.page.set(1); this.load(); }
+
+  setPage(p: number) {
+    if (p >= 1 && p <= this.totalPages()) {
+      this.page.set(p);
+      this.load();
+    }
+  }
+
+  pageNumbers(): number[] {
+    const total = this.totalPages();
+    const cur = this.page();
+    const range: number[] = [];
+    const delta = 2;
+    for (let i = Math.max(1, cur - delta); i <= Math.min(total, cur + delta); i++) {
+      range.push(i);
+    }
+    return range;
   }
 
   updateStatus(order: Order, status: string) {

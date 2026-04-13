@@ -137,11 +137,11 @@
   display: block;
   background: white;
   border-radius: var(--radius-xl);
-  border: 1px solid var(--border-color);
+  border: none;
   text-decoration: none;
   overflow: hidden;
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.03);
   animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
   min-width: 0; /* Add shrinking rules for flex kids inside block */
 

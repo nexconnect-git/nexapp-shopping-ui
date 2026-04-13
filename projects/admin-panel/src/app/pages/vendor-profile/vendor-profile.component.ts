@@ -2,7 +2,7 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
-import { ApiService, AppCurrencyPipe } from '@shared/public-api';
+import { ApiService, ToastService, AppCurrencyPipe } from '@shared/public-api';
 import { DynamicTableComponent, TableCellDirective } from '../../shared/components/dynamic-table/dynamic-table.component';
 
 type Tab = 'overview' | 'products' | 'orders' | 'report';
@@ -16,7 +16,8 @@ type Period = '30d' | '90d' | '12m';
   styleUrl: './vendor-profile.component.scss'
 })
 export class VendorProfileComponent implements OnInit {
-  private api = inject(ApiService);
+  private api   = inject(ApiService);
+  private toast = inject(ToastService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
@@ -154,12 +155,26 @@ export class VendorProfileComponent implements OnInit {
     this.loadReport();
   }
 
+  onStatusChange(event: Event) {
+    const newStatus = (event.target as HTMLSelectElement).value;
+    if (newStatus === this.vendor().status) return;
+    if (!confirm(`Set vendor status to "${newStatus}"?`)) {
+      // Reset select visually — re-trigger change detection
+      this.vendor.update(v => ({ ...v }));
+      return;
+    }
+    this.setStatus(newStatus);
+  }
+
   setStatus(newStatus: string) {
-    if (!confirm(`Set vendor status to "${newStatus}"?`)) return;
     this.actionLoading.set(true);
     this.api.setVendorStatus(this.vendorId, newStatus).subscribe({
-      next: () => { this.actionLoading.set(false); this.loadVendor(); },
-      error: () => this.actionLoading.set(false)
+      next: () => {
+        this.toast.show(`Vendor status set to ${newStatus}.`, 'success');
+        this.actionLoading.set(false);
+        this.loadVendor();
+      },
+      error: () => { this.toast.show('Failed to update status.', 'error'); this.actionLoading.set(false); }
     });
   }
 

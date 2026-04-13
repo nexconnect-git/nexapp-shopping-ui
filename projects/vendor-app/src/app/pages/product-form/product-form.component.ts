@@ -25,7 +25,7 @@ export class ProductFormComponent implements OnInit {
 
   images = signal<any[]>([]);
 
-  form: any = { name: '', description: '', price: null, compare_price: null, stock: 0, low_stock_threshold: 10, unit: 'pcs', sku: '', weight: '', category: null, is_available: true, is_featured: false };
+  form: any = { name: '', description: '', price: null, compare_price: null, stock: 0, low_stock_threshold: 10, unit: 'pcs', sku: '', weight: '', category: null, is_available: true, status: 'active', is_featured: false };
 
   ngOnInit() {
     this.api.getCategories().subscribe({ next: (r) => this.categories.set(r.results || r) });
@@ -40,7 +40,7 @@ export class ProductFormComponent implements OnInit {
             name: p.name, description: p.description || '', price: p.price,
             compare_price: p.compare_price, stock: p.stock, unit: p.unit || 'pcs',
             sku: p.sku || '', weight: p.weight || '',
-            category: p.category?.id || null, is_available: p.is_available, is_featured: p.is_featured,
+            category: p.category?.id || null, is_available: p.is_available, status: p.status || 'active', is_featured: p.is_featured,
             low_stock_threshold: p.low_stock_threshold ?? 10
           };
           this.loadImages();

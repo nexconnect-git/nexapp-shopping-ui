@@ -30,7 +30,6 @@
         </div>
         <p class="mc-label">Net Revenue</p>
         <h2 class="mc-value">{{ stats()?.total_revenue | appCurrency }}</h2>
-        <a routerLink="/sales-report" class="card-link"></a>
       </div>
 
       <div class="metric-card">
@@ -88,6 +87,40 @@
         </div>
         @if(stats()?.pending_delivery_partners) { <span class="indicator blink"></span> }
         <a routerLink="/delivery-partners" class="card-link"></a>
+      </div>
+    </div>
+
+    <!-- Orders Breakdown Widget -->
+    <div class="metrics-grid mt-4" style="margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+      <div class="widget-card">
+        <div class="widget-header">
+          <h3>Orders Breakdown by Status</h3>
+        </div>
+        <div class="widget-body">
+          <div class="status-bars">
+            <div class="status-bar-row">
+              <span class="status-label">Pending</span>
+              <div class="bar-track">
+                <div class="bar-fill bg-warning" [style.width.%]="(stats()?.pending_orders / (stats()?.total_orders || 1)) * 100"></div>
+              </div>
+              <span class="status-count">{{ stats()?.pending_orders || 0 }}</span>
+            </div>
+            <div class="status-bar-row">
+              <span class="status-label">Completed</span>
+              <div class="bar-track">
+                <div class="bar-fill bg-success" [style.width.%]="(stats()?.completed_orders / (stats()?.total_orders || 1)) * 100"></div>
+              </div>
+              <span class="status-count">{{ stats()?.completed_orders || 0 }}</span>
+            </div>
+            <div class="status-bar-row">
+              <span class="status-label">Cancelled</span>
+              <div class="bar-track">
+                <div class="bar-fill bg-danger" [style.width.%]="(stats()?.cancelled_orders / (stats()?.total_orders || 1)) * 100"></div>
+              </div>
+              <span class="status-count">{{ stats()?.cancelled_orders || 0 }}</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   }

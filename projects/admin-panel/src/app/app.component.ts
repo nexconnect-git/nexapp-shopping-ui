@@ -35,7 +35,6 @@ export class AppComponent implements OnInit {
       { route: '/delivery-partners', icon: 'local_shipping', label: 'Delivery Partners' },
       { route: '/categories', icon: 'category', label: 'Categories' },
       { route: '/assets', icon: 'handyman', label: 'Assets' },
-      { route: '/sales-report', icon: 'trending_up', label: 'Sales Report' },
       { route: '/payouts', icon: 'payments', label: 'Payouts' },
       { route: '/issues', icon: 'report_problem', label: 'Order Issues' },
       { route: '/coupons', icon: 'confirmation_number', label: 'Coupons' },
@@ -59,6 +58,7 @@ export class AppComponent implements OnInit {
   private startPolling() {
     // Unread badge (light poll every 30 s for header counter)
     timer(0, 30000).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      if (!this.auth.isLoggedIn()) return;
       this.api.getUnreadCount().subscribe({
         next: (r) => this.unreadCount.set(r.count ?? 0),
         error: () => {},
@@ -95,6 +95,7 @@ export class AppComponent implements OnInit {
   }
 
   fetchNotifications() {
+    if (!this.auth.isLoggedIn()) return;
     this.notifLoading.set(true);
     this.api.getNotifications().subscribe({
       next: (r) => {

@@ -9,7 +9,7 @@ import { DynamicTableComponent, TableCellDirective } from '../../shared/componen
 @Component({
   selector: 'app-customers',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, DynamicTableComponent, TableCellDirective],
+  imports: [CommonModule, FormsModule, DynamicTableComponent, TableCellDirective],
   templateUrl: './customers.component.html',
   styleUrl: './customers.component.scss'
 })
