@@ -1,0 +1,6 @@
+{
+  "name": "nexconnect-customer-mobile",
+  "version": "1.0.0",
+  "description": "NexConnect Customer mobile app (Capacitor wrapper)",
+  "private": true
+}

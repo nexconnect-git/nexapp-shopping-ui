@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ApiService, AppCurrencyPipe, AuthService, DeliveryDashboard } from '@shared/public-api';
 import { timer, Subscription } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-dashboard',
@@ -71,6 +72,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   private _startLocationTracking() {
+    if (environment.production) {
+      console.log('Live location tracking is disabled in production.');
+      this.locationStatus.set('idle');
+      return;
+    }
     if (!navigator.geolocation) {
       this.locationStatus.set('error');
       return;

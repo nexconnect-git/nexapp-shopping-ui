@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ApiService, Order, PaymentQR } from '@shared/public-api';
 import { timer, Subscription } from 'rxjs';
 import { AuthService } from '@shared/public-api';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-active-delivery',
@@ -46,6 +47,10 @@ export class ActiveDeliveryComponent implements OnInit, OnDestroy {
 
   // --- Tracking Broadcast ---
   private startLocationTracking() {
+    if (environment.production) {
+      console.log('Live location tracking is disabled in production.');
+      return;
+    }
     if ('geolocation' in navigator) {
       this.watchId = navigator.geolocation.watchPosition(
         (pos) => this.broadcastLocation(pos.coords.latitude, pos.coords.longitude),
@@ -87,7 +92,8 @@ export class ActiveDeliveryComponent implements OnInit, OnDestroy {
   }
 
   private connectTrackerSocket(orderId: string): WebSocket {
-    const wsUrl = `ws://${window.location.host}/ws/delivery/${orderId}/tracking/?token=${this.auth.getToken()}`;
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws/delivery/${orderId}/tracking/?token=${this.auth.getToken()}`;
     const ws = new WebSocket(wsUrl);
     ws.onopen = () => console.log(`Connected tracking socket for order ${orderId}`);
     ws.onerror = (err) => console.error('WS Error:', err);

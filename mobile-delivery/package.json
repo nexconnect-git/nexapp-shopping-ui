@@ -1,0 +1,6 @@
+{
+  "name": "nexconnect-delivery-mobile",
+  "version": "1.0.0",
+  "description": "NexConnect Delivery mobile app (Capacitor wrapper)",
+  "private": true
+}

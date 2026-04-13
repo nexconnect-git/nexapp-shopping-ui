@@ -1,10 +1,11 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, shareReplay } from 'rxjs';
+import { API_BASE_URL } from '../tokens/api-url.token';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
-  private baseUrl = '/api';
+  private baseUrl = inject(API_BASE_URL);
 
   readonly cartCount = signal(0);
   readonly unreadNotifications = signal(0);

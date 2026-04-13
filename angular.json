@@ -200,6 +200,28 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "mobile": {
+              "fileReplacements": [
+                {
+                  "replace": "projects/customer-app/src/environments/environment.ts",
+                  "with": "projects/customer-app/src/environments/environment.mobile.ts"
+                }
+              ],
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "2MB",
+                  "maximumError": "5MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "50kB",
+                  "maximumError": "100kB"
+                }
+              ],
+              "outputHashing": "all",
+              "optimization": true
             }
           },
           "defaultConfiguration": "production"
@@ -444,6 +466,28 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "mobile": {
+              "fileReplacements": [
+                {
+                  "replace": "projects/delivery-app/src/environments/environment.ts",
+                  "with": "projects/delivery-app/src/environments/environment.mobile.ts"
+                }
+              ],
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "2MB",
+                  "maximumError": "5MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "50kB",
+                  "maximumError": "100kB"
+                }
+              ],
+              "outputHashing": "all",
+              "optimization": true
             }
           },
           "defaultConfiguration": "production"

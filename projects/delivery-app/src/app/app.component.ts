@@ -4,6 +4,10 @@ import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { timer } from 'rxjs';
 import { AuthService, ApiService, ToastComponent, NotificationPollingService } from '@shared/public-api';
+import { Capacitor } from '@capacitor/core';
+import { StatusBar, Style } from '@capacitor/status-bar';
+import { SplashScreen } from '@capacitor/splash-screen';
+import { App } from '@capacitor/app';
 
 @Component({
   selector: 'app-root',
@@ -24,6 +28,8 @@ export class AppComponent implements OnInit {
   unreadCount = signal(0);
 
   ngOnInit() {
+    this.initNative();
+
     if (this.auth.isLoggedIn()) {
       this.notifPolling.start((n) => {
         if (n.notification_type === 'order') return { label: 'View', url: '/orders' };
@@ -36,6 +42,23 @@ export class AppComponent implements OnInit {
           next: (r) => this.unreadCount.set(r.count ?? 0),
           error: () => {},
         });
+      }
+    });
+  }
+
+  private async initNative() {
+    if (!Capacitor.isNativePlatform()) return;
+
+    await StatusBar.setStyle({ style: Style.Dark });
+    await StatusBar.setBackgroundColor({ color: '#059669' });
+    await SplashScreen.hide();
+
+    // Handle Android hardware back button
+    App.addListener('backButton', ({ canGoBack }) => {
+      if (canGoBack) {
+        window.history.back();
+      } else {
+        App.exitApp();
       }
     });
   }

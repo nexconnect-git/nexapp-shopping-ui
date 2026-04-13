@@ -167,7 +167,8 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private connectWebSocket(orderId: string) {
-    const wsUrl = `ws://${window.location.host}/ws/delivery/${orderId}/tracking/?token=${this.auth.getToken()}`;
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws/delivery/${orderId}/tracking/?token=${this.auth.getToken()}`;
     this.ws = new WebSocket(wsUrl);
     this.ws.onmessage = (msg) => {
       const data = JSON.parse(msg.data);

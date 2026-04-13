@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">NexConnect Delivery</string>
+    <string name="title_activity_main">NexConnect Delivery</string>
+    <string name="package_name">com.nexconnect.delivery</string>
+    <string name="custom_url_scheme">com.nexconnect.delivery</string>
+</resources>
