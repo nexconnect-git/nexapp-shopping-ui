@@ -58,4 +58,11 @@ export class LoginComponent implements OnInit {
         this.loading.set(false);
       },
       error: (err) => {
+        this.error.set(err.error?.detail || 'Invalid credentials.');
+        this.loading.set(false);
+      }
+    });
+  }
+}
+
 

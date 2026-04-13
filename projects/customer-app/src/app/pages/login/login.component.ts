@@ -44,9 +44,11 @@ export class LoginComponent {
         this.loading.set(false);
       },
       error: (err) => {
-        this.error.set(err.error?.detail || 'Login failed. Please try again.');
+        this.error.set(err.error?.detail || 'Invalid credentials.');
         this.loading.set(false);
       }
     });
   }
+}
+
 
