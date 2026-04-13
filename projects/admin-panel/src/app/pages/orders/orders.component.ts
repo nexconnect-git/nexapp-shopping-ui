@@ -223,7 +223,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.closeWs();
     const token = localStorage.getItem('token') || '';
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws/delivery/${orderId}/tracking/?token=${token}`;
+    const wsUrl = `${protocol}//${window.location.host}/sa/ws/delivery/${orderId}/tracking/?token=${token}`;
     this.ws = new WebSocket(wsUrl);
     this.ws.onmessage = (msg) => {
       const data = JSON.parse(msg.data);

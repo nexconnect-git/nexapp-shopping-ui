@@ -5,7 +5,7 @@ import { API_BASE_URL } from '../tokens/api-url.token';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
-  private baseUrl = inject(API_BASE_URL);
+  private baseUrl = '/sa' + inject(API_BASE_URL);
 
   readonly cartCount = signal(0);
   readonly unreadNotifications = signal(0);

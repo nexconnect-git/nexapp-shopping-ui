@@ -93,7 +93,7 @@ export class ActiveDeliveryComponent implements OnInit, OnDestroy {
 
   private connectTrackerSocket(orderId: string): WebSocket {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws/delivery/${orderId}/tracking/?token=${this.auth.getToken()}`;
+    const wsUrl = `${protocol}//${window.location.host}/sa/ws/delivery/${orderId}/tracking/?token=${this.auth.getToken()}`;
     const ws = new WebSocket(wsUrl);
     ws.onopen = () => console.log(`Connected tracking socket for order ${orderId}`);
     ws.onerror = (err) => console.error('WS Error:', err);

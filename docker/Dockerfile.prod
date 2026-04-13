@@ -9,10 +9,10 @@ RUN npm install
 COPY . .
 
 # Build all applications with their respective base hrefs
-RUN npx ng build customer-app --configuration production
-RUN npx ng build admin-panel --configuration production --base-href /admin/
-RUN npx ng build vendor-app --configuration production --base-href /vendor/
-RUN npx ng build delivery-app --configuration production --base-href /delivery/
+RUN npx ng build customer-app --configuration production --base-href /sa/
+RUN npx ng build admin-panel --configuration production --base-href /sa/admin/
+RUN npx ng build vendor-app --configuration production --base-href /sa/vendor/
+RUN npx ng build delivery-app --configuration production --base-href /sa/delivery/
 
 # Stage 2: Serve with Nginx
 FROM nginx:alpine
