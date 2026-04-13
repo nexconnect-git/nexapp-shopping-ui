@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'NexConnect Delivery',
   webDir: '../dist/delivery-app/browser',
   server: {
-    androidScheme: 'https',
+    androidScheme: 'http',
     cleartext: true   // allow HTTP to local dev server; remove for production HTTPS
   },
   plugins: {

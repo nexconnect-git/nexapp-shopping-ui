@@ -31,13 +31,13 @@ export class LoginComponent {
 
     this.auth.login(this.username, this.password).subscribe({
       next: (res) => {
-        this.auth.handleAuthResponse(res);
         if (res.user.role !== 'vendor') {
-          this.auth.logout();
-          this.error.set('This portal is for vendors only.');
+          this.error.set('Access denied. This portal is strictly for vendors and merchants.');
           this.loading.set(false);
           return;
         }
+
+        this.auth.handleAuthResponse(res);
         this.api.getVendorProfile().subscribe({
           next: (profile) => {
             localStorage.setItem('vendor_status', profile.status);

@@ -28,6 +28,12 @@ export class LoginComponent {
 
     this.auth.login(this.username, this.password).subscribe({
       next: (res) => {
+        if (res.user.role !== 'delivery') {
+          this.error.set('Access denied. This portal is strictly for delivery partners.');
+          this.loading.set(false);
+          return;
+        }
+
         this.auth.handleAuthResponse(res);
         if (res.user.force_password_change) {
           this.router.navigate(['/change-password']);

@@ -42,21 +42,20 @@ export class LoginComponent implements OnInit {
     this.error.set('');
     this.auth.login(this.username, this.password).subscribe({
       next: (res) => {
-        this.auth.handleAuthResponse(res);
         if (res.user.role !== 'admin') {
-          this.auth.logout();
-          this.error.set('Access denied. Admin accounts only.');
+          this.error.set('Access denied. Administrator privileges required.');
+          this.loading.set(false);
+          return;
+        }
+
+        this.auth.handleAuthResponse(res);
+        if (res.user.force_password_change) {
+          this.router.navigate(['/change-password']);
           this.loading.set(false);
           return;
         }
         this.router.navigate(['/']);
+        this.loading.set(false);
       },
       error: (err) => {
-        this.error.set(err.error?.detail || 'Invalid credentials.');
-        this.loading.set(false);
-      }
-    });
-  }
-}
-
 
