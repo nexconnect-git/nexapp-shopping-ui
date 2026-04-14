@@ -34,7 +34,7 @@ export class PendingApprovalComponent implements OnInit, OnDestroy {
       next: (profile) => {
         this.status.set(profile.status);
         this.storeName.set(profile.store_name || '');
-        localStorage.setItem('vendor_status', profile.status);
+        localStorage.setItem(this.auth.vendorKey, profile.status);
         this.loading.set(false);
         if (profile.status === 'approved') {
           clearInterval(this.pollInterval);

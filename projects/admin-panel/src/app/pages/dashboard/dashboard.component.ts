@@ -1,7 +1,7 @@
 import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { ApiService, AppCurrencyPipe } from '@shared/public-api';
+import { ApiService, AuthService, AppCurrencyPipe } from '@shared/public-api';
 import { timer, Subscription } from 'rxjs';
 
 @Component({
@@ -13,6 +13,7 @@ import { timer, Subscription } from 'rxjs';
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   private api = inject(ApiService);
+  private auth = inject(AuthService);
 
   stats = signal<any>(null);
   recentOrders = signal<any[]>([]);
@@ -50,7 +51,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   connectWebSocket() {
-    const token = localStorage.getItem('access_token') || '';
+    const token = this.auth.getToken() || '';
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/sa/ws/admin/stats/?token=${token}`;
     this.ws = new WebSocket(wsUrl);

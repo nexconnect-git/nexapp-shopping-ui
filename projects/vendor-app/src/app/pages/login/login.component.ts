@@ -40,7 +40,7 @@ export class LoginComponent {
         this.auth.handleAuthResponse(res);
         this.api.getVendorProfile().subscribe({
           next: (profile) => {
-            localStorage.setItem('vendor_status', profile.status);
+            localStorage.setItem(this.auth.vendorKey, profile.status);
             
             if (profile.status === 'approved') {
               if (res.user.force_password_change) {

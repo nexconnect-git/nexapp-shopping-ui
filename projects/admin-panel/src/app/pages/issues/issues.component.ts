@@ -2,7 +2,7 @@ import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { Subscription, timer } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService } from '@shared/public-api';
+import { ApiService, AuthService } from '@shared/public-api';
 import { DynamicTableComponent, TableCellDirective } from '../../shared/components/dynamic-table/dynamic-table.component';
 
 @Component({
@@ -13,6 +13,7 @@ import { DynamicTableComponent, TableCellDirective } from '../../shared/componen
   styleUrl: './issues.component.scss' })
 export class IssuesComponent implements OnInit, OnDestroy {
   private api = inject(ApiService);
+  private auth = inject(AuthService);
 
   issues = signal<any[]>([]);
   loading = signal(true);
@@ -114,7 +115,7 @@ export class IssuesComponent implements OnInit, OnDestroy {
 
   connectWebSocket(issueId: string) {
     this.closeWebSocket();
-    const token = localStorage.getItem('access_token') || '';
+    const token = this.auth.getToken() || '';
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/ws/issues/${issueId}/?token=${token}`;
     this.ws = new WebSocket(wsUrl);

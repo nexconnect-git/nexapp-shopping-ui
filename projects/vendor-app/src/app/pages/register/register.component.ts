@@ -90,7 +90,7 @@ export class RegisterComponent {
     this.api.registerVendor(payload).subscribe({
       next: (res) => {
         this.auth.handleAuthResponse(res);
-        localStorage.setItem('vendor_status', res.vendor_status || 'pending');
+        localStorage.setItem(this.auth.vendorKey, res.vendor_status || 'pending');
         this.router.navigate(['/pending-approval']);
         this.loading.set(false);
       },

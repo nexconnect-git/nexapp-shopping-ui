@@ -42,7 +42,7 @@ export class ChangePasswordComponent {
         // Fetch vendor profile to determine next route
         this.api.getVendorProfile().subscribe({
           next: (profile) => {
-            localStorage.setItem('vendor_status', profile.status);
+            localStorage.setItem(this.auth.vendorKey, profile.status);
             setTimeout(() => {
               if (profile.status === 'approved') {
                 this.router.navigate(['/']);

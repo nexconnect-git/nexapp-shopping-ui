@@ -3,75 +3,74 @@ import { CanActivateFn, Router } from '@angular/router';
 import { map, catchError, of } from 'rxjs';
 import { ApiService } from '../services/api.service';
 import { AuthService } from '../services/auth.service';
+import { AUTH_PREFIX } from '../tokens/auth-prefix.token';
+
+/** Read the portal-scoped token from localStorage. */
+function getScopedToken(): string | null {
+  const prefix = inject(AUTH_PREFIX);
+  return localStorage.getItem(`${prefix}_access_token`);
+}
+
+function getScopedUser(): any | null {
+  const prefix = inject(AUTH_PREFIX);
+  const raw = localStorage.getItem(`${prefix}_user`);
+  if (!raw) return null;
+  try { return JSON.parse(raw); } catch { return null; }
+}
 
 /**
- * authGuard — allows only authenticated users.
- * Reads live from localStorage so cross-portal clearing is reflected.
+ * authGuard — allows only authenticated users (reads scoped token).
  */
 export const authGuard: CanActivateFn = () => {
   const router = inject(Router);
-  const token = localStorage.getItem('access_token');
-  if (token) return true;
+  if (getScopedToken()) return true;
   router.navigate(['/login']);
   return false;
 };
 
 /**
  * unauthGuard — allows only unauthenticated users (e.g. login page).
- * If the user is logged in, redirects to dashboard.
  */
 export const unauthGuard: CanActivateFn = () => {
   const router = inject(Router);
-  const token = localStorage.getItem('access_token');
-  if (!token) return true;
+  if (!getScopedToken()) return true;
   router.navigate(['/']);
   return false;
 };
 
 /**
- * portalUnauthGuard(role) — role-aware guard for login pages.
- * Only blocks access to the login page if the logged-in user has the CORRECT role.
- * If the user is logged in with a DIFFERENT role (cross-portal), allows the login page
- * to render so they can see the "Access denied" message or log in with the right account.
- * Does NOT touch localStorage — avoiding cross-portal session destruction.
+ * portalUnauthGuard(role) — role-aware login page guard.
+ * Only blocks the login page if the CORRECT portal's user is already logged in.
+ * Cross-portal users (different role) are always allowed to see the login page.
  */
 export const portalUnauthGuard = (expectedRole: string): CanActivateFn => {
   return () => {
     const router = inject(Router);
-    const token = localStorage.getItem('access_token');
-    if (!token) return true; // not logged in → show login page
+    const token = getScopedToken();
+    if (!token) return true;
 
-    const userData = localStorage.getItem('user');
-    if (!userData) return true; // no user data → show login page
+    const user = getScopedUser();
+    if (!user) return true;
 
-    const user = JSON.parse(userData);
     if (user.role === expectedRole) {
-      // Correct portal — already logged in, go to dashboard
       router.navigate(['/']);
       return false;
     }
 
-    // Different role (cross-portal): let the login page show
-    // The login component will display the "Access denied" error on submit.
+    // Different role in OUR scoped key — shouldn't normally happen since
+    // each portal now has its own key, but guard defensively.
     return true;
   };
 };
 
 /**
- * roleGuard(role) — blocks authenticated users with the wrong role.
- * Does NOT clear localStorage — another portal owns that session.
- * Simply redirects to /login so the user can log in with the right account.
+ * roleGuard(role) — blocks users with the wrong role from protected routes.
  */
 export const roleGuard = (allowedRole: string): CanActivateFn => {
   return () => {
     const router = inject(Router);
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      const user = JSON.parse(userData);
-      if (user.role === allowedRole) return true;
-    }
-    // Wrong role or no user — redirect to login. Do NOT clear localStorage
-    // as other portals may legitimately own the current session.
+    const user = getScopedUser();
+    if (user?.role === allowedRole) return true;
     router.navigate(['/login']);
     return false;
   };
@@ -80,8 +79,10 @@ export const roleGuard = (allowedRole: string): CanActivateFn => {
 export const approvedVendorGuard: CanActivateFn = () => {
   const router = inject(Router);
   const api = inject(ApiService);
-  const token = localStorage.getItem('access_token');
-  const userData = localStorage.getItem('user');
+  const prefix = inject(AUTH_PREFIX);
+
+  const token = localStorage.getItem(`${prefix}_access_token`);
+  const userData = localStorage.getItem(`${prefix}_user`);
 
   if (!token || !userData) {
     router.navigate(['/login']);
@@ -94,7 +95,7 @@ export const approvedVendorGuard: CanActivateFn = () => {
     return false;
   }
 
-  const cached = localStorage.getItem('vendor_status');
+  const cached = localStorage.getItem(`${prefix}_vendor_status`);
   if (cached !== null) {
     if (cached === 'approved') return true;
     router.navigate(['/pending-approval']);
@@ -103,7 +104,7 @@ export const approvedVendorGuard: CanActivateFn = () => {
 
   return api.getVendorProfile().pipe(
     map((profile: any) => {
-      localStorage.setItem('vendor_status', profile.status);
+      localStorage.setItem(`${prefix}_vendor_status`, profile.status);
       if (profile.status === 'approved') return true;
       router.navigate(['/pending-approval']);
       return false;
