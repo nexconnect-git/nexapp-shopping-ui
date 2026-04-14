@@ -1,5 +1,7 @@
 import { Routes } from '@angular/router';
-import { authGuard, unauthGuard } from '@shared/public-api';
+import { authGuard, unauthGuard, roleGuard } from '@shared/public-api';
+
+const customerGuard = [authGuard, roleGuard('customer')];
 
 export const routes: Routes = [
   {
@@ -15,76 +17,76 @@ export const routes: Routes = [
   {
     path: '',
     loadComponent: () => import('./pages/home/home.component').then(m => m.HomeComponent),
-    canActivate: [authGuard]
+    canActivate: customerGuard
   },
   {
     path: 'search',
     loadComponent: () => import('./pages/search/search.component').then(m => m.SearchComponent),
-    canActivate: [authGuard]
+    canActivate: customerGuard
   },
   {
     path: 'shops',
     loadComponent: () => import('./pages/shops/shops.component').then(m => m.ShopsComponent),
-    canActivate: [authGuard]
+    canActivate: customerGuard
   },
   {
     path: 'shop/:id',
     loadComponent: () => import('./pages/shop-detail/shop-detail.component').then(m => m.ShopDetailComponent),
-    canActivate: [authGuard]
+    canActivate: customerGuard
   },
   {
     path: 'products',
     loadComponent: () => import('./pages/products/products.component').then(m => m.ProductsComponent),
-    canActivate: [authGuard]
+    canActivate: customerGuard
   },
   {
     path: 'product/:id',
     loadComponent: () => import('./pages/product-detail/product-detail.component').then(m => m.ProductDetailComponent),
-    canActivate: [authGuard]
+    canActivate: customerGuard
   },
   {
     path: 'cart',
     loadComponent: () => import('./pages/cart/cart.component').then(m => m.CartComponent),
-    canActivate: [authGuard]
+    canActivate: customerGuard
   },
   {
     path: 'order/:id',
     loadComponent: () => import('./pages/order-detail/order-detail.component').then(m => m.OrderDetailComponent),
-    canActivate: [authGuard]
+    canActivate: customerGuard
   },
   {
     path: 'order/:id/tracking',
     loadComponent: () => import('./pages/order-tracking/order-tracking.component').then(m => m.OrderTrackingComponent),
-    canActivate: [authGuard]
+    canActivate: customerGuard
   },
   {
     path: 'order/:id/help',
     loadComponent: () => import('./pages/order-help/order-help.component').then(m => m.OrderHelpComponent),
-    canActivate: [authGuard]
+    canActivate: customerGuard
   },
   {
     path: 'order/:id/rate',
     loadComponent: () => import('./pages/order-rating/order-rating.component').then(m => m.OrderRatingComponent),
-    canActivate: [authGuard]
+    canActivate: customerGuard
   },
   {
     path: 'order/:id/issue',
     loadComponent: () => import('./pages/order-issue/order-issue.component').then(m => m.OrderIssueComponent),
-    canActivate: [authGuard]
+    canActivate: customerGuard
   },
   {
     path: 'issue/:issueId',
     loadComponent: () => import('./pages/order-issue/order-issue.component').then(m => m.OrderIssueComponent),
-    canActivate: [authGuard]
+    canActivate: customerGuard
   },
   {
     path: 'my-issues',
     loadComponent: () => import('./pages/my-issues/my-issues.component').then(m => m.MyIssuesComponent),
-    canActivate: [authGuard]
+    canActivate: customerGuard
   },
   {
     path: 'profile',
-    canActivate: [authGuard],
+    canActivate: customerGuard,
     children: [
       { path: '', loadComponent: () => import('./pages/profile/profile.component').then(m => m.ProfileComponent) },
       { path: 'orders', loadComponent: () => import('./pages/orders/orders.component').then(m => m.OrdersComponent) }
@@ -93,17 +95,17 @@ export const routes: Routes = [
   {
     path: 'checkout',
     loadComponent: () => import('./pages/checkout/checkout.component').then(m => m.CheckoutComponent),
-    canActivate: [authGuard]
+    canActivate: customerGuard
   },
   {
     path: 'offers',
     loadComponent: () => import('./pages/offers/offers.component').then(m => m.OffersComponent),
-    canActivate: [authGuard]
+    canActivate: customerGuard
   },
   {
     path: 'addresses',
     loadComponent: () => import('./pages/addresses/addresses.component').then(m => m.AddressesComponent),
-    canActivate: [authGuard]
+    canActivate: customerGuard
   },
   {
     path: '**',
