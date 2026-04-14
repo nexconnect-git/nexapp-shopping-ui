@@ -1,12 +1,13 @@
 import { Routes } from '@angular/router';
 import { authGuard, unauthGuard, roleGuard } from '@shared/public-api';
+import { superuserGuard } from './guards/superuser.guard';
 
 const adminGuard = [authGuard, roleGuard('admin')];
-import { superuserGuard } from './guards/superuser.guard';
 
 export const routes: Routes = [
   { path: 'login', loadComponent: () => import('./pages/login/login.component').then(m => m.LoginComponent), canActivate: [unauthGuard] },
   { path: 'setup', loadComponent: () => import('./pages/setup/setup.component').then(m => m.SetupComponent), canActivate: [unauthGuard] },
+  { path: 'change-password', loadComponent: () => import('./pages/change-password/change-password.component').then(m => m.ChangePasswordComponent), canActivate: [authGuard] },
   { path: '', loadComponent: () => import('./pages/dashboard/dashboard.component').then(m => m.DashboardComponent), canActivate: adminGuard },
   { path: 'vendors', loadComponent: () => import('./pages/vendors/vendors.component').then(m => m.VendorsComponent), canActivate: adminGuard },
   // vendors/onboard MUST be before vendors/:id to avoid conflict
