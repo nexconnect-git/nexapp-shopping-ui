@@ -2,7 +2,7 @@ import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { ApiService, Vendor } from '@shared/public-api';
+import { ApiService, Vendor, LocationService } from '@shared/public-api';
 
 @Component({
   selector: 'app-shops',
@@ -14,10 +14,27 @@ import { ApiService, Vendor } from '@shared/public-api';
 export class ShopsComponent implements OnInit {
   private api = inject(ApiService);
   private route = inject(ActivatedRoute);
+  private locationService = inject(LocationService);
 
   allVendors = signal<Vendor[]>([]);
   vendors = computed(() => {
     let list = [...this.allVendors()];
+    
+    // Apply local filters since getNearbyVendors returns raw unpaginated list
+    if (this.searchQuery) {
+      const q = this.searchQuery.toLowerCase();
+      list = list.filter(v => 
+        (v.store_name && v.store_name.toLowerCase().includes(q)) || 
+        (v.description && v.description.toLowerCase().includes(q))
+      );
+    }
+    if (this.cityFilter) {
+      list = list.filter(v => v.city === this.cityFilter);
+    }
+    if (this.openOnly) {
+      list = list.filter(v => v.is_open);
+    }
+
     if (this.sortBy === 'rating') list.sort((a, b) => b.average_rating - a.average_rating);
     else if (this.sortBy === 'distance') list.sort((a, b) => (a.distance_km || 99) - (b.distance_km || 99));
     else if (this.sortBy === 'min_order_asc') list.sort((a, b) => (a.min_order_amount || 0) - (b.min_order_amount || 0));
@@ -26,11 +43,13 @@ export class ShopsComponent implements OnInit {
 
   cities = signal<string[]>([]);
   loading = signal(true);
-  page = signal(1);
-  totalPages = signal(1);
+  
   searchQuery = '';
   cityFilter = '';
   openOnly = false;
+
+  userLat: number | null = null;
+  userLng: number | null = null;
 
   sortBy = 'relevance';
   showSortSheet = false;
@@ -43,35 +62,50 @@ export class ShopsComponent implements OnInit {
     { value: 'min_order_asc', label: 'Min Order: Low to High' },
   ];
 
-  private searchTimer: any;
-
-  pageRange = computed(() => {
-    const total = this.totalPages();
-    const current = this.page();
-    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-    const start = Math.max(1, Math.min(current - 3, total - 6));
-    return Array.from({ length: Math.min(7, total) }, (_, i) => start + i);
-  });
-
   ngOnInit() {
     this.route.queryParams.subscribe(p => {
       if (p['search']) this.searchQuery = p['search'];
-      this.load();
+      this.initLocationAndLoad();
     });
   }
 
-  load() {
-    this.loading.set(true);
-    const params: any = { page: this.page() };
-    if (this.searchQuery) params.search = this.searchQuery;
-    if (this.cityFilter) params.city = this.cityFilter;
-    if (this.openOnly) params.is_open = true;
+  initLocationAndLoad() {
+    // If we already resolved location via LocationService, use it immediately
+    const loc = this.locationService.location();
+    if (loc) {
+      this.userLat = loc.lat;
+      this.userLng = loc.lng;
+      this.load();
+    } else {
+      this.loading.set(true);
+      this.locationService.initializeLocation().then(l => {
+        if (l) {
+          this.userLat = l.lat;
+          this.userLng = l.lng;
+          this.load();
+        } else {
+          // No location access constraints
+          this.allVendors.set([]);
+          this.loading.set(false);
+        }
+      });
+    }
+  }
 
-    this.api.getVendors(params).subscribe({
+  load() {
+    if (!this.userLat || !this.userLng) {
+      this.allVendors.set([]);
+      this.loading.set(false);
+      return;
+    }
+
+    this.loading.set(true);
+    // Explicitly restrict to 10 km here depending on active user location!
+    const queryCat = undefined; // Shop list relies on explicit searching for now
+    this.api.getNearbyVendors(this.userLat, this.userLng, 10, queryCat).subscribe({
       next: (res) => {
         const results = res.results || res;
         this.allVendors.set(results);
-        if (res.count) this.totalPages.set(Math.ceil(res.count / 20));
         const allCities = results.map((v: Vendor) => v.city).filter(Boolean);
         const unique = [...new Set<string>(allCities)] as string[];
         if (unique.length) this.cities.set(unique);
@@ -82,11 +116,9 @@ export class ShopsComponent implements OnInit {
   }
 
   onSearch() {
-    clearTimeout(this.searchTimer);
-    this.searchTimer = setTimeout(() => { this.page.set(1); this.load(); }, 400);
+    // Just trigger change detection for computed signal
+    // No need to query backend since vendors[] computed takes care locally
   }
-
-  setPage(p: number) { this.page.set(p); this.load(); }
 
   openSortSheet() { this.pendingSort = this.sortBy; this.showSortSheet = true; }
 

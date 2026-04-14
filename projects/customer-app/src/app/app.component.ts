@@ -1,7 +1,7 @@
 import { Component, inject, signal, OnInit, HostListener, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
-import { AuthService, ApiService, ToastService, ToastComponent, NotificationPollingService } from '@shared/public-api';
+import { AuthService, ApiService, LocationService, ToastService, ToastComponent, NotificationPollingService } from '@shared/public-api';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { switchMap, filter, debounceTime } from 'rxjs/operators';
 import { Capacitor } from '@capacitor/core';
@@ -19,10 +19,13 @@ import { App } from '@capacitor/app';
 export class AppComponent implements OnInit {
   auth = inject(AuthService);
   api = inject(ApiService);
+  locationService = inject(LocationService);
   toastService = inject(ToastService);
   router = inject(Router);
   private destroyRef = inject(DestroyRef);
   private notifPolling = inject(NotificationPollingService);
+
+  showSplash = signal(true);
 
   mobileMenuOpen = signal(false);
   userMenuOpen = signal(false);
@@ -37,6 +40,25 @@ export class AppComponent implements OnInit {
 
   ngOnInit() {
     this.initNative();
+
+    // Start fetching location eagerly on boot
+    this.locationService.initializeLocation();
+
+    // Fade out splash screen slightly after location loads, or timeout at 2s max for fallback
+    Promise.all([
+      new Promise(res => setTimeout(res, 800)), // Artificial minimum paint time for elegance
+      new Promise(res => {
+        // Wait until location is no longer loading, OR timeout after 2 seconds
+        let checks = 0;
+        const intv = setInterval(() => {
+          checks++;
+          if (!this.locationService.loading() || checks > 10) {
+            clearInterval(intv);
+            res(true);
+          }
+        }, 200);
+      })
+    ]).then(() => this.showSplash.set(false));
 
     if (this.auth.isLoggedIn()) {
       this.notifPolling.start((n) => {

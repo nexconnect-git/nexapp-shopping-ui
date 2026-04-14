@@ -284,3 +284,20 @@
     </a>
   }
 </nav>
+
+<!-- ============================================================
+     SPLASH SCREEN (INITIAL LOAD)
+     ============================================================ -->
+@if (showSplash()) {
+  <div class="web-splash-screen">
+    <div class="splash-logo-container">
+      <div class="splash-icon-wrapper">
+        <span class="material-icons-outlined splash-icon">bolt</span>
+      </div>
+      <h1 class="splash-brand">NexConnect</h1>
+      <p class="splash-subtitle">Nearby Shopping, Delivered.</p>
+      
+      <div class="splash-loader"></div>
+    </div>
+  </div>
+}

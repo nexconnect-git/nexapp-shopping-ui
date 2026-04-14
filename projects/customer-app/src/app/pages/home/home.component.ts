@@ -2,7 +2,7 @@ import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { ApiService, AuthService, Vendor } from '@shared/public-api';
+import { ApiService, AuthService, Vendor, LocationService } from '@shared/public-api';
 
 @Component({
   selector: 'app-home',
@@ -13,13 +13,16 @@ import { ApiService, AuthService, Vendor } from '@shared/public-api';
 })
 export class HomeComponent implements OnInit {
   auth = inject(AuthService);
+  locationService = inject(LocationService);
   private api = inject(ApiService);
 
   allVendors = signal<Vendor[]>([]);
   filteredVendors = signal<Vendor[]>([]);
   loadingVendors = signal(true);
-  locationLoading = signal(false);
-  locationDisplay = signal('Detecting location...');
+  
+  // Binding to LocationService state!
+  locationLoading = this.locationService.loading;
+  locationDisplay = this.locationService.locationDisplay;
 
   userLat: number | null = null;
   userLng: number | null = null;
@@ -70,51 +73,32 @@ export class HomeComponent implements OnInit {
   }
 
   detectLocation() {
-    if (!navigator.geolocation) {
-      this.locationDisplay.set('Lagos, Nigeria');
-      this.loadVendors();
-      return;
-    }
-    this.locationLoading.set(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        this.userLat = pos.coords.latitude;
-        this.userLng = pos.coords.longitude;
-        this.locationLoading.set(false);
-        this.resolveLocationName();
+    this.locationService.initializeLocation().then(loc => {
+      if (loc) {
+        this.userLat = loc.lat;
+        this.userLng = loc.lng;
         this.loadNearbyVendors();
-      },
-      () => {
-        this.locationLoading.set(false);
-        this.locationDisplay.set('Lagos, Nigeria');
-        this.loadVendors();
-      },
-      { timeout: 8000, enableHighAccuracy: false }
-    );
-  }
-
-  resolveLocationName() {
-    if (!this.auth.isLoggedIn()) {
-      this.locationDisplay.set('Near you');
-      return;
-    }
-    this.api.getAddresses().subscribe({
-      next: (r) => {
-        const addrs: any[] = r.results || r;
-        const nearby = addrs.find((a: any) => {
-          if (!a.latitude || !a.longitude) return false;
-          return this.haversine(this.userLat!, this.userLng!, parseFloat(a.latitude), parseFloat(a.longitude)) < 2;
-        });
-        const use = nearby || addrs.find((a: any) => a.is_default) || addrs[0];
-        this.locationDisplay.set(use?.city ? use.city : 'Near you');
-      },
-      error: () => this.locationDisplay.set('Near you')
+      } else {
+        // Force fallback if location is strictly disabled
+        this.allVendors.set([]);
+        this.filteredVendors.set([]);
+        this.loadingVendors.set(false);
+      }
     });
+
+    // We can also bind the signals heavily
+    // but a one-off initialization is fine for first load.
   }
 
   loadNearbyVendors(category?: string) {
-    if (!this.userLat || !this.userLng) { this.loadVendors(category); return; }
+    if (!this.userLat || !this.userLng) {
+      this.allVendors.set([]);
+      this.filteredVendors.set([]);
+      this.loadingVendors.set(false);
+      return; 
+    }
     this.loadingVendors.set(true);
+    // Explicitly restrict to 10 km here
     this.api.getNearbyVendors(this.userLat, this.userLng, 10, category).subscribe({
       next: (res) => {
         const vendors = (Array.isArray(res) ? res : (res.results || res)) as Vendor[];
@@ -122,35 +106,14 @@ export class HomeComponent implements OnInit {
         this.filteredVendors.set(this.applyOpenFilter(vendors));
         this.loadingVendors.set(false);
       },
-      error: () => this.loadVendors(category) });
-  }
-
-  loadVendors(category?: string) {
-    this.loadingVendors.set(true);
-    const params: any = {};
-    if (category && category !== 'all') params['category'] = category;
-    this.api.getVendors(params).subscribe({
-      next: (res) => {
-        let vendors = (res.results || res) as Vendor[];
-        vendors = vendors.map(v => ({
-          ...v,
-          distance_km: v.distance_km || parseFloat((Math.random() * 8 + 0.5).toFixed(1)) }));
-        vendors.sort((a, b) => (a.distance_km || 0) - (b.distance_km || 0));
-        this.allVendors.set(vendors);
-        this.filteredVendors.set(this.applyOpenFilter(vendors));
-        this.loadingVendors.set(false);
-      },
-      error: () => this.loadingVendors.set(false) });
+      error: () => this.loadingVendors.set(false) 
+    });
   }
 
   selectCategory(catId: string) {
     this.selectedCategory.set(catId);
     const cat = catId !== 'all' ? catId : undefined;
-    if (this.userLat && this.userLng) {
-      this.loadNearbyVendors(cat);
-    } else {
-      this.loadVendors(cat);
-    }
+    this.loadNearbyVendors(cat);
     const el = document.querySelector('.stores-section');
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
@@ -178,14 +141,5 @@ export class HomeComponent implements OnInit {
   starsFor(rating: number): string {
     const full = Math.round(rating);
     return '★'.repeat(full) + '☆'.repeat(5 - full);
-  }
-
-  private haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
-    const R = 6371;
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat / 2) ** 2
-      + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
-    return R * 2 * Math.asin(Math.sqrt(a));
   }
 }

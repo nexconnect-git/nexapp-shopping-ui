@@ -10,3 +10,4 @@ export * from './lib/services/toast.service';
 export * from './lib/components/toast/toast.component';
 export * from './lib/pipes/currency.pipe';
 export * from './lib/services/notification-polling.service';
+export * from './lib/services/location.service';

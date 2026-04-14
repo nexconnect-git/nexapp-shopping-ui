@@ -124,18 +124,6 @@
         </a>
       }
     </div>
-
-    @if (totalPages() > 1) {
-      <div class="pagination">
-        <button class="pag-btn" [disabled]="page() === 1" (click)="setPage(page() - 1)">
-          <span class="material-icons-outlined">chevron_left</span>
-        </button>
-        <span class="pag-info">{{ page() }} / {{ totalPages() }}</span>
-        <button class="pag-btn" [disabled]="page() === totalPages()" (click)="setPage(page() + 1)">
-          <span class="material-icons-outlined">chevron_right</span>
-        </button>
-      </div>
-    }
   }
 
   <!-- ── Sort Bottom Sheet ────────────────────────────── -->
