@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, unauthGuard, roleGuard } from '@shared/public-api';
+import { authGuard, unauthGuard, roleGuard, portalUnauthGuard } from '@shared/public-api';
 
 const customerGuard = [authGuard, roleGuard('customer')];
 
@@ -7,7 +7,7 @@ export const routes: Routes = [
   {
     path: 'login',
     loadComponent: () => import('./pages/login/login.component').then(m => m.LoginComponent),
-    canActivate: [unauthGuard]
+    canActivate: [portalUnauthGuard('customer')]
   },
   {
     path: 'register',

@@ -1,8 +1,6 @@
 import { Component, inject, signal, HostListener, OnInit, DestroyRef } from '@angular/core';
 import { Router, RouterOutlet, RouterLink, RouterLinkActive, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { timer } from 'rxjs';
 import { AuthService, ApiService, ToastComponent, NotificationPollingService } from '@shared/public-api';
 
 @Component({
@@ -27,18 +25,11 @@ export class AppComponent implements OnInit {
 
   ngOnInit() {
     if (this.auth.isLoggedIn()) this.startPolling();
-    // Keep badge in sync on a light 30 s cycle (NotificationPollingService handles toasts)
-    timer(0, 30000).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-      if (this.auth.isLoggedIn()) {
-        this.api.getUnreadCount().subscribe({
-          next: (r) => this.unreadCount.set(r.count ?? 0),
-          error: () => {},
-        });
-      }
-    });
   }
 
   private startPolling() {
+    // notifPolling drives both badges and toasts — no separate timer needed
+    this.notifPolling.onUnreadChange((count) => this.unreadCount.set(count));
     this.notifPolling.start((n) => {
       if (n.notification_type === 'order' && n.related_entity_id) {
         return { label: 'View', url: `/orders/${n.related_entity_id}` };

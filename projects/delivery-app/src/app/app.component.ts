@@ -1,7 +1,6 @@
-import { Component, inject, signal, HostListener, OnInit, DestroyRef } from '@angular/core';
+import { Component, inject, signal, HostListener, OnInit } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuthService, ApiService, ToastComponent, NotificationPollingService } from '@shared/public-api';
 import { Capacitor } from '@capacitor/core';
 import { StatusBar, Style } from '@capacitor/status-bar';
@@ -18,7 +17,6 @@ export class AppComponent implements OnInit {
   auth = inject(AuthService);
   api = inject(ApiService);
   private router = inject(Router);
-  private destroyRef = inject(DestroyRef);
   private notifPolling = inject(NotificationPollingService);
   profileOpen = signal(false);
   notifOpen = signal(false);

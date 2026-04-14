@@ -4,7 +4,6 @@ export * from './lib/services/api.service';
 export * from './lib/services/auth.service';
 export * from './lib/interceptors/auth.interceptor';
 export * from './lib/guards/auth.guard';
-export * from './lib/guards/unauth.guard';
 export * from './lib/components/map-picker/map-picker.component';
 export * from './lib/services/toast.service';
 export * from './lib/components/toast/toast.component';

@@ -2,7 +2,12 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { map, catchError, of } from 'rxjs';
 import { ApiService } from '../services/api.service';
+import { AuthService } from '../services/auth.service';
 
+/**
+ * authGuard — allows only authenticated users.
+ * Reads live from localStorage so cross-portal clearing is reflected.
+ */
 export const authGuard: CanActivateFn = () => {
   const router = inject(Router);
   const token = localStorage.getItem('access_token');
@@ -11,7 +16,11 @@ export const authGuard: CanActivateFn = () => {
   return false;
 };
 
-export const guestGuard: CanActivateFn = () => {
+/**
+ * unauthGuard — allows only unauthenticated users (e.g. login page).
+ * If the user is logged in, redirects to dashboard.
+ */
+export const unauthGuard: CanActivateFn = () => {
   const router = inject(Router);
   const token = localStorage.getItem('access_token');
   if (!token) return true;
@@ -19,22 +28,50 @@ export const guestGuard: CanActivateFn = () => {
   return false;
 };
 
+/**
+ * portalUnauthGuard(role) — role-aware guard for login pages.
+ * Only blocks access to the login page if the logged-in user has the CORRECT role.
+ * If the user is logged in with a DIFFERENT role (cross-portal), allows the login page
+ * to render so they can see the "Access denied" message or log in with the right account.
+ * Does NOT touch localStorage — avoiding cross-portal session destruction.
+ */
+export const portalUnauthGuard = (expectedRole: string): CanActivateFn => {
+  return () => {
+    const router = inject(Router);
+    const token = localStorage.getItem('access_token');
+    if (!token) return true; // not logged in → show login page
+
+    const userData = localStorage.getItem('user');
+    if (!userData) return true; // no user data → show login page
+
+    const user = JSON.parse(userData);
+    if (user.role === expectedRole) {
+      // Correct portal — already logged in, go to dashboard
+      router.navigate(['/']);
+      return false;
+    }
+
+    // Different role (cross-portal): let the login page show
+    // The login component will display the "Access denied" error on submit.
+    return true;
+  };
+};
+
+/**
+ * roleGuard(role) — blocks authenticated users with the wrong role.
+ * Does NOT clear localStorage — another portal owns that session.
+ * Simply redirects to /login so the user can log in with the right account.
+ */
 export const roleGuard = (allowedRole: string): CanActivateFn => {
   return () => {
     const router = inject(Router);
     const userData = localStorage.getItem('user');
     if (userData) {
-      try {
-        const user = JSON.parse(userData);
-        if (user.role === allowedRole) return true;
-      } catch {
-        // corrupted JSON — fall through to redirect
-      }
+      const user = JSON.parse(userData);
+      if (user.role === allowedRole) return true;
     }
-    // Wrong role or no user — redirect without touching localStorage.
-    // DO NOT clear localStorage here: all apps share the same origin and the same
-    // localStorage namespace, so clearing tokens here logs the user out of every
-    // other app simultaneously (cross-app contamination).
+    // Wrong role or no user — redirect to login. Do NOT clear localStorage
+    // as other portals may legitimately own the current session.
     router.navigate(['/login']);
     return false;
   };
@@ -53,7 +90,6 @@ export const approvedVendorGuard: CanActivateFn = () => {
 
   const user = JSON.parse(userData);
   if (user.role !== 'vendor') {
-    // Wrong role — redirect without clearing localStorage (cross-app contamination risk).
     router.navigate(['/login']);
     return false;
   }
@@ -65,7 +101,6 @@ export const approvedVendorGuard: CanActivateFn = () => {
     return false;
   }
 
-  // Status not cached (e.g. page refresh after session restore) — fetch from API
   return api.getVendorProfile().pipe(
     map((profile: any) => {
       localStorage.setItem('vendor_status', profile.status);

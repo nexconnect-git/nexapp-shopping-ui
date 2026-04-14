@@ -1,11 +1,11 @@
 import { Routes } from '@angular/router';
-import { authGuard, unauthGuard, roleGuard } from '@shared/public-api';
+import { authGuard, unauthGuard, roleGuard, portalUnauthGuard } from '@shared/public-api';
 import { superuserGuard } from './guards/superuser.guard';
 
 const adminGuard = [authGuard, roleGuard('admin')];
 
 export const routes: Routes = [
-  { path: 'login', loadComponent: () => import('./pages/login/login.component').then(m => m.LoginComponent), canActivate: [unauthGuard] },
+  { path: 'login', loadComponent: () => import('./pages/login/login.component').then(m => m.LoginComponent), canActivate: [portalUnauthGuard('admin')] },
   { path: 'setup', loadComponent: () => import('./pages/setup/setup.component').then(m => m.SetupComponent), canActivate: [unauthGuard] },
   { path: 'change-password', loadComponent: () => import('./pages/change-password/change-password.component').then(m => m.ChangePasswordComponent), canActivate: [authGuard] },
   { path: '', loadComponent: () => import('./pages/dashboard/dashboard.component').then(m => m.DashboardComponent), canActivate: adminGuard },

@@ -1,8 +1,6 @@
-import { Component, signal, inject, OnInit, HostListener, DestroyRef } from '@angular/core';
+import { Component, signal, inject, OnInit, HostListener } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { timer } from 'rxjs';
 import { AuthService, ApiService, ToastComponent, NotificationPollingService } from '@shared/public-api';
 
 @Component({
@@ -16,7 +14,6 @@ export class AppComponent implements OnInit {
   auth = inject(AuthService);
   api = inject(ApiService);
   private router = inject(Router);
-  private destroyRef = inject(DestroyRef);
   private notifPolling = inject(NotificationPollingService);
 
   sidebarCollapsed = signal(false);
@@ -56,14 +53,8 @@ export class AppComponent implements OnInit {
   }
 
   private startPolling() {
-    // Unread badge (light poll every 30 s for header counter)
-    timer(0, 30000).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-      if (!this.auth.isLoggedIn()) return;
-      this.api.getUnreadCount().subscribe({
-        next: (r) => this.unreadCount.set(r.count ?? 0),
-        error: () => {},
-      });
-    });
+    // notifPolling drives both badges and toasts — no separate timer needed
+    this.notifPolling.onUnreadChange((count) => this.unreadCount.set(count));
 
     // Live toast notifications via polling service
     this.notifPolling.start((n) => {

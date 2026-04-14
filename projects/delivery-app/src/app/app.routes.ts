@@ -1,10 +1,10 @@
 import { Routes } from '@angular/router';
-import { authGuard, unauthGuard, roleGuard } from '@shared/public-api';
+import { authGuard, unauthGuard, roleGuard, portalUnauthGuard } from '@shared/public-api';
 
 const deliveryGuard = [authGuard, roleGuard('delivery')];
 
 export const routes: Routes = [
-  { path: 'login', loadComponent: () => import('./pages/login/login.component').then(m => m.LoginComponent), canActivate: [unauthGuard] },
+  { path: 'login', loadComponent: () => import('./pages/login/login.component').then(m => m.LoginComponent), canActivate: [portalUnauthGuard('delivery')] },
   { path: 'change-password', loadComponent: () => import('./pages/change-password/change-password.component').then(m => m.ChangePasswordComponent), canActivate: [authGuard] },
   { path: '', loadComponent: () => import('./pages/dashboard/dashboard.component').then(m => m.DashboardComponent), canActivate: deliveryGuard },
   { path: 'available', loadComponent: () => import('./pages/available-orders/available-orders.component').then(m => m.AvailableOrdersComponent), canActivate: deliveryGuard },

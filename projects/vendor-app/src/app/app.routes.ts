@@ -1,10 +1,10 @@
 import { Routes } from '@angular/router';
-import { authGuard, roleGuard, approvedVendorGuard, unauthGuard } from '@shared/public-api';
+import { authGuard, unauthGuard, roleGuard, approvedVendorGuard, portalUnauthGuard } from '@shared/public-api';
 
 const vendorGuard = [authGuard, roleGuard('vendor'), approvedVendorGuard];
 
 export const routes: Routes = [
-  { path: 'login', loadComponent: () => import('./pages/login/login.component').then(m => m.LoginComponent), canActivate: [unauthGuard] },
+  { path: 'login', loadComponent: () => import('./pages/login/login.component').then(m => m.LoginComponent), canActivate: [portalUnauthGuard('vendor')] },
   { path: 'register', loadComponent: () => import('./pages/register/register.component').then(m => m.RegisterComponent), canActivate: [unauthGuard] },
   { path: 'change-password', loadComponent: () => import('./pages/change-password/change-password.component').then(m => m.ChangePasswordComponent), canActivate: [authGuard] },
   { path: 'pending-approval', loadComponent: () => import('./pages/pending-approval/pending-approval.component').then(m => m.PendingApprovalComponent), canActivate: [authGuard, roleGuard('vendor')] },
