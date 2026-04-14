@@ -497,9 +497,14 @@ export class ApiService {
     return this.http.post(`${this.baseUrl}/vendors/orders/${orderId}/verify-pickup-otp/`, { otp });
   }
 
-  // Vendor: retrigger delivery partner search after timeout
-  retriggerPickup(orderId: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/vendors/orders/${orderId}/retrigger-pickup/`, {});
+  // Vendor: initiate (or re-initiate) delivery partner search
+  startDeliverySearch(orderId: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/vendors/orders/${orderId}/start-delivery-search/`, {});
+  }
+
+  // Vendor: cancel an in-progress delivery partner search
+  cancelDeliverySearch(orderId: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/vendors/orders/${orderId}/cancel-delivery-search/`, {});
   }
 
   // Payment QR code

@@ -136,29 +136,35 @@
           </div>
         </div>
 
-        <!-- Delivery Assignment Alert (ready, no partner yet) -->
+        <!-- Delivery Assignment Panel (ready, no partner yet) -->
         @if (order()!.status === 'ready' && !order()!.delivery_partner) {
-          @if (order()!.assignment_status === 'timed_out' || order()!.assignment_status === 'failed') {
-            <div class="assignment-alert timed-out">
+
+          @if (searchError()) {
+            <p class="alert-error" style="margin-bottom: 0.5rem;">{{ searchError() }}</p>
+          }
+
+          <!-- No search started yet or search was cancelled -->
+          @if (!order()!.assignment_status || order()!.assignment_status === 'cancelled') {
+            <div class="assignment-alert idle">
               <div class="alert-icon">
-                <span class="material-icons-outlined">timer_off</span>
+                <span class="material-icons-outlined">local_shipping</span>
               </div>
               <div class="alert-body">
-                <strong>No delivery partner responded</strong>
-                <p>Nobody accepted this order within 1 minute. Tap below to search again.</p>
-                @if (retriggerError()) {
-                  <p class="alert-error">{{ retriggerError() }}</p>
-                }
+                <strong>Ready to dispatch</strong>
+                <p>Start the search when you're ready to hand over the order to a delivery partner.</p>
               </div>
-              <button id="btn-retrigger" class="btn-retrigger" [disabled]="retriggering()" (click)="retriggerPickup()">
-                @if (retriggering()) {
-                  <span class="spinner-xs"></span> Searching…
+              <button id="btn-start-search" class="btn-retrigger" [disabled]="startingSearch()" (click)="startDeliverySearch()">
+                @if (startingSearch()) {
+                  <span class="spinner-xs"></span> Starting…
                 } @else {
-                  <span class="material-icons-outlined">refresh</span> Retrigger Pickup
+                  <span class="material-icons-outlined">search</span> Find Driver
                 }
               </button>
             </div>
-          } @else {
+          }
+
+          <!-- Search in progress -->
+          @if (order()!.assignment_status === 'searching' || order()!.assignment_status === 'notified') {
             <div class="assignment-alert searching">
               <div class="alert-icon pulse">
                 <span class="material-icons-outlined">delivery_dining</span>
@@ -167,9 +173,36 @@
                 <strong>Searching for delivery partner…</strong>
                 <p>We're looking for the nearest available partner. This page updates automatically.</p>
               </div>
-              <div class="search-spinner"></div>
+              <button id="btn-cancel-search" class="btn-cancel-search" [disabled]="cancellingSearch()" (click)="cancelDeliverySearch()">
+                @if (cancellingSearch()) {
+                  <span class="spinner-xs"></span> Cancelling…
+                } @else {
+                  <span class="material-icons-outlined">close</span> Cancel
+                }
+              </button>
             </div>
           }
+
+          <!-- Timed out or failed — allow restart -->
+          @if (order()!.assignment_status === 'timed_out' || order()!.assignment_status === 'failed') {
+            <div class="assignment-alert timed-out">
+              <div class="alert-icon">
+                <span class="material-icons-outlined">timer_off</span>
+              </div>
+              <div class="alert-body">
+                <strong>No delivery partner responded</strong>
+                <p>Nobody accepted within 1 minute. Tap below to search again.</p>
+              </div>
+              <button id="btn-start-search-retry" class="btn-retrigger" [disabled]="startingSearch()" (click)="startDeliverySearch()">
+                @if (startingSearch()) {
+                  <span class="spinner-xs"></span> Searching…
+                } @else {
+                  <span class="material-icons-outlined">refresh</span> Find Driver
+                }
+              </button>
+            </div>
+          }
+
         }
 
         <!-- OTP Verification (ready + partner assigned) -->

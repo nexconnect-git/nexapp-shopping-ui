@@ -30,9 +30,10 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   verifying = signal(false);
   otpSuccess = signal(false);
 
-  // Retrigger pickup
-  retriggering = signal(false);
-  retriggerError = signal('');
+  // Delivery search controls
+  startingSearch = signal(false);
+  cancellingSearch = signal(false);
+  searchError = signal('');
 
   // Cancel modal
   showCancelModal = signal(false);
@@ -240,11 +241,19 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     this.showCancelModal.set(false); this.cancelReason = ''; this.cancelError.set('');
   }
 
-  retriggerPickup() {
-    this.retriggering.set(true); this.retriggerError.set('');
-    this.api.retriggerPickup(this.order()!.id).subscribe({
-      next: (o) => { this.order.set(o); this.retriggering.set(false); },
-      error: (err) => { this.retriggerError.set(err.error?.error || 'Failed to retrigger. Please try again.'); this.retriggering.set(false); }
+  startDeliverySearch() {
+    this.startingSearch.set(true); this.searchError.set('');
+    this.api.startDeliverySearch(this.order()!.id).subscribe({
+      next: (o) => { this.order.set(o); this.startingSearch.set(false); },
+      error: (err) => { this.searchError.set(err.error?.error || 'Failed to start search. Please try again.'); this.startingSearch.set(false); }
+    });
+  }
+
+  cancelDeliverySearch() {
+    this.cancellingSearch.set(true); this.searchError.set('');
+    this.api.cancelDeliverySearch(this.order()!.id).subscribe({
+      next: (o) => { this.order.set(o); this.cancellingSearch.set(false); },
+      error: (err) => { this.searchError.set(err.error?.error || 'Failed to cancel search. Please try again.'); this.cancellingSearch.set(false); }
     });
   }
 
