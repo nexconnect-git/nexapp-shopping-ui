@@ -50,7 +50,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   connectWebSocket() {
-    const token = localStorage.getItem('token') || '';
+    const token = localStorage.getItem('access_token') || '';
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/sa/ws/admin/stats/?token=${token}`;
     this.ws = new WebSocket(wsUrl);
