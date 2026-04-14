@@ -1,9 +1,12 @@
 import { Component, inject, signal, OnInit, OnDestroy, AfterViewInit, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
-import { ApiService, AuthService, AppCurrencyPipe, Order, OrderTracking } from '@shared/public-api';
+import { ApiService, AuthService, AppCurrencyPipe, ToastService, Order, OrderTracking } from '@shared/public-api';
 import { timer, Subscription } from 'rxjs';
 import { GoogleMapsModule } from '@angular/google-maps';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 
 @Component({
   selector: 'app-order-detail',
@@ -17,6 +20,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   private auth = inject(AuthService);
   private route = inject(ActivatedRoute);
   private zone = inject(NgZone);
+  private toast = inject(ToastService);
 
   order = signal<Order | null>(null);
   tracking = signal<OrderTracking[]>([]);
@@ -234,10 +238,31 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     const o = this.order(); if (!o) return;
     this.api.generateInvoice({invoice_type: 'customer_receipt', order: o.id, amount: o.total, notes: `Receipt for Order #${o.order_number}`}).subscribe({
       next: (inv) => this.api.downloadInvoice(inv.id).subscribe({
-        next: (blob) => { const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `invoice-${o.order_number}.pdf`; a.click(); URL.revokeObjectURL(url); },
-        error: () => alert('Failed to download invoice.')
+        next: (blob) => this.saveOrShareBlob(blob, `invoice-${o.order_number}.pdf`),
+        error: () => this.toast.show('Failed to download invoice.', 'error')
       }),
-      error: () => alert('Failed to generate invoice.')
+      error: () => this.toast.show('Failed to generate invoice.', 'error')
     });
+  }
+
+  private async saveOrShareBlob(blob: Blob, filename: string) {
+    if (Capacitor.isNativePlatform()) {
+      // Android/iOS: write to cache dir then share via native sheet
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve((reader.result as string).split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+      await Filesystem.writeFile({ path: filename, data: base64, directory: Directory.Cache });
+      const { uri } = await Filesystem.getUri({ path: filename, directory: Directory.Cache });
+      await Share.share({ title: filename, url: uri, dialogTitle: 'Save or share invoice' });
+    } else {
+      // Web: anchor-click download
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename; a.click();
+      URL.revokeObjectURL(url);
+    }
   }
 }
