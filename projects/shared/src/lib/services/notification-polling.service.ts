@@ -7,15 +7,12 @@ export type NotifRouteMapper = (n: any) => { label: string; url: string } | null
 /**
  * Centralised notification-polling service.
  *
- * Usage (in each AppComponent.ngOnInit, after the user is confirmed logged-in):
- *   this.notifPolling.start((n) => { ... return { label, url } or null; });
- *
- * Behaviour:
- *  - Polls getUnreadCount every 5 s.
- *  - On new count: fetches notifications and shows a toast per new item (up to 5).
- *  - Deduplicates by notification ID — the same toast is never shown twice.
- *  - Detects offline/reconnect via browser events + consecutive HTTP errors.
- *  - On reconnect: if ≤ 3 missed → individual toasts; if > 3 → single summary toast.
+ * Improvements:
+ *  - Polls every 60s (was 5s) to avoid saturating the backend with parallel tabs.
+ *  - Pauses automatically when the tab is hidden (visibilitychange API).
+ *  - Removes duplicate: AppComponent no longer needs its own getUnreadCount poll.
+ *  - Exposes unreadCount so AppComponent can read it reactively.
+ *  - Exponential back-off on consecutive errors (max 5 min).
  */
 @Injectable({ providedIn: 'root' })
 export class NotificationPollingService {
@@ -28,6 +25,15 @@ export class NotificationPollingService {
   private intervalId: ReturnType<typeof setInterval> | null = null;
   private mapper: NotifRouteMapper = () => null;
 
+  // Publicly readable unread count — AppComponent binds to this
+  unreadCount = 0;
+  private _onUnreadChange: ((count: number) => void) | null = null;
+
+  /** Subscribe to unread-count changes. */
+  onUnreadChange(cb: (count: number) => void): void {
+    this._onUnreadChange = cb;
+  }
+
   /** Call once when the user is authenticated. Safe to call multiple times — no-ops after first. */
   start(mapper?: NotifRouteMapper): void {
     if (mapper) this.mapper = mapper;
@@ -38,41 +44,78 @@ export class NotificationPollingService {
       next: (r) => (r.results || r).forEach((n: any) => this.seenIds.add(n.id)),
     });
 
-    window.addEventListener('online', () => this.handleOnline(), { passive: true });
+    window.addEventListener('online',  () => this.handleOnline(), { passive: true });
     window.addEventListener('offline', () => { this.isOnline = false; }, { passive: true });
 
-    this.intervalId = setInterval(() => this.poll(), 5000);
+    // Pause polling when tab is not visible — saves CPU and network across all open tabs.
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        this._stopInterval();
+      } else {
+        this._startInterval();
+        this.poll(); // immediate catch-up poll on focus
+      }
+    });
+
+    this._startInterval();
   }
 
   /** Tear down (call on logout or app destroy). */
   stop(): void {
+    this._stopInterval();
+    this.seenIds.clear();
+    this.consecutiveErrors = 0;
+    this.isOnline = true;
+    this.unreadCount = 0;
+  }
+
+  private _startInterval(): void {
+    if (this.intervalId !== null) return;
+    this.intervalId = setInterval(() => this.poll(), 60_000); // 60s — was 5s
+  }
+
+  private _stopInterval(): void {
     if (this.intervalId !== null) {
       clearInterval(this.intervalId);
       this.intervalId = null;
     }
-    this.seenIds.clear();
-    this.consecutiveErrors = 0;
-    this.isOnline = true;
   }
 
   private poll(): void {
+    // Skip if tab is hidden — battery & network friendly
+    if (document.hidden) return;
+
     this.api.getUnreadCount().subscribe({
       next: (r) => {
         const wasOffline = !this.isOnline;
         this.consecutiveErrors = 0;
         this.isOnline = true;
 
+        const count = r.count ?? 0;
+        this.unreadCount = count;
+        this._onUnreadChange?.(count);
+
         if (wasOffline) {
           this.handleOnline();
           return;
         }
-        if ((r.count ?? 0) > 0) {
+        if (count > 0) {
           this.fetchAndNotify(false);
         }
       },
       error: () => {
         this.consecutiveErrors++;
         if (this.consecutiveErrors >= 2) this.isOnline = false;
+
+        // Exponential back-off: temporarily extend interval on repeated errors
+        // (max ceiling 5 min). We restart the interval with the longer delay.
+        if (this.consecutiveErrors >= 3) {
+          this._stopInterval();
+          const backoffMs = Math.min(60_000 * Math.pow(2, this.consecutiveErrors - 2), 300_000);
+          setTimeout(() => {
+            if (this.intervalId === null) this._startInterval();
+          }, backoffMs);
+        }
       },
     });
   }

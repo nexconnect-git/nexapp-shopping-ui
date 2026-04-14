@@ -2,7 +2,6 @@ import { Component, inject, signal, HostListener, OnInit, DestroyRef } from '@an
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { timer } from 'rxjs';
 import { AuthService, ApiService, ToastComponent, NotificationPollingService } from '@shared/public-api';
 import { Capacitor } from '@capacitor/core';
 import { StatusBar, Style } from '@capacitor/status-bar';
@@ -36,14 +35,8 @@ export class AppComponent implements OnInit {
         return null;
       });
     }
-    timer(0, 30000).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-      if (this.auth.isLoggedIn()) {
-        this.api.getUnreadCount().subscribe({
-          next: (r) => this.unreadCount.set(r.count ?? 0),
-          error: () => {},
-        });
-      }
-    });
+    // Unread count is driven by NotificationPollingService — no extra timer needed here
+    this.notifPolling.onUnreadChange((count) => this.unreadCount.set(count));
   }
 
   private async initNative() {

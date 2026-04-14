@@ -3,8 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { AuthService, ApiService, ToastService, ToastComponent, NotificationPollingService } from '@shared/public-api';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { timer } from 'rxjs';
-import { filter } from 'rxjs/operators';
+import { switchMap, filter, debounceTime } from 'rxjs/operators';
 import { Capacitor } from '@capacitor/core';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { SplashScreen } from '@capacitor/splash-screen';
@@ -49,28 +48,22 @@ export class AppComponent implements OnInit {
         }
         return null;
       });
-    }
-
-    // Light badge poll every 30 s
-    timer(0, 30000).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-      if (!this.auth.isLoggedIn()) return;
-      this.api.getUnreadCount().subscribe({
-        next: (r) => this.api.unreadNotifications.set(r.count ?? 0),
-      });
-    });
-
-    // Refresh counts on every navigation
-    this.router.events.pipe(filter(e => e instanceof NavigationEnd)).subscribe(() => {
-      if (this.auth.isLoggedIn()) {
-        this.api.refreshCartCount();
-        this.api.refreshUnreadCount();
-        this.checkActiveIssue();
-      }
-    });
-
-    if (this.auth.isLoggedIn()) {
+      // Initial load
+      this.api.refreshCartCount();
       this.checkActiveIssue();
     }
+
+    // On navigation: debounce rapid route changes, cancel previous in-flight requests via switchMap
+    this.router.events.pipe(
+      filter(e => e instanceof NavigationEnd),
+      debounceTime(200),
+      filter(() => this.auth.isLoggedIn()),
+      switchMap(() => this.api.getCart()),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: (cart) => this.api.cartCount.set((cart.items || []).length),
+      error: () => {}
+    });
   }
 
   private async initNative() {
