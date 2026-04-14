@@ -27,6 +27,10 @@ export const roleGuard = (allowedRole: string): CanActivateFn => {
       const user = JSON.parse(userData);
       if (user.role === allowedRole) return true;
     }
+    // Invalid role or corrupted data: purge cross-portal contamination to prevent redirect loops.
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user');
     router.navigate(['/login']);
     return false;
   };
@@ -45,6 +49,9 @@ export const approvedVendorGuard: CanActivateFn = () => {
 
   const user = JSON.parse(userData);
   if (user.role !== 'vendor') {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user');
     router.navigate(['/login']);
     return false;
   }
