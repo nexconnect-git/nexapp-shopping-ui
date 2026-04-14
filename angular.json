@@ -178,7 +178,8 @@
               "includePaths": [
                 "projects/shared/src/styles"
               ]
-            }
+            },
+            "baseHref": "/sa/"
           },
           "configurations": {
             "production": {
@@ -322,7 +323,8 @@
               "includePaths": [
                 "projects/shared/src/styles"
               ]
-            }
+            },
+            "baseHref": "/sa/vendor/"
           },
           "configurations": {
             "production": {
@@ -444,7 +446,8 @@
               "includePaths": [
                 "projects/shared/src/styles"
               ]
-            }
+            },
+            "baseHref": "/sa/delivery/"
           },
           "configurations": {
             "production": {
@@ -588,7 +591,8 @@
               "includePaths": [
                 "projects/shared/src/styles"
               ]
-            }
+            },
+            "baseHref": "/sa/admin/"
           },
           "configurations": {
             "production": {
