@@ -24,13 +24,17 @@ export const roleGuard = (allowedRole: string): CanActivateFn => {
     const router = inject(Router);
     const userData = localStorage.getItem('user');
     if (userData) {
-      const user = JSON.parse(userData);
-      if (user.role === allowedRole) return true;
+      try {
+        const user = JSON.parse(userData);
+        if (user.role === allowedRole) return true;
+      } catch {
+        // corrupted JSON — fall through to redirect
+      }
     }
-    // Invalid role or corrupted data: purge cross-portal contamination to prevent redirect loops.
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user');
+    // Wrong role or no user — redirect without touching localStorage.
+    // DO NOT clear localStorage here: all apps share the same origin and the same
+    // localStorage namespace, so clearing tokens here logs the user out of every
+    // other app simultaneously (cross-app contamination).
     router.navigate(['/login']);
     return false;
   };
@@ -49,9 +53,7 @@ export const approvedVendorGuard: CanActivateFn = () => {
 
   const user = JSON.parse(userData);
   if (user.role !== 'vendor') {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user');
+    // Wrong role — redirect without clearing localStorage (cross-app contamination risk).
     router.navigate(['/login']);
     return false;
   }
