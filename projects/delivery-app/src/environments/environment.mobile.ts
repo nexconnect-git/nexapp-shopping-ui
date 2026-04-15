@@ -4,5 +4,5 @@
 //          'https://api.nexconnect.app/api' for production.
 export const environment = {
   production: true,
-  apiBaseUrl: 'http://nex-connect.in/sa/api'
+  apiBaseUrl: 'https://nex-connect.in/sa/api'
 };
