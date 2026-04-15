@@ -68,7 +68,7 @@
             <div class="co-method-text">
               <span class="co-method-label">{{ pm.label }}</span>
               @if (pm.sub) {
-                <span class="co-method-sub">{{ pm.disabled ? 'Coming soon' : pm.sub }}</span>
+                <span class="co-method-sub">{{ pm.sub }}</span>
               }
             </div>
             <div class="co-method-radio" [class.active]="selectedPayment === pm.id">
@@ -77,6 +77,13 @@
           </label>
         }
       </div>
+
+      @if (selectedPayment === 'razorpay') {
+        <div class="co-rzp-note">
+          <span class="material-icons-outlined">lock</span>
+          Secured by Razorpay · UPI, Cards, Net Banking & Wallets accepted
+        </div>
+      }
     </div>
 
     <!-- ── Apply Coupon ──────────────────────────────── -->
@@ -189,7 +196,10 @@
       (click)="placeOrder()">
       @if (placingOrder()) {
         <span class="co-btn-spinner"></span>
-        Placing Order…
+        {{ selectedPayment === 'razorpay' ? 'Opening Payment…' : 'Placing Order…' }}
+      } @else if (selectedPayment === 'razorpay') {
+        <span class="material-icons-outlined" style="font-size:18px">lock</span>
+        <span>Pay {{ discountedTotal | appCurrency }}</span>
       } @else {
         <span>Place Order</span>
         <span class="co-place-total">{{ discountedTotal | appCurrency }}</span>

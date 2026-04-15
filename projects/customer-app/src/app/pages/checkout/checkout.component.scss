@@ -317,3 +317,18 @@
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Razorpay note ──────────────────────────────────── */
+.co-rzp-note {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  color: #15803d;
+  .material-icons-outlined { font-size: 14px; }
+}

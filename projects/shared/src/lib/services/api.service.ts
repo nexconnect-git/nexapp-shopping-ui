@@ -308,8 +308,19 @@ export class ApiService {
   }
 
   // Orders
-  createOrder(data: { delivery_address_id: string; notes?: string }): Observable<any> {
+  createOrder(data: { delivery_address_id: string; notes?: string; coupon_code?: string }): Observable<any> {
     return this.http.post(`${this.baseUrl}/orders/create/`, data);
+  }
+
+  createRazorpayOrder(orderId: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/orders/${orderId}/create-payment/`, {});
+  }
+
+  verifyRazorpayPayment(orderId: string, razorpay_payment_id: string, razorpay_signature: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/orders/${orderId}/verify-payment/`, {
+      razorpay_payment_id,
+      razorpay_signature,
+    });
   }
 
   getOrders(status?: string): Observable<any> {

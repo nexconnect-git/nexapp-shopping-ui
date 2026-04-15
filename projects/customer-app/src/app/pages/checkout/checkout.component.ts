@@ -4,6 +4,8 @@ import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService, AppCurrencyPipe, Cart, Address } from '@shared/public-api';
 
+declare const Razorpay: any;
+
 interface PaymentMethod {
   id: string;
   label: string;
@@ -39,10 +41,8 @@ export class CheckoutComponent implements OnInit {
   couponLoading = signal(false);
 
   readonly paymentMethods: PaymentMethod[] = [
-    { id: 'cod', label: 'Pay on Delivery', icon: 'payments', sub: 'Pay in cash or pay online' },
-    { id: 'upi', label: 'UPI', icon: 'account_balance_wallet', sub: 'Add new UPI ID', disabled: true },
-    { id: 'card', label: 'Credit / Debit Card', icon: 'credit_card', sub: 'Add new card via Stripe', disabled: true },
-    { id: 'netbanking', label: 'Net Banking', icon: 'account_balance', sub: 'Select from a list of banks', disabled: true },
+    { id: 'cod',      label: 'Pay on Delivery',        icon: 'payments',               sub: 'Pay cash to delivery partner' },
+    { id: 'razorpay', label: 'Pay Online (Razorpay)',  icon: 'account_balance_wallet',  sub: 'UPI, Cards, Net Banking & more' },
   ];
 
   ngOnInit() {
@@ -77,10 +77,7 @@ export class CheckoutComponent implements OnInit {
     this.couponLoading.set(true);
     this.couponError.set('');
     this.api.validateCoupon(code, Number(this.cart()?.total_amount || 0)).subscribe({
-      next: (res) => {
-        this.appliedCoupon.set(res);
-        this.couponLoading.set(false);
-      },
+      next: (res) => { this.appliedCoupon.set(res); this.couponLoading.set(false); },
       error: (err) => {
         this.couponError.set(err.error?.error || 'Invalid coupon.');
         this.appliedCoupon.set(null);
@@ -99,22 +96,80 @@ export class CheckoutComponent implements OnInit {
     if (!this.selectedAddressId) return;
     this.placingOrder.set(true);
     this.orderError.set('');
+
     const orderData: any = { delivery_address_id: this.selectedAddressId, notes: this.notes };
     if (this.appliedCoupon()) orderData.coupon_code = this.appliedCoupon().code;
+
     this.api.createOrder(orderData).subscribe({
       next: (orders) => {
         this.api.refreshCartCount();
-        const id = Array.isArray(orders) ? orders[0]?.id : orders?.id;
-        setTimeout(() => this.router.navigate(['/order', id || '']), 300);
+        const orderId = Array.isArray(orders) ? orders[0]?.id : orders?.id;
+        if (!orderId) { this.handleOrderError('Order created but ID missing.'); return; }
+
+        if (this.selectedPayment === 'razorpay') {
+          this.openRazorpayCheckout(orderId);
+        } else {
+          setTimeout(() => this.router.navigate(['/order', orderId]), 300);
+        }
       },
       error: (err) => {
-        this.orderError.set(err.error?.detail || err.error?.non_field_errors?.[0] || 'Could not place order.');
-        this.placingOrder.set(false);
+        this.handleOrderError(err.error?.detail || err.error?.non_field_errors?.[0] || 'Could not place order.');
       }
     });
   }
 
+  private openRazorpayCheckout(orderId: string) {
+    this.api.createRazorpayOrder(orderId).subscribe({
+      next: (rzData) => {
+        const options = {
+          key: rzData.key_id,
+          amount: rzData.amount,
+          currency: rzData.currency,
+          name: 'NexConnect',
+          description: 'Order Payment',
+          order_id: rzData.razorpay_order_id,
+          prefill: {},
+          theme: { color: '#6C63FF' },
+          handler: (response: any) => {
+            this.verifyPayment(orderId, response.razorpay_payment_id, response.razorpay_signature);
+          },
+          modal: {
+            ondismiss: () => {
+              // User closed the modal without paying — navigate to order so they can retry
+              this.placingOrder.set(false);
+              this.router.navigate(['/order', orderId]);
+            }
+          }
+        };
+        const rzp = new Razorpay(options);
+        rzp.on('payment.failed', (response: any) => {
+          this.handleOrderError(response.error?.description || 'Payment failed. Please try again.');
+        });
+        this.placingOrder.set(false);
+        rzp.open();
+      },
+      error: (err) => {
+        this.handleOrderError(err.error?.error || 'Could not initiate payment.');
+      }
+    });
+  }
+
+  private verifyPayment(orderId: string, paymentId: string, signature: string) {
+    this.placingOrder.set(true);
+    this.api.verifyRazorpayPayment(orderId, paymentId, signature).subscribe({
+      next: () => {
+        this.router.navigate(['/order', orderId]);
+      },
+      error: () => {
+        this.handleOrderError('Payment verification failed. Contact support with your payment ID: ' + paymentId);
+      }
+    });
+  }
+
+  private handleOrderError(msg: string) {
+    this.orderError.set(msg);
+    this.placingOrder.set(false);
+  }
+
   goBack() { window.history.back(); }
 }
-
-
