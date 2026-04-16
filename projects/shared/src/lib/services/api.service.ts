@@ -265,6 +265,19 @@ export class ApiService {
     return this.http.post(`${this.baseUrl}/notifications/device-token/`, data);
   }
 
+  // Vendor Categories
+  getVendorCategories(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/vendors/categories/`);
+  }
+
+  createVendorCategory(data: { name: string; slug?: string; description?: string }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/vendors/categories/`, data);
+  }
+
+  createVendorSubcategory(parentId: string, data: { name: string; slug?: string; description?: string }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/vendors/categories/${parentId}/subcategories/`, data);
+  }
+
   // Products
   getCategories(): Observable<any> {
     return this.http.get(`${this.baseUrl}/products/categories/`);

@@ -211,6 +211,26 @@ textarea.form-input { resize: vertical; min-height: 80px; }
   &:hover { background: var(--surface-hover); }
 }
 
+// Customer UI visibility toggle
+.ui-toggle {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  padding: 0.3rem 0.625rem; border-radius: var(--radius-md); border: 1.5px solid var(--border-color);
+  background: var(--surface-hover); color: var(--text-muted); font-size: 0.75rem; font-weight: 700;
+  cursor: pointer; transition: all 0.15s; white-space: nowrap;
+  .material-icons-outlined { font-size: 14px; }
+  &:hover { border-color: var(--primary); color: var(--primary); }
+  &.ui-toggle-on {
+    background: rgba(16,185,129,0.1); color: #10b981; border-color: rgba(16,185,129,0.35);
+    &:hover { background: rgba(16,185,129,0.2); }
+  }
+}
+
+.form-hint-text {
+  font-size: 0.8rem; color: var(--text-muted); margin: 0.25rem 0 0;
+  padding: 0.5rem 0.75rem; background: var(--surface-hover);
+  border-radius: var(--radius-md); border: 1px solid var(--border-color);
+}
+
 @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes spin    { to { transform: rotate(360deg); } }

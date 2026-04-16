@@ -51,6 +51,7 @@
             <th>Type</th>
             <th>Subcategories</th>
             <th>Status</th>
+            <th title="Controls whether this category is visible in the customer app">Customer App</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -83,6 +84,16 @@
                 <span class="status-badge" [class.active]="cat.is_active" [class.inactive]="!cat.is_active">
                   {{ cat.is_active ? 'Active' : 'Inactive' }}
                 </span>
+              </td>
+              <td>
+                <button
+                  class="ui-toggle"
+                  [class.ui-toggle-on]="cat.show_in_customer_ui"
+                  (click)="toggleCustomerUi(cat)"
+                  [title]="cat.show_in_customer_ui ? 'Visible in customer app — click to hide' : 'Hidden from customer app — click to show'">
+                  <span class="material-icons-outlined">{{ cat.show_in_customer_ui ? 'visibility' : 'visibility_off' }}</span>
+                  {{ cat.show_in_customer_ui ? 'Visible' : 'Hidden' }}
+                </button>
               </td>
               <td>
                 <div class="actions">
@@ -134,6 +145,16 @@
                       <span class="status-badge" [class.active]="sub.is_active" [class.inactive]="!sub.is_active">
                         {{ sub.is_active ? 'Active' : 'Inactive' }}
                       </span>
+                    </td>
+                    <td>
+                      <button
+                        class="ui-toggle"
+                        [class.ui-toggle-on]="sub.show_in_customer_ui"
+                        (click)="toggleCustomerUi(sub)"
+                        [title]="sub.show_in_customer_ui ? 'Visible in customer app — click to hide' : 'Hidden — click to show'">
+                        <span class="material-icons-outlined">{{ sub.show_in_customer_ui ? 'visibility' : 'visibility_off' }}</span>
+                        {{ sub.show_in_customer_ui ? 'Visible' : 'Hidden' }}
+                      </button>
                     </td>
                     <td>
                       <div class="actions">
@@ -212,6 +233,14 @@
           <input type="checkbox" id="is_active" [(ngModel)]="form.is_active">
           <label for="is_active">Active</label>
         </div>
+        <div class="form-check-row">
+          <input type="checkbox" id="show_in_customer_ui" [(ngModel)]="form.show_in_customer_ui">
+          <label for="show_in_customer_ui">Show in customer app</label>
+        </div>
+        <p class="form-hint-text">
+          <span class="material-icons-outlined" style="font-size:14px;vertical-align:middle;">info</span>
+          Vendor-created categories are hidden by default until approved here.
+        </p>
       </div>
       <div class="modal-footer">
         <button class="btn-secondary" (click)="closeModal()">Cancel</button>

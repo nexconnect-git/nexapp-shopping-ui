@@ -22,7 +22,7 @@
   </a>
 </div>
 
-<!-- ── Category Tiles ──────────────────────────────────────── -->
+<!-- ── Root Category Tiles ─────────────────────────────────── -->
 <section class="nx-cats">
   <div class="nx-cats-scroll">
     @for (cat of categories(); track cat.id) {
@@ -38,6 +38,29 @@
     }
   </div>
 </section>
+
+<!-- ── Subcategory Bar (shown when selected category has children) ── -->
+@if (currentSubcategories().length > 0) {
+  <section class="nx-subcats">
+    <div class="nx-subcats-scroll">
+      <button
+        class="nx-subcat"
+        [class.active]="selectedSubCategory() === null"
+        (click)="selectSubCategory(null)">
+        <span class="material-icons-outlined">apps</span>
+        All {{ selectedCategoryObj?.name }}
+      </button>
+      @for (sub of currentSubcategories(); track sub.id) {
+        <button
+          class="nx-subcat"
+          [class.active]="selectedSubCategory() === sub.id"
+          (click)="selectSubCategory(sub.id)">
+          {{ sub.name }}
+        </button>
+      }
+    </div>
+  </section>
+}
 
 <!-- ── Promo Banner ─────────────────────────────────────────── -->
 <div class="nx-promo-banner">
@@ -97,15 +120,7 @@
 <!-- ── Shops Near You ──────────────────────────────────────── -->
 <section class="nx-shops stores-section">
   <div class="nx-shops-hd">
-    <h2>
-      @if (selectedCategory() !== 'all' && selectedCategoryObj) {
-        {{ selectedCategoryObj.name }} Shops
-      } @else if (userLat) {
-        Shops Near You
-      } @else {
-        All Shops
-      }
-    </h2>
+    <h2>{{ sectionTitle }}</h2>
     @if (!loadingVendors()) {
       <span class="nx-shops-count">{{ filteredVendors().length }} shops</span>
     }
@@ -118,17 +133,20 @@
       <span class="material-icons-outlined">schedule</span>
       Open Now
     </label>
-    @if (selectedCategory() !== 'all') {
+    @if (selectedSubCategory()) {
+      <button class="nx-fchip nx-fchip-active" (click)="selectSubCategory(null)">
+        <span class="material-icons-outlined">close</span>
+        {{ currentSubcategories().find(c => c.id === selectedSubCategory())?.name }}
+      </button>
+    } @else if (selectedCategory() !== 'all') {
       <button class="nx-fchip nx-fchip-active" (click)="selectCategory('all')">
         <span class="material-icons-outlined">close</span>
         {{ selectedCategoryObj?.name }}
       </button>
     }
-    @for (cat of categories().slice(1, 6); track cat.id) {
+    @for (cat of categories().slice(1, 5); track cat.id) {
       @if (selectedCategory() !== cat.id) {
-        <button class="nx-fchip" (click)="selectCategory(cat.id)">
-          {{ cat.name }}
-        </button>
+        <button class="nx-fchip" (click)="selectCategory(cat.id)">{{ cat.name }}</button>
       }
     }
   </div>
@@ -147,7 +165,9 @@
     <div class="nx-empty">
       <span class="material-icons-outlined">search_off</span>
       <p>No shops found</p>
-      @if (selectedCategory() !== 'all') {
+      @if (selectedSubCategory()) {
+        <button (click)="selectSubCategory(null)">View all {{ selectedCategoryObj?.name }}</button>
+      } @else if (selectedCategory() !== 'all') {
         <button (click)="selectCategory('all')">View all shops</button>
       }
     </div>

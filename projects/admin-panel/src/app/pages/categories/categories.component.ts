@@ -33,7 +33,7 @@ export class CategoriesComponent implements OnInit, OnDestroy {
   showModal = signal(false);
   editTarget = signal<Category | null>(null);
 
-  form = { name: '', slug: '', description: '', is_active: true, parent: null as string | null };
+  form = { name: '', slug: '', description: '', is_active: true, show_in_customer_ui: true, parent: null as string | null };
 
   ngOnInit() {
     this.reloadSub = timer(0, 15000).subscribe(() => {
@@ -95,16 +95,33 @@ export class CategoriesComponent implements OnInit, OnDestroy {
 
   openCreate(parentId: string | null = null) {
     this.editTarget.set(null);
-    this.form = { name: '', slug: '', description: '', is_active: true, parent: parentId };
+    this.form = { name: '', slug: '', description: '', is_active: true, show_in_customer_ui: true, parent: parentId };
     this.error.set('');
     this.showModal.set(true);
   }
 
   openEdit(cat: Category) {
     this.editTarget.set(cat);
-    this.form = { name: cat.name, slug: cat.slug, description: cat.description, is_active: cat.is_active, parent: cat.parent ?? null };
+    this.form = { name: cat.name, slug: cat.slug, description: cat.description, is_active: cat.is_active, show_in_customer_ui: cat.show_in_customer_ui, parent: cat.parent ?? null };
     this.error.set('');
     this.showModal.set(true);
+  }
+
+  toggleCustomerUi(cat: Category) {
+    const updated = !cat.show_in_customer_ui;
+    this.api.updateAdminCategory(cat.id, { show_in_customer_ui: updated }).subscribe({
+      next: () => {
+        // Refresh the right level
+        if (cat.parent) {
+          this.subcategories.update(s => ({
+            ...s,
+            [cat.parent!]: (s[cat.parent!] || []).map(c => c.id === cat.id ? { ...c, show_in_customer_ui: updated } : c)
+          }));
+        } else {
+          this.categories.update(cats => cats.map(c => c.id === cat.id ? { ...c, show_in_customer_ui: updated } : c));
+        }
+      }
+    });
   }
 
   closeModal() { this.showModal.set(false); }

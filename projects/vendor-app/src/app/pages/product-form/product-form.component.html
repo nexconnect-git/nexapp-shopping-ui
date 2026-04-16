@@ -12,8 +12,6 @@
     </a>
   </div>
 
-
-
   <form (ngSubmit)="save()" class="form-layout">
 
     <!-- Left Column -->
@@ -36,15 +34,61 @@
             <label class="form-label">Description</label>
             <textarea class="form-input form-textarea" [(ngModel)]="form.description" name="description" rows="4" placeholder="Describe your product to customers..."></textarea>
           </div>
+
+          <!-- Category Picker -->
           <div class="form-group">
             <label class="form-label">Category</label>
-            <select class="form-input form-select" [(ngModel)]="form.category" name="category">
-              <option [value]="null">Select a category</option>
-              @for (cat of categories(); track cat.id) {
-                <option [value]="cat.id">{{ cat.name }}</option>
+            <div class="category-picker">
+
+              <!-- Root category row -->
+              <div class="cat-row">
+                <select class="form-input form-select" [ngModel]="selectedRootId()" (ngModelChange)="onRootChange($event)" name="root_category">
+                  <option [value]="null">Select a category</option>
+                  @for (cat of rootCategories(); track cat.id) {
+                    <option [value]="cat.id">{{ cat.name }}</option>
+                  }
+                </select>
+                <button type="button" class="btn-add-cat" (click)="openCreateRoot()" title="Create new category">
+                  <span class="material-icons-outlined">add</span>
+                  New
+                </button>
+              </div>
+
+              <!-- Subcategory row — only shown when a root with children is selected -->
+              @if (selectedRootId() && subcategories().length > 0) {
+                <div class="cat-row cat-sub-row">
+                  <span class="material-icons-outlined cat-sub-arrow">subdirectory_arrow_right</span>
+                  <select class="form-input form-select" [ngModel]="selectedSubId()" (ngModelChange)="onSubChange($event)" name="sub_category">
+                    <option [value]="null">All (no subcategory)</option>
+                    @for (sub of subcategories(); track sub.id) {
+                      <option [value]="sub.id">{{ sub.name }}</option>
+                    }
+                  </select>
+                  <button type="button" class="btn-add-cat" (click)="openCreateSub()" title="Create new subcategory">
+                    <span class="material-icons-outlined">add</span>
+                    New
+                  </button>
+                </div>
               }
-            </select>
+
+              <!-- Add subcategory button when root selected but no children yet -->
+              @if (selectedRootId() && subcategories().length === 0) {
+                <div class="cat-row cat-sub-row">
+                  <span class="material-icons-outlined cat-sub-arrow">subdirectory_arrow_right</span>
+                  <button type="button" class="btn-add-cat btn-add-cat-full" (click)="openCreateSub()">
+                    <span class="material-icons-outlined">add</span>
+                    Add Subcategory
+                  </button>
+                </div>
+              }
+
+              <p class="form-hint">
+                <span class="material-icons-outlined" style="font-size:14px;vertical-align:middle;">info</span>
+                New categories need admin approval before appearing in the customer app.
+              </p>
+            </div>
           </div>
+
         </div>
       </div>
 
@@ -134,11 +178,10 @@
                 </div>
               }
             </div>
-
             <div class="image-actions">
-              <div class="upload-box" style="flex: 1; max-width: 300px; margin: 0 auto; display: flex; flex-direction: column; align-items: center;">
+              <div class="upload-box" style="flex:1;max-width:300px;margin:0 auto;display:flex;flex-direction:column;align-items:center;">
                 <input type="file" id="imageUpload" (change)="onFileSelected($event)" accept="image/*" hidden>
-                <label for="imageUpload" class="btn-primary" style="margin-bottom: 0.5rem; width: 100%; text-align: center; justify-content: center;">
+                <label for="imageUpload" class="btn-primary" style="margin-bottom:0.5rem;width:100%;text-align:center;justify-content:center;">
                   <span class="material-icons-outlined">upload</span> Upload Photo
                 </label>
                 <p class="hint">Max 5 photos allowed.</p>
@@ -153,7 +196,6 @@
     <!-- Right Column -->
     <div class="form-sidebar">
 
-      <!-- Visibility -->
       <!-- Visibility & Status -->
       <div class="card">
         <div class="card-header">
@@ -161,30 +203,26 @@
         </div>
         <div class="card-body">
           <div class="form-group visibility-option" style="margin-bottom:1.2rem;">
-            <label class="form-label" for="product_status" style="margin-bottom:0.5rem; display:block;">Product Status</label>
-            <select class="form-input form-select" [(ngModel)]="form.status" name="status" id="product_status" style="width: 100%;">
+            <label class="form-label" for="product_status" style="margin-bottom:0.5rem;display:block;">Product Status</label>
+            <select class="form-input form-select" [(ngModel)]="form.status" name="status" id="product_status" style="width:100%;">
               <option value="active">Active</option>
               <option value="draft">Draft</option>
               <option value="sold_out">Sold Out</option>
               <option value="coming_soon">Coming Soon</option>
               <option value="archived">Archived</option>
             </select>
-            <p style="font-size:0.8125rem;color:var(--text-muted);margin-top:0.35rem;">Categorize exactly how this item behaves physically within the global catalog.</p>
           </div>
-
           <div class="visibility-option" style="margin-bottom:0.875rem;">
             <div class="form-check">
               <input type="checkbox" id="is_available" [(ngModel)]="form.is_available" name="is_available">
               <label for="is_available">Available for sale</label>
             </div>
-            <p style="font-size:0.8125rem;color:var(--text-muted);margin-top:0.25rem;margin-left:1.5rem;">Legacy flag toggle for core visibility constraints.</p>
           </div>
           <div class="visibility-option">
             <div class="form-check">
               <input type="checkbox" id="is_featured" [(ngModel)]="form.is_featured" name="is_featured">
               <label for="is_featured">Featured product</label>
             </div>
-            <p style="font-size:0.8125rem;color:var(--text-muted);margin-top:0.25rem;margin-left:1.5rem;">Highlight this product in your store</p>
           </div>
         </div>
       </div>
@@ -193,8 +231,7 @@
       <div class="form-actions-card">
         <button type="submit" class="btn-primary w-100" [disabled]="saving()">
           @if (saving()) {
-            <span class="spinner-inline"></span>
-            Saving...
+            <span class="spinner-inline"></span> Saving...
           } @else {
             <span class="material-icons-outlined">{{ isEdit() ? 'save' : 'add_circle' }}</span>
             {{ isEdit() ? 'Update Product' : 'Add Product' }}
@@ -207,3 +244,50 @@
 
   </form>
 </div>
+
+<!-- ── Category creation modal ─────────────────────────────────────────────── -->
+@if (showCatModal()) {
+  <div class="cat-modal-overlay" (click)="closeCatModal()">
+    <div class="cat-modal" (click)="$event.stopPropagation()">
+      <div class="cat-modal-header">
+        <h3>
+          <span class="material-icons-outlined">category</span>
+          {{ catModalMode() === 'root' ? 'Create Category' : 'Create Subcategory' }}
+        </h3>
+        <button type="button" class="cat-modal-close" (click)="closeCatModal()">
+          <span class="material-icons-outlined">close</span>
+        </button>
+      </div>
+      <div class="cat-modal-body">
+        @if (catModalMode() === 'sub') {
+          <p class="cat-modal-hint">
+            This will be added under
+            <strong>{{ selectedRootName() }}</strong>
+          </p>
+        }
+        <div class="form-group">
+          <label class="form-label">Name <span class="required">*</span></label>
+          <input class="form-input" type="text" [(ngModel)]="catModalName" name="cat_name" placeholder="e.g. Fresh Vegetables" autofocus>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">Description</label>
+          <input class="form-input" type="text" [(ngModel)]="catModalDesc" name="cat_desc" placeholder="Optional description">
+        </div>
+        @if (catModalError()) {
+          <p class="cat-modal-error">{{ catModalError() }}</p>
+        }
+        <p class="cat-modal-notice">
+          <span class="material-icons-outlined">shield</span>
+          Admin will review before this category appears in the customer app.
+        </p>
+      </div>
+      <div class="cat-modal-footer">
+        <button type="button" class="btn-outline" (click)="closeCatModal()">Cancel</button>
+        <button type="button" class="btn-primary" (click)="saveCatModal()" [disabled]="catModalSaving()">
+          @if (catModalSaving()) { <span class="spinner-inline"></span> } @else { <span class="material-icons-outlined">add</span> }
+          Create
+        </button>
+      </div>
+    </div>
+  </div>
+}

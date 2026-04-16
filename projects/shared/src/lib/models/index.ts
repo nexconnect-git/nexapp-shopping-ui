@@ -77,6 +77,7 @@ export interface Category {
   children: Category[];
   subcategory_count: number;
   is_active: boolean;
+  show_in_customer_ui: boolean;
   display_order: number;
 }
 

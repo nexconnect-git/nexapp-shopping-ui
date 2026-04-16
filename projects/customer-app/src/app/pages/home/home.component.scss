@@ -147,6 +147,55 @@
   transition: color 0.15s;
 }
 
+/* ── Subcategory bar ───────────────────────────────────────── */
+.nx-subcats {
+  background: white;
+  padding: 0 0 0.75rem;
+  border-bottom: 1px solid #f0f0f0;
+  animation: slideDown 0.18s ease;
+}
+
+.nx-subcats-scroll {
+  display: flex;
+  overflow-x: auto;
+  padding: 0.5rem 0.75rem 0;
+  gap: 0.5rem;
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+.nx-subcat {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.4rem 0.875rem;
+  border-radius: 20px;
+  border: 1.5px solid #e5e7eb;
+  background: white;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.15s;
+
+  .material-icons-outlined { font-size: 15px; }
+
+  &:hover { border-color: var(--primary); color: var(--primary); background: rgba(108,99,255,0.05); }
+
+  &.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 /* ══════════════════════════════════════════════════
    SHARED SECTION HEADING
 ══════════════════════════════════════════════════ */
