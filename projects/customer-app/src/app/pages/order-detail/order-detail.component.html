@@ -43,6 +43,13 @@
             Download Invoice
           </button>
           
+          @if (canPayNow()) {
+            <button class="btn btn-pay-now btn-sm" [disabled]="payingNow()" (click)="payNow()">
+              <span class="material-icons-outlined">payment</span>
+              {{ payingNow() ? 'Opening Payment…' : 'Complete Payment' }}
+            </button>
+          }
+
           @if (canCancel()) {
             <div class="cancel-wrap">
               <button class="btn btn-cancel btn-sm" [disabled]="cancelling()" (click)="cancelOrder()">

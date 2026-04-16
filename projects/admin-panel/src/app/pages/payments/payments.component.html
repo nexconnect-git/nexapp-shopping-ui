@@ -1,0 +1,109 @@
+<div class="page-wrap">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Payments</h1>
+      <p class="page-sub">All orders with online payment info</p>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="summary-row">
+    <div class="summary-card">
+      <span class="summary-label">Page Revenue</span>
+      <span class="summary-value">{{ totalRevenue | appCurrency }}</span>
+    </div>
+    <div class="summary-card">
+      <span class="summary-label">Razorpay Collected</span>
+      <span class="summary-value accent">{{ razorpayRevenue | appCurrency }}</span>
+    </div>
+    <div class="summary-card">
+      <span class="summary-label">Pending Payments</span>
+      <span class="summary-value warn">{{ pendingCount }}</span>
+    </div>
+    <div class="summary-card">
+      <span class="summary-label">Total Orders</span>
+      <span class="summary-value">{{ total() }}</span>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-row">
+    <input class="filter-input" type="text" placeholder="Search order number…"
+      [(ngModel)]="search" (input)="onSearch()">
+
+    <select class="filter-select" [(ngModel)]="methodFilter" (change)="applyFilters()">
+      <option value="">All Methods</option>
+      <option value="razorpay">Razorpay</option>
+      <option value="cod">Cash on Delivery</option>
+    </select>
+
+    <select class="filter-select" [(ngModel)]="verifiedFilter" (change)="applyFilters()">
+      <option value="">All Status</option>
+      <option value="1">Paid</option>
+      <option value="0">Pending Payment</option>
+    </select>
+  </div>
+
+  <!-- Table -->
+  @if (loading()) {
+    <div class="loading-row"><div class="spinner"></div></div>
+  } @else {
+    <div class="table-card">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Order #</th>
+            <th>Customer</th>
+            <th>Vendor</th>
+            <th>Method</th>
+            <th>Razorpay ID</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of payments(); track p.id) {
+            <tr>
+              <td>
+                <a [routerLink]="['/orders', p.id]" class="order-link">#{{ p.order_number }}</a>
+              </td>
+              <td>{{ p.customer_name || '—' }}</td>
+              <td>{{ p.vendor_name || '—' }}</td>
+              <td>
+                <span class="method-badge" [class.method-razorpay]="p.payment_method === 'razorpay'">
+                  {{ paymentMethodLabel(p.payment_method) }}
+                </span>
+              </td>
+              <td class="mono">
+                @if (p.razorpay_payment_id) {
+                  <span class="rz-id" title="{{ p.razorpay_payment_id }}">{{ p.razorpay_payment_id | slice:0:16 }}…</span>
+                } @else {
+                  <span class="text-muted">—</span>
+                }
+              </td>
+              <td class="amount-cell">{{ p.total | appCurrency }}</td>
+              <td>
+                <span class="badge" [class]="statusClass(p)">{{ statusLabel(p) }}</span>
+              </td>
+              <td class="text-muted">{{ p.placed_at | date:'MMM d, y' }}</td>
+            </tr>
+          } @empty {
+            <tr><td colspan="8" class="empty-cell">No payments found.</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    @if (totalPages() > 1) {
+      <div class="pagination">
+        <button class="page-btn" [disabled]="page() === 1" (click)="setPage(page() - 1)">‹ Prev</button>
+        <span class="page-info">Page {{ page() }} of {{ totalPages() }}</span>
+        <button class="page-btn" [disabled]="page() === totalPages()" (click)="setPage(page() + 1)">Next ›</button>
+      </div>
+    }
+  }
+
+</div>

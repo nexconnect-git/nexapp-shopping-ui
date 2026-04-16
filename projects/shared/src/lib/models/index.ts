@@ -170,6 +170,7 @@ export interface Order {
   vendor_info: VendorInfo;
   status: string;
   payment_method: string;
+  is_payment_verified: boolean;
   subtotal: number;
   delivery_fee: number;
   discount: number;

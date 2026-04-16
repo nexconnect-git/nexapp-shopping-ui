@@ -427,3 +427,78 @@
   color: #15803d;
   .material-icons-outlined { font-size: 14px; }
 }
+
+/* ── Payment Failed Dialog ──────────────────────────── */
+.co-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 1000;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.co-dialog {
+  background: white;
+  border-radius: 20px 20px 0 0;
+  padding: 1.5rem 1.25rem 2rem;
+  width: 100%;
+  max-width: 540px;
+  text-align: center;
+}
+
+.co-dialog-icon { margin-bottom: 0.75rem; }
+
+.co-dialog-title {
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: #111;
+  margin: 0 0 0.5rem;
+}
+
+.co-dialog-msg {
+  font-size: 0.875rem;
+  color: #666;
+  margin: 0 0 1.5rem;
+  line-height: 1.5;
+}
+
+.co-dialog-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.co-dialog-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem;
+  border-radius: 12px;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  font-family: var(--font-family);
+  transition: opacity 0.15s;
+
+  &.primary {
+    background: var(--primary);
+    color: white;
+    &:hover { opacity: 0.9; }
+  }
+  &.secondary {
+    background: var(--primary-light, #ede9fe);
+    color: var(--primary);
+    &:hover { opacity: 0.85; }
+  }
+  &.ghost {
+    background: none;
+    color: #888;
+    font-size: 0.875rem;
+    &:hover { color: #333; }
+  }
+}

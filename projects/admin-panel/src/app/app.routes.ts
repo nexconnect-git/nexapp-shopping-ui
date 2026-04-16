@@ -25,6 +25,7 @@ export const routes: Routes = [
   { path: 'categories', loadComponent: () => import('./pages/categories/categories.component').then(m => m.CategoriesComponent), canActivate: adminGuard },
   { path: 'assets', loadComponent: () => import('./pages/assets/assets.component').then(m => m.AssetsComponent), canActivate: adminGuard },
   { path: 'payouts', loadComponent: () => import('./pages/payouts/payouts.component').then(m => m.PayoutsComponent), canActivate: adminGuard },
+  { path: 'payments', loadComponent: () => import('./pages/payments/payments.component').then(m => m.PaymentsComponent), canActivate: adminGuard },
   { path: 'scheduled-tasks', loadComponent: () => import('./pages/scheduled-tasks/scheduled-tasks.component').then(m => m.ScheduledTasksComponent), canActivate: adminGuard },
   { path: 'issues', loadComponent: () => import('./pages/issues/issues.component').then(m => m.IssuesComponent), canActivate: adminGuard },
   { path: 'coupons', loadComponent: () => import('./pages/coupons/coupons.component').then(m => m.CouponsComponent), canActivate: adminGuard },

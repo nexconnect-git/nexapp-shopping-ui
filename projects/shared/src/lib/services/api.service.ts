@@ -356,8 +356,12 @@ export class ApiService {
     return this.http.post(`${this.baseUrl}/auth/wallet/verify-topup/`, data);
   }
 
-  createOrder(data: { delivery_address_id: string; notes?: string; coupon_code?: string; wallet_amount?: number }): Observable<any> {
+  createOrder(data: any): Observable<any> {
     return this.http.post(`${this.baseUrl}/orders/create/`, data);
+  }
+
+  initiateCheckoutPayment(data: { delivery_address_id: string; coupon_code?: string; wallet_amount?: number }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/orders/initiate-checkout-payment/`, data);
   }
 
   createRazorpayOrder(orderId: string): Observable<any> {
@@ -876,6 +880,18 @@ export class ApiService {
       });
     }
     return this.http.get(`${this.baseUrl}/admin/orders/`, { params: httpParams });
+  }
+
+  getAdminPayments(params?: any): Observable<any> {
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.keys(params).forEach(key => {
+        if (params[key] !== null && params[key] !== undefined) {
+          httpParams = httpParams.set(key, params[key]);
+        }
+      });
+    }
+    return this.http.get(`${this.baseUrl}/admin/payments/`, { params: httpParams });
   }
 
   updateAdminOrderStatus(id: string, status: string): Observable<any> {

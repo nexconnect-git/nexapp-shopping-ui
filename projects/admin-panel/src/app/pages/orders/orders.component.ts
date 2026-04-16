@@ -64,6 +64,14 @@ export class OrdersComponent implements OnInit, OnDestroy {
   private animFrameId?: number;
   private timer: any;
   readonly statuses = ['placed', 'confirmed', 'preparing', 'ready', 'picked_up', 'on_the_way', 'delivered', 'cancelled'];
+
+  /** Admin can cancel any order that hasn't been delivered yet. */
+  getAvailableStatuses(order: Order): string[] {
+    if (order.status === 'delivered' || order.status === 'cancelled') {
+      return [order.status]; // terminal — no transitions
+    }
+    return this.statuses.filter(s => s !== 'cancelled' || order.status !== 'delivered');
+  }
   private sub?: Subscription;
 
   ngOnInit() {

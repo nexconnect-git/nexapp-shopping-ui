@@ -2,7 +2,7 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule, TitleCasePipe, SlicePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { ApiService, AppCurrencyPipe, Cart, Address } from '@shared/public-api';
+import { ApiService, AppCurrencyPipe, Cart, Address, ToastService } from '@shared/public-api';
 
 declare const Razorpay: any;
 
@@ -24,6 +24,7 @@ interface PaymentMethod {
 export class CheckoutComponent implements OnInit {
   private api = inject(ApiService);
   private router = inject(Router);
+  private toast = inject(ToastService);
 
   cart = signal<Cart | null>(null);
   addresses = signal<Address[]>([]);
@@ -135,78 +136,137 @@ export class CheckoutComponent implements OnInit {
     this.couponError.set('');
   }
 
+  // Dialog shown when Razorpay payment fails or is dismissed
+  showPaymentFailedDialog = signal(false);
+  paymentFailedMsg = signal('');
+  // Pending Razorpay order ID so we can retry without re-initiating
+  private pendingRzOrderId = '';
+  private pendingRzAmount = 0;
+  private pendingRzCurrency = 'INR';
+
   placeOrder() {
     if (!this.selectedAddressId) return;
     this.placingOrder.set(true);
     this.orderError.set('');
 
-    const orderData: any = { delivery_address_id: this.selectedAddressId, notes: this.notes };
+    if (this.selectedPayment === 'razorpay' && this.finalTotal > 0) {
+      // New flow: initiate Razorpay order first, then create app order after payment
+      this.api.initiateCheckoutPayment({
+        delivery_address_id: this.selectedAddressId,
+        coupon_code: this.appliedCoupon()?.code,
+        wallet_amount: this.walletAmountToUse() || undefined,
+      }).subscribe({
+        next: (rzData) => {
+          this.pendingRzOrderId = rzData.razorpay_order_id;
+          this.pendingRzAmount = rzData.amount;
+          this.pendingRzCurrency = rzData.currency;
+          this.openRazorpayModal(rzData);
+        },
+        error: (err) => this.handleOrderError(err.error?.error || 'Could not initiate payment.'),
+      });
+    } else {
+      // COD or wallet-fully-covered
+      this.submitOrder(null);
+    }
+  }
+
+  private openRazorpayModal(rzData: { key_id: string; razorpay_order_id: string; amount: number; currency: string }) {
+    const options = {
+      key: rzData.key_id,
+      amount: rzData.amount,
+      currency: rzData.currency,
+      name: 'NexConnect',
+      description: 'Order Payment',
+      order_id: rzData.razorpay_order_id,
+      prefill: {},
+      theme: { color: '#6C63FF' },
+      handler: (response: any) => {
+        // Payment succeeded — create app order with proof
+        this.placingOrder.set(true);
+        this.submitOrder({
+          razorpay_order_id: response.razorpay_order_id,
+          razorpay_payment_id: response.razorpay_payment_id,
+          razorpay_signature: response.razorpay_signature,
+        });
+      },
+      modal: {
+        ondismiss: () => {
+          this.placingOrder.set(false);
+          this.paymentFailedMsg.set('You closed the payment window before completing payment.');
+          this.showPaymentFailedDialog.set(true);
+        }
+      }
+    };
+    const rzp = new Razorpay(options);
+    rzp.on('payment.failed', (response: any) => {
+      this.placingOrder.set(false);
+      this.paymentFailedMsg.set(response.error?.description || 'Payment was declined by your bank.');
+      this.showPaymentFailedDialog.set(true);
+    });
+    this.placingOrder.set(false);
+    rzp.open();
+  }
+
+  retryPayment() {
+    this.showPaymentFailedDialog.set(false);
+    if (!this.pendingRzOrderId) { this.placeOrder(); return; }
+    // Re-open Razorpay with the same order (no need to call initiate again)
+    this.openRazorpayModal({
+      key_id: '',  // will be fetched below
+      razorpay_order_id: this.pendingRzOrderId,
+      amount: this.pendingRzAmount,
+      currency: this.pendingRzCurrency,
+    });
+    // Re-initiate to get key_id (needed by Razorpay SDK)
+    this.placingOrder.set(true);
+    this.api.initiateCheckoutPayment({
+      delivery_address_id: this.selectedAddressId!,
+      coupon_code: this.appliedCoupon()?.code,
+      wallet_amount: this.walletAmountToUse() || undefined,
+    }).subscribe({
+      next: (rzData) => {
+        this.pendingRzOrderId = rzData.razorpay_order_id;
+        this.pendingRzAmount = rzData.amount;
+        this.openRazorpayModal(rzData);
+      },
+      error: (err) => this.handleOrderError(err.error?.error || 'Could not initiate payment.'),
+    });
+  }
+
+  placeOrderPayLater() {
+    this.showPaymentFailedDialog.set(false);
+    this.placingOrder.set(true);
+    this.submitOrder(null);  // creates order with payment_method=razorpay but is_payment_verified=false
+  }
+
+  dismissPaymentDialog() {
+    this.showPaymentFailedDialog.set(false);
+    this.placingOrder.set(false);
+  }
+
+  private submitOrder(paymentProof: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string } | null) {
+    const orderData: any = {
+      delivery_address_id: this.selectedAddressId,
+      payment_method: this.selectedPayment,
+      notes: this.notes,
+    };
     if (this.appliedCoupon()) orderData.coupon_code = this.appliedCoupon().code;
     if (this.walletAmountToUse() > 0) orderData.wallet_amount = this.walletAmountToUse();
     if (this.scheduledFor()) orderData.scheduled_for = this.scheduledFor();
+    if (paymentProof) Object.assign(orderData, paymentProof);
 
     this.api.createOrder(orderData).subscribe({
       next: (orders) => {
         this.api.refreshCartCount();
         const orderId = Array.isArray(orders) ? orders[0]?.id : orders?.id;
         if (!orderId) { this.handleOrderError('Order created but ID missing.'); return; }
-
-        if (this.selectedPayment === 'razorpay') {
-          this.openRazorpayCheckout(orderId);
-        } else {
-          setTimeout(() => this.router.navigate(['/order', orderId]), 300);
+        if (!paymentProof && this.selectedPayment === 'razorpay') {
+          this.toast.show('Order placed. Complete payment from Order Details.', 'info');
         }
+        setTimeout(() => this.router.navigate(['/order', orderId]), 300);
       },
       error: (err) => {
         this.handleOrderError(err.error?.detail || err.error?.non_field_errors?.[0] || 'Could not place order.');
-      }
-    });
-  }
-
-  private openRazorpayCheckout(orderId: string) {
-    this.api.createRazorpayOrder(orderId).subscribe({
-      next: (rzData) => {
-        const options = {
-          key: rzData.key_id,
-          amount: rzData.amount,
-          currency: rzData.currency,
-          name: 'NexConnect',
-          description: 'Order Payment',
-          order_id: rzData.razorpay_order_id,
-          prefill: {},
-          theme: { color: '#6C63FF' },
-          handler: (response: any) => {
-            this.verifyPayment(orderId, response.razorpay_payment_id, response.razorpay_signature);
-          },
-          modal: {
-            ondismiss: () => {
-              // User closed the modal without paying — navigate to order so they can retry
-              this.placingOrder.set(false);
-              this.router.navigate(['/order', orderId]);
-            }
-          }
-        };
-        const rzp = new Razorpay(options);
-        rzp.on('payment.failed', (response: any) => {
-          this.handleOrderError(response.error?.description || 'Payment failed. Please try again.');
-        });
-        this.placingOrder.set(false);
-        rzp.open();
-      },
-      error: (err) => {
-        this.handleOrderError(err.error?.error || 'Could not initiate payment.');
-      }
-    });
-  }
-
-  private verifyPayment(orderId: string, paymentId: string, signature: string) {
-    this.placingOrder.set(true);
-    this.api.verifyRazorpayPayment(orderId, paymentId, signature).subscribe({
-      next: () => {
-        this.router.navigate(['/order', orderId]);
-      },
-      error: () => {
-        this.handleOrderError('Payment verification failed. Contact support with your payment ID: ' + paymentId);
       }
     });
   }

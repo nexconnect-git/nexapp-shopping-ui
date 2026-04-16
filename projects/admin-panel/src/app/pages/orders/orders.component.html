@@ -83,9 +83,9 @@
           <span class="material-icons-outlined" style="font-size: 18px;">visibility</span>
         </button>
         <select class="status-select" [value]="order.status"
-          [disabled]="updatingId() === order.id"
+          [disabled]="updatingId() === order.id || order.status === 'delivered' || order.status === 'cancelled'"
           (change)="updateStatus(order, $any($event.target).value)">
-          @for (s of statuses; track s) {
+          @for (s of getAvailableStatuses(order); track s) {
             <option [value]="s">{{ s }}</option>
           }
         </select>

@@ -218,7 +218,11 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   canUpdateStatus() {
-    return ['placed', 'confirmed', 'preparing'].includes(this.order()?.status || '');
+    return ['placed', 'confirmed', 'preparing', 'ready'].includes(this.order()?.status || '');
+  }
+
+  canVendorCancel() {
+    return ['placed', 'confirmed', 'preparing', 'ready'].includes(this.order()?.status || '');
   }
 
   updateStatus(newStatus: string) {

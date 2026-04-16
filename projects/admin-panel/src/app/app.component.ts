@@ -33,6 +33,7 @@ export class AppComponent implements OnInit {
       { route: '/categories', icon: 'category', label: 'Categories' },
       { route: '/assets', icon: 'handyman', label: 'Assets' },
       { route: '/payouts', icon: 'payments', label: 'Payouts' },
+      { route: '/payments', icon: 'receipt_long', label: 'Payments' },
       { route: '/issues', icon: 'report_problem', label: 'Order Issues' },
       { route: '/coupons', icon: 'confirmation_number', label: 'Coupons' },
       { route: '/scheduled-tasks', icon: 'schedule_send', label: 'Scheduled Tasks' },

@@ -272,6 +272,18 @@
     }
   }
 
+  &.cancel-order-btn {
+    background: white;
+    border: 1.5px solid #fecdd3;
+    color: #e11d48;
+    font-size: 0.8125rem;
+
+    &:hover:not(:disabled) {
+      background: #fff1f2;
+      border-color: #fda4af;
+    }
+  }
+
   &:disabled {
     opacity: 0.6;
     cursor: not-allowed;

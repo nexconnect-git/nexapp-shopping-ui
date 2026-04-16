@@ -236,7 +236,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     const o = this.order();
     if (!o) return false;
     const policy = this.cancellationPolicy();
-    const allowed = policy?.allowed_statuses ?? ['placed', 'confirmed', 'preparing'];
+    const allowed = policy?.allowed_statuses ?? ['placed', 'confirmed', 'preparing', 'ready'];
     if (!allowed.includes(o.status)) return false;
     if (policy && policy.window_minutes > 0) {
       const elapsed = (Date.now() - new Date(o.placed_at).getTime()) / 60000;
@@ -291,6 +291,44 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
         this.reordering.set(false);
         this.toast.show('Could not reorder. Please try again.', 'error');
       }
+    });
+  }
+
+  payingNow = signal(false);
+
+  canPayNow(): boolean {
+    const o = this.order();
+    return !!o && o.payment_method === 'razorpay' && !o.is_payment_verified
+      && !['cancelled', 'delivered'].includes(o.status);
+  }
+
+  payNow() {
+    const o = this.order();
+    if (!o) return;
+    this.payingNow.set(true);
+    this.api.createRazorpayOrder(o.id).subscribe({
+      next: (rzData) => {
+        const Razorpay = (window as any)['Razorpay'];
+        const options = {
+          key: rzData.key_id,
+          amount: rzData.amount,
+          currency: rzData.currency,
+          name: 'NexConnect',
+          description: `Order #${o.order_number}`,
+          order_id: rzData.razorpay_order_id,
+          theme: { color: '#6C63FF' },
+          handler: (response: any) => {
+            this.api.verifyRazorpayPayment(o.id, response.razorpay_payment_id, response.razorpay_signature).subscribe({
+              next: (updated) => { this.order.set(updated); this.payingNow.set(false); this.toast.show('Payment successful!', 'success'); },
+              error: () => { this.payingNow.set(false); this.toast.show('Payment verification failed. Contact support.', 'error'); }
+            });
+          },
+          modal: { ondismiss: () => this.payingNow.set(false) }
+        };
+        this.payingNow.set(false);
+        new Razorpay(options).open();
+      },
+      error: () => { this.payingNow.set(false); this.toast.show('Could not initiate payment.', 'error'); }
     });
   }
 

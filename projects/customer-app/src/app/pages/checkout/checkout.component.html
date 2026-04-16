@@ -293,3 +293,27 @@
   </div>
 
 </div>
+
+<!-- ── Payment Failed Dialog ─────────────────────────── -->
+@if (showPaymentFailedDialog()) {
+  <div class="co-dialog-backdrop" (click)="dismissPaymentDialog()">
+    <div class="co-dialog" (click)="$event.stopPropagation()">
+      <div class="co-dialog-icon">
+        <span class="material-icons-outlined" style="font-size:32px;color:#ef4444">payment</span>
+      </div>
+      <h3 class="co-dialog-title">Payment Not Completed</h3>
+      <p class="co-dialog-msg">{{ paymentFailedMsg() }}</p>
+      <div class="co-dialog-actions">
+        <button class="co-dialog-btn primary" (click)="retryPayment()">
+          <span class="material-icons-outlined">refresh</span>
+          Retry Payment
+        </button>
+        <button class="co-dialog-btn secondary" (click)="placeOrderPayLater()">
+          <span class="material-icons-outlined">schedule</span>
+          Place &amp; Pay Later
+        </button>
+        <button class="co-dialog-btn ghost" (click)="dismissPaymentDialog()">Cancel</button>
+      </div>
+    </div>
+  </div>
+}

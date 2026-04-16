@@ -75,10 +75,14 @@
             </button>
           }
         </div>
-        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-light); font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.375rem;">
-          <span class="material-icons-outlined" style="font-size: 1.125rem; color: var(--info);">info</span>
-          Need to cancel this order? Please contact the help desk.
-        </div>
+        @if (canVendorCancel()) {
+          <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-light);">
+            <button class="status-btn cancel-order-btn" (click)="updateStatus('cancelled')">
+              <span class="material-icons-outlined">cancel</span>
+              Cancel Order
+            </button>
+          </div>
+        }
       </div>
     }
 
