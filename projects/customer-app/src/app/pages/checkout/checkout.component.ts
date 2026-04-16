@@ -40,6 +40,13 @@ export class CheckoutComponent implements OnInit {
   couponError = signal('');
   couponLoading = signal(false);
 
+  deliveryFeePreview = signal<any>(null);
+  deliveryFeeLoading = signal(false);
+
+  walletBalance = signal<number>(0);
+  walletAmountToUse = signal<number>(0);
+  walletLoading = signal(false);
+
   readonly paymentMethods: PaymentMethod[] = [
     { id: 'cod',      label: 'Pay on Delivery',        icon: 'payments',               sub: 'Pay cash to delivery partner' },
     { id: 'razorpay', label: 'Pay Online (Razorpay)',  icon: 'account_balance_wallet',  sub: 'UPI, Cards, Net Banking & more' },
@@ -57,7 +64,38 @@ export class CheckoutComponent implements OnInit {
         const def = addrs.find(a => a.is_default);
         if (def) this.selectedAddressId = def.id;
         else if (addrs.length) this.selectedAddressId = addrs[0].id;
+        if (this.selectedAddressId) this.fetchDeliveryFeePreview(this.selectedAddressId);
       }
+    });
+    this.walletLoading.set(true);
+    this.api.getWallet().subscribe({
+      next: (w) => { this.walletBalance.set(Number(w.balance)); this.walletLoading.set(false); },
+      error: () => this.walletLoading.set(false),
+    });
+  }
+
+  get maxWalletApplicable(): number {
+    return Math.min(this.walletBalance(), this.discountedTotal);
+  }
+
+  applyFullWallet() {
+    this.walletAmountToUse.set(this.maxWalletApplicable);
+  }
+
+  get finalTotal(): number {
+    return Math.max(this.discountedTotal - this.walletAmountToUse(), 0);
+  }
+
+  selectAddress(id: string) {
+    this.selectedAddressId = id;
+    this.fetchDeliveryFeePreview(id);
+  }
+
+  fetchDeliveryFeePreview(addressId: string) {
+    this.deliveryFeeLoading.set(true);
+    this.api.getDeliveryFeePreview(addressId).subscribe({
+      next: (res) => { this.deliveryFeePreview.set(res); this.deliveryFeeLoading.set(false); },
+      error: () => this.deliveryFeeLoading.set(false),
     });
   }
 
@@ -99,6 +137,8 @@ export class CheckoutComponent implements OnInit {
 
     const orderData: any = { delivery_address_id: this.selectedAddressId, notes: this.notes };
     if (this.appliedCoupon()) orderData.coupon_code = this.appliedCoupon().code;
+    if (this.walletAmountToUse() > 0) orderData.wallet_amount = this.walletAmountToUse();
+    if (this.scheduledFor()) orderData.scheduled_for = this.scheduledFor();
 
     this.api.createOrder(orderData).subscribe({
       next: (orders) => {
@@ -169,6 +209,35 @@ export class CheckoutComponent implements OnInit {
   private handleOrderError(msg: string) {
     this.orderError.set(msg);
     this.placingOrder.set(false);
+  }
+
+  readonly Math = Math;
+
+  // Scheduling
+  scheduledFor = signal<string>('');  // ISO datetime string or ''
+
+  get scheduledForDate(): string {
+    const v = this.scheduledFor();
+    return v ? v.split('T')[0] : '';
+  }
+
+  get scheduledForTime(): string {
+    const v = this.scheduledFor();
+    return v ? v.split('T')[1]?.slice(0, 5) : '';
+  }
+
+  setScheduledDate(date: string) {
+    const time = this.scheduledForTime || '12:00';
+    this.scheduledFor.set(date ? `${date}T${time}` : '');
+  }
+
+  setScheduledTime(time: string) {
+    const date = this.scheduledForDate || new Date().toISOString().split('T')[0];
+    this.scheduledFor.set(time ? `${date}T${time}` : '');
+  }
+
+  get minScheduleDate(): string {
+    return new Date().toISOString().split('T')[0];
   }
 
   goBack() { window.history.back(); }

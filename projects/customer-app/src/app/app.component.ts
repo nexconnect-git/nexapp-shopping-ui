@@ -103,6 +103,26 @@ export class AppComponent implements OnInit {
         App.exitApp();
       }
     });
+
+    // Register FCM push notification token
+    this.registerPushToken();
+  }
+
+  private async registerPushToken() {
+    if (!this.auth.isLoggedIn()) return;
+    try {
+      const { PushNotifications } = await import('@capacitor/push-notifications');
+      await PushNotifications.requestPermissions();
+      await PushNotifications.register();
+      PushNotifications.addListener('registration', (token) => {
+        const platform = Capacitor.getPlatform();
+        this.api.registerDeviceToken({ token: token.value, platform }).subscribe({
+          error: (e) => console.warn('Device token registration failed', e)
+        });
+      });
+    } catch {
+      // Plugin not installed or permissions denied — skip silently
+    }
   }
 
   checkActiveIssue() {

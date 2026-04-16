@@ -1,0 +1,80 @@
+<div class="wallet-page">
+  <header class="wallet-header">
+    <a routerLink="/profile" class="back-btn">
+      <span class="material-icons">arrow_back</span>
+    </a>
+    <h1>My Wallet</h1>
+  </header>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading wallet...</p>
+    </div>
+  } @else {
+    <!-- Balance Card -->
+    <div class="balance-card">
+      <div class="balance-label">Available Balance</div>
+      <div class="balance-amount">₹{{ balance() }}</div>
+      <button class="topup-btn" (click)="openTopUp()">
+        <span class="material-icons">add</span>
+        Add Money
+      </button>
+    </div>
+
+    <!-- Top-up Form -->
+    @if (showTopUpForm()) {
+      <div class="topup-form-card">
+        <h3>Add Money to Wallet</h3>
+        <div class="quick-amounts">
+          <button class="quick-btn" *ngFor="let a of [100, 200, 500, 1000]" (click)="topUpAmount.set(a)">₹{{ a }}</button>
+        </div>
+        <div class="amount-input-row">
+          <span class="rupee-prefix">₹</span>
+          <input
+            type="number"
+            class="amount-input"
+            placeholder="Enter amount"
+            [ngModel]="topUpAmount()"
+            (ngModelChange)="topUpAmount.set($event)"
+            min="1"
+          />
+        </div>
+        <div class="topup-actions">
+          <button class="cancel-topup-btn" (click)="cancelTopUp()">Cancel</button>
+          <button class="confirm-topup-btn" (click)="initiateTopUp()" [disabled]="topUpLoading()">
+            @if (topUpLoading()) { Processing... } @else { Pay via Razorpay }
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- Transactions -->
+    <div class="transactions-section">
+      <h2>Transaction History</h2>
+      @if (transactions().length === 0) {
+        <div class="empty-state">
+          <span class="material-icons">receipt_long</span>
+          <p>No transactions yet.</p>
+        </div>
+      } @else {
+        <ul class="tx-list">
+          @for (tx of transactions(); track tx.id) {
+            <li class="tx-item">
+              <div class="tx-icon-wrap" [class]="tx.transaction_type">
+                <span class="material-icons">{{ txIcon(tx.source) }}</span>
+              </div>
+              <div class="tx-details">
+                <div class="tx-desc">{{ tx.description || tx.source }}</div>
+                <div class="tx-date">{{ formatDate(tx.created_at) }}</div>
+              </div>
+              <div class="tx-amount" [class]="txClass(tx.transaction_type)">
+                {{ txSign(tx.transaction_type) }}₹{{ tx.amount }}
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  }
+</div>

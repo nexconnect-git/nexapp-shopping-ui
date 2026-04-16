@@ -325,7 +325,38 @@ export class ApiService {
   }
 
   // Orders
-  createOrder(data: { delivery_address_id: string; notes?: string; coupon_code?: string }): Observable<any> {
+  getCancellationPolicy(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/orders/cancellation-policy/`);
+  }
+
+  getDeliveryFeePreview(addressId: string): Observable<any> {
+    return this.http.get(`${this.baseUrl}/orders/delivery-fee-preview/?address_id=${addressId}`);
+  }
+
+  // Loyalty
+  getLoyalty(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/auth/loyalty/`);
+  }
+
+  // Wallet
+  getWallet(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/auth/wallet/`);
+  }
+
+  initiateWalletTopUp(amount: number): Observable<any> {
+    return this.http.post(`${this.baseUrl}/auth/wallet/topup/`, { amount });
+  }
+
+  verifyWalletTopUp(data: {
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+    amount: number;
+  }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/auth/wallet/verify-topup/`, data);
+  }
+
+  createOrder(data: { delivery_address_id: string; notes?: string; coupon_code?: string; wallet_amount?: number }): Observable<any> {
     return this.http.post(`${this.baseUrl}/orders/create/`, data);
   }
 
@@ -348,6 +379,10 @@ export class ApiService {
 
   getOrder(id: string): Observable<any> {
     return this.http.get(`${this.baseUrl}/orders/${id}/`);
+  }
+
+  reorder(orderId: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/orders/${orderId}/reorder/`, {});
   }
 
   cancelOrder(id: string): Observable<any> {

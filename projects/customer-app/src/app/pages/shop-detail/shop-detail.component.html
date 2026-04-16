@@ -110,6 +110,14 @@
     }
   </div>
 
+  <!-- ── Closed Banner ───────────────────────────────────── -->
+  @if (!vendor()!.is_open) {
+    <div class="sd-closed-banner">
+      <span class="material-icons-outlined">schedule</span>
+      This store is currently closed. You can browse the menu but cannot place orders.
+    </div>
+  }
+
   <!-- ── Filter Chips ────────────────────────────────────── -->
   <div class="sd-filter-row">
     <label class="sd-fchip" [class.active]="filterRating">
@@ -179,7 +187,9 @@
 
             @if (product.is_available !== false) {
               <div class="sd-qty-overlay">
-                @if (getQty(product.id) === 0) {
+                @if (!vendor()!.is_open) {
+                  <div class="sd-oos-overlay">Closed</div>
+                } @else if (getQty(product.id) === 0) {
                   <button class="sd-add-btn" (click)="add(product)" [disabled]="addingId() === product.id">
                     @if (addingId() === product.id) { <span class="sd-btn-spinner"></span> } @else { ADD }
                   </button>

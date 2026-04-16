@@ -44,10 +44,18 @@
           </button>
           
           @if (canCancel()) {
-            <button class="btn btn-cancel btn-sm" [disabled]="cancelling()" (click)="cancelOrder()">
-              <span class="material-icons-outlined">cancel</span>
-              {{ cancelling() ? 'Cancelling...' : 'Cancel' }}
-            </button>
+            <div class="cancel-wrap">
+              <button class="btn btn-cancel btn-sm" [disabled]="cancelling()" (click)="cancelOrder()">
+                <span class="material-icons-outlined">cancel</span>
+                {{ cancelling() ? 'Cancelling...' : 'Cancel Order' }}
+              </button>
+              @if (cancelWindowLabel()) {
+                <span class="cancel-window-hint">{{ cancelWindowLabel() }}</span>
+              }
+              @if (cancelError()) {
+                <span class="cancel-error">{{ cancelError() }}</span>
+              }
+            </div>
           }
 
           @if (order()!.status === 'delivered') {
@@ -55,6 +63,13 @@
               <span class="material-icons-outlined">report_problem</span>
               Report Issue
             </a>
+          }
+
+          @if (['delivered', 'cancelled'].includes(order()!.status)) {
+            <button class="btn btn-reorder btn-sm" [disabled]="reordering()" (click)="reorder()">
+              <span class="material-icons-outlined">replay</span>
+              {{ reordering() ? 'Adding to Cart…' : 'Reorder' }}
+            </button>
           }
         </div>
       </div>
@@ -438,6 +453,18 @@
               <span class="payment-label">Cash on Delivery (COD)</span>
               <span class="payment-amount">{{ order()!.total | appCurrency }}</span>
             </div>
+            @if (order()!.refund_status && order()!.refund_status !== 'none') {
+              <div class="refund-status-row" [class]="'refund-' + order()!.refund_status">
+                <span class="material-icons-outlined">
+                  {{ order()!.refund_status === 'processed' ? 'check_circle' : order()!.refund_status === 'failed' ? 'error' : 'hourglass_top' }}
+                </span>
+                <span>
+                  {{ order()!.refund_status === 'initiated' ? 'Refund initiated — typically 5–7 business days' :
+                     order()!.refund_status === 'processed' ? 'Refund processed to your original payment method' :
+                     'Refund failed — please contact support' }}
+                </span>
+              </div>
+            }
           </div>
 
           <!-- Delivery OTP (shown when on_the_way) -->

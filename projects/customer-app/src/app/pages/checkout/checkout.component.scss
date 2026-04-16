@@ -132,6 +132,8 @@
 .co-bill { }
 .co-bill-row { display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: 600; color: #555; padding: 0.375rem 0; }
 .co-bill-free { color: #16a34a; font-weight: 800; }
+.co-bill-loading { color: #999; font-style: italic; font-weight: 500; }
+.co-bill-sub { font-size: 0.78rem; color: #888; padding-left: 0.75rem; font-weight: 400; }
 .co-bill-divider { height: 1px; background: #f0f0f0; margin: 0.5rem 0; }
 .co-bill-total { font-size: 1rem; font-weight: 900; color: #111; padding-top: 0.75rem; }
 
@@ -317,6 +319,99 @@
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Wallet section ─────────────────────────────────── */
+.co-wallet-section {
+  .co-section-title { display: flex; align-items: center; }
+}
+
+.co-wallet-applied {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #e8f5e9;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #2e7d32;
+  font-weight: 600;
+
+  .material-icons-outlined { font-size: 18px; }
+}
+
+.co-wallet-remove {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: #c62828;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.co-wallet-row {
+  display: flex;
+  gap: 8px;
+}
+
+.co-wallet-input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 15px;
+
+  &:focus { outline: none; border-color: #6C63FF; }
+}
+
+.co-wallet-max-btn {
+  padding: 10px 16px;
+  background: #6C63FF;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ── Schedule delivery ──────────────────────────────── */
+.co-schedule-row {
+  display: flex;
+  gap: 8px;
+}
+
+.co-schedule-input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 14px;
+
+  &:focus { outline: none; border-color: #6C63FF; }
+}
+
+.co-schedule-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 13px;
+  color: #6C63FF;
+  font-weight: 600;
+
+  .material-icons-outlined { font-size: 15px; }
+}
+
+.co-schedule-clear {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: #c62828;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
 
 /* ── Razorpay note ──────────────────────────────────── */
 .co-rzp-note {

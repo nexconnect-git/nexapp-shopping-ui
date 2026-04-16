@@ -24,8 +24,13 @@ export class ProfileComponent implements OnInit {
   avatarUploading = signal(false);
   isEditing = false;
   recentOrders = signal<any[]>([]);
+  loyaltyPoints = signal<number>(0);
 
   ngOnInit() {
+    this.api.getLoyalty().subscribe({
+      next: (l) => this.loyaltyPoints.set(l.points ?? 0),
+      error: () => {}
+    });
     this.api.getProfile().subscribe({
       next: (u) => {
         this.form = { ...u };

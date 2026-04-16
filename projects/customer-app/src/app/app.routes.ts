@@ -108,6 +108,11 @@ export const routes: Routes = [
     canActivate: customerGuard
   },
   {
+    path: 'wallet',
+    loadComponent: () => import('./pages/wallet/wallet.component').then(m => m.WalletComponent),
+    canActivate: customerGuard
+  },
+  {
     path: '**',
     redirectTo: 'login'
   }

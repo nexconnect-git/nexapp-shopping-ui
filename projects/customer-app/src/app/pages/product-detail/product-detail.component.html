@@ -1,3 +1,19 @@
+@if (showClearCartDialog()) {
+  <div class="modal-overlay" (click)="dismissClearCartDialog()">
+    <div class="modal-dialog" (click)="$event.stopPropagation()">
+      <h3 class="modal-title">
+        <span class="material-icons-outlined">swap_horiz</span>
+        Replace cart items?
+      </h3>
+      <p class="modal-body">Your cart has items from a different store. Adding this item will clear your current cart.</p>
+      <div class="modal-actions">
+        <button class="btn btn-outline" (click)="dismissClearCartDialog()">Keep current cart</button>
+        <button class="btn btn-primary" (click)="confirmClearAndAdd()">Clear &amp; add</button>
+      </div>
+    </div>
+  </div>
+}
+
 @if (loading()) {
   <div class="loading-spinner" style="padding:5rem 0; text-align:center;">
     <span class="spinner" style="width:40px;height:40px;border-width:4px;"></span>

@@ -1,9 +1,11 @@
-import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy, AfterViewChecked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService, Order, PaymentQR } from '@shared/public-api';
 import { timer, Subscription } from 'rxjs';
 import { AuthService } from '@shared/public-api';
 import { environment } from '../../../environments/environment';
+
+declare const L: any;
 
 @Component({
   selector: 'app-active-delivery',
@@ -12,17 +14,23 @@ import { environment } from '../../../environments/environment';
   templateUrl: './active-delivery.component.html',
   styleUrls: ['./active-delivery.component.scss']
 })
-export class ActiveDeliveryComponent implements OnInit, OnDestroy {
+export class ActiveDeliveryComponent implements OnInit, OnDestroy, AfterViewChecked {
   private api = inject(ApiService);
   private auth = inject(AuthService);
 
   orders = signal<Order[]>([]);
   loading = signal(true);
   private sub?: Subscription;
-  
+
   // Geotracking State
   private watchId?: number;
   private wsConns: Map<string, WebSocket> = new Map();
+
+  // Leaflet route maps — keyed by order.id
+  private leafletMaps: Map<string, any> = new Map();
+  private partnerMarkers: Map<string, any> = new Map();
+  private currentLat = 0;
+  private currentLng = 0;
 
   // Delivery confirmation modal state
   confirmModalOrder = signal<Order | null>(null);
@@ -40,9 +48,16 @@ export class ActiveDeliveryComponent implements OnInit, OnDestroy {
     this.startLocationTracking();
   }
 
+  ngAfterViewChecked() {
+    this.initMapsForOrders();
+  }
+
   ngOnDestroy() {
     this.sub?.unsubscribe();
     this.stopLocationTracking();
+    this.leafletMaps.forEach(m => m.remove());
+    this.leafletMaps.clear();
+    this.partnerMarkers.clear();
   }
 
   // --- Tracking Broadcast ---
@@ -69,11 +84,13 @@ export class ActiveDeliveryComponent implements OnInit, OnDestroy {
   }
 
   private broadcastLocation(lat: number, lng: number) {
+    this.currentLat = lat;
+    this.currentLng = lng;
+
     const currentOrders = this.orders();
     if (!currentOrders || currentOrders.length === 0) return;
-    
+
     currentOrders.forEach(order => {
-      // Connect specifically for 'on_the_way' or 'picked_up'
       if (order.status !== 'delivered' && order.status !== 'cancelled') {
         let ws = this.wsConns.get(order.id);
         if (!ws || ws.readyState === WebSocket.CLOSED) {
@@ -82,11 +99,76 @@ export class ActiveDeliveryComponent implements OnInit, OnDestroy {
         if (ws && ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({
             action: 'update_location',
-            lat: lat,
-            lng: lng,
-            partner_id: this.auth.user()?.id
+            lat,
+            lng,
+            partner_id: this.auth.user()?.id,
           }));
         }
+        // Update partner marker on the Leaflet map
+        const marker = this.partnerMarkers.get(order.id);
+        if (marker) marker.setLatLng([lat, lng]);
+      }
+    });
+  }
+
+  private initMapsForOrders() {
+    if (typeof L === 'undefined') return;
+    this.orders().forEach(order => {
+      if (['picked_up', 'on_the_way'].includes(order.status) && !this.leafletMaps.has(order.id)) {
+        const el = document.getElementById(`delivery-map-${order.id}`);
+        if (!el) return;
+
+        const vLat = Number(order.vendor_info?.latitude || 0);
+        const vLng = Number(order.vendor_info?.longitude || 0);
+        const cLat = Number(order.delivery_latitude || 0);
+        const cLng = Number(order.delivery_longitude || 0);
+        const centerLat = this.currentLat || vLat;
+        const centerLng = this.currentLng || vLng;
+
+        const map = L.map(el, { zoomControl: true }).setView([centerLat, centerLng], 14);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap contributors',
+        }).addTo(map);
+
+        // Vendor marker
+        if (vLat && vLng) {
+          L.marker([vLat, vLng], {
+            icon: L.divIcon({ className: 'map-icon-vendor', html: '🏪', iconSize: [24, 24] }),
+          }).addTo(map).bindPopup('Pickup: ' + (order.vendor_info?.store_name || 'Vendor'));
+        }
+
+        // Customer marker
+        if (cLat && cLng) {
+          L.marker([cLat, cLng], {
+            icon: L.divIcon({ className: 'map-icon-customer', html: '📍', iconSize: [24, 24] }),
+          }).addTo(map).bindPopup('Drop-off');
+        }
+
+        // Partner marker (own location)
+        if (this.currentLat && this.currentLng) {
+          const partnerMarker = L.marker([this.currentLat, this.currentLng], {
+            icon: L.divIcon({ className: 'map-icon-partner', html: '🛵', iconSize: [28, 28] }),
+          }).addTo(map).bindPopup('You');
+          this.partnerMarkers.set(order.id, partnerMarker);
+        }
+
+        // Polyline: partner → vendor → customer
+        const points: [number, number][] = [];
+        if (this.currentLat && this.currentLng) points.push([this.currentLat, this.currentLng]);
+        if (vLat && vLng) points.push([vLat, vLng]);
+        if (cLat && cLng) points.push([cLat, cLng]);
+        if (points.length >= 2) {
+          L.polyline(points, { color: '#00C853', weight: 3, dashArray: '6,4' }).addTo(map);
+        }
+
+        this.leafletMaps.set(order.id, map);
+      }
+
+      // Remove map if order no longer needs it
+      if (!['picked_up', 'on_the_way'].includes(order.status) && this.leafletMaps.has(order.id)) {
+        this.leafletMaps.get(order.id).remove();
+        this.leafletMaps.delete(order.id);
+        this.partnerMarkers.delete(order.id);
       }
     });
   }

@@ -4,6 +4,21 @@
   min-height: 100vh;
 }
 
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.45);
+  display: flex; align-items: center; justify-content: center; z-index: 1000;
+}
+.modal-dialog {
+  background: var(--surface); border-radius: 16px; padding: 2rem;
+  max-width: 420px; width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,.2);
+}
+.modal-title {
+  display: flex; align-items: center; gap: .5rem;
+  font-size: 1.1rem; font-weight: 700; margin-bottom: .75rem;
+}
+.modal-body { color: var(--text-secondary); margin-bottom: 1.5rem; line-height: 1.5; }
+.modal-actions { display: flex; gap: .75rem; justify-content: flex-end; }
+
 .container { max-width: 1280px; margin: 0 auto; padding: 0 1.5rem; }
 .text-muted { color: var(--text-muted); }
 

@@ -51,6 +51,13 @@
           </div>
           <span class="pf-mem-badge">ACTIVE</span>
         </div>
+        @if (loyaltyPoints() > 0) {
+          <div class="pf-loyalty-row">
+            <span class="material-icons-outlined">stars</span>
+            <span>{{ loyaltyPoints() }} loyalty points</span>
+            <span class="pf-loyalty-value">≈ ₹{{ (loyaltyPoints() * 0.25).toFixed(2) }}</span>
+          </div>
+        }
       </div>
 
       <!-- Menu Items -->
@@ -69,6 +76,15 @@
           <div class="pf-mi-text">
             <span class="pf-mi-label">My Issues</span>
             <span class="pf-mi-sub">Returns, refunds, damage reports</span>
+          </div>
+          <span class="material-icons-outlined pf-mi-arrow">chevron_right</span>
+        </a>
+
+        <a routerLink="/wallet" class="pf-menu-item">
+          <span class="material-icons-outlined pf-mi-icon">account_balance_wallet</span>
+          <div class="pf-mi-text">
+            <span class="pf-mi-label">My Wallet</span>
+            <span class="pf-mi-sub">Balance, top-up and transaction history</span>
           </div>
           <span class="material-icons-outlined pf-mi-arrow">chevron_right</span>
         </a>

@@ -40,7 +40,8 @@
       <div class="co-section co-addr-section">
         <div class="co-section-title">Select Delivery Address</div>
         @for (addr of addresses(); track addr.id) {
-          <label class="co-addr-option" [class.selected]="selectedAddressId === addr.id">
+          <label class="co-addr-option" [class.selected]="selectedAddressId === addr.id"
+            (click)="selectAddress(addr.id)">
             <input type="radio" [value]="addr.id" [(ngModel)]="selectedAddressId" hidden>
             <div class="co-addr-radio" [class.active]="selectedAddressId === addr.id">
               <div class="co-addr-dot"></div>
@@ -136,6 +137,36 @@
       }
     </div>
 
+    <!-- ── Wallet ──────────────────────────────────────── -->
+    @if (walletBalance() > 0) {
+      <div class="co-section co-wallet-section">
+        <div class="co-section-title">
+          <span class="material-icons-outlined" style="font-size:18px;vertical-align:middle;margin-right:4px">account_balance_wallet</span>
+          Wallet Balance: ₹{{ walletBalance() | number:'1.2-2' }}
+        </div>
+        @if (walletAmountToUse() > 0) {
+          <div class="co-wallet-applied">
+            <span class="material-icons-outlined">check_circle</span>
+            ₹{{ walletAmountToUse() | number:'1.2-2' }} will be deducted from wallet
+            <button class="co-wallet-remove" (click)="walletAmountToUse.set(0)">Remove</button>
+          </div>
+        } @else {
+          <div class="co-wallet-row">
+            <input
+              class="co-wallet-input"
+              type="number"
+              [max]="maxWalletApplicable"
+              min="0"
+              placeholder="Enter amount to use"
+              [ngModel]="walletAmountToUse()"
+              (ngModelChange)="walletAmountToUse.set(Math.min($event, maxWalletApplicable))"
+            />
+            <button class="co-wallet-max-btn" (click)="applyFullWallet()">Use Max</button>
+          </div>
+        }
+      </div>
+    }
+
     <!-- ── Bill Summary ───────────────────────────────── -->
     @if (cart()) {
       <div class="co-section co-bill">
@@ -152,12 +183,36 @@
         }
         <div class="co-bill-row">
           <span>Delivery Fee</span>
-          <span class="co-bill-free">FREE</span>
+          @if (deliveryFeeLoading()) {
+            <span class="co-bill-loading">Calculating…</span>
+          } @else if (deliveryFeePreview()) {
+            @if (+deliveryFeePreview().total_delivery_fee === 0) {
+              <span class="co-bill-free">FREE</span>
+            } @else {
+              <span>{{ +deliveryFeePreview().total_delivery_fee | appCurrency }}</span>
+            }
+          } @else {
+            <span class="co-bill-free">FREE</span>
+          }
         </div>
+        @if (deliveryFeePreview()?.fees?.length > 0) {
+          @for (fee of deliveryFeePreview().fees; track fee.vendor_id) {
+            <div class="co-bill-row co-bill-sub">
+              <span>{{ fee.vendor_name }} ({{ fee.distance_km }} km)</span>
+              <span>{{ +fee.delivery_fee === 0 ? 'Free' : (fee.delivery_fee | appCurrency) }}</span>
+            </div>
+          }
+        }
+        @if (walletAmountToUse() > 0) {
+          <div class="co-bill-row co-bill-savings">
+            <span>Wallet Discount</span>
+            <span>− ₹{{ walletAmountToUse() | number:'1.2-2' }}</span>
+          </div>
+        }
         <div class="co-bill-divider"></div>
         <div class="co-bill-row co-bill-total">
           <span>To Pay</span>
-          <span>{{ discountedTotal | appCurrency }}</span>
+          <span>₹{{ finalTotal | number:'1.2-2' }}</span>
         </div>
       </div>
     }
@@ -170,6 +225,36 @@
         [(ngModel)]="notes"
         rows="2"
         placeholder="Delivery instructions, allergies…"></textarea>
+    </div>
+
+    <!-- ── Schedule Delivery ─────────────────────────── -->
+    <div class="co-section">
+      <div class="co-section-title">
+        <span class="material-icons-outlined" style="font-size:18px;vertical-align:middle;margin-right:4px">schedule</span>
+        Schedule Delivery <span class="co-optional">(optional)</span>
+      </div>
+      <div class="co-schedule-row">
+        <input
+          class="co-schedule-input"
+          type="date"
+          [min]="minScheduleDate"
+          [value]="scheduledForDate"
+          (change)="setScheduledDate(($any($event.target)).value)"
+        />
+        <input
+          class="co-schedule-input"
+          type="time"
+          [value]="scheduledForTime"
+          (change)="setScheduledTime(($any($event.target)).value)"
+        />
+      </div>
+      @if (scheduledFor()) {
+        <div class="co-schedule-hint">
+          <span class="material-icons-outlined">info</span>
+          Scheduled for {{ scheduledFor() | date:'EEE d MMM, h:mm a' }}
+          <button class="co-schedule-clear" (click)="scheduledFor.set('')">Clear</button>
+        </div>
+      }
     </div>
 
     @if (orderError()) {
@@ -199,10 +284,10 @@
         {{ selectedPayment === 'razorpay' ? 'Opening Payment…' : 'Placing Order…' }}
       } @else if (selectedPayment === 'razorpay') {
         <span class="material-icons-outlined" style="font-size:18px">lock</span>
-        <span>Pay {{ discountedTotal | appCurrency }}</span>
+        <span>Pay ₹{{ finalTotal | number:'1.2-2' }}</span>
       } @else {
         <span>Place Order</span>
-        <span class="co-place-total">{{ discountedTotal | appCurrency }}</span>
+        <span class="co-place-total">₹{{ finalTotal | number:'1.2-2' }}</span>
       }
     </button>
   </div>

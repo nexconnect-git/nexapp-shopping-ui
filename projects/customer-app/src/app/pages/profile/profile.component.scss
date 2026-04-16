@@ -170,6 +170,26 @@
   flex-shrink: 0;
 }
 
+.pf-loyalty-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(0,0,0,0.06);
+  font-size: 13px;
+  font-weight: 600;
+  color: #5b4fcf;
+
+  .material-icons-outlined { font-size: 16px; color: #f59e0b; }
+
+  .pf-loyalty-value {
+    margin-left: auto;
+    font-size: 12px;
+    color: #888;
+  }
+}
+
 /* Menu */
 .pf-menu {
   background: white;

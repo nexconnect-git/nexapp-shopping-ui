@@ -1,6 +1,6 @@
 import { Component, inject, signal, OnInit, OnDestroy, AfterViewInit, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, ActivatedRoute } from '@angular/router';
+import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { ApiService, AuthService, AppCurrencyPipe, ToastService, Order, OrderTracking } from '@shared/public-api';
 import { timer, Subscription } from 'rxjs';
 import { GoogleMapsModule } from '@angular/google-maps';
@@ -19,6 +19,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   private api = inject(ApiService);
   private auth = inject(AuthService);
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private zone = inject(NgZone);
   private toast = inject(ToastService);
 
@@ -51,6 +52,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id')!;
+    this.loadCancellationPolicy();
     this.sub = timer(0, 5000).subscribe(() => {
       this.api.getOrder(id).subscribe({
         next: (o) => {
@@ -219,7 +221,39 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   isLastStep(step: string): boolean { return step === 'delivered'; }
-  canCancel() { return this.order()?.status === 'placed'; }
+
+  cancellationPolicy = signal<{ window_minutes: number; allowed_statuses: string[] } | null>(null);
+  cancelError = signal('');
+
+  private loadCancellationPolicy() {
+    this.api.getCancellationPolicy().subscribe({
+      next: (p) => this.cancellationPolicy.set(p),
+      error: () => {}
+    });
+  }
+
+  canCancel(): boolean {
+    const o = this.order();
+    if (!o) return false;
+    const policy = this.cancellationPolicy();
+    const allowed = policy?.allowed_statuses ?? ['placed', 'confirmed', 'preparing'];
+    if (!allowed.includes(o.status)) return false;
+    if (policy && policy.window_minutes > 0) {
+      const elapsed = (Date.now() - new Date(o.placed_at).getTime()) / 60000;
+      if (elapsed > policy.window_minutes) return false;
+    }
+    return true;
+  }
+
+  cancelWindowLabel(): string {
+    const o = this.order();
+    const policy = this.cancellationPolicy();
+    if (!o || !policy || policy.window_minutes === 0) return '';
+    const elapsed = (Date.now() - new Date(o.placed_at).getTime()) / 60000;
+    const remaining = Math.max(0, policy.window_minutes - elapsed);
+    if (remaining <= 0) return 'Cancellation window expired';
+    return `Cancel within ${Math.ceil(remaining)} min`;
+  }
 
   isActiveOrder() {
     const status = this.order()?.status;
@@ -228,9 +262,35 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
 
   cancelOrder() {
     this.cancelling.set(true);
+    this.cancelError.set('');
     this.api.cancelOrder(this.order()!.id).subscribe({
       next: (o) => { this.order.set(o); this.cancelling.set(false); },
-      error: () => this.cancelling.set(false)
+      error: (err) => {
+        this.cancelError.set(err.error?.error || 'Could not cancel order.');
+        this.cancelling.set(false);
+      }
+    });
+  }
+
+  reordering = signal(false);
+
+  reorder() {
+    const o = this.order();
+    if (!o) return;
+    this.reordering.set(true);
+    this.api.reorder(o.id).subscribe({
+      next: (cart) => {
+        this.reordering.set(false);
+        this.api.refreshCartCount();
+        if (cart.skipped?.length) {
+          this.toast.show(`${cart.skipped.length} item(s) unavailable and were skipped.`, 'error');
+        }
+        this.router.navigate(['/checkout']);
+      },
+      error: () => {
+        this.reordering.set(false);
+        this.toast.show('Could not reorder. Please try again.', 'error');
+      }
     });
   }
 

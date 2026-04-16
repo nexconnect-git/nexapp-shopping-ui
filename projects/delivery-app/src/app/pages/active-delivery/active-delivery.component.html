@@ -73,6 +73,11 @@
             </div>
           }
 
+          <!-- ════════ ROUTE MAP (picked_up / on_the_way) ════════ -->
+          @if (['picked_up','on_the_way'].includes(order.status)) {
+            <div [id]="'delivery-map-' + order.id" class="route-map"></div>
+          }
+
           <!-- ════════ PICKED UP: Navigate to customer ════════ -->
           @if (order.status === 'picked_up') {
             <div class="route-visual">

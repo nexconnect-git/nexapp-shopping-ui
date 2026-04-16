@@ -35,6 +35,10 @@
 .btn-sm { padding: 0.625rem 1rem; font-size: 0.875rem; }
 .btn-cancel { background: white; color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); &:hover:not(:disabled) { background: var(--danger-light); border-color: var(--danger); } &:disabled { opacity: 0.5; cursor: not-allowed; } }
 .btn-report { background: white; color: #f97316; border: 1px solid rgba(249,115,22,0.3); &:hover { background: #fff7ed; border-color: #f97316; } }
+.btn-reorder { background: white; color: #6C63FF; border: 1px solid rgba(108,99,255,0.3); &:hover:not(:disabled) { background: #f5f3ff; border-color: #6C63FF; } &:disabled { opacity: 0.5; cursor: not-allowed; } }
+.cancel-wrap { display: flex; flex-direction: column; align-items: flex-start; gap: .25rem; }
+.cancel-window-hint { font-size: .75rem; color: #856404; font-weight: 600; }
+.cancel-error { font-size: .78rem; color: var(--danger); font-weight: 600; }
 
 /* ══ Live Tracking Hero ══ */
 .live-tracking-hero {
@@ -151,6 +155,10 @@
 .eta-card { display: flex; align-items: center; gap: 1rem; background: var(--primary-gradient); color: white; border: none; .eta-icon-wrap { width: 40px; height: 40px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; } .eta-info { display: flex; flex-direction: column; } .eta-label { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 0.125rem 0; opacity: 0.9; } .eta-value { font-size: 1.25rem; font-weight: 900; margin: 0; } }
 
 .payment-row { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9375rem; font-weight: 700; color: var(--text-primary); .material-icons-outlined { color: var(--success); } .payment-label { flex: 1; } .payment-amount { font-weight: 900; } }
+.refund-status-row { display: flex; align-items: flex-start; gap: .5rem; margin-top: .75rem; padding: .625rem .75rem; border-radius: 8px; font-size: .85rem; font-weight: 600; line-height: 1.4; }
+.refund-initiated { background: #fff3cd; color: #856404; }
+.refund-processed { background: #d1fae5; color: #065f46; }
+.refund-failed    { background: #fee2e2; color: #991b1b; }
 
 .otp-card { background: var(--surface-hover); border-style: dashed; border-color: var(--border-color); .card-section-title .material-icons-outlined { color: var(--text-primary); } .otp-hint { font-size: 0.8125rem; color: var(--text-secondary); font-weight: 600; margin: 0 0 1rem 0; line-height: 1.4; } .otp-display { text-align: center; font-size: 2.5rem; font-weight: 900; letter-spacing: 0.5em; color: var(--primary); background: white; padding: 1rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color); margin-right: -0.5em; /* visual balance for letter-spacing */ } }
 
