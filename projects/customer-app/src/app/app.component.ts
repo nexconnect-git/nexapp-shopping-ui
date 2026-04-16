@@ -111,10 +111,11 @@ export class AppComponent implements OnInit {
   private async registerPushToken() {
     if (!this.auth.isLoggedIn()) return;
     try {
+      // @ts-ignore — @capacitor/push-notifications is a native-only plugin not declared in web build
       const { PushNotifications } = await import('@capacitor/push-notifications');
       await PushNotifications.requestPermissions();
       await PushNotifications.register();
-      PushNotifications.addListener('registration', (token) => {
+      PushNotifications.addListener('registration', (token: { value: string }) => {
         const platform = Capacitor.getPlatform();
         this.api.registerDeviceToken({ token: token.value, platform }).subscribe({
           error: (e) => console.warn('Device token registration failed', e)
