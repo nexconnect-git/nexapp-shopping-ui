@@ -103,10 +103,15 @@ export class CheckoutComponent implements OnInit {
     return this.addresses().find(a => a.id === this.selectedAddressId);
   }
 
+  get deliveryFee(): number {
+    const preview = this.deliveryFeePreview();
+    return preview ? +preview.total_delivery_fee : 0;
+  }
+
   get discountedTotal(): number {
     const total = Number(this.cart()?.total_amount || 0);
     const discount = Number(this.appliedCoupon()?.discount || 0);
-    return Math.max(total - discount, 0);
+    return Math.max(total + this.deliveryFee - discount, 0);
   }
 
   applyCoupon() {
