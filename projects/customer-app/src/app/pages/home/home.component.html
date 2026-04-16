@@ -136,7 +136,7 @@
     @if (selectedSubCategory()) {
       <button class="nx-fchip nx-fchip-active" (click)="selectSubCategory(null)">
         <span class="material-icons-outlined">close</span>
-        {{ currentSubcategories().find(c => c.id === selectedSubCategory())?.name }}
+        {{ selectedSubCategoryName() }}
       </button>
     } @else if (selectedCategory() !== 'all') {
       <button class="nx-fchip nx-fchip-active" (click)="selectCategory('all')">

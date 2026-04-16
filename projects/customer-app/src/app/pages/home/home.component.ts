@@ -56,6 +56,13 @@ export class HomeComponent implements OnInit {
     return this.categories().find(c => c.id === this.selectedCategory())?.children ?? [];
   });
 
+  /** Name of the currently selected sub-category (for template display) */
+  selectedSubCategoryName = computed<string>(() => {
+    const id = this.selectedSubCategory();
+    if (!id) return '';
+    return this.currentSubcategories().find(c => c.id === id)?.name ?? '';
+  });
+
   private readonly colorMap: Record<string, { icon: string; color: string; bg: string }> = {
     'nigerian-food':  { icon: 'restaurant',          color: '#F97316', bg: 'rgba(249,115,22,0.1)' },
     'continental':    { icon: 'local_bar',            color: '#8B5CF6', bg: 'rgba(139,92,246,0.1)' },

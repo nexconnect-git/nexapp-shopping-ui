@@ -188,6 +188,7 @@ export interface Order {
   delivery_partner?: string | null;
   delivery_partner_info?: DeliveryPartnerInfo | null;
   assignment_status?: string | null;
+  refund_status?: 'none' | 'initiated' | 'processed' | 'failed' | null;
   placed_at: string;
   distance_km?: number;
 }
