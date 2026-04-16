@@ -247,6 +247,18 @@ export class ApiService {
     return this.http.get(`${this.baseUrl}/vendors/payouts/`, { params: httpParams });
   }
 
+  getVendorWalletTransactions(params?: any): Observable<any> {
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.keys(params).forEach(k => {
+        if (params[k] !== null && params[k] !== undefined && params[k] !== '') {
+          httpParams = httpParams.set(k, params[k]);
+        }
+      });
+    }
+    return this.http.get(`${this.baseUrl}/vendors/wallet/transactions/`, { params: httpParams });
+  }
+
   // Invoices
   getInvoices(): Observable<any> {
     return this.http.get(`${this.baseUrl}/invoices/`);

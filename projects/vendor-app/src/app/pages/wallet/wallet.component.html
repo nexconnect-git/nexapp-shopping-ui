@@ -1,0 +1,79 @@
+<div class="p-6 max-w-7xl mx-auto space-y-6">
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight text-gray-900">Wallet & Ledger</h1>
+      <p class="text-gray-500 mt-1">View your current balance and transaction history</p>
+    </div>
+    
+    <div class="bg-gray-50 rounded-xl p-4 border border-gray-200 min-w-[200px]">
+      <p class="text-sm font-medium text-gray-500 mb-1">Available Balance</p>
+      <div class="text-3xl font-bold text-gray-900">
+        {{ walletBalance() | appCurrency }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading()" class="py-12 flex flex-col items-center justify-center">
+    <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-600"></div>
+    <p class="mt-4 text-gray-500">Loading your ledger...</p>
+  </div>
+
+  <!-- Content -->
+  <ng-container *ngIf="!loading()">
+    <div class="bg-white shadow-sm border border-gray-200 rounded-xl overflow-hidden">
+      <!-- Empty State -->
+      <div *ngIf="transactions().length === 0" class="text-center py-16">
+        <div class="mx-auto w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+          <svg class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900">No transactions yet</h3>
+        <p class="mt-1 text-sm text-gray-500">Your earnings and payouts will appear here.</p>
+      </div>
+
+      <!-- Wallet Table -->
+      <div *ngIf="transactions().length > 0" class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50/50">
+            <tr>
+              <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+              <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Description</th>
+              <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Type</th>
+              <th scope="col" class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Amount</th>
+              <th scope="col" class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Balance After</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 bg-white">
+            <tr *ngFor="let txn of transactions()" class="group hover:bg-gray-50/50 transition-colors">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-medium text-gray-900">{{ txn.created_at | date:'mediumDate' }}</div>
+                <div class="text-xs text-gray-500">{{ txn.created_at | date:'shortTime' }}</div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="text-sm text-gray-900 line-clamp-2 max-w-sm">{{ txn.description || (txn.source | titlecase) }}</div>
+                <div class="text-xs text-gray-500 mt-0.5 truncate max-w-[200px]" *ngIf="txn.reference_id">Ref: {{ txn.reference_id }}</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border"
+                      [ngClass]="getTypeClass(txn.transaction_type)">
+                  {{ formatTransactionType(txn.transaction_type) }}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-right">
+                <div class="text-sm font-semibold" [ngClass]="txn.transaction_type === 'credit' ? 'text-green-600' : 'text-gray-900'">
+                  {{ txn.transaction_type === 'credit' ? '+' : '-' }}{{ txn.amount | appCurrency }}
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500">
+                {{ txn.balance_after | appCurrency }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </ng-container>
+</div>

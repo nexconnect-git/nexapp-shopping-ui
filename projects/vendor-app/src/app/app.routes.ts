@@ -17,6 +17,7 @@ export const routes: Routes = [
   { path: 'profile', loadComponent: () => import('./pages/profile/profile.component').then(m => m.ProfileComponent), canActivate: vendorGuard },
   { path: 'sales-report', loadComponent: () => import('./pages/sales-report/sales-report.component').then(m => m.SalesReportComponent), canActivate: vendorGuard },
   { path: 'stock-management', loadComponent: () => import('./pages/stock-management/stock-management.component').then(m => m.StockManagementComponent), canActivate: vendorGuard },
+  { path: 'wallet', loadComponent: () => import('./pages/wallet/wallet.component').then(m => m.WalletComponent), canActivate: vendorGuard },
   { path: 'payments', loadComponent: () => import('./pages/payments/payments.component').then(m => m.PaymentsComponent), canActivate: vendorGuard },
   { path: 'coupons', loadComponent: () => import('./pages/coupons/coupons.component').then(m => m.CouponsComponent), canActivate: vendorGuard },
   { path: 'support', loadComponent: () => import('./pages/support/support.component').then(m => m.SupportComponent), canActivate: vendorGuard },
