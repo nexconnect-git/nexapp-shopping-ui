@@ -81,7 +81,7 @@ export class AppComponent implements OnInit {
     const opening = !this.notifOpen();
     this.notifOpen.set(opening);
     this.profileOpen.set(false);
-    if (opening && this.notifications().length === 0) {
+    if (opening) {
       this.fetchNotifications();
     }
   }
@@ -89,8 +89,8 @@ export class AppComponent implements OnInit {
   fetchNotifications() {
     if (!this.auth.isLoggedIn()) return;
     this.notifLoading.set(true);
-    this.api.getNotifications().subscribe({
-      next: (r) => {
+    this.api.getAdminNotifications({ page: 1, page_size: 8 }).subscribe({
+      next: (r: any) => {
         const items = (r.results || r).slice(0, 8);
         this.notifications.set(items);
         this.notifLoading.set(false);

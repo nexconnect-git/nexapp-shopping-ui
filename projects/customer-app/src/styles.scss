@@ -1,24 +1,29 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 @import 'design-system';
 
-/* ── Customer app — accent override (Vibrant Market) ─────────────── */
+/* ── Customer app — accent override (Instant Delivery) ─────────────── */
 :root {
   --primary: #6b33ee;
-  --primary-hover: #8c5cff;
-  --primary-dark: #4a148c;
-  --primary-light: #FFEDD5;
-  --primary-gradient: linear-gradient(135deg, #6b33ee 0%, #8c5cff 100%);
-  --primary-shadow: rgba(67, 0, 250, 0.582);
+  --primary-hover: #7c3aed;
+  --primary-dark: #5b21b6;
+  --primary-light: rgba(107, 51, 238, 0.08);
+  --primary-gradient: linear-gradient(135deg, #6b33ee 0%, #8b5cf6 100%);
+  --primary-shadow: rgba(107, 51, 238, 0.25);
   --sidebar-text-active: #6b33ee;
   --sidebar-item-active-bg: rgba(107, 51, 238, 0.08);
-  --login-gradient: linear-gradient(135deg, #6b33ee 0%, #8c5cff 100%);
+  --login-gradient: linear-gradient(135deg, #6b33ee 0%, #8b5cf6 100%);
+
+  --delivery-green: #22c55e;
+  --delivery-green-light: rgba(34, 197, 94, 0.1);
+  --offer-red: #ef4444;
+  --offer-red-light: rgba(239, 68, 68, 0.08);
 
   --info: #0EA5E9;
   --info-light: #E0F2FE;
 
-  --bg-color: #FAFAFA;
+  --bg-color: #F8F8FC;
   --surface-color: #FFFFFF;
-  --surface-hover: #F1F5F9;
+  --surface-hover: #F4F4F8;
 
   --font-family: 'Plus Jakarta Sans', sans-serif;
   --font-heading: 'Plus Jakarta Sans', sans-serif;
@@ -26,10 +31,12 @@
   --radius-lg: 16px;
   --radius-xl: 20px;
   --radius-2xl: 28px;
+  --radius-full: 9999px;
 
-  --shadow-sm: 0 4px 20px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 8px 32px rgba(249, 115, 22, 0.08);
-  --shadow-focus: 0 0 0 4px rgba(249, 115, 22, 0.15);
+  --shadow-sm: 0 2px 12px rgba(0,0,0,0.05);
+  --shadow-md: 0 6px 24px rgba(0,0,0,0.07);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,0.08);
+  --shadow-focus: 0 0 0 4px rgba(107, 51, 238, 0.15);
 }
 
 /* ── Mobile / Capacitor safe-area support ────────────────────────── */
@@ -70,20 +77,13 @@ html, body {
   }
 }
 
-.form-input,
-input:not([type="checkbox"]),
-textarea,
-select {
-  background: #F3F4F6 !important;
-  border: none !important;
-  border-bottom: 2px solid transparent !important;
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
-
-  &:focus {
-    background: #FFFFFF !important;
-    border-bottom: 2px solid var(--primary) !important;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05) !important;
-  }
+/* Global shimmer utility */
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+.shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: var(--radius-md);
 }
 
 /* ═══════════════════════════════════════════════

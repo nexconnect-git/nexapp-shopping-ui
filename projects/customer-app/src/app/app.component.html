@@ -1,81 +1,74 @@
-<!-- ============================================================
-     DESKTOP NAVBAR
-     ============================================================ -->
 <app-toast></app-toast>
-<nav class="top-nav" [class.scrolled]="true">
-  <div class="top-nav-inner">
+
+<!-- ============================================================
+     DESKTOP NAVBAR  (hidden on mobile)
+     ============================================================ -->
+<nav class="desk-nav">
+  <div class="desk-nav-inner">
 
     <!-- Logo -->
-    <a routerLink="/" class="nav-logo">
-      <span class="nav-logo-icon">
-        <span class="material-icons-outlined">bolt</span>
-      </span>
-      <span class="nav-logo-text">NexConnect</span>
+    <a routerLink="/" class="desk-logo">
+      <span class="desk-logo-icon"><span class="material-icons-outlined">bolt</span></span>
+      <span class="desk-logo-text">NexConnect</span>
     </a>
 
-    <!-- Center links -->
-    <div class="nav-center-links">
-      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" class="nav-link">
-        <span class="material-icons-outlined">home</span>
-        <span>Home</span>
-      </a>
-      <a routerLink="/shops" routerLinkActive="active" class="nav-link">
-        <span class="material-icons-outlined">storefront</span>
-        <span>Shops</span>
-      </a>
-      <a routerLink="/offers" routerLinkActive="active" class="nav-link">
-        <span class="material-icons-outlined">local_offer</span>
-        <span>Offers</span>
-      </a>
-    </div>
+    <!-- Location pill -->
+    <button class="desk-location-pill" (click)="openLocationPicker()">
+      <span class="material-icons-outlined desk-location-icon">location_on</span>
+      <span class="desk-location-name">{{ locationService.locationDisplay() }}</span>
+      <span class="material-icons-outlined desk-location-caret">keyboard_arrow_down</span>
+    </button>
+
+    <!-- Search bar -->
+    <a routerLink="/search" class="desk-search-bar">
+      <span class="material-icons-outlined">search</span>
+      <span class="desk-search-placeholder">Search for stores, products…</span>
+    </a>
 
     <!-- Right actions -->
-    <div class="nav-actions">
+    <div class="desk-actions">
       @if (auth.isLoggedIn()) {
         <!-- Cart -->
-        <a routerLink="/cart" class="nav-icon-btn" title="Cart">
+        <a routerLink="/cart" class="desk-action-btn" title="Cart">
           <span class="material-icons-outlined">shopping_cart</span>
           @if (api.cartCount() > 0) {
-            <span class="nav-badge">{{ api.cartCount() > 9 ? '9+' : api.cartCount() }}</span>
+            <span class="desk-badge">{{ api.cartCount() > 9 ? '9+' : api.cartCount() }}</span>
           }
         </a>
 
-        <!-- Orders -->
-        <a routerLink="/profile/orders" class="nav-icon-btn" title="Orders">
-          <span class="material-icons-outlined">receipt_long</span>
-        </a>
-
         <!-- Notifications -->
-        <div class="user-menu-wrapper">
-          <button class="nav-icon-btn" title="Notifications" (click)="toggleNotifMenu($event)">
+        <div class="desk-menu-wrap">
+          <button class="desk-action-btn" (click)="toggleNotifMenu($event)" title="Notifications">
             <span class="material-icons-outlined">notifications</span>
             @if (api.unreadNotifications() > 0) {
-              <span class="nav-badge">{{ api.unreadNotifications() > 9 ? '9+' : api.unreadNotifications() }}</span>
+              <span class="desk-badge">{{ api.unreadNotifications() > 9 ? '9+' : api.unreadNotifications() }}</span>
             }
           </button>
-          
           @if (notifMenuOpen()) {
-            <div class="user-dropdown notif-dropdown" role="menu" style="width: 320px; right: -50px; padding: 0;">
-              <div class="dropdown-header" style="background: var(--surface-hover); border-bottom: 1px solid var(--border-light); padding: 1rem;">
-                <h4 style="margin: 0; font-size: 1rem; font-weight: 800;">Notifications</h4>
+            <div class="desk-dropdown notif-dd">
+              <div class="dd-header">
+                <span class="dd-header-title">Notifications</span>
+                @if (api.unreadNotifications() > 0) {
+                  <button class="dd-mark-read" (click)="clearNotifBadge()">Mark all read</button>
+                }
               </div>
-              <div class="dropdown-body" style="max-height: 350px; overflow-y: auto; padding: 0;">
+              <div class="dd-body">
                 @if (notifications().length === 0) {
-                  <div style="padding: 2rem 1rem; text-align: center; color: var(--text-muted);">
-                    <span class="material-icons-outlined" style="font-size: 32px; opacity: 0.5;">notifications_off</span>
-                    <p style="margin: 0.5rem 0 0; font-size: 0.875rem;">No notifications yet</p>
+                  <div class="dd-empty">
+                    <span class="material-icons-outlined">notifications_none</span>
+                    <span>No notifications yet</span>
                   </div>
                 } @else {
-                  @for (notif of notifications(); track notif.id) {
-                    <a [routerLink]="notif.data?.order_id ? ['/order', notif.data.order_id] : null" 
-                       class="dropdown-item" 
-                       style="padding: 1rem; border-bottom: 1px solid var(--border-light); display: flex; flex-direction: column; align-items: flex-start; height: auto;"
+                  @for (n of notifications(); track n.id) {
+                    <a [routerLink]="n.data?.order_id ? ['/order', n.data.order_id] : ['/orders']"
+                       class="dd-notif-item" [class.unread]="!n.is_read"
                        (click)="toggleNotifMenu()">
-                      <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 0.25rem;">
-                        <strong style="font-size: 0.875rem;">{{ notif.title }}</strong>
-                        <span style="font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; margin-left: 0.5rem;">{{ notif.created_at | date:'shortTime' }}</span>
+                      <div class="dd-notif-dot" [class.visible]="!n.is_read"></div>
+                      <div class="dd-notif-content">
+                        <div class="dd-notif-title">{{ n.title }}</div>
+                        <div class="dd-notif-msg">{{ n.message }}</div>
+                        <div class="dd-notif-time">{{ n.created_at | date:'MMM d, h:mm a' }}</div>
                       </div>
-                      <p style="margin: 0; font-size: 0.8125rem; color: var(--text-secondary); white-space: normal; line-height: 1.4;">{{ notif.message }}</p>
                     </a>
                   }
                 }
@@ -84,110 +77,103 @@
           }
         </div>
 
-        <!-- User menu -->
-        <div class="user-menu-wrapper">
-          <button class="user-avatar-btn" (click)="toggleUserMenu($event)" aria-label="Account menu">
-            <span class="user-avatar-circle">{{ userInitials() }}</span>
+        <!-- User avatar -->
+        <div class="desk-menu-wrap">
+          <button class="desk-avatar-btn" (click)="toggleUserMenu($event)">
+            <span class="desk-avatar-circle">{{ userInitials() }}</span>
           </button>
-
           @if (userMenuOpen()) {
-            <div class="user-dropdown" role="menu">
-              <div class="dropdown-header">
-                <div class="dropdown-avatar">{{ userInitials() }}</div>
-                <div class="dropdown-user-info">
+            <div class="desk-dropdown user-dd">
+              <div class="dd-user-header">
+                <div class="dd-user-avatar">{{ userInitials() }}</div>
+                <div class="dd-user-info">
                   <strong>{{ auth.user()?.first_name }} {{ auth.user()?.last_name }}</strong>
                   <span>{{ auth.user()?.email }}</span>
                 </div>
               </div>
-              <div class="dropdown-body">
-                <a routerLink="/profile" class="dropdown-item" (click)="toggleUserMenu()">
-                  <span class="dropdown-item-icon"><span class="material-icons-outlined">person</span></span>
-                  Profile
+              <div class="dd-menu-body">
+                <a routerLink="/profile" class="dd-item" (click)="toggleUserMenu()">
+                  <span class="material-icons-outlined">person</span>Profile
                 </a>
-                <a routerLink="/profile/orders" class="dropdown-item" (click)="toggleUserMenu()">
-                  <span class="dropdown-item-icon"><span class="material-icons-outlined">receipt_long</span></span>
-                  My Orders
+                <a routerLink="/orders" class="dd-item" (click)="toggleUserMenu()">
+                  <span class="material-icons-outlined">receipt_long</span>My Orders
                 </a>
-                <a routerLink="/addresses" class="dropdown-item" (click)="toggleUserMenu()">
-                  <span class="dropdown-item-icon"><span class="material-icons-outlined">location_on</span></span>
-                  Addresses
+                <a routerLink="/addresses" class="dd-item" (click)="toggleUserMenu()">
+                  <span class="material-icons-outlined">location_on</span>Addresses
                 </a>
-                <a routerLink="/wishlist" class="dropdown-item" (click)="toggleUserMenu()">
-                  <span class="dropdown-item-icon"><span class="material-icons-outlined">favorite_border</span></span>
-                  Wishlist
+                <a routerLink="/wallet" class="dd-item" (click)="toggleUserMenu()">
+                  <span class="material-icons-outlined">account_balance_wallet</span>Wallet
                 </a>
-                <a routerLink="/referral" class="dropdown-item" (click)="toggleUserMenu()">
-                  <span class="dropdown-item-icon"><span class="material-icons-outlined">card_giftcard</span></span>
-                  Refer &amp; Earn
+                <a routerLink="/wishlist" class="dd-item" (click)="toggleUserMenu()">
+                  <span class="material-icons-outlined">favorite_border</span>Wishlist
                 </a>
-                <div class="dropdown-divider"></div>
-                <button class="dropdown-item danger" (click)="logout()">
-                  <span class="dropdown-item-icon"><span class="material-icons-outlined">logout</span></span>
-                  Sign Out
+                <a routerLink="/referral" class="dd-item" (click)="toggleUserMenu()">
+                  <span class="material-icons-outlined">card_giftcard</span>Refer &amp; Earn
+                </a>
+                <div class="dd-divider"></div>
+                <button class="dd-item danger" (click)="logout()">
+                  <span class="material-icons-outlined">logout</span>Sign Out
                 </button>
               </div>
             </div>
           }
         </div>
       } @else {
-        <a routerLink="/login" class="btn btn-ghost btn-sm">Sign In</a>
-        <a routerLink="/register" class="btn btn-primary btn-sm">Get Started</a>
+        <a routerLink="/login" class="desk-btn-ghost">Sign In</a>
+        <a routerLink="/register" class="desk-btn-primary">Get Started</a>
       }
     </div>
   </div>
 </nav>
 
 <!-- ============================================================
-     MOBILE HEADER
+     MOBILE HEADER  (shown only on mobile)
      ============================================================ -->
-<header class="mobile-header">
-  <div class="mobile-header-inner">
-    <a routerLink="/" class="nav-logo">
-      <span class="nav-logo-icon">
-        <span class="material-icons-outlined">bolt</span>
-      </span>
-      <span class="nav-logo-text">NexConnect</span>
-    </a>
-
-    <div class="mobile-header-actions">
+<header class="mob-header">
+  <!-- Row 1: Location + Notification bell -->
+  <div class="mob-header-top">
+    <button class="mob-location-btn" (click)="openLocationPicker()">
+      <span class="material-icons-outlined mob-loc-icon">location_on</span>
+      <div class="mob-loc-text">
+        <span class="mob-loc-label">Delivering to</span>
+        <span class="mob-loc-name">{{ locationService.locationDisplay() }}</span>
+      </div>
+      <span class="material-icons-outlined mob-loc-caret">keyboard_arrow_down</span>
+    </button>
+    <div class="mob-header-right">
       @if (auth.isLoggedIn()) {
-        <a routerLink="/cart" class="nav-icon-btn" title="Cart">
-          <span class="material-icons-outlined">shopping_cart</span>
-          @if (api.cartCount() > 0) {
-            <span class="nav-badge">{{ api.cartCount() > 9 ? '9+' : api.cartCount() }}</span>
-          }
-        </a>
-
-        <!-- Notifications -->
-        <div class="user-menu-wrapper">
-          <button class="nav-icon-btn" title="Notifications" (click)="toggleNotifMenu($event)">
-            <span class="material-icons-outlined">notifications</span>
+        <div class="mob-menu-wrap">
+          <button class="mob-icon-btn" (click)="toggleNotifMenu($event)">
+            <span class="material-icons-outlined">notifications_none</span>
             @if (api.unreadNotifications() > 0) {
-              <span class="nav-badge">{{ api.unreadNotifications() > 9 ? '9+' : api.unreadNotifications() }}</span>
+              <span class="mob-badge">{{ api.unreadNotifications() > 9 ? '9+' : api.unreadNotifications() }}</span>
             }
           </button>
           @if (notifMenuOpen()) {
-            <div class="user-dropdown notif-dropdown mobile-dropdown" role="menu" style="width: 300px; padding: 0;">
-              <div class="dropdown-header" style="background: var(--surface-hover); border-bottom: 1px solid var(--border-light); padding: 1rem;">
-                <h4 style="margin: 0; font-size: 1rem; font-weight: 800;">Notifications</h4>
+            <div class="mob-notif-dd">
+              <div class="dd-header">
+                <span class="dd-header-title">Notifications</span>
+                @if (api.unreadNotifications() > 0) {
+                  <button class="dd-mark-read" (click)="clearNotifBadge()">Mark all read</button>
+                }
               </div>
-              <div class="dropdown-body" style="max-height: 320px; overflow-y: auto; padding: 0;">
+              <div class="dd-body">
                 @if (notifications().length === 0) {
-                  <div style="padding: 2rem 1rem; text-align: center; color: var(--text-muted);">
-                    <span class="material-icons-outlined" style="font-size: 32px; opacity: 0.5;">notifications_off</span>
-                    <p style="margin: 0.5rem 0 0; font-size: 0.875rem;">No notifications yet</p>
+                  <div class="dd-empty">
+                    <span class="material-icons-outlined">notifications_none</span>
+                    <span>No notifications yet</span>
                   </div>
                 } @else {
-                  @for (notif of notifications(); track notif.id) {
-                    <a [routerLink]="notif.data?.order_id ? ['/order', notif.data.order_id] : null"
-                       class="dropdown-item"
-                       style="padding: 1rem; border-bottom: 1px solid var(--border-light); display: flex; flex-direction: column; align-items: flex-start; height: auto;"
+                  @for (n of notifications(); track n.id) {
+                    <a [routerLink]="n.data?.order_id ? ['/order', n.data.order_id] : ['/orders']"
+                       class="dd-notif-item" [class.unread]="!n.is_read"
                        (click)="toggleNotifMenu()">
-                      <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 0.25rem;">
-                        <strong style="font-size: 0.875rem;">{{ notif.title }}</strong>
-                        <span style="font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; margin-left: 0.5rem;">{{ notif.created_at | date:'shortTime' }}</span>
+                      <div class="dd-notif-dot" [class.visible]="!n.is_read"></div>
+                      <div class="dd-notif-content">
+                        <div class="dd-notif-title">{{ n.title }}</div>
+                        <div class="dd-notif-msg">{{ n.message }}</div>
+                        <div class="dd-notif-time">{{ n.created_at | date:'MMM d, h:mm a' }}</div>
                       </div>
-                      <p style="margin: 0; font-size: 0.8125rem; color: var(--text-secondary); white-space: normal; line-height: 1.4;">{{ notif.message }}</p>
                     </a>
                   }
                 }
@@ -195,52 +181,16 @@
             </div>
           }
         </div>
-
-        <button class="user-avatar-btn" (click)="toggleUserMenu($event)" aria-label="Account menu">
-          <span class="user-avatar-circle">{{ userInitials() }}</span>
-        </button>
-        @if (userMenuOpen()) {
-          <div class="user-dropdown mobile-dropdown" role="menu">
-            <div class="dropdown-header">
-              <div class="dropdown-avatar">{{ userInitials() }}</div>
-              <div class="dropdown-user-info">
-                <strong>{{ auth.user()?.first_name }} {{ auth.user()?.last_name }}</strong>
-                <span>{{ auth.user()?.email }}</span>
-              </div>
-            </div>
-            <div class="dropdown-body">
-              <a routerLink="/profile" class="dropdown-item" (click)="toggleUserMenu()">
-                <span class="dropdown-item-icon"><span class="material-icons-outlined">person</span></span>
-                Profile
-              </a>
-              <a routerLink="/orders" class="dropdown-item" (click)="toggleUserMenu(); clearNotifBadge()">
-                <span class="dropdown-item-icon"><span class="material-icons-outlined">receipt_long</span></span>
-                My Orders
-              </a>
-              <a routerLink="/addresses" class="dropdown-item" (click)="toggleUserMenu()">
-                <span class="dropdown-item-icon"><span class="material-icons-outlined">location_on</span></span>
-                Addresses
-              </a>
-              <a routerLink="/wishlist" class="dropdown-item" (click)="toggleUserMenu()">
-                <span class="dropdown-item-icon"><span class="material-icons-outlined">favorite_border</span></span>
-                Wishlist
-              </a>
-              <a routerLink="/referral" class="dropdown-item" (click)="toggleUserMenu()">
-                <span class="dropdown-item-icon"><span class="material-icons-outlined">card_giftcard</span></span>
-                Refer &amp; Earn
-              </a>
-              <div class="dropdown-divider"></div>
-              <button class="dropdown-item danger" (click)="logout()">
-                <span class="dropdown-item-icon"><span class="material-icons-outlined">logout</span></span>
-                Sign Out
-              </button>
-            </div>
-          </div>
-        }
-      } @else {
-        <a routerLink="/login" class="btn btn-primary btn-sm">Sign In</a>
       }
     </div>
+  </div>
+
+  <!-- Row 2: Search bar -->
+  <div class="mob-search-row">
+    <a routerLink="/search" class="mob-search-bar">
+      <span class="material-icons-outlined">search</span>
+      <span>Search for stores, groceries, more…</span>
+    </a>
   </div>
 </header>
 
@@ -249,78 +199,68 @@
      ============================================================ -->
 <main class="main-content">
   @if (api.activeIssue(); as issue) {
-    <div style="background: var(--primary); color: white; padding: 12px 16px; margin: 16px; margin-bottom: 0px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);" (click)="router.navigate(['/issue', issue.id])">
-      <div style="display: flex; align-items: center; gap: 12px;">
-        <span class="material-icons-outlined" style="font-size: 28px;">error_outline</span>
-        <div>
-          <div style="font-weight: 700; font-size: 0.95rem;">Active Issue for Order #{{ issue.order_number }}</div>
-          <div style="font-size: 0.85rem; opacity: 0.9;">Tap to view support chat</div>
-        </div>
+    <div class="issue-banner" (click)="router.navigate(['/issue', issue.id])">
+      <span class="material-icons-outlined">error_outline</span>
+      <div>
+        <div class="issue-banner-title">Active Issue — Order #{{ issue.order_number }}</div>
+        <div class="issue-banner-sub">Tap to view support chat</div>
       </div>
       <span class="material-icons-outlined">chevron_right</span>
     </div>
   }
-  
   <router-outlet />
 </main>
 
 <!-- ============================================================
-     MOBILE BOTTOM NAV
+     MOBILE BOTTOM TAB BAR  (shown only on mobile)
      ============================================================ -->
-<nav class="bottom-nav">
-  <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" class="nav-tab">
+<nav class="mob-tabs">
+  <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" class="mob-tab">
     <span class="material-icons-outlined">home</span>
     <span>Home</span>
   </a>
-
-  <a routerLink="/search" routerLinkActive="active" class="nav-tab">
+  <a routerLink="/search" routerLinkActive="active" class="mob-tab">
     <span class="material-icons-outlined">search</span>
     <span>Search</span>
   </a>
-
   @if (auth.isLoggedIn()) {
-    <a routerLink="/orders" routerLinkActive="active" class="nav-tab">
-      <span class="material-icons-outlined nav-tab-icon">receipt_long</span>
-      @if (api.cartCount() > 0) {
-        <span class="nav-tab-badge">{{ api.cartCount() > 9 ? '9+' : api.cartCount() }}</span>
-      }
+    <a routerLink="/cart" routerLinkActive="active" class="mob-tab mob-tab-cart">
+      <span class="mob-cart-icon">
+        <span class="material-icons-outlined">shopping_cart</span>
+        @if (api.cartCount() > 0) {
+          <span class="mob-cart-badge">{{ api.cartCount() > 9 ? '9+' : api.cartCount() }}</span>
+        }
+      </span>
+      <span>Cart</span>
+    </a>
+    <a routerLink="/orders" routerLinkActive="active" class="mob-tab">
+      <span class="material-icons-outlined">receipt_long</span>
       <span>Orders</span>
     </a>
-
-    <a routerLink="/offers" routerLinkActive="active" class="nav-tab">
-      <span class="material-icons-outlined">local_offer</span>
-      <span>Offers</span>
-    </a>
-
-    <a routerLink="/profile" routerLinkActive="active" class="nav-tab">
+    <a routerLink="/profile" routerLinkActive="active" class="mob-tab">
       <span class="material-icons-outlined">person</span>
       <span>Profile</span>
     </a>
   } @else {
-    <a routerLink="/offers" routerLinkActive="active" class="nav-tab">
+    <a routerLink="/offers" routerLinkActive="active" class="mob-tab">
       <span class="material-icons-outlined">local_offer</span>
       <span>Offers</span>
     </a>
-    <a routerLink="/login" routerLinkActive="active" class="nav-tab">
+    <a routerLink="/login" class="mob-tab">
       <span class="material-icons-outlined">login</span>
       <span>Sign In</span>
     </a>
   }
 </nav>
 
-<!-- ============================================================
-     SPLASH SCREEN (INITIAL LOAD)
-     ============================================================ -->
+<!-- Splash Screen -->
 @if (showSplash()) {
-  <div class="web-splash-screen">
-    <div class="splash-logo-container">
-      <div class="splash-icon-wrapper">
-        <span class="material-icons-outlined splash-icon">bolt</span>
-      </div>
+  <div class="splash-screen">
+    <div class="splash-inner">
+      <div class="splash-icon-wrap"><span class="material-icons-outlined">bolt</span></div>
       <h1 class="splash-brand">NexConnect</h1>
-      <p class="splash-subtitle">Nearby Shopping, Delivered.</p>
-      
-      <div class="splash-loader"></div>
+      <p class="splash-tagline">Nearby Shopping, Delivered Fast.</p>
+      <div class="splash-spinner"></div>
     </div>
   </div>
 }

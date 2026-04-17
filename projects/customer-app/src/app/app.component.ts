@@ -167,6 +167,10 @@ export class AppComponent implements OnInit {
     this.notifMenuOpen.set(false);
   }
 
+  openLocationPicker() {
+    this.router.navigate(['/addresses']);
+  }
+
   closeMobile() {
     this.mobileMenuOpen.set(false);
   }
