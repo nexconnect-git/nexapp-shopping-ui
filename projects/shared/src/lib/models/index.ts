@@ -196,6 +196,7 @@ export interface Order {
   has_rating?: boolean;
   total_items?: number;
   total_amount?: number;
+  delivery_tip?: string | null;
 }
 
 export interface AssignmentOrderItem {

@@ -486,6 +486,46 @@
             </div>
           }
 
+          <!-- Tip card (delivered + has partner + not yet tipped) -->
+          @if (order()!.status === 'delivered' && order()!.delivery_partner_info) {
+            @if (!order()!.delivery_tip || +order()!.delivery_tip! === 0) {
+              <div class="detail-card tip-card">
+                <h3 class="card-section-title">
+                  <span class="material-icons-outlined">volunteer_activism</span>
+                  Tip Your Delivery Partner
+                </h3>
+                <p class="tip-sub">{{ order()!.delivery_partner_info!.name }} did a great job! Show some love.</p>
+                @if (tipSubmitted()) {
+                  <div class="tip-thanks">
+                    <span class="material-icons-outlined">favorite</span>
+                    Thank you! Your tip has been recorded.
+                  </div>
+                } @else {
+                  <div class="tip-presets">
+                    @for (preset of tipPresets; track preset) {
+                      <button class="tip-preset-btn" [class.selected]="tipAmount() === preset" (click)="tipAmount.set(preset)">
+                        ₹{{ preset }}
+                      </button>
+                    }
+                  </div>
+                  <div class="tip-custom-row">
+                    <input class="tip-input" type="number" min="1" placeholder="Custom amount"
+                      [ngModel]="tipAmount() || null"
+                      (ngModelChange)="tipAmount.set($event)" />
+                    <button class="tip-send-btn" [disabled]="tipAmount() <= 0 || tipping()" (click)="submitTip()">
+                      @if (tipping()) { <span class="tip-spinner"></span> } @else { Send Tip }
+                    </button>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="detail-card tip-card tip-card--done">
+                <span class="material-icons-outlined">volunteer_activism</span>
+                You tipped ₹{{ order()!.delivery_tip }} — thank you!
+              </div>
+            }
+          }
+
           <!-- Delivery Partner Card -->
           @if (order()!.delivery_partner_info && order()!.status !== 'delivered') {
             <div class="detail-card delivery-partner-card">
@@ -509,6 +549,16 @@
                     <span class="material-icons-outlined" style="font-size:14px;vertical-align:middle;">star</span>
                     {{ order()!.delivery_partner_info!.average_rating }}
                   </span>
+                </div>
+                <div class="partner-actions">
+                  @if (order()!.delivery_partner_info!.phone) {
+                    <a [href]="'tel:' + order()!.delivery_partner_info!.phone" class="partner-action-btn call-btn" title="Call partner">
+                      <span class="material-icons-outlined">call</span>
+                    </a>
+                  }
+                  <button class="partner-action-btn share-btn" (click)="shareTracking()" title="Share live tracking">
+                    <span class="material-icons-outlined">share</span>
+                  </button>
                 </div>
               </div>
             </div>

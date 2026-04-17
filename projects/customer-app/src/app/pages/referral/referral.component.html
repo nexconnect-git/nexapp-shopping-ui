@@ -1,0 +1,140 @@
+<div class="ref-wrap">
+
+  <!-- Top bar -->
+  <div class="ref-topbar">
+    <button class="ref-back" (click)="goBack()">
+      <span class="material-icons-outlined">arrow_back</span>
+    </button>
+    <div class="ref-topbar-text">
+      <div class="ref-title">Refer & Earn</div>
+      <div class="ref-sub">Earn {{ bonusPerReferral() }} pts for every friend you bring</div>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="ref-loading">
+      @for (n of [1,2,3]; track n) { <div class="ref-skel shimmer"></div> }
+    </div>
+  } @else {
+
+    <!-- Hero banner -->
+    <div class="ref-hero">
+      <div class="ref-hero-icon">
+        <span class="material-icons-outlined">card_giftcard</span>
+      </div>
+      <div class="ref-hero-text">
+        <div class="ref-hero-pts">+{{ bonusPerReferral() }} pts</div>
+        <div class="ref-hero-label">per successful referral</div>
+      </div>
+    </div>
+
+    <!-- Your referral code -->
+    <div class="ref-section">
+      <div class="ref-section-title">Your Referral Code</div>
+      <div class="ref-code-card">
+        <span class="ref-code">{{ referralCode() }}</span>
+        <div class="ref-code-btns">
+          <button class="ref-btn ref-btn--copy" [class.copied]="copied()" (click)="copyCode()">
+            <span class="material-icons-outlined">{{ copied() ? 'check' : 'content_copy' }}</span>
+            {{ copied() ? 'Copied!' : 'Copy' }}
+          </button>
+          <button class="ref-btn ref-btn--share" (click)="shareCode()">
+            <span class="material-icons-outlined">share</span>
+            Share
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="ref-stats-row">
+      <div class="ref-stat">
+        <div class="ref-stat-val">{{ totalReferrals() }}</div>
+        <div class="ref-stat-label">Friends Invited</div>
+      </div>
+      <div class="ref-stat-divider"></div>
+      <div class="ref-stat">
+        <div class="ref-stat-val">{{ totalReferrals() * bonusPerReferral() }}</div>
+        <div class="ref-stat-label">Points Earned</div>
+      </div>
+    </div>
+
+    <!-- Apply a code someone shared with you -->
+    <div class="ref-section">
+      <div class="ref-section-title">Have a Friend's Code?</div>
+      @if (alreadyApplied()) {
+        <div class="ref-apply-success">
+          <span class="material-icons-outlined">check_circle</span>
+          {{ applySuccess() || 'Code applied successfully!' }}
+        </div>
+      } @else {
+        @if (applyError()) {
+          <div class="ref-apply-error">{{ applyError() }}</div>
+        }
+        <div class="ref-apply-row">
+          <input
+            class="ref-apply-input"
+            type="text"
+            placeholder="Enter referral code"
+            [(ngModel)]="applyCode"
+            (keyup.enter)="submitApply()"
+            [disabled]="applying()"
+          />
+          <button class="ref-apply-btn" [disabled]="!applyCode.trim() || applying()" (click)="submitApply()">
+            @if (applying()) { <span class="ref-spinner"></span> } @else { Apply }
+          </button>
+        </div>
+      }
+    </div>
+
+    <!-- Referral history -->
+    @if (referrals().length > 0) {
+      <div class="ref-section">
+        <div class="ref-section-title">Your Referrals</div>
+        <div class="ref-list">
+          @for (r of referrals(); track r.joined_at) {
+            <div class="ref-item">
+              <div class="ref-item-avatar">
+                <span class="material-icons-outlined">person</span>
+              </div>
+              <div class="ref-item-info">
+                <div class="ref-item-name">{{ r.name }}</div>
+                <div class="ref-item-date">Joined {{ r.joined_at | date:'mediumDate' }}</div>
+              </div>
+              <div class="ref-item-badge" [class.awarded]="r.bonus_awarded">
+                @if (r.bonus_awarded) {
+                  <span class="material-icons-outlined">stars</span>
+                  +{{ bonusPerReferral() }} pts
+                } @else {
+                  <span class="material-icons-outlined">schedule</span>
+                  Pending
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- How it works -->
+    <div class="ref-section ref-how">
+      <div class="ref-section-title">How It Works</div>
+      <div class="ref-steps">
+        <div class="ref-step">
+          <div class="ref-step-num">1</div>
+          <div class="ref-step-text">Share your code with friends</div>
+        </div>
+        <div class="ref-step">
+          <div class="ref-step-num">2</div>
+          <div class="ref-step-text">They register and apply your code</div>
+        </div>
+        <div class="ref-step">
+          <div class="ref-step-num">3</div>
+          <div class="ref-step-text">You earn {{ bonusPerReferral() }} pts when they place their first order</div>
+        </div>
+      </div>
+    </div>
+
+  }
+
+</div>

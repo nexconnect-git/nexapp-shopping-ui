@@ -270,4 +270,15 @@ export class OrderTrackingComponent implements OnInit, OnDestroy, AfterViewInit 
   }
 
   isLastStep(step: string): boolean { return step === 'delivered'; }
+
+  shareTracking() {
+    const o = this.order();
+    if (!o) return;
+    const url = `${window.location.origin}/order/${o.id}/tracking`;
+    if (navigator.share) {
+      navigator.share({ title: 'Live Delivery Tracking', text: `Track my NexConnect delivery: ${url}`, url }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(url).catch(() => {});
+    }
+  }
 }

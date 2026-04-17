@@ -1,6 +1,7 @@
 import { Component, inject, signal, OnInit, OnDestroy, AfterViewInit, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { ApiService, AuthService, AppCurrencyPipe, ToastService, Order, OrderTracking } from '@shared/public-api';
 import { timer, Subscription } from 'rxjs';
 import { GoogleMapsModule } from '@angular/google-maps';
@@ -11,7 +12,7 @@ import { Share } from '@capacitor/share';
 @Component({
   selector: 'app-order-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, AppCurrencyPipe, GoogleMapsModule],
+  imports: [CommonModule, FormsModule, RouterLink, AppCurrencyPipe, GoogleMapsModule],
   templateUrl: './order-detail.component.html',
   styleUrl: './order-detail.component.scss'
 })
@@ -28,6 +29,12 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   loading = signal(true);
   cancelling = signal(false);
   private sub?: Subscription;
+
+  // Tip
+  tipAmount = signal<number>(0);
+  tipping = signal(false);
+  tipSubmitted = signal(false);
+  readonly tipPresets = [10, 20, 50, 100];
 
   // Live tracking map
   center: google.maps.LatLngLiteral = {lat: 12.9716, lng: 77.5946};
@@ -366,6 +373,32 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
       const a = document.createElement('a');
       a.href = url; a.download = filename; a.click();
       URL.revokeObjectURL(url);
+    }
+  }
+
+  submitTip() {
+    const o = this.order();
+    if (!o || this.tipAmount() <= 0 || this.tipping()) return;
+    this.tipping.set(true);
+    this.api.tipDeliveryPartner(o.id, this.tipAmount()).subscribe({
+      next: (res) => {
+        this.order.update(ord => ord ? { ...ord, delivery_tip: res.delivery_tip } : ord);
+        this.tipping.set(false);
+        this.tipSubmitted.set(true);
+        this.toast.show('Tip sent! Thank you for your generosity.', 'success');
+      },
+      error: () => this.tipping.set(false),
+    });
+  }
+
+  shareTracking() {
+    const o = this.order();
+    if (!o) return;
+    const url = `${window.location.origin}/order/${o.id}/tracking`;
+    if (navigator.share) {
+      navigator.share({ title: 'Live Delivery Tracking', text: `Track my NexConnect delivery: ${url}`, url }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(url).then(() => this.toast.show('Tracking link copied!', 'success')).catch(() => {});
     }
   }
 }

@@ -133,6 +133,11 @@ export const routes: Routes = [
     canActivate: customerGuard
   },
   {
+    path: 'referral',
+    loadComponent: () => import('./pages/referral/referral.component').then(m => m.ReferralComponent),
+    canActivate: customerGuard
+  },
+  {
     path: '**',
     redirectTo: 'login'
   }

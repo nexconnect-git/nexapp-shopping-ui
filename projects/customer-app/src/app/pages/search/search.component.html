@@ -45,28 +45,44 @@
     <!-- Popular shops -->
     <div class="s-section">
       <h3 class="s-section-title">Most Searched And Bought</h3>
-      <div class="s-pop-list">
-        @for (v of popularVendors(); track v.id) {
-          <button class="s-pop-item" (click)="selectVendor(v.id)">
-            <div class="s-pop-img">
-              @if (v.logo) {
-                <img [src]="v.logo" alt="{{v.store_name}}" loading="lazy">
-              } @else {
-                <span class="material-icons-outlined">storefront</span>
-              }
+      @if (loadingPopular()) {
+        <div class="s-pop-list">
+          @for (n of [1,2,3,4,5,6]; track n) {
+            <div class="s-pop-skel">
+              <div class="s-skel-img shimmer"></div>
+              <div class="s-skel-name shimmer"></div>
             </div>
-            <span class="s-pop-name">{{ v.store_name }}</span>
-            <span class="material-icons-outlined s-pop-arrow">north_east</span>
-          </button>
-        }
-      </div>
+          }
+        </div>
+      } @else {
+        <div class="s-pop-list">
+          @for (v of popularVendors(); track v.id) {
+            <button class="s-pop-item" (click)="selectVendor(v.id)">
+              <div class="s-pop-img">
+                @if (v.logo) {
+                  <img [src]="v.logo" alt="{{v.store_name}}" loading="lazy">
+                } @else {
+                  <span class="material-icons-outlined">storefront</span>
+                }
+              </div>
+              <span class="s-pop-name">{{ v.store_name }}</span>
+              <span class="material-icons-outlined s-pop-arrow">north_east</span>
+            </button>
+          }
+        </div>
+      }
     </div>
   }
 
   <!-- ── Searching indicator ─────────────────────────── -->
   @if (queryValue && searching()) {
-    <div class="s-loading">
-      <div class="s-spinner"></div>
+    <div class="s-search-skels">
+      @for (n of [1,2,3,4]; track n) {
+        <div class="s-pop-skel s-search-skel-item">
+          <div class="s-skel-img shimmer"></div>
+          <div class="s-skel-name shimmer"></div>
+        </div>
+      }
     </div>
   }
 

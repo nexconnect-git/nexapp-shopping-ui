@@ -107,6 +107,16 @@
                 <span class="material-icons-outlined">star</span>
                 {{ order()!.delivery_partner_info!.average_rating }}
               </div>
+              <div class="driver-contact-btns">
+                @if (order()!.delivery_partner_info!.phone) {
+                  <a [href]="'tel:' + order()!.delivery_partner_info!.phone" class="driver-contact-btn call-btn" title="Call partner">
+                    <span class="material-icons-outlined">call</span>
+                  </a>
+                }
+                <button class="driver-contact-btn share-btn" (click)="shareTracking()" title="Share tracking">
+                  <span class="material-icons-outlined">share</span>
+                </button>
+              </div>
             </div>
           }
 

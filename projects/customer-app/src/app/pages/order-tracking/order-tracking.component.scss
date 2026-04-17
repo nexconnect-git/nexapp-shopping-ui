@@ -181,6 +181,16 @@
   .material-icons-outlined { font-size: 16px; }
 }
 
+.driver-contact-btns { display: flex; gap: 0.375rem; flex-shrink: 0; }
+.driver-contact-btn {
+  width: 36px; height: 36px; border-radius: 10px; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  text-decoration: none; transition: all 0.15s;
+  .material-icons-outlined { font-size: 18px; }
+}
+.driver-contact-btn.call-btn { background: #dcfce7; color: #16a34a; &:hover { background: #16a34a; color: white; } }
+.driver-contact-btn.share-btn { background: var(--primary-light); color: var(--primary); &:hover { background: var(--primary); color: white; } }
+
 /* Layout */
 .tracking-layout { display: flex; flex-direction: column; gap: 1.5rem; }
 

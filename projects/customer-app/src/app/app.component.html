@@ -116,6 +116,10 @@
                   <span class="dropdown-item-icon"><span class="material-icons-outlined">favorite_border</span></span>
                   Wishlist
                 </a>
+                <a routerLink="/referral" class="dropdown-item" (click)="toggleUserMenu()">
+                  <span class="dropdown-item-icon"><span class="material-icons-outlined">card_giftcard</span></span>
+                  Refer &amp; Earn
+                </a>
                 <div class="dropdown-divider"></div>
                 <button class="dropdown-item danger" (click)="logout()">
                   <span class="dropdown-item-icon"><span class="material-icons-outlined">logout</span></span>
@@ -220,6 +224,10 @@
               <a routerLink="/wishlist" class="dropdown-item" (click)="toggleUserMenu()">
                 <span class="dropdown-item-icon"><span class="material-icons-outlined">favorite_border</span></span>
                 Wishlist
+              </a>
+              <a routerLink="/referral" class="dropdown-item" (click)="toggleUserMenu()">
+                <span class="dropdown-item-icon"><span class="material-icons-outlined">card_giftcard</span></span>
+                Refer &amp; Earn
               </a>
               <div class="dropdown-divider"></div>
               <button class="dropdown-item danger" (click)="logout()">

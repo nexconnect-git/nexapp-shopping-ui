@@ -24,6 +24,7 @@ export class SearchComponent implements OnInit, AfterViewInit {
   storeResults = signal<any[]>([]);
   itemResults = signal<any[]>([]);
   searching = signal(false);
+  loadingPopular = signal(true);
   pastSearches = signal<string[]>([]);
   popularVendors = signal<any[]>([]);
 
@@ -47,7 +48,11 @@ export class SearchComponent implements OnInit, AfterViewInit {
 
   loadPopular() {
     this.api.getVendors({}).subscribe({
-      next: (res) => this.popularVendors.set((res.results || res).slice(0, 12))
+      next: (res) => {
+        this.popularVendors.set((res.results || res).slice(0, 12));
+        this.loadingPopular.set(false);
+      },
+      error: () => this.loadingPopular.set(false)
     });
   }
 

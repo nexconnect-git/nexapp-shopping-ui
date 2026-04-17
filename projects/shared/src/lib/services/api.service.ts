@@ -1136,6 +1136,24 @@ export class ApiService {
   getLoyaltyPreview(orderTotal: number): Observable<{ points: number; max_redeemable: number; discount: number }> {
     return this.http.get<any>(`${this.baseUrl}/auth/loyalty/preview/`, { params: { order_total: orderTotal.toString() } });
   }
+
+  // Tip
+  tipDeliveryPartner(orderId: string, amount: number): Observable<{ delivery_tip: string }> {
+    return this.http.post<{ delivery_tip: string }>(`${this.baseUrl}/orders/${orderId}/tip/`, { amount });
+  }
+
+  // Referral
+  getReferral(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/auth/referral/`);
+  }
+
+  applyReferralCode(code: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/auth/referral/apply/`, { code });
+  }
+
+  lookupReferralCode(code: string): Observable<{ valid: boolean; code: string }> {
+    return this.http.get<any>(`${this.baseUrl}/auth/referral/lookup/`, { params: { code } });
+  }
 }
 
 

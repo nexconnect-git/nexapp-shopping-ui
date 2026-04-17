@@ -172,7 +172,42 @@
   flex-shrink: 0;
 }
 
-/* ── Loading ──────────────────────────────────────── */
+/* ── Skeleton ─────────────────────────────────────── */
+.s-pop-skel {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.875rem 0;
+  border-bottom: 1px solid #f8f8f8;
+  &:last-child { border-bottom: none; }
+}
+.s-skel-img {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.s-skel-name {
+  flex: 1;
+  height: 16px;
+  border-radius: 6px;
+  max-width: 180px;
+}
+.s-search-skels {
+  padding: 0 1rem;
+}
+.s-search-skel-item {
+  border-bottom: 1px solid #f8f8f8;
+}
+
+.shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
+
+/* ── Loading (legacy spinner — kept for reference) ── */
 .s-loading {
   display: flex;
   justify-content: center;
