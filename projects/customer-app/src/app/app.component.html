@@ -129,7 +129,7 @@
 <!-- ============================================================
      MOBILE HEADER  (shown only on mobile)
      ============================================================ -->
-<header class="mob-header">
+<header class="mob-header" [class.hidden]="hideMobHeader()">
   <!-- Row 1: Location + Notification bell -->
   <div class="mob-header-top">
     <button class="mob-location-btn" (click)="openLocationPicker()">
@@ -197,7 +197,7 @@
 <!-- ============================================================
      MAIN CONTENT
      ============================================================ -->
-<main class="main-content">
+<main class="main-content" [class.full-screen-mode]="hideMobHeader()">
   @if (api.activeIssue(); as issue) {
     <div class="issue-banner" (click)="router.navigate(['/issue', issue.id])">
       <span class="material-icons-outlined">error_outline</span>
@@ -214,7 +214,7 @@
 <!-- ============================================================
      MOBILE BOTTOM TAB BAR  (shown only on mobile)
      ============================================================ -->
-<nav class="mob-tabs">
+<nav class="mob-tabs" [class.hidden]="hideMobTabs()">
   <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" class="mob-tab">
     <span class="material-icons-outlined">home</span>
     <span>Home</span>

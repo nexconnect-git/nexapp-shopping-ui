@@ -17,7 +17,7 @@
 /* ── Top Bar ─────────────────────────────────────────── */
 .sd-topbar {
   position: sticky;
-  top: 0;
+  top: var(--safe-area-top); /* mobile: mob-header hidden, stick at safe-area top */
   z-index: 100;
   background: white;
   border-bottom: none;
@@ -26,6 +26,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
+  @media (min-width: 769px) { top: 72px; } /* stick below desk-nav */
 }
 
 .sd-back-btn, .sd-search-btn {

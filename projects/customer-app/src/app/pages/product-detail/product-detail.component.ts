@@ -1,5 +1,5 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService, AppCurrencyPipe, AuthService } from '@shared/public-api';
@@ -16,6 +16,7 @@ export class ProductDetailComponent implements OnInit {
   private auth = inject(AuthService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private location = inject(Location);
 
   product = signal<any | null>(null);
   reviews = signal<any[]>([]);
@@ -153,6 +154,7 @@ export class ProductDetailComponent implements OnInit {
     this.pendingAction.set(null);
   }
 
+  goBack() { this.location.back(); }
   decQty() { if (this.qty > 1) this.qty--; }
   incQty() { const p = this.product(); if (p && (p.stock === 0 || this.qty < p.stock)) this.qty++; }
   starsFor(r: number) { const f = Math.round(r); return '★'.repeat(f) + '☆'.repeat(5 - f); }

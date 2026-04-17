@@ -26,6 +26,9 @@ export class AppComponent implements OnInit {
   private notifPolling = inject(NotificationPollingService);
 
   showSplash = signal(true);
+  /** Routes that have their own sticky topbar — hide the mobile header */
+  hideMobHeader = signal(false);
+  hideMobTabs = signal(false);
 
   mobileMenuOpen = signal(false);
   userMenuOpen = signal(false);
@@ -74,6 +77,18 @@ export class AppComponent implements OnInit {
       this.api.refreshCartCount();
       this.checkActiveIssue();
     }
+
+    // Track current route — certain pages have their own sticky topbar
+    const FULL_SCREEN_ROUTES = ['/search', '/shop/', '/product/', '/order/'];
+    const TAB_HIDDEN_ROUTES = ['/product/', '/order/'];
+    this.router.events.pipe(
+      filter(e => e instanceof NavigationEnd),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((e: any) => {
+      const url = e.urlAfterRedirects || '';
+      this.hideMobHeader.set(FULL_SCREEN_ROUTES.some(r => url.startsWith(r)));
+      this.hideMobTabs.set(TAB_HIDDEN_ROUTES.some(r => url.startsWith(r)));
+    });
 
     // On navigation: debounce rapid route changes, cancel previous in-flight requests via switchMap
     this.router.events.pipe(
