@@ -29,6 +29,8 @@ export class ResetPasswordComponent implements OnInit {
     if (!this.token) this.error.set('Invalid or missing reset token. Please request a new link.');
   }
 
+  togglePassword() { this.showPassword.set(!this.showPassword()); }
+
   submit() {
     if (!this.newPassword || this.newPassword.length < 8) {
       this.error.set('Password must be at least 8 characters.');
