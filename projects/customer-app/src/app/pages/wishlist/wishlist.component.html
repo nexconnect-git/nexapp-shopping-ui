@@ -1,0 +1,76 @@
+<div class="wl-wrap">
+
+  <!-- Top bar -->
+  <div class="wl-topbar">
+    <button class="wl-back" (click)="goBack()">
+      <span class="material-icons-outlined">arrow_back</span>
+    </button>
+    <div>
+      <div class="wl-title">My Wishlist</div>
+      @if (!loading()) {
+        <div class="wl-sub">{{ products().length }} item{{ products().length !== 1 ? 's' : '' }} saved</div>
+      }
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="wl-loading">
+      @for (n of [1,2,3,4]; track n) {
+        <div class="wl-skel shimmer"></div>
+      }
+    </div>
+  } @else if (products().length === 0) {
+    <div class="wl-empty">
+      <span class="material-icons-outlined">favorite_border</span>
+      <h3>Your wishlist is empty</h3>
+      <p>Save products you love by tapping the heart icon on any product page.</p>
+      <a routerLink="/products" class="wl-browse-btn">Browse Products</a>
+    </div>
+  } @else {
+    <div class="wl-grid">
+      @for (p of products(); track p.id) {
+        <div class="wl-card">
+          <a [routerLink]="['/product', p.id]" class="wl-img-wrap">
+            @if (p.primary_image) {
+              <img [src]="p.primary_image" [alt]="p.name" class="wl-img" loading="lazy" />
+            } @else {
+              <div class="wl-img-placeholder">
+                <span class="material-icons-outlined">image</span>
+              </div>
+            }
+            @if (p.status === 'sold_out') {
+              <div class="wl-sold-out-badge">Sold Out</div>
+            }
+          </a>
+
+          <div class="wl-info">
+            <a [routerLink]="['/product', p.id]" class="wl-name">{{ p.name }}</a>
+            <div class="wl-vendor">{{ p.vendor_name }}</div>
+            <div class="wl-price">{{ p.price | appCurrency }}</div>
+          </div>
+
+          <div class="wl-actions">
+            <button
+              class="wl-cart-btn"
+              [disabled]="addingId() === p.id || p.status === 'sold_out'"
+              (click)="addToCart(p)">
+              @if (addingId() === p.id) {
+                <span class="wl-spinner"></span>
+              } @else {
+                <span class="material-icons-outlined">add_shopping_cart</span>
+              }
+            </button>
+            <button
+              class="wl-remove-btn"
+              [disabled]="removingId() === p.id"
+              (click)="removeFromWishlist(p)"
+              title="Remove from wishlist">
+              <span class="material-icons-outlined">delete_outline</span>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+</div>

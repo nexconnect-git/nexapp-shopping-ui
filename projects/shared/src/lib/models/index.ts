@@ -193,6 +193,9 @@ export interface Order {
   refund_status?: 'none' | 'initiated' | 'processed' | 'failed' | null;
   placed_at: string;
   distance_km?: number;
+  has_rating?: boolean;
+  total_items?: number;
+  total_amount?: number;
 }
 
 export interface AssignmentOrderItem {

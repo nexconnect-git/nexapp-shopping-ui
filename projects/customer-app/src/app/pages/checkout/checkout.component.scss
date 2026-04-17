@@ -413,6 +413,72 @@
   cursor: pointer;
 }
 
+/* ── Loyalty ─────────────────────────────────────────── */
+.co-loyalty-section { padding-top: 0.25rem; }
+
+.co-loyalty-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.co-loyalty-info {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.co-loyalty-icon {
+  font-size: 22px;
+  color: #f59e0b;
+}
+
+.co-loyalty-title {
+  font-size: 0.9375rem;
+  font-weight: 800;
+  color: #111;
+}
+
+.co-loyalty-sub {
+  font-size: 0.75rem;
+  color: #888;
+  font-weight: 500;
+  margin-top: 1px;
+}
+
+.co-loyalty-toggle {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1.5px solid var(--primary);
+  background: white;
+  color: var(--primary);
+  font-size: 0.8125rem;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: var(--font-family);
+  transition: all 0.15s;
+
+  &.active {
+    background: var(--primary);
+    color: white;
+  }
+}
+
+.co-loyalty-applied {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 0.625rem;
+  padding: 8px 12px;
+  background: #fef9e7;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #92400e;
+  .material-icons-outlined { font-size: 16px; color: #f59e0b; }
+}
+
 /* ── Schedule delivery ──────────────────────────────── */
 .co-schedule-row {
   display: flex;

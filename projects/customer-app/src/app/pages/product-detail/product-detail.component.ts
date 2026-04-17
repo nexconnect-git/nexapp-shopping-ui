@@ -27,6 +27,8 @@ export class ProductDetailComponent implements OnInit {
   showClearCartDialog = signal(false);
   pendingAction = signal<'cart' | 'buyNow' | null>(null);
   qty = 1;
+  wishlisted = signal(false);
+  wishlistBusy = signal(false);
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
@@ -43,10 +45,24 @@ export class ProductDetailComponent implements OnInit {
           next: (rev) => this.reviews.set(rev.results || rev),
           error: () => {}
         });
+        this.api.getWishlistStatus([id]).subscribe({
+          next: (status) => this.wishlisted.set(!!status[id]),
+          error: () => {}
+        });
       },
       error: () => {
         this.loading.set(false);
       }
+    });
+  }
+
+  toggleWishlist() {
+    const p = this.product();
+    if (!p || this.wishlistBusy()) return;
+    this.wishlistBusy.set(true);
+    this.api.toggleWishlist(p.id).subscribe({
+      next: (res) => { this.wishlisted.set(res.wishlisted); this.wishlistBusy.set(false); },
+      error: () => this.wishlistBusy.set(false),
     });
   }
 

@@ -128,6 +128,11 @@ export const routes: Routes = [
     canActivate: customerGuard
   },
   {
+    path: 'wishlist',
+    loadComponent: () => import('./pages/wishlist/wishlist.component').then(m => m.WishlistComponent),
+    canActivate: customerGuard
+  },
+  {
     path: '**',
     redirectTo: 'login'
   }

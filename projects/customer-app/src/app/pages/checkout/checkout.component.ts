@@ -50,6 +50,12 @@ export class CheckoutComponent implements OnInit {
   walletAmountToUse = signal<number>(0);
   walletLoading = signal(false);
 
+  loyaltyPoints = signal<number>(0);
+  loyaltyDiscount = signal<number>(0);
+  loyaltyMaxRedeemable = signal<number>(0);
+  useLoyalty = signal<boolean>(false);
+  loyaltyLoading = signal(false);
+
   readonly paymentMethods: PaymentMethod[] = [
     { id: 'cod',      label: 'Pay on Delivery',        icon: 'payments',               sub: 'Pay cash to delivery partner' },
     { id: 'razorpay', label: 'Pay Online (Razorpay)',  icon: 'account_balance_wallet',  sub: 'UPI, Cards, Net Banking & more' },
@@ -75,6 +81,11 @@ export class CheckoutComponent implements OnInit {
       next: (w) => { this.walletBalance.set(Number(w.balance)); this.walletLoading.set(false); },
       error: () => this.walletLoading.set(false),
     });
+    this.loyaltyLoading.set(true);
+    this.api.getLoyalty().subscribe({
+      next: (l) => { this.loyaltyPoints.set(l.points || 0); this.loyaltyLoading.set(false); },
+      error: () => this.loyaltyLoading.set(false),
+    });
   }
 
   get maxWalletApplicable(): number {
@@ -85,8 +96,27 @@ export class CheckoutComponent implements OnInit {
     this.walletAmountToUse.set(this.maxWalletApplicable);
   }
 
+  toggleLoyalty() {
+    if (this.useLoyalty()) {
+      this.useLoyalty.set(false);
+      this.loyaltyDiscount.set(0);
+      this.loyaltyMaxRedeemable.set(0);
+    } else {
+      const total = this.discountedTotal - this.walletAmountToUse();
+      if (total <= 0 || this.loyaltyPoints() <= 0) return;
+      this.api.getLoyaltyPreview(total).subscribe({
+        next: (preview) => {
+          this.loyaltyMaxRedeemable.set(preview.max_redeemable);
+          this.loyaltyDiscount.set(Number(preview.discount));
+          this.useLoyalty.set(true);
+        }
+      });
+    }
+  }
+
   get finalTotal(): number {
-    return Math.max(this.discountedTotal - this.walletAmountToUse(), 0);
+    const loyalty = this.useLoyalty() ? this.loyaltyDiscount() : 0;
+    return Math.max(this.discountedTotal - this.walletAmountToUse() - loyalty, 0);
   }
 
   selectAddress(id: string) {
@@ -254,6 +284,7 @@ export class CheckoutComponent implements OnInit {
     };
     if (this.appliedCoupon()) orderData.coupon_code = this.appliedCoupon().code;
     if (this.walletAmountToUse() > 0) orderData.wallet_amount = this.walletAmountToUse();
+    if (this.useLoyalty() && this.loyaltyMaxRedeemable() > 0) orderData.loyalty_points = this.loyaltyMaxRedeemable();
     if (this.scheduledFor()) orderData.scheduled_for = this.scheduledFor();
     if (paymentProof) Object.assign(orderData, paymentProof);
 

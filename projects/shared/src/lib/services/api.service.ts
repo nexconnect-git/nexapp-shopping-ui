@@ -1117,6 +1117,25 @@ export class ApiService {
   cancelScheduledTask(jobId: string): Observable<any> {
     return this.http.delete(`${this.baseUrl}/admin/scheduled-tasks/${jobId}/`);
   }
+
+  // Wishlist
+  getWishlist(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/products/wishlist/`);
+  }
+
+  toggleWishlist(productId: string): Observable<{ wishlisted: boolean }> {
+    return this.http.post<{ wishlisted: boolean }>(`${this.baseUrl}/products/wishlist/${productId}/toggle/`, {});
+  }
+
+  getWishlistStatus(ids: string[]): Observable<Record<string, boolean>> {
+    return this.http.get<Record<string, boolean>>(`${this.baseUrl}/products/wishlist/status/`, {
+      params: { ids: ids.join(',') }
+    });
+  }
+
+  getLoyaltyPreview(orderTotal: number): Observable<{ points: number; max_redeemable: number; discount: number }> {
+    return this.http.get<any>(`${this.baseUrl}/auth/loyalty/preview/`, { params: { order_total: orderTotal.toString() } });
+  }
 }
 
 

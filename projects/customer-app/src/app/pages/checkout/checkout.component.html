@@ -179,6 +179,30 @@
       </div>
     }
 
+    <!-- ── Loyalty Points ──────────────────────────────── -->
+    @if (loyaltyPoints() > 0) {
+      <div class="co-section co-loyalty-section">
+        <div class="co-loyalty-header">
+          <div class="co-loyalty-info">
+            <span class="material-icons-outlined co-loyalty-icon">stars</span>
+            <div>
+              <div class="co-loyalty-title">{{ loyaltyPoints() }} Loyalty Points</div>
+              <div class="co-loyalty-sub">Worth up to 20% of your order</div>
+            </div>
+          </div>
+          <button class="co-loyalty-toggle" [class.active]="useLoyalty()" (click)="toggleLoyalty()">
+            {{ useLoyalty() ? 'Applied' : 'Apply' }}
+          </button>
+        </div>
+        @if (useLoyalty() && loyaltyDiscount() > 0) {
+          <div class="co-loyalty-applied">
+            <span class="material-icons-outlined">check_circle</span>
+            {{ loyaltyMaxRedeemable() }} pts → − ₹{{ loyaltyDiscount() | number:'1.2-2' }} discount
+          </div>
+        }
+      </div>
+    }
+
     <!-- ── Bill Summary ───────────────────────────────── -->
     @if (cart()) {
       <div class="co-section co-bill">
@@ -219,6 +243,12 @@
           <div class="co-bill-row co-bill-savings">
             <span>Wallet Discount</span>
             <span>− ₹{{ walletAmountToUse() | number:'1.2-2' }}</span>
+          </div>
+        }
+        @if (useLoyalty() && loyaltyDiscount() > 0) {
+          <div class="co-bill-row co-bill-savings">
+            <span>Loyalty Points ({{ loyaltyMaxRedeemable() }} pts)</span>
+            <span>− ₹{{ loyaltyDiscount() | number:'1.2-2' }}</span>
           </div>
         }
         <div class="co-bill-divider"></div>

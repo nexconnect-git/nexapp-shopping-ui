@@ -112,6 +112,10 @@
                   <span class="dropdown-item-icon"><span class="material-icons-outlined">location_on</span></span>
                   Addresses
                 </a>
+                <a routerLink="/wishlist" class="dropdown-item" (click)="toggleUserMenu()">
+                  <span class="dropdown-item-icon"><span class="material-icons-outlined">favorite_border</span></span>
+                  Wishlist
+                </a>
                 <div class="dropdown-divider"></div>
                 <button class="dropdown-item danger" (click)="logout()">
                   <span class="dropdown-item-icon"><span class="material-icons-outlined">logout</span></span>
@@ -212,6 +216,10 @@
               <a routerLink="/addresses" class="dropdown-item" (click)="toggleUserMenu()">
                 <span class="dropdown-item-icon"><span class="material-icons-outlined">location_on</span></span>
                 Addresses
+              </a>
+              <a routerLink="/wishlist" class="dropdown-item" (click)="toggleUserMenu()">
+                <span class="dropdown-item-icon"><span class="material-icons-outlined">favorite_border</span></span>
+                Wishlist
               </a>
               <div class="dropdown-divider"></div>
               <button class="dropdown-item danger" (click)="logout()">

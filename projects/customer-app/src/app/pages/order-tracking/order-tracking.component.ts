@@ -1,6 +1,6 @@
 import { Component, inject, signal, OnInit, OnDestroy, AfterViewInit, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, ActivatedRoute } from '@angular/router';
+import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { ApiService, AuthService, Order, OrderTracking } from '@shared/public-api';
 import { timer, Subscription } from 'rxjs';
 import { GoogleMapsModule } from '@angular/google-maps';
@@ -16,6 +16,7 @@ export class OrderTrackingComponent implements OnInit, OnDestroy, AfterViewInit 
   private api = inject(ApiService);
   private auth = inject(AuthService);
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private zone = inject(NgZone);
 
   order = signal<Order | null>(null);
@@ -50,6 +51,7 @@ export class OrderTrackingComponent implements OnInit, OnDestroy, AfterViewInit 
   private animFrameId?: number;
 
   readonly orderSteps = ['placed', 'confirmed', 'preparing', 'ready', 'picked_up', 'on_the_way', 'delivered'];
+  private ratingRedirectDone = false;
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id')!;
@@ -62,6 +64,10 @@ export class OrderTrackingComponent implements OnInit, OnDestroy, AfterViewInit 
           this.api.getOrderTracking(id).subscribe({ next: (t) => this.tracking.set(t.results || t) });
           this.updateMapPositions(o);
           if (o.estimated_delivery_time) this.etaMinutes.set(o.estimated_delivery_time);
+          if (o.status === 'delivered' && !o.has_rating && !this.ratingRedirectDone) {
+            this.ratingRedirectDone = true;
+            setTimeout(() => this.router.navigate(['/order', id, 'rate']), 1500);
+          }
         },
         error: () => this.loading.set(false)
       });

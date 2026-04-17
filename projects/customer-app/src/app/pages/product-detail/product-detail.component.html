@@ -164,6 +164,9 @@
                 <span class="material-icons-outlined">shopping_cart_checkout</span>
                 Checkout
               </button>
+              <button class="detail-wishlist-btn" [class.active]="wishlisted()" [disabled]="wishlistBusy()" (click)="toggleWishlist()" title="{{ wishlisted() ? 'Remove from wishlist' : 'Add to wishlist' }}">
+                <span class="material-icons-outlined">{{ wishlisted() ? 'favorite' : 'favorite_border' }}</span>
+              </button>
             </div>
           </div>
         }

@@ -49,6 +49,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   private animFrameId?: number;
 
   readonly orderSteps = ['placed', 'confirmed', 'preparing', 'ready', 'picked_up', 'on_the_way', 'delivered'];
+  private ratingRedirectDone = false;
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id')!;
@@ -62,6 +63,10 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
           this.api.getOrderTracking(id).subscribe({ next: (t) => this.tracking.set(t.results || t) });
           this.updateMapPositions(o);
           if (o.estimated_delivery_time) this.etaMinutes.set(o.estimated_delivery_time);
+          if (o.status === 'delivered' && !o.has_rating && !this.ratingRedirectDone) {
+            this.ratingRedirectDone = true;
+            setTimeout(() => this.router.navigate(['/order', id, 'rate']), 1500);
+          }
         },
         error: () => this.loading.set(false)
       });
