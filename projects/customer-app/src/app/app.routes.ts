@@ -15,6 +15,16 @@ export const routes: Routes = [
     canActivate: [unauthGuard]
   },
   {
+    path: 'forgot-password',
+    loadComponent: () => import('./pages/forgot-password/forgot-password.component').then(m => m.ForgotPasswordComponent),
+    canActivate: [unauthGuard]
+  },
+  {
+    path: 'reset-password',
+    loadComponent: () => import('./pages/reset-password/reset-password.component').then(m => m.ResetPasswordComponent),
+    canActivate: [unauthGuard]
+  },
+  {
     path: '',
     loadComponent: () => import('./pages/home/home.component').then(m => m.HomeComponent),
     canActivate: customerGuard
@@ -85,11 +95,16 @@ export const routes: Routes = [
     canActivate: customerGuard
   },
   {
+    path: 'orders',
+    loadComponent: () => import('./pages/orders/orders.component').then(m => m.OrdersComponent),
+    canActivate: customerGuard
+  },
+  {
     path: 'profile',
     canActivate: customerGuard,
     children: [
       { path: '', loadComponent: () => import('./pages/profile/profile.component').then(m => m.ProfileComponent) },
-      { path: 'orders', loadComponent: () => import('./pages/orders/orders.component').then(m => m.OrdersComponent) }
+      { path: 'orders', redirectTo: '/orders', pathMatch: 'full' }
     ]
   },
   {

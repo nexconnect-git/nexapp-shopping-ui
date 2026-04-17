@@ -1,8 +1,19 @@
-import { Component, inject, signal, OnInit, computed } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy, computed } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService, AuthService, Category, Vendor, LocationService } from '@shared/public-api';
+
+export interface PlatformBanner {
+  id: string;
+  title: string;
+  subtitle: string;
+  badge_text: string;
+  cta_label: string;
+  cta_url: string;
+  image: string | null;
+  bg_gradient: string;
+}
 
 interface DisplayCategory {
   id: string;       // slug — used for vendor filtering
@@ -21,7 +32,7 @@ interface DisplayCategory {
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss'
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent implements OnInit, OnDestroy {
   auth = inject(AuthService);
   locationService = inject(LocationService);
   private api = inject(ApiService);
@@ -29,6 +40,10 @@ export class HomeComponent implements OnInit {
   allVendors = signal<Vendor[]>([]);
   filteredVendors = signal<Vendor[]>([]);
   loadingVendors = signal(true);
+
+  banners = signal<PlatformBanner[]>([]);
+  activeBannerIdx = signal(0);
+  private carouselTimer?: ReturnType<typeof setInterval>;
 
   locationLoading = this.locationService.loading;
   locationDisplay = this.locationService.locationDisplay;
@@ -78,6 +93,38 @@ export class HomeComponent implements OnInit {
   ngOnInit() {
     this.loadCategories();
     this.detectLocation();
+    this.loadBanners();
+  }
+
+  ngOnDestroy() {
+    if (this.carouselTimer) clearInterval(this.carouselTimer);
+  }
+
+  loadBanners() {
+    this.api.getBanners().subscribe({
+      next: (data) => {
+        this.banners.set(data);
+        if (data.length > 1) {
+          this.carouselTimer = setInterval(() => {
+            this.activeBannerIdx.update(i => (i + 1) % this.banners().length);
+          }, 4000);
+        }
+      },
+      error: () => {} // silently fall back to static banner
+    });
+  }
+
+  setActiveBanner(idx: number) {
+    this.activeBannerIdx.set(idx);
+    // Reset the timer so it doesn't jump right after manual selection
+    if (this.carouselTimer) {
+      clearInterval(this.carouselTimer);
+      if (this.banners().length > 1) {
+        this.carouselTimer = setInterval(() => {
+          this.activeBannerIdx.update(i => (i + 1) % this.banners().length);
+        }, 4000);
+      }
+    }
   }
 
   private mapCategory(c: Category): DisplayCategory {

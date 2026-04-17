@@ -62,17 +62,49 @@
   </section>
 }
 
-<!-- ── Promo Banner ─────────────────────────────────────────── -->
-<div class="nx-promo-banner">
-  <div class="nx-promo-content">
-    <div class="nx-promo-badge">FAST DELIVERY</div>
-    <h2 class="nx-promo-title">Delivery<br>Under 30 Mins</h2>
-    <p class="nx-promo-sub">Enjoy fast delivery on your favourite dishes</p>
-    <a routerLink="/shops" class="nx-promo-cta">Order Now</a>
-  </div>
-  <div class="nx-promo-art">
-    <span class="material-icons-outlined">delivery_dining</span>
-  </div>
+<!-- ── Promo Carousel (dynamic banners or static fallback) ── -->
+<div class="nx-carousel-wrap">
+  @if (banners().length > 0) {
+    <div class="nx-carousel">
+      <div class="nx-carousel-track" [style.transform]="'translateX(-' + activeBannerIdx() * 100 + '%)'">
+        @for (b of banners(); track b.id) {
+          <div class="nx-carousel-slide"
+               [style.background]="b.image ? 'url(' + b.image + ') center/cover no-repeat' : b.bg_gradient">
+            <div class="nx-promo-content">
+              @if (b.badge_text) {
+                <div class="nx-promo-badge">{{ b.badge_text }}</div>
+              }
+              <h2 class="nx-promo-title">{{ b.title }}</h2>
+              @if (b.subtitle) {
+                <p class="nx-promo-sub">{{ b.subtitle }}</p>
+              }
+              <a [routerLink]="b.cta_url" class="nx-promo-cta">{{ b.cta_label }}</a>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+    @if (banners().length > 1) {
+      <div class="nx-carousel-dots">
+        @for (b of banners(); track b.id; let i = $index) {
+          <button class="nx-dot" [class.active]="activeBannerIdx() === i" (click)="setActiveBanner(i)"></button>
+        }
+      </div>
+    }
+  } @else {
+    <!-- Static fallback shown while banners load or when none are configured -->
+    <div class="nx-promo-banner">
+      <div class="nx-promo-content">
+        <div class="nx-promo-badge">FAST DELIVERY</div>
+        <h2 class="nx-promo-title">Delivery<br>Under 30 Mins</h2>
+        <p class="nx-promo-sub">Enjoy fast delivery on your favourite items</p>
+        <a routerLink="/shops" class="nx-promo-cta">Order Now</a>
+      </div>
+      <div class="nx-promo-art">
+        <span class="material-icons-outlined">delivery_dining</span>
+      </div>
+    </div>
+  }
 </div>
 
 <!-- ── Top Picks ───────────────────────────────────────────── -->
@@ -106,7 +138,9 @@
                 <span class="material-icons-outlined">star</span>
                 {{ v.average_rating | number:'1.1-1' }}
               </span>
-              @if (v.distance_km) {
+              @if (v.estimated_delivery_minutes) {
+                <span class="nx-pick-dist">~{{ v.estimated_delivery_minutes }} min</span>
+              } @else if (v.distance_km) {
                 <span class="nx-pick-dist">{{ v.distance_km }} km</span>
               }
             </div>
@@ -204,6 +238,13 @@
                 {{ v.average_rating | number:'1.1-1' }}
               </span>
               <span class="nx-mdot">·</span>
+              @if (v.estimated_delivery_minutes) {
+                <span class="nx-vmeta-text nx-eta-text">
+                  <span class="material-icons-outlined">schedule</span>
+                  ~{{ v.estimated_delivery_minutes }} min
+                </span>
+                <span class="nx-mdot">·</span>
+              }
               @if (v.distance_km) {
                 <span class="nx-vmeta-text">{{ v.distance_km }} km</span>
                 <span class="nx-mdot">·</span>

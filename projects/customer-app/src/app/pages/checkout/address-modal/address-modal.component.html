@@ -1,0 +1,114 @@
+<div class="am-backdrop" (click)="cancel()">
+  <div class="am-sheet" (click)="$event.stopPropagation()">
+
+    <div class="am-handle"></div>
+
+    <div class="am-header">
+      <h3 class="am-title">
+        <span class="material-icons-outlined">add_location</span>
+        New Address
+      </h3>
+      <button class="am-close" (click)="cancel()">
+        <span class="material-icons-outlined">close</span>
+      </button>
+    </div>
+
+    @if (formError()) {
+      <div class="am-error">{{ formError() }}</div>
+    }
+
+    <div class="am-body">
+      <form (ngSubmit)="save()">
+
+        <div class="am-field">
+          <label class="am-label">Label</label>
+          <select class="am-input" [(ngModel)]="form.label" name="label">
+            <option value="home">Home</option>
+            <option value="work">Work</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div class="am-row">
+          <div class="am-field">
+            <label class="am-label">Full Name *</label>
+            <input class="am-input" type="text" [(ngModel)]="form.full_name" name="full_name" placeholder="Recipient name" required>
+          </div>
+          <div class="am-field">
+            <label class="am-label">Phone</label>
+            <input class="am-input" type="tel" [(ngModel)]="form.phone" name="phone" placeholder="Phone number">
+          </div>
+        </div>
+
+        <!-- Map Picker -->
+        <div class="am-map-section">
+          <div class="am-map-head">
+            <span class="am-map-label">
+              <span class="material-icons-outlined">map</span>
+              Pin on Map
+            </span>
+            <button type="button" class="am-map-toggle" (click)="showMap.set(!showMap())">
+              {{ showMap() ? 'Hide Map' : (form.latitude ? 'Change Location' : 'Pick on Map') }}
+            </button>
+          </div>
+          @if (form.latitude) {
+            <div class="am-pinned-badge">
+              <span class="material-icons-outlined">check_circle</span>
+              Location pinned
+            </div>
+          }
+          @if (showMap()) {
+            <div class="am-map-wrap">
+              <app-map-picker
+                [height]="'200px'"
+                [initialLat]="form.latitude || 6.5244"
+                [initialLng]="form.longitude || 3.3792"
+                (locationPicked)="onMapLocation($event)">
+              </app-map-picker>
+              <p class="am-map-tip">Fields below auto-fill from the pin.</p>
+            </div>
+          }
+        </div>
+
+        <div class="am-field">
+          <label class="am-label">Address Line 1 *</label>
+          <input class="am-input" type="text" [(ngModel)]="form.address_line1" name="address_line1" placeholder="Street, building" required>
+        </div>
+
+        <div class="am-field">
+          <label class="am-label">Address Line 2 (optional)</label>
+          <input class="am-input" type="text" [(ngModel)]="form.address_line2" name="address_line2" placeholder="Apartment, floor, landmark">
+        </div>
+
+        <div class="am-row am-row-3">
+          <div class="am-field">
+            <label class="am-label">City *</label>
+            <input class="am-input" type="text" [(ngModel)]="form.city" name="city" required>
+          </div>
+          <div class="am-field">
+            <label class="am-label">State</label>
+            <input class="am-input" type="text" [(ngModel)]="form.state" name="state">
+          </div>
+          <div class="am-field">
+            <label class="am-label">Postal Code</label>
+            <input class="am-input" type="text" [(ngModel)]="form.postal_code" name="postal_code">
+          </div>
+        </div>
+
+        <label class="am-toggle">
+          <input type="checkbox" [(ngModel)]="form.is_default" name="is_default">
+          <span>Set as default address</span>
+        </label>
+
+        <div class="am-actions">
+          <button type="submit" class="am-btn-primary" [disabled]="saving()">
+            {{ saving() ? 'Saving...' : 'Save Address' }}
+          </button>
+          <button type="button" class="am-btn-ghost" (click)="cancel()">Cancel</button>
+        </div>
+
+      </form>
+    </div>
+
+  </div>
+</div>

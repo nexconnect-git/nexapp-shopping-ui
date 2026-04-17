@@ -498,6 +498,14 @@
 
 .nx-mdot { color: #ccc; font-size: 0.875rem; }
 .nx-vmeta-text { font-size: 0.8125rem; font-weight: 600; color: #777; }
+.nx-eta-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: #059669;
+  font-weight: 700;
+  .material-icons-outlined { font-size: 13px; }
+}
 
 /* Skeleton */
 .nx-vskel {
@@ -654,10 +662,74 @@
 }
 
 /* ══════════════════════════════════════════════════
-   PROMO BANNER
+   CAROUSEL
+══════════════════════════════════════════════════ */
+.nx-carousel-wrap {
+  margin: 1rem 1rem 0;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+
+.nx-carousel {
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+  position: relative;
+}
+
+.nx-carousel-track {
+  display: flex;
+  transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nx-carousel-slide {
+  flex: 0 0 100%;
+  min-height: 160px;
+  display: flex;
+  align-items: center;
+  padding: 1.5rem 1.25rem;
+  color: white;
+  position: relative;
+
+  // dark overlay for image-based banners
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.25);
+    border-radius: inherit;
+  }
+
+  .nx-promo-content { position: relative; z-index: 1; }
+}
+
+.nx-carousel-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  padding: 0.5rem 0 0.25rem;
+}
+
+.nx-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ddd;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s;
+
+  &.active {
+    background: var(--primary);
+    width: 18px;
+    border-radius: 4px;
+  }
+}
+
+/* ══════════════════════════════════════════════════
+   PROMO BANNER (static fallback)
 ══════════════════════════════════════════════════ */
 .nx-promo-banner {
-  margin: 1rem;
   border-radius: var(--radius-xl);
   background: var(--primary-gradient);
   color: white;

@@ -36,24 +36,36 @@
     </div>
 
     <!-- ── Address Picker ─────────────────────────────── -->
-    @if (addresses().length > 1) {
-      <div class="co-section co-addr-section">
-        <div class="co-section-title">Select Delivery Address</div>
-        @for (addr of addresses(); track addr.id) {
-          <label class="co-addr-option" [class.selected]="selectedAddressId === addr.id"
-            (click)="selectAddress(addr.id)">
-            <input type="radio" [value]="addr.id" [(ngModel)]="selectedAddressId" hidden>
-            <div class="co-addr-radio" [class.active]="selectedAddressId === addr.id">
-              <div class="co-addr-dot"></div>
-            </div>
-            <div class="co-addr-text">
-              <span class="co-addr-tag">{{ addr.label | titlecase }}</span>
-              <span class="co-addr-detail">{{ addr.address_line1 }}, {{ addr.city }}</span>
-            </div>
-          </label>
-        }
+    <div class="co-section co-addr-section">
+      <div class="co-section-title-row">
+        <span class="co-section-title">Delivery Address</span>
+        <button class="co-add-addr-btn" type="button" (click)="showAddressModal.set(true)">
+          <span class="material-icons-outlined">add_location</span>
+          Add New
+        </button>
       </div>
-    }
+
+      @for (addr of addresses(); track addr.id) {
+        <label class="co-addr-option" [class.selected]="selectedAddressId === addr.id"
+          (click)="selectAddress(addr.id)">
+          <input type="radio" [value]="addr.id" [(ngModel)]="selectedAddressId" hidden>
+          <div class="co-addr-radio" [class.active]="selectedAddressId === addr.id">
+            <div class="co-addr-dot"></div>
+          </div>
+          <div class="co-addr-text">
+            <span class="co-addr-tag">{{ addr.label | titlecase }}</span>
+            <span class="co-addr-detail">{{ addr.address_line1 }}, {{ addr.city }}</span>
+          </div>
+        </label>
+      }
+
+      @if (addresses().length === 0) {
+        <div class="co-no-addr">
+          <span class="material-icons-outlined">location_off</span>
+          <span>No saved addresses. Add one to continue.</span>
+        </div>
+      }
+    </div>
 
     <!-- ── Payment Methods ────────────────────────────── -->
     <div class="co-section">
@@ -293,6 +305,14 @@
   </div>
 
 </div>
+
+<!-- ── Add Address Modal ─────────────────────────────── -->
+@if (showAddressModal()) {
+  <app-address-modal
+    (created)="onAddressCreated($event)"
+    (cancelled)="showAddressModal.set(false)">
+  </app-address-modal>
+}
 
 <!-- ── Payment Failed Dialog ─────────────────────────── -->
 @if (showPaymentFailedDialog()) {

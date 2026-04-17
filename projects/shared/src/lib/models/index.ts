@@ -61,6 +61,7 @@ export interface Vendor {
   total_ratings: number;
   is_featured: boolean;
   distance_km?: number;
+  estimated_delivery_minutes?: number;
   products?: Product[];
   vendor_tier?: string;
   user_info?: User;

@@ -57,6 +57,14 @@ export class ApiService {
     return this.http.post(`${this.baseUrl}/auth/change-password/`, data);
   }
 
+  requestPasswordReset(email: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/auth/password-reset/`, { email });
+  }
+
+  confirmPasswordReset(token: string, newPassword: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/auth/password-reset/confirm/`, { token, new_password: newPassword });
+  }
+
   checkSetup(): Observable<any> {
     return this.http.get(`${this.baseUrl}/auth/setup/`);
   }
@@ -453,6 +461,11 @@ export class ApiService {
 
   sendAdminIssueMessage(issueId: string, message: string): Observable<any> {
     return this.http.post(`${this.baseUrl}/admin/issues/${issueId}/messages/`, { message });
+  }
+
+  // Banners
+  getBanners(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/orders/banners/`);
   }
 
   // Coupons

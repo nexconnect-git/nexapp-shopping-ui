@@ -3,6 +3,7 @@ import { CommonModule, TitleCasePipe, SlicePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService, AppCurrencyPipe, Cart, Address, ToastService } from '@shared/public-api';
+import { AddressModalComponent } from './address-modal/address-modal.component';
 
 declare const Razorpay: any;
 
@@ -17,7 +18,7 @@ interface PaymentMethod {
 @Component({
   selector: 'app-checkout',
   standalone: true,
-  imports: [CommonModule, FormsModule, AppCurrencyPipe, RouterLink, TitleCasePipe, SlicePipe],
+  imports: [CommonModule, FormsModule, AppCurrencyPipe, RouterLink, TitleCasePipe, SlicePipe, AddressModalComponent],
   templateUrl: './checkout.component.html',
   styleUrl: './checkout.component.scss'
 })
@@ -35,6 +36,7 @@ export class CheckoutComponent implements OnInit {
   selectedAddressId: string | null = null;
   selectedPayment = 'cod';
   notes = '';
+  showAddressModal = signal(false);
 
   couponCode = '';
   appliedCoupon = signal<any>(null);
@@ -303,6 +305,12 @@ export class CheckoutComponent implements OnInit {
 
   get minScheduleDate(): string {
     return new Date().toISOString().split('T')[0];
+  }
+
+  onAddressCreated(addr: Address) {
+    this.addresses.update(list => [...list, addr]);
+    this.selectAddress(addr.id);
+    this.showAddressModal.set(false);
   }
 
   goBack() { window.history.back(); }

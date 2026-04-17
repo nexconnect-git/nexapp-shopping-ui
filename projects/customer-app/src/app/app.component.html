@@ -23,6 +23,10 @@
         <span class="material-icons-outlined">storefront</span>
         <span>Shops</span>
       </a>
+      <a routerLink="/offers" routerLinkActive="active" class="nav-link">
+        <span class="material-icons-outlined">local_offer</span>
+        <span>Offers</span>
+      </a>
     </div>
 
     <!-- Right actions -->
@@ -252,32 +256,35 @@
     <span class="material-icons-outlined">home</span>
     <span>Home</span>
   </a>
+
   <a routerLink="/search" routerLinkActive="active" class="nav-tab">
     <span class="material-icons-outlined">search</span>
     <span>Search</span>
   </a>
-  
-  <!-- Central FAB Cart -->
-  <a routerLink="/cart" routerLinkActive="active" class="nav-tab cart-tab">
-    <div class="cart-fab">
-      <span class="material-icons-outlined">shopping_bag</span>
-      @if (api.cartCount() > 0) {
-        <span class="cart-badge">{{ api.cartCount() > 9 ? '9+' : api.cartCount() }}</span>
-      }
-    </div>
-  </a>
 
-  <!-- Orders replacing old profile? Actually orders should be there. Let's keep Orders instead of just profile if logged in -->
   @if (auth.isLoggedIn()) {
     <a routerLink="/orders" routerLinkActive="active" class="nav-tab">
-      <span class="material-icons-outlined">receipt_long</span>
+      <span class="material-icons-outlined nav-tab-icon">receipt_long</span>
+      @if (api.cartCount() > 0) {
+        <span class="nav-tab-badge">{{ api.cartCount() > 9 ? '9+' : api.cartCount() }}</span>
+      }
       <span>Orders</span>
     </a>
+
+    <a routerLink="/offers" routerLinkActive="active" class="nav-tab">
+      <span class="material-icons-outlined">local_offer</span>
+      <span>Offers</span>
+    </a>
+
     <a routerLink="/profile" routerLinkActive="active" class="nav-tab">
       <span class="material-icons-outlined">person</span>
       <span>Profile</span>
     </a>
   } @else {
+    <a routerLink="/offers" routerLinkActive="active" class="nav-tab">
+      <span class="material-icons-outlined">local_offer</span>
+      <span>Offers</span>
+    </a>
     <a routerLink="/login" routerLinkActive="active" class="nav-tab">
       <span class="material-icons-outlined">login</span>
       <span>Sign In</span>

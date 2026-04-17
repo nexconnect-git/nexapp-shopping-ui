@@ -108,6 +108,10 @@
                 }
               </span>
               <span class="sr-dot">·</span>
+              @if (vendor.estimated_delivery_minutes) {
+                <span class="sr-eta">~{{ vendor.estimated_delivery_minutes }} min</span>
+                <span class="sr-dot">·</span>
+              }
               @if (vendor.distance_km) {
                 <span>{{ vendor.distance_km }} km</span>
                 <span class="sr-dot">·</span>
