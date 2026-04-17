@@ -698,6 +698,14 @@ export class ApiService {
     return this.http.delete(`${this.baseUrl}/admin/customers/${id}/`);
   }
 
+  getAdminCustomerLoyalty(id: string): Observable<any> {
+    return this.http.get(`${this.baseUrl}/admin/customers/${id}/loyalty/`);
+  }
+
+  adjustAdminCustomerLoyalty(id: string, data: { operation: 'credit' | 'debit'; amount: number; reason: string }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/admin/customers/${id}/loyalty/adjust/`, data);
+  }
+
   createAdminDeliveryPartner(data: any): Observable<any> {
     return this.http.post(`${this.baseUrl}/admin/delivery-partners/`, data);
   }

@@ -21,6 +21,7 @@ export const routes: Routes = [
   { path: 'payments', loadComponent: () => import('./pages/payments/payments.component').then(m => m.PaymentsComponent), canActivate: vendorGuard },
   { path: 'coupons', loadComponent: () => import('./pages/coupons/coupons.component').then(m => m.CouponsComponent), canActivate: vendorGuard },
   { path: 'support', loadComponent: () => import('./pages/support/support.component').then(m => m.SupportComponent), canActivate: vendorGuard },
+  { path: 'reviews', loadComponent: () => import('./pages/reviews/reviews.component').then(m => m.ReviewsComponent), canActivate: vendorGuard },
   { path: '**', redirectTo: '' }
 ];
 

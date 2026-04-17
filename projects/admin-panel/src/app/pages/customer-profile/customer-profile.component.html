@@ -92,6 +92,10 @@
         <span class="material-icons-outlined">receipt_long</span>
         Orders
       </button>
+      <button class="tab-btn" [class.active]="activeTab() === 'loyalty'" (click)="setTab('loyalty')">
+        <span class="material-icons-outlined">stars</span>
+        Loyalty Points
+      </button>
     </div>
 
     <!-- Tab: Overview -->
@@ -202,6 +206,75 @@
       </div>
     }
 
+    <!-- Tab: Loyalty -->
+    @if (activeTab() === 'loyalty') {
+      <div class="tab-content fade-in">
+
+        @if (loyaltyLoading()) {
+          <div class="loading-state"><div class="spinner"></div></div>
+        } @else {
+
+          <!-- Balance cards -->
+          <div class="loyalty-cards">
+            <div class="loyalty-card loyalty-card--primary">
+              <div class="loyalty-card-icon">
+                <span class="material-icons-outlined">stars</span>
+              </div>
+              <div class="loyalty-card-body">
+                <div class="loyalty-card-val">{{ loyaltyBalance() | number }}</div>
+                <div class="loyalty-card-label">Current Balance</div>
+              </div>
+              <div class="loyalty-card-sub">≈ ₹{{ (loyaltyBalance() * 0.25) | number:'1.0-0' }} value</div>
+            </div>
+            <div class="loyalty-card">
+              <div class="loyalty-card-icon loyalty-card-icon--muted">
+                <span class="material-icons-outlined">history</span>
+              </div>
+              <div class="loyalty-card-body">
+                <div class="loyalty-card-val">{{ loyaltyLifetime() | number }}</div>
+                <div class="loyalty-card-label">Lifetime Points</div>
+              </div>
+            </div>
+            <div class="loyalty-adjust-btn-wrap">
+              <button class="btn btn-primary" (click)="openAdjustModal()">
+                <span class="material-icons-outlined">tune</span>
+                Adjust Points
+              </button>
+            </div>
+          </div>
+
+          <!-- Transaction history -->
+          <div class="loyalty-tx-section">
+            <h3 class="loyalty-tx-title">Recent Transactions</h3>
+            @if (loyaltyTransactions().length === 0) {
+              <div class="loyalty-empty">
+                <span class="material-icons-outlined">receipt_long</span>
+                No transactions yet
+              </div>
+            } @else {
+              <div class="loyalty-tx-list">
+                @for (tx of loyaltyTransactions(); track tx.id) {
+                  <div class="loyalty-tx-row">
+                    <div class="loyalty-tx-icon" [class.credit]="tx.points > 0" [class.debit]="tx.points < 0">
+                      <span class="material-icons-outlined">{{ tx.points > 0 ? 'add_circle' : 'remove_circle' }}</span>
+                    </div>
+                    <div class="loyalty-tx-info">
+                      <div class="loyalty-tx-desc">{{ tx.description }}</div>
+                      <div class="loyalty-tx-meta">{{ txTypeLabel(tx.transaction_type) }} · {{ tx.created_at | date:'MMM d, y' }}</div>
+                    </div>
+                    <div class="loyalty-tx-pts" [class.tx-credit]="tx.points > 0" [class.tx-debit]="tx.points < 0">
+                      {{ tx.points > 0 ? '+' : '' }}{{ tx.points }} pts
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+        }
+      </div>
+    }
+
     <!-- Edit Modal -->
     @if (showEditModal()) {
       <div class="modal-backdrop" (click)="closeEdit()">
@@ -242,6 +315,49 @@
             <button class="btn btn-secondary" (click)="closeEdit()">Cancel</button>
             <button class="btn btn-primary" [disabled]="editSaving()" (click)="saveEdit()">
               {{ editSaving() ? 'Saving...' : 'Save Changes' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Loyalty Adjust Modal -->
+    @if (showAdjustModal()) {
+      <div class="modal-backdrop" (click)="closeAdjustModal()">
+        <div class="modal" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h2>Adjust Loyalty Points</h2>
+            <button class="modal-close" (click)="closeAdjustModal()">&times;</button>
+          </div>
+          <div class="modal-body">
+            @if (adjustError()) { <div class="alert-error">{{ adjustError() }}</div> }
+            <div class="loyalty-adjust-balance">
+              Current balance: <strong>{{ loyaltyBalance() | number }} pts</strong>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Operation</label>
+              <div class="op-toggle">
+                <button class="op-btn" [class.active]="adjustOp === 'credit'" (click)="adjustOp = 'credit'">
+                  <span class="material-icons-outlined">add_circle</span> Credit
+                </button>
+                <button class="op-btn op-btn--debit" [class.active]="adjustOp === 'debit'" (click)="adjustOp = 'debit'">
+                  <span class="material-icons-outlined">remove_circle</span> Debit
+                </button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Amount (points)</label>
+              <input class="form-input" type="number" min="1" [(ngModel)]="adjustAmount" placeholder="e.g. 100">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Reason</label>
+              <input class="form-input" [(ngModel)]="adjustReason" placeholder="e.g. Compensation for late delivery">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" (click)="closeAdjustModal()">Cancel</button>
+            <button class="btn btn-primary" [disabled]="adjusting()" (click)="submitAdjust()">
+              {{ adjusting() ? 'Saving...' : 'Apply Adjustment' }}
             </button>
           </div>
         </div>

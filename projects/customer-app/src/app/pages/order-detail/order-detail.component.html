@@ -65,6 +65,13 @@
             </div>
           }
 
+          @if (order()!.status === 'delivered' && !order()!.has_rating) {
+            <a [routerLink]="['/order', order()!.id, 'rate']" class="btn btn-rate btn-sm">
+              <span class="material-icons-outlined">star_border</span>
+              Rate &amp; Review
+            </a>
+          }
+
           @if (order()!.status === 'delivered') {
             <a [routerLink]="['/order', order()!.id, 'issue']" class="btn btn-report btn-sm">
               <span class="material-icons-outlined">report_problem</span>

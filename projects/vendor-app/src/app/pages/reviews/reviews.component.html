@@ -1,0 +1,89 @@
+<div class="rev-wrap">
+
+  <!-- Top bar -->
+  <div class="rev-topbar">
+    <button class="rev-back" (click)="goBack()">
+      <span class="material-icons-outlined">arrow_back</span>
+    </button>
+    <div>
+      <div class="rev-title">Customer Reviews</div>
+      <div class="rev-sub">What your customers are saying</div>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="rev-loading">
+      @for (n of [1,2,3,4]; track n) {
+        <div class="rev-skel shimmer"></div>
+      }
+    </div>
+  } @else {
+
+    <!-- Rating summary card -->
+    <div class="rev-summary">
+      <div class="rev-avg-block">
+        <div class="rev-avg-num">{{ averageRating() | number:'1.1-1' }}</div>
+        <div class="rev-avg-stars">
+          @for (s of stars; track s) {
+            <span class="material-icons-outlined rev-star"
+              [class.filled]="s <= averageRating()"
+              [class.half]="s > averageRating() && s - 0.5 <= averageRating()">
+              {{ s <= averageRating() ? 'star' : (s - 0.5 <= averageRating() ? 'star_half' : 'star_border') }}
+            </span>
+          }
+        </div>
+        <div class="rev-avg-count">{{ totalReviews() }} review{{ totalReviews() !== 1 ? 's' : '' }}</div>
+      </div>
+
+      <div class="rev-breakdown">
+        @for (count of ratingBreakdown(); track $index; let i = $index) {
+          <div class="rev-bar-row">
+            <span class="rev-bar-label">{{ 5 - i }}</span>
+            <span class="material-icons-outlined rev-bar-star">star</span>
+            <div class="rev-bar-track">
+              <div class="rev-bar-fill"
+                [style.width]="totalReviews() > 0 ? ((count / totalReviews()) * 100) + '%' : '0%'">
+              </div>
+            </div>
+            <span class="rev-bar-count">{{ count }}</span>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Review list -->
+    @if (reviews().length === 0) {
+      <div class="rev-empty">
+        <span class="material-icons-outlined">rate_review</span>
+        <p>No reviews yet</p>
+        <span>Reviews from customers will appear here after their orders are delivered.</span>
+      </div>
+    } @else {
+      <div class="rev-list">
+        @for (r of reviews(); track r.id) {
+          <div class="rev-card">
+            <div class="rev-card-header">
+              <div class="rev-avatar">
+                <span class="material-icons-outlined">person</span>
+              </div>
+              <div class="rev-meta">
+                <div class="rev-customer-name">{{ r.customer_name || 'Customer' }}</div>
+                <div class="rev-date">{{ r.created_at | date:'MMM d, y' }}</div>
+              </div>
+              <div class="rev-card-stars">
+                @for (s of starsArray(r.rating); track s) {
+                  <span class="material-icons-outlined rev-star filled">star</span>
+                }
+              </div>
+            </div>
+            @if (r.comment) {
+              <p class="rev-comment">{{ r.comment }}</p>
+            }
+          </div>
+        }
+      </div>
+    }
+
+  }
+
+</div>
