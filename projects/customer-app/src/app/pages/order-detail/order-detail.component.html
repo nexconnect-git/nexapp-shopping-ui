@@ -1,3 +1,18 @@
+<!-- Mobile sticky topbar (hidden on desktop) -->
+<div class="od-topbar">
+  <button class="od-topbar-btn" (click)="goBack()">
+    <span class="material-icons-outlined">arrow_back</span>
+  </button>
+  @if (order()) {
+    <div class="od-topbar-info">
+      <span class="od-topbar-title">Order #{{ order()!.order_number }}</span>
+      <span class="od-topbar-badge od-status-{{ order()!.status }}">{{ order()!.status | titlecase }}</span>
+    </div>
+  } @else {
+    <span class="od-topbar-title">Order Details</span>
+  }
+</div>
+
 <div class="page-content">
   <div class="container">
 

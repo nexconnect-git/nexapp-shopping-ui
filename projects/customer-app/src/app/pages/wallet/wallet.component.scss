@@ -1,6 +1,6 @@
 .wallet-page {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: var(--bg-color);
   padding-bottom: 32px;
 }
 
@@ -10,12 +10,12 @@
   gap: 12px;
   padding: 16px;
   background: #fff;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border-light);
 
   h1 {
     font-size: 20px;
     font-weight: 700;
-    color: #1a1a2e;
+    color: var(--text-primary);
     margin: 0;
   }
 }
@@ -45,7 +45,7 @@
     width: 36px;
     height: 36px;
     border: 3px solid #eee;
-    border-top-color: #6C63FF;
+    border-top-color: var(--primary);
     border-radius: 50%;
     animation: spin 0.7s linear infinite;
   }
@@ -55,7 +55,7 @@
 
 .balance-card {
   margin: 20px 16px;
-  background: linear-gradient(135deg, #6C63FF 0%, #9b93ff 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, #9b93ff 100%);
   border-radius: 20px;
   padding: 28px 24px;
   color: #fff;
@@ -109,7 +109,7 @@
     margin: 0 0 16px;
     font-size: 16px;
     font-weight: 700;
-    color: #1a1a2e;
+    color: var(--text-primary);
   }
 }
 
@@ -122,17 +122,17 @@
 
 .quick-btn {
   padding: 8px 16px;
-  border: 2px solid #6C63FF;
+  border: 2px solid var(--primary);
   border-radius: 20px;
   background: transparent;
-  color: #6C63FF;
+  color: var(--primary);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
 
   &:hover {
-    background: #6C63FF;
+    background: var(--primary);
     color: #fff;
   }
 }
@@ -145,7 +145,7 @@
   overflow: hidden;
   margin-bottom: 16px;
 
-  &:focus-within { border-color: #6C63FF; }
+  &:focus-within { border-color: var(--primary); }
 
   .rupee-prefix {
     padding: 0 12px;
@@ -185,7 +185,7 @@
 .confirm-topup-btn {
   flex: 2;
   padding: 12px;
-  background: #6C63FF;
+  background: var(--primary);
   border: none;
   border-radius: 12px;
   font-size: 15px;
@@ -203,7 +203,7 @@
   h2 {
     font-size: 17px;
     font-weight: 700;
-    color: #1a1a2e;
+    color: var(--text-primary);
     margin-bottom: 12px;
   }
 }
@@ -269,7 +269,7 @@
   .tx-desc {
     font-size: 14px;
     font-weight: 600;
-    color: #1a1a2e;
+    color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

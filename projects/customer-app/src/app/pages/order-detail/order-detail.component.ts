@@ -1,5 +1,5 @@
 import { Component, inject, signal, OnInit, OnDestroy, AfterViewInit, NgZone } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService, AuthService, AppCurrencyPipe, ToastService, Order, OrderTracking } from '@shared/public-api';
@@ -21,6 +21,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   private auth = inject(AuthService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private location = inject(Location);
   private zone = inject(NgZone);
   private toast = inject(ToastService);
 
@@ -219,6 +220,8 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     const s = this.order()?.status;
     return ['confirmed', 'preparing', 'ready', 'picked_up', 'on_the_way'].includes(s ?? '');
   }
+
+  goBack() { this.location.back(); }
 
   isStepCompleted(step: string): boolean {
     const status = this.order()?.status;
