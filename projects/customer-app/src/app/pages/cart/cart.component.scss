@@ -13,6 +13,9 @@
   background: white;
   border-bottom: none;
   box-shadow: 0 4px 16px rgba(0,0,0,0.03);
+  position: sticky;
+  top: var(--safe-area-top, 0);
+  z-index: 100;
 
   h1 {
     font-size: 1.125rem;
@@ -589,11 +592,7 @@
   left: 0;
   right: 0;
   z-index: 200;
-  padding-bottom: env(safe-area-inset-bottom);
-
-  @media (max-width: 900px) {
-    bottom: 72px; /* above bottom nav */
-  }
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .sticky-bar-inner {

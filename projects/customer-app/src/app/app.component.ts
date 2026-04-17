@@ -79,8 +79,8 @@ export class AppComponent implements OnInit {
     }
 
     // Track current route — certain pages have their own sticky topbar
-    const FULL_SCREEN_ROUTES = ['/search', '/shop/', '/product/', '/order/'];
-    const TAB_HIDDEN_ROUTES = ['/product/', '/order/'];
+    const FULL_SCREEN_ROUTES = ['/search', '/shop/', '/product/', '/order/', '/cart', '/checkout'];
+    const TAB_HIDDEN_ROUTES = ['/product/', '/order/', '/checkout'];
     this.router.events.pipe(
       filter(e => e instanceof NavigationEnd),
       takeUntilDestroyed(this.destroyRef)

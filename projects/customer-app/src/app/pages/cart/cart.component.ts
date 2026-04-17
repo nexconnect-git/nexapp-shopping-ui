@@ -1,5 +1,5 @@
 import { Component, inject, signal, OnInit, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService, AppCurrencyPipe, Cart } from '@shared/public-api';
@@ -14,6 +14,7 @@ import { ApiService, AppCurrencyPipe, Cart } from '@shared/public-api';
 export class CartComponent implements OnInit {
   private api = inject(ApiService);
   private router = inject(Router);
+  private location = inject(Location);
 
   cart = signal<Cart | null>(null);
   loading = signal(true);
@@ -85,6 +86,7 @@ export class CartComponent implements OnInit {
     });
   }
 
+  goBack() { this.location.back(); }
   proceedToCheckout() {
     this.router.navigate(['/checkout']);
   }
