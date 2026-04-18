@@ -548,6 +548,17 @@
             }
           }
 
+          <!-- Proof of Delivery Photo -->
+          @if (order()!.status === 'delivered' && order()!.delivery_photo) {
+            <div class="detail-card proof-card">
+              <h3 class="card-section-title">
+                <span class="material-icons-outlined">photo_camera</span>
+                Proof of Delivery
+              </h3>
+              <img class="proof-photo" [src]="order()!.delivery_photo" alt="Delivery photo" loading="lazy" />
+            </div>
+          }
+
           <!-- Delivery Partner Card -->
           @if (order()!.delivery_partner_info && order()!.status !== 'delivered') {
             <div class="detail-card delivery-partner-card">

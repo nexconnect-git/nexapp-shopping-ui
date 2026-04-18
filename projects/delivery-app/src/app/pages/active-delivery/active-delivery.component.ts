@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { ApiService, Order, PaymentQR } from '@shared/public-api';
 import { timer, Subscription } from 'rxjs';
 import { AuthService } from '@shared/public-api';
-import { environment } from '../../../environments/environment';
 
 declare const L: any;
 
@@ -62,10 +61,6 @@ export class ActiveDeliveryComponent implements OnInit, OnDestroy, AfterViewChec
 
   // --- Tracking Broadcast ---
   private startLocationTracking() {
-    if (environment.production) {
-      console.log('Live location tracking is disabled in production.');
-      return;
-    }
     if ('geolocation' in navigator) {
       this.watchId = navigator.geolocation.watchPosition(
         (pos) => this.broadcastLocation(pos.coords.latitude, pos.coords.longitude),
