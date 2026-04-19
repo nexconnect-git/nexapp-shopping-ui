@@ -5,11 +5,7 @@ import { API_BASE_URL } from '../tokens/api-url.token';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
-  private baseUrl = (() => {
-    const base = inject(API_BASE_URL);
-    // Absolute URL (mobile/Capacitor) — use as-is; relative URL (web) — prepend /sa subpath
-    return base.startsWith('http') ? base : '/sa' + base;
-  })();
+  private baseUrl = inject(API_BASE_URL);
 
   readonly cartCount = signal(0);
   readonly unreadNotifications = signal(0);
