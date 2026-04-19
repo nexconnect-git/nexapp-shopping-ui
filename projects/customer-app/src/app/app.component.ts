@@ -4,10 +4,6 @@ import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { AuthService, ApiService, LocationService, ToastService, ToastComponent, NotificationPollingService } from '@shared/public-api';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { switchMap, filter, debounceTime } from 'rxjs/operators';
-import { Capacitor } from '@capacitor/core';
-import { StatusBar, Style } from '@capacitor/status-bar';
-import { SplashScreen } from '@capacitor/splash-screen';
-import { App } from '@capacitor/app';
 import { ThemeService } from './core/services/theme.service';
 import { environment } from '../environments/environment';
 
@@ -46,7 +42,6 @@ export class AppComponent implements OnInit {
 
   ngOnInit() {
     this.loadGoogleMaps();
-    this.initNative();
 
     // Start fetching location eagerly on boot
     this.locationService.initializeLocation();
@@ -114,44 +109,6 @@ export class AppComponent implements OnInit {
     s.setAttribute('data-gmaps', '');
     s.async = true;
     document.head.appendChild(s);
-  }
-
-  private async initNative() {
-    if (!Capacitor.isNativePlatform()) return;
-
-    await StatusBar.setStyle({ style: Style.Light });
-    await StatusBar.setBackgroundColor({ color: '#F97316' });
-    await SplashScreen.hide();
-
-    // Handle Android hardware back button
-    App.addListener('backButton', ({ canGoBack }) => {
-      if (canGoBack) {
-        window.history.back();
-      } else {
-        App.exitApp();
-      }
-    });
-
-    // Register FCM push notification token
-    this.registerPushToken();
-  }
-
-  private async registerPushToken() {
-    if (!this.auth.isLoggedIn()) return;
-    try {
-      // @ts-ignore — @capacitor/push-notifications is a native-only plugin not declared in web build
-      const { PushNotifications } = await import('@capacitor/push-notifications');
-      await PushNotifications.requestPermissions();
-      await PushNotifications.register();
-      PushNotifications.addListener('registration', (token: { value: string }) => {
-        const platform = Capacitor.getPlatform();
-        this.api.registerDeviceToken({ token: token.value, platform }).subscribe({
-          error: (e) => console.warn('Device token registration failed', e)
-        });
-      });
-    } catch {
-      // Plugin not installed or permissions denied — skip silently
-    }
   }
 
   checkActiveIssue() {

@@ -5,9 +5,6 @@ import { FormsModule } from '@angular/forms';
 import { ApiService, AuthService, AppCurrencyPipe, ToastService, Order, OrderTracking } from '@shared/public-api';
 import { timer, Subscription } from 'rxjs';
 import { GoogleMapsModule } from '@angular/google-maps';
-import { Capacitor } from '@capacitor/core';
-import { Filesystem, Directory } from '@capacitor/filesystem';
-import { Share } from '@capacitor/share';
 
 @Component({
   selector: 'app-order-detail',
@@ -358,25 +355,11 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
-  private async saveOrShareBlob(blob: Blob, filename: string) {
-    if (Capacitor.isNativePlatform()) {
-      // Android/iOS: write to cache dir then share via native sheet
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve((reader.result as string).split(',')[1]);
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
-      await Filesystem.writeFile({ path: filename, data: base64, directory: Directory.Cache });
-      const { uri } = await Filesystem.getUri({ path: filename, directory: Directory.Cache });
-      await Share.share({ title: filename, url: uri, dialogTitle: 'Save or share invoice' });
-    } else {
-      // Web: anchor-click download
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = filename; a.click();
-      URL.revokeObjectURL(url);
-    }
+  private saveOrShareBlob(blob: Blob, filename: string) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
   }
 
   submitTip() {
