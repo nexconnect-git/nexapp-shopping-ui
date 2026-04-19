@@ -1,0 +1,73 @@
+.sc-page {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 4rem;
+}
+
+.sc-header {
+  margin-bottom: 2.5rem;
+
+  h1 {
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    font-family: var(--font-display);
+    font-weight: 800;
+    color: rgb(var(--color-text-primary));
+    margin: 0 0 0.5rem;
+  }
+
+  p {
+    color: rgb(var(--color-text-secondary));
+    margin: 0;
+  }
+}
+
+.sc-section {
+  margin-bottom: 3rem;
+}
+
+.sc-section-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgb(var(--color-text-disabled));
+  margin: 0 0 1rem;
+}
+
+.sc-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+
+  &--mt  { margin-top: 0.75rem; }
+  &--center { justify-content: flex-start; align-items: center; }
+}
+
+.sc-wrap { flex-wrap: wrap; }
+
+.sc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+
+  &--3 { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+}
+
+.sc-card-label {
+  font-weight: 700;
+  font-family: var(--font-display);
+  color: rgb(var(--color-text-primary));
+  margin: 0 0 0.25rem;
+}
+
+.sc-card-text {
+  font-size: 0.875rem;
+  color: rgb(var(--color-text-secondary));
+  margin: 0;
+}
+
+.sc-type-sample { margin: 0 0 0.5rem; }
+.sc-type-body { color: rgb(var(--color-text-secondary)); margin-bottom: 0.5rem; }
+.sc-type-small { font-size: 0.8125rem; color: rgb(var(--color-text-disabled)); margin: 0; }

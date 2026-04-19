@@ -1,0 +1,13 @@
+.nx-spinner {
+  display: inline-block;
+  border: 2px solid rgb(var(--color-border));
+  border-top-color: rgb(var(--color-primary));
+  border-radius: 50%;
+  animation: nx-spinner-spin 0.7s linear infinite;
+
+  &--sm { width: 16px; height: 16px; }
+  &--md { width: 24px; height: 24px; }
+  &--lg { width: 40px; height: 40px; border-width: 3px; }
+}
+
+@keyframes nx-spinner-spin { to { transform: rotate(360deg); } }

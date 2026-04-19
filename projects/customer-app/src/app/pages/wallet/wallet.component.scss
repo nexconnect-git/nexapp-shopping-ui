@@ -1,6 +1,6 @@
 .wallet-page {
   min-height: 100vh;
-  background: var(--bg-color);
+  background: rgb(var(--color-surface-raised));
   padding-bottom: 32px;
 }
 
@@ -9,13 +9,13 @@
   align-items: center;
   gap: 12px;
   padding: 16px;
-  background: #fff;
-  border-bottom: 1px solid var(--border-light);
+  background: rgb(var(--color-surface));
+  border-bottom: 1px solid rgb(var(--color-border-light));
 
   h1 {
     font-size: 20px;
     font-weight: 700;
-    color: var(--text-primary);
+    color: rgb(var(--color-text-primary));
     margin: 0;
   }
 }
@@ -27,10 +27,10 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  color: #333;
+  color: rgb(var(--color-text-primary));
   text-decoration: none;
 
-  &:hover { background: #f0f0f0; }
+  &:hover { background: rgb(var(--color-surface-raised)); }
 }
 
 .loading-state {
@@ -39,12 +39,12 @@
   align-items: center;
   padding: 60px 24px;
   gap: 16px;
-  color: #888;
+  color: rgb(var(--color-text-secondary));
 
   .spinner {
     width: 36px;
     height: 36px;
-    border: 3px solid #eee;
+    border: 3px solid rgb(var(--color-border));
     border-top-color: var(--primary);
     border-radius: 50%;
     animation: spin 0.7s linear infinite;
@@ -63,7 +63,7 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  box-shadow: 0 8px 24px rgba(108, 99, 255, 0.3);
+  box-shadow: 0 8px 24px var(--primary-shadow);
 
   .balance-label {
     font-size: 14px;
@@ -100,7 +100,7 @@
 
 .topup-form-card {
   margin: 0 16px 20px;
-  background: #fff;
+  background: rgb(var(--color-surface));
   border-radius: 16px;
   padding: 20px;
   box-shadow: 0 2px 12px rgba(0,0,0,0.08);
@@ -109,7 +109,7 @@
     margin: 0 0 16px;
     font-size: 16px;
     font-weight: 700;
-    color: var(--text-primary);
+    color: rgb(var(--color-text-primary));
   }
 }
 
@@ -140,7 +140,7 @@
 .amount-input-row {
   display: flex;
   align-items: center;
-  border: 2px solid #e0e0e0;
+  border: 2px solid rgb(var(--color-border));
   border-radius: 12px;
   overflow: hidden;
   margin-bottom: 16px;
@@ -150,9 +150,9 @@
   .rupee-prefix {
     padding: 0 12px;
     font-size: 18px;
-    color: #555;
-    background: #f5f5f5;
-    border-right: 1px solid #e0e0e0;
+    color: rgb(var(--color-text-secondary));
+    background: rgb(var(--color-surface-raised));
+    border-right: 1px solid rgb(var(--color-border));
     line-height: 48px;
   }
 
@@ -162,6 +162,8 @@
     font-size: 16px;
     border: none;
     outline: none;
+    background: rgb(var(--color-surface));
+    color: rgb(var(--color-text-primary));
   }
 }
 
@@ -173,12 +175,12 @@
 .cancel-topup-btn {
   flex: 1;
   padding: 12px;
-  background: #f5f5f5;
+  background: rgb(var(--color-surface-raised));
   border: none;
   border-radius: 12px;
   font-size: 15px;
   font-weight: 600;
-  color: #555;
+  color: rgb(var(--color-text-secondary));
   cursor: pointer;
 }
 
@@ -203,7 +205,7 @@
   h2 {
     font-size: 17px;
     font-weight: 700;
-    color: var(--text-primary);
+    color: rgb(var(--color-text-primary));
     margin-bottom: 12px;
   }
 }
@@ -214,7 +216,7 @@
   align-items: center;
   padding: 40px 16px;
   gap: 12px;
-  color: #aaa;
+  color: rgb(var(--color-text-muted));
 
   .material-icons { font-size: 48px; }
   p { font-size: 15px; }
@@ -224,7 +226,7 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  background: #fff;
+  background: rgb(var(--color-surface));
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 2px 12px rgba(0,0,0,0.06);
@@ -235,7 +237,7 @@
   align-items: center;
   gap: 14px;
   padding: 14px 16px;
-  border-bottom: 1px solid #f5f5f5;
+  border-bottom: 1px solid rgb(var(--color-border-light));
 
   &:last-child { border-bottom: none; }
 }
@@ -269,7 +271,7 @@
   .tx-desc {
     font-size: 14px;
     font-weight: 600;
-    color: var(--text-primary);
+    color: rgb(var(--color-text-primary));
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -277,7 +279,7 @@
 
   .tx-date {
     font-size: 12px;
-    color: #888;
+    color: rgb(var(--color-text-secondary));
     margin-top: 2px;
   }
 }

@@ -1,6 +1,6 @@
 :host {
   display: block;
-  background: var(--bg-color);
+  background: rgb(var(--color-surface-raised));
   min-height: calc(100vh - 80px);
 }
 
@@ -11,7 +11,7 @@
 .loading-spinner { width: 40px; height: 40px; border: 3px solid var(--border-light); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 4rem auto; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.empty-state { text-align: center; padding: 6rem 2rem; background: white; border-radius: var(--radius-xl); border: 1px dashed var(--border-color); .empty-icon-wrap { width: 80px; height: 80px; background: var(--surface-hover); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem auto; .material-icons-outlined { font-size: 40px; color: var(--text-muted); opacity: 0.5; } } .empty-heading { font-size: 1.5rem; font-weight: 900; color: var(--text-primary); margin: 0 0 1.5rem 0; letter-spacing: -0.01em; } }
+.empty-state { text-align: center; padding: 6rem 2rem; background: rgb(var(--color-surface)); border-radius: var(--radius-xl); border: 1px dashed var(--border-color); .empty-icon-wrap { width: 80px; height: 80px; background: var(--surface-hover); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem auto; .material-icons-outlined { font-size: 40px; color: var(--text-muted); opacity: 0.5; } } .empty-heading { font-size: 1.5rem; font-weight: 900; color: var(--text-primary); margin: 0 0 1.5rem 0; letter-spacing: -0.01em; } }
 
 /* Header */
 .tracking-header { margin-bottom: 1.75rem; }
@@ -36,7 +36,7 @@
 
 /* ══ Live Tracking Hero ══ */
 .live-tracking-hero {
-  background: white;
+  background: rgb(var(--color-surface));
   border-radius: var(--radius-xl);
   border: none;
   overflow: hidden;
@@ -144,7 +144,7 @@
   gap: 1rem;
   padding: 1rem 1.25rem;
   border-top: 1px solid var(--border-light);
-  background: #fafafa;
+  background: rgb(var(--color-surface-raised));
 }
 
 .driver-avatar {
@@ -195,7 +195,7 @@
 .tracking-layout { display: flex; flex-direction: column; gap: 1.5rem; }
 
 /* Cards Shared */
-.detail-card { background: white; border-radius: var(--radius-xl); border: none; padding: 1.5rem; box-shadow: 0 4px 16px rgba(0,0,0,0.03); }
+.detail-card { background: rgb(var(--color-surface)); border-radius: var(--radius-xl); border: none; padding: 1.5rem; box-shadow: 0 4px 16px rgba(0,0,0,0.03); }
 .card-section-title { font-size: 1.125rem; font-weight: 900; color: var(--text-primary); margin: 0 0 1.25rem 0; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px dashed var(--border-light); padding-bottom: 0.75rem; .material-icons-outlined { color: var(--primary); font-size: 20px; } }
 
 /* Timeline */

@@ -64,7 +64,7 @@
             <div class="action-col">
               <button class="action-btn map-btn" (click)="navigateToVendor(order)">
                 <span class="material-icons-outlined">near_me</span>
-                Navigate to {{ order.vendor_info?.store_name || order.vendor_name || 'Vendor' }}
+                Navigate to {{ order.vendor_info.store_name || order.vendor_name || 'Vendor' }}
               </button>
               <button class="action-btn cancel-btn" (click)="cancelAssignment(order)">
                 <span class="material-icons-outlined">cancel</span>

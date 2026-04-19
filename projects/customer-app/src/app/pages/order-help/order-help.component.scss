@@ -1,6 +1,6 @@
 :host {
   display: block;
-  background: var(--surface-color);
+  background: rgb(var(--color-surface-raised));
   height: 100vh;
   display: flex;
   flex-direction: column;
@@ -13,7 +13,7 @@
   max-width: 540px;
   margin: 0 auto;
   width: 100%;
-  background: white;
+  background: rgb(var(--color-surface));
   box-shadow: 0 0 20px rgba(0,0,0,0.05);
   position: relative;
 }
@@ -24,7 +24,7 @@
   align-items: center;
   gap: 1rem;
   padding: 1rem 1.25rem;
-  background: white;
+  background: rgb(var(--color-surface));
   border-bottom: none;
   box-shadow: 0 4px 16px rgba(0,0,0,0.03);
   z-index: 10;
@@ -34,19 +34,19 @@
   width: 40px; height: 40px;
   border-radius: var(--radius-full);
   border: none;
-  background: var(--surface-hover);
+  background: rgb(var(--color-surface-raised));
   display: flex; align-items: center; justify-content: center;
   cursor: pointer;
-  color: var(--text-primary);
+  color: rgb(var(--color-text-primary));
   transition: all 0.2s;
-  &:hover { background: var(--border-light); }
+  &:hover { background: rgb(var(--color-border-light)); }
   .material-icons-outlined { font-size: 20px; }
 }
 
 .header-info {
   flex: 1;
-  h1 { font-size: 1.125rem; font-weight: 800; color: var(--text-primary); margin: 0; }
-  p { margin: 0; font-size: 0.8125rem; color: var(--text-muted); font-family: monospace; }
+  h1 { font-size: 1.125rem; font-weight: 800; color: rgb(var(--color-text-primary)); margin: 0; }
+  p { margin: 0; font-size: 0.8125rem; color: rgb(var(--color-text-muted)); font-family: monospace; }
 }
 
 /* ── Chat Container ───────────────────────────── */
@@ -55,7 +55,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--bg-color);
+  background: rgb(var(--color-surface-raised));
 }
 
 .chat-window {
@@ -69,7 +69,7 @@
 
 .spinner-container {
   display: flex; align-items: center; justify-content: center; height: 100%;
-  .spinner { width: 40px; height: 40px; border: 3px solid var(--border-light); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+  .spinner { width: 40px; height: 40px; border: 3px solid rgb(var(--color-border)); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
 }
 
 /* ── Messages ───────────────────────────── */
@@ -78,7 +78,7 @@
   align-items: flex-end;
   gap: 0.5rem;
   max-width: 85%;
-  
+
   &.user {
     align-self: flex-end;
     flex-direction: row;
@@ -94,28 +94,28 @@
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
   .material-icons-outlined { font-size: 16px; }
-  
+
   &.bot-avatar { background: var(--primary-light); color: var(--primary); }
-  &.user-avatar { background: var(--border-light); color: var(--text-secondary); }
+  &.user-avatar { background: rgb(var(--color-border-light)); color: rgb(var(--color-text-secondary)); }
 }
 
 .message-bubble {
   padding: 0.875rem 1rem;
   border-radius: 1.25rem;
   position: relative;
-  
+
   .message-text { font-size: 0.9375rem; font-weight: 500; line-height: 1.4; }
   .message-time { font-size: 0.6875rem; font-weight: 600; text-align: right; margin-top: 0.25rem; opacity: 0.7; }
-  
+
   &.user-bubble {
     background: var(--primary);
     color: white;
     border-bottom-right-radius: 0.25rem;
   }
-  
+
   &.bot-bubble {
-    background: white;
-    color: var(--text-primary);
+    background: rgb(var(--color-surface));
+    color: rgb(var(--color-text-primary));
     border: none;
     border-bottom-left-radius: 0.25rem;
     box-shadow: 0 4px 16px rgba(0,0,0,0.03);
@@ -127,7 +127,7 @@
 .typing-indicator {
   display: flex; gap: 4px;
   span {
-    display: block; width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); opacity: 0.4;
+    display: block; width: 6px; height: 6px; border-radius: 50%; background: rgb(var(--color-text-muted)); opacity: 0.4;
     animation: bounce 1.4s infinite ease-in-out both;
     &:nth-child(1) { animation-delay: -0.32s; }
     &:nth-child(2) { animation-delay: -0.16s; }
@@ -141,7 +141,7 @@
 
 /* ── Input Area / Quick Questions ───────────────────────────── */
 .chat-input-area {
-  background: white;
+  background: rgb(var(--color-surface));
   border-top: none;
   padding: 1rem 1.25rem;
   box-shadow: 0 -4px 16px rgba(0,0,0,0.03);
@@ -151,13 +151,13 @@
   display: flex; flex-direction: column; gap: 0.75rem;
 }
 .qq-title {
-  font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;
+  font-size: 0.75rem; font-weight: 700; color: rgb(var(--color-text-muted)); text-transform: uppercase; letter-spacing: 0.05em;
 }
 .qq-chips {
   display: flex; flex-wrap: wrap; gap: 0.5rem;
 }
 .qq-chip {
-  background: white;
+  background: rgb(var(--color-surface));
   border: 1px solid var(--primary);
   color: var(--primary);
   padding: 0.5rem 1rem;
@@ -168,15 +168,15 @@
   transition: all 0.2s;
   box-shadow: 0 2px 4px rgba(99,102,241,0.08);
   font-family: var(--font-family);
-  
+
   &:hover:not(:disabled) {
     background: var(--primary);
     color: white;
   }
   &:disabled {
     opacity: 0.5;
-    border-color: var(--border-color);
-    color: var(--text-muted);
+    border-color: rgb(var(--color-border));
+    color: rgb(var(--color-text-muted));
     cursor: not-allowed;
     box-shadow: none;
   }

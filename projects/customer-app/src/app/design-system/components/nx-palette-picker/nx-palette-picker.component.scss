@@ -1,0 +1,76 @@
+.nxpp {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  &__label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgb(var(--color-text-disabled));
+    margin: 0;
+  }
+
+  &__swatches {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+  }
+
+  &__swatch {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform var(--duration-fast) ease, border-color var(--duration-fast) ease;
+
+    &:hover { transform: scale(1.12); }
+
+    &--active {
+      border-color: rgb(var(--color-text-primary));
+      transform: scale(1.12);
+    }
+  }
+
+  &__check {
+    font-size: 1rem !important;
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  }
+
+  &__modes {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  &__mode {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 0.9rem;
+    border-radius: var(--radius-md);
+    border: 1.5px solid rgb(var(--color-border));
+    background: rgb(var(--color-surface));
+    color: rgb(var(--color-text-secondary));
+    font-size: 0.8125rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--duration-fast) ease;
+
+    .material-icons-outlined { font-size: 1rem !important; }
+
+    &:hover { background: rgb(var(--color-surface-overlay)); }
+
+    &--active {
+      border-color: rgb(var(--color-primary));
+      background: rgb(var(--color-primary-light));
+      color: rgb(var(--color-primary-dark));
+      font-weight: 600;
+    }
+  }
+}

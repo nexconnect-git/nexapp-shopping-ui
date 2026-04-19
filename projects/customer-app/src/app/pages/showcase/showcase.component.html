@@ -1,0 +1,136 @@
+<div class="sc-page">
+  <header class="sc-header">
+    <h1>NexConnect Design System</h1>
+    <p>Live component showcase — all tokens respond to the palette/theme picker below.</p>
+  </header>
+
+  <!-- Theme Picker -->
+  <section class="sc-section">
+    <h2 class="sc-section-title">Theme &amp; Palette</h2>
+    <nx-card variant="bordered" [padding]="true">
+      <nx-palette-picker />
+    </nx-card>
+  </section>
+
+  <!-- Buttons -->
+  <section class="sc-section">
+    <h2 class="sc-section-title">Buttons</h2>
+    <div class="sc-row">
+      <button nx-btn variant="primary">Primary</button>
+      <button nx-btn variant="secondary">Secondary</button>
+      <button nx-btn variant="outline">Outline</button>
+      <button nx-btn variant="ghost">Ghost</button>
+      <button nx-btn variant="danger">Danger</button>
+    </div>
+    <div class="sc-row sc-row--mt">
+      <button nx-btn variant="primary" size="sm">Small</button>
+      <button nx-btn variant="primary" size="md">Medium</button>
+      <button nx-btn variant="primary" size="lg">Large</button>
+    </div>
+    <div class="sc-row sc-row--mt">
+      <button nx-btn variant="primary" [loading]="loadingBtn" (click)="triggerLoading()">
+        Click to Load
+      </button>
+      <button nx-btn variant="primary" [full]="true">Full Width</button>
+    </div>
+  </section>
+
+  <!-- Badges -->
+  <section class="sc-section">
+    <h2 class="sc-section-title">Badges</h2>
+    <div class="sc-row sc-wrap">
+      <nx-badge variant="pending">Pending</nx-badge>
+      <nx-badge variant="confirmed">Confirmed</nx-badge>
+      <nx-badge variant="preparing">Preparing</nx-badge>
+      <nx-badge variant="ready">Ready for Pickup</nx-badge>
+      <nx-badge variant="picked_up">Picked Up</nx-badge>
+      <nx-badge variant="on_the_way">On the Way</nx-badge>
+      <nx-badge variant="delivered" [dot]="true">Delivered</nx-badge>
+      <nx-badge variant="cancelled">Cancelled</nx-badge>
+    </div>
+    <div class="sc-row sc-wrap sc-row--mt">
+      <nx-badge variant="primary">Primary</nx-badge>
+      <nx-badge variant="success">Success</nx-badge>
+      <nx-badge variant="warning">Warning</nx-badge>
+      <nx-badge variant="error">Error</nx-badge>
+      <nx-badge variant="info">Info</nx-badge>
+    </div>
+  </section>
+
+  <!-- Inputs -->
+  <section class="sc-section">
+    <h2 class="sc-section-title">Inputs</h2>
+    <div class="sc-grid">
+      <nx-input
+        label="Email"
+        placeholder="you@example.com"
+        type="email"
+        prefixIcon="mail"
+        [(ngModel)]="inputValue"
+        [required]="true"
+      />
+      <nx-input
+        label="Password"
+        placeholder="Enter password"
+        type="password"
+        prefixIcon="lock"
+        [(ngModel)]="passwordValue"
+        hint="At least 8 characters"
+      />
+      <nx-input
+        label="Search"
+        placeholder="Find a product..."
+        prefixIcon="search"
+        suffixIcon="tune"
+        [(ngModel)]="inputValue"
+      />
+      <nx-input
+        label="With Error"
+        placeholder="Your name"
+        [(ngModel)]="inputValue"
+        error="This field is required"
+      />
+    </div>
+  </section>
+
+  <!-- Cards -->
+  <section class="sc-section">
+    <h2 class="sc-section-title">Cards</h2>
+    <div class="sc-grid sc-grid--3">
+      <nx-card variant="raised" [hover]="true">
+        <p class="sc-card-label">Raised (hover me)</p>
+        <p class="sc-card-text">Default card with elevation and hover lift.</p>
+      </nx-card>
+      <nx-card variant="bordered">
+        <p class="sc-card-label">Bordered</p>
+        <p class="sc-card-text">Flat card with border, no shadow.</p>
+      </nx-card>
+      <nx-card variant="ghost">
+        <p class="sc-card-label">Ghost</p>
+        <p class="sc-card-text">Filled with surface-raised, no border or shadow.</p>
+      </nx-card>
+    </div>
+  </section>
+
+  <!-- Spinners -->
+  <section class="sc-section">
+    <h2 class="sc-section-title">Spinners</h2>
+    <div class="sc-row sc-row--center">
+      <nx-spinner size="sm" />
+      <nx-spinner size="md" />
+      <nx-spinner size="lg" />
+    </div>
+  </section>
+
+  <!-- Typography -->
+  <section class="sc-section">
+    <h2 class="sc-section-title">Typography</h2>
+    <nx-card variant="bordered">
+      <h1 class="sc-type-sample">Heading 1 — Plus Jakarta Sans 700</h1>
+      <h2 class="sc-type-sample">Heading 2 — Plus Jakarta Sans 700</h2>
+      <h3 class="sc-type-sample">Heading 3 — Plus Jakarta Sans 700</h3>
+      <p class="sc-type-body">Body text — Inter 400. The quick brown fox jumps over the lazy dog. Comfortable 1.5 line-height for easy reading.</p>
+      <p class="sc-type-small">Small / caption — Inter 400, 0.8125rem</p>
+    </nx-card>
+  </section>
+</div>

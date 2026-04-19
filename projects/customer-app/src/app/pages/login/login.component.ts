@@ -2,11 +2,12 @@ import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '@shared/public-api';
+import { NxInputComponent, NxButtonComponent } from '../../design-system/index';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, NxInputComponent, NxButtonComponent],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss'
 })

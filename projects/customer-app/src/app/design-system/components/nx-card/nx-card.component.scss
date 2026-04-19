@@ -1,0 +1,22 @@
+.nx-card {
+  background: rgb(var(--color-surface));
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  transition:
+    box-shadow var(--duration-normal) ease,
+    transform var(--duration-normal) ease;
+
+  &--padded { padding: 1.25rem; }
+
+  &--flat     { box-shadow: none; }
+  &--raised   { box-shadow: var(--shadow-md); }
+  &--bordered { box-shadow: none; border: 1px solid rgb(var(--color-border)); }
+  &--ghost    { box-shadow: none; background: rgb(var(--color-surface-raised)); }
+
+  &--hover {
+    &:hover {
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-2px);
+    }
+  }
+}

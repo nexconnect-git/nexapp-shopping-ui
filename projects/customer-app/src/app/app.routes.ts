@@ -138,6 +138,10 @@ export const routes: Routes = [
     canActivate: customerGuard
   },
   {
+    path: 'showcase',
+    loadComponent: () => import('./pages/showcase/showcase.component').then(m => m.ShowcaseComponent),
+  },
+  {
     path: '**',
     redirectTo: 'login'
   }

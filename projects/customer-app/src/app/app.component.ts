@@ -8,6 +8,8 @@ import { Capacitor } from '@capacitor/core';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { SplashScreen } from '@capacitor/splash-screen';
 import { App } from '@capacitor/app';
+import { ThemeService } from './core/services/theme.service';
+import { environment } from '../environments/environment';
 
 @Component({
   selector: 'app-root',
@@ -24,6 +26,7 @@ export class AppComponent implements OnInit {
   router = inject(Router);
   private destroyRef = inject(DestroyRef);
   private notifPolling = inject(NotificationPollingService);
+  readonly theme = inject(ThemeService);
 
   showSplash = signal(true);
   /** Routes that have their own sticky topbar — hide the mobile header */
@@ -42,6 +45,7 @@ export class AppComponent implements OnInit {
   };
 
   ngOnInit() {
+    this.loadGoogleMaps();
     this.initNative();
 
     // Start fetching location eagerly on boot
@@ -103,11 +107,20 @@ export class AppComponent implements OnInit {
     });
   }
 
+  private loadGoogleMaps() {
+    if (document.querySelector('script[data-gmaps]')) return;
+    const s = document.createElement('script');
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${environment.googleMapsApiKey}`;
+    s.setAttribute('data-gmaps', '');
+    s.async = true;
+    document.head.appendChild(s);
+  }
+
   private async initNative() {
     if (!Capacitor.isNativePlatform()) return;
 
     await StatusBar.setStyle({ style: Style.Light });
-    await StatusBar.setBackgroundColor({ color: '#6b33ee' });
+    await StatusBar.setBackgroundColor({ color: '#F97316' });
     await SplashScreen.hide();
 
     // Handle Android hardware back button

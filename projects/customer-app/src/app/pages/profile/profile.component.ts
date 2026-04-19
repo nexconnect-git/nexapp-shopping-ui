@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
 import { ApiService, AuthService, ToastService } from '@shared/public-api';
+import { NxPalettePickerComponent } from '../../design-system/index';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, NxPalettePickerComponent],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.scss'
 })

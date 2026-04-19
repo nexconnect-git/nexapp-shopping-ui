@@ -1,6 +1,6 @@
 :host {
   display: block;
-  background: #f9f9f9;
+  background: rgb(var(--color-surface-raised));
   min-height: 100%;
 }
 
@@ -10,7 +10,7 @@
   align-items: center;
   gap: 0.75rem;
   padding: 1rem 1rem 0.875rem;
-  background: white;
+  background: rgb(var(--color-surface));
   border-bottom: none;
   box-shadow: 0 4px 16px rgba(0,0,0,0.03);
   position: sticky;
@@ -20,7 +20,7 @@
   h1 {
     font-size: 1.125rem;
     font-weight: 900;
-    color: #111;
+    color: rgb(var(--color-text-primary));
     margin: 0;
     letter-spacing: -0.01em;
     flex: 1;
@@ -32,19 +32,19 @@
   border: none;
   padding: 0.25rem;
   cursor: pointer;
-  color: #333;
+  color: rgb(var(--color-text-primary));
   display: flex;
   align-items: center;
   border-radius: 8px;
   transition: background 0.15s;
-  &:hover { background: #f3f3f3; }
+  &:hover { background: rgb(var(--color-surface-raised)); }
   .material-icons-outlined { font-size: 22px; }
 }
 
 .cart-item-count {
   font-size: 0.8125rem;
   font-weight: 700;
-  color: #888;
+  color: rgb(var(--color-text-secondary));
 }
 
 /* ── Loading ─────────────────────────────────────────── */
@@ -57,7 +57,7 @@
 .cart-spinner {
   width: 36px;
   height: 36px;
-  border: 3px solid #f0f0f0;
+  border: 3px solid rgb(var(--color-border));
   border-top-color: var(--primary);
   border-radius: 50%;
   animation: spin 0.9s linear infinite;
@@ -67,32 +67,32 @@
 .cart-empty {
   text-align: center;
   padding: 5rem 2rem;
-  background: white;
+  background: rgb(var(--color-surface));
   margin: 0.5rem;
   border-radius: 16px;
 
   .empty-img {
     width: 80px;
     height: 80px;
-    background: #f3f3f3;
+    background: rgb(var(--color-surface-raised));
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     margin: 0 auto 1.25rem;
-    .material-icons-outlined { font-size: 38px; color: #ccc; }
+    .material-icons-outlined { font-size: 38px; color: rgb(var(--color-text-muted)); }
   }
 
   h3 {
     font-size: 1.25rem;
     font-weight: 900;
-    color: #111;
+    color: rgb(var(--color-text-primary));
     margin: 0 0 0.5rem;
   }
 
   p {
     font-size: 0.9375rem;
-    color: #888;
+    color: rgb(var(--color-text-secondary));
     font-weight: 500;
     margin: 0 0 1.75rem;
   }
@@ -123,7 +123,7 @@
 
 /* ── Section ─────────────────────────────────────────── */
 .cart-section {
-  background: white;
+  background: rgb(var(--color-surface));
   margin: 0.5rem 1rem;
   padding: 1.25rem;
   border-radius: var(--radius-xl);
@@ -136,13 +136,13 @@
   gap: 0.375rem;
   font-size: 0.8125rem;
   font-weight: 800;
-  color: #555;
+  color: rgb(var(--color-text-secondary));
   text-transform: uppercase;
   letter-spacing: 0.06em;
   margin-bottom: 0.875rem;
 
   .material-icons-outlined { font-size: 16px; color: var(--primary); }
-  .optional { font-weight: 600; text-transform: none; letter-spacing: 0; color: #aaa; font-size: 0.75rem; }
+  .optional { font-weight: 600; text-transform: none; letter-spacing: 0; color: rgb(var(--color-text-muted)); font-size: 0.75rem; }
 }
 
 /* ── Cart Item ───────────────────────────────────────── */
@@ -151,7 +151,7 @@
   align-items: flex-start;
   gap: 0.875rem;
   padding: 0.875rem 0;
-  border-bottom: 1px solid #f5f5f5;
+  border-bottom: 1px solid rgb(var(--color-border-light));
 
   &:last-child { border-bottom: none; padding-bottom: 0; }
   &:first-child { padding-top: 0; }
@@ -163,8 +163,8 @@
   flex-shrink: 0;
   border-radius: 10px;
   overflow: hidden;
-  background: #f5f5f5;
-  border: 1px solid #eee;
+  background: rgb(var(--color-surface-raised));
+  border: 1px solid rgb(var(--color-border));
 
   a { display: block; width: 100%; height: 100%; }
   img { width: 100%; height: 100%; object-fit: cover; }
@@ -176,7 +176,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  .material-icons-outlined { font-size: 28px; color: #ccc; }
+  .material-icons-outlined { font-size: 28px; color: rgb(var(--color-text-muted)); }
 }
 
 .ci-info {
@@ -190,7 +190,7 @@
 .ci-name {
   font-size: 0.9375rem;
   font-weight: 800;
-  color: #111;
+  color: rgb(var(--color-text-primary));
   text-decoration: none;
   line-height: 1.3;
   &:hover { color: var(--primary); }
@@ -199,7 +199,7 @@
 .ci-vendor {
   font-size: 0.6875rem;
   font-weight: 700;
-  color: #bbb;
+  color: rgb(var(--color-text-muted));
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -207,7 +207,7 @@
 .ci-price {
   font-size: 0.8125rem;
   font-weight: 600;
-  color: #888;
+  color: rgb(var(--color-text-secondary));
   margin-top: 0.125rem;
 }
 
@@ -222,7 +222,7 @@
 .ci-subtotal {
   font-size: 1rem;
   font-weight: 900;
-  color: #111;
+  color: rgb(var(--color-text-primary));
   letter-spacing: -0.01em;
 }
 
@@ -252,13 +252,13 @@
 
 .qty-minus {
   color: var(--primary);
-  &:hover:not(:disabled) { background: rgba(108,99,255,0.06); }
+  &:hover:not(:disabled) { background: rgb(var(--color-primary) / 0.06); }
 }
 
 .qty-plus {
   background: var(--primary);
   color: white;
-  &:hover:not(:disabled) { background: var(--primary-hover); }
+  &:hover:not(:disabled) { opacity: 0.9; }
 }
 
 .qty-val {
@@ -282,21 +282,21 @@
   align-items: center;
   gap: 0.875rem;
   padding: 0.875rem 1rem;
-  border: 1.5px solid #eee;
+  border: 1.5px solid rgb(var(--color-border));
   border-radius: 12px;
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s;
 
   &.selected {
     border-color: var(--primary);
-    background: rgba(108,99,255,0.03);
+    background: rgb(var(--color-primary) / 0.03);
   }
 }
 
 .addr-radio {
   width: 20px;
   height: 20px;
-  border: 2px solid #ddd;
+  border: 2px solid rgb(var(--color-border));
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -326,13 +326,13 @@
 .addr-label-tag {
   font-size: 0.875rem;
   font-weight: 800;
-  color: #111;
+  color: rgb(var(--color-text-primary));
 }
 
 .addr-detail {
   font-size: 0.8125rem;
   font-weight: 500;
-  color: #888;
+  color: rgb(var(--color-text-secondary));
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -351,26 +351,26 @@
   border: 1px solid rgba(245,158,11,0.2);
   flex-wrap: wrap;
   .material-icons-outlined { font-size: 16px; }
-  a { color: #111; font-weight: 700; }
+  a { color: rgb(var(--color-text-primary)); font-weight: 700; }
 }
 
 /* ── Notes ───────────────────────────────────────────── */
 .notes-input {
   width: 100%;
-  border: 1.5px solid #eee;
+  border: 1.5px solid rgb(var(--color-border));
   border-radius: 10px;
   padding: 0.75rem 0.875rem;
   font-family: var(--font-family);
   font-size: 0.9375rem;
   font-weight: 500;
-  color: #111;
-  background: #fafafa;
+  color: rgb(var(--color-text-primary));
+  background: rgb(var(--color-surface-raised));
   resize: none;
   box-sizing: border-box;
   transition: border-color 0.15s, background 0.15s;
 
-  &::placeholder { color: #bbb; }
-  &:focus { outline: none; border-color: var(--primary); background: white; }
+  &::placeholder { color: rgb(var(--color-text-muted)); }
+  &:focus { outline: none; border-color: var(--primary); background: rgb(var(--color-surface)); }
 }
 
 /* ── Savings Banner ──────────────────────────────────── */
@@ -393,7 +393,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 1rem;
-  background: white;
+  background: rgb(var(--color-surface));
   border-bottom: none;
   margin: 0.5rem 1rem;
   border-radius: var(--radius-xl);
@@ -408,7 +408,7 @@
   gap: 0.625rem;
   font-size: 0.9375rem;
   font-weight: 800;
-  color: #111;
+  color: rgb(var(--color-text-primary));
   .material-icons-outlined { font-size: 20px; color: var(--primary); }
 }
 
@@ -418,8 +418,8 @@
   gap: 0.25rem;
   font-size: 0.8125rem;
   font-weight: 500;
-  color: #aaa;
-  .material-icons-outlined { font-size: 18px; color: #ccc; }
+  color: rgb(var(--color-text-muted));
+  .material-icons-outlined { font-size: 18px; color: rgb(var(--color-text-muted)); }
 }
 
 /* ── Add-ons Section ─────────────────────────────────── */
@@ -435,7 +435,7 @@
   padding: 0.875rem 1rem 0.5rem;
   font-size: 0.9375rem;
   font-weight: 900;
-  color: #111;
+  color: rgb(var(--color-text-primary));
   .material-icons-outlined { font-size: 20px; color: var(--primary); }
 }
 
@@ -452,15 +452,15 @@
 .addon-card {
   flex-shrink: 0;
   width: 120px;
-  background: white;
-  border: 1px solid #f0f0f0;
+  background: rgb(var(--color-surface));
+  border: 1px solid rgb(var(--color-border-light));
   border-radius: 12px;
   overflow: hidden;
 }
 
 .addon-img {
   height: 80px;
-  background: #f5f5f5;
+  background: rgb(var(--color-surface-raised));
   position: relative;
   img { width: 100%; height: 100%; object-fit: cover; }
 }
@@ -468,7 +468,7 @@
 .addon-img-ph {
   width: 100%; height: 100%;
   display: flex; align-items: center; justify-content: center;
-  .material-icons-outlined { font-size: 24px; color: #ccc; }
+  .material-icons-outlined { font-size: 24px; color: rgb(var(--color-text-muted)); }
 }
 
 .addon-discount {
@@ -489,7 +489,7 @@
 .addon-name {
   font-size: 0.75rem;
   font-weight: 800;
-  color: #111;
+  color: rgb(var(--color-text-primary));
   line-height: 1.3;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -500,7 +500,7 @@
 .addon-price {
   font-size: 0.8125rem;
   font-weight: 900;
-  color: #111;
+  color: rgb(var(--color-text-primary));
   margin-top: 0.25rem;
 }
 
@@ -533,7 +533,7 @@
   padding: 0.5rem 0;
   font-size: 0.9375rem;
   font-weight: 600;
-  color: #555;
+  color: rgb(var(--color-text-secondary));
 }
 
 .bill-free {
@@ -544,13 +544,13 @@
 
 .bill-divider {
   height: 1px;
-  background: #f0f0f0;
+  background: rgb(var(--color-border-light));
   margin: 0.375rem 0;
 }
 
 .bill-total {
   font-weight: 900;
-  color: #111;
+  color: rgb(var(--color-text-primary));
   font-size: 1rem;
 }
 
@@ -600,7 +600,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  background: white;
+  background: rgb(var(--color-surface));
   border-top: none;
   border-radius: 24px 24px 0 0;
   padding: 0.875rem 1.25rem;
@@ -616,7 +616,7 @@
 .sticky-items {
   font-size: 0.6875rem;
   font-weight: 700;
-  color: #bbb;
+  color: rgb(var(--color-text-muted));
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -624,7 +624,7 @@
 .sticky-amount {
   font-size: 1.125rem;
   font-weight: 900;
-  color: #111;
+  color: rgb(var(--color-text-primary));
   letter-spacing: -0.02em;
 }
 
