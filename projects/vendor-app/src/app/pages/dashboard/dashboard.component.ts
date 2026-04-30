@@ -2,7 +2,7 @@ import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { ApiService, AppCurrencyPipe, DashboardStats, AuthService, ToastService, Product } from '@shared/public-api';
+import { ApiService, AppCurrencyPipe, DashboardStats, AuthService, ToastService, Product, VendorOperationsSummary } from '@shared/public-api';
 import { timer, Subscription } from 'rxjs';
 
 @Component({
@@ -19,6 +19,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   auth = inject(AuthService);
 
   stats = signal<DashboardStats | null>(null);
+  ops = signal<VendorOperationsSummary | null>(null);
   loading = signal(true);
   private sub?: Subscription;
 
@@ -43,6 +44,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.api.getVendorDashboard().subscribe({
         next: (s) => { this.stats.set(s); this.loading.set(false); },
         error: () => this.loading.set(false)
+      });
+      this.api.getVendorOperationsSummary().subscribe({
+        next: (summary) => this.ops.set(summary),
+        error: () => {}
       });
     });
   }

@@ -1,74 +1,81 @@
-<app-toast></app-toast>
+<app-alert-host></app-alert-host>
 
-<!-- ============================================================
-     DESKTOP NAVBAR  (hidden on mobile)
-     ============================================================ -->
-<nav class="desk-nav">
-  <div class="desk-nav-inner">
-
-    <!-- Logo -->
-    <a routerLink="/" class="desk-logo">
-      <span class="desk-logo-icon"><span class="material-icons-outlined">bolt</span></span>
-      <span class="desk-logo-text">NexConnect</span>
+<nav class="shell-nav">
+  <div class="shell-nav-inner">
+    <a routerLink="/" class="shell-brand">
+      <span class="shell-brand-mark"><span class="material-icons-outlined">bolt</span></span>
+      <span class="shell-brand-copy">
+        <strong>NexConnect</strong>
+        <small>instant local commerce</small>
+      </span>
     </a>
 
-    <!-- Location pill -->
-    <button class="desk-location-pill" (click)="openLocationPicker()">
-      <span class="material-icons-outlined desk-location-icon">location_on</span>
-      <span class="desk-location-name">{{ locationService.locationDisplay() }}</span>
-      <span class="material-icons-outlined desk-location-caret">keyboard_arrow_down</span>
+    <button class="shell-location" (click)="openLocationPicker()">
+      <span class="material-icons-outlined">near_me</span>
+      <span class="shell-location-copy">
+        <small>Delivering to</small>
+        <strong>{{ locationService.locationDisplay() }}</strong>
+      </span>
+      <span class="material-icons-outlined">keyboard_arrow_down</span>
     </button>
 
-    <!-- Search bar -->
-    <a routerLink="/search" class="desk-search-bar">
+    <a routerLink="/search" class="shell-search">
       <span class="material-icons-outlined">search</span>
-      <span class="desk-search-placeholder">Search for stores, products…</span>
+      <span>Search groceries, meals, medicine, essentials</span>
     </a>
 
-    <!-- Right actions -->
-    <div class="desk-actions">
+    <div class="shell-links">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">Home</a>
+      <a routerLink="/shops" routerLinkActive="active">Browse</a>
+      <a routerLink="/offers" routerLinkActive="active">Deals</a>
       @if (auth.isLoggedIn()) {
-        <!-- Cart -->
-        <a routerLink="/cart" class="desk-action-btn" title="Cart">
-          <span class="material-icons-outlined">shopping_cart</span>
+        <a routerLink="/orders" routerLinkActive="active">Orders</a>
+      }
+    </div>
+
+    <div class="shell-actions">
+      @if (auth.isLoggedIn()) {
+        <a routerLink="/cart" class="shell-icon-btn" title="Cart">
+          <span class="material-icons-outlined">shopping_bag</span>
           @if (api.cartCount() > 0) {
-            <span class="desk-badge">{{ api.cartCount() > 9 ? '9+' : api.cartCount() }}</span>
+            <span class="shell-badge">{{ api.cartCount() > 9 ? '9+' : api.cartCount() }}</span>
           }
         </a>
 
-        <!-- Notifications -->
-        <div class="desk-menu-wrap">
-          <button class="desk-action-btn" (click)="toggleNotifMenu($event)" title="Notifications">
+        <div class="shell-menu-wrap">
+          <button class="shell-icon-btn" (click)="toggleNotifMenu($event)" title="Notifications">
             <span class="material-icons-outlined">notifications</span>
             @if (api.unreadNotifications() > 0) {
-              <span class="desk-badge">{{ api.unreadNotifications() > 9 ? '9+' : api.unreadNotifications() }}</span>
+              <span class="shell-badge">{{ api.unreadNotifications() > 9 ? '9+' : api.unreadNotifications() }}</span>
             }
           </button>
           @if (notifMenuOpen()) {
-            <div class="desk-dropdown notif-dd">
-              <div class="dd-header">
-                <span class="dd-header-title">Notifications</span>
+            <div class="shell-dropdown shell-dropdown-notif">
+              <div class="shell-dropdown-head">
+                <strong>Updates</strong>
                 @if (api.unreadNotifications() > 0) {
-                  <button class="dd-mark-read" (click)="clearNotifBadge()">Mark all read</button>
+                  <button (click)="clearNotifBadge()">Mark all read</button>
                 }
               </div>
-              <div class="dd-body">
+              <div class="shell-dropdown-body">
                 @if (notifications().length === 0) {
-                  <div class="dd-empty">
+                  <div class="shell-empty-state">
                     <span class="material-icons-outlined">notifications_none</span>
                     <span>No notifications yet</span>
                   </div>
                 } @else {
                   @for (n of notifications(); track n.id) {
-                    <a [routerLink]="n.data?.order_id ? ['/order', n.data.order_id] : ['/orders']"
-                       class="dd-notif-item" [class.unread]="!n.is_read"
-                       (click)="toggleNotifMenu()">
-                      <div class="dd-notif-dot" [class.visible]="!n.is_read"></div>
-                      <div class="dd-notif-content">
-                        <div class="dd-notif-title">{{ n.title }}</div>
-                        <div class="dd-notif-msg">{{ n.message }}</div>
-                        <div class="dd-notif-time">{{ n.created_at | date:'MMM d, h:mm a' }}</div>
-                      </div>
+                    <a
+                      [routerLink]="n.data?.order_id ? ['/order', n.data.order_id] : ['/orders']"
+                      class="shell-notif-row"
+                      [class.unread]="!n.is_read"
+                      (click)="toggleNotifMenu()">
+                      <span class="shell-notif-dot" [class.visible]="!n.is_read"></span>
+                      <span class="shell-notif-copy">
+                        <strong>{{ n.title }}</strong>
+                        <small>{{ n.message }}</small>
+                        <em>{{ n.created_at | date:'MMM d, h:mm a' }}</em>
+                      </span>
                     </a>
                   }
                 }
@@ -77,189 +84,177 @@
           }
         </div>
 
-        <!-- User avatar -->
-        <div class="desk-menu-wrap">
-          <button class="desk-avatar-btn" (click)="toggleUserMenu($event)">
-            <span class="desk-avatar-circle">{{ userInitials() }}</span>
+        <div class="shell-menu-wrap">
+          <button class="shell-profile-btn" (click)="toggleUserMenu($event)">
+            <span>{{ userInitials() }}</span>
           </button>
           @if (userMenuOpen()) {
-            <div class="desk-dropdown user-dd">
-              <div class="dd-user-header">
-                <div class="dd-user-avatar">{{ userInitials() }}</div>
-                <div class="dd-user-info">
+            <div class="shell-dropdown shell-dropdown-user">
+              <div class="shell-user-head">
+                <div class="shell-user-avatar">{{ userInitials() }}</div>
+                <div>
                   <strong>{{ auth.user()?.first_name }} {{ auth.user()?.last_name }}</strong>
-                  <span>{{ auth.user()?.email }}</span>
+                  <small>{{ auth.user()?.email }}</small>
                 </div>
               </div>
-              <div class="dd-menu-body">
-                <a routerLink="/profile" class="dd-item" (click)="toggleUserMenu()">
-                  <span class="material-icons-outlined">person</span>Profile
-                </a>
-                <a routerLink="/orders" class="dd-item" (click)="toggleUserMenu()">
-                  <span class="material-icons-outlined">receipt_long</span>My Orders
-                </a>
-                <a routerLink="/addresses" class="dd-item" (click)="toggleUserMenu()">
-                  <span class="material-icons-outlined">location_on</span>Addresses
-                </a>
-                <a routerLink="/wallet" class="dd-item" (click)="toggleUserMenu()">
-                  <span class="material-icons-outlined">account_balance_wallet</span>Wallet
-                </a>
-                <a routerLink="/wishlist" class="dd-item" (click)="toggleUserMenu()">
-                  <span class="material-icons-outlined">favorite_border</span>Wishlist
-                </a>
-                <a routerLink="/referral" class="dd-item" (click)="toggleUserMenu()">
-                  <span class="material-icons-outlined">card_giftcard</span>Refer &amp; Earn
-                </a>
-                <div class="dd-divider"></div>
-                <button class="dd-item danger" (click)="logout()">
-                  <span class="material-icons-outlined">logout</span>Sign Out
-                </button>
-              </div>
+              <a routerLink="/profile" (click)="toggleUserMenu()">Profile</a>
+              <a routerLink="/orders" (click)="toggleUserMenu()">My orders</a>
+              <a routerLink="/addresses" (click)="toggleUserMenu()">Addresses</a>
+              <a routerLink="/wallet" (click)="toggleUserMenu()">Wallet</a>
+              <a routerLink="/wishlist" (click)="toggleUserMenu()">Wishlist</a>
+              <a routerLink="/referral" (click)="toggleUserMenu()">Refer and earn</a>
+              <button class="shell-logout" (click)="logout()">Sign out</button>
             </div>
           }
         </div>
       } @else {
-        <a routerLink="/login" class="desk-btn-ghost">Sign In</a>
-        <a routerLink="/register" class="desk-btn-primary">Get Started</a>
+        <a routerLink="/login" class="shell-ghost-btn">Sign in</a>
+        <a routerLink="/register" class="shell-primary-btn">Start ordering</a>
       }
     </div>
   </div>
 </nav>
 
-<!-- ============================================================
-     MOBILE HEADER  (shown only on mobile)
-     ============================================================ -->
-<header class="mob-header" [class.hidden]="hideMobHeader()">
-  <!-- Row 1: Location + Notification bell -->
-  <div class="mob-header-top">
-    <button class="mob-location-btn" (click)="openLocationPicker()">
-      <span class="material-icons-outlined mob-loc-icon">location_on</span>
-      <div class="mob-loc-text">
-        <span class="mob-loc-label">Delivering to</span>
-        <span class="mob-loc-name">{{ locationService.locationDisplay() }}</span>
-      </div>
-      <span class="material-icons-outlined mob-loc-caret">keyboard_arrow_down</span>
+<header class="mobile-shell" [class.hidden]="hideMobHeader()">
+  <div class="mobile-shell-top">
+    <button class="mobile-location" (click)="openLocationPicker()">
+      <span class="material-icons-outlined">location_on</span>
+      <span>
+        <small>Delivering to</small>
+        <strong>{{ locationService.locationDisplay() }}</strong>
+      </span>
     </button>
-    <div class="mob-header-right">
-      @if (auth.isLoggedIn()) {
-        <div class="mob-menu-wrap">
-          <button class="mob-icon-btn" (click)="toggleNotifMenu($event)">
-            <span class="material-icons-outlined">notifications_none</span>
-            @if (api.unreadNotifications() > 0) {
-              <span class="mob-badge">{{ api.unreadNotifications() > 9 ? '9+' : api.unreadNotifications() }}</span>
-            }
-          </button>
-          @if (notifMenuOpen()) {
-            <div class="mob-notif-dd">
-              <div class="dd-header">
-                <span class="dd-header-title">Notifications</span>
-                @if (api.unreadNotifications() > 0) {
-                  <button class="dd-mark-read" (click)="clearNotifBadge()">Mark all read</button>
-                }
-              </div>
-              <div class="dd-body">
-                @if (notifications().length === 0) {
-                  <div class="dd-empty">
-                    <span class="material-icons-outlined">notifications_none</span>
-                    <span>No notifications yet</span>
-                  </div>
-                } @else {
-                  @for (n of notifications(); track n.id) {
-                    <a [routerLink]="n.data?.order_id ? ['/order', n.data.order_id] : ['/orders']"
-                       class="dd-notif-item" [class.unread]="!n.is_read"
-                       (click)="toggleNotifMenu()">
-                      <div class="dd-notif-dot" [class.visible]="!n.is_read"></div>
-                      <div class="dd-notif-content">
-                        <div class="dd-notif-title">{{ n.title }}</div>
-                        <div class="dd-notif-msg">{{ n.message }}</div>
-                        <div class="dd-notif-time">{{ n.created_at | date:'MMM d, h:mm a' }}</div>
-                      </div>
-                    </a>
-                  }
-                }
-              </div>
-            </div>
+
+    @if (auth.isLoggedIn()) {
+      <div class="shell-menu-wrap">
+        <button class="mobile-icon-btn" (click)="toggleNotifMenu($event)">
+          <span class="material-icons-outlined">notifications_none</span>
+          @if (api.unreadNotifications() > 0) {
+            <span class="shell-badge">{{ api.unreadNotifications() > 9 ? '9+' : api.unreadNotifications() }}</span>
           }
-        </div>
-      }
-    </div>
+        </button>
+        @if (notifMenuOpen()) {
+          <div class="mobile-dropdown">
+            <div class="shell-dropdown-head">
+              <strong>Updates</strong>
+              @if (api.unreadNotifications() > 0) {
+                <button (click)="clearNotifBadge()">Mark all read</button>
+              }
+            </div>
+            <div class="shell-dropdown-body">
+              @if (notifications().length === 0) {
+                <div class="shell-empty-state">
+                  <span class="material-icons-outlined">notifications_none</span>
+                  <span>No notifications yet</span>
+                </div>
+              } @else {
+                @for (n of notifications(); track n.id) {
+                  <a
+                    [routerLink]="n.data?.order_id ? ['/order', n.data.order_id] : ['/orders']"
+                    class="shell-notif-row"
+                    [class.unread]="!n.is_read"
+                    (click)="toggleNotifMenu()">
+                    <span class="shell-notif-dot" [class.visible]="!n.is_read"></span>
+                    <span class="shell-notif-copy">
+                      <strong>{{ n.title }}</strong>
+                      <small>{{ n.message }}</small>
+                      <em>{{ n.created_at | date:'MMM d, h:mm a' }}</em>
+                    </span>
+                  </a>
+                }
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
   </div>
 
-  <!-- Row 2: Search bar -->
-  <div class="mob-search-row">
-    <a routerLink="/search" class="mob-search-bar">
+  <div class="mobile-search-row">
+    <a routerLink="/search" class="mobile-search">
       <span class="material-icons-outlined">search</span>
-      <span>Search for stores, groceries, more…</span>
+      <span>Search stores, groceries, snacks, medicine</span>
     </a>
   </div>
 </header>
 
-<!-- ============================================================
-     MAIN CONTENT
-     ============================================================ -->
 <main class="main-content" [class.full-screen-mode]="hideMobHeader()">
-  @if (api.activeIssue(); as issue) {
-    <div class="issue-banner" (click)="router.navigate(['/issue', issue.id])">
-      <span class="material-icons-outlined">error_outline</span>
-      <div>
-        <div class="issue-banner-title">Active Issue — Order #{{ issue.order_number }}</div>
-        <div class="issue-banner-sub">Tap to view support chat</div>
+  <div class="main-stage">
+    <nav class="app-breadcrumbs" aria-label="Breadcrumb">
+      @for (crumb of breadcrumbs(); track crumb.url; let last = $last) {
+        @if (!last) {
+          <a [routerLink]="crumb.url">{{ crumb.label }}</a>
+          <span class="material-icons-outlined">chevron_right</span>
+        } @else {
+          <span class="current">{{ crumb.label }}</span>
+        }
+      }
+    </nav>
+    @if (api.activeIssue(); as issue) {
+      <div class="issue-banner" (click)="router.navigate(['/issue', issue.id])">
+        <span class="material-icons-outlined">support_agent</span>
+        <div>
+          <div class="issue-banner-title">Support is active for order #{{ issue.order_number }}</div>
+          <div class="issue-banner-sub">Open your live support thread</div>
+        </div>
+        <span class="material-icons-outlined">chevron_right</span>
       </div>
-      <span class="material-icons-outlined">chevron_right</span>
+    }
+    <div class="route-stage">
+      <router-outlet />
     </div>
-  }
-  <router-outlet />
+  </div>
 </main>
 
-<!-- ============================================================
-     MOBILE BOTTOM TAB BAR  (shown only on mobile)
-     ============================================================ -->
-<nav class="mob-tabs" [class.hidden]="hideMobTabs()">
-  <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" class="mob-tab">
+@if (!hideMobHeader()) {
+  <app-footer></app-footer>
+}
+
+<nav class="mobile-tabs" [class.hidden]="hideMobTabs()">
+  <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">
     <span class="material-icons-outlined">home</span>
     <span>Home</span>
   </a>
-  <a routerLink="/search" routerLinkActive="active" class="mob-tab">
-    <span class="material-icons-outlined">search</span>
+  <a routerLink="/search" routerLinkActive="active">
+    <span class="material-icons-outlined">travel_explore</span>
     <span>Search</span>
   </a>
   @if (auth.isLoggedIn()) {
-    <a routerLink="/cart" routerLinkActive="active" class="mob-tab mob-tab-cart">
-      <span class="mob-cart-icon">
-        <span class="material-icons-outlined">shopping_cart</span>
-        @if (api.cartCount() > 0) {
-          <span class="mob-cart-badge">{{ api.cartCount() > 9 ? '9+' : api.cartCount() }}</span>
-        }
-      </span>
+    <a routerLink="/cart" routerLinkActive="active" class="mobile-tab-cart">
+      <span class="material-icons-outlined">shopping_bag</span>
+      @if (api.cartCount() > 0) {
+        <span class="shell-badge">{{ api.cartCount() > 9 ? '9+' : api.cartCount() }}</span>
+      }
       <span>Cart</span>
     </a>
-    <a routerLink="/orders" routerLinkActive="active" class="mob-tab">
+    <a routerLink="/orders" routerLinkActive="active">
       <span class="material-icons-outlined">receipt_long</span>
       <span>Orders</span>
     </a>
-    <a routerLink="/profile" routerLinkActive="active" class="mob-tab">
+    <a routerLink="/profile" routerLinkActive="active">
       <span class="material-icons-outlined">person</span>
       <span>Profile</span>
     </a>
   } @else {
-    <a routerLink="/offers" routerLinkActive="active" class="mob-tab">
+    <a routerLink="/offers" routerLinkActive="active">
       <span class="material-icons-outlined">local_offer</span>
-      <span>Offers</span>
+      <span>Deals</span>
     </a>
-    <a routerLink="/login" class="mob-tab">
+    <a routerLink="/login">
       <span class="material-icons-outlined">login</span>
-      <span>Sign In</span>
+      <span>Sign in</span>
     </a>
   }
 </nav>
 
-<!-- Splash Screen -->
 @if (showSplash()) {
   <div class="splash-screen">
-    <div class="splash-inner">
-      <div class="splash-icon-wrap"><span class="material-icons-outlined">bolt</span></div>
-      <h1 class="splash-brand">NexConnect</h1>
-      <p class="splash-tagline">Nearby Shopping, Delivered Fast.</p>
+    <div class="splash-orb orb-a"></div>
+    <div class="splash-orb orb-b"></div>
+    <div class="splash-card">
+      <div class="splash-mark"><span class="material-icons-outlined">bolt</span></div>
+      <h1>NexConnect</h1>
+      <p>Fast local delivery for everyday essentials.</p>
       <div class="splash-spinner"></div>
     </div>
   </div>

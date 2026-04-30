@@ -1,24 +1,25 @@
-import { Component, inject, signal, OnInit, HostListener, DestroyRef } from '@angular/core';
+import { Component, inject, signal, OnInit, HostListener, DestroyRef, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router, NavigationEnd } from '@angular/router';
-import { AuthService, ApiService, LocationService, ToastService, ToastComponent, NotificationPollingService } from '@shared/public-api';
+import { ActivatedRoute, PRIMARY_OUTLET, RouterModule, Router, NavigationEnd } from '@angular/router';
+import { AlertHostComponent, AuthService, ApiService, LocationService, NotificationPollingService } from '@shared/public-api';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { switchMap, filter, debounceTime } from 'rxjs/operators';
 import { ThemeService } from './core/services/theme.service';
 import { environment } from '../environments/environment';
+import { FooterComponent } from './components/footer/footer.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterModule, ToastComponent],
+  imports: [CommonModule, RouterModule, AlertHostComponent, FooterComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
 export class AppComponent implements OnInit {
+  private activatedRoute = inject(ActivatedRoute);
   auth = inject(AuthService);
   api = inject(ApiService);
   locationService = inject(LocationService);
-  toastService = inject(ToastService);
   router = inject(Router);
   private destroyRef = inject(DestroyRef);
   private notifPolling = inject(NotificationPollingService);
@@ -33,6 +34,8 @@ export class AppComponent implements OnInit {
   userMenuOpen = signal(false);
   notifMenuOpen = signal(false);
   notifications = signal<any[]>([]);
+  private notificationPollingStarted = false;
+  breadcrumbs = signal<Array<{ label: string; url: string }>>([]);
 
   userInitials = () => {
     const u = this.auth.user();
@@ -42,6 +45,7 @@ export class AppComponent implements OnInit {
 
   ngOnInit() {
     this.loadGoogleMaps();
+    this.notifPolling.onUnreadChange((count) => this.api.unreadNotifications.set(count));
 
     // Start fetching location eagerly on boot
     this.locationService.initializeLocation();
@@ -62,20 +66,33 @@ export class AppComponent implements OnInit {
       })
     ]).then(() => this.showSplash.set(false));
 
-    if (this.auth.isLoggedIn()) {
-      this.notifPolling.start((n) => {
-        if (n.notification_type === 'order' && n.related_entity_id) {
-          return { label: 'View', url: `/order/${n.related_entity_id}` };
+    effect(() => {
+      if (this.auth.isLoggedIn()) {
+        if (!this.notificationPollingStarted) {
+          this.notifPolling.start((n) => {
+            if (n.notification_type === 'order' && n.related_entity_id) {
+              return { label: 'View', url: `/order/${n.related_entity_id}` };
+            }
+            if (n.notification_type === 'order' && n.data?.order_id) {
+              return { label: 'View', url: `/order/${n.data.order_id}` };
+            }
+            return null;
+          });
+          this.notificationPollingStarted = true;
         }
-        if (n.notification_type === 'order' && n.data?.order_id) {
-          return { label: 'View', url: `/order/${n.data.order_id}` };
+        this.api.refreshCartCount();
+        this.api.refreshUnreadCount();
+        this.checkActiveIssue();
+        this.locationService.initializeLocation();
+      } else {
+        if (this.notificationPollingStarted) {
+          this.notifPolling.stop();
+          this.notificationPollingStarted = false;
         }
-        return null;
-      });
-      // Initial load
-      this.api.refreshCartCount();
-      this.checkActiveIssue();
-    }
+        this.notifications.set([]);
+        this.api.activeIssue.set(null);
+      }
+    });
 
     // Track current route — certain pages have their own sticky topbar
     const FULL_SCREEN_ROUTES = ['/search', '/shop/', '/product/', '/order/', '/cart', '/checkout'];
@@ -87,6 +104,7 @@ export class AppComponent implements OnInit {
       const url = e.urlAfterRedirects || '';
       this.hideMobHeader.set(FULL_SCREEN_ROUTES.some(r => url.startsWith(r)));
       this.hideMobTabs.set(TAB_HIDDEN_ROUTES.some(r => url.startsWith(r)));
+      this.breadcrumbs.set(this.buildBreadcrumbs());
     });
 
     // On navigation: debounce rapid route changes, cancel previous in-flight requests via switchMap
@@ -100,6 +118,37 @@ export class AppComponent implements OnInit {
       next: (cart) => this.api.cartCount.set((cart.items || []).length),
       error: () => {}
     });
+
+    this.breadcrumbs.set(this.buildBreadcrumbs());
+  }
+
+  private buildBreadcrumbs(): Array<{ label: string; url: string }> {
+    const breadcrumbs: Array<{ label: string; url: string }> = [];
+    let route = this.activatedRoute.root;
+    let currentUrl = '';
+
+    while (route.firstChild) {
+      route = route.firstChild;
+      if (route.outlet !== PRIMARY_OUTLET) {
+        continue;
+      }
+
+      const routeUrl = route.snapshot.url.map((segment) => segment.path).join('/');
+      if (routeUrl) {
+        currentUrl += `/${routeUrl}`;
+      }
+
+      const label = route.snapshot.data?.['breadcrumb'];
+      if (label) {
+        breadcrumbs.push({ label, url: currentUrl || '/' });
+      }
+    }
+
+    if (breadcrumbs.length === 0) {
+      return [{ label: 'Home', url: '/' }];
+    }
+
+    return breadcrumbs;
   }
 
   private loadGoogleMaps() {
@@ -153,7 +202,7 @@ export class AppComponent implements OnInit {
   }
 
   openLocationPicker() {
-    this.router.navigate(['/addresses']);
+    this.router.navigate([this.auth.isLoggedIn() ? '/addresses' : '/set-location']);
   }
 
   closeMobile() {
@@ -163,7 +212,11 @@ export class AppComponent implements OnInit {
   logout() {
     this.userMenuOpen.set(false);
     this.auth.logout();
+    this.notifPolling.stop();
+    this.notificationPollingStarted = false;
     this.api.cartCount.set(0);
     this.api.unreadNotifications.set(0);
+    this.notifications.set([]);
+    this.api.activeIssue.set(null);
   }
 }

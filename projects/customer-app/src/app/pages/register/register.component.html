@@ -1,70 +1,200 @@
-<div class="auth-page">
-  <div class="auth-left">
-    <div class="auth-left-inner">
-      <div class="auth-brand">
-        <span class="brand-icon">⚡</span>
-        <span class="brand-name">NexConnect</span>
-      </div>
-      <h2 class="auth-left-headline">Join NexConnect</h2>
-      <p class="auth-left-sub">Shop from hundreds of local vendors and get everything delivered fast.</p>
-      <ul class="feature-list">
-        <li class="feature-item">
-          <span class="feature-icon"><span class="material-icons-outlined">storefront</span></span>
-          500+ Local Vendors
-        </li>
-        <li class="feature-item">
-          <span class="feature-icon"><span class="material-icons-outlined">local_shipping</span></span>
-          Fast Delivery
-        </li>
-        <li class="feature-item">
-          <span class="feature-icon"><span class="material-icons-outlined">gps_fixed</span></span>
-          Track in Real Time
-        </li>
-      </ul>
-    </div>
-  </div>
+<div class="auth-page auth-page-register">
+  <div class="auth-ambient auth-ambient-1" aria-hidden="true"></div>
+  <div class="auth-ambient auth-ambient-2" aria-hidden="true"></div>
 
-  <div class="auth-right">
-    <div class="auth-mobile-brand">
-      <div class="auth-mobile-logo">
-        <span class="material-icons-outlined">bolt</span>
-      </div>
-      <span class="auth-mobile-name">NexConnect</span>
-    </div>
-
-    <div class="auth-card">
-      <div class="auth-header">
-        <div class="auth-logo-mark">⚡</div>
-        <h1>Create Account</h1>
-        <p>Fill in your details to get started</p>
+  <div class="auth-shell">
+    <div class="auth-left" aria-hidden="true">
+      <div class="auth-map-glow"></div>
+      <div class="auth-badge-row">
+        <span class="auth-badge">Fresh in your area</span>
+        <span class="auth-badge auth-badge-muted">No password needed</span>
       </div>
 
-      @if (error()) {
-        <div class="auth-error">
-          <span class="material-icons-outlined">error_outline</span>
-          {{ error() }}
-        </div>
-      }
-
-      <form (ngSubmit)="onRegister()" class="auth-form">
-        <div class="form-row-2">
-          <nx-input label="First Name" placeholder="First name" [(ngModel)]="form.first_name" name="first_name" [required]="true" />
-          <nx-input label="Last Name"  placeholder="Last name"  [(ngModel)]="form.last_name"  name="last_name" />
+      <div class="auth-left-inner">
+        <div class="auth-brand">
+          <div class="auth-brand-icon">
+            <span class="material-icons-outlined">bolt</span>
+          </div>
+          <div class="auth-brand-copy">
+            <span class="brand-name">NexConnect</span>
+            <span class="brand-tag">Instant local commerce</span>
+          </div>
         </div>
 
-        <nx-input label="Username" placeholder="Choose a username" prefixIcon="person" [(ngModel)]="form.username" name="username" [required]="true" />
-        <nx-input label="Email"    placeholder="your@email.com"    prefixIcon="mail"   type="email" [(ngModel)]="form.email"    name="email"    [required]="true" />
-        <nx-input label="Phone"    placeholder="+1234567890"        prefixIcon="phone"  type="tel"   [(ngModel)]="form.phone"    name="phone" />
-        <nx-input label="Password" placeholder="Create a password" prefixIcon="lock"   type="password" [(ngModel)]="form.password" name="password" [required]="true" hint="At least 8 characters" />
+        <h2 class="auth-left-headline">Create your local delivery identity in under a minute.</h2>
+        <p class="auth-left-sub">
+          Join once, then order groceries, meals, pharmacy essentials and more with one secure mobile OTP.
+        </p>
 
-        <button nx-btn variant="primary" size="lg" [full]="true" type="submit" [loading]="loading()">
-          Create Account
-        </button>
-      </form>
+        <div class="auth-hero-stats">
+          <div class="hero-stat-card">
+            <strong>1 app</strong>
+            <span>Groceries, food, pharmacy and everyday essentials</span>
+          </div>
+          <div class="hero-stat-card">
+            <strong>Live ETA</strong>
+            <span>Track preparation, pickup and doorstep arrival in real time</span>
+          </div>
+        </div>
 
-      <p class="auth-footer">
-        Already have an account? <a routerLink="/login">Sign in →</a>
-      </p>
+        <ul class="feature-list">
+          <li class="feature-item">
+            <span class="feature-icon"><span class="material-icons-outlined">shopping_bag</span></span>
+            <div class="feature-text">
+              <span class="feature-title">Storefronts worth returning to</span>
+              <span class="feature-desc">Browse neighborhood favorites, premium picks and daily essentials</span>
+            </div>
+          </li>
+          <li class="feature-item">
+            <span class="feature-icon"><span class="material-icons-outlined">bolt</span></span>
+            <div class="feature-text">
+              <span class="feature-title">Fast repeat ordering</span>
+              <span class="feature-desc">Reorder staples, save addresses and keep checkout friction low</span>
+            </div>
+          </li>
+          <li class="feature-item">
+            <span class="feature-icon"><span class="material-icons-outlined">local_offer</span></span>
+            <div class="feature-text">
+              <span class="feature-title">Offers built for regulars</span>
+              <span class="feature-desc">Unlock deal drops, delivery savings and loyalty-ready shopping flows</span>
+            </div>
+          </li>
+        </ul>
+
+        <div class="auth-left-footer">
+          <div class="delivery-pill">
+            <span class="material-icons-outlined">verified</span>
+            Set up once, then <strong>checkout faster every time</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="auth-right">
+      <div class="auth-mobile-brand">
+        <div class="auth-mobile-logo">
+          <span class="material-icons-outlined">bolt</span>
+        </div>
+        <div class="auth-mobile-copy">
+          <span class="auth-mobile-name">NexConnect</span>
+          <span class="auth-mobile-tag">Instant local commerce</span>
+        </div>
+      </div>
+
+      <div class="auth-card">
+        <div class="auth-header">
+          <div class="auth-logo-mark">
+            <span class="material-icons-outlined">person_add</span>
+          </div>
+          <h1>Create your account</h1>
+          <p>Tell us where to reach you, verify your phone and start ordering in minutes.</p>
+        </div>
+
+        <div class="auth-status-strip">
+          <span class="status-chip">
+            <span class="material-icons-outlined">inventory_2</span>
+            Same-day essentials
+          </span>
+          <span class="status-chip">
+            <span class="material-icons-outlined">sms</span>
+            OTP only onboarding
+          </span>
+        </div>
+
+        @if (error()) {
+          <div class="auth-error" role="alert">
+            <span class="material-icons-outlined">error_outline</span>
+            <span>{{ error() }}</span>
+          </div>
+        }
+
+        @if (info()) {
+          <div class="auth-info" role="status">
+            <span class="material-icons-outlined">sms</span>
+            <span>{{ info() }}</span>
+          </div>
+        }
+
+        <form (ngSubmit)="onRegister()" class="auth-form">
+          <div class="form-row-2">
+            <nx-input
+              label="First Name"
+              placeholder="Aarav"
+              [(ngModel)]="form.first_name"
+              name="first_name"
+              [required]="true"
+            />
+            <nx-input
+              label="Last Name"
+              placeholder="Sharma"
+              [(ngModel)]="form.last_name"
+              name="last_name"
+            />
+          </div>
+
+          <nx-input
+            label="Email Address"
+            placeholder="you@example.com"
+            prefixIcon="mail"
+            type="email"
+            [(ngModel)]="form.email"
+            name="email"
+          />
+
+          <nx-input
+            label="Mobile Number"
+            placeholder="+91 98765 43210"
+            prefixIcon="phone"
+            type="tel"
+            [(ngModel)]="form.phone"
+            name="phone"
+            [required]="true"
+          />
+
+          @if (otpRequested()) {
+            <div class="otp-stage-card">
+              <div class="otp-stage-head">
+                <div>
+                  <h2>Verify your mobile number</h2>
+                  <p>Enter the OTP we sent to {{ form.phone }}</p>
+                </div>
+                <span class="otp-stage-icon material-icons-outlined">mark_email_read</span>
+              </div>
+
+              <nx-input
+                label="One-Time Passcode"
+                placeholder="Enter 6-digit OTP"
+                prefixIcon="sms"
+                [(ngModel)]="otp"
+                name="otp"
+                [required]="true"
+              />
+
+              @if (devOtp()) {
+                <div class="otp-dev-note">
+                  Dev OTP: <strong>{{ devOtp() }}</strong>
+                </div>
+              }
+
+              <button type="button" class="auth-secondary-link" (click)="editPhone()">
+                Change mobile number
+              </button>
+            </div>
+          }
+
+          <button nx-btn variant="primary" size="lg" [full]="true" type="submit" [loading]="loading()">
+            {{ otpRequested() ? 'Verify & Create Account' : 'Send OTP' }}
+          </button>
+        </form>
+
+        <p class="auth-footer">
+          Already registered? <a routerLink="/login">Sign in with OTP</a>
+        </p>
+
+        <div class="auth-help-row">
+          <span>Your phone number becomes your secure, passwordless key.</span>
+        </div>
+      </div>
     </div>
   </div>
 </div>

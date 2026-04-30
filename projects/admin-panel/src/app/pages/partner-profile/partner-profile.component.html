@@ -1,17 +1,5 @@
 <div class="partner-profile-page">
 
-  <!-- Breadcrumb -->
-  <nav class="breadcrumb">
-    <a routerLink="/delivery-partners" class="breadcrumb-link">
-      <span class="material-icons-outlined">arrow_back</span>
-      Delivery Partners
-    </a>
-    @if (!loading() && partner()) {
-      <span class="breadcrumb-sep">/</span>
-      <span class="breadcrumb-current">{{ partner().user?.first_name || partner().user?.username }}</span>
-    }
-  </nav>
-
   @if (loading()) {
     <div class="loading-state"><div class="spinner"></div><p>Loading partner…</p></div>
   }
@@ -43,91 +31,95 @@
       </div>
     }
 
-    <!-- Page Header -->
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">{{ partner().user?.first_name }} {{ partner().user?.last_name }}</h1>
-        <p class="page-subtitle">&#64;{{ partner().user?.username }} &bull; {{ partner().vehicle_type | titlecase }} delivery</p>
-      </div>
-      <div class="header-actions">
-        <a class="btn btn-secondary" [routerLink]="['/delivery-partners/onboard']">
-          <span class="material-icons-outlined">edit</span>
-          Edit
-        </a>
-        <div class="status-select-wrap">
-          <label class="status-select-label" for="partner-status-select">Account Status</label>
-          <select
-            id="partner-status-select"
-            class="status-select"
-            [value]="partnerAccountStatus()"
-            (change)="onAccountStatusChange($event)"
-            [disabled]="actionLoading()"
-            aria-label="Partner account status"
-          >
-            <option value="active">Active</option>
-            <option value="suspended">Suspended</option>
-            <option value="pending">Pending (Not Approved)</option>
-          </select>
-        </div>
-      </div>
-    </div>
-
-    <!-- Hero Card -->
-    <div class="profile-hero-card">
-      <div class="hero-banner"></div>
-      <div class="hero-body">
-        <div class="hero-avatar-wrap">
+    <!-- Profile Header -->
+    <header class="profile-hero-card">
+      <div class="hero-banner">
+        <div class="hero-overlay"></div>
+        <div class="hero-identity">
           <div class="hero-avatar" [style.background]="avatarColor(partner().user?.username || 'D')">
             {{ (partner().user?.first_name || partner().user?.username || 'D')[0].toUpperCase() }}
           </div>
-        </div>
-
-        <div class="hero-info">
-          <div class="hero-info-top">
-            <span class="badge" [class]="statusBadge(partner().status)">{{ partner().status }}</span>
-            <span class="badge" [class.badge-approved]="partner().is_approved" [class.badge-pending]="!partner().is_approved">
-              {{ partner().is_approved ? 'Approved' : 'Pending' }}
-            </span>
-          </div>
-          <div class="hero-meta-row">
-            @if (partner().user?.email) {
-              <span class="hero-meta-item">
-                <span class="material-icons-outlined">mail</span>
-                {{ partner().user?.email }}
-              </span>
-            }
-            @if (partner().user?.phone) {
-              <span class="hero-meta-item">
-                <span class="material-icons-outlined">phone</span>
-                {{ partner().user?.phone }}
-              </span>
-            }
-            <span class="hero-meta-item">
-              <span class="material-icons-outlined">two_wheeler</span>
-              {{ partner().vehicle_type | titlecase }} &bull; {{ partner().vehicle_number || 'No plate' }}
-            </span>
-          </div>
-        </div>
-
-        <!-- Quick Stats -->
-        <div class="hero-stats">
-          <div class="hero-stat">
-            <span class="hero-stat-value">{{ starsFor(partner().average_rating || 0) }}</span>
-            <span class="hero-stat-label">Rating</span>
-          </div>
-          <div class="hero-stat-divider"></div>
-          <div class="hero-stat">
-            <span class="hero-stat-value">{{ partner().total_deliveries || 0 }}</span>
-            <span class="hero-stat-label">Deliveries</span>
-          </div>
-          <div class="hero-stat-divider"></div>
-          <div class="hero-stat">
-            <span class="hero-stat-value">{{ partner().average_rating | number: '1.1-1' }}</span>
-            <span class="hero-stat-label">Avg Rating</span>
+          <div class="hero-title-block">
+            <h1>{{ partner().user?.first_name }} {{ partner().user?.last_name }}</h1>
+            <p>&#64;{{ partner().user?.username }} &bull; {{ partner().vehicle_type | titlecase }} delivery</p>
           </div>
         </div>
       </div>
-    </div>
+
+      <div class="hero-action-bar">
+        <div class="hero-info-top">
+          <span class="badge" [class]="statusBadge(partner().status)">{{ partner().status }}</span>
+          <span class="badge" [class.badge-approved]="partner().is_approved" [class.badge-pending]="!partner().is_approved">
+            {{ partner().is_approved ? 'Approved' : 'Pending' }}
+          </span>
+        </div>
+        <div class="header-actions">
+          <a class="btn btn-secondary" [routerLink]="['/delivery-partners/onboard']">
+            <span class="material-icons-outlined">edit</span>
+            Edit
+          </a>
+          <div class="status-select-wrap">
+            <label class="status-select-label" for="partner-status-select">Account Status</label>
+            <select
+              id="partner-status-select"
+              class="status-select"
+              [value]="partnerAccountStatus()"
+              (change)="onAccountStatusChange($event)"
+              [disabled]="actionLoading()"
+              aria-label="Partner account status"
+            >
+              <option value="active">Active</option>
+              <option value="suspended">Suspended</option>
+              <option value="pending">Pending (Not Approved)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+    </header>
+
+    <section class="profile-intel-grid" aria-label="Delivery partner operations summary">
+      <div class="intel-card priority">
+        <div class="intel-icon">
+          <span class="material-icons-outlined">badge</span>
+        </div>
+        <div>
+          <span class="intel-label">Approval</span>
+          <strong>{{ partner().is_approved ? 'Approved' : 'Pending' }}</strong>
+          <small>{{ partnerAccountStatus() | titlecase }} account</small>
+        </div>
+      </div>
+      <div class="intel-card">
+        <div class="intel-icon green">
+          <span class="material-icons-outlined">local_shipping</span>
+        </div>
+        <div>
+          <span class="intel-label">Deliveries</span>
+          <strong>{{ partner().total_deliveries || deliveriesTotal() || 0 }}</strong>
+          <small>Completed assignments</small>
+        </div>
+      </div>
+      <div class="intel-card">
+        <div class="intel-icon warm">
+          <span class="material-icons-outlined">star</span>
+        </div>
+        <div>
+          <span class="intel-label">Rating</span>
+          <strong>{{ partner().average_rating | number: '1.1-1' }}</strong>
+          <small>Customer score</small>
+        </div>
+      </div>
+      <div class="intel-card">
+        <div class="intel-icon slate">
+          <span class="material-icons-outlined">two_wheeler</span>
+        </div>
+        <div>
+          <span class="intel-label">Vehicle</span>
+          <strong>{{ partner().vehicle_type | titlecase }}</strong>
+          <small>{{ partner().vehicle_number || 'Plate missing' }}</small>
+        </div>
+      </div>
+    </section>
 
     <!-- Tab Strip -->
     <div class="tab-strip">
@@ -149,6 +141,35 @@
     @if (activeTab() === 'overview') {
       <div class="tab-content fade-in">
         <div class="info-grid">
+          <div class="profile-action-panel">
+            <h3 class="info-card-title">
+              <span class="material-icons-outlined">rule</span>
+              Compliance Review
+            </h3>
+            <div class="review-list">
+              <div class="review-item" [class.complete]="partner().is_approved">
+                <span class="material-icons-outlined">{{ partner().is_approved ? 'check_circle' : 'pending' }}</span>
+                <div>
+                  <strong>Partner approval</strong>
+                  <small>{{ partner().is_approved ? 'Approved for dispatch' : 'Cannot receive assignments yet' }}</small>
+                </div>
+              </div>
+              <div class="review-item" [class.complete]="partner().license_number">
+                <span class="material-icons-outlined">{{ partner().license_number ? 'check_circle' : 'radio_button_unchecked' }}</span>
+                <div>
+                  <strong>License record</strong>
+                  <small>{{ partner().license_number || 'License number missing' }}</small>
+                </div>
+              </div>
+              <div class="review-item" [class.complete]="partner().vehicle_number">
+                <span class="material-icons-outlined">{{ partner().vehicle_number ? 'check_circle' : 'radio_button_unchecked' }}</span>
+                <div>
+                  <strong>Vehicle identity</strong>
+                  <small>{{ partner().vehicle_number || 'Vehicle plate missing' }}</small>
+                </div>
+              </div>
+            </div>
+          </div>
           <!-- Account Details -->
           <div class="info-card">
             <h3 class="info-card-title">

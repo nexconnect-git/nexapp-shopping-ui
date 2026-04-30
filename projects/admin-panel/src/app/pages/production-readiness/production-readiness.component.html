@@ -1,0 +1,28 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Implementation Roadmap</h1>
+    <p class="page-subtitle">A practical checklist of what is live, what is partial, and what still needs backend or product work.</p>
+  </div>
+</div>
+
+<section class="readiness-summary">
+  <div><strong>{{ counts.done }}</strong><span>Complete</span></div>
+  <div><strong>{{ counts.partial }}</strong><span>In progress</span></div>
+  <div><strong>{{ counts.missing }}</strong><span>Backend/product required</span></div>
+</section>
+
+<section class="readiness-grid">
+  @for (item of items; track item.title) {
+    <article class="readiness-card" [class]="item.status">
+      <div class="status-row">
+        <span>{{ item.area }}</span>
+        <em>{{ item.status }}</em>
+      </div>
+      <h2>{{ item.title }}</h2>
+      <p>{{ item.detail }}</p>
+      @if (item.route) {
+        <a [routerLink]="item.route">Open workspace</a>
+      }
+    </article>
+  }
+</section>

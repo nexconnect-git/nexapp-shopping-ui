@@ -51,6 +51,22 @@
       </div>
     </div>
 
+    @if (lowReviews().length > 0) {
+      <div class="rev-alert">
+        <span class="material-icons-outlined">priority_high</span>
+        <div>
+          <strong>{{ lowReviews().length }} low review{{ lowReviews().length === 1 ? '' : 's' }} need attention</strong>
+          <p>Use the product and order context to follow up from support until review replies are enabled.</p>
+        </div>
+      </div>
+    }
+
+    <div class="rev-filters">
+      <button [class.active]="filter() === 'all'" (click)="setFilter('all')">All</button>
+      <button [class.active]="filter() === 'low'" (click)="setFilter('low')">Low reviews</button>
+      <button [class.active]="filter() === 'recent'" (click)="setFilter('recent')">Recent</button>
+    </div>
+
     <!-- Review list -->
     @if (reviews().length === 0) {
       <div class="rev-empty">
@@ -60,8 +76,8 @@
       </div>
     } @else {
       <div class="rev-list">
-        @for (r of reviews(); track r.id) {
-          <div class="rev-card">
+        @for (r of filteredReviews(); track r.id) {
+          <div class="rev-card" [class.needs-followup]="r.rating <= 3">
             <div class="rev-card-header">
               <div class="rev-avatar">
                 <span class="material-icons-outlined">person</span>
@@ -79,6 +95,12 @@
             @if (r.comment) {
               <p class="rev-comment">{{ r.comment }}</p>
             }
+            <div class="rev-actions">
+              @if (r.product_name) {
+                <span class="rev-context">Product: {{ r.product_name }}</span>
+              }
+              <span class="rev-context">{{ r.rating <= 3 ? 'Reply-ready: support follow-up recommended' : 'No action needed' }}</span>
+            </div>
           </div>
         }
       </div>

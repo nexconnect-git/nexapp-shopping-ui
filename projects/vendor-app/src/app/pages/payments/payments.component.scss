@@ -37,6 +37,16 @@
   .p-0 { padding: 0; }
   .p-4 { padding: 1.5rem; }
 }
+.payout-tabs {
+  display: flex; gap: 0.5rem; overflow-x: auto; padding: 0.9rem 1.5rem;
+  border-bottom: 1px solid var(--border-light); background: var(--surface-hover);
+  button {
+    flex-shrink: 0; border: 1px solid var(--border-color); background: white;
+    color: var(--text-secondary); border-radius: var(--radius-full);
+    padding: 0.45rem 0.85rem; font-weight: 800; cursor: pointer;
+    &.active { background: var(--primary); color: white; border-color: var(--primary); }
+  }
+}
 
 /* ── Table ───────────────────────────────────────────────── */
 .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -167,4 +177,3 @@ small  { font-family: monospace; font-size: 0.8125rem; letter-spacing: 0.05em; }
 @keyframes backdropIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes modalIn { from { opacity: 0; transform: translateY(16px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
 .fade-in { animation: fadeIn 0.35s ease-out; }
-

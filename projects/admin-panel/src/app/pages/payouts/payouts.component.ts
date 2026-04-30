@@ -3,7 +3,7 @@ import { Subscription, timer } from 'rxjs';
 import { CommonModule, DecimalPipe, TitleCasePipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService, AppCurrencyPipe, ToastService } from '@shared/public-api';
-import { DynamicTableComponent, TableCellDirective } from '../../shared/components/dynamic-table/dynamic-table.component';
+import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
 
 @Component({
   selector: 'app-payouts',

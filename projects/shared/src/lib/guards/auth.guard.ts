@@ -5,15 +5,15 @@ import { ApiService } from '../services/api.service';
 import { AuthService } from '../services/auth.service';
 import { AUTH_PREFIX } from '../tokens/auth-prefix.token';
 
-/** Read the portal-scoped token from localStorage. */
+/** Read the portal-scoped token from sessionStorage. */
 function getScopedToken(): string | null {
   const prefix = inject(AUTH_PREFIX);
-  return localStorage.getItem(`${prefix}_access_token`);
+  return sessionStorage.getItem(`${prefix}_access_token`);
 }
 
 function getScopedUser(): any | null {
   const prefix = inject(AUTH_PREFIX);
-  const raw = localStorage.getItem(`${prefix}_user`);
+  const raw = sessionStorage.getItem(`${prefix}_user`);
   if (!raw) return null;
   try { return JSON.parse(raw); } catch { return null; }
 }
@@ -81,8 +81,8 @@ export const approvedVendorGuard: CanActivateFn = () => {
   const api = inject(ApiService);
   const prefix = inject(AUTH_PREFIX);
 
-  const token = localStorage.getItem(`${prefix}_access_token`);
-  const userData = localStorage.getItem(`${prefix}_user`);
+  const token = sessionStorage.getItem(`${prefix}_access_token`);
+  const userData = sessionStorage.getItem(`${prefix}_user`);
 
   if (!token || !userData) {
     router.navigate(['/login']);
@@ -95,13 +95,6 @@ export const approvedVendorGuard: CanActivateFn = () => {
     return false;
   }
 
-  const cached = localStorage.getItem(`${prefix}_vendor_status`);
-  if (cached !== null) {
-    if (cached === 'approved') return true;
-    router.navigate(['/pending-approval']);
-    return false;
-  }
-
   return api.getVendorProfile().pipe(
     map((profile: any) => {
       localStorage.setItem(`${prefix}_vendor_status`, profile.status);
@@ -110,6 +103,7 @@ export const approvedVendorGuard: CanActivateFn = () => {
       return false;
     }),
     catchError(() => {
+      localStorage.removeItem(`${prefix}_vendor_status`);
       router.navigate(['/pending-approval']);
       return of(false);
     })

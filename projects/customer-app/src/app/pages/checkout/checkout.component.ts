@@ -1,9 +1,9 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
-import { CommonModule, TitleCasePipe, SlicePipe } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { CommonModule, TitleCasePipe } from '@angular/common';
+import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { ApiService, AppCurrencyPipe, Cart, Address, ToastService } from '@shared/public-api';
 import { AddressModalComponent } from './address-modal/address-modal.component';
+import { Address, AlertService, ApiService, AppCurrencyPipe, Cart, DeliveryFeePreview } from '@shared/public-api';
 
 declare const Razorpay: any;
 
@@ -18,14 +18,14 @@ interface PaymentMethod {
 @Component({
   selector: 'app-checkout',
   standalone: true,
-  imports: [CommonModule, FormsModule, AppCurrencyPipe, RouterLink, TitleCasePipe, SlicePipe, AddressModalComponent],
+  imports: [CommonModule, FormsModule, AppCurrencyPipe, TitleCasePipe, AddressModalComponent],
   templateUrl: './checkout.component.html',
   styleUrl: './checkout.component.scss'
 })
 export class CheckoutComponent implements OnInit {
   private api = inject(ApiService);
   private router = inject(Router);
-  private toast = inject(ToastService);
+  private alerts = inject(AlertService);
 
   cart = signal<Cart | null>(null);
   addresses = signal<Address[]>([]);
@@ -43,8 +43,9 @@ export class CheckoutComponent implements OnInit {
   couponError = signal('');
   couponLoading = signal(false);
 
-  deliveryFeePreview = signal<any>(null);
+  deliveryFeePreview = signal<DeliveryFeePreview | null>(null);
   deliveryFeeLoading = signal(false);
+  farDeliveryConfirmed = signal(false);
 
   walletBalance = signal<number>(0);
   walletAmountToUse = signal<number>(0);
@@ -121,13 +122,18 @@ export class CheckoutComponent implements OnInit {
 
   selectAddress(id: string) {
     this.selectedAddressId = id;
+    this.farDeliveryConfirmed.set(false);
     this.fetchDeliveryFeePreview(id);
   }
 
   fetchDeliveryFeePreview(addressId: string) {
     this.deliveryFeeLoading.set(true);
     this.api.getDeliveryFeePreview(addressId).subscribe({
-      next: (res) => { this.deliveryFeePreview.set(res); this.deliveryFeeLoading.set(false); },
+      next: (res) => {
+        this.deliveryFeePreview.set(res);
+        this.farDeliveryConfirmed.set(false);
+        this.deliveryFeeLoading.set(false);
+      },
       error: () => this.deliveryFeeLoading.set(false),
     });
   }
@@ -178,6 +184,13 @@ export class CheckoutComponent implements OnInit {
 
   placeOrder() {
     if (!this.selectedAddressId) return;
+    if (this.requiresFarDeliveryConfirmation() && !this.farDeliveryConfirmed()) {
+      this.openFarDeliveryConfirmation(() => {
+        this.farDeliveryConfirmed.set(true);
+        this.placeOrder();
+      });
+      return;
+    }
     this.placingOrder.set(true);
     this.orderError.set('');
 
@@ -187,6 +200,7 @@ export class CheckoutComponent implements OnInit {
         delivery_address_id: this.selectedAddressId,
         coupon_code: this.appliedCoupon()?.code,
         wallet_amount: this.walletAmountToUse() || undefined,
+        confirm_far_delivery: this.farDeliveryConfirmed(),
       }).subscribe({
         next: (rzData) => {
           this.pendingRzOrderId = rzData.razorpay_order_id;
@@ -194,7 +208,7 @@ export class CheckoutComponent implements OnInit {
           this.pendingRzCurrency = rzData.currency;
           this.openRazorpayModal(rzData);
         },
-        error: (err) => this.handleOrderError(err.error?.error || 'Could not initiate payment.'),
+        error: (err) => this.handleApiOrderError(err),
       });
     } else {
       // COD or wallet-fully-covered
@@ -241,27 +255,23 @@ export class CheckoutComponent implements OnInit {
 
   retryPayment() {
     this.showPaymentFailedDialog.set(false);
-    if (!this.pendingRzOrderId) { this.placeOrder(); return; }
-    // Re-open Razorpay with the same order (no need to call initiate again)
-    this.openRazorpayModal({
-      key_id: '',  // will be fetched below
-      razorpay_order_id: this.pendingRzOrderId,
-      amount: this.pendingRzAmount,
-      currency: this.pendingRzCurrency,
-    });
-    // Re-initiate to get key_id (needed by Razorpay SDK)
+    if (!this.selectedAddressId) {
+      this.handleOrderError('Choose a delivery address before retrying payment.');
+      return;
+    }
     this.placingOrder.set(true);
     this.api.initiateCheckoutPayment({
-      delivery_address_id: this.selectedAddressId!,
+      delivery_address_id: this.selectedAddressId,
       coupon_code: this.appliedCoupon()?.code,
       wallet_amount: this.walletAmountToUse() || undefined,
+      confirm_far_delivery: this.farDeliveryConfirmed(),
     }).subscribe({
       next: (rzData) => {
         this.pendingRzOrderId = rzData.razorpay_order_id;
         this.pendingRzAmount = rzData.amount;
         this.openRazorpayModal(rzData);
       },
-      error: (err) => this.handleOrderError(err.error?.error || 'Could not initiate payment.'),
+      error: (err) => this.handleApiOrderError(err),
     });
   }
 
@@ -286,6 +296,7 @@ export class CheckoutComponent implements OnInit {
     if (this.walletAmountToUse() > 0) orderData.wallet_amount = this.walletAmountToUse();
     if (this.useLoyalty() && this.loyaltyMaxRedeemable() > 0) orderData.loyalty_points = this.loyaltyMaxRedeemable();
     if (this.scheduledFor()) orderData.scheduled_for = this.scheduledFor();
+    if (this.farDeliveryConfirmed()) orderData.confirm_far_delivery = true;
     if (paymentProof) Object.assign(orderData, paymentProof);
 
     this.api.createOrder(orderData).subscribe({
@@ -294,19 +305,59 @@ export class CheckoutComponent implements OnInit {
         const orderId = Array.isArray(orders) ? orders[0]?.id : orders?.id;
         if (!orderId) { this.handleOrderError('Order created but ID missing.'); return; }
         if (!paymentProof && this.selectedPayment === 'razorpay') {
-          this.toast.show('Order placed. Complete payment from Order Details.', 'info');
+          this.alerts.info('Order placed. Complete payment from Order Details.');
         }
         setTimeout(() => this.router.navigate(['/order', orderId]), 300);
       },
-      error: (err) => {
-        this.handleOrderError(err.error?.detail || err.error?.non_field_errors?.[0] || 'Could not place order.');
-      }
+      error: (err) => this.handleApiOrderError(err),
     });
   }
 
   private handleOrderError(msg: string) {
     this.orderError.set(msg);
     this.placingOrder.set(false);
+  }
+
+  private handleApiOrderError(err: any) {
+    if (err?.status === 409 && err.error?.code === 'far_delivery_confirmation_required') {
+      this.placingOrder.set(false);
+      this.openFarDeliveryConfirmation(() => {
+        this.farDeliveryConfirmed.set(true);
+        this.placeOrder();
+      }, err.error?.quotes || []);
+      return;
+    }
+    if (err?.status === 400 && err?.error?.code === 'delivery_not_serviceable' && err?.error?.details) {
+      const details = err.error.details;
+      const detailedMessage =
+        `${details.vendor_name} cannot deliver to your selected address. ` +
+        `Store state: ${details.vendor_state || 'Unknown'} · Selected address state: ${details.address_state || 'Unknown'}.`;
+      this.handleOrderError(detailedMessage);
+      return;
+    }
+    this.handleOrderError(err?.error?.error || err?.error?.detail || err?.error?.non_field_errors?.[0] || 'Could not place order.');
+  }
+
+  requiresFarDeliveryConfirmation(): boolean {
+    return !!this.deliveryFeePreview()?.requires_far_delivery_confirmation;
+  }
+
+  private openFarDeliveryConfirmation(onConfirm: () => void, quotes?: any[]) {
+    const farQuotes = quotes?.length ? quotes : this.deliveryFeePreview()?.far_delivery_quotes || [];
+    const message = farQuotes.map((quote: any) => (
+      `${quote.vendor_name}: ${quote.distance_km} km away · ETA ${quote.far_order_eta_label || quote.estimated_delivery_label} · ${quote.vehicle_type}`
+    )).join('\n');
+    this.alerts.openModal({
+      title: 'This order is from farther away',
+      message: `${message}\n\nDelivery will take longer than your normal 10 km instant radius. Do you still want to continue?`,
+      tone: 'warning',
+      confirmLabel: 'Continue order',
+      cancelLabel: 'Review basket',
+      onConfirm,
+      onCancel: () => {
+        this.placingOrder.set(false);
+      },
+    });
   }
 
   readonly Math = Math;

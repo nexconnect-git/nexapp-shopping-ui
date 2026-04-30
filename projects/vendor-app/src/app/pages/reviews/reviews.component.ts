@@ -19,6 +19,7 @@ export class ReviewsComponent implements OnInit {
   reviews = signal<any[]>([]);
   averageRating = signal(0);
   totalReviews = signal(0);
+  filter = signal<'all' | 'low' | 'recent'>('all');
 
   readonly stars = [1, 2, 3, 4, 5];
 
@@ -29,6 +30,17 @@ export class ReviewsComponent implements OnInit {
       if (idx >= 0 && idx < 5) counts[idx]++;
     }
     return counts.reverse(); // [5-star, 4-star, ..., 1-star]
+  });
+
+  lowReviews = computed(() => this.reviews().filter(r => Number(r.rating) <= 3));
+
+  filteredReviews = computed(() => {
+    const list = [...this.reviews()];
+    if (this.filter() === 'low') return list.filter(r => Number(r.rating) <= 3);
+    if (this.filter() === 'recent') {
+      return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 10);
+    }
+    return list;
   });
 
   ngOnInit() {
@@ -55,6 +67,10 @@ export class ReviewsComponent implements OnInit {
 
   starsArray(n: number): number[] {
     return Array.from({ length: Math.min(5, Math.max(0, Math.round(n))) });
+  }
+
+  setFilter(filter: 'all' | 'low' | 'recent') {
+    this.filter.set(filter);
   }
 
   goBack() { window.history.back(); }

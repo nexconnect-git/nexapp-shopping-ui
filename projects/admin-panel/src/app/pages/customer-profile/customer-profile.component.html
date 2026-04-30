@@ -1,46 +1,16 @@
 <div class="customer-profile-page">
 
-  <!-- Breadcrumb -->
-  <nav class="breadcrumb">
-    <a routerLink="/customers" class="breadcrumb-link">
-      <span class="material-icons-outlined">arrow_back</span>
-      Customers
-    </a>
-    @if (!loading() && customer()) {
-      <span class="breadcrumb-sep">/</span>
-      <span class="breadcrumb-current">{{ customer().first_name }} {{ customer().last_name || customer().username }}</span>
-    }
-  </nav>
-
   @if (loading()) {
     <div class="loading-state"><div class="spinner"></div><p>Loading customer…</p></div>
   }
 
   @if (!loading() && customer()) {
 
-    <!-- Page Header -->
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">{{ customer().first_name }} {{ customer().last_name }}</h1>
-        <p class="page-subtitle">&#64;{{ customer().username }} &bull; Customer since {{ customer().date_joined | date: 'MMM y' }}</p>
-      </div>
-      <div class="header-actions">
-        <button class="btn btn-secondary" (click)="openEdit()">
-          <span class="material-icons-outlined">edit</span>
-          Edit
-        </button>
-        <button class="btn btn-danger-outline" (click)="deleteCustomer()">
-          <span class="material-icons-outlined">delete_outline</span>
-          Delete
-        </button>
-      </div>
-    </div>
-
-    <!-- Hero Card -->
-    <div class="profile-hero-card">
-      <div class="hero-banner"></div>
-      <div class="hero-body">
-        <div class="hero-avatar-wrap">
+    <!-- Profile Header -->
+    <header class="profile-hero-card">
+      <div class="hero-banner">
+        <div class="hero-overlay"></div>
+        <div class="hero-identity">
           <div class="hero-avatar" [style.background]="customer().avatar ? 'transparent' : avatarColor(customer().username)">
             @if (customer().avatar) {
               <img [src]="customer().avatar" alt="avatar">
@@ -48,39 +18,79 @@
               {{ initials(customer()) }}
             }
           </div>
-        </div>
-
-        <div class="hero-info">
-          <div class="hero-info-top">
-            <span class="badge" [class.badge-approved]="customer().is_verified" [class.badge-pending]="!customer().is_verified">
-              {{ customer().is_verified ? 'Verified' : 'Unverified' }}
-            </span>
-            <span class="badge" [class.badge-approved]="customer().is_active !== false" [class.badge-rejected]="customer().is_active === false">
-              {{ customer().is_active !== false ? 'Active' : 'Suspended' }}
-            </span>
-            <span class="role-badge">Customer</span>
-          </div>
-          <div class="hero-meta-row">
-            @if (customer().email) {
-              <span class="hero-meta-item">
-                <span class="material-icons-outlined">mail</span>
-                {{ customer().email }}
-              </span>
-            }
-            @if (customer().phone) {
-              <span class="hero-meta-item">
-                <span class="material-icons-outlined">phone</span>
-                {{ customer().phone }}
-              </span>
-            }
-            <span class="hero-meta-item">
-              <span class="material-icons-outlined">calendar_today</span>
-              Joined {{ customer().date_joined | date: 'MMM d, y' }}
-            </span>
+          <div class="hero-title-block">
+            <h1>{{ customer().first_name }} {{ customer().last_name }}</h1>
+            <p>&#64;{{ customer().username }} &bull; Customer since {{ customer().date_joined | date: 'MMM y' }}</p>
           </div>
         </div>
       </div>
-    </div>
+
+      <div class="hero-action-bar">
+        <div class="hero-info-top">
+          <span class="badge" [class.badge-approved]="customer().is_verified" [class.badge-pending]="!customer().is_verified">
+            {{ customer().is_verified ? 'Verified' : 'Unverified' }}
+          </span>
+          <span class="badge" [class.badge-approved]="customer().is_active !== false" [class.badge-rejected]="customer().is_active === false">
+            {{ customer().is_active !== false ? 'Active' : 'Suspended' }}
+          </span>
+          <span class="role-badge">Customer</span>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-secondary" (click)="openEdit()">
+            <span class="material-icons-outlined">edit</span>
+            Edit
+          </button>
+          <button class="btn btn-danger-outline" (click)="deleteCustomer()">
+            <span class="material-icons-outlined">delete_outline</span>
+            Delete
+          </button>
+        </div>
+      </div>
+
+    </header>
+
+    <section class="profile-intel-grid" aria-label="Customer operations summary">
+      <div class="intel-card priority">
+        <div class="intel-icon">
+          <span class="material-icons-outlined">verified_user</span>
+        </div>
+        <div>
+          <span class="intel-label">Account Health</span>
+          <strong>{{ customer().is_active !== false && customer().is_verified ? 'Clear' : 'Review' }}</strong>
+          <small>{{ customer().is_active === false ? 'Account suspended' : (customer().is_verified ? 'Verified customer' : 'Verification pending') }}</small>
+        </div>
+      </div>
+      <div class="intel-card">
+        <div class="intel-icon warm">
+          <span class="material-icons-outlined">shopping_bag</span>
+        </div>
+        <div>
+          <span class="intel-label">Orders</span>
+          <strong>{{ customer().total_orders || customer().orders_count || ordersTotal() || 0 }}</strong>
+          <small>Linked purchase history</small>
+        </div>
+      </div>
+      <div class="intel-card">
+        <div class="intel-icon green">
+          <span class="material-icons-outlined">stars</span>
+        </div>
+        <div>
+          <span class="intel-label">Loyalty</span>
+          <strong>{{ loyaltyBalance() | number }}</strong>
+          <small>Current points balance</small>
+        </div>
+      </div>
+      <div class="intel-card">
+        <div class="intel-icon slate">
+          <span class="material-icons-outlined">alternate_email</span>
+        </div>
+        <div>
+          <span class="intel-label">Contactability</span>
+          <strong>{{ customer().email && customer().phone ? 'Complete' : 'Partial' }}</strong>
+          <small>{{ customer().email || customer().phone || 'No contact channel' }}</small>
+        </div>
+      </div>
+    </section>
 
     <!-- Tab Strip -->
     <div class="tab-strip">
@@ -102,6 +112,35 @@
     @if (activeTab() === 'overview') {
       <div class="tab-content fade-in">
         <div class="info-grid">
+          <div class="profile-action-panel">
+            <h3 class="info-card-title">
+              <span class="material-icons-outlined">rule</span>
+              Review Queue
+            </h3>
+            <div class="review-list">
+              <div class="review-item" [class.complete]="customer().is_verified">
+                <span class="material-icons-outlined">{{ customer().is_verified ? 'check_circle' : 'radio_button_unchecked' }}</span>
+                <div>
+                  <strong>Email verification</strong>
+                  <small>{{ customer().is_verified ? 'Verified and ready for campaigns' : 'Ask customer to verify before sensitive actions' }}</small>
+                </div>
+              </div>
+              <div class="review-item" [class.complete]="customer().is_active !== false">
+                <span class="material-icons-outlined">{{ customer().is_active !== false ? 'check_circle' : 'warning' }}</span>
+                <div>
+                  <strong>Account access</strong>
+                  <small>{{ customer().is_active !== false ? 'Can place orders and receive notifications' : 'Suspended from ordering' }}</small>
+                </div>
+              </div>
+              <div class="review-item" [class.complete]="customer().phone">
+                <span class="material-icons-outlined">{{ customer().phone ? 'check_circle' : 'radio_button_unchecked' }}</span>
+                <div>
+                  <strong>Phone on file</strong>
+                  <small>{{ customer().phone || 'Missing phone number' }}</small>
+                </div>
+              </div>
+            </div>
+          </div>
           <div class="info-card">
             <h3 class="info-card-title">
               <span class="material-icons-outlined">person</span>

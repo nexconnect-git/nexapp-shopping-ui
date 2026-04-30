@@ -1,7 +1,7 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
-import { ApiService, AppCurrencyPipe, ToastService } from '@shared/public-api';
+import { AlertService, ApiService, AppCurrencyPipe } from '@shared/public-api';
 
 @Component({
   selector: 'app-wishlist',
@@ -13,12 +13,16 @@ import { ApiService, AppCurrencyPipe, ToastService } from '@shared/public-api';
 export class WishlistComponent implements OnInit {
   private api = inject(ApiService);
   private router = inject(Router);
-  private toast = inject(ToastService);
+  private alerts = inject(AlertService);
 
   products = signal<any[]>([]);
   loading = signal(true);
   removingId = signal('');
   addingId = signal('');
+
+  availableCount() {
+    return this.products().filter((product) => product.status !== 'sold_out').length;
+  }
 
   ngOnInit() {
     this.api.getWishlist().subscribe({
@@ -43,11 +47,11 @@ export class WishlistComponent implements OnInit {
     this.api.addToCart(product.id, 1).subscribe({
       next: () => {
         this.api.refreshCartCount();
-        this.toast.show(`${product.name} added to cart`, 'success');
+        this.alerts.success(`${product.name} added to cart`);
         this.addingId.set('');
       },
       error: () => {
-        this.toast.show('Could not add to cart.', 'error');
+        this.alerts.error('Could not add to cart.');
         this.addingId.set('');
       },
     });

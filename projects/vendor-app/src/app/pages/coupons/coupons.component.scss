@@ -31,6 +31,37 @@
   &.error   { background: var(--danger-light); color: #991b1b; border: 1px solid rgba(220,38,38,0.25); }
 }
 
+.cp-growth-summary {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1rem;
+}
+.cp-presets {
+  display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.75rem; margin-bottom: 0.75rem;
+  button {
+    display: inline-flex; align-items: center; gap: 0.4rem; flex-shrink: 0;
+    border: 1px solid var(--border-color); background: white; color: var(--text-primary);
+    border-radius: var(--radius-md); padding: 0.65rem 0.9rem; font-weight: 800; cursor: pointer;
+    .material-icons-outlined { font-size: 17px; color: var(--primary); }
+    &:hover { border-color: rgba(108,99,255,0.35); background: var(--primary-light); color: var(--primary); }
+  }
+}
+.cp-summary-item {
+  display: flex; align-items: center; gap: 0.75rem; background: white;
+  border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1rem;
+  .material-icons-outlined { color: var(--primary); font-size: 22px; }
+  strong { font-size: 1.2rem; color: var(--text-primary); }
+  span:last-child { color: var(--text-muted); font-weight: 700; font-size: 0.8rem; text-transform: uppercase; }
+  &.warn { border-color: rgba(245,158,11,0.35); background: var(--warning-light); }
+}
+
+.cp-filter-row {
+  display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.25rem;
+  button {
+    border: 1px solid var(--border-color); background: white; color: var(--text-secondary);
+    border-radius: var(--radius-full); padding: 0.45rem 0.85rem; font-weight: 800; cursor: pointer;
+    &.active { background: var(--primary); color: white; border-color: var(--primary); }
+  }
+}
+
 /* ── Loading ──────────────────────────────────────────── */
 .cp-loading {
   display: flex; justify-content: center; padding: 5rem 0;
@@ -106,9 +137,16 @@
   .material-icons-outlined { font-size: 15px; }
 }
 
+.cp-health {
+  display: flex; align-items: center; gap: 0.4rem; padding: 0.65rem 1.25rem;
+  background: var(--warning-light); color: #92400e; font-size: 0.8rem; font-weight: 700;
+  border-bottom: 1px solid rgba(245,158,11,0.2);
+  .material-icons-outlined { font-size: 16px; }
+}
+
 /* Actions */
 .cp-card-actions {
-  display: flex; gap: 0.5rem; padding: 0.875rem 1.25rem;
+  display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.875rem 1.25rem;
 }
 
 .cp-edit-btn, .cp-del-btn {

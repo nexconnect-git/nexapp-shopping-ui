@@ -1,5 +1,31 @@
 :host { display: block; padding-bottom: 3rem; }
 
+.issues-page {
+  .page-header {
+    align-items: center;
+    margin-bottom: 1.25rem;
+  }
+
+  .header-filters {
+    display: grid;
+    grid-template-columns: minmax(240px, 1fr) minmax(150px, 180px) minmax(150px, 180px);
+    width: min(720px, 100%);
+  }
+
+  .search-input,
+  .filter-select {
+    border-radius: 8px;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 860px) {
+  .issues-page .header-filters {
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+}
+
 /* ── Header ───────────────────────────────────────── */
 .page-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
 .page-title { font-size: 2rem; font-weight: 900; color: var(--text-primary); margin: 0 0 0.25rem; letter-spacing: -0.03em; }

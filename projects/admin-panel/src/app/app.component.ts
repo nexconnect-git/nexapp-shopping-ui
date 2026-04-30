@@ -1,6 +1,7 @@
 import { Component, signal, inject, OnInit, HostListener } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
+import { NavigationEnd, RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { filter } from 'rxjs';
 import { AuthService, ApiService, ToastComponent, NotificationPollingService } from '@shared/public-api';
 
 @Component({
@@ -23,34 +24,112 @@ export class AppComponent implements OnInit {
   notifications = signal<any[]>([]);
   notifLoading = signal(false);
   unreadCount = signal(0);
+  breadcrumbs = signal<Array<{ label: string; url?: string }>>([]);
 
-  get navItems() {
-    const items = [
-      { route: '/', icon: 'dashboard', label: 'Dashboard' },
-      { route: '/vendors', icon: 'storefront', label: 'Vendors' },
-      { route: '/customers', icon: 'people', label: 'Customers' },
-      { route: '/delivery-partners', icon: 'local_shipping', label: 'Delivery Partners' },
-      { route: '/categories', icon: 'category', label: 'Categories' },
-      { route: '/assets', icon: 'handyman', label: 'Assets' },
-      { route: '/payouts', icon: 'payments', label: 'Payouts' },
-      { route: '/payments', icon: 'receipt_long', label: 'Payments' },
-      { route: '/issues', icon: 'report_problem', label: 'Order Issues' },
-      { route: '/coupons', icon: 'confirmation_number', label: 'Coupons' },
-      { route: '/scheduled-tasks', icon: 'schedule_send', label: 'Scheduled Tasks' },
-      { route: '/notifications', icon: 'notifications', label: 'Notifications' },
+  get navSections() {
+    const operations = [
+      { route: '/', icon: 'speed', label: 'Command Center' },
+      { route: '/orders', icon: 'receipt_long', label: 'Live Orders' },
+      { route: '/dispatch', icon: 'route', label: 'Dispatch Board' },
+      { route: '/delivery-partners', icon: 'two_wheeler', label: 'Dispatch Fleet' },
+      { route: '/issues', icon: 'support_agent', label: 'Exceptions' },
     ];
-    
+
+    const marketplace = [
+      { route: '/vendors', icon: 'storefront', label: 'Stores' },
+      { route: '/catalog', icon: 'inventory_2', label: 'Master Catalog' },
+      { route: '/catalog-requests', icon: 'playlist_add_check', label: 'Catalog Requests' },
+      { route: '/vendor-variant-approvals', icon: 'rule', label: 'Product Approvals' },
+      { route: '/products', icon: 'store', label: 'Vendor Products' },
+      { route: '/categories', icon: 'category', label: 'Categories' },
+      { route: '/customers', icon: 'groups', label: 'Customers' },
+    ];
+
+    const growth = [
+      { route: '/coupons', icon: 'local_activity', label: 'Promotions' },
+      { route: '/notifications', icon: 'campaign', label: 'Notifications' },
+      { route: '/assets', icon: 'handyman', label: 'Assets' },
+    ];
+
+    const finance = [
+      { route: '/payments', icon: 'credit_card', label: 'Payments' },
+      { route: '/payouts', icon: 'account_balance_wallet', label: 'Payouts' },
+      { route: '/reconciliation', icon: 'fact_check', label: 'Reconciliation' },
+      { route: '/scheduled-tasks', icon: 'event_repeat', label: 'Automation' },
+    ];
+
+    const access = [
+      { route: '/platform-settings', icon: 'tune', label: 'Platform Settings' },
+      { route: '/audit-logs', icon: 'manage_search', label: 'Audit Logs' },
+      { route: '/production-readiness', icon: 'verified', label: 'Readiness' },
+    ];
     if (this.auth.isSuperUser()) {
-      items.push({ route: '/admin-users', icon: 'admin_panel_settings', label: 'Admin Management' });
+      access.push({ route: '/admin-users', icon: 'admin_panel_settings', label: 'Admin Access' });
     }
-    
-    return items;
+
+    return [
+      { label: 'Operate', items: operations },
+      { label: 'Marketplace', items: marketplace },
+      { label: 'Growth', items: growth },
+      { label: 'Money', items: finance },
+      ...(access.length ? [{ label: 'Govern', items: access }] : []),
+    ];
   }
 
   ngOnInit() {
     if (this.auth.isLoggedIn()) {
       this.startPolling();
     }
+    this.setBreadcrumbs(this.router.url);
+    this.router.events.pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd)).subscribe((event) => {
+      this.setBreadcrumbs(event.urlAfterRedirects);
+    });
+  }
+
+  private setBreadcrumbs(url: string) {
+    const cleanUrl = url.split('?')[0].split('#')[0];
+    const parts = cleanUrl.split('/').filter(Boolean);
+    const crumbs: Array<{ label: string; url?: string }> = [{ label: 'Command Center', url: '/' }];
+    const labels: Record<string, string> = {
+      orders: 'Live Orders',
+      dispatch: 'Dispatch Board',
+      'delivery-partners': 'Dispatch Fleet',
+      issues: 'Exceptions',
+      vendors: 'Stores',
+      products: 'Vendor Products',
+      catalog: 'Master Catalog',
+      'catalog-requests': 'Catalog Requests',
+      'vendor-variant-approvals': 'Product Approvals',
+      categories: 'Categories',
+      customers: 'Customers',
+      coupons: 'Promotions',
+      notifications: 'Notifications',
+      assets: 'Assets',
+      payments: 'Payments',
+      payouts: 'Payouts',
+      reconciliation: 'Reconciliation',
+      'scheduled-tasks': 'Automation',
+      'platform-settings': 'Platform Settings',
+      'audit-logs': 'Audit Logs',
+      'production-readiness': 'Implementation Roadmap',
+      'admin-users': 'Admin Access',
+      onboard: 'Onboarding',
+      edit: 'Edit',
+    };
+
+    let currentUrl = '';
+    parts.forEach((part, index) => {
+      currentUrl += `/${part}`;
+      const isId = /^[0-9a-f-]{20,}$/i.test(part) || (index > 0 && !labels[part]);
+      const label = isId ? 'Profile' : (labels[part] || this.titleCase(part));
+      crumbs.push({ label, url: index === parts.length - 1 ? undefined : currentUrl });
+    });
+
+    this.breadcrumbs.set(parts.length ? crumbs : [{ label: 'Command Center' }]);
+  }
+
+  private titleCase(value: string): string {
+    return value.replace(/-/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
   }
 
   private startPolling() {
@@ -116,6 +195,10 @@ export class AppComponent implements OnInit {
   }
 
   toggleSidebar() {
+    if (window.innerWidth <= 1024) {
+      this.mobileMenuOpen.update(v => !v);
+      return;
+    }
     this.sidebarCollapsed.update(v => !v);
   }
 

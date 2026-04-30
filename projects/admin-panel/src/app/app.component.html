@@ -1,32 +1,50 @@
 @if (auth.isLoggedIn()) {
-  <div class="admin-layout" [class.sidebar-collapsed]="sidebarCollapsed()">
-    <!-- Sidebar -->
+  <div class="admin-layout" [class.sidebar-collapsed]="sidebarCollapsed()" [class.sidebar-open]="mobileMenuOpen()">
     <aside class="sidebar">
       <div class="sidebar-header">
         <div class="brand">
-          <span class="brand-icon">N</span>
+          <span class="brand-icon">NX</span>
           @if (!sidebarCollapsed()) {
-            <span class="brand-text">NexConnect</span>
+            <span class="brand-text">
+              NexConnect
+              <small>Instant commerce ops</small>
+            </span>
           }
         </div>
-        <button class="toggle-btn" (click)="toggleSidebar()">
+        <button class="toggle-btn" (click)="toggleSidebar()" title="Toggle navigation">
           <span class="material-icons-outlined">{{ sidebarCollapsed() ? 'chevron_right' : 'chevron_left' }}</span>
         </button>
       </div>
 
       <nav class="sidebar-nav">
-        @for (item of navItems; track item.route) {
-          <a class="menu-item" [routerLink]="item.route" routerLinkActive="active"
-            [routerLinkActiveOptions]="{exact: item.route === '/'}">
-            <span class="material-icons-outlined">{{ item.icon }}</span>
+        @for (section of navSections; track section.label) {
+          <div class="nav-section">
             @if (!sidebarCollapsed()) {
-              <span class="nav-label">{{ item.label }}</span>
+              <span class="nav-section-label">{{ section.label }}</span>
             }
-          </a>
+            @for (item of section.items; track item.route) {
+              <a class="menu-item" [routerLink]="item.route" routerLinkActive="active"
+                [routerLinkActiveOptions]="{exact: item.route === '/'}" (click)="mobileMenuOpen.set(false)">
+                <span class="material-icons-outlined">{{ item.icon }}</span>
+                @if (!sidebarCollapsed()) {
+                  <span class="nav-label">{{ item.label }}</span>
+                }
+              </a>
+            }
+          </div>
         }
       </nav>
 
       <div class="sidebar-footer">
+        @if (!sidebarCollapsed()) {
+          <div class="ops-status">
+            <span class="status-dot"></span>
+            <div>
+              <strong>Ops console</strong>
+              <span>Live monitoring enabled</span>
+            </div>
+          </div>
+        }
         <button class="menu-item logout-btn" (click)="logout()">
           <span class="material-icons-outlined">logout</span>
           @if (!sidebarCollapsed()) {
@@ -36,9 +54,7 @@
       </div>
     </aside>
 
-    <!-- Main Content -->
     <div class="main-wrapper">
-      <!-- Top Bar -->
       <header class="top-bar">
         <button class="mobile-toggle" (click)="toggleSidebar()">
           <span class="material-icons-outlined">menu</span>
@@ -46,12 +62,10 @@
 
         <div class="search-box">
           <span class="material-icons-outlined">search</span>
-          <input type="text" placeholder="Search..." />
+          <input type="text" placeholder="Search orders, stores, customers..." />
         </div>
 
         <div class="top-bar-actions">
-
-          <!-- Notification Bell -->
           <div class="notif-wrapper" (click)="$event.stopPropagation()">
             <button class="btn-icon notification-btn" (click)="toggleNotif($event)" title="Notifications">
               <span class="material-icons-outlined">notifications</span>
@@ -131,14 +145,26 @@
         </div>
       </header>
 
-      <!-- Page Content -->
       <main class="main-content">
+        @if (breadcrumbs().length > 1) {
+          <nav class="global-breadcrumbs" aria-label="Breadcrumb">
+            @for (crumb of breadcrumbs(); track crumb.label + ($index || 0)) {
+              @if (crumb.url && $index < breadcrumbs().length - 1) {
+                <a [routerLink]="crumb.url">{{ crumb.label }}</a>
+              } @else {
+                <span>{{ crumb.label }}</span>
+              }
+              @if ($index < breadcrumbs().length - 1) {
+                <span class="material-icons-outlined">chevron_right</span>
+              }
+            }
+          </nav>
+        }
         <router-outlet />
       </main>
     </div>
   </div>
 
-  <!-- Mobile overlay -->
   @if (mobileMenuOpen()) {
     <div class="mobile-overlay" (click)="toggleSidebar()"></div>
   }

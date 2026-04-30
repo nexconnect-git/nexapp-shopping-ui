@@ -1,249 +1,170 @@
 @if (loading()) {
-  <div class="pf-loading"><div class="pf-spinner"></div></div>
-}
-
-@if (!loading()) {
-
-  <!-- ════════════════════════════════════
-       VIEW MODE
-  ════════════════════════════════════ -->
+  <div class="profile-loading"><div class="profile-spinner"></div></div>
+} @else {
   @if (!isEditing) {
-    <div class="pf-wrap">
-
-      <!-- User Header -->
-      <div class="pf-header">
-        <div class="pf-avatar-wrap">
-          <div class="pf-avatar" (click)="avatarInput.click()">
+    <section class="profile-page">
+      <div class="profile-hero">
+        <div class="profile-identity">
+          <div class="profile-avatar" (click)="avatarInput.click()">
             @if (avatarPreview()) {
               <img [src]="avatarPreview()" alt="avatar">
             } @else {
-              <span class="pf-initials">{{ initials() }}</span>
+              <span>{{ initials() }}</span>
             }
             @if (avatarUploading()) {
-              <div class="pf-avatar-overlay"><div class="pf-avatar-spinner"></div></div>
+              <div class="avatar-overlay"><div class="profile-spinner small"></div></div>
             }
           </div>
           <input #avatarInput type="file" accept="image/*" hidden (change)="onAvatarChange($event)">
-        </div>
-
-        <div class="pf-user-info">
-          <h2 class="pf-name">{{ form.first_name || form.username }} {{ form.last_name }}</h2>
-          @if (form.phone) {
-            <p class="pf-contact">{{ form.phone }}</p>
-          }
-          @if (form.email) {
-            <p class="pf-contact">{{ form.email }}</p>
-          }
-        </div>
-
-        <button class="pf-edit-btn" (click)="isEditing = true">EDIT</button>
-      </div>
-
-      <!-- Membership Banner -->
-      <div class="pf-membership">
-        <div class="pf-membership-inner">
-          <div class="pf-membership-icon">
-            <span class="material-icons-outlined">bolt</span>
-          </div>
-          <div class="pf-membership-text">
-            <span class="pf-mem-title">NexConnect Member</span>
-            <span class="pf-mem-sub">Enjoy exclusive deals and fast delivery</span>
-          </div>
-          <span class="pf-mem-badge">ACTIVE</span>
-        </div>
-        @if (loyaltyPoints() > 0) {
-          <div class="pf-loyalty-row">
-            <span class="material-icons-outlined">stars</span>
-            <span>{{ loyaltyPoints() }} loyalty points</span>
-            <span class="pf-loyalty-value">≈ ₹{{ (loyaltyPoints() * 0.25).toFixed(2) }}</span>
-          </div>
-        }
-      </div>
-
-      <!-- Menu Items -->
-      <div class="pf-menu">
-        <a routerLink="/profile/orders" class="pf-menu-item">
-          <span class="material-icons-outlined pf-mi-icon">receipt_long</span>
-          <div class="pf-mi-text">
-            <span class="pf-mi-label">My Orders</span>
-            <span class="pf-mi-sub">Track and manage your orders</span>
-          </div>
-          <span class="material-icons-outlined pf-mi-arrow">chevron_right</span>
-        </a>
-
-        <a routerLink="/my-issues" class="pf-menu-item">
-          <span class="material-icons-outlined pf-mi-icon">report_problem</span>
-          <div class="pf-mi-text">
-            <span class="pf-mi-label">My Issues</span>
-            <span class="pf-mi-sub">Returns, refunds, damage reports</span>
-          </div>
-          <span class="material-icons-outlined pf-mi-arrow">chevron_right</span>
-        </a>
-
-        <a routerLink="/wallet" class="pf-menu-item">
-          <span class="material-icons-outlined pf-mi-icon">account_balance_wallet</span>
-          <div class="pf-mi-text">
-            <span class="pf-mi-label">My Wallet</span>
-            <span class="pf-mi-sub">Balance, top-up and transaction history</span>
-          </div>
-          <span class="material-icons-outlined pf-mi-arrow">chevron_right</span>
-        </a>
-
-        <a routerLink="/addresses" class="pf-menu-item">
-          <span class="material-icons-outlined pf-mi-icon">location_on</span>
-          <div class="pf-mi-text">
-            <span class="pf-mi-label">Manage Addresses</span>
-            <span class="pf-mi-sub">Add or edit delivery addresses</span>
-          </div>
-          <span class="material-icons-outlined pf-mi-arrow">chevron_right</span>
-        </a>
-
-        <button class="pf-menu-item" (click)="isEditing = true">
-          <span class="material-icons-outlined pf-mi-icon">person</span>
-          <div class="pf-mi-text">
-            <span class="pf-mi-label">Account Details</span>
-            <span class="pf-mi-sub">Name, Email, Phone</span>
-          </div>
-          <span class="material-icons-outlined pf-mi-arrow">chevron_right</span>
-        </button>
-
-        <div class="pf-menu-divider"></div>
-
-        <!-- Appearance -->
-        <div class="pf-appearance">
-          <div class="pf-appearance-header">
-            <span class="material-icons-outlined">palette</span>
-            Appearance
-          </div>
-          <nx-palette-picker />
-        </div>
-
-        <div class="pf-menu-divider"></div>
-
-        <button class="pf-menu-item">
-          <span class="material-icons-outlined pf-mi-icon">help_outline</span>
-          <div class="pf-mi-text">
-            <span class="pf-mi-label">Help & Support</span>
-            <span class="pf-mi-sub">FAQs & Contact us</span>
-          </div>
-          <span class="material-icons-outlined pf-mi-arrow">chevron_right</span>
-        </button>
-
-        <div class="pf-menu-divider"></div>
-
-        <button class="pf-menu-item pf-logout" (click)="logout()">
-          <span class="material-icons-outlined pf-mi-icon">logout</span>
-          <div class="pf-mi-text">
-            <span class="pf-mi-label">Sign Out</span>
-          </div>
-        </button>
-      </div>
-
-      <!-- Past Orders -->
-      @if (recentOrders().length > 0) {
-        <div class="pf-orders-section">
-          <div class="pf-orders-head">
-            <span class="pf-orders-title">PAST ORDERS</span>
-            <a routerLink="/profile/orders" class="pf-orders-see-all">View All</a>
-          </div>
-
-          @for (order of recentOrders(); track order.id) {
-            <a [routerLink]="['/order', order.id]" class="pf-order-card">
-              <div class="poc-top">
-                <div class="poc-store">
-                  <span class="material-icons-outlined poc-store-icon">storefront</span>
-                  <span class="poc-store-name">{{ order.vendor_name || order.vendor?.store_name || 'Shop' }}</span>
-                </div>
-                <span class="poc-status" [class]="'poc-' + orderStatusClass(order.status)">
-                  {{ orderStatusLabel(order.status) }}
-                </span>
-              </div>
-              <div class="poc-items">
-                @for (item of (order.items || []).slice(0, 3); track item.id) {
-                  <span class="poc-item-tag">{{ item.product?.name || item.product_name }}</span>
-                }
-              </div>
-              <div class="poc-bottom">
-                <span class="poc-meta">{{ order.created_at | date:'MMM d, y · h:mm a' }}</span>
-                <span class="poc-amount">{{ order.total_amount | currency:'NGN':'₦':'1.0-0' }}</span>
-              </div>
-              <div class="poc-actions" (click)="$event.preventDefault(); $event.stopPropagation()">
-                <a [routerLink]="['/order', order.id]" class="poc-btn poc-reorder">VIEW ORDER</a>
-                @if (order.status === 'delivered') {
-                  <a [routerLink]="['/order', order.id, 'rate']" class="poc-btn poc-rate">RATE ORDER</a>
-                }
-              </div>
-            </a>
-          }
-        </div>
-      }
-
-    </div><!-- end pf-wrap -->
-  }
-
-  <!-- ════════════════════════════════════
-       EDIT MODE
-  ════════════════════════════════════ -->
-  @if (isEditing) {
-    <div class="pf-edit-wrap">
-      <div class="pf-edit-topbar">
-        <button class="pf-edit-back" (click)="isEditing = false">
-          <span class="material-icons-outlined">arrow_back</span>
-        </button>
-        <h2>Edit Profile</h2>
-      </div>
-
-      <!-- Avatar -->
-      <div class="pf-edit-avatar-row">
-        <div class="pf-avatar pf-avatar-lg" (click)="avatarInput.click()">
-          @if (avatarPreview()) {
-            <img [src]="avatarPreview()" alt="avatar">
-          } @else {
-            <span class="pf-initials pf-initials-lg">{{ initials() }}</span>
-          }
-          <div class="pf-avatar-overlay">
-            @if (avatarUploading()) {
-              <div class="pf-avatar-spinner"></div>
-            } @else {
-              <span class="material-icons-outlined">photo_camera</span>
+          <div>
+            <span class="profile-kicker">Customer profile</span>
+            <h1>{{ form.first_name || form.username }} {{ form.last_name }}</h1>
+            <p>{{ form.email }}</p>
+            @if (form.phone) {
+              <small>{{ form.phone }}</small>
             }
           </div>
         </div>
-        <input #avatarInput type="file" accept="image/*" hidden (change)="onAvatarChange($event)">
-        <span class="pf-avatar-hint">Tap to change photo</span>
+        <button class="pill-btn" (click)="isEditing = true">Edit profile</button>
       </div>
 
-      <!-- Form -->
-      <form class="pf-form" (ngSubmit)="save()">
-        <div class="pf-form-row">
-          <div class="pf-field">
-            <label class="pf-label">First Name</label>
-            <input class="pf-input" type="text" [(ngModel)]="form.first_name" name="first_name" placeholder="First name">
+      <div class="profile-grid">
+        <section class="profile-card">
+          <span class="profile-kicker">Account perks</span>
+          <h2>Delivery-ready account details</h2>
+          <div class="perk-list">
+            <article>
+              <span class="material-icons-outlined">stars</span>
+              <div>
+                <strong>{{ loyaltyPoints() }} loyalty points</strong>
+                <span>Use them as savings during checkout.</span>
+              </div>
+            </article>
+            <article>
+              <span class="material-icons-outlined">location_on</span>
+              <div>
+                <strong>Saved addresses</strong>
+                <span>Switch between home, work and favorites faster.</span>
+              </div>
+            </article>
+            <article>
+              <span class="material-icons-outlined">bolt</span>
+              <div>
+                <strong>Faster repeat ordering</strong>
+                <span>Your recent stores and orders stay easy to revisit.</span>
+              </div>
+            </article>
           </div>
-          <div class="pf-field">
-            <label class="pf-label">Last Name</label>
-            <input class="pf-input" type="text" [(ngModel)]="form.last_name" name="last_name" placeholder="Last name">
+        </section>
+
+        <section class="profile-card">
+          <span class="profile-kicker">Quick access</span>
+          <h2>Everything around your customer account</h2>
+          <div class="profile-links">
+            <a routerLink="/orders">Orders</a>
+            <a routerLink="/my-issues">Support issues</a>
+            <a routerLink="/wallet">Wallet</a>
+            <a routerLink="/addresses">Addresses</a>
+            <a routerLink="/wishlist">Wishlist</a>
+            <a routerLink="/referral">Referral</a>
+          </div>
+        </section>
+      </div>
+
+      <section class="profile-card">
+        <div class="recent-head">
+          <div>
+            <span class="profile-kicker">Recent activity</span>
+            <h2>Your latest orders</h2>
+          </div>
+          <a routerLink="/orders">See all</a>
+        </div>
+
+        @if (recentOrders().length > 0) {
+          <div class="profile-metrics">
+            <article>
+              <strong>{{ recentOrders().length }}</strong>
+              <span>Orders in your quick-access rail</span>
+            </article>
+            <article>
+              <strong>{{ recentOrders()[0].vendor_name || recentOrders()[0].vendor?.store_name || 'Store' }}</strong>
+              <span>Most recent store visited</span>
+            </article>
+          </div>
+
+          <div class="recent-grid">
+            @for (order of recentOrders(); track order.id) {
+              <a [routerLink]="['/order', order.id]" class="recent-card">
+                <div class="recent-row">
+                  <strong>{{ order.vendor_name || order.vendor?.store_name || 'Shop' }}</strong>
+                  <span class="recent-status {{ orderStatusClass(order.status) }}">{{ orderStatusLabel(order.status) }}</span>
+                </div>
+                <div class="recent-tags">
+                  @for (item of (order.items || []).slice(0, 3); track item.id) {
+                    <span>{{ item.product?.name || item.product_name }}</span>
+                  }
+                </div>
+                <div class="recent-row meta">
+                  <span>{{ (order.placed_at || order.created_at) | date:'MMM d, y · h:mm a' }}</span>
+                  <strong>{{ order.total }}</strong>
+                </div>
+                @if (['delivered', 'cancelled'].includes(order.status)) {
+                  <div class="recent-actions">
+                    <button class="reorder-btn" (click)="reorder(order.id, $event)" [disabled]="reorderingId() === order.id">
+                      {{ reorderingId() === order.id ? 'Adding...' : 'Reorder basket' }}
+                    </button>
+                  </div>
+                }
+              </a>
+            }
+          </div>
+        } @else {
+          <div class="recent-empty">Your placed orders will show up here.</div>
+        }
+      </section>
+
+      <section class="profile-card">
+        <div class="recent-head">
+          <div>
+            <span class="profile-kicker">Appearance</span>
+            <h2>Personalize the customer app</h2>
           </div>
         </div>
+        <nx-palette-picker />
+      </section>
 
-        <div class="pf-field">
-          <label class="pf-label">Username</label>
-          <input class="pf-input" type="text" [(ngModel)]="form.username" name="username" required>
+      <button class="logout-btn" (click)="logout()">Sign out</button>
+    </section>
+  } @else {
+    <section class="profile-page">
+      <div class="profile-hero edit">
+        <button class="pill-btn" (click)="isEditing = false">Back</button>
+        <div>
+          <span class="profile-kicker">Profile editor</span>
+          <h1>Update your customer details</h1>
         </div>
+      </div>
 
-        <div class="pf-field">
-          <label class="pf-label">Email</label>
-          <input class="pf-input" type="email" [(ngModel)]="form.email" name="email" required>
+      <form class="profile-form" (ngSubmit)="save()">
+        <div class="profile-avatar large" (click)="avatarInput.click()">
+          @if (avatarPreview()) {
+            <img [src]="avatarPreview()" alt="avatar">
+          } @else {
+            <span>{{ initials() }}</span>
+          }
         </div>
+        <input #avatarInput type="file" accept="image/*" hidden (change)="onAvatarChange($event)">
 
-        <div class="pf-field">
-          <label class="pf-label">Phone</label>
-          <input class="pf-input" type="tel" [(ngModel)]="form.phone" name="phone" placeholder="+1 234 567 8900">
+        <div class="field-grid">
+          <label><span>First name</span><input [(ngModel)]="form.first_name" name="first_name"></label>
+          <label><span>Last name</span><input [(ngModel)]="form.last_name" name="last_name"></label>
         </div>
-
-        <div class="pf-field">
-          <label class="pf-label">Country</label>
-          <select class="pf-input pf-select" [(ngModel)]="form.country" name="country">
+        <label><span>Username</span><input [(ngModel)]="form.username" name="username" required></label>
+        <label><span>Email</span><input [(ngModel)]="form.email" name="email" type="email" required></label>
+        <label><span>Phone</span><input [(ngModel)]="form.phone" name="phone" type="tel"></label>
+        <label>
+          <span>Country</span>
+          <select [(ngModel)]="form.country" name="country">
             <option value="US">United States</option>
             <option value="GB">United Kingdom</option>
             <option value="CA">Canada</option>
@@ -262,16 +183,13 @@
             <option value="FR">France</option>
             <option value="BR">Brazil</option>
           </select>
-        </div>
+        </label>
 
-        <div class="pf-form-actions">
-          <button type="button" class="pf-cancel-btn" (click)="isEditing = false">Cancel</button>
-          <button type="submit" class="pf-save-btn" [disabled]="saving()">
-            @if (saving()) { Saving… } @else { Save Changes }
-          </button>
+        <div class="form-actions">
+          <button type="button" class="ghost-btn" (click)="isEditing = false">Cancel</button>
+          <button type="submit" class="save-btn" [disabled]="saving()">@if (saving()) { Saving... } @else { Save changes }</button>
         </div>
       </form>
-    </div>
+    </section>
   }
-
 }

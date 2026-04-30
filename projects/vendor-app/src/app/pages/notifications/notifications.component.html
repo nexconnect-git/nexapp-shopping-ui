@@ -1,0 +1,42 @@
+<div class="notifications-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Notifications</h1>
+      <p class="page-subtitle">Order, delivery, payout, approval, support, and system messages.</p>
+    </div>
+    <button class="btn-primary" (click)="markAllRead()">Mark All Read</button>
+  </div>
+
+  <div class="filters">
+    @for (type of filters; track type) {
+      <button [class.active]="filter() === type" (click)="setFilter(type)">{{ type | titlecase }}</button>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="state-card">Loading notifications...</div>
+  } @else {
+    <div class="notification-list">
+      @for (n of filtered(); track n.id) {
+        <article class="notification-card" [class.unread]="!n.is_read">
+          <span class="material-icons-outlined">{{ n.notification_type === 'delivery' ? 'two_wheeler' : n.notification_type === 'payout' ? 'payments' : n.notification_type === 'support' ? 'support_agent' : 'notifications' }}</span>
+          <div>
+            <h3>{{ n.title }}</h3>
+            <p>{{ n.message }}</p>
+            <small>{{ n.created_at | date:'medium' }}</small>
+          </div>
+          <div class="actions">
+            @if (!n.is_read) {
+              <button (click)="markRead(n)">Mark read</button>
+            }
+            @if (n.notification_type === 'order' && (n.data?.order_id || n.data?.id)) {
+              <a [routerLink]="['/orders', n.data?.order_id || n.data?.id]">Open order</a>
+            }
+          </div>
+        </article>
+      } @empty {
+        <div class="state-card">No notifications in this filter.</div>
+      }
+    </div>
+  }
+</div>

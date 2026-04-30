@@ -1,0 +1,73 @@
+<div class="ops-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Live Orders</h1>
+      <p class="page-subtitle">Run intake, prep, pickup, and delivery handoff from one board.</p>
+    </div>
+    <div class="header-actions">
+      <span class="live-pill" [class.offline]="socketState() !== 'live'">
+        <span class="material-icons-outlined">{{ socketState() === 'live' ? 'bolt' : 'sync_problem' }}</span>
+        {{ socketState() === 'live' ? 'Live' : 'Polling fallback' }}
+      </span>
+      <button class="btn btn-outline" (click)="load()">
+        <span class="material-icons-outlined">refresh</span>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="state-card">Loading live orders...</div>
+  } @else {
+    <div class="kanban">
+      @for (column of columns(); track column.key) {
+        <section class="kanban-column">
+          <header>
+            <span class="material-icons-outlined">{{ column.icon }}</span>
+            <strong>{{ column.title }}</strong>
+            <em>{{ column.orders.length }}</em>
+          </header>
+
+          @if (column.orders.length === 0) {
+            <div class="empty-column">No orders</div>
+          } @else {
+            @for (order of column.orders; track order.id) {
+              <article class="order-card">
+                <div class="order-top">
+                  <a [routerLink]="['/orders', order.id, 'prep']">#{{ order.order_number }}</a>
+                  <span>{{ minutesSince(order) }} min</span>
+                </div>
+                <div class="customer">{{ order.customer_name || 'Customer' }}</div>
+                <div class="amount">{{ order.total | appCurrency }}</div>
+                <div class="meta">
+                  <span>{{ order.items.length }} item{{ order.items.length === 1 ? '' : 's' }}</span>
+                  <span>{{ order.payment_method | uppercase }}</span>
+                </div>
+                @if (order.notes) {
+                  <p class="note">{{ order.notes }}</p>
+                }
+
+                <div class="actions">
+                  @if (order.status === 'placed') {
+                    <button class="accept" [disabled]="busyOrder() === order.id" (click)="accept(order)">Accept</button>
+                    <button class="reject" [disabled]="busyOrder() === order.id" (click)="reject(order)">Reject</button>
+                  }
+                  @if (order.status === 'confirmed') {
+                    <button [disabled]="busyOrder() === order.id" (click)="startPreparing(order)">Start Prep</button>
+                  }
+                  @if (order.status === 'preparing') {
+                    <button [disabled]="busyOrder() === order.id" (click)="markReady(order)">Mark Ready</button>
+                  }
+                  @if (canFindDriver(order)) {
+                    <button [disabled]="busyOrder() === order.id" (click)="findDriver(order)">Find Driver</button>
+                  }
+                  <a [routerLink]="['/orders', order.id, 'prep']">Prep</a>
+                </div>
+              </article>
+            }
+          }
+        </section>
+      }
+    </div>
+  }
+</div>

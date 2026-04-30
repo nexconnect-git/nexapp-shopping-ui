@@ -1,192 +1,153 @@
-<div class="cart-wrap">
-
-  <!-- ── Header ──────────────────────────────────────── -->
-  <div class="cart-topbar">
-    <button class="cart-back" (click)="goBack()">
-      <span class="material-icons-outlined">arrow_back</span>
-    </button>
-    <h1>Your Cart</h1>
+<section class="basket-page">
+  <div class="basket-topbar">
+    <button class="basket-icon" (click)="goBack()"><span class="material-icons-outlined">arrow_back</span></button>
+    <div>
+      <span class="basket-kicker">Review your basket</span>
+      <h1>Your cart</h1>
+    </div>
     @if (cart() && cart()!.items.length > 0) {
-      <span class="cart-item-count">{{ cart()!.items.length }} item{{ cart()!.items.length !== 1 ? 's' : '' }}</span>
+      <span class="basket-count">{{ cart()!.items.length }} item{{ cart()!.items.length !== 1 ? 's' : '' }}</span>
     }
   </div>
 
-  <!-- ── Loading ─────────────────────────────────────── -->
   @if (loading()) {
-    <div class="cart-loading"><div class="cart-spinner"></div></div>
-  }
-
-  <!-- ── Empty ───────────────────────────────────────── -->
-  @if (!loading() && (!cart() || cart()!.items.length === 0)) {
-    <div class="cart-empty">
-      <div class="empty-img">
-        <span class="material-icons-outlined">shopping_cart</span>
-      </div>
-      <h3>Your cart is empty</h3>
-      <p>Discover amazing shops near you</p>
-      <a routerLink="/shops" class="browse-btn">
-        <span class="material-icons-outlined">storefront</span>
-        Browse Shops
-      </a>
+    <div class="basket-loading"><div class="basket-spinner"></div></div>
+  } @else if (!cart() || cart()!.items.length === 0) {
+    <div class="basket-empty">
+      <span class="material-icons-outlined">shopping_bag</span>
+      <h2>Your instant basket is empty.</h2>
+      <p>Browse nearby stores and start building a fast local order.</p>
+      <a routerLink="/shops">Browse stores</a>
     </div>
-  }
+  } @else {
+    <div class="basket-layout">
+      <div class="basket-main">
+        @if (savings() > 0) {
+          <div class="savings-callout">
+            <span class="material-icons-outlined">local_offer</span>
+            <strong>You are already saving {{ savings() | appCurrency }} on this order.</strong>
+          </div>
+        }
 
-  <!-- ── Cart Content ────────────────────────────────── -->
-  @if (!loading() && cart() && cart()!.items.length > 0) {
-    <div class="cart-body">
-
-      <!-- Savings Banner -->
-      @if (savings() > 0) {
-        <div class="savings-banner">
-          <span class="material-icons-outlined">local_offer</span>
-          <span>You're saving <strong>₦{{ savings() }}</strong> on this order!</span>
-        </div>
-      }
-
-      <!-- Apply Coupon Row -->
-      <a routerLink="/offers" class="coupon-row">
-        <div class="coupon-row-left">
+        <a routerLink="/offers" class="coupon-link">
           <span class="material-icons-outlined">confirmation_number</span>
-          <span>Apply Coupon</span>
-        </div>
-        <div class="coupon-row-right">
-          <span>Save more with coupons</span>
+          <div>
+            <strong>Apply store offers or coupons</strong>
+            <span>Stack discounts before you checkout</span>
+          </div>
           <span class="material-icons-outlined">chevron_right</span>
-        </div>
-      </a>
+        </a>
 
-      <!-- Review Items -->
-      <div class="cart-section">
-        <div class="section-label">Review Items</div>
+        <section class="basket-panel">
+          <div class="panel-head">
+            <div>
+              <span class="basket-kicker">Basket items</span>
+              <h2>Everything from one store, ready to check out.</h2>
+            </div>
+            <button class="clear-btn" (click)="clearCart()">Clear cart</button>
+          </div>
 
-        @for (item of cart()!.items; track item.id) {
-          <div class="cart-item">
-            <div class="ci-img">
-              @if (item.product.primary_image) {
-                <img [src]="item.product.primary_image" alt="{{item.product.name}}">
-              } @else {
-                <div class="ci-img-ph">
-                  <span class="material-icons-outlined">fastfood</span>
+          <div class="basket-items">
+            @for (item of cart()!.items; track item.id) {
+              <article class="basket-item">
+                <div class="item-media">
+                  @if (item.product.primary_image) {
+                    <img [src]="item.product.primary_image" [alt]="item.product.name">
+                  } @else {
+                    <div class="item-placeholder"><span class="material-icons-outlined">inventory_2</span></div>
+                  }
+                </div>
+                <div class="item-copy">
+                  <h3>{{ item.product.name }}</h3>
+                  <p>{{ item.product.vendor_name }}</p>
+                  <div class="item-price-row">
+                    <strong>{{ item.product.price | appCurrency }}</strong>
+                    @if (item.product.compare_price && item.product.compare_price > item.product.price) {
+                      <span class="compare-price">{{ item.product.compare_price | appCurrency }}</span>
+                      <span class="item-discount">{{ item.product.discount_percentage }}% off</span>
+                    }
+                  </div>
+                </div>
+                <div class="item-actions">
+                  <span class="item-subtotal">{{ item.subtotal | appCurrency }}</span>
+                  <div class="qty-bar">
+                    <button (click)="updateQty(item, item.quantity - 1)" [disabled]="updatingId() === item.id">
+                      <span class="material-icons-outlined">{{ item.quantity === 1 ? 'delete_outline' : 'remove' }}</span>
+                    </button>
+                    <span>{{ item.quantity }}</span>
+                    <button (click)="updateQty(item, item.quantity + 1)" [disabled]="updatingId() === item.id || item.quantity >= item.product.stock">
+                      <span class="material-icons-outlined">add</span>
+                    </button>
+                  </div>
+                </div>
+              </article>
+            }
+          </div>
+        </section>
+
+        @if (suggestions().length > 0) {
+          <section class="basket-panel">
+            <div class="panel-head compact">
+              <div>
+                <span class="basket-kicker">Add-on lane</span>
+                <h2>Last-minute extras from the same store.</h2>
+              </div>
+            </div>
+            <div class="addon-row">
+              @for (prod of suggestions(); track prod.id) {
+                <div class="addon-card">
+                  <div class="addon-media">
+                    @if (prod.primary_image) {
+                      <img [src]="prod.primary_image" [alt]="prod.name" loading="lazy">
+                    } @else {
+                      <div class="item-placeholder"><span class="material-icons-outlined">add_shopping_cart</span></div>
+                    }
+                    @if (prod.discount_percentage > 0) {
+                      <span class="addon-discount">{{ prod.discount_percentage }}% off</span>
+                    }
+                  </div>
+                  <strong>{{ prod.name }}</strong>
+                  <span>{{ prod.price | appCurrency }}</span>
+                  <button (click)="addSuggestion(prod)" [disabled]="addingSuggId() === prod.id">
+                    @if (addingSuggId() === prod.id) { Adding... } @else { Add to basket }
+                  </button>
                 </div>
               }
             </div>
-
-            <div class="ci-info">
-              <span class="ci-name">{{ item.product.name }}</span>
-              <span class="ci-vendor">{{ item.product.vendor_name }}</span>
-              <span class="ci-price">{{ item.product.price | appCurrency }}</span>
-            </div>
-
-            <div class="ci-right">
-              <span class="ci-subtotal">{{ item.subtotal | appCurrency }}</span>
-              <div class="qty-box">
-                <button
-                  class="qty-btn qty-minus"
-                  (click)="updateQty(item, item.quantity - 1)"
-                  [disabled]="updatingId() === item.id">
-                  <span class="material-icons-outlined">{{ item.quantity === 1 ? 'delete_outline' : 'remove' }}</span>
-                </button>
-                <span class="qty-val">{{ item.quantity }}</span>
-                <button
-                  class="qty-btn qty-plus"
-                  (click)="updateQty(item, item.quantity + 1)"
-                  [disabled]="updatingId() === item.id || item.quantity >= item.product.stock">
-                  <span class="material-icons-outlined">add</span>
-                </button>
-              </div>
-            </div>
-          </div>
+          </section>
         }
       </div>
 
-      <!-- Last Minute Add-ons -->
-      @if (suggestions().length > 0) {
-        <div class="addons-section">
-          <div class="addons-header">
-            <span class="material-icons-outlined">add_shopping_cart</span>
-            Your last minute add-ons
-          </div>
-          <div class="addons-scroll">
-            @for (prod of suggestions(); track prod.id) {
-              <div class="addon-card">
-                <div class="addon-img">
-                  @if (prod.primary_image) {
-                    <img [src]="prod.primary_image" alt="{{prod.name}}" loading="lazy">
-                  } @else {
-                    <div class="addon-img-ph">
-                      <span class="material-icons-outlined">fastfood</span>
-                    </div>
-                  }
-                  @if (prod.discount_percentage > 0) {
-                    <span class="addon-discount">{{ prod.discount_percentage }}% OFF</span>
-                  }
-                </div>
-                <div class="addon-info">
-                  <div class="addon-name">{{ prod.name }}</div>
-                  <div class="addon-price">{{ prod.price | appCurrency }}</div>
-                </div>
-                <button
-                  class="addon-add-btn"
-                  (click)="addSuggestion(prod)"
-                  [disabled]="addingSuggId() === prod.id">
-                  @if (addingSuggId() === prod.id) {
-                    <span class="addon-spinner"></span>
-                  } @else {
-                    <span class="material-icons-outlined">add</span>
-                  }
-                </button>
-              </div>
-            }
-          </div>
-        </div>
-      }
+      <aside class="basket-summary">
+        <div class="summary-card">
+          <span class="basket-kicker">Payment snapshot</span>
+          <h2>Order summary</h2>
 
-      <!-- Bill Details -->
-      <div class="cart-section bill-section">
-        <div class="section-label">
-          <span class="material-icons-outlined">receipt</span>
-          Bill Details
-        </div>
-        <div class="bill-row">
-          <span>Item Total</span>
-          <span>{{ cart()!.total_amount | appCurrency }}</span>
-        </div>
-        @if (savings() > 0) {
-          <div class="bill-row bill-savings">
-            <span>Coupon Savings</span>
-            <span>− ₦{{ savings() }}</span>
+          <div class="summary-row">
+            <span>Items</span>
+            <strong>{{ cart()!.total_amount | appCurrency }}</strong>
           </div>
-        }
-        <div class="bill-row">
-          <span>Delivery Fee</span>
-          <span class="bill-free">FREE</span>
-        </div>
-        <div class="bill-divider"></div>
-        <div class="bill-row bill-total">
-          <span>To Pay</span>
-          <span>{{ cart()!.total_amount | appCurrency }}</span>
-        </div>
-        <a routerLink="/offers" class="bill-detailed-link">View Detailed Bill</a>
-      </div>
+          @if (savings() > 0) {
+            <div class="summary-row saving">
+              <span>Discounted item savings</span>
+              <strong>- {{ savings() | appCurrency }}</strong>
+            </div>
+          }
+          <div class="summary-row">
+            <span>Delivery fee</span>
+            <strong>Calculated at checkout</strong>
+          </div>
+          <div class="summary-row total">
+            <span>Current total</span>
+            <strong>{{ cart()!.total_amount | appCurrency }}</strong>
+          </div>
 
-      <!-- Spacer for sticky bar -->
-      <div style="height: 96px;"></div>
-    </div>
-
-    <!-- ── Sticky Checkout Bar ─────────────────────────── -->
-    <div class="sticky-bar">
-      <div class="sticky-bar-inner">
-        <div class="sticky-total">
-          <span class="sticky-items">{{ cart()!.total_items }} items</span>
-          <span class="sticky-amount">{{ cart()!.total_amount | appCurrency }}</span>
+          <button class="checkout-btn" (click)="proceedToCheckout()">
+            Continue to checkout
+            <span class="material-icons-outlined">arrow_forward</span>
+          </button>
         </div>
-        <button class="proceed-btn" (click)="proceedToCheckout()">
-          Proceed to Pay
-          <span class="material-icons-outlined">arrow_forward</span>
-        </button>
-      </div>
+      </aside>
     </div>
   }
-</div>
-
-<!-- aria-label -->
+</section>

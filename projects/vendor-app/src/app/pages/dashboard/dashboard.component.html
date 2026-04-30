@@ -34,6 +34,60 @@
     </div>
   } @else if (stats()) {
 
+    @if (ops()) {
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="mc-icon-wrap bg-success-soft">
+            <span class="material-icons-outlined text-success">payments</span>
+          </div>
+          <div class="mc-details">
+            <p class="mc-label">Today Revenue</p>
+            <h3 class="mc-value">{{ ops()!.today.revenue | appCurrency }}</h3>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="mc-icon-wrap bg-primary-soft">
+            <span class="material-icons-outlined text-primary">fiber_new</span>
+          </div>
+          <div class="mc-details">
+            <p class="mc-label">Awaiting Action</p>
+            <h3 class="mc-value">{{ ops()!.orders.new }}</h3>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="mc-icon-wrap bg-warning-soft">
+            <span class="material-icons-outlined text-warning">restaurant</span>
+          </div>
+          <div class="mc-details">
+            <p class="mc-label">Preparing / Ready</p>
+            <h3 class="mc-value">{{ ops()!.orders.preparing + ops()!.orders.ready }}</h3>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="mc-icon-wrap bg-info-soft">
+            <span class="material-icons-outlined text-info">two_wheeler</span>
+          </div>
+          <div class="mc-details">
+            <p class="mc-label">Driver Assigned</p>
+            <h3 class="mc-value">{{ ops()!.delivery.assigned }}</h3>
+          </div>
+        </div>
+      </div>
+
+      <div class="low-stock-banner">
+        <span class="material-icons-outlined">{{ ops()!.store.is_accepting_orders ? 'bolt' : 'pause_circle' }}</span>
+        <span>
+          <strong>{{ ops()!.store.is_accepting_orders ? 'Accepting orders' : 'Orders paused' }}</strong>
+          Auto-accept is {{ ops()!.store.auto_order_acceptance ? 'on' : 'off' }}. Alerts:
+          {{ ops()!.alerts.low_stock }} low stock,
+          {{ ops()!.alerts.product_attention }} product health,
+          {{ ops()!.alerts.pending_payouts }} payout,
+          {{ ops()!.alerts.support_open }} support.
+        </span>
+        <a routerLink="/live-orders" class="banner-link">Open Live Orders</a>
+      </div>
+    }
+
     <!-- Low Stock Warning Banner -->
     @if (stats()!.low_stock_count > 0) {
       <div class="low-stock-banner">
@@ -151,7 +205,7 @@
               <div class="qa-icon"><span class="material-icons-outlined">list_alt</span></div>
               <span>View Orders</span>
             </a>
-            <a routerLink="/payouts" class="qa-btn">
+            <a routerLink="/payments" class="qa-btn">
               <div class="qa-icon"><span class="material-icons-outlined">payments</span></div>
               <span>Payouts</span>
             </a>

@@ -1,0 +1,80 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Dispatch Board</h1>
+    <p class="page-subtitle">Live queue for instant delivery order movement and rider readiness.</p>
+  </div>
+  <div class="header-actions">
+    @if (lastUpdated()) {
+      <span class="reload-timestamp">Updated {{ lastUpdated() | date:'HH:mm:ss' }}</span>
+    }
+    <button class="btn btn-primary" (click)="load()" [disabled]="loading()">
+      <span class="material-icons-outlined" [class.spin]="loading()">refresh</span>
+      Refresh
+    </button>
+  </div>
+</div>
+
+@if (loading()) {
+  <div class="admin-loading"><div class="spinner"></div><span>Loading dispatch telemetry...</span></div>
+} @else if (error()) {
+  <div class="admin-empty danger">{{ error() }}</div>
+} @else {
+  <section class="dispatch-kpis">
+    <a routerLink="/orders" class="dispatch-kpi">
+      <span class="material-icons-outlined">receipt_long</span>
+      <strong>{{ activeOrders().length }}</strong>
+      <small>Active orders</small>
+    </a>
+    <a routerLink="/orders" class="dispatch-kpi accent">
+      <span class="material-icons-outlined">room_service</span>
+      <strong>{{ readyOrders().length }}</strong>
+      <small>Ready for pickup</small>
+    </a>
+    <a routerLink="/orders" class="dispatch-kpi cyan">
+      <span class="material-icons-outlined">conversion_path</span>
+      <strong>{{ inTransit().length }}</strong>
+      <small>In transit</small>
+    </a>
+    <a routerLink="/delivery-partners" class="dispatch-kpi green">
+      <span class="material-icons-outlined">two_wheeler</span>
+      <strong>{{ onlinePartners().length }}</strong>
+      <small>Available partners</small>
+    </a>
+  </section>
+
+  <section class="lane-grid">
+    @for (status of ['placed', 'confirmed', 'preparing', 'ready', 'picked_up', 'on_the_way']; track status) {
+      <article class="lane-card">
+        <header>
+          <span class="lane-dot" [class]="status"></span>
+          <h2>{{ status.replace('_', ' ') | titlecase }}</h2>
+          <strong>{{ lane(status).length }}</strong>
+        </header>
+
+        @if (lane(status).length === 0) {
+          <div class="lane-empty">No orders in this lane.</div>
+        } @else {
+          <div class="lane-list">
+            @for (order of lane(status); track order.id) {
+              <a class="lane-order" [routerLink]="['/orders', order.id]" [class]="slaClass(order)">
+                <div>
+                  <strong>#{{ order.order_number }}</strong>
+                  <span>{{ order.vendor_name || 'Vendor' }} -> {{ order.customer_name || 'Customer' }}</span>
+                </div>
+                <div class="lane-order-meta">
+                  <em>{{ order.total | appCurrency }}</em>
+                  <small>{{ ageMinutes(order) }}m</small>
+                </div>
+              </a>
+            }
+          </div>
+        }
+      </article>
+    }
+  </section>
+
+  <section class="ops-note">
+    <span class="material-icons-outlined">info</span>
+    <p>Orders older than 20 minutes are highlighted for SLA attention. Orders older than 35 minutes before pickup should be escalated to store or dispatch support.</p>
+  </section>
+}

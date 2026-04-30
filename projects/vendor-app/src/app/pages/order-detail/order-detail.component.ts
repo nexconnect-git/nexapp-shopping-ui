@@ -1,15 +1,16 @@
 import { Component, inject, signal, OnInit, OnDestroy, AfterViewInit, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, ActivatedRoute } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { ApiService, AuthService, AppCurrencyPipe, Order } from '@shared/public-api';
+import { ApiService, AuthService, AppCurrencyPipe, Order, openAuthenticatedWebSocket } from '@shared/public-api';
 import { timer, Subscription } from 'rxjs';
 import { GoogleMapsModule } from '@angular/google-maps';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-order-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, AppCurrencyPipe, GoogleMapsModule],
+  imports: [CommonModule, FormsModule, AppCurrencyPipe, GoogleMapsModule],
   templateUrl: './order-detail.component.html',
   styleUrl: './order-detail.component.scss'
 })
@@ -168,9 +169,8 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private connectWebSocket(orderId: string) {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/sa/ws/delivery/${orderId}/tracking/?token=${this.auth.getToken()}`;
-    this.ws = new WebSocket(wsUrl);
+    const wsPrefix = environment.apiBaseUrl.replace(/\/api$/, '');
+    this.ws = openAuthenticatedWebSocket(`${wsPrefix}/ws/delivery/${orderId}/tracking/`, this.auth.getToken());
     this.ws.onmessage = (msg) => {
       const data = JSON.parse(msg.data);
       if (data.type === 'location_update' && data.lat && data.lng) {

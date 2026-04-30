@@ -21,6 +21,11 @@
       </div>
 
       <form [formGroup]="setupForm" (ngSubmit)="onSubmit()" class="setup-form">
+        <div class="form-group">
+          <label>Setup Token</label>
+          <input type="password" formControlName="setup_token" class="form-control" placeholder="Deployment setup token">
+        </div>
+
         <div class="form-row">
           <div class="form-group">
             <label>First Name</label>

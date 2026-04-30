@@ -2,7 +2,7 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
-import { ApiService, AuthService, ToastService } from '@shared/public-api';
+import { AlertService, ApiService, AuthService } from '@shared/public-api';
 import { NxPalettePickerComponent } from '../../design-system/index';
 
 @Component({
@@ -15,7 +15,7 @@ import { NxPalettePickerComponent } from '../../design-system/index';
 export class ProfileComponent implements OnInit {
   private api = inject(ApiService);
   auth = inject(AuthService);
-  private toast = inject(ToastService);
+  private alerts = inject(AlertService);
   private router = inject(Router);
 
   form: any = {};
@@ -26,6 +26,7 @@ export class ProfileComponent implements OnInit {
   isEditing = false;
   recentOrders = signal<any[]>([]);
   loyaltyPoints = signal<number>(0);
+  reorderingId = signal<string | null>(null);
 
   ngOnInit() {
     this.api.getLoyalty().subscribe({
@@ -68,13 +69,13 @@ export class ProfileComponent implements OnInit {
     this.api.updateProfile(this.form).subscribe({
       next: (u) => {
         this.auth.updateUserData(u);
-        this.toast.show('Profile updated successfully.', 'success');
+        this.alerts.success('Profile updated successfully.');
         this.saving.set(false);
         this.isEditing = false;
       },
       error: (err) => {
         const e = err.error;
-        this.toast.show(typeof e === 'object' ? Object.values(e).flat().join(' ') : 'Update failed.', 'error');
+        this.alerts.error(typeof e === 'object' ? Object.values(e).flat().join(' ') : 'Update failed.');
         this.saving.set(false);
       }
     });
@@ -105,5 +106,27 @@ export class ProfileComponent implements OnInit {
     if (status === 'cancelled') return 'cancelled';
     if (['on_the_way', 'picked_up'].includes(status)) return 'transit';
     return 'active';
+  }
+
+  reorder(orderId: string, event?: Event) {
+    event?.preventDefault();
+    event?.stopPropagation();
+    this.reorderingId.set(orderId);
+    this.api.reorder(orderId).subscribe({
+      next: (cart) => {
+        this.reorderingId.set(null);
+        this.api.refreshCartCount();
+        if (cart.skipped?.length) {
+          this.alerts.warning(`${cart.skipped.length} item(s) were unavailable and skipped.`, 'Some items were skipped');
+        } else {
+          this.alerts.success('Basket rebuilt from your recent order.');
+        }
+        this.router.navigate(['/cart']);
+      },
+      error: () => {
+        this.reorderingId.set(null);
+        this.alerts.error('Could not reorder this basket right now.');
+      }
+    });
   }
 }

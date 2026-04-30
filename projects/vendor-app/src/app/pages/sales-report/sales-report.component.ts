@@ -1,7 +1,7 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService, AppCurrencyPipe, ToastService } from '@shared/public-api';
+import { ApiService, AppCurrencyPipe, ToastService, VendorAnalytics } from '@shared/public-api';
 import { forkJoin } from 'rxjs';
 
 @Component({
@@ -18,7 +18,7 @@ export class SalesReportComponent implements OnInit {
   loading = signal(true);
 
   
-  stats = signal<any>(null);
+  stats = signal<VendorAnalytics | null>(null);
   dateRange = signal('30'); // days
 
   // Settlement summary metrics
@@ -33,7 +33,7 @@ export class SalesReportComponent implements OnInit {
   loadStats() {
     this.loading.set(true);
     forkJoin({
-      stats: this.api.getVendorDashboardStats({ days: this.dateRange() }),
+      stats: this.api.getVendorAnalytics({ days: this.dateRange() }),
       payouts: this.api.getVendorPayouts()
     }).subscribe({
       next: (res: any) => {
@@ -75,5 +75,33 @@ export class SalesReportComponent implements OnInit {
 
   mathMax(a: number, b: number): number {
     return Math.max(a, b);
+  }
+
+  exportCsv() {
+    const stats = this.stats();
+    if (!stats) return;
+    const rows = [
+      ['Metric', 'Value'],
+      ['Period', stats.period_label],
+      ['Total revenue', stats.total_revenue],
+      ['Total orders', stats.total_orders],
+      ['Delivered orders', stats.delivered_orders],
+      ['Average order value', stats.average_order_value],
+      ['Repeat customers', stats.repeat_customers],
+      ['Coupon revenue influenced', stats.coupon_contribution?.revenue || 0],
+      ['Coupon uses', stats.coupon_contribution?.usage_count || 0],
+      ['Low stock products', stats.low_stock_impact?.low_stock_count || 0],
+      [],
+      ['Top product', 'Units sold', 'Revenue'],
+      ...stats.top_products.map(p => [p.name, p.total_sold, p.revenue]),
+    ];
+    const csv = rows.map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `vendor-growth-${this.dateRange()}-days.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 }

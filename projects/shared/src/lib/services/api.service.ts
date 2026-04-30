@@ -37,8 +37,32 @@ export class ApiService {
     return this.http.post(`${this.baseUrl}/auth/login/`, data);
   }
 
+  requestCustomerLoginOtp(data: { phone: string }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/auth/mobile/request-login-otp/`, data);
+  }
+
+  verifyCustomerLoginOtp(data: { phone: string; otp: string }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/auth/mobile/verify-login-otp/`, data);
+  }
+
   register(data: any): Observable<any> {
     return this.http.post(`${this.baseUrl}/auth/register/`, data);
+  }
+
+  requestCustomerRegisterOtp(data: { phone: string }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/auth/mobile/request-register-otp/`, data);
+  }
+
+  verifyCustomerRegisterOtp(data: { phone: string; otp: string; first_name: string; last_name?: string; email?: string }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/auth/mobile/verify-register-otp/`, data);
+  }
+
+  refreshToken(): Observable<any> {
+    return this.http.post(`${this.baseUrl}/auth/refresh/`, {});
+  }
+
+  logout(): Observable<any> {
+    return this.http.post(`${this.baseUrl}/auth/logout/`, {});
   }
 
   getProfile(): Observable<any> {
@@ -61,12 +85,14 @@ export class ApiService {
     return this.http.post(`${this.baseUrl}/auth/password-reset/confirm/`, { token, new_password: newPassword });
   }
 
-  checkSetup(): Observable<any> {
-    return this.http.get(`${this.baseUrl}/auth/setup/`);
+  checkSetup(setupToken?: string): Observable<any> {
+    const headers = setupToken ? { 'X-Setup-Token': setupToken } : undefined;
+    return this.http.get(`${this.baseUrl}/auth/setup/`, { headers });
   }
 
-  setupSuperuser(data: any): Observable<any> {
-    return this.http.post(`${this.baseUrl}/auth/setup/`, data);
+  setupSuperuser(data: any, setupToken?: string): Observable<any> {
+    const headers = setupToken ? { 'X-Setup-Token': setupToken } : undefined;
+    return this.http.post(`${this.baseUrl}/auth/setup/`, data, { headers });
   }
 
   uploadAvatar(file: File): Observable<any> {
@@ -117,15 +143,54 @@ export class ApiService {
     return this.http.get(`${this.baseUrl}/vendors/list/`, { params: httpParams });
   }
 
-  getNearbyVendors(lat: number, lng: number, radius?: number, category?: string): Observable<any> {
-    let params = new HttpParams().set('lat', lat.toString()).set('lng', lng.toString());
+  getNearbyVendors(lat: number, lng: number, radius?: number, category?: string, state?: string, city?: string, postalCode?: string): Observable<any> {
+    let params = new HttpParams()
+      .set('lat', lat.toString())
+      .set('lng', lng.toString())
+      .set('search_mode', 'nearby');
     if (radius) params = params.set('radius_km', radius.toString());
     if (category && category !== 'all') params = params.set('category', category);
-    return this.http.get(`${this.baseUrl}/vendors/nearby/`, { params });
+    if (state) params = params.set('state', state);
+    if (city) params = params.set('city', city);
+    if (postalCode) params = params.set('postal_code', postalCode);
+    return this.http.get(`${this.baseUrl}/vendors/list/`, { params });
   }
 
-  getVendor(id: string): Observable<any> {
-    return this.http.get(`${this.baseUrl}/vendors/${id}/`);
+  searchFarVendors(params: { lat: number; lng: number; state: string; city?: string; postal_code?: string; search?: string; category?: string }): Observable<any> {
+    let httpParams = new HttpParams()
+      .set('lat', params.lat.toString())
+      .set('lng', params.lng.toString())
+      .set('state', params.state)
+      .set('search_mode', 'manual_far');
+    if (params.city) httpParams = httpParams.set('city', params.city);
+    if (params.postal_code) httpParams = httpParams.set('postal_code', params.postal_code);
+    if (params.search) httpParams = httpParams.set('search', params.search);
+    if (params.category && params.category !== 'all') httpParams = httpParams.set('category', params.category);
+    return this.http.get(`${this.baseUrl}/vendors/list/`, { params: httpParams });
+  }
+
+  globalShopSearch(params: { lat: number; lng: number; state: string; city?: string; postal_code?: string; product_query: string }): Observable<any> {
+    let httpParams = new HttpParams()
+      .set('lat', params.lat.toString())
+      .set('lng', params.lng.toString())
+      .set('state', params.state)
+      .set('search_mode', 'global_item')
+      .set('product_query', params.product_query);
+    if (params.city) httpParams = httpParams.set('city', params.city);
+    if (params.postal_code) httpParams = httpParams.set('postal_code', params.postal_code);
+    return this.http.get(`${this.baseUrl}/vendors/list/`, { params: httpParams });
+  }
+
+  getVendor(id: string, params?: any): Observable<any> {
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.keys(params).forEach((key) => {
+        if (params[key] !== null && params[key] !== undefined && params[key] !== '') {
+          httpParams = httpParams.set(key, params[key]);
+        }
+      });
+    }
+    return this.http.get(`${this.baseUrl}/vendors/${id}/`, { params: httpParams });
   }
 
   registerVendor(data: any): Observable<any> {
@@ -148,12 +213,36 @@ export class ApiService {
     return this.http.get(`${this.baseUrl}/vendors/dashboard/`, { params: httpParams });
   }
 
+  getVendorAnalytics(params?: any): Observable<any> {
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.keys(params).forEach(key => {
+        if (params[key] !== null && params[key] !== undefined && params[key] !== '') {
+          httpParams = httpParams.set(key, params[key]);
+        }
+      });
+    }
+    return this.http.get(`${this.baseUrl}/vendors/analytics/`, { params: httpParams });
+  }
+
+  getVendorOperationsSummary(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/vendors/operations/summary/`);
+  }
+
   getVendorProfile(): Observable<any> {
     return this.http.get(`${this.baseUrl}/vendors/profile/`);
   }
 
   updateVendorProfile(data: any): Observable<any> {
     return this.http.patch(`${this.baseUrl}/vendors/profile/`, data);
+  }
+
+  getVendorStoreSettings(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/vendors/store-settings/`);
+  }
+
+  updateVendorStoreSettings(data: any): Observable<any> {
+    return this.http.patch(`${this.baseUrl}/vendors/store-settings/`, data);
   }
 
   getVendorProducts(params?: any): Observable<any> {
@@ -168,6 +257,10 @@ export class ApiService {
     return this.http.get(`${this.baseUrl}/vendors/products/`, { params: httpParams });
   }
 
+  getVendorProduct(id: string): Observable<any> {
+    return this.http.get(`${this.baseUrl}/vendors/products/${id}/`);
+  }
+
   createProduct(data: any): Observable<any> {
     return this.http.post(`${this.baseUrl}/vendors/products/`, data);
   }
@@ -176,8 +269,80 @@ export class ApiService {
     return this.http.put(`${this.baseUrl}/vendors/products/${id}/`, data);
   }
 
+  patchProduct(id: string, data: any): Observable<any> {
+    return this.http.patch(`${this.baseUrl}/vendors/products/${id}/`, data);
+  }
+
   deleteProduct(id: string): Observable<any> {
     return this.http.delete(`${this.baseUrl}/vendors/products/${id}/`);
+  }
+
+  getVendorAvailableCatalogProducts(params?: any): Observable<any> {
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.keys(params).forEach(k => {
+        if (params[k] !== null && params[k] !== undefined && params[k] !== '') {
+          httpParams = httpParams.set(k, params[k]);
+        }
+      });
+    }
+    return this.http.get(`${this.baseUrl}/vendors/catalog-products/available/`, { params: httpParams });
+  }
+
+  getVendorCatalogProductDetail(id: string): Observable<any> {
+    return this.http.get(`${this.baseUrl}/vendors/catalog-products/available/${id}/`);
+  }
+
+  createProductFromCatalog(data: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/vendors/products/from-catalog/`, data);
+  }
+
+  createInheritedProductDraftBatch(catalogProductIds: string[]): Observable<any> {
+    return this.http.post(`${this.baseUrl}/vendors/inherited-products/draft-batch/`, {
+      catalog_product_ids: catalogProductIds,
+    });
+  }
+
+  getInheritedProducts(params?: { approval_status?: string }): Observable<any> {
+    let httpParams = new HttpParams();
+    if (params?.approval_status) {
+      httpParams = httpParams.set('approval_status', params.approval_status);
+    }
+    return this.http.get(`${this.baseUrl}/vendors/inherited-products/`, { params: httpParams });
+  }
+
+  updateInheritedProduct(id: string, data: any): Observable<any> {
+    return this.http.patch(`${this.baseUrl}/vendors/inherited-products/${id}/`, data);
+  }
+
+  duplicateInheritedProduct(id: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/vendors/inherited-products/${id}/duplicate/`, {});
+  }
+
+  submitInheritedProducts(productIds: string[]): Observable<any> {
+    return this.http.post(`${this.baseUrl}/vendors/inherited-products/submit/`, { product_ids: productIds });
+  }
+
+  setInheritedProductImagePolicy(id: string, inheritanceMode: 'base_image' | 'vendor_image_only' | 'mixed'): Observable<any> {
+    return this.http.post(`${this.baseUrl}/vendors/inherited-products/${id}/image-policy/`, {
+      inheritance_mode: inheritanceMode,
+    });
+  }
+
+  getVendorCatalogProposals(params?: any): Observable<any> {
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.keys(params).forEach(k => {
+        if (params[k] !== null && params[k] !== undefined && params[k] !== '') {
+          httpParams = httpParams.set(k, params[k]);
+        }
+      });
+    }
+    return this.http.get(`${this.baseUrl}/vendors/catalog-proposals/`, { params: httpParams });
+  }
+
+  createVendorCatalogProposal(data: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/vendors/catalog-proposals/`, data);
   }
 
   // Product Images
@@ -233,10 +398,30 @@ export class ApiService {
     return this.http.get(`${this.baseUrl}/vendors/orders/${id}/`);
   }
 
+  getVendorLiveOrders(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/vendors/live-orders/`);
+  }
+
   updateOrderStatus(orderId: string, status: string, cancelReason?: string): Observable<any> {
     const body: any = { status };
     if (cancelReason) body.cancel_reason = cancelReason;
     return this.http.patch(`${this.baseUrl}/vendors/orders/${orderId}/status/`, body);
+  }
+
+  acceptVendorOrder(orderId: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/vendors/orders/${orderId}/accept/`, {});
+  }
+
+  rejectVendorOrder(orderId: string, reason: string = ''): Observable<any> {
+    return this.http.post(`${this.baseUrl}/vendors/orders/${orderId}/reject/`, { reason });
+  }
+
+  startPreparingVendorOrder(orderId: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/vendors/orders/${orderId}/start-preparing/`, {});
+  }
+
+  markVendorOrderReady(orderId: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/vendors/orders/${orderId}/mark-ready/`, {});
   }
 
   getVendorPayouts(params?: any): Observable<any> {
@@ -346,7 +531,7 @@ export class ApiService {
   }
 
   getDeliveryFeePreview(addressId: string): Observable<any> {
-    return this.http.get(`${this.baseUrl}/orders/delivery-fee-preview/?address_id=${addressId}`);
+    return this.http.get(`${this.baseUrl}/orders/delivery-fee-preview/`, { params: { address_id: addressId } });
   }
 
   // Loyalty
@@ -376,7 +561,7 @@ export class ApiService {
     return this.http.post(`${this.baseUrl}/orders/create/`, data);
   }
 
-  initiateCheckoutPayment(data: { delivery_address_id: string; coupon_code?: string; wallet_amount?: number }): Observable<any> {
+  initiateCheckoutPayment(data: { delivery_address_id: string; coupon_code?: string; wallet_amount?: number; confirm_far_delivery?: boolean }): Observable<any> {
     return this.http.post(`${this.baseUrl}/orders/initiate-checkout-payment/`, data);
   }
 
@@ -496,6 +681,14 @@ export class ApiService {
 
   deleteVendorCoupon(id: string): Observable<any> {
     return this.http.delete(`${this.baseUrl}/vendors/coupons/${id}/`);
+  }
+
+  duplicateVendorCoupon(id: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/vendors/coupons/${id}/duplicate/`, {});
+  }
+
+  reactivateVendorCoupon(id: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/vendors/coupons/${id}/reactivate/`, {});
   }
 
   // Admin coupons
@@ -898,6 +1091,89 @@ export class ApiService {
     return this.http.delete(`${this.baseUrl}/admin/products/${id}/`);
   }
 
+  getAdminCatalogProducts(params?: any): Observable<any> {
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.keys(params).forEach(key => {
+        if (params[key] !== null && params[key] !== undefined && params[key] !== '') {
+          httpParams = httpParams.set(key, params[key]);
+        }
+      });
+    }
+    return this.http.get(`${this.baseUrl}/admin/catalog-products/`, { params: httpParams });
+  }
+
+  createAdminCatalogProduct(data: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/admin/catalog-products/`, data);
+  }
+
+  updateAdminCatalogProduct(id: string, data: any): Observable<any> {
+    return this.http.patch(`${this.baseUrl}/admin/catalog-products/${id}/`, data);
+  }
+
+  deleteAdminCatalogProduct(id: string): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/admin/catalog-products/${id}/`);
+  }
+
+  getAdminCatalogProductImages(id: string): Observable<any> {
+    return this.http.get(`${this.baseUrl}/admin/catalog-products/${id}/images/`);
+  }
+
+  uploadAdminCatalogProductImage(id: string, file: File, isPrimary: boolean = true): Observable<any> {
+    const fd = new FormData();
+    fd.append('image', file);
+    fd.append('is_primary', String(isPrimary));
+    return this.http.post(`${this.baseUrl}/admin/catalog-products/${id}/images/`, fd);
+  }
+
+  deleteAdminCatalogProductImage(productId: string, imageId: string): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/admin/catalog-products/${productId}/images/${imageId}/`);
+  }
+
+  grantAdminCatalogProductToVendor(id: string, vendorId: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/admin/catalog-products/${id}/grant-vendor/`, { vendor_id: vendorId });
+  }
+
+  getAdminCatalogProposals(params?: any): Observable<any> {
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.keys(params).forEach(key => {
+        if (params[key] !== null && params[key] !== undefined && params[key] !== '') {
+          httpParams = httpParams.set(key, params[key]);
+        }
+      });
+    }
+    return this.http.get(`${this.baseUrl}/admin/catalog-proposals/`, { params: httpParams });
+  }
+
+  approveAdminCatalogProposalItem(proposalId: string, itemId: string, data: any = {}): Observable<any> {
+    return this.http.post(`${this.baseUrl}/admin/catalog-proposals/${proposalId}/items/${itemId}/approve/`, data);
+  }
+
+  rejectAdminCatalogProposalItem(proposalId: string, itemId: string, data: any = {}): Observable<any> {
+    return this.http.post(`${this.baseUrl}/admin/catalog-proposals/${proposalId}/items/${itemId}/reject/`, data);
+  }
+
+  getAdminPendingVendorProducts(params?: any): Observable<any> {
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.keys(params).forEach(key => {
+        if (params[key] !== null && params[key] !== undefined && params[key] !== '') {
+          httpParams = httpParams.set(key, params[key]);
+        }
+      });
+    }
+    return this.http.get(`${this.baseUrl}/admin/vendor-products/pending/`, { params: httpParams });
+  }
+
+  approveAdminVendorProduct(id: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/admin/vendor-products/${id}/approve/`, {});
+  }
+
+  rejectAdminVendorProduct(id: string, reason: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/admin/vendor-products/${id}/reject/`, { reason });
+  }
+
   // Admin Orders
   getAdminOrders(params?: any): Observable<any> {
     let httpParams = new HttpParams();
@@ -921,6 +1197,26 @@ export class ApiService {
       });
     }
     return this.http.get(`${this.baseUrl}/admin/payments/`, { params: httpParams });
+  }
+
+  getPlatformSettings(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/admin/settings/platform/`);
+  }
+
+  updatePlatformSettings(data: any): Observable<any> {
+    return this.http.patch(`${this.baseUrl}/admin/settings/platform/`, data);
+  }
+
+  getAdminAuditLogs(params?: any): Observable<any> {
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.keys(params).forEach(key => {
+        if (params[key] !== null && params[key] !== undefined && params[key] !== '') {
+          httpParams = httpParams.set(key, params[key]);
+        }
+      });
+    }
+    return this.http.get(`${this.baseUrl}/admin/audit-logs/`, { params: httpParams });
   }
 
   updateAdminOrderStatus(id: string, status: string): Observable<any> {

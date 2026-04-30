@@ -2,7 +2,7 @@ import { Component, inject, signal, OnInit, OnDestroy, AfterViewInit, NgZone } f
 import { CommonModule, Location } from '@angular/common';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { ApiService, AuthService, AppCurrencyPipe, ToastService, Order, OrderTracking } from '@shared/public-api';
+import { AlertService, ApiService, AuthService, AppCurrencyPipe, Order, OrderTracking, openAuthenticatedWebSocket } from '@shared/public-api';
 import { timer, Subscription } from 'rxjs';
 import { GoogleMapsModule } from '@angular/google-maps';
 
@@ -20,7 +20,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   private router = inject(Router);
   private location = inject(Location);
   private zone = inject(NgZone);
-  private toast = inject(ToastService);
+  private alerts = inject(AlertService);
 
   order = signal<Order | null>(null);
   tracking = signal<OrderTracking[]>([]);
@@ -169,9 +169,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private connectWebSocket(orderId: string) {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/sa/ws/delivery/${orderId}/tracking/?token=${this.auth.getToken()}`;
-    this.ws = new WebSocket(wsUrl);
+    this.ws = openAuthenticatedWebSocket(`/sa/ws/delivery/${orderId}/tracking/`, this.auth.getToken());
     this.ws.onmessage = (msg) => {
       const data = JSON.parse(msg.data);
       if (data.type === 'location_update' && data.lat && data.lng) {
@@ -295,13 +293,13 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
         this.reordering.set(false);
         this.api.refreshCartCount();
         if (cart.skipped?.length) {
-          this.toast.show(`${cart.skipped.length} item(s) unavailable and were skipped.`, 'error');
+          this.alerts.warning(`${cart.skipped.length} item(s) unavailable and were skipped.`, 'Some items were skipped');
         }
         this.router.navigate(['/checkout']);
       },
       error: () => {
         this.reordering.set(false);
-        this.toast.show('Could not reorder. Please try again.', 'error');
+        this.alerts.error('Could not reorder. Please try again.');
       }
     });
   }
@@ -331,8 +329,8 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
           theme: { color: '#6C63FF' },
           handler: (response: any) => {
             this.api.verifyRazorpayPayment(o.id, response.razorpay_payment_id, response.razorpay_signature).subscribe({
-              next: (updated) => { this.order.set(updated); this.payingNow.set(false); this.toast.show('Payment successful!', 'success'); },
-              error: () => { this.payingNow.set(false); this.toast.show('Payment verification failed. Contact support.', 'error'); }
+              next: (updated) => { this.order.set(updated); this.payingNow.set(false); this.alerts.success('Payment successful!'); },
+              error: () => { this.payingNow.set(false); this.alerts.error('Payment verification failed. Contact support.'); }
             });
           },
           modal: { ondismiss: () => this.payingNow.set(false) }
@@ -340,7 +338,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
         this.payingNow.set(false);
         new Razorpay(options).open();
       },
-      error: () => { this.payingNow.set(false); this.toast.show('Could not initiate payment.', 'error'); }
+      error: () => { this.payingNow.set(false); this.alerts.error('Could not initiate payment.'); }
     });
   }
 
@@ -349,9 +347,9 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     this.api.generateInvoice({invoice_type: 'customer_receipt', order: o.id, amount: o.total, notes: `Receipt for Order #${o.order_number}`}).subscribe({
       next: (inv) => this.api.downloadInvoice(inv.id).subscribe({
         next: (blob) => this.saveOrShareBlob(blob, `invoice-${o.order_number}.pdf`),
-        error: () => this.toast.show('Failed to download invoice.', 'error')
+        error: () => this.alerts.error('Failed to download invoice.')
       }),
-      error: () => this.toast.show('Failed to generate invoice.', 'error')
+      error: () => this.alerts.error('Failed to generate invoice.')
     });
   }
 
@@ -371,7 +369,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
         this.order.update(ord => ord ? { ...ord, delivery_tip: res.delivery_tip } : ord);
         this.tipping.set(false);
         this.tipSubmitted.set(true);
-        this.toast.show('Tip sent! Thank you for your generosity.', 'success');
+        this.alerts.success('Tip sent! Thank you for your generosity.');
       },
       error: () => this.tipping.set(false),
     });
@@ -384,7 +382,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     if (navigator.share) {
       navigator.share({ title: 'Live Delivery Tracking', text: `Track my NexConnect delivery: ${url}`, url }).catch(() => {});
     } else {
-      navigator.clipboard.writeText(url).then(() => this.toast.show('Tracking link copied!', 'success')).catch(() => {});
+      navigator.clipboard.writeText(url).then(() => this.alerts.success('Tracking link copied!')).catch(() => {});
     }
   }
 }

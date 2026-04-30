@@ -1,76 +1,73 @@
-<div class="wl-wrap">
-
-  <!-- Top bar -->
-  <div class="wl-topbar">
-    <button class="wl-back" (click)="goBack()">
-      <span class="material-icons-outlined">arrow_back</span>
-    </button>
+<section class="wishlist-page">
+  <div class="wishlist-hero">
+    <button class="icon-btn" (click)="goBack()"><span class="material-icons-outlined">arrow_back</span></button>
     <div>
-      <div class="wl-title">My Wishlist</div>
-      @if (!loading()) {
-        <div class="wl-sub">{{ products().length }} item{{ products().length !== 1 ? 's' : '' }} saved</div>
-      }
+      <span class="page-kicker">Saved intent</span>
+      <h1>Your wishlist</h1>
+      <p>
+        @if (!loading()) {
+          {{ products().length }} saved product{{ products().length !== 1 ? 's' : '' }} ready when you are
+        } @else {
+          Hold onto favorite products and move them into your basket faster
+        }
+      </p>
     </div>
   </div>
 
   @if (loading()) {
-    <div class="wl-loading">
+    <div class="wishlist-grid">
       @for (n of [1,2,3,4]; track n) {
-        <div class="wl-skel shimmer"></div>
+        <div class="wishlist-skel shimmer"></div>
       }
     </div>
   } @else if (products().length === 0) {
-    <div class="wl-empty">
+    <div class="empty-panel">
       <span class="material-icons-outlined">favorite_border</span>
-      <h3>Your wishlist is empty</h3>
-      <p>Save products you love by tapping the heart icon on any product page.</p>
-      <a routerLink="/products" class="wl-browse-btn">Browse Products</a>
+      <h2>Your wishlist is still empty.</h2>
+      <p>Tap the heart on products you want to revisit, compare or order later.</p>
+      <div class="empty-actions">
+        <a routerLink="/search">Search essentials</a>
+        <a routerLink="/offers" class="ghost-link">See current offers</a>
+      </div>
     </div>
   } @else {
-    <div class="wl-grid">
+    <div class="wishlist-summary">
+      <article>
+        <strong>{{ products().length }}</strong>
+        <span>Saved products</span>
+      </article>
+      <article>
+        <strong>{{ availableCount() }}</strong>
+        <span>Ready to move into cart</span>
+      </article>
+    </div>
+
+    <div class="wishlist-grid">
       @for (p of products(); track p.id) {
-        <div class="wl-card">
-          <a [routerLink]="['/product', p.id]" class="wl-img-wrap">
+        <article class="wishlist-card">
+          <a [routerLink]="['/product', p.id]" class="wishlist-media">
             @if (p.primary_image) {
-              <img [src]="p.primary_image" [alt]="p.name" class="wl-img" loading="lazy" />
+              <img [src]="p.primary_image" [alt]="p.name" loading="lazy">
             } @else {
-              <div class="wl-img-placeholder">
-                <span class="material-icons-outlined">image</span>
-              </div>
+              <div class="media-placeholder"><span class="material-icons-outlined">inventory_2</span></div>
             }
             @if (p.status === 'sold_out') {
-              <div class="wl-sold-out-badge">Sold Out</div>
+              <span class="soldout-chip">Sold out</span>
             }
           </a>
-
-          <div class="wl-info">
-            <a [routerLink]="['/product', p.id]" class="wl-name">{{ p.name }}</a>
-            <div class="wl-vendor">{{ p.vendor_name }}</div>
-            <div class="wl-price">{{ p.price | appCurrency }}</div>
+          <div class="wishlist-copy">
+            <a [routerLink]="['/product', p.id]"><strong>{{ p.name }}</strong></a>
+            <span>{{ p.vendor_name }}</span>
+            <em>{{ p.price | appCurrency }}</em>
           </div>
-
-          <div class="wl-actions">
-            <button
-              class="wl-cart-btn"
-              [disabled]="addingId() === p.id || p.status === 'sold_out'"
-              (click)="addToCart(p)">
-              @if (addingId() === p.id) {
-                <span class="wl-spinner"></span>
-              } @else {
-                <span class="material-icons-outlined">add_shopping_cart</span>
-              }
+          <div class="wishlist-actions">
+            <button class="add-btn" [disabled]="addingId() === p.id || p.status === 'sold_out'" (click)="addToCart(p)">
+              @if (addingId() === p.id) { Adding... } @else { Add to cart }
             </button>
-            <button
-              class="wl-remove-btn"
-              [disabled]="removingId() === p.id"
-              (click)="removeFromWishlist(p)"
-              title="Remove from wishlist">
-              <span class="material-icons-outlined">delete_outline</span>
-            </button>
+            <button class="remove-btn" [disabled]="removingId() === p.id" (click)="removeFromWishlist(p)">Remove</button>
           </div>
-        </div>
+        </article>
       }
     </div>
   }
-
-</div>
+</section>

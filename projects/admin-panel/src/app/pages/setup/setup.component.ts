@@ -24,6 +24,7 @@ export class SetupComponent implements OnInit {
 
   constructor() {
     this.setupForm = this.fb.group({
+      setup_token: ['', Validators.required],
       first_name: ['', Validators.required],
       last_name: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
@@ -57,9 +58,10 @@ export class SetupComponent implements OnInit {
     this.isSubmitting = true;
     this.errorMsg = '';
 
-    const payload = this.setupForm.value;
+    const payload = this.setupForm.getRawValue();
+    const setupToken = payload.setup_token;
 
-    this.api.setupSuperuser(payload).subscribe({
+    this.api.setupSuperuser(payload, setupToken).subscribe({
       next: () => {
         // Successfully created! Now login with the same credentials
         this.auth.login(payload.username, payload.password).subscribe({

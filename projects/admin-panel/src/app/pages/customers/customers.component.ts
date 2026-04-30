@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '@shared/public-api';
-import { DynamicTableComponent, TableCellDirective } from '../../shared/components/dynamic-table/dynamic-table.component';
+import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
 
 @Component({
   selector: 'app-customers',

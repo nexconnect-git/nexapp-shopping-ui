@@ -33,13 +33,20 @@
     <div class="card-header">
       <h3>Payout History</h3>
     </div>
+    <div class="payout-tabs">
+      @for (tab of payoutTabs; track tab.key) {
+        <button [class.active]="activeTab() === tab.key" (click)="activeTab.set(tab.key)">
+          {{ tab.label }}
+        </button>
+      }
+    </div>
     <div class="card-body p-0">
       @if (loading()) {
         <div class="p-4 text-center text-muted">Loading settlement records...</div>
-      } @else if (payouts().length === 0) {
+      } @else if (filteredPayouts().length === 0) {
         <div class="p-4 text-center text-muted">
           <span class="material-icons-outlined" style="font-size:32px;display:block;margin-bottom:8px">account_balance_wallet</span>
-          No payouts have been processed yet.
+          No payouts in this view.
         </div>
       } @else {
         <div class="table-responsive">
@@ -57,7 +64,7 @@
               </tr>
             </thead>
             <tbody>
-              @for (payout of payouts(); track payout.id) {
+              @for (payout of filteredPayouts(); track payout.id) {
                 <tr [class.highlight-row]="payout.status === 'pending_approval' || payout.status === 'paid'">
                   <td class="text-muted"><small>{{ payout.id.split('-')[0] }}</small></td>
                   <td>{{ payout.period_start | date:'MMM d, y' }} – {{ payout.period_end | date:'MMM d, y' }}</td>

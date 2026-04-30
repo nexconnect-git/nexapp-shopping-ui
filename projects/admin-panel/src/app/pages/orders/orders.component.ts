@@ -1,9 +1,9 @@
 import { Component, inject, signal, OnInit, OnDestroy, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService, AppCurrencyPipe, Order } from '@shared/public-api';
+import { ApiService, AppCurrencyPipe, AuthService, Order, openAuthenticatedWebSocket } from '@shared/public-api';
 import { timer, Subscription } from 'rxjs';
-import { DynamicTableComponent, TableCellDirective } from '../../shared/components/dynamic-table/dynamic-table.component';
+import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
 
 // Google Maps loaded via <script> tag in index.html — no @types/google.maps needed
 declare const google: any;
@@ -17,6 +17,7 @@ declare const google: any;
 })
 export class OrdersComponent implements OnInit, OnDestroy {
   private api = inject(ApiService);
+  private auth = inject(AuthService);
   private zone = inject(NgZone);
 
   orders = signal<Order[]>([]);
@@ -229,10 +230,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
 
   private connectWebSocket(orderId: string) {
     this.closeWs();
-    const token = localStorage.getItem('token') || '';
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/sa/ws/delivery/${orderId}/tracking/?token=${token}`;
-    this.ws = new WebSocket(wsUrl);
+    this.ws = openAuthenticatedWebSocket(`/sa/ws/delivery/${orderId}/tracking/`, this.auth.getToken());
     this.ws.onmessage = (msg) => {
       const data = JSON.parse(msg.data);
       if (data.type === 'location_update' && data.lat && data.lng) {

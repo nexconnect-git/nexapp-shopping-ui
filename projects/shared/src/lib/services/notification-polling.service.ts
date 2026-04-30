@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { ApiService } from './api.service';
-import { ToastService } from './toast.service';
+import { AlertService } from './alert.service';
 
 export type NotifRouteMapper = (n: any) => { label: string; url: string } | null;
 
@@ -13,11 +13,12 @@ export type NotifRouteMapper = (n: any) => { label: string; url: string } | null
  *  - Removes duplicate: AppComponent no longer needs its own getUnreadCount poll.
  *  - Exposes unreadCount so AppComponent can read it reactively.
  *  - Exponential back-off on consecutive errors (max 5 min).
+ *  - Uses the shared alert host instead of the legacy toast UI.
  */
 @Injectable({ providedIn: 'root' })
 export class NotificationPollingService {
   private api = inject(ApiService);
-  private toast = inject(ToastService);
+  private alerts = inject(AlertService);
 
   private seenIds = new Set<string>();
   private consecutiveErrors = 0;
@@ -39,7 +40,7 @@ export class NotificationPollingService {
     if (mapper) this.mapper = mapper;
     if (this.intervalId !== null) return; // already running
 
-    // Seed seen-IDs without showing toasts so old notifications don't toast on boot.
+    // Seed seen-IDs without surfacing old notifications on boot.
     this.api.getNotifications().subscribe({
       next: (r) => (r.results || r).forEach((n: any) => this.seenIds.add(n.id)),
     });
@@ -136,23 +137,24 @@ export class NotificationPollingService {
         if (!fresh.length) return;
 
         if (isReconnect && fresh.length > 3) {
-          this.toast.show(
-            `${fresh.length} new notifications while offline`,
-            'info',
-            'View all',
-            '/notifications',
-            7000,
-          );
+          this.alerts.info(`${fresh.length} new notifications while offline`, 'Notifications updated');
         } else {
-          fresh.slice(0, 5).forEach((n) => this.showToast(n));
+          fresh.slice(0, 5).forEach((n) => this.showBanner(n));
         }
       },
     });
   }
 
-  private showToast(n: any): void {
-    const action = this.mapper(n);
+  private showBanner(n: any): void {
     const type = n.notification_type === 'order' ? 'success' : 'info';
-    this.toast.show(n.title || n.message || 'New notification', type, action?.label, action?.url);
+    const title = n.title || 'New notification';
+    const message = n.message || title;
+
+    this.alerts.showBanner({
+      title,
+      message,
+      tone: type,
+      durationMs: 7000,
+    });
   }
 }

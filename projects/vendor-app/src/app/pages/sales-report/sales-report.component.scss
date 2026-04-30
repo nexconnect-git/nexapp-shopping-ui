@@ -9,12 +9,20 @@
   .page-subtitle { font-size: 1.0625rem; font-weight: 500; color: var(--text-muted); margin: 0; }
 }
 .header-actions {
+  display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;
   .form-select {
     padding: 0.625rem 1rem; border: 1.5px solid var(--border-color); border-radius: var(--radius-md);
     background: white; font-family: var(--font-family); font-size: 0.9375rem; font-weight: 600;
     color: var(--text-primary); cursor: pointer; transition: all 0.2s; outline: none;
     &:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
   }
+}
+.export-btn {
+  display: inline-flex; align-items: center; gap: 0.4rem; border: 1px solid var(--border-color);
+  background: white; color: var(--text-primary); border-radius: var(--radius-md);
+  padding: 0.625rem 1rem; font-weight: 800; cursor: pointer;
+  .material-icons-outlined { font-size: 18px; }
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
 }
 
 /* Metrics Row */
@@ -34,6 +42,9 @@
   &.success { background: var(--success-light); color: var(--success); }
   &.info    { background: rgba(59,130,246,0.1); color: #3b82f6; }
   &.warning { background: var(--warning-light); color: var(--warning); }
+  &.repeat { background: rgba(236,72,153,0.1); color: #db2777; }
+  &.coupon { background: rgba(14,165,233,0.1); color: #0284c7; }
+  &.stock { background: rgba(245,158,11,0.12); color: #b45309; }
 }
 .metric-info {
   flex: 1; display: flex; flex-direction: column; gap: 0.25rem;
@@ -46,6 +57,7 @@
   margin-bottom: 1.5rem; border-color: rgba(99,102,241,0.2) !important;
   .widget-header { background: linear-gradient(135deg, rgba(99,102,241,0.06), rgba(99,102,241,0.01)); }
 }
+.metric-card.compact { padding: 1.125rem 1.25rem; }
 .settlement-metrics {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem;
 }

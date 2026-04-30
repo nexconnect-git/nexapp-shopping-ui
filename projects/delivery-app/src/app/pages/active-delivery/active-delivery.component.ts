@@ -1,6 +1,6 @@
 import { Component, inject, signal, OnInit, OnDestroy, AfterViewChecked } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ApiService, Order, PaymentQR } from '@shared/public-api';
+import { ApiService, Order, PaymentQR, openAuthenticatedWebSocket } from '@shared/public-api';
 import { timer, Subscription } from 'rxjs';
 import { AuthService } from '@shared/public-api';
 
@@ -169,9 +169,7 @@ export class ActiveDeliveryComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   private connectTrackerSocket(orderId: string): WebSocket {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/sa/ws/delivery/${orderId}/tracking/?token=${this.auth.getToken()}`;
-    const ws = new WebSocket(wsUrl);
+    const ws = openAuthenticatedWebSocket(`/sa/ws/delivery/${orderId}/tracking/`, this.auth.getToken());
     ws.onopen = () => console.log(`Connected tracking socket for order ${orderId}`);
     ws.onerror = (err) => console.error('WS Error:', err);
     this.wsConns.set(orderId, ws);

@@ -1,13 +1,13 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, ActivatedRoute, RouterLink } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { ApiService } from '@shared/public-api';
 import { DynamicStepperComponent, StepperConfig } from '../../shared/components/dynamic-stepper/dynamic-stepper.component';
 
 @Component({
   selector: 'app-onboarding-form',
   standalone: true,
-  imports: [CommonModule, DynamicStepperComponent, RouterLink],
+  imports: [CommonModule, DynamicStepperComponent],
   templateUrl: './onboarding-form.component.html',
   styleUrl: './onboarding-form.component.scss'
 })

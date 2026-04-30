@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { ApiService, ToastService } from '@shared/public-api';
+import { AlertService, ApiService } from '@shared/public-api';
 
 interface ChatMessage {
   sender: 'user' | 'bot';
@@ -25,7 +25,7 @@ export class OrderHelpComponent implements OnInit, AfterViewChecked {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private api = inject(ApiService);
-  private toast = inject(ToastService);
+  private alerts = inject(AlertService);
 
   orderId = signal<string>('');
   order = signal<any>(null);
@@ -42,6 +42,28 @@ export class OrderHelpComponent implements OnInit, AfterViewChecked {
     { id: 'cancel', text: 'How do I cancel this order?' },
     { id: 'issue', text: 'I have an issue with the items.' },
   ];
+
+  canTrackOrder() {
+    const status = this.order()?.status;
+    return !!status && ['confirmed', 'preparing', 'ready', 'picked_up', 'on_the_way'].includes(status);
+  }
+
+  canRaiseIssue() {
+    const status = this.order()?.status;
+    return !!status && ['delivered', 'cancelled'].includes(status);
+  }
+
+  openTracking() {
+    this.router.navigate(['/order', this.orderId(), 'tracking']);
+  }
+
+  openOrderDetail() {
+    this.router.navigate(['/order', this.orderId()]);
+  }
+
+  openIssueFlow() {
+    this.router.navigate(['/order', this.orderId(), 'issue']);
+  }
 
   ngOnInit() {
     this.route.paramMap.subscribe(params => {
@@ -79,7 +101,7 @@ export class OrderHelpComponent implements OnInit, AfterViewChecked {
         this.loading.set(false);
       },
       error: () => {
-        this.toast.show('Failed to load order context.', 'error');
+        this.alerts.error('Failed to load order context.');
         this.loading.set(false);
       }
     });

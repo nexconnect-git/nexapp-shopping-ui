@@ -36,6 +36,7 @@ export class CouponsComponent implements OnInit {
   editingId = signal<string | null>(null);
   error = signal('');
   success = signal('');
+  filter = signal<'all' | 'active' | 'upcoming' | 'expired' | 'inactive'>('all');
 
   // Pagination
   page = signal(1);
@@ -52,7 +53,37 @@ export class CouponsComponent implements OnInit {
     { value: 'free_delivery', label: 'Free Delivery' },
   ];
 
+  readonly campaignPresets = [
+    { label: 'First order discount', code: 'WELCOME15', title: 'First order discount', discount_type: 'percentage', discount_value: 15, min_order_amount: 149 },
+    { label: 'Weekend offer', code: 'WEEKEND10', title: 'Weekend special', discount_type: 'percentage', discount_value: 10, min_order_amount: 199 },
+    { label: 'Free delivery', code: 'FREEDEL', title: 'Free delivery', discount_type: 'free_delivery', discount_value: 0, min_order_amount: 249 },
+    { label: 'Slow product push', code: 'MOVE20', title: 'Move slow stock', discount_type: 'fixed', discount_value: 20, min_order_amount: 99 },
+  ];
+
   ngOnInit() { this.load(); }
+
+  filteredCoupons() {
+    const now = new Date();
+    return this.coupons().filter(c => {
+      const f = this.filter();
+      if (f === 'all') return true;
+      if (f === 'active') return c.status_label === 'Active';
+      if (f === 'upcoming') return c.valid_from && new Date(c.valid_from) > now;
+      if (f === 'expired') return this.isExpired(c);
+      if (f === 'inactive') return !c.is_active;
+      return true;
+    });
+  }
+
+  summary() {
+    const coupons = this.coupons();
+    return {
+      active: coupons.filter(c => c.status_label === 'Active').length,
+      usage: coupons.reduce((sum, c) => sum + Number(c.usage_count ?? c.used_count ?? 0), 0),
+      revenue: coupons.reduce((sum, c) => sum + Number(c.revenue_influenced || 0), 0),
+      warnings: coupons.filter(c => c.health_warnings?.length).length,
+    };
+  }
 
   load() {
     this.loading.set(true);
@@ -94,6 +125,20 @@ export class CouponsComponent implements OnInit {
 
   openCreate() {
     this.form = this.blankForm();
+    this.editingId.set(null);
+    this.error.set('');
+    this.showForm.set(true);
+  }
+
+  applyPreset(preset: any) {
+    this.form = {
+      ...this.blankForm(),
+      code: preset.code,
+      title: preset.title,
+      discount_type: preset.discount_type,
+      discount_value: preset.discount_value,
+      min_order_amount: preset.min_order_amount,
+    };
     this.editingId.set(null);
     this.error.set('');
     this.showForm.set(true);
@@ -148,6 +193,20 @@ export class CouponsComponent implements OnInit {
       error: () => this.deleting.set(null) });
   }
 
+  duplicate(c: any) {
+    this.api.duplicateVendorCoupon(c.id).subscribe({
+      next: () => { this.success.set('Coupon duplicated as an inactive draft.'); this.load(); },
+      error: () => this.error.set('Failed to duplicate coupon.'),
+    });
+  }
+
+  reactivate(c: any) {
+    this.api.reactivateVendorCoupon(c.id).subscribe({
+      next: () => { this.success.set('Coupon reactivated.'); this.load(); },
+      error: () => this.error.set('Failed to reactivate coupon.'),
+    });
+  }
+
   discountLabel(c: any): string {
     if (c.discount_type === 'percentage') return `${c.discount_value}% OFF`;
     if (c.discount_type === 'free_delivery') return 'FREE DELIVERY';
@@ -155,6 +214,6 @@ export class CouponsComponent implements OnInit {
   }
 
   isExpired(c: any): boolean {
-    return c.valid_until && new Date(c.valid_until) < new Date();
+    return c.is_expired || (c.valid_until && new Date(c.valid_until) < new Date());
   }
 }

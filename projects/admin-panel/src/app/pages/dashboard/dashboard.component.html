@@ -1,219 +1,197 @@
-<div class="dashboard fade-in">
-  
-  <div class="header-banner">
-    <div class="hb-left">
-      <h1 class="page-title">Executive Overview</h1>
-      <p class="page-subtitle">Platform-wide statistics and system health.</p>
+<div class="dashboard">
+  <section class="command-hero">
+    <div>
+      <span class="eyebrow">Instant delivery command center</span>
+      <h1>Today's marketplace operations</h1>
+      <p>Live order pressure, fleet readiness, marketplace health, and money movement in one control room.</p>
     </div>
-    <div class="hb-right">
-      <div class="report-badge">
-        <span class="material-icons-outlined">calendar_today</span>
-        Today
-      </div>
+    <div class="hero-actions">
+      <a routerLink="/orders" class="hero-button primary">
+        <span class="material-icons-outlined">receipt_long</span>
+        Live orders
+      </a>
+      <a routerLink="/delivery-partners" class="hero-button">
+        <span class="material-icons-outlined">two_wheeler</span>
+        Dispatch fleet
+      </a>
     </div>
-  </div>
+  </section>
 
   @if (loadingStats()) {
     <div class="loading-state">
       <div class="spinner"></div>
-      <p>Aggregating platform data...</p>
+      <p>Syncing platform telemetry...</p>
     </div>
   } @else {
-    <!-- Sophisticated Metrics Grid -->
-    <div class="metrics-grid">
-      
-      <!-- Primary Core Metric -->
-      <div class="metric-card highlight-card">
-        <div class="mc-top">
-          <span class="material-icons-outlined">monitoring</span>
-          <span class="trend positive"><span class="material-icons-outlined">trending_up</span></span>
-        </div>
-        <p class="mc-label">Net Revenue</p>
-        <h2 class="mc-value">{{ stats()?.total_revenue | appCurrency }}</h2>
-      </div>
+    <section class="kpi-grid">
+      <a routerLink="/payments" class="kpi-card revenue">
+        <span class="kpi-label">Gross revenue</span>
+        <strong>{{ stats()?.total_revenue | appCurrency }}</strong>
+        <span class="kpi-note">Across all completed and active orders</span>
+      </a>
 
-      <div class="metric-card">
-        <div class="mc-icon-wrap bg-blue-soft"><span class="material-icons-outlined">group</span></div>
-        <div class="mc-info">
-          <p class="mc-label">Total Customers</p>
-          <h3 class="mc-value">{{ stats()?.customers ?? '—' }}</h3>
-        </div>
-        <a routerLink="/customers" class="card-link"></a>
-      </div>
+      <a routerLink="/orders" class="kpi-card">
+        <span class="kpi-icon danger"><span class="material-icons-outlined">timer</span></span>
+        <span class="kpi-label">Open orders</span>
+        <strong>{{ (stats()?.pending_orders || 0) + (stats()?.confirmed_orders || 0) + (stats()?.preparing_orders || 0) + (stats()?.ready_orders || 0) }}</strong>
+        <span class="kpi-note">Needs store or dispatch attention</span>
+      </a>
 
-      <div class="metric-card">
-        <div class="mc-icon-wrap bg-indigo-soft"><span class="material-icons-outlined">storefront</span></div>
-        <div class="mc-info">
-          <p class="mc-label">Active Vendors</p>
-          <h3 class="mc-value">{{ stats()?.vendors ?? '—' }}</h3>
-        </div>
-        <a routerLink="/vendors" class="card-link"></a>
-      </div>
+      <a routerLink="/delivery-partners" class="kpi-card">
+        <span class="kpi-icon teal"><span class="material-icons-outlined">delivery_dining</span></span>
+        <span class="kpi-label">Fleet partners</span>
+        <strong>{{ stats()?.delivery_partners ?? 0 }}</strong>
+        <span class="kpi-note">{{ stats()?.pending_delivery_partners || 0 }} pending verification</span>
+      </a>
 
-      <div class="metric-card">
-        <div class="mc-icon-wrap bg-emerald-soft"><span class="material-icons-outlined">inventory_2</span></div>
-        <div class="mc-info">
-          <p class="mc-label">Items Listed</p>
-          <h3 class="mc-value">{{ stats()?.products ?? '—' }}</h3>
-        </div>
-        <a routerLink="/products" class="card-link"></a>
-      </div>
+      <a routerLink="/vendors" class="kpi-card">
+        <span class="kpi-icon green"><span class="material-icons-outlined">storefront</span></span>
+        <span class="kpi-label">Active stores</span>
+        <strong>{{ stats()?.vendors ?? 0 }}</strong>
+        <span class="kpi-note">{{ stats()?.pending_vendors || 0 }} onboarding reviews</span>
+      </a>
 
-      <div class="metric-card">
-        <div class="mc-icon-wrap bg-teal-soft"><span class="material-icons-outlined">local_shipping</span></div>
-        <div class="mc-info">
-          <p class="mc-label">Delivery Partners</p>
-          <h3 class="mc-value">{{ stats()?.delivery_partners ?? '—' }}</h3>
-        </div>
-        <a routerLink="/delivery-partners" class="card-link"></a>
-      </div>
+      <a routerLink="/products" class="kpi-card">
+        <span class="kpi-icon amber"><span class="material-icons-outlined">inventory_2</span></span>
+        <span class="kpi-label">Catalog SKUs</span>
+        <strong>{{ stats()?.products ?? 0 }}</strong>
+        <span class="kpi-note">Across all vendor storefronts</span>
+      </a>
 
-      <!-- Action Required metrics -->
-      <div class="metric-card action-card">
-        <div class="mc-icon-wrap bg-warning-soft"><span class="material-icons-outlined text-warning">how_to_reg</span></div>
-        <div class="mc-info">
-          <p class="mc-label">Pending Vendors</p>
-          <h3 class="mc-value">{{ stats()?.pending_vendors ?? '0' }}</h3>
-        </div>
-        @if(stats()?.pending_vendors) { <span class="indicator blink"></span> }
-        <a routerLink="/vendors" class="card-link"></a>
-      </div>
+      <a routerLink="/customers" class="kpi-card">
+        <span class="kpi-icon violet"><span class="material-icons-outlined">groups</span></span>
+        <span class="kpi-label">Customers</span>
+        <strong>{{ stats()?.customers ?? 0 }}</strong>
+        <span class="kpi-note">Registered buyer accounts</span>
+      </a>
+    </section>
 
-      <div class="metric-card action-card">
-        <div class="mc-icon-wrap bg-warning-soft"><span class="material-icons-outlined text-warning">bike_scooter</span></div>
-        <div class="mc-info">
-          <p class="mc-label">Pending Delivery Partners</p>
-          <h3 class="mc-value">{{ stats()?.pending_delivery_partners ?? '0' }}</h3>
+    <section class="ops-grid">
+      <div class="ops-card order-flow">
+        <div class="section-header">
+          <div>
+            <h2>Order flow</h2>
+            <p>{{ stats()?.total_orders || 0 }} total orders in the platform</p>
+          </div>
+          <a routerLink="/orders">Manage</a>
         </div>
-        @if(stats()?.pending_delivery_partners) { <span class="indicator blink"></span> }
-        <a routerLink="/delivery-partners" class="card-link"></a>
-      </div>
-    </div>
 
-    <!-- Orders Breakdown Widget -->
-    <div class="metrics-grid mt-4" style="margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
-      <div class="widget-card">
-        <div class="widget-header">
-          <h3>Orders Breakdown by Status</h3>
-        </div>
-        <div class="widget-body">
-          <div class="status-bars">
-            <div class="status-bar-row">
-              <span class="status-label">Pending</span>
-              <div class="bar-track">
-                <div class="bar-fill bg-warning" [style.width.%]="(stats()?.pending_orders / (stats()?.total_orders || 1)) * 100"></div>
+        <div class="flow-list">
+          @for (item of [
+            { label: 'Placed', value: stats()?.pending_orders || 0, className: 'warn' },
+            { label: 'Preparing', value: stats()?.preparing_orders || 0, className: 'info' },
+            { label: 'Completed', value: stats()?.completed_orders || 0, className: 'good' },
+            { label: 'Cancelled', value: stats()?.cancelled_orders || 0, className: 'bad' }
+          ]; track item.label) {
+            <div class="flow-row">
+              <div class="flow-meta">
+                <span class="flow-dot" [class]="item.className"></span>
+                <span>{{ item.label }}</span>
               </div>
-              <span class="status-count">{{ stats()?.pending_orders || 0 }}</span>
-            </div>
-            <div class="status-bar-row">
-              <span class="status-label">Completed</span>
-              <div class="bar-track">
-                <div class="bar-fill bg-success" [style.width.%]="(stats()?.completed_orders / (stats()?.total_orders || 1)) * 100"></div>
+              <div class="flow-track">
+                <span [class]="item.className" [style.width.%]="(item.value / (stats()?.total_orders || 1)) * 100"></span>
               </div>
-              <span class="status-count">{{ stats()?.completed_orders || 0 }}</span>
+              <strong>{{ item.value }}</strong>
             </div>
-            <div class="status-bar-row">
-              <span class="status-label">Cancelled</span>
-              <div class="bar-track">
-                <div class="bar-fill bg-danger" [style.width.%]="(stats()?.cancelled_orders / (stats()?.total_orders || 1)) * 100"></div>
-              </div>
-              <span class="status-count">{{ stats()?.cancelled_orders || 0 }}</span>
-            </div>
+          }
+        </div>
+      </div>
+
+      <div class="ops-card action-queue">
+        <div class="section-header">
+          <div>
+            <h2>Action queue</h2>
+            <p>Items that can block an instant-delivery marketplace</p>
           </div>
         </div>
+        <a routerLink="/vendors" class="queue-item">
+          <span class="material-icons-outlined">how_to_reg</span>
+          <div>
+            <strong>{{ stats()?.pending_vendors || 0 }} vendor reviews</strong>
+            <small>KYC, store profile, and operational readiness</small>
+          </div>
+        </a>
+        <a routerLink="/delivery-partners" class="queue-item">
+          <span class="material-icons-outlined">badge</span>
+          <div>
+            <strong>{{ stats()?.pending_delivery_partners || 0 }} partner approvals</strong>
+            <small>Identity, vehicle, assets, and city coverage</small>
+          </div>
+        </a>
+        <a routerLink="/issues" class="queue-item">
+          <span class="material-icons-outlined">report_problem</span>
+          <div>
+            <strong>Customer exceptions</strong>
+            <small>Refunds, damaged goods, missing items, and delivery disputes</small>
+          </div>
+        </a>
       </div>
-    </div>
+    </section>
   }
 
-  <!-- Lower Data Panels -->
-  <div class="dashboard-panels-row mt-4">
-    <!-- Recent Orders -->
-    <div class="card panel">
-      <div class="card-header">
-        <h3>Recent Transactions</h3>
-        <a routerLink="/orders" class="btn btn-ghost btn-sm">View all</a>
+  <section class="lower-grid">
+    <div class="ops-card">
+      <div class="section-header">
+        <div>
+          <h2>Recent orders</h2>
+          <p>Newest transactions entering operations</p>
+        </div>
+        <a routerLink="/orders">View all</a>
       </div>
-      <div class="card-body p-0">
-        @if (loadingOrders()) {
-          <div class="p-4 text-center"><div class="spinner"></div></div>
-        } @else if (ordersError()) {
-          <div class="p-4 text-center text-muted" style="color:#E94560;">
-            <span class="material-icons-outlined" style="font-size:32px;opacity:.6;">error_outline</span>
-            <p style="margin:.25rem 0 0;">{{ ordersError() }}</p>
-          </div>
-        } @else if (recentOrders().length > 0) {
-          <div class="table-wrapper no-radius">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th style="width: 20%;">ID</th>
-                  <th style="width: 40%;">Entity</th>
-                  <th style="width: 20%;">Amount</th>
-                  <th style="width: 20%;">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (o of recentOrders(); track o.id) {
-                  <tr [routerLink]="['/orders', o.id]" style="cursor: pointer;">
-                    <td><span class="font-monospace">#{{ o.order_number }}</span></td>
-                    <td class="font-weight-600">{{ o.customer_name }}</td>
-                    <td class="font-weight-600">{{ o.total | appCurrency }}</td>
-                    <td><span class="badge badge-{{ o.status }}">{{ o.status }}</span></td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        } @else {
-          <div class="p-5 text-center text-muted" style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
-            <span class="material-icons-outlined" style="font-size: 40px; opacity: 0.5;">receipt_long</span>
-            <p style="margin: 0;">No active transactions</p>
-          </div>
-        }
-      </div>
-    </div>
 
-    <!-- Top Vendors -->
-    <div class="card panel">
-      <div class="card-header">
-        <h3>Top Vendors</h3>
-        <a routerLink="/vendors" class="btn btn-ghost btn-sm">View all</a>
-      </div>
-      <div class="card-body p-0">
-        @if (loadingVendors()) {
-          <div class="p-4 text-center"><div class="spinner"></div></div>
-        } @else if (vendorsError()) {
-          <div class="p-4 text-center text-muted" style="color:#E94560;">
-            <span class="material-icons-outlined" style="font-size:32px;opacity:.6;">error_outline</span>
-            <p style="margin:.25rem 0 0;">{{ vendorsError() }}</p>
-          </div>
-        } @else if (topVendors().length > 0) {
-          <div class="ranking-list">
-            @for (v of topVendors(); track v.id) {
-              <div class="rank-row hover-shadow" [routerLink]="['/vendors', v.id]" style="cursor: pointer; padding: 10px; border-radius: 8px; transition: background 0.2s;">
-                <div class="rank-avatar">
-                  <span class="material-icons-outlined">store</span>
-                </div>
-                <div class="v-meta">
-                  <span class="v-name">{{ v.store_name }}</span>
-                  <span class="v-city text-muted">{{ v.city }}</span>
-                </div>
-                <div class="v-score">
-                  <span class="score-stars"><span class="material-icons-outlined text-warning">star</span> {{ v.average_rating | number:'1.1-1' }}</span>
-                  <span class="score-reviews text-muted">{{ v.total_ratings }} revs</span>
-                </div>
+      @if (loadingOrders()) {
+        <div class="compact-loading"><div class="spinner"></div></div>
+      } @else if (ordersError()) {
+        <div class="empty-panel danger">{{ ordersError() }}</div>
+      } @else if (recentOrders().length > 0) {
+        <div class="order-list">
+          @for (o of recentOrders(); track o.id) {
+            <a class="order-row" [routerLink]="['/orders', o.id]">
+              <div>
+                <strong>#{{ o.order_number }}</strong>
+                <span>{{ o.customer_name }} · {{ o.vendor_name || 'Vendor' }}</span>
               </div>
-            }
-          </div>
-        } @else {
-          <div class="p-5 text-center text-muted" style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
-            <span class="material-icons-outlined" style="font-size: 40px; opacity: 0.5;">storefront</span>
-            <p style="margin: 0;">No vendors ranked yet</p>
-          </div>
-        }
-      </div>
+              <div class="order-value">
+                <strong>{{ o.total | appCurrency }}</strong>
+                <span class="status-pill" [class]="o.status">{{ o.status }}</span>
+              </div>
+            </a>
+          }
+        </div>
+      } @else {
+        <div class="empty-panel">No live transactions yet.</div>
+      }
     </div>
-  </div>
-</div>
 
-<!-- aria-label -->
+    <div class="ops-card">
+      <div class="section-header">
+        <div>
+          <h2>Top stores</h2>
+          <p>Best-rated vendor storefronts</p>
+        </div>
+        <a routerLink="/vendors">View all</a>
+      </div>
+
+      @if (loadingVendors()) {
+        <div class="compact-loading"><div class="spinner"></div></div>
+      } @else if (vendorsError()) {
+        <div class="empty-panel danger">{{ vendorsError() }}</div>
+      } @else if (topVendors().length > 0) {
+        <div class="store-list">
+          @for (v of topVendors(); track v.id) {
+            <a class="store-row" [routerLink]="['/vendors', v.id]">
+              <span class="store-avatar">{{ v.store_name?.[0] || 'S' }}</span>
+              <div>
+                <strong>{{ v.store_name }}</strong>
+                <span>{{ v.city || 'Coverage city pending' }}</span>
+              </div>
+              <em>{{ v.average_rating | number:'1.1-1' }}</em>
+            </a>
+          }
+        </div>
+      } @else {
+        <div class="empty-panel">No rated stores yet.</div>
+      }
+    </div>
+  </section>
+</div>

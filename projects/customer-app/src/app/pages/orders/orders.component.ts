@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -13,14 +13,25 @@ import { ApiService, AppCurrencyPipe, Order } from '@shared/public-api';
 })
 export class OrdersComponent implements OnInit {
   private api = inject(ApiService);
+  private readonly activeStatuses = ['placed', 'confirmed', 'preparing', 'ready', 'picked_up', 'on_the_way'];
 
   orders = signal<Order[]>([]);
   loading = signal(true);
   activeStatus = signal('');
 
-  statusTabs = [
+  readonly filteredOrders = computed(() => {
+    const active = this.activeStatus();
+    const orders = this.orders();
+    if (!active) return orders;
+    if (active === 'active') {
+      return orders.filter((order) => this.activeStatuses.includes(order.status));
+    }
+    return orders.filter((order) => order.status === active);
+  });
+
+  readonly statusTabs = [
     { label: 'All', value: '' },
-    { label: 'Active', value: 'placed' },
+    { label: 'Active', value: 'active' },
     { label: 'Preparing', value: 'preparing' },
     { label: 'On the way', value: 'on_the_way' },
     { label: 'Delivered', value: 'delivered' },
@@ -31,7 +42,7 @@ export class OrdersComponent implements OnInit {
 
   load() {
     this.loading.set(true);
-    this.api.getOrders(this.activeStatus() || undefined).subscribe({
+    this.api.getOrders().subscribe({
       next: (r) => { this.orders.set(r.results || r); this.loading.set(false); },
       error: () => this.loading.set(false)
     });

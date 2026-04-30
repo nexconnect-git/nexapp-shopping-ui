@@ -1,285 +1,147 @@
 @if (showClearCartDialog()) {
-  <div class="modal-overlay" (click)="dismissClearCartDialog()">
-    <div class="modal-dialog" (click)="$event.stopPropagation()">
-      <h3 class="modal-title">
-        <span class="material-icons-outlined">swap_horiz</span>
-        Replace cart items?
-      </h3>
-      <p class="modal-body">Your cart has items from a different store. Adding this item will clear your current cart.</p>
-      <div class="modal-actions">
-        <button class="btn btn-outline" (click)="dismissClearCartDialog()">Keep current cart</button>
-        <button class="btn btn-primary" (click)="confirmClearAndAdd()">Clear &amp; add</button>
+  <div class="dialog-backdrop" (click)="dismissClearCartDialog()">
+    <div class="dialog-card" (click)="$event.stopPropagation()">
+      <span class="material-icons-outlined">swap_horiz</span>
+      <h3>Replace current basket?</h3>
+      <p>Your cart has items from another store. Adding this product will start a fresh basket.</p>
+      <div class="dialog-actions">
+        <button class="ghost" (click)="dismissClearCartDialog()">Keep current cart</button>
+        <button class="solid" (click)="confirmClearAndAdd()">Clear and add</button>
       </div>
     </div>
   </div>
 }
 
 @if (loading()) {
-  <div class="pd-loading">
-    <div class="pd-loading-img shimmer"></div>
-    <div class="pd-loading-body">
-      <div class="pd-skel-line shimmer" style="width:60%;height:14px"></div>
-      <div class="pd-skel-line shimmer" style="width:85%;height:28px;margin-top:8px"></div>
-      <div class="pd-skel-line shimmer" style="width:40%;height:22px;margin-top:12px"></div>
-      <div class="pd-skel-line shimmer" style="width:100%;height:80px;margin-top:16px"></div>
-    </div>
-  </div>
+  <div class="product-loading"><div class="product-spinner"></div></div>
 } @else if (!product()) {
-  <div class="pd-not-found">
-    <span class="material-icons-outlined">sentiment_dissatisfied</span>
-    <h3>Product not found</h3>
-    <p>This product may have been removed or doesn't exist.</p>
-    <a routerLink="/" class="btn btn-primary">Go Home</a>
+  <div class="product-empty">
+    <span class="material-icons-outlined">inventory_2</span>
+    <h2>Product not found</h2>
+    <a routerLink="/">Back home</a>
   </div>
 } @else {
+  <section class="product-page">
+    <div class="product-topbar">
+      <button class="icon-btn" (click)="goBack()"><span class="material-icons-outlined">arrow_back</span></button>
+      <a [routerLink]="['/shop', product()!.vendor?.id]" class="vendor-pill">{{ product()!.vendor_name || product()!.vendor?.store_name || 'Store' }}</a>
+      <button class="icon-btn" [class.active]="wishlisted()" [disabled]="wishlistBusy()" (click)="toggleWishlist()">
+        <span class="material-icons-outlined">{{ wishlisted() ? 'favorite' : 'favorite_border' }}</span>
+      </button>
+      <a routerLink="/cart" class="icon-btn"><span class="material-icons-outlined">shopping_bag</span></a>
+    </div>
 
-  <!-- ── Mobile sticky topbar (hidden on desktop) ─────────── -->
-  <div class="pd-topbar">
-    <button class="pd-topbar-btn" (click)="goBack()">
-      <span class="material-icons-outlined">arrow_back</span>
-    </button>
-    <span class="pd-topbar-title">{{ product()!.name }}</span>
-    <button class="pd-topbar-btn pd-wish-topbar" [class.active]="wishlisted()"
-            [disabled]="wishlistBusy()" (click)="toggleWishlist()">
-      <span class="material-icons-outlined">{{ wishlisted() ? 'favorite' : 'favorite_border' }}</span>
-    </button>
-    <a routerLink="/cart" class="pd-topbar-btn">
-      <span class="material-icons-outlined">shopping_cart</span>
-    </a>
-  </div>
-
-  <div class="product-detail-page">
-
-    <!-- Breadcrumb (desktop only) -->
-    <nav class="breadcrumb">
-      <a routerLink="/" class="breadcrumb-item">
-        <span class="material-icons-outlined">home</span>
-        Home
-      </a>
-      <span class="breadcrumb-sep material-icons-outlined">chevron_right</span>
-      <a [routerLink]="['/shop', product()!.vendor?.id]" class="breadcrumb-item">
-        {{ product()!.vendor_name || 'Vendor' }}
-      </a>
-      <span class="breadcrumb-sep material-icons-outlined">chevron_right</span>
-      <span class="breadcrumb-current">{{ product()!.name }}</span>
-    </nav>
-
-    <!-- Main layout: 2-col desktop, stacked mobile -->
     <div class="product-layout">
-
-      <!-- Gallery panel -->
-      <div class="gallery-panel">
-        <div class="main-image-wrap">
-          @if (product()!.discount_percentage > 0) {
-            <div class="gallery-discount-badge">-{{ product()!.discount_percentage }}%</div>
-          }
+      <div class="gallery-card">
+        <div class="main-image">
           @if (selectedImage()) {
-            <img [src]="selectedImage()!" alt="{{ product()!.name }}" class="gallery-main-img">
+            <img [src]="selectedImage()!" [alt]="product()!.name">
           } @else {
-            <div class="gallery-placeholder">
-              <span class="material-icons-outlined">inventory_2</span>
-            </div>
+            <div class="image-placeholder"><span class="material-icons-outlined">inventory_2</span></div>
+          }
+          @if (product()!.discount_percentage > 0) {
+            <span class="promo-flag">{{ product()!.discount_percentage }}% off</span>
           }
         </div>
-
         @if (product()!.images?.length > 1) {
-          <div class="thumbnails-row">
+          <div class="thumb-row">
             @for (img of product()!.images; track img.id) {
-              <button class="thumb" [class.active]="selectedImage() === img.image"
-                      (click)="selectedImage.set(img.image)">
-                <img [src]="img.image" alt="{{ product()!.name }}">
+              <button [class.active]="selectedImage() === img.image" (click)="selectedImage.set(img.image)">
+                <img [src]="img.image" [alt]="product()!.name">
               </button>
             }
           </div>
         }
       </div>
 
-      <!-- Info panel -->
-      <div class="info-panel">
+      <div class="detail-card">
+        <span class="product-kicker">Instant delivery product</span>
+        <h1>{{ product()!.name }}</h1>
 
-        <!-- Vendor pill -->
-        <a [routerLink]="['/shop', product()!.vendor?.id]" class="vendor-pill">
-          <span class="material-icons-outlined">storefront</span>
-          {{ product()!.vendor?.store_name || 'Official Vendor' }}
-        </a>
-
-        <!-- Product name -->
-        <h1 class="detail-product-name">{{ product()!.name }}</h1>
-
-        <!-- Stars + review count -->
         @if (product()!.average_rating > 0) {
-          <div class="detail-rating">
-            <span class="stars">{{ starsFor(product()!.average_rating) }}</span>
-            <span class="rating-value">{{ product()!.average_rating | number:'1.1-1' }}</span>
-            <span class="rating-count">({{ product()!.total_ratings }} reviews)</span>
+          <div class="rating-row">
+            <span>{{ starsFor(product()!.average_rating) }}</span>
+            <strong>{{ product()!.average_rating | number:'1.1-1' }}</strong>
+            <small>{{ product()!.total_ratings }} ratings</small>
           </div>
         }
 
-        <!-- Price block -->
-        <div class="detail-price-section">
-          <span class="detail-price">{{ (product()!.price || 0) | appCurrency }}</span>
+        <div class="price-row">
+          <strong>{{ (product()!.price || 0) | appCurrency }}</strong>
           @if (product()!.compare_price) {
-            <span class="detail-compare-price">{{ product()!.compare_price | appCurrency }}</span>
-            @if (product()!.discount_percentage > 0) {
-              <span class="detail-save-badge">{{ product()!.discount_percentage }}% off</span>
-            }
+            <span>{{ product()!.compare_price | appCurrency }}</span>
           }
         </div>
 
-        <!-- Stock badge -->
-        @if (product()!.in_stock === false || product()!.is_available === false) {
-          <div class="stock-indicator out-of-stock">
-            <span class="material-icons-outlined">remove_shopping_cart</span>
-            Out of Stock
-          </div>
-        } @else {
-          <div class="stock-indicator in-stock">
-            <span class="material-icons-outlined">check_circle</span>
-            In Stock · Fast Delivery
-          </div>
-        }
-
-        <!-- Description -->
         @if (product()!.description) {
-          <p class="detail-description">{{ product()!.description }}</p>
+          <p>{{ product()!.description }}</p>
         }
 
-        <!-- Alerts -->
+        @if (product()!.in_stock === false || product()!.is_available === false) {
+          <div class="stock-pill sold-out">Out of stock</div>
+        } @else {
+          <div class="stock-pill">Available for quick delivery</div>
+        }
+
         @if (cartSuccess()) {
-          <div class="alert alert-success">
-            <span class="material-icons-outlined">check_circle</span>
-            Added to cart successfully!
-          </div>
+          <div class="alert success"><span class="material-icons-outlined">check_circle</span>Added to cart.</div>
         }
         @if (cartError()) {
-          <div class="alert alert-error">
-            <span class="material-icons-outlined">error</span>
-            {{ cartError() }}
-          </div>
+          <div class="alert error"><span class="material-icons-outlined">error_outline</span>{{ cartError() }}</div>
         }
 
-        <!-- Desktop purchase section (hidden on mobile) -->
         @if (product()!.in_stock !== false && product()!.is_available !== false) {
-          <div class="detail-purchase">
-            <div class="qty-section">
-              <label class="qty-label">Quantity</label>
-              <div class="qty-control">
-                <button class="qty-btn" (click)="decQty()" [disabled]="qty <= 1">
-                  <span class="material-icons-outlined">remove</span>
-                </button>
-                <span class="qty-value">{{ qty }}</span>
-                <button class="qty-btn" (click)="incQty()"
-                        [disabled]="product()!.stock > 0 && qty >= product()!.stock">
-                  <span class="material-icons-outlined">add</span>
-                </button>
-              </div>
+          <div class="buy-box">
+            <div class="qty-bar">
+              <button (click)="decQty()" [disabled]="qty <= 1"><span class="material-icons-outlined">remove</span></button>
+              <span>{{ qty }}</span>
+              <button (click)="incQty()" [disabled]="product()!.stock > 0 && qty >= product()!.stock"><span class="material-icons-outlined">add</span></button>
             </div>
 
-            <div class="detail-actions">
-              <button class="btn btn-primary detail-add-btn"
-                      [disabled]="addingToCart()" (click)="addToCart()">
-                @if (addingToCart()) {
-                  <span class="spinner"></span> Processing…
-                } @else {
-                  <span class="material-icons-outlined">shopping_bag</span>
-                  Add to Cart
-                }
+            <div class="buy-actions">
+              <button class="buy-btn solid" [disabled]="addingToCart()" (click)="addToCart()">
+                @if (addingToCart()) { Adding... } @else { Add to cart }
               </button>
-              <button (click)="buyNow()" [disabled]="addingToCart()" class="btn btn-outline">
-                <span class="material-icons-outlined">shopping_cart_checkout</span>
-                Buy Now
-              </button>
-              <button class="detail-wishlist-btn" [class.active]="wishlisted()"
-                      [disabled]="wishlistBusy()" (click)="toggleWishlist()"
-                      title="{{ wishlisted() ? 'Remove from wishlist' : 'Add to wishlist' }}">
-                <span class="material-icons-outlined">{{ wishlisted() ? 'favorite' : 'favorite_border' }}</span>
-              </button>
+              <button class="buy-btn ghost" [disabled]="addingToCart()" (click)="buyNow()">Buy now</button>
             </div>
           </div>
         }
 
-        <!-- Meta table -->
         <div class="meta-table">
-          <div class="meta-row">
-            <span class="meta-key">Category</span>
-            <span class="meta-val">{{ product()!.category?.name || 'General' }}</span>
-          </div>
+          <div><span>Category</span><strong>{{ product()!.category?.name || 'General' }}</strong></div>
+          <div><span>Store</span><strong>{{ product()!.vendor_name }}</strong></div>
           @if (product()!.sku) {
-            <div class="meta-row">
-              <span class="meta-key">SKU</span>
-              <span class="meta-val">{{ product()!.sku }}</span>
-            </div>
+            <div><span>SKU</span><strong>{{ product()!.sku }}</strong></div>
           }
-          @if (product()!.weight) {
-            <div class="meta-row">
-              <span class="meta-key">Weight</span>
-              <span class="meta-val">{{ product()!.weight }}</span>
-            </div>
-          }
-          <div class="meta-row">
-            <span class="meta-key">Sold By</span>
-            <span class="meta-val meta-val--link" [routerLink]="['/shop', product()!.vendor?.id]">
-              {{ product()!.vendor_name }}
-            </span>
-          </div>
         </div>
-
       </div>
     </div>
 
-    <!-- Reviews section — full width -->
     @if (product()!.total_ratings > 0) {
-      <section class="reviews-section">
-        <h2 class="reviews-title">
-          <span class="material-icons-outlined">hotel_class</span>
-          Customer Reviews
-        </h2>
-        <div class="reviews-grid">
+      <section class="reviews-card">
+        <div class="reviews-head">
+          <div>
+            <span class="product-kicker">Customer proof</span>
+            <h2>What buyers are saying</h2>
+          </div>
+        </div>
+        <div class="review-grid">
           @for (review of reviews(); track review.id) {
-            <div class="review-card">
-              <div class="review-header">
-                <div class="reviewer-avatar">{{ (review.customer_name || 'C')[0].toUpperCase() }}</div>
-                <div class="reviewer-info">
-                  <span class="reviewer-name">{{ review.customer_name || 'Verified Buyer' }}</span>
-                  <span class="stars review-stars">
-                    {{ starsFor(review.rating) }}
-                    <span class="rating-num">{{ review.rating }}.0</span>
-                  </span>
+            <article class="review-card">
+              <div class="review-head">
+                <div class="review-avatar">{{ (review.customer_name || 'C')[0].toUpperCase() }}</div>
+                <div>
+                  <strong>{{ review.customer_name || 'Verified buyer' }}</strong>
+                  <span>{{ starsFor(review.rating) }}</span>
                 </div>
               </div>
               @if (review.comment) {
-                <p class="review-body">{{ review.comment }}</p>
+                <p>{{ review.comment }}</p>
               }
-            </div>
+            </article>
           }
         </div>
       </section>
     }
-
-  </div>
-
-  <!-- ── Mobile sticky bottom action bar (hidden on desktop) ─ -->
-  @if (product()!.in_stock !== false && product()!.is_available !== false) {
-    <div class="pd-sticky-bar">
-      <div class="pd-sticky-qty">
-        <button class="pd-sq-btn" (click)="decQty()" [disabled]="qty <= 1">
-          <span class="material-icons-outlined">remove</span>
-        </button>
-        <span class="pd-sq-val">{{ qty }}</span>
-        <button class="pd-sq-btn" (click)="incQty()"
-                [disabled]="product()!.stock > 0 && qty >= product()!.stock">
-          <span class="material-icons-outlined">add</span>
-        </button>
-      </div>
-      <button class="pd-sticky-add" [disabled]="addingToCart()" (click)="addToCart()">
-        @if (addingToCart()) {
-          <span class="spinner"></span>
-        } @else {
-          <span class="material-icons-outlined">shopping_bag</span>
-          Add to Cart · {{ (product()!.price * qty) | appCurrency }}
-        }
-      </button>
-    </div>
-  }
-
+  </section>
 }

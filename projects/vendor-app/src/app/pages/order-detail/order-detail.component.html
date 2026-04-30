@@ -1,17 +1,5 @@
 <div class="order-detail-page">
 
-  <!-- Breadcrumb -->
-  <nav class="breadcrumb">
-    <a routerLink="/orders" class="btn-back">
-      <span class="material-icons-outlined">arrow_back_ios</span>
-      Orders
-    </a>
-    @if (!loading() && order()) {
-      <span class="breadcrumb-sep">/</span>
-      <span class="breadcrumb-current">#{{ order()!.order_number }}</span>
-    }
-  </nav>
-
   <!-- Loading -->
   @if (loading()) {
     <div class="loading-state">

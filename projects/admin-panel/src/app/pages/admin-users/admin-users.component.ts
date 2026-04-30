@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ApiService, AuthService, ToastService } from '@shared/public-api';
 import { NgIf, NgFor, NgClass } from '@angular/common';
-import { DynamicTableComponent, TableCellDirective } from '../../shared/components/dynamic-table/dynamic-table.component';
+import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
 
 @Component({
   selector: 'app-admin-users',

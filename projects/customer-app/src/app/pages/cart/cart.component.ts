@@ -22,10 +22,15 @@ export class CartComponent implements OnInit {
   suggestions = signal<any[]>([]);
   addingSuggId = signal<string | null>(null);
 
-  // Savings display (mock saving for UI)
+  // Real savings from compare prices on discounted items.
   savings = computed(() => {
-    const total = Number(this.cart()?.total_amount || 0);
-    return total > 500 ? Math.round(total * 0.05) : 0;
+    const items = this.cart()?.items || [];
+    return items.reduce((sum, item) => {
+      const compare = Number(item.product.compare_price || 0);
+      const price = Number(item.product.price || 0);
+      if (!compare || compare <= price) return sum;
+      return sum + ((compare - price) * item.quantity);
+    }, 0);
   });
 
   ngOnInit() {

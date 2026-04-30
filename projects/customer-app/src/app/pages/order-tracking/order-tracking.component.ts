@@ -1,7 +1,7 @@
 import { Component, inject, signal, OnInit, OnDestroy, AfterViewInit, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
-import { ApiService, AuthService, Order, OrderTracking } from '@shared/public-api';
+import { ApiService, AuthService, Order, OrderTracking, openAuthenticatedWebSocket } from '@shared/public-api';
 import { timer, Subscription } from 'rxjs';
 import { GoogleMapsModule } from '@angular/google-maps';
 
@@ -200,9 +200,7 @@ export class OrderTrackingComponent implements OnInit, OnDestroy, AfterViewInit 
   }
 
   private connectWebSocket(orderId: string) {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/sa/ws/delivery/${orderId}/tracking/?token=${this.auth.getToken()}`;
-    this.ws = new WebSocket(wsUrl);
+    this.ws = openAuthenticatedWebSocket(`/sa/ws/delivery/${orderId}/tracking/`, this.auth.getToken());
     this.ws.onmessage = (msg) => {
       const data = JSON.parse(msg.data);
       if (data.type === 'location_update' && data.lat && data.lng) {

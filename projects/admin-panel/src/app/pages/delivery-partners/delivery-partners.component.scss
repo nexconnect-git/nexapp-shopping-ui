@@ -31,3 +31,61 @@
 
 .actions { display: flex; align-items: center; gap: 0.5rem; }
 .action-btn { width: 36px; height: 36px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; background: transparent; border: 1px solid transparent; color: var(--text-muted); cursor: pointer; transition: all 0.2s; .material-icons-outlined { font-size: 18px; } &:hover:not(:disabled) { background: var(--surface-hover); color: var(--primary); border-color: var(--border-color); } &:disabled { opacity: 0.5; cursor: not-allowed; } &.approve:hover:not(:disabled) { background: var(--success-light); color: var(--success); border-color: rgba(16, 185, 129, 0.2); } &.reject:hover:not(:disabled), &.suspend:hover:not(:disabled) { background: var(--danger-light); color: var(--danger); border-color: rgba(239, 68, 68, 0.2); } }
+
+.page-header {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto minmax(420px, 0.9fr);
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.page-title {
+  font-size: 1.45rem;
+  font-weight: 950;
+  letter-spacing: 0;
+}
+
+.page-subtitle {
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.header-actions {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(120px, 170px) minmax(130px, 170px);
+  gap: 0.75rem;
+}
+
+.filter-input {
+  min-width: 0;
+  width: 100%;
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 1180px) {
+  .page-header {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .reload-bar {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .header-actions,
+  .filters {
+    grid-template-columns: 1fr;
+  }
+}

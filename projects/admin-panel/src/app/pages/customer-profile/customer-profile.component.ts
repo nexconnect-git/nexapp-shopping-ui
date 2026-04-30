@@ -1,16 +1,16 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, ActivatedRoute, RouterLink } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { ApiService, ToastService, AppCurrencyPipe } from '@shared/public-api';
-import { DynamicTableComponent, TableCellDirective } from '../../shared/components/dynamic-table/dynamic-table.component';
+import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
 
 type Tab = 'overview' | 'orders' | 'loyalty';
 
 @Component({
   selector: 'app-customer-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, DynamicTableComponent, TableCellDirective, AppCurrencyPipe],
+  imports: [CommonModule, FormsModule, DynamicTableComponent, TableCellDirective, AppCurrencyPipe],
   templateUrl: './customer-profile.component.html',
   styleUrl: './customer-profile.component.scss'
 })
@@ -170,7 +170,7 @@ export class CustomerProfileComponent implements OnInit {
     this.editSaving.set(true);
     this.editError.set('');
     this.api.updateAdminCustomer(this.customerId, this.editForm).subscribe({
-      next: (c) => { this.customer.set(c); this.editSaving.set(false); this.closeEdit(); },
+      next: () => { this.loadCustomer(); this.editSaving.set(false); this.closeEdit(); },
       error: (err) => { this.editSaving.set(false); this.editError.set(err.error?.detail || 'Update failed.'); }
     });
   }
@@ -179,8 +179,8 @@ export class CustomerProfileComponent implements OnInit {
     const isActive = (event.target as HTMLSelectElement).value === 'true';
     this.actionLoading.set(true);
     this.api.updateAdminCustomer(this.customerId, { is_active: isActive }).subscribe({
-      next: (c) => {
-        this.customer.set(c);
+      next: () => {
+        this.loadCustomer();
         this.toast.show(`Account ${isActive ? 'activated' : 'suspended'}.`, isActive ? 'success' : 'info');
         this.actionLoading.set(false);
       },

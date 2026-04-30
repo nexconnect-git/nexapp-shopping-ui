@@ -2,7 +2,7 @@ import { Component, inject, signal, OnInit, OnDestroy, computed } from '@angular
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { ApiService, AuthService, Category, Vendor, LocationService } from '@shared/public-api';
+import { AlertService, ApiService, AuthService, Category, Vendor, LocationService } from '@shared/public-api';
 
 export interface PlatformBanner {
   id: string;
@@ -36,10 +36,13 @@ export class HomeComponent implements OnInit, OnDestroy {
   auth = inject(AuthService);
   locationService = inject(LocationService);
   private api = inject(ApiService);
+  private alerts = inject(AlertService);
 
   allVendors = signal<Vendor[]>([]);
   filteredVendors = signal<Vendor[]>([]);
   loadingVendors = signal(true);
+  recentOrders = signal<any[]>([]);
+  reorderBusyId = signal<string | null>(null);
 
   banners = signal<PlatformBanner[]>([]);
   activeBannerIdx = signal(0);
@@ -47,6 +50,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   locationLoading = this.locationService.loading;
   locationDisplay = this.locationService.locationDisplay;
+  currentLocation = this.locationService.location;
 
   userLat: number | null = null;
   userLng: number | null = null;
@@ -94,6 +98,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.loadCategories();
     this.detectLocation();
     this.loadBanners();
+    if (this.auth.isLoggedIn()) this.loadRecentOrders();
   }
 
   ngOnDestroy() {
@@ -111,6 +116,16 @@ export class HomeComponent implements OnInit, OnDestroy {
         }
       },
       error: () => {} // silently fall back to static banner
+    });
+  }
+
+  loadRecentOrders() {
+    this.api.getOrders().subscribe({
+      next: (res) => {
+        const orders = (res.results || res) as any[];
+        this.recentOrders.set(orders.filter((order) => ['delivered', 'cancelled'].includes(order.status)).slice(0, 4));
+      },
+      error: () => this.recentOrders.set([]),
     });
   }
 
@@ -151,8 +166,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     });
   }
 
-  detectLocation() {
-    this.locationService.initializeLocation().then(loc => {
+  detectLocation(forceRefresh = false) {
+    this.locationService.initializeLocation(forceRefresh).then(loc => {
       if (loc) {
         this.userLat = loc.lat;
         this.userLng = loc.lng;
@@ -221,6 +236,27 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   get selectedCategoryObj(): DisplayCategory | null {
     return this.categories().find(c => c.id === this.selectedCategory()) ?? null;
+  }
+
+  reorder(orderId: string, event?: Event) {
+    event?.preventDefault();
+    event?.stopPropagation();
+    this.reorderBusyId.set(orderId);
+    this.api.reorder(orderId).subscribe({
+      next: (cart) => {
+        this.reorderBusyId.set(null);
+        this.api.refreshCartCount();
+        if (cart.skipped?.length) {
+          this.alerts.warning(`${cart.skipped.length} item(s) were unavailable and skipped.`, 'Some items were skipped');
+        } else {
+          this.alerts.success('Basket rebuilt from your previous order.');
+        }
+      },
+      error: () => {
+        this.reorderBusyId.set(null);
+        this.alerts.error('Could not reorder this basket right now.');
+      },
+    });
   }
 
   starsFor(rating: number): string {

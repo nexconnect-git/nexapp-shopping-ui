@@ -1,7 +1,7 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService, ToastService } from '@shared/public-api';
+import { AlertService, ApiService } from '@shared/public-api';
 
 @Component({
   selector: 'app-referral',
@@ -12,7 +12,7 @@ import { ApiService, ToastService } from '@shared/public-api';
 })
 export class ReferralComponent implements OnInit {
   private api = inject(ApiService);
-  private toast = inject(ToastService);
+  private alerts = inject(AlertService);
 
   loading = signal(true);
   referralCode = signal('');
@@ -52,7 +52,7 @@ export class ReferralComponent implements OnInit {
     if (navigator.share) {
       navigator.share({ title: 'NexConnect Referral', text: msg }).catch(() => {});
     } else {
-      navigator.clipboard.writeText(msg).then(() => this.toast.show('Referral message copied!', 'success')).catch(() => {});
+      navigator.clipboard.writeText(msg).then(() => this.alerts.success('Referral message copied!')).catch(() => {});
     }
   }
 
@@ -76,4 +76,5 @@ export class ReferralComponent implements OnInit {
   }
 
   goBack() { window.history.back(); }
+  pointsEarned() { return this.totalReferrals() * this.bonusPerReferral(); }
 }

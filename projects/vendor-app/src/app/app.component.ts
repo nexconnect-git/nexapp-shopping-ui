@@ -1,4 +1,4 @@
-import { Component, inject, signal, HostListener, OnInit, DestroyRef } from '@angular/core';
+import { Component, inject, signal, HostListener, OnInit, DestroyRef, effect } from '@angular/core';
 import { Router, RouterOutlet, RouterLink, RouterLinkActive, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService, ApiService, ToastComponent, NotificationPollingService } from '@shared/public-api';
@@ -22,12 +22,28 @@ export class AppComponent implements OnInit {
   notifications = signal<any[]>([]);
   notifLoading = signal(false);
   unreadCount = signal(0);
+  private pollingStarted = false;
+
+  constructor() {
+    effect(() => {
+      if (this.auth.isLoggedIn()) {
+        this.startPolling();
+      } else if (this.pollingStarted) {
+        this.notifPolling.stop();
+        this.pollingStarted = false;
+        this.unreadCount.set(0);
+        this.notifications.set([]);
+      }
+    });
+  }
 
   ngOnInit() {
     if (this.auth.isLoggedIn()) this.startPolling();
   }
 
   private startPolling() {
+    if (this.pollingStarted) return;
+    this.pollingStarted = true;
     // notifPolling drives both badges and toasts — no separate timer needed
     this.notifPolling.onUnreadChange((count) => this.unreadCount.set(count));
     this.notifPolling.start((n) => {
@@ -93,6 +109,68 @@ export class AppComponent implements OnInit {
 
   closeMobileSidebar() {
     this.sidebarCollapsed.set(true);
+  }
+
+  breadcrumbs(): Array<{ label: string; url?: string }> {
+    const cleanUrl = this.router.url.split('?')[0].split('#')[0];
+    if (!cleanUrl || cleanUrl === '/') return [{ label: 'Dashboard' }];
+
+    const segments = cleanUrl.split('/').filter(Boolean);
+    if (segments[0] === 'products' && segments[1] === 'edit' && segments[2]) {
+      return [
+        { label: 'Dashboard', url: '/' },
+        { label: 'Products', url: '/products' },
+        { label: this.productBreadcrumbName(segments[2]) },
+      ];
+    }
+    const crumbs: Array<{ label: string; url?: string }> = [{ label: 'Dashboard', url: '/' }];
+
+    const labelMap: Record<string, string> = {
+      'live-orders': 'Live Orders',
+      inventory: 'Inventory',
+      products: 'Products',
+      'catalog-requests': 'Catalog Requests',
+      new: 'New Product',
+      edit: 'Edit Product',
+      orders: 'Orders',
+      prep: 'Prep',
+      promotions: 'Promotions',
+      analytics: 'Analytics',
+      payouts: 'Payouts',
+      reviews: 'Reviews',
+      support: 'Support',
+      notifications: 'Notifications',
+      'store-settings': 'Store Settings',
+    };
+
+    let url = '';
+    segments.forEach((segment, index) => {
+      url += `/${segment}`;
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(segment);
+      const previous = segments[index - 1];
+      const label = isUuid
+        ? previous === 'orders' ? 'Order Detail' : 'Detail'
+        : labelMap[segment] || this.titleCase(segment);
+      const isIntermediateAction = segment === 'edit' || segment === 'new' || isUuid;
+      crumbs.push({ label, url: index === segments.length - 1 || isIntermediateAction ? undefined : url });
+    });
+
+    return crumbs;
+  }
+
+  pageTitle(): string {
+    const crumbs = this.breadcrumbs();
+    return crumbs[crumbs.length - 1]?.label || 'Dashboard';
+  }
+
+  private titleCase(value: string): string {
+    return value
+      .replace(/-/g, ' ')
+      .replace(/\b\w/g, char => char.toUpperCase());
+  }
+
+  private productBreadcrumbName(id: string): string {
+    return localStorage.getItem(`vendor_product_name_${id}`) || 'Product';
   }
 
   handleNotificationClick(n: any) {

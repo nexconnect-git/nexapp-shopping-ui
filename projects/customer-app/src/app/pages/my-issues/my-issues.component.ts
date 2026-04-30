@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ApiService } from '@shared/public-api';
@@ -15,6 +15,8 @@ export class MyIssuesComponent implements OnInit {
 
   issues = signal<any[]>([]);
   loading = signal(true);
+  openCount = computed(() => this.issues().filter((issue) => ['open', 'in_review', 'refund_initiated'].includes(issue.status)).length);
+  resolvedCount = computed(() => this.issues().filter((issue) => issue.status === 'resolved').length);
 
   readonly typeIcons: Record<string, string> = {
     return: 'undo', refund: 'payments', damage: 'broken_image', mismatch: 'compare_arrows' };
@@ -29,6 +31,10 @@ export class MyIssuesComponent implements OnInit {
 
   open(issue: any) {
     this.router.navigate(['/issue', issue.id]);
+  }
+
+  startFromOrders() {
+    this.router.navigate(['/orders']);
   }
 
   statusColor(s: string): string {

@@ -2,8 +2,8 @@ import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { Subscription, timer } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService, AuthService } from '@shared/public-api';
-import { DynamicTableComponent, TableCellDirective } from '../../shared/components/dynamic-table/dynamic-table.component';
+import { ApiService, AuthService, openAuthenticatedWebSocket } from '@shared/public-api';
+import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
 
 @Component({
   selector: 'app-issues',
@@ -115,10 +115,7 @@ export class IssuesComponent implements OnInit, OnDestroy {
 
   connectWebSocket(issueId: string) {
     this.closeWebSocket();
-    const token = this.auth.getToken() || '';
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws/issues/${issueId}/?token=${token}`;
-    this.ws = new WebSocket(wsUrl);
+    this.ws = openAuthenticatedWebSocket(`/ws/issues/${issueId}/`, this.auth.getToken());
 
     this.ws.onmessage = (event) => {
       const data = JSON.parse(event.data);

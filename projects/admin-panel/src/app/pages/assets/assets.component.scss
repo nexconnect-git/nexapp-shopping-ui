@@ -2,28 +2,51 @@
 
 /* Page Header */
 .page-header {
-  display: flex; justify-content: space-between; align-items: flex-end;
-  margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(420px, 0.75fr);
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
 }
-.page-title { font-size: 2rem; font-weight: 900; color: var(--text-primary); margin: 0 0 0.25rem; letter-spacing: -0.03em; }
-.page-subtitle { font-size: 1.0625rem; font-weight: 500; color: var(--text-muted); margin: 0; }
+.page-title { font-size: 1.45rem; font-weight: 950; color: var(--text-primary); margin: 0 0 0.25rem; letter-spacing: 0; }
+.page-subtitle { font-size: 0.9rem; font-weight: 650; color: var(--text-muted); margin: 0; }
 
-.header-actions { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
-.filters { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.page-header .header-actions {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.page-header .filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(130px, 1fr));
+  gap: 0.75rem;
+}
+
 .filter-input {
-  padding: 0.625rem 1rem; border: 1px solid var(--border-color); border-radius: var(--radius-md);
+  width: 100%; min-width: 0; padding: 0.6rem 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;
   font-family: var(--font-family); font-size: 0.875rem; font-weight: 600; color: var(--text-primary);
   background: white; outline: none; cursor: pointer; transition: border-color 0.2s;
   &:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
 }
 
 .btn-create {
-  display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.625rem 1.25rem;
-  background: var(--primary); color: white; border: none; border-radius: var(--radius-md);
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.625rem 1rem;
+  background: var(--primary); color: white; border: none; border-radius: 8px;
   font-family: var(--font-family); font-size: 0.875rem; font-weight: 700; cursor: pointer;
   transition: all 0.2s; box-shadow: 0 2px 8px var(--primary-shadow);
   .material-icons-outlined { font-size: 18px; }
   &:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 4px 14px var(--primary-shadow); }
+}
+
+@media (max-width: 1180px) {
+  .page-header,
+  .page-header .header-actions,
+  .page-header .filters {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
 }
 
 /* Table cell helpers */

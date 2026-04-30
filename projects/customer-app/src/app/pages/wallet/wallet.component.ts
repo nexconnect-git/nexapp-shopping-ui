@@ -1,8 +1,9 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { ApiService, ToastService } from '@shared/public-api';
+
+import { AlertService, ApiService } from '@shared/public-api';
 
 declare const Razorpay: any;
 
@@ -11,11 +12,11 @@ declare const Razorpay: any;
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './wallet.component.html',
-  styleUrl: './wallet.component.scss'
+  styleUrl: './wallet.component.scss',
 })
 export class WalletComponent implements OnInit {
   private api = inject(ApiService);
-  private toast = inject(ToastService);
+  private alerts = inject(AlertService);
 
   balance = signal<string>('0.00');
   transactions = signal<any[]>([]);
@@ -38,9 +39,9 @@ export class WalletComponent implements OnInit {
         this.loading.set(false);
       },
       error: () => {
-        this.toast.show('Failed to load wallet.', 'error');
+        this.alerts.error('Failed to load wallet.');
         this.loading.set(false);
-      }
+      },
     });
   }
 
@@ -57,7 +58,7 @@ export class WalletComponent implements OnInit {
   initiateTopUp() {
     const amount = this.topUpAmount();
     if (!amount || amount < 1) {
-      this.toast.show('Minimum top-up amount is ₹1.', 'error');
+      this.alerts.error('Minimum top-up amount is ₹1.');
       return;
     }
     this.topUpLoading.set(true);
@@ -68,14 +69,14 @@ export class WalletComponent implements OnInit {
       },
       error: (err) => {
         this.topUpLoading.set(false);
-        this.toast.show(err.error?.detail || 'Failed to initiate top-up.', 'error');
-      }
+        this.alerts.error(err.error?.detail || 'Failed to initiate top-up.');
+      },
     });
   }
 
   private openRazorpay(order: any, amount: number) {
     const options = {
-      key: '',
+      key: order.key_id || order.razorpay_key_id || '',
       amount: order.amount,
       currency: order.currency,
       name: 'NexConnect',
@@ -86,7 +87,7 @@ export class WalletComponent implements OnInit {
       },
       prefill: {},
       theme: { color: '#6C63FF' },
-      modal: { ondismiss: () => this.toast.show('Top-up cancelled.', 'error') }
+      modal: { ondismiss: () => this.alerts.warning('Top-up cancelled.', 'Top-up stopped') },
     };
     const rz = new Razorpay(options);
     rz.open();
@@ -104,13 +105,13 @@ export class WalletComponent implements OnInit {
         this.topUpLoading.set(false);
         this.balance.set(data.balance);
         this.showTopUpForm.set(false);
-        this.toast.show('Wallet topped up successfully!', 'success');
+        this.alerts.success('Wallet topped up successfully!');
         this.loadWallet();
       },
       error: (err) => {
         this.topUpLoading.set(false);
-        this.toast.show(err.error?.detail || 'Payment verification failed.', 'error');
-      }
+        this.alerts.error(err.error?.detail || 'Payment verification failed.');
+      },
     });
   }
 
@@ -134,5 +135,9 @@ export class WalletComponent implements OnInit {
 
   formatDate(iso: string): string {
     return new Date(iso).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+  }
+
+  hasTransactions(): boolean {
+    return this.transactions().length > 0;
   }
 }

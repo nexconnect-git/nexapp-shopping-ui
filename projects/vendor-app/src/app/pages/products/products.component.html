@@ -1,6 +1,5 @@
 <div class="products-page fade-in">
 
-  <!-- Page Header -->
   <div class="page-header">
     <div>
       <h1>Products</h1>
@@ -14,8 +13,7 @@
         <button class="btn-icon" (click)="manualReload()" [disabled]="loading()" title="Reload">
           <span class="material-icons-outlined" [class.spin]="loading()">refresh</span>
         </button>
-        <button class="reload-toggle" [class.active]="autoReload()" (click)="toggleAutoReload()"
-                title="Toggle auto-reload">
+        <button class="reload-toggle" [class.active]="autoReload()" (click)="toggleAutoReload()" title="Toggle auto-reload">
           <span class="material-icons-outlined">{{ autoReload() ? 'pause_circle' : 'play_circle' }}</span>
           {{ autoReload() ? 'Auto' : 'Paused' }}
         </button>
@@ -27,163 +25,152 @@
     </div>
   </div>
 
-  <!-- Search -->
   <div class="search-bar">
     <span class="material-icons-outlined search-icon">search</span>
     <input type="search" class="form-input search-input" [(ngModel)]="search"
-           (input)="onSearch()" placeholder="Search products…" aria-label="Search products">
+           (input)="onSearch()" placeholder="Search products..." aria-label="Search products">
   </div>
 
-  @if (loading()) {
-    <div class="loading-state">
-      <div class="spinner"></div>
-      <p>Loading products...</p>
-    </div>
-  } @else if (products().length === 0) {
-    <div class="card">
-      <div class="empty-state">
-        <span class="material-icons-outlined">inventory_2</span>
-        <strong>No products yet</strong>
-        <p>Add your first product to start selling to customers.</p>
-        <a routerLink="/products/new" class="btn-primary" style="margin-top:0.5rem;">
-          <span class="material-icons-outlined">add</span>
-          Add Your First Product
-        </a>
-      </div>
-    </div>
-  } @else {
-
-    <!-- Low stock warning -->
-    @if (products().some(isLowStock)) {
-      <div class="low-stock-alert">
-        <span class="material-icons-outlined">warning_amber</span>
-        <span>
-          <strong>{{ products().filter(isLowStock).length }} product{{ products().filter(isLowStock).length > 1 ? 's are' : ' is' }} low on stock.</strong>
-          Update inventory to keep selling.
-        </span>
-      </div>
-    }
-
-    <div class="card">
-      <div class="card-header">
-        <div class="products-count">
-          <span class="badge badge-secondary">{{ total() }} product{{ total() !== 1 ? 's' : '' }}</span>
-        </div>
-      </div>
-      <div class="table-wrapper" style="border:none;border-radius:0;">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Product</th>
-              <th>Category</th>
-              <th>Price</th>
-              <th>Stock</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (product of products(); track product.id) {
-              <tr>
-                <td>
-                  <div class="product-cell">
-                    <div class="product-thumb">
-                      @if (product.primary_image) {
-                        <img [src]="product.primary_image" alt="{{product.name}}">
-                      } @else {
-                        <div class="img-placeholder" style="width:44px;height:44px;">
-                          <span class="material-icons-outlined">image</span>
-                        </div>
-                      }
-                    </div>
-                    <div class="product-info">
-                      <span class="product-name">{{ product.name }}</span>
-                      @if (product.sku) {
-                        <span class="product-sku">SKU: {{ product.sku }}</span>
-                      }
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  @if (product.category) {
-                    <span class="badge badge-secondary">{{ product.category.name }}</span>
-                  } @else {
-                    <span class="text-muted">—</span>
-                  }
-                </td>
-                <td>
-                  <div class="price-cell">
-                    <span class="price-main">{{ product.price | appCurrency }}</span>
-                    @if (product.compare_price) {
-                      <span class="price-compare">{{ product.compare_price | appCurrency }}</span>
-                    }
-                  </div>
-                </td>
-                <td>
-                  <div class="stock-cell">
-                    <span [class]="product.in_stock ? 'stock-ok' : 'stock-out'">
-                      {{ product.stock }} {{ product.unit }}
-                    </span>
-                    @if (isLowStock(product)) {
-                      <span class="low-stock-badge">
-                        <span class="material-icons-outlined">warning_amber</span>
-                        Low
-                      </span>
-                    }
-                  </div>
-                </td>
-                <td>
-                  <span [class]="product.is_available ? 'status-active' : 'status-inactive'">
-                    <span class="status-dot"></span>
-                    {{ product.is_available ? 'Active' : 'Inactive' }}
-                  </span>
-                </td>
-                <td>
-                  <div class="actions-cell">
-                    <a [routerLink]="['/products/edit', product.id]" class="btn-ghost btn-sm" title="Edit">
-                      <span class="material-icons-outlined">edit</span>
-                    </a>
-                    <button class="btn-ghost btn-sm danger-hover" (click)="confirmDelete(product)" title="Delete">
-                      <span class="material-icons-outlined">delete_outline</span>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Pagination -->
-      @if (totalPages() > 1) {
-        <div class="pagination-bar">
-          <span class="pagination-info">
-            Showing {{ (page() - 1) * pageSize + 1 }}–{{ Math.min(page() * pageSize, total()) }} of {{ total() }} products
-          </span>
-          <div class="pagination-controls">
-            <button class="page-btn" (click)="setPage(1)" [disabled]="page() === 1" title="First">
-              <span class="material-icons-outlined">first_page</span>
-            </button>
-            <button class="page-btn" (click)="setPage(page() - 1)" [disabled]="page() === 1" title="Previous">
-              <span class="material-icons-outlined">chevron_left</span>
-            </button>
-            @for (n of pageNumbers(); track n) {
-              <button class="page-btn" [class.active]="n === page()" (click)="setPage(n)">{{ n }}</button>
-            }
-            <button class="page-btn" (click)="setPage(page() + 1)" [disabled]="page() === totalPages()" title="Next">
-              <span class="material-icons-outlined">chevron_right</span>
-            </button>
-            <button class="page-btn" (click)="setPage(totalPages())" [disabled]="page() === totalPages()" title="Last">
-              <span class="material-icons-outlined">last_page</span>
-            </button>
-          </div>
-        </div>
-      }
+  @if (!loading() && products().some(isLowStock)) {
+    <div class="low-stock-alert">
+      <span class="material-icons-outlined">warning_amber</span>
+      <span>
+        <strong>{{ products().filter(isLowStock).length }} product{{ products().filter(isLowStock).length > 1 ? 's are' : ' is' }} low on stock.</strong>
+        Update inventory to keep selling.
+      </span>
     </div>
   }
+
+  @if (!loading() && products().some(needsAttention)) {
+    <div class="growth-alert">
+      <span class="material-icons-outlined">tips_and_updates</span>
+      <span>
+        <strong>{{ products().filter(needsAttention).length }} product{{ products().filter(needsAttention).length > 1 ? 's need' : ' needs' }} selling fixes.</strong>
+        Add images, stock, categories, or availability to improve customer conversion.
+      </span>
+    </div>
+  }
+
+  <app-dynamic-table
+    [columns]="columns"
+    [data]="products()"
+    [loading]="loading()"
+    [totalItems]="total()"
+    [itemsPerPage]="pageSize"
+    [page]="page()"
+    emptyIcon="inventory_2"
+    emptyMessage="No products yet"
+    emptySubMessage="Add your first product to start selling to customers."
+    (pageChange)="setPage($event)"
+  >
+    <ng-template tableCell="product" let-product>
+      <div class="product-cell">
+        <div class="product-thumb">
+          @if (product.primary_image) {
+            <img [src]="product.primary_image" alt="{{product.name}}">
+          } @else {
+            <div class="img-placeholder">
+              <span class="material-icons-outlined">image</span>
+            </div>
+          }
+        </div>
+        <div class="product-info">
+          <span class="product-name">{{ product.name }}</span>
+          @if (product.sku) {
+            <span class="product-sku">SKU: {{ product.sku }}</span>
+          }
+          @if (!product.image_count) {
+            <span class="product-warning">Missing photo</span>
+          }
+          @if (product.approval_status && product.approval_status !== 'approved') {
+            <span class="product-warning">{{ approvalText(product) }}</span>
+          }
+        </div>
+      </div>
+    </ng-template>
+
+    <ng-template tableCell="category" let-product>
+      @if (product.category) {
+        <span class="badge badge-secondary">{{ product.category.name }}</span>
+      } @else {
+        <span class="text-muted">-</span>
+      }
+    </ng-template>
+
+    <ng-template tableCell="price" let-product>
+      <div class="price-cell">
+        <span class="price-main">{{ product.price | appCurrency }}</span>
+        @if (product.compare_price) {
+          <span class="price-compare">{{ product.compare_price | appCurrency }}</span>
+        }
+        @if (product.revenue) {
+          <span class="price-revenue">{{ product.revenue | appCurrency }} sold</span>
+        }
+      </div>
+    </ng-template>
+
+    <ng-template tableCell="stock" let-product>
+      <div class="stock-cell">
+        <span [class]="product.in_stock ? 'stock-ok' : 'stock-out'">
+          {{ product.stock }} {{ product.unit }}
+        </span>
+        @if (isLowStock(product)) {
+          <span class="low-stock-badge">
+            <span class="material-icons-outlined">warning_amber</span>
+            Low
+          </span>
+        }
+      </div>
+    </ng-template>
+
+    <ng-template tableCell="growth" let-product>
+      <div class="growth-cell">
+        @if (needsAttention(product)) {
+          <button type="button" class="health-badge attention health-action" (click)="openFixes(product)">
+            <span class="material-icons-outlined">priority_high</span>
+            {{ productHealthLabel(product) }}
+          </button>
+        } @else {
+          <span class="health-badge ready">
+            <span class="material-icons-outlined">check_circle</span>
+            {{ productHealthLabel(product) }}
+          </span>
+        }
+        <span class="growth-meta">{{ product.sales_count || 0 }} sold / {{ categoryVisibilityLabel(product) }}</span>
+      </div>
+    </ng-template>
+
+    <ng-template tableCell="status" let-product>
+      <div class="status-stack">
+        <span [class]="approvalClass(product)">{{ approvalText(product) }}</span>
+        <small>{{ approvalReason(product) }}</small>
+      </div>
+    </ng-template>
+
+    <ng-template tableCell="actions" let-product>
+      <div class="actions-cell">
+        @if (canSubmitForApproval(product)) {
+          <button
+            class="btn-ghost btn-sm approval-hover"
+            type="button"
+            (click)="submitForApproval(product)"
+            [disabled]="submittingApproval() === product.id"
+            title="Submit for admin approval"
+          >
+            <span class="material-icons-outlined">{{ submittingApproval() === product.id ? 'hourglass_top' : 'approval' }}</span>
+          </button>
+        }
+        <a [routerLink]="['/products/edit', product.id]" class="btn-ghost btn-sm" title="Edit">
+          <span class="material-icons-outlined">edit</span>
+        </a>
+        <button class="btn-ghost btn-sm danger-hover" (click)="confirmDelete(product)" title="Delete">
+          <span class="material-icons-outlined">delete_outline</span>
+        </button>
+      </div>
+    </ng-template>
+  </app-dynamic-table>
 </div>
 
-<!-- Delete Confirm Modal -->
 @if (deleteTarget()) {
   <div class="modal-backdrop" (click)="cancelDelete()">
     <div class="delete-modal" (click)="$event.stopPropagation()">
@@ -201,6 +188,60 @@
           @if (deleting()) { <span class="btn-spinner"></span> }
           Delete
         </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (fixesTarget()) {
+  <div class="modal-backdrop" (click)="closeFixes()">
+    <div class="fixes-modal" (click)="$event.stopPropagation()">
+      <div class="fixes-modal-header">
+        <div>
+          <h3>{{ fixesTarget()!.name }} needs attention</h3>
+          <p>Fix these items before the product is ready for customers.</p>
+        </div>
+        <button class="btn-ghost" type="button" (click)="closeFixes()" title="Close">
+          <span class="material-icons-outlined">close</span>
+        </button>
+      </div>
+      <div class="fixes-list">
+        @if (fixesTarget()!.approval_status === 'pending_approval') {
+          <div class="fix-row review">
+            <span class="material-icons-outlined">hourglass_top</span>
+            <span>This product is waiting for admin approval and is hidden from customers.</span>
+          </div>
+        }
+        @if (fixesTarget()!.approval_status === 'rejected') {
+          <div class="fix-row review">
+            <span class="material-icons-outlined">report</span>
+            <span>{{ fixesTarget()!.rejection_reason || 'Admin rejected this product. Edit and resubmit it for approval.' }}</span>
+          </div>
+        }
+        @for (fix of fixesTarget()!.visibility_blockers || []; track fix) {
+          <div class="fix-row">
+            <span class="material-icons-outlined">error_outline</span>
+            <span>{{ fix }}</span>
+          </div>
+        }
+      </div>
+      <div class="fixes-actions">
+        <button class="btn-secondary" type="button" (click)="closeFixes()">Later</button>
+        @if (canSubmitForApproval(fixesTarget())) {
+          <button
+            class="btn-primary"
+            type="button"
+            (click)="submitForApproval(fixesTarget())"
+            [disabled]="submittingApproval() === fixesTarget()!.id"
+          >
+            <span class="material-icons-outlined">{{ submittingApproval() === fixesTarget()!.id ? 'hourglass_top' : 'approval' }}</span>
+            {{ submittingApproval() === fixesTarget()!.id ? 'Submitting...' : 'Submit For Approval' }}
+          </button>
+        }
+        <a class="btn-primary" [routerLink]="['/products/edit', fixesTarget()!.id]" (click)="closeFixes()">
+          <span class="material-icons-outlined">edit</span>
+          Edit Product
+        </a>
       </div>
     </div>
   </div>

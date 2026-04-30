@@ -1,0 +1,69 @@
+<div class="page-header audit-header">
+  <div>
+    <h1 class="page-title">Audit Logs</h1>
+    <p class="page-subtitle">{{ total() }} recorded admin actions</p>
+  </div>
+  <div class="filters">
+    <input class="filter-input" type="search" [(ngModel)]="search" (input)="onSearch()" placeholder="Search summaries...">
+    <select class="filter-input" [(ngModel)]="action" (change)="applyFilters()">
+      <option value="">All actions</option>
+      <option value="create">Create</option>
+      <option value="update">Update</option>
+      <option value="delete">Delete</option>
+      <option value="status_change">Status change</option>
+      <option value="payout">Payout</option>
+      <option value="settings">Settings</option>
+      <option value="notification">Notification</option>
+    </select>
+    <input class="filter-input" [(ngModel)]="entityType" (input)="onSearch()" placeholder="Entity type">
+  </div>
+</div>
+
+@if (loading()) {
+  <div class="audit-loading"><div class="spinner"></div><span>Loading audit trail...</span></div>
+} @else if (logs().length === 0) {
+  <div class="audit-empty">
+    <span class="material-icons-outlined">manage_search</span>
+    <strong>No audit entries found</strong>
+    <p>Try adjusting filters or perform an audited admin action.</p>
+  </div>
+} @else {
+  <section class="audit-list">
+    @for (log of logs(); track log.id) {
+      <article class="audit-row">
+        <div class="audit-icon" [class]="log.action">
+          <span class="material-icons-outlined">
+            {{ log.action === 'settings' ? 'tune' : log.action === 'status_change' ? 'published_with_changes' : log.action === 'payout' ? 'payments' : 'history' }}
+          </span>
+        </div>
+        <div class="audit-main">
+          <div class="audit-title">
+            <strong>{{ log.summary }}</strong>
+            <span>{{ log.created_at | date:'MMM d, y, h:mm a' }}</span>
+          </div>
+          <div class="audit-meta">
+            <span>{{ log.actor_name || 'system' }}</span>
+            <span>{{ log.action }}</span>
+            <span>{{ log.entity_type }}{{ log.entity_id ? ':' + log.entity_id : '' }}</span>
+            @if (log.ip_address) { <span>{{ log.ip_address }}</span> }
+          </div>
+          @if (log.metadata && (log.metadata | json) !== '{}') {
+            <details class="metadata-panel">
+              <summary>
+                <span class="material-icons-outlined">data_object</span>
+                View metadata
+              </summary>
+              <pre>{{ log.metadata | json }}</pre>
+            </details>
+          }
+        </div>
+      </article>
+    }
+  </section>
+
+  <div class="pagination" *ngIf="totalPages > 1">
+    <button class="page-btn" [disabled]="page() === 1" (click)="setPage(page() - 1)">Prev</button>
+    <span>{{ page() }} / {{ totalPages }}</span>
+    <button class="page-btn" [disabled]="page() === totalPages" (click)="setPage(page() + 1)">Next</button>
+  </div>
+}

@@ -1,0 +1,62 @@
+<div class="inventory-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Inventory</h1>
+      <p class="page-subtitle">Fast stock, availability, and product-readiness controls.</p>
+    </div>
+    <button class="btn-primary" (click)="bulkSaveVisible()">Save Visible Stock</button>
+  </div>
+
+  <div class="filters">
+    @for (f of filters; track f.key) {
+      <button [class.active]="filter() === f.key" (click)="setFilter(f.key)">
+        {{ f.label }}
+      </button>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="state-card">Loading inventory...</div>
+  } @else {
+    <div class="inventory-table">
+      @for (product of filteredProducts(); track product.id) {
+        <article class="inventory-row">
+          <div class="product-main">
+            <div class="thumb">
+              @if (product.primary_image) {
+                <img [src]="product.primary_image" [alt]="product.name" />
+              } @else {
+                <span class="material-icons-outlined">image_not_supported</span>
+              }
+            </div>
+            <div>
+              <h3>{{ product.name }}</h3>
+              <p>{{ healthLabel(product) }}</p>
+              <div class="tags">
+                @if (isLowStock(product)) { <span class="warn">Low stock</span> }
+                @if (product.stock <= 0) { <span class="danger">Out of stock</span> }
+                @if (!product.is_available) { <span>Paused</span> }
+                @if ((product.image_count ?? product.images.length) === 0) { <span>Needs photo</span> }
+              </div>
+            </div>
+          </div>
+
+          <div class="stock-edit">
+            <label>Stock</label>
+            <input type="number" min="0" [value]="stockDrafts()[product.id]" (input)="setDraft(product.id, $any($event.target).value)" />
+            <button [disabled]="savingId() === product.id" (click)="saveStock(product)">Save</button>
+          </div>
+
+          <div class="row-actions">
+            <button [disabled]="savingId() === product.id" (click)="toggleAvailable(product)">
+              {{ product.is_available ? 'Pause Today' : 'Unpause' }}
+            </button>
+            <a [routerLink]="['/products/edit', product.id]">Edit</a>
+          </div>
+        </article>
+      } @empty {
+        <div class="state-card">No products match this inventory filter.</div>
+      }
+    </div>
+  }
+</div>

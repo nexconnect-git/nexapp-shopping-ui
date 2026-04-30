@@ -20,6 +20,35 @@
           <div class="spinner"></div>
         </div>
       } @else {
+        <div class="support-intro">
+          <span class="material-icons-outlined">verified_user</span>
+          <div>
+            <strong>Automated guidance for this order</strong>
+            <p>Use these quick answers for speed, then jump into tracking or a real issue thread when you need action.</p>
+          </div>
+        </div>
+
+        <div class="support-actions">
+          @if (canTrackOrder()) {
+            <button class="support-action-card" (click)="openTracking()">
+              <span class="material-icons-outlined">map</span>
+              <strong>Track order live</strong>
+              <span>Open the live map and ETA view.</span>
+            </button>
+          }
+          <button class="support-action-card" (click)="openOrderDetail()">
+            <span class="material-icons-outlined">receipt_long</span>
+            <strong>View order details</strong>
+            <span>See status, payment and delivery info.</span>
+          </button>
+          @if (canRaiseIssue()) {
+            <button class="support-action-card" (click)="openIssueFlow()">
+              <span class="material-icons-outlined">report_problem</span>
+              <strong>Raise an issue</strong>
+              <span>Open a support issue for refund, damage or mismatch.</span>
+            </button>
+          }
+        </div>
         
         <!-- Messages -->
         @for (msg of messages(); track $index) {

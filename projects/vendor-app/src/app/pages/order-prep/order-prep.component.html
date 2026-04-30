@@ -1,0 +1,81 @@
+<div class="prep-page">
+  <a routerLink="/live-orders" class="back-link">
+    <span class="material-icons-outlined">arrow_back</span>
+    Live Orders
+  </a>
+
+  @if (loading()) {
+    <div class="state-card">Loading prep screen...</div>
+  } @else if (order()) {
+    <section class="prep-header">
+      <div>
+        <h1>Prep #{{ order()!.order_number }}</h1>
+        <p>{{ order()!.customer_name }} - {{ elapsedMinutes() }} minutes since order placed</p>
+      </div>
+      <span class="status">{{ order()!.status | titlecase }}</span>
+    </section>
+
+    <div class="prep-grid">
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Item Checklist</h2>
+          <strong>{{ progress() }}%</strong>
+        </div>
+        <div class="progress"><span [style.width.%]="progress()"></span></div>
+        @for (item of order()!.items; track item.id) {
+          <label class="check-row">
+            <input type="checkbox" [checked]="checkedItems()[item.id]" (change)="toggleItem(item.id, $any($event.target).checked)" />
+            <span>
+              <strong>{{ item.product_name }}</strong>
+              <em>{{ item.quantity }} x {{ item.product_price | appCurrency }}</em>
+            </span>
+            <b>{{ item.subtotal | appCurrency }}</b>
+          </label>
+        }
+      </section>
+
+      <section class="panel">
+        <h2>Prep Controls</h2>
+        <div class="control-list">
+          @if (order()!.status === 'placed') {
+            <button [disabled]="busy()" (click)="accept()">Accept Order</button>
+          }
+          @if (order()!.status === 'confirmed') {
+            <button [disabled]="busy()" (click)="startPreparing()">Start Preparing</button>
+          }
+          @if (order()!.status === 'preparing') {
+            <button [disabled]="busy() || progress() < 100" (click)="markReady()">Mark Ready</button>
+          }
+          @if (order()!.status === 'ready' && !order()!.delivery_partner && !['searching', 'notified'].includes(order()!.assignment_status || '')) {
+            <button [disabled]="busy()" (click)="findDriver()">Find Driver</button>
+          }
+          @if (['searching', 'notified'].includes(order()!.assignment_status || '')) {
+            <button class="secondary" [disabled]="busy()" (click)="cancelSearch()">Cancel Driver Search</button>
+          }
+        </div>
+
+        <div class="otp-box">
+          <h3>Pickup OTP</h3>
+          <p>Verify handoff when the delivery partner arrives.</p>
+          <input type="text" inputmode="numeric" maxlength="6" [(ngModel)]="otp" placeholder="Enter OTP" />
+          @if (otpError()) { <div class="error">{{ otpError() }}</div> }
+          <button [disabled]="busy() || !otp.trim()" (click)="verifyOtp()">Verify Pickup</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Customer Notes</h2>
+        <p class="notes">{{ order()!.notes || 'No customer notes.' }}</p>
+        <h2>Delivery</h2>
+        <p>{{ order()!.delivery_address.address_line1 }}</p>
+        <p>{{ order()!.delivery_address.city }} {{ order()!.delivery_address.postal_code }}</p>
+      </section>
+
+      <section class="panel">
+        <h2>Order Total</h2>
+        <div class="amount">{{ order()!.total | appCurrency }}</div>
+        <a [routerLink]="['/orders', order()!.id]">Open full order detail</a>
+      </section>
+    </div>
+  }
+</div>

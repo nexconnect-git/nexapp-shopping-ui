@@ -21,33 +21,37 @@
             <span class="material-icons-outlined">dashboard</span>
             <span class="nav-label">Dashboard</span>
           </a>
+          <a routerLink="/live-orders" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
+            <span class="material-icons-outlined">view_kanban</span>
+            <span class="nav-label">Live Orders</span>
+          </a>
+          <a routerLink="/inventory" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
+            <span class="material-icons-outlined">inventory</span>
+            <span class="nav-label">Inventory</span>
+          </a>
           <a routerLink="/products" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
             <span class="material-icons-outlined">inventory_2</span>
             <span class="nav-label">Products</span>
+          </a>
+          <a routerLink="/catalog-requests" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
+            <span class="material-icons-outlined">playlist_add</span>
+            <span class="nav-label">Catalog Requests</span>
           </a>
           <a routerLink="/orders" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
             <span class="material-icons-outlined">receipt_long</span>
             <span class="nav-label">Orders</span>
           </a>
-          <a routerLink="/sales-report" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
-            <span class="material-icons-outlined">trending_up</span>
-            <span class="nav-label">Sales Report</span>
-          </a>
-          <a routerLink="/stock-management" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
-            <span class="material-icons-outlined">inventory</span>
-            <span class="nav-label">Stock Management</span>
-          </a>
-          <a routerLink="/coupons" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
+          <a routerLink="/promotions" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
             <span class="material-icons-outlined">confirmation_number</span>
-            <span class="nav-label">Coupons</span>
+            <span class="nav-label">Promotions</span>
           </a>
-          <a routerLink="/payments" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
+          <a routerLink="/analytics" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
+            <span class="material-icons-outlined">trending_up</span>
+            <span class="nav-label">Analytics</span>
+          </a>
+          <a routerLink="/payouts" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
             <span class="material-icons-outlined">payments</span>
             <span class="nav-label">Payouts</span>
-          </a>
-          <a routerLink="/wallet" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
-            <span class="material-icons-outlined">account_balance_wallet</span>
-            <span class="nav-label">Wallet & Ledger</span>
           </a>
           <a routerLink="/reviews" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
             <span class="material-icons-outlined">star_rate</span>
@@ -55,11 +59,15 @@
           </a>
           <a routerLink="/support" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
             <span class="material-icons-outlined">support_agent</span>
-            <span class="nav-label">Customer Care</span>
+            <span class="nav-label">Support</span>
           </a>
-          <a routerLink="/profile" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
+          <a routerLink="/notifications" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
+            <span class="material-icons-outlined">notifications</span>
+            <span class="nav-label">Notifications</span>
+          </a>
+          <a routerLink="/store-settings" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
             <span class="material-icons-outlined">manage_accounts</span>
-            <span class="nav-label">Profile & Store</span>
+            <span class="nav-label">Store Settings</span>
           </a>
         </nav>
 
@@ -152,7 +160,7 @@
                   </div>
                 </div>
                 <div class="pd-divider"></div>
-                <a routerLink="/profile" class="pd-item" (click)="closeProfile()">
+                <a routerLink="/store-settings" class="pd-item" (click)="closeProfile()">
                   <span class="material-icons-outlined">manage_accounts</span> Store Profile
                 </a>
                 <div class="pd-divider"></div>
@@ -167,8 +175,49 @@
 
       <!-- Page Content -->
       <main class="page-content">
+        @if (!isPendingRoute()) {
+          <div class="breadcrumb-bar">
+            <nav aria-label="Breadcrumb" class="breadcrumbs">
+              @for (crumb of breadcrumbs(); track $index) {
+                @if (crumb.url) {
+                  <a [routerLink]="crumb.url">{{ crumb.label }}</a>
+                } @else {
+                  <span>{{ crumb.label }}</span>
+                }
+                @if ($index < breadcrumbs().length - 1) {
+                  <span class="material-icons-outlined crumb-separator">chevron_right</span>
+                }
+              }
+            </nav>
+            <h1>{{ pageTitle() }}</h1>
+          </div>
+        }
         <router-outlet />
       </main>
+      @if (!isPendingRoute()) {
+        <nav class="mobile-bottom-nav">
+          <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+            <span class="material-icons-outlined">dashboard</span>
+            <small>Home</small>
+          </a>
+          <a routerLink="/live-orders" routerLinkActive="active">
+            <span class="material-icons-outlined">view_kanban</span>
+            <small>Orders</small>
+          </a>
+          <a routerLink="/inventory" routerLinkActive="active">
+            <span class="material-icons-outlined">inventory</span>
+            <small>Stock</small>
+          </a>
+          <a routerLink="/notifications" routerLinkActive="active">
+            <span class="material-icons-outlined">notifications</span>
+            <small>Inbox</small>
+          </a>
+          <a routerLink="/store-settings" routerLinkActive="active">
+            <span class="material-icons-outlined">settings</span>
+            <small>Store</small>
+          </a>
+        </nav>
+      }
     </div>
   </div>
 } @else {

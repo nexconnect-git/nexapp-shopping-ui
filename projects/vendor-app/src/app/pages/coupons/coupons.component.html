@@ -19,6 +19,46 @@
     </div>
   }
 
+  @if (!loading() && coupons().length > 0) {
+    <div class="cp-presets">
+      @for (preset of campaignPresets; track preset.code) {
+        <button (click)="applyPreset(preset)">
+          <span class="material-icons-outlined">auto_awesome</span>
+          {{ preset.label }}
+        </button>
+      }
+    </div>
+
+    <div class="cp-growth-summary">
+      <div class="cp-summary-item">
+        <span class="material-icons-outlined">campaign</span>
+        <strong>{{ summary().active }}</strong>
+        <span>Active</span>
+      </div>
+      <div class="cp-summary-item">
+        <span class="material-icons-outlined">group</span>
+        <strong>{{ summary().usage }}</strong>
+        <span>Uses</span>
+      </div>
+      <div class="cp-summary-item">
+        <span class="material-icons-outlined">payments</span>
+        <strong>{{ summary().revenue | number:'1.0-0' }}</strong>
+        <span>Influenced</span>
+      </div>
+      <div class="cp-summary-item" [class.warn]="summary().warnings > 0">
+        <span class="material-icons-outlined">health_and_safety</span>
+        <strong>{{ summary().warnings }}</strong>
+        <span>Need review</span>
+      </div>
+    </div>
+
+    <div class="cp-filter-row">
+      @for (f of ['all', 'active', 'upcoming', 'expired', 'inactive']; track f) {
+        <button [class.active]="filter() === f" (click)="filter.set($any(f))">{{ f | titlecase }}</button>
+      }
+    </div>
+  }
+
   <!-- ── Loading ─────────────────────────────────────────── -->
   @if (loading()) {
     <div class="cp-loading"><div class="cp-spinner"></div></div>
@@ -40,7 +80,7 @@
   <!-- ── Coupon List ──────────────────────────────────────── -->
   @else {
     <div class="cp-list">
-      @for (c of coupons(); track c.id) {
+      @for (c of filteredCoupons(); track c.id) {
         <div class="cp-card" [class.inactive]="!c.is_active" [class.expired]="isExpired(c)">
           <div class="cp-card-top">
             <div class="cp-card-left">
@@ -52,11 +92,11 @@
             </div>
             <div class="cp-card-status">
               @if (isExpired(c)) {
-                <span class="cp-status expired">Expired</span>
+                <span class="cp-status expired">{{ c.status_label || 'Expired' }}</span>
               } @else if (c.is_active) {
-                <span class="cp-status active">Active</span>
+                <span class="cp-status active">{{ c.status_label || 'Active' }}</span>
               } @else {
-                <span class="cp-status inactive">Inactive</span>
+                <span class="cp-status inactive">{{ c.status_label || 'Inactive' }}</span>
               }
             </div>
           </div>
@@ -70,6 +110,10 @@
               <span class="material-icons-outlined">people</span>
               {{ c.used_count }}{{ c.usage_limit ? '/' + c.usage_limit : '' }} used
             </span>
+            <span>
+              <span class="material-icons-outlined">payments</span>
+              {{ c.revenue_influenced || 0 }} influenced
+            </span>
             @if (c.valid_until) {
               <span>
                 <span class="material-icons-outlined">schedule</span>
@@ -78,11 +122,28 @@
             }
           </div>
 
+          @if (c.health_warnings?.length) {
+            <div class="cp-health">
+              <span class="material-icons-outlined">warning_amber</span>
+              <span>{{ c.health_warnings[0] }}</span>
+            </div>
+          }
+
           <div class="cp-card-actions">
             <button class="cp-edit-btn" (click)="openEdit(c)">
               <span class="material-icons-outlined">edit</span>
               Edit
             </button>
+            <button class="cp-edit-btn" (click)="duplicate(c)">
+              <span class="material-icons-outlined">content_copy</span>
+              Duplicate
+            </button>
+            @if (!c.is_active || isExpired(c)) {
+              <button class="cp-edit-btn" (click)="reactivate(c)">
+                <span class="material-icons-outlined">restart_alt</span>
+                Reactivate
+              </button>
+            }
             <button class="cp-del-btn" (click)="delete(c.id)" [disabled]="deleting() === c.id">
               @if (deleting() === c.id) {
                 <span class="cp-spinner-sm"></span>

@@ -16,6 +16,7 @@ export class PaymentsComponent implements OnInit {
 
   loading = signal(true);
   payouts = signal<any[]>([]);
+  activeTab = signal<'all' | 'pending_approval' | 'scheduled' | 'paid' | 'failed' | 'ledger'>('all');
 
   // Decline modal
   showDeclineModal = signal(false);
@@ -25,6 +26,21 @@ export class PaymentsComponent implements OnInit {
   // Computed slices
   pendingApproval = computed(() => this.payouts().filter(p => p.status === 'pending_approval'));
   pendingVerify  = computed(() => this.payouts().filter(p => p.status === 'paid'));
+  filteredPayouts = computed(() => {
+    const tab = this.activeTab();
+    if (tab === 'all' || tab === 'ledger') return this.payouts();
+    if (tab === 'failed') return this.payouts().filter(p => ['failed', 'declined'].includes(p.status));
+    return this.payouts().filter(p => p.status === tab);
+  });
+
+  payoutTabs = [
+    { key: 'all', label: 'All' },
+    { key: 'pending_approval', label: 'Pending approval' },
+    { key: 'scheduled', label: 'Scheduled' },
+    { key: 'paid', label: 'Paid / verify credit' },
+    { key: 'failed', label: 'Failed / declined' },
+    { key: 'ledger', label: 'Ledger' },
+  ] as const;
 
   ngOnInit() {
     this.loadPayouts();

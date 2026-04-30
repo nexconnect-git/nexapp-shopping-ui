@@ -1,17 +1,5 @@
 <div class="vendor-profile-page">
 
-  <!-- Breadcrumb -->
-  <nav class="breadcrumb">
-    <a routerLink="/vendors" class="breadcrumb-link">
-      <span class="material-icons-outlined">arrow_back</span>
-      Vendors
-    </a>
-    @if (!loading() && vendor()) {
-      <span class="breadcrumb-sep">/</span>
-      <span class="breadcrumb-current">{{ vendor().store_name }}</span>
-    }
-  </nav>
-
   <!-- Loading -->
   @if (loading()) {
     <div class="loading-state">
@@ -48,42 +36,11 @@
       </div>
     }
 
-    <!-- Page Header -->
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">{{ vendor().store_name }}</h1>
-        <p class="page-subtitle">{{ vendor().city }}{{ vendor().state ? ', ' + vendor().state : '' }} &bull; {{ vendor().vendor_type || 'Vendor' }}</p>
-      </div>
-      <div class="header-actions">
-        <a class="btn btn-secondary" [routerLink]="['/vendors', vendorId, 'edit']">
-          <span class="material-icons-outlined">edit</span>
-          Edit
-        </a>
-        <div class="status-select-wrap">
-          <label class="status-select-label" for="vendor-status-select">Account Status</label>
-          <select
-            id="vendor-status-select"
-            class="status-select"
-            [class]="'status-select status-' + vendor().status"
-            [value]="vendor().status"
-            (change)="onStatusChange($event)"
-            [disabled]="actionLoading()"
-            aria-label="Vendor status"
-          >
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="suspended">Suspended</option>
-            <option value="rejected">Rejected</option>
-          </select>
-        </div>
-      </div>
-    </div>
-
-    <!-- Profile Hero Card -->
-    <div class="profile-hero-card">
-      <div class="hero-banner"></div>
-      <div class="hero-body">
-        <div class="hero-avatar-wrap">
+    <!-- Profile Header -->
+    <header class="profile-hero-card">
+      <div class="hero-banner">
+        <div class="hero-overlay"></div>
+        <div class="hero-identity">
           <div class="hero-avatar" [style.background]="vendor().logo ? 'transparent' : vendorColor(vendor().store_name)">
             @if (vendor().logo) {
               <img [src]="vendor().logo" alt="logo">
@@ -101,58 +58,93 @@
             }
           </div>
           <input #logoInput type="file" accept="image/*" hidden (change)="onLogoChange($event)" aria-label="input">
-        </div>
-
-        <div class="hero-info">
-          <div class="hero-info-top">
-            <span class="badge" [class]="statusBadge(vendor().status)">{{ vendor().status }}</span>
-            @if (vendor().vendor_tier) {
-              <span class="tier-badge">{{ vendor().vendor_tier }}</span>
-            }
-            <span class="hero-open-badge" [class.open]="vendor().is_open">
-              <span class="dot"></span>
-              {{ vendor().is_open ? 'Open Now' : 'Closed' }}
-            </span>
-          </div>
-          <div class="hero-meta-row">
-            @if (vendor().email) {
-              <span class="hero-meta-item">
-                <span class="material-icons-outlined">mail</span>
-                {{ vendor().email }}
-              </span>
-            }
-            @if (vendor().phone) {
-              <span class="hero-meta-item">
-                <span class="material-icons-outlined">phone</span>
-                {{ vendor().phone }}
-              </span>
-            }
-            <span class="hero-meta-item">
-              <span class="material-icons-outlined">star</span>
-              {{ vendor().average_rating | number: '1.1-1' }} ({{ vendor().total_ratings }} reviews)
-            </span>
-          </div>
-        </div>
-
-        <!-- Quick Stats -->
-        <div class="hero-stats">
-          <div class="hero-stat">
-            <span class="hero-stat-value">{{ vendor().average_rating | number: '1.1-1' }}</span>
-            <span class="hero-stat-label">Rating</span>
-          </div>
-          <div class="hero-stat-divider"></div>
-          <div class="hero-stat">
-            <span class="hero-stat-value">{{ vendor().min_order_amount | number }}</span>
-            <span class="hero-stat-label">Min Order ({{ 0 | appCurrency:true }})</span>
-          </div>
-          <div class="hero-stat-divider"></div>
-          <div class="hero-stat">
-            <span class="hero-stat-value">{{ vendor().delivery_radius_km }} km</span>
-            <span class="hero-stat-label">Delivery Radius</span>
+          <div class="hero-title-block">
+            <h1>{{ vendor().store_name }}</h1>
+            <p>{{ vendor().city }}{{ vendor().state ? ', ' + vendor().state : '' }} &bull; {{ vendor().vendor_type || 'Vendor' }}</p>
           </div>
         </div>
       </div>
-    </div>
+
+      <div class="hero-action-bar">
+        <div class="hero-info-top">
+          <span class="badge" [class]="statusBadge(vendor().status)">{{ vendor().status }}</span>
+          @if (vendor().vendor_tier) {
+            <span class="tier-badge">{{ vendor().vendor_tier }}</span>
+          }
+          <span class="hero-open-badge" [class.open]="vendor().is_open">
+            <span class="dot"></span>
+            {{ vendor().is_open ? 'Open Now' : 'Closed' }}
+          </span>
+        </div>
+        <div class="header-actions">
+          <a class="btn btn-secondary" [routerLink]="['/vendors', vendorId, 'edit']">
+            <span class="material-icons-outlined">edit</span>
+            Edit
+          </a>
+          <div class="status-select-wrap">
+            <label class="status-select-label" for="vendor-status-select">Account Status</label>
+            <select
+              id="vendor-status-select"
+              class="status-select"
+              [class]="'status-select status-' + vendor().status"
+              [value]="vendor().status"
+              (change)="onStatusChange($event)"
+              [disabled]="actionLoading()"
+              aria-label="Vendor status"
+            >
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="suspended">Suspended</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+    </header>
+
+    <section class="profile-intel-grid" aria-label="Vendor operations summary">
+      <div class="intel-card priority">
+        <div class="intel-icon">
+          <span class="material-icons-outlined">storefront</span>
+        </div>
+        <div>
+          <span class="intel-label">Store State</span>
+          <strong>{{ vendor().is_open ? 'Open' : 'Closed' }}</strong>
+          <small>{{ vendor().status | titlecase }} account</small>
+        </div>
+      </div>
+      <div class="intel-card">
+        <div class="intel-icon green">
+          <span class="material-icons-outlined">receipt_long</span>
+        </div>
+        <div>
+          <span class="intel-label">Orders</span>
+          <strong>{{ vendor().total_orders || ordersTotal() || 0 }}</strong>
+          <small>Operational volume</small>
+        </div>
+      </div>
+      <div class="intel-card">
+        <div class="intel-icon warm">
+          <span class="material-icons-outlined">inventory_2</span>
+        </div>
+        <div>
+          <span class="intel-label">Catalog</span>
+          <strong>{{ vendor().total_products || productsTotal() || 0 }}</strong>
+          <small>Listed products</small>
+        </div>
+      </div>
+      <div class="intel-card">
+        <div class="intel-icon slate">
+          <span class="material-icons-outlined">route</span>
+        </div>
+        <div>
+          <span class="intel-label">Coverage</span>
+          <strong>{{ vendor().delivery_radius_km || 0 }} km</strong>
+          <small>{{ vendor().city || 'City not set' }}</small>
+        </div>
+      </div>
+    </section>
 
     <!-- Tab Strip -->
     <div class="tab-strip">
@@ -178,6 +170,66 @@
     @if (activeTab() === 'overview') {
       <div class="tab-content fade-in">
         <div class="info-grid">
+          <div class="info-main-column">
+          <div class="profile-action-panel">
+            <h3 class="info-card-title">
+              <span class="material-icons-outlined">fact_check</span>
+              Operational Checklist
+            </h3>
+            <div class="review-list">
+              <div class="review-item" [class.complete]="vendor().status === 'approved'">
+                <span class="material-icons-outlined">{{ vendor().status === 'approved' ? 'check_circle' : 'pending' }}</span>
+                <div>
+                  <strong>Approval status</strong>
+                  <small>{{ vendor().status | titlecase }}</small>
+                </div>
+              </div>
+              <div class="review-item" [class.complete]="vendor().email && vendor().phone">
+                <span class="material-icons-outlined">{{ vendor().email && vendor().phone ? 'check_circle' : 'radio_button_unchecked' }}</span>
+                <div>
+                  <strong>Contact profile</strong>
+                  <small>{{ vendor().email && vendor().phone ? 'Email and phone available' : 'Missing contact detail' }}</small>
+                </div>
+              </div>
+              <div class="review-item" [class.complete]="!vendor().require_stock_check">
+                <span class="material-icons-outlined">{{ vendor().require_stock_check ? 'inventory' : 'check_circle' }}</span>
+                <div>
+                  <strong>Stock readiness</strong>
+                  <small>{{ vendor().require_stock_check ? 'Stock check required before opening' : 'No daily stock block' }}</small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Admin Controls -->
+          <div class="info-card">
+            <h3 class="info-card-title">
+              <span class="material-icons-outlined">admin_panel_settings</span>
+              Admin Controls
+            </h3>
+            <div class="info-rows">
+              <div class="info-row">
+                <span class="info-label">Require Stock Check Before Going Online</span>
+                <div class="toggle-row">
+                  <button
+                    class="toggle-btn"
+                    [class.active]="vendor().require_stock_check"
+                    (click)="toggleRequireStockCheck()">
+                    <span class="toggle-track">
+                      <span class="toggle-thumb"></span>
+                    </span>
+                    {{ vendor().require_stock_check ? 'Enabled' : 'Disabled' }}
+                  </button>
+                  <span class="info-hint">
+                    When enabled, vendor must update inventory before opening the store each day.
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          </div>
+
+          <aside class="info-side-column">
           <!-- Store Details -->
           <div class="info-card">
             <h3 class="info-card-title">
@@ -218,9 +270,8 @@
             </div>
           </div>
 
-          <!-- Quick Stats + Admin Controls -->
-          <div>
-            <div class="info-card" style="margin-bottom:1.5rem;">
+          <!-- Quick Stats -->
+            <div class="info-card">
               <h3 class="info-card-title">
                 <span class="material-icons-outlined">insights</span>
                 Quick Stats
@@ -249,33 +300,7 @@
               </div>
             </div>
 
-            <!-- Admin Controls -->
-            <div class="info-card">
-              <h3 class="info-card-title">
-                <span class="material-icons-outlined">admin_panel_settings</span>
-                Admin Controls
-              </h3>
-              <div class="info-rows">
-                <div class="info-row">
-                  <span class="info-label">Require Stock Check Before Going Online</span>
-                  <div class="toggle-row">
-                    <button
-                      class="toggle-btn"
-                      [class.active]="vendor().require_stock_check"
-                      (click)="toggleRequireStockCheck()">
-                      <span class="toggle-track">
-                        <span class="toggle-thumb"></span>
-                      </span>
-                      {{ vendor().require_stock_check ? 'Enabled' : 'Disabled' }}
-                    </button>
-                    <span class="info-hint">
-                      When enabled, vendor must update inventory before opening the store each day.
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          </aside>
         </div>
       </div>
     }

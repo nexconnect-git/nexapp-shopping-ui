@@ -1,80 +1,98 @@
-<div class="wallet-page">
-  <header class="wallet-header">
-    <a routerLink="/profile" class="back-btn">
-      <span class="material-icons">arrow_back</span>
-    </a>
-    <h1>My Wallet</h1>
-  </header>
+<section class="wallet-page">
+  <div class="wallet-hero">
+    <a routerLink="/profile" class="back-pill"><span class="material-icons-outlined">arrow_back</span>Profile</a>
+    <div>
+      <span class="page-kicker">Stored value</span>
+      <h1>Your wallet</h1>
+      <p>Use stored balance during checkout, top up instantly, and review every wallet movement.</p>
+    </div>
+  </div>
 
   @if (loading()) {
-    <div class="loading-state">
-      <div class="spinner"></div>
-      <p>Loading wallet...</p>
-    </div>
+    <div class="wallet-loading"><div class="spinner"></div></div>
   } @else {
-    <!-- Balance Card -->
-    <div class="balance-card">
-      <div class="balance-label">Available Balance</div>
-      <div class="balance-amount">₹{{ balance() }}</div>
-      <button class="topup-btn" (click)="openTopUp()">
-        <span class="material-icons">add</span>
-        Add Money
-      </button>
+    <div class="wallet-balance">
+      <span class="page-kicker light">Available balance</span>
+      <strong>{{ balance() }}</strong>
+      <button class="primary-btn" (click)="openTopUp()">Add money</button>
     </div>
 
-    <!-- Top-up Form -->
+    <div class="wallet-trust-grid">
+      <article class="trust-card">
+        <span class="material-icons-outlined">verified_user</span>
+        <div>
+          <strong>Top-ups stay visible</strong>
+          <span>Every credit, refund and order deduction lands in your ledger below.</span>
+        </div>
+      </article>
+      <article class="trust-card">
+        <span class="material-icons-outlined">bolt</span>
+        <div>
+          <strong>Wallet speeds up checkout</strong>
+          <span>Use balance first, then combine with COD or online payment when needed.</span>
+        </div>
+      </article>
+    </div>
+
     @if (showTopUpForm()) {
-      <div class="topup-form-card">
-        <h3>Add Money to Wallet</h3>
-        <div class="quick-amounts">
-          <button class="quick-btn" *ngFor="let a of [100, 200, 500, 1000]" (click)="topUpAmount.set(a)">₹{{ a }}</button>
+      <div class="topup-card">
+        <div class="topup-head">
+          <div>
+            <span class="page-kicker">Wallet top-up</span>
+            <h2>Fund your next orders faster</h2>
+          </div>
+          <button class="ghost-btn" (click)="cancelTopUp()">Close</button>
         </div>
-        <div class="amount-input-row">
-          <span class="rupee-prefix">₹</span>
-          <input
-            type="number"
-            class="amount-input"
-            placeholder="Enter amount"
-            [ngModel]="topUpAmount()"
-            (ngModelChange)="topUpAmount.set($event)"
-            min="1"
-          />
+        <div class="quick-row">
+          @for (a of [100, 200, 500, 1000]; track a) {
+            <button class="quick-btn" (click)="topUpAmount.set(a)">{{ a }}</button>
+          }
         </div>
-        <div class="topup-actions">
-          <button class="cancel-topup-btn" (click)="cancelTopUp()">Cancel</button>
-          <button class="confirm-topup-btn" (click)="initiateTopUp()" [disabled]="topUpLoading()">
-            @if (topUpLoading()) { Processing... } @else { Pay via Razorpay }
-          </button>
+        <div class="topup-input">
+          <span>Amount</span>
+          <input type="number" [ngModel]="topUpAmount()" (ngModelChange)="topUpAmount.set($event)" min="1" placeholder="Enter amount">
         </div>
+        <div class="topup-note">
+          <span class="material-icons-outlined">info</span>
+          <span>You will be redirected to Razorpay to complete this wallet top-up securely.</span>
+        </div>
+        <button class="primary-btn" (click)="initiateTopUp()" [disabled]="topUpLoading()">
+          @if (topUpLoading()) { Processing... } @else { Continue with Razorpay }
+        </button>
       </div>
     }
 
-    <!-- Transactions -->
-    <div class="transactions-section">
-      <h2>Transaction History</h2>
-      @if (transactions().length === 0) {
-        <div class="empty-state">
-          <span class="material-icons">receipt_long</span>
-          <p>No transactions yet.</p>
+    <section class="wallet-transactions">
+      <div class="section-head">
+        <div>
+          <span class="page-kicker">Ledger</span>
+          <h2>Transaction history</h2>
+        </div>
+      </div>
+      @if (!hasTransactions()) {
+        <div class="empty-inline">
+          <span class="material-icons-outlined">receipt_long</span>
+          <div>
+            <p>No wallet transactions yet.</p>
+            <small>Your top-ups, refunds and checkout deductions will appear here once you start using wallet balance.</small>
+          </div>
         </div>
       } @else {
-        <ul class="tx-list">
+        <div class="tx-list">
           @for (tx of transactions(); track tx.id) {
-            <li class="tx-item">
-              <div class="tx-icon-wrap" [class]="tx.transaction_type">
-                <span class="material-icons">{{ txIcon(tx.source) }}</span>
+            <div class="tx-row">
+              <div class="tx-icon {{ tx.transaction_type }}">
+                <span class="material-icons-outlined">{{ txIcon(tx.source) }}</span>
               </div>
-              <div class="tx-details">
-                <div class="tx-desc">{{ tx.description || tx.source }}</div>
-                <div class="tx-date">{{ formatDate(tx.created_at) }}</div>
+              <div class="tx-copy">
+                <strong>{{ tx.description || tx.source }}</strong>
+                <span>{{ formatDate(tx.created_at) }}</span>
               </div>
-              <div class="tx-amount" [class]="txClass(tx.transaction_type)">
-                {{ txSign(tx.transaction_type) }}₹{{ tx.amount }}
-              </div>
-            </li>
+              <div class="tx-amount {{ txClass(tx.transaction_type) }}">{{ txSign(tx.transaction_type) }}{{ tx.amount }}</div>
+            </div>
           }
-        </ul>
+        </div>
       }
-    </div>
+    </section>
   }
-</div>
+</section>
