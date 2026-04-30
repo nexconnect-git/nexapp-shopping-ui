@@ -11,6 +11,10 @@
 npm-debug.log
 yarn-error.log
 
+# Legacy mobile wrappers
+/mobile-customer
+/mobile-delivery
+
 # IDEs and editors
 .idea/
 .project

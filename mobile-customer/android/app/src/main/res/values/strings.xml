@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">NexConnect</string>
-    <string name="title_activity_main">NexConnect</string>
-    <string name="package_name">com.nexconnect.customer</string>
-    <string name="custom_url_scheme">com.nexconnect.customer</string>
-</resources>
