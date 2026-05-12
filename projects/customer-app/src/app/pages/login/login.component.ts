@@ -35,7 +35,9 @@ export class LoginComponent {
       next: (res) => {
         this.otpRequested.set(true);
         this.devOtp.set(res.dev_otp || '');
-        this.info.set('We sent a one-time code to your mobile number.');
+        this.info.set(res.email_fallback_queued
+          ? 'We sent a one-time code to your mobile number and registered email.'
+          : 'We sent a one-time code to your mobile number.');
         this.loading.set(false);
       },
       error: (err) => {

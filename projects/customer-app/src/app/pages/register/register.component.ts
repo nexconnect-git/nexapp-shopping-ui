@@ -31,11 +31,13 @@ export class RegisterComponent {
     this.loading.set(true);
     this.error.set('');
     this.info.set('');
-    this.auth.requestCustomerRegisterOtp(this.form.phone.trim()).subscribe({
+    this.auth.requestCustomerRegisterOtp(this.form.phone.trim(), this.form.email.trim()).subscribe({
       next: (res) => {
         this.otpRequested.set(true);
         this.devOtp.set(res.dev_otp || '');
-        this.info.set('We sent a one-time code to your mobile number.');
+        this.info.set(res.email_fallback_queued
+          ? 'We sent a one-time code to your mobile number and email.'
+          : 'We sent a one-time code to your mobile number.');
         this.loading.set(false);
       },
       error: (err) => {

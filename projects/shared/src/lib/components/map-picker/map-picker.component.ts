@@ -78,7 +78,7 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
   }
 
   private loadGoogleMaps() {
-    const src = `https://maps.googleapis.com/maps/api/js?key=${this.API_KEY}`;
+    const src = `https://maps.googleapis.com/maps/api/js?key=${this.API_KEY}&loading=async`;
 
     if (typeof google !== 'undefined' && google.maps) {
       this.initMap();

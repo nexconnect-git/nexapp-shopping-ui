@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, HostListener, DestroyRef, effect } from '@angular/core';
+import { Component, inject, signal, OnInit, HostListener, DestroyRef, effect, Injector } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, PRIMARY_OUTLET, RouterModule, Router, NavigationEnd } from '@angular/router';
 import { AlertHostComponent, AuthService, ApiService, LocationService, NotificationPollingService } from '@shared/public-api';
@@ -22,6 +22,7 @@ export class AppComponent implements OnInit {
   locationService = inject(LocationService);
   router = inject(Router);
   private destroyRef = inject(DestroyRef);
+  private injector = inject(Injector);
   private notifPolling = inject(NotificationPollingService);
   readonly theme = inject(ThemeService);
 
@@ -92,7 +93,7 @@ export class AppComponent implements OnInit {
         this.notifications.set([]);
         this.api.activeIssue.set(null);
       }
-    });
+    }, { injector: this.injector });
 
     // Track current route — certain pages have their own sticky topbar
     const FULL_SCREEN_ROUTES = ['/search', '/shop/', '/product/', '/order/', '/cart', '/checkout'];
@@ -154,7 +155,7 @@ export class AppComponent implements OnInit {
   private loadGoogleMaps() {
     if (document.querySelector('script[data-gmaps]')) return;
     const s = document.createElement('script');
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${environment.googleMapsApiKey}`;
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${environment.googleMapsApiKey}&loading=async`;
     s.setAttribute('data-gmaps', '');
     s.async = true;
     document.head.appendChild(s);

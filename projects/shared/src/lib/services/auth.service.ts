@@ -69,8 +69,8 @@ export class AuthService {
     return this.api.register(data);
   }
 
-  requestCustomerRegisterOtp(phone: string) {
-    return this.api.requestCustomerRegisterOtp({ phone });
+  requestCustomerRegisterOtp(phone: string, email?: string) {
+    return this.api.requestCustomerRegisterOtp({ phone, email: email || '' });
   }
 
   verifyCustomerRegisterOtp(data: { phone: string; otp: string; first_name: string; last_name?: string; email?: string }) {

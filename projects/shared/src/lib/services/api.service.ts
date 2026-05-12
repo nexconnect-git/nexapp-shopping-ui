@@ -49,7 +49,7 @@ export class ApiService {
     return this.http.post(`${this.baseUrl}/auth/register/`, data);
   }
 
-  requestCustomerRegisterOtp(data: { phone: string }): Observable<any> {
+  requestCustomerRegisterOtp(data: { phone: string; email?: string }): Observable<any> {
     return this.http.post(`${this.baseUrl}/auth/mobile/request-register-otp/`, data);
   }
 
