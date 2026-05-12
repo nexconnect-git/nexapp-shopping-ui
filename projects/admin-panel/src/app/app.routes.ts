@@ -38,6 +38,7 @@ export const routes: Routes = [
   { path: 'production-readiness', loadComponent: () => import('./pages/production-readiness/production-readiness.component').then(m => m.ProductionReadinessComponent), canActivate: adminGuard },
   { path: 'issues', loadComponent: () => import('./pages/issues/issues.component').then(m => m.IssuesComponent), canActivate: adminGuard },
   { path: 'coupons', loadComponent: () => import('./pages/coupons/coupons.component').then(m => m.CouponsComponent), canActivate: adminGuard },
+  { path: 'banners', loadComponent: () => import('./pages/banners/banners.component').then(m => m.BannersComponent), canActivate: adminGuard },
   { path: 'notifications', loadComponent: () => import('./pages/notifications/notifications.component').then(m => m.NotificationsComponent), canActivate: adminGuard },
   { path: 'admin-users', loadComponent: () => import('./pages/admin-users/admin-users.component').then(m => m.AdminUsersComponent), canActivate: [superuserGuard] },
   { path: '**', redirectTo: '' }

@@ -18,6 +18,11 @@ interface CouponForm {
   valid_until: string;
   is_active: boolean;
   vendor: string | null;
+  display_section: 'hero' | 'more';
+  badge_text: string;
+  icon_name: string;
+  accent_color: string;
+  display_order: number;
 }
 
 @Component({
@@ -46,6 +51,7 @@ export class CouponsComponent implements OnInit {
     { key: 'code', label: 'Code', flex: '1fr' },
     { key: 'details', label: 'Details', flex: '1.5fr' },
     { key: 'discount', label: 'Discount', flex: '1fr' },
+    { key: 'placement', label: 'Placement', flex: '1fr' },
     { key: 'scope', label: 'Scope', flex: '1fr' },
     { key: 'limits', label: 'Used / Limit', flex: '1fr' },
     { key: 'status', label: 'Status', flex: '1.5fr' },
@@ -56,8 +62,22 @@ export class CouponsComponent implements OnInit {
 
   readonly discountTypes = [
     { value: 'percentage',    label: 'Percentage (%)' },
-    { value: 'fixed',         label: 'Fixed Amount (₦)' },
+    { value: 'fixed',         label: 'Fixed Amount (Rs.)' },
     { value: 'free_delivery', label: 'Free Delivery' },
+  ];
+
+  readonly displaySections = [
+    { value: 'hero', label: 'Featured hero' },
+    { value: 'more', label: 'More offers' },
+  ];
+
+  readonly iconOptions = [
+    { value: 'local-offer', label: 'Offer tag' },
+    { value: 'delivery-dining', label: 'Delivery' },
+    { value: 'percent', label: 'Percent' },
+    { value: 'shopping-bag', label: 'Shopping bag' },
+    { value: 'bolt', label: 'Fast deal' },
+    { value: 'redeem', label: 'Reward' },
   ];
 
   ngOnInit() { this.load(); }
@@ -89,7 +109,12 @@ export class CouponsComponent implements OnInit {
       valid_from: now.toISOString().slice(0, 16),
       valid_until: later.toISOString().slice(0, 16),
       is_active: true,
-      vendor: null };
+      vendor: null,
+      display_section: 'more',
+      badge_text: '',
+      icon_name: 'local-offer',
+      accent_color: '#ff4b1f',
+      display_order: 0 };
   }
 
   openCreate() {
@@ -108,7 +133,12 @@ export class CouponsComponent implements OnInit {
       valid_from: c.valid_from?.slice(0, 16) || '',
       valid_until: c.valid_until?.slice(0, 16) || '',
       is_active: c.is_active,
-      vendor: c.vendor || null };
+      vendor: c.vendor || null,
+      display_section: c.display_section || 'more',
+      badge_text: c.badge_text || '',
+      icon_name: c.icon_name || 'local-offer',
+      accent_color: c.accent_color || '#ff4b1f',
+      display_order: c.display_order || 0 };
     this.editingId.set(c.id);
     this.error.set('');
     this.showForm.set(true);
@@ -152,7 +182,7 @@ export class CouponsComponent implements OnInit {
   discountLabel(c: any): string {
     if (c.discount_type === 'percentage') return `${c.discount_value}% OFF`;
     if (c.discount_type === 'free_delivery') return 'FREE DELIVERY';
-    return `₦${c.discount_value} OFF`;
+    return `Rs.${c.discount_value} OFF`;
   }
 
   scopeLabel(c: any): string {
@@ -163,3 +193,4 @@ export class CouponsComponent implements OnInit {
     return c.valid_until && new Date(c.valid_until) < new Date();
   }
 }
+

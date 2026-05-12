@@ -4,13 +4,14 @@ import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService, ToastService, AppCurrencyPipe } from '@shared/public-api';
 import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
+import { AdminProfileShellComponent, AdminProfileBadge, AdminProfileMetric, AdminProfileTab } from '../../shared/components/admin-profile-shell/admin-profile-shell.component';
 
 type Tab = 'overview' | 'deliveries' | 'assets';
 
 @Component({
   selector: 'app-partner-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, DynamicTableComponent, TableCellDirective, DecimalPipe, AppCurrencyPipe],
+  imports: [CommonModule, FormsModule, RouterLink, DynamicTableComponent, TableCellDirective, DecimalPipe, AppCurrencyPipe, AdminProfileShellComponent],
   templateUrl: './partner-profile.component.html',
   styleUrl: './partner-profile.component.scss'
 })
@@ -38,6 +39,12 @@ export class PartnerProfileComponent implements OnInit {
   copied = signal(false);
 
   activeTab = signal<Tab>('overview');
+
+  profileTabs: AdminProfileTab[] = [
+    { id: 'overview', label: 'Overview', icon: 'person' },
+    { id: 'deliveries', label: 'Deliveries', icon: 'local_shipping' },
+    { id: 'assets', label: 'Assigned Assets', icon: 'handyman' },
+  ];
 
   // Deliveries tab
   deliveries = signal<any[]>([]);
@@ -85,6 +92,10 @@ export class PartnerProfileComponent implements OnInit {
     this.activeTab.set(tab);
     if (tab === 'deliveries' && !this.deliveriesLoaded) this.loadDeliveries();
     if (tab === 'assets' && !this.assetsLoaded) this.loadAssets();
+  }
+
+  setProfileTab(tab: string) {
+    this.setTab(tab as Tab);
   }
 
   loadDeliveries() {
@@ -183,6 +194,26 @@ export class PartnerProfileComponent implements OnInit {
     let hash = 0;
     for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
     return colors[Math.abs(hash) % colors.length];
+  }
+
+  partnerBadges(): AdminProfileBadge[] {
+    const p = this.partner();
+    if (!p) return [];
+    return [
+      { label: p.status, className: this.statusBadge(p.status) },
+      { label: p.is_approved ? 'Approved' : 'Pending', className: p.is_approved ? 'badge-approved' : 'badge-pending' },
+    ];
+  }
+
+  partnerMetrics(): AdminProfileMetric[] {
+    const p = this.partner();
+    if (!p) return [];
+    return [
+      { label: 'Approval', value: p.is_approved ? 'Approved' : 'Pending', subtext: `${this.partnerAccountStatus()} account`, icon: 'badge', priority: true },
+      { label: 'Deliveries', value: p.total_deliveries || this.deliveriesTotal() || 0, subtext: 'Completed assignments', icon: 'local_shipping', tone: 'green' },
+      { label: 'Rating', value: p.average_rating || '0.0', subtext: 'Customer score', icon: 'star', tone: 'warm' },
+      { label: 'Vehicle', value: p.vehicle_type || 'Vehicle', subtext: p.vehicle_number || 'Plate missing', icon: 'two_wheeler', tone: 'slate' },
+    ];
   }
 
   statusBadge(s: string): string {

@@ -1,0 +1,105 @@
+<div class="banners-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Home banners</h1>
+      <p class="page-subtitle">Manage the customer app carousel.</p>
+    </div>
+    <button class="btn-primary" (click)="openCreate()">
+      <span class="material-icons-outlined">add</span>
+      New Banner
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="state-card">Loading banners...</div>
+  } @else if (!banners().length) {
+    <div class="state-card">No banners yet. Create one to show it on the customer home carousel.</div>
+  } @else {
+    <div class="banner-grid">
+      @for (banner of banners(); track banner.id) {
+        <article class="banner-card">
+          <div class="banner-preview" [style.background]="banner.bg_gradient">
+            @if (banner.image) {
+              <img [src]="banner.image" [alt]="banner.title">
+            }
+            @if (banner.badge_text) { <span class="badge">{{ banner.badge_text }}</span> }
+          </div>
+          <div class="banner-body">
+            <div>
+              <h2>{{ banner.title }}</h2>
+              <p>{{ banner.subtitle || 'No subtitle' }}</p>
+            </div>
+            <button class="status-pill" [class.active]="banner.is_active" (click)="toggleActive(banner)">
+              <span class="material-icons-outlined">{{ banner.is_active ? 'visibility' : 'visibility_off' }}</span>
+              {{ banner.is_active ? 'Active' : 'Hidden' }}
+            </button>
+          </div>
+          <div class="banner-meta">
+            <span>Order {{ banner.display_order }}</span>
+            <span>{{ banner.cta_label }} -> {{ banner.cta_url }}</span>
+          </div>
+          <div class="actions">
+            <button class="action-btn" (click)="openEdit(banner)"><span class="material-icons-outlined">edit</span></button>
+            <button class="action-btn danger" (click)="delete(banner)"><span class="material-icons-outlined">delete_outline</span></button>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</div>
+
+@if (showModal()) {
+  <div class="modal-backdrop" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editTarget() ? 'Edit Banner' : 'New Banner' }}</h2>
+        <button class="modal-close" (click)="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        @if (error()) { <div class="alert-error">{{ error() }}</div> }
+        <label class="form-label">Title *</label>
+        <input class="form-input" [(ngModel)]="form.title" placeholder="Banner title">
+
+        <label class="form-label">Subtitle</label>
+        <input class="form-input" [(ngModel)]="form.subtitle" placeholder="Short supporting text">
+
+        <div class="form-grid">
+          <div>
+            <label class="form-label">Badge</label>
+            <input class="form-input" [(ngModel)]="form.badge_text" placeholder="Optional">
+          </div>
+          <div>
+            <label class="form-label">Display order</label>
+            <input class="form-input" type="number" [(ngModel)]="form.display_order">
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div>
+            <label class="form-label">CTA label</label>
+            <input class="form-input" [(ngModel)]="form.cta_label">
+          </div>
+          <div>
+            <label class="form-label">CTA URL</label>
+            <input class="form-input" [(ngModel)]="form.cta_url">
+          </div>
+        </div>
+
+        <label class="form-label">Background gradient</label>
+        <input class="form-input" [(ngModel)]="form.bg_gradient">
+
+        <label class="form-label">Image</label>
+        <input class="form-input" type="file" accept="image/*" (change)="onFileSelected($event)">
+
+        <label class="check-row">
+          <input type="checkbox" [(ngModel)]="form.is_active">
+          Active in customer app
+        </label>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeModal()">Cancel</button>
+        <button class="btn-primary" [disabled]="saving()" (click)="save()">{{ saving() ? 'Saving...' : 'Save' }}</button>
+      </div>
+    </div>
+  </div>
+}

@@ -104,6 +104,7 @@ export interface Category {
   slug: string;
   description: string;
   image: string | null;
+  icon_name: string;
   parent: string | null;
   parent_name: string | null;
   children: Category[];
@@ -400,6 +401,7 @@ export interface DeliveryFeeQuote {
   is_serviceable: boolean;
   serviceability_error: string;
   max_supported_distance_km: number;
+  instant_radius_km: number;
   reason?: string;
 }
 

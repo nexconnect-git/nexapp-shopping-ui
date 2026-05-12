@@ -4,13 +4,14 @@ import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { ApiService, ToastService, AppCurrencyPipe } from '@shared/public-api';
 import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
+import { AdminProfileShellComponent, AdminProfileBadge, AdminProfileMetric, AdminProfileTab } from '../../shared/components/admin-profile-shell/admin-profile-shell.component';
 
 type Tab = 'overview' | 'orders' | 'loyalty';
 
 @Component({
   selector: 'app-customer-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, DynamicTableComponent, TableCellDirective, AppCurrencyPipe],
+  imports: [CommonModule, FormsModule, DynamicTableComponent, TableCellDirective, AppCurrencyPipe, AdminProfileShellComponent],
   templateUrl: './customer-profile.component.html',
   styleUrl: './customer-profile.component.scss'
 })
@@ -26,6 +27,12 @@ export class CustomerProfileComponent implements OnInit {
   actionLoading = signal(false);
 
   activeTab = signal<Tab>('overview');
+
+  profileTabs: AdminProfileTab[] = [
+    { id: 'overview', label: 'Overview', icon: 'person' },
+    { id: 'orders', label: 'Orders', icon: 'receipt_long' },
+    { id: 'loyalty', label: 'Loyalty Points', icon: 'stars' },
+  ];
 
   // Orders tab
   orders = signal<any[]>([]);
@@ -81,6 +88,10 @@ export class CustomerProfileComponent implements OnInit {
     this.activeTab.set(tab);
     if (tab === 'orders' && !this.ordersLoaded) this.loadOrders();
     if (tab === 'loyalty' && !this.loyaltyLoaded) this.loadLoyalty();
+  }
+
+  setProfileTab(tab: string) {
+    this.setTab(tab as Tab);
   }
 
   loadOrders() {
@@ -215,6 +226,27 @@ export class CustomerProfileComponent implements OnInit {
 
   initials(c: any): string {
     return ((c.first_name?.[0] || '') + (c.last_name?.[0] || '')).toUpperCase() || c.username?.[0]?.toUpperCase() || '?';
+  }
+
+  customerBadges(): AdminProfileBadge[] {
+    const c = this.customer();
+    if (!c) return [];
+    return [
+      { label: c.is_verified ? 'Verified' : 'Unverified', className: c.is_verified ? 'badge-approved' : 'badge-pending' },
+      { label: c.is_active !== false ? 'Active' : 'Suspended', className: c.is_active !== false ? 'badge-approved' : 'badge-rejected' },
+      { label: 'Customer', className: 'role-badge' },
+    ];
+  }
+
+  customerMetrics(): AdminProfileMetric[] {
+    const c = this.customer();
+    if (!c) return [];
+    return [
+      { label: 'Account Health', value: c.is_active !== false && c.is_verified ? 'Clear' : 'Review', subtext: c.is_active === false ? 'Account suspended' : (c.is_verified ? 'Verified customer' : 'Verification pending'), icon: 'verified_user', priority: true },
+      { label: 'Orders', value: c.total_orders || c.orders_count || this.ordersTotal() || 0, subtext: 'Linked purchase history', icon: 'shopping_bag', tone: 'warm' },
+      { label: 'Loyalty', value: this.loyaltyBalance(), subtext: 'Current points balance', icon: 'stars', tone: 'green' },
+      { label: 'Contactability', value: c.email && c.phone ? 'Complete' : 'Partial', subtext: c.email || c.phone || 'No contact channel', icon: 'alternate_email', tone: 'slate' },
+    ];
   }
 
   orderStatusBadge(s: string): string {

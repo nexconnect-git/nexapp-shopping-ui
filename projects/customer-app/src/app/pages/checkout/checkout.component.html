@@ -56,6 +56,15 @@
             </div>
           </div>
           <div class="payment-list">
+            @if (!paymentMethods.length) {
+              <div class="payment-empty">
+                <span class="material-icons-outlined">payments</span>
+                <div>
+                  <strong>Payment unavailable</strong>
+                  <span>No checkout payment modes are enabled right now.</span>
+                </div>
+              </div>
+            }
             @for (pm of paymentMethods; track pm.id) {
               <label class="payment-card" [class.active]="selectedPayment === pm.id">
                 <input type="radio" [value]="pm.id" [(ngModel)]="selectedPayment" hidden>
@@ -237,7 +246,7 @@
                 <span class="material-icons-outlined">local_shipping</span>
                 <div>
                   <strong>Long-distance delivery in this basket</strong>
-                  <span>One or more shops are outside your 10 km instant radius. You can still order after confirming the longer ETA.</span>
+                  <span>One or more shops are outside {{ instantRadiusLabel() }}. You can still order after confirming the longer ETA.</span>
                 </div>
               </div>
             }
@@ -259,7 +268,7 @@
             </div>
           }
 
-          <button class="place-btn" [disabled]="!selectedAddressId || placingOrder() || addresses().length === 0" (click)="placeOrder()">
+          <button class="place-btn" [disabled]="!selectedAddressId || placingOrder() || addresses().length === 0 || !paymentMethods.length" (click)="placeOrder()">
             @if (placingOrder()) {
               {{ selectedPayment === 'razorpay' ? 'Opening payment...' : 'Placing order...' }}
             } @else if (selectedPayment === 'razorpay') {

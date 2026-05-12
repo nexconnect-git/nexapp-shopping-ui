@@ -26,6 +26,18 @@
         UPI ID
         <input class="form-input" [(ngModel)]="form.upi_id" name="upi_id" placeholder="payments@nexconnect">
       </label>
+
+      <div class="method-list">
+        @for (method of paymentMethods; track method.key) {
+          <button type="button" class="method-toggle" [class.enabled]="isPaymentMethodEnabled(method.key)" (click)="togglePaymentMethod(method.key)">
+            <span class="material-icons-outlined">{{ isPaymentMethodEnabled(method.key) ? 'check_circle' : 'radio_button_unchecked' }}</span>
+            <span>
+              <strong>{{ method.label }}</strong>
+              <small>{{ method.description }}</small>
+            </span>
+          </button>
+        }
+      </div>
     </section>
 
     <section class="settings-card">

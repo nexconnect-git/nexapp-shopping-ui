@@ -67,14 +67,16 @@
                 </button>
               </td>
               <td>
-                <div class="cat-cell">
+                  <div class="cat-cell">
                   <div class="cat-icon">
                     @if (cat.image) { <img [src]="cat.image" alt="{{cat.name}}"> }
-                    @else { 📁 }
+                    @else if (iconArtwork(cat.icon_name)) { <img [src]="iconArtwork(cat.icon_name)" alt="{{ iconLabel(cat.icon_name) }}"> }
+                    @else { <span class="material-icons-outlined">{{ displayIcon(cat) }}</span> }
                   </div>
                   <div>
                     <p class="cat-name">{{ cat.name }}</p>
                     <p class="cat-slug">{{ cat.slug }}</p>
+                    @if (cat.icon_name) { <p class="cat-icon-name">@if (!iconArtwork(cat.icon_name)) { <span class="material-icons-outlined">{{ cat.icon_name }}</span> }{{ iconLabel(cat.icon_name) }}</p> }
                   </div>
                 </div>
               </td>
@@ -131,11 +133,13 @@
                         <div class="sub-connector"></div>
                         <div class="cat-icon small">
                           @if (sub.image) { <img [src]="sub.image" alt="{{sub.name}}"> }
-                          @else { 📂 }
+                          @else if (iconArtwork(sub.icon_name)) { <img [src]="iconArtwork(sub.icon_name)" alt="{{ iconLabel(sub.icon_name) }}"> }
+                          @else { <span class="material-icons-outlined">{{ displayIcon(sub) }}</span> }
                         </div>
                         <div>
                           <p class="cat-name">{{ sub.name }}</p>
                           <p class="cat-slug">{{ sub.slug }}</p>
+                          @if (sub.icon_name) { <p class="cat-icon-name">@if (!iconArtwork(sub.icon_name)) { <span class="material-icons-outlined">{{ sub.icon_name }}</span> }{{ iconLabel(sub.icon_name) }}</p> }
                         </div>
                       </div>
                     </td>
@@ -222,6 +226,36 @@
         <div class="form-group">
           <label class="form-label">Description</label>
           <textarea class="form-input" [(ngModel)]="form.description" rows="3" placeholder="Optional description"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Category icon</label>
+          <div class="icon-picker-grid">
+            @for (option of categoryIconOptions; track option.key) {
+              <button
+                type="button"
+                class="icon-picker-option"
+                [class.selected]="form.icon_name === option.key"
+                (click)="selectIcon(option)"
+                [title]="option.label">
+                <img [src]="option.url" [alt]="option.label">
+                <span>{{ option.label }}</span>
+              </button>
+            }
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Icon key or Material icon fallback</label>
+          <div class="icon-name-row">
+            <span class="icon-preview">
+              @if (iconArtwork(form.icon_name)) {
+                <img [src]="iconArtwork(form.icon_name)" [alt]="iconLabel(form.icon_name)">
+              } @else {
+                <span class="material-icons-outlined">{{ form.icon_name || 'category' }}</span>
+              }
+            </span>
+            <input class="form-input" [(ngModel)]="form.icon_name" placeholder="Icon key or Material icon, e.g. groceries">
+          </div>
+          <p class="field-hint">Choose from the curated icon list above, or type a Material icon name for a custom fallback.</p>
         </div>
         @if (form.parent) {
           <div class="parent-note">

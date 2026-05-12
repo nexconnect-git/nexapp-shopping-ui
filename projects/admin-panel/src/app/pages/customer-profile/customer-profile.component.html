@@ -1,4 +1,33 @@
 <div class="customer-profile-page">
+  @if (loading() || customer()) {
+    <app-admin-profile-shell
+      [loading]="loading()"
+      loadingLabel="Loading customer..."
+      [title]="((customer()?.first_name || '') + ' ' + (customer()?.last_name || '')).trim() || customer()?.username || ''"
+      [subtitle]="'@' + (customer()?.username || '') + ' • Customer since ' + (customer()?.date_joined | date: 'MMM y')"
+      [avatarText]="customer() ? initials(customer()) : 'C'"
+      [avatarImage]="customer()?.avatar || ''"
+      [avatarBg]="customer()?.username ? avatarColor(customer().username) : '#06b6d4'"
+      [badges]="customerBadges()"
+      [metrics]="customerMetrics()"
+      [tabs]="profileTabs"
+      [activeTab]="activeTab()"
+      (tabChange)="setProfileTab($event)"
+    >
+      <ng-container profile-actions>
+        @if (customer()) {
+          <button class="btn btn-secondary" (click)="openEdit()">
+            <span class="material-icons-outlined">edit</span>
+            Edit
+          </button>
+          <button class="btn btn-danger-outline" (click)="deleteCustomer()">
+            <span class="material-icons-outlined">delete_outline</span>
+            Delete
+          </button>
+        }
+      </ng-container>
+    </app-admin-profile-shell>
+  }
 
   @if (loading()) {
     <div class="loading-state"><div class="spinner"></div><p>Loading customer…</p></div>

@@ -1,4 +1,40 @@
 <div class="partner-profile-page">
+  @if (loading() || partner()) {
+    <app-admin-profile-shell
+      [loading]="loading()"
+      loadingLabel="Loading partner..."
+      [title]="((partner()?.user?.first_name || '') + ' ' + (partner()?.user?.last_name || '')).trim() || partner()?.user?.username || ''"
+      [subtitle]="'@' + (partner()?.user?.username || '') + ' • ' + (partner()?.vehicle_type | titlecase) + ' delivery'"
+      [avatarText]="(partner()?.user?.first_name || partner()?.user?.username || 'D')[0].toUpperCase()"
+      [avatarBg]="partner()?.user?.username ? avatarColor(partner().user.username) : '#06b6d4'"
+      [badges]="partnerBadges()"
+      [metrics]="partnerMetrics()"
+      [tabs]="profileTabs"
+      [activeTab]="activeTab()"
+      (tabChange)="setProfileTab($event)"
+    >
+      <ng-container profile-actions>
+        @if (partner()) {
+          <a class="btn btn-secondary" [routerLink]="['/delivery-partners/onboard']">
+            <span class="material-icons-outlined">edit</span>
+            Edit
+          </a>
+          <select
+            id="partner-shell-status-select"
+            class="status-select"
+            [value]="partnerAccountStatus()"
+            (change)="onAccountStatusChange($event)"
+            [disabled]="actionLoading()"
+            aria-label="Partner account status"
+          >
+            <option value="active">Active</option>
+            <option value="suspended">Suspended</option>
+            <option value="pending">Pending (Not Approved)</option>
+          </select>
+        }
+      </ng-container>
+    </app-admin-profile-shell>
+  }
 
   @if (loading()) {
     <div class="loading-state"><div class="spinner"></div><p>Loading partner…</p></div>

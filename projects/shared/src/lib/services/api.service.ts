@@ -534,6 +534,10 @@ export class ApiService {
     return this.http.get(`${this.baseUrl}/orders/delivery-fee-preview/`, { params: { address_id: addressId } });
   }
 
+  getPaymentMethods(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/orders/payment-methods/`);
+  }
+
   // Loyalty
   getLoyalty(): Observable<any> {
     return this.http.get(`${this.baseUrl}/auth/loyalty/`);
@@ -649,13 +653,29 @@ export class ApiService {
     return this.http.get<any[]>(`${this.baseUrl}/orders/banners/`);
   }
 
+  getAdminBanners(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/admin/banners/`);
+  }
+
+  createAdminBanner(data: FormData | any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/admin/banners/`, data);
+  }
+
+  updateAdminBanner(id: string, data: FormData | any): Observable<any> {
+    return this.http.patch(`${this.baseUrl}/admin/banners/${id}/`, data);
+  }
+
+  deleteAdminBanner(id: string): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/admin/banners/${id}/`);
+  }
+
   // Coupons
   getCoupons(): Observable<any> {
     return this.http.get(`${this.baseUrl}/orders/coupons/`);
   }
 
-  validateCoupon(code: string, cartTotal: number): Observable<any> {
-    return this.http.post(`${this.baseUrl}/orders/coupons/validate/`, { code, cart_total: cartTotal });
+  validateCoupon(code: string, cartTotal: number, addressId?: string | null): Observable<any> {
+    return this.http.post(`${this.baseUrl}/orders/coupons/validate/`, { code, cart_total: cartTotal, address_id: addressId });
   }
 
   // Vendor coupons

@@ -15,3 +15,4 @@ export * from './lib/pipes/currency.pipe';
 export * from './lib/services/notification-polling.service';
 export * from './lib/services/location.service';
 export * from './lib/services/websocket-auth';
+export * from './lib/utils/google-api';

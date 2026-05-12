@@ -4,6 +4,31 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService, Category } from '@shared/public-api';
 
+type CategoryIconOption = {
+  key: string;
+  label: string;
+  url: string;
+};
+
+const CATEGORY_ICON_OPTIONS: CategoryIconOption[] = [
+  { key: 'groceries', label: 'Groceries', url: 'https://img.icons8.com/3d-fluency/94/shopping-basket.png' },
+  { key: 'fruits', label: 'Fruits', url: 'https://img.icons8.com/3d-fluency/94/vegetarian-food.png' },
+  { key: 'dairy', label: 'Dairy', url: 'https://img.icons8.com/3d-fluency/94/milk-bottle.png' },
+  { key: 'snacks', label: 'Snacks', url: 'https://img.icons8.com/3d-fluency/94/nachos.png' },
+  { key: 'beverages', label: 'Beverages', url: 'https://img.icons8.com/3d-fluency/94/cola.png' },
+  { key: 'restaurant', label: 'Restaurant', url: 'https://img.icons8.com/3d-fluency/94/restaurant.png' },
+  { key: 'meal', label: 'Meal', url: 'https://img.icons8.com/3d-fluency/94/meal.png' },
+  { key: 'electronics', label: 'Electronics', url: 'https://img.icons8.com/3d-fluency/94/smartphone-tablet.png' },
+  { key: 'fashion', label: 'Fashion', url: 'https://img.icons8.com/3d-fluency/94/clothes.png' },
+  { key: 'personalCare', label: 'Personal care', url: 'https://img.icons8.com/3d-fluency/94/lipstick.png' },
+  { key: 'homeCare', label: 'Home care', url: 'https://img.icons8.com/3d-fluency/94/spray.png' },
+  { key: 'pharmacy', label: 'Pharmacy', url: 'https://img.icons8.com/3d-fluency/94/medical-bag.png' },
+  { key: 'babyCare', label: 'Baby care', url: 'https://img.icons8.com/3d-fluency/94/pacifier.png' },
+  { key: 'petCare', label: 'Pet care', url: 'https://img.icons8.com/3d-fluency/94/dog.png' },
+  { key: 'bakery', label: 'Bakery', url: 'https://img.icons8.com/3d-fluency/94/baguette.png' },
+  { key: 'protein', label: 'Protein', url: 'https://img.icons8.com/3d-fluency/94/steak.png' }
+];
+
 @Component({
   selector: 'app-categories',
   standalone: true,
@@ -13,6 +38,7 @@ import { ApiService, Category } from '@shared/public-api';
 })
 export class CategoriesComponent implements OnInit, OnDestroy {
   private api = inject(ApiService);
+  readonly categoryIconOptions = CATEGORY_ICON_OPTIONS;
   categories = signal<Category[]>([]);
   totalItems = signal(0);
   page = signal(1);
@@ -33,7 +59,7 @@ export class CategoriesComponent implements OnInit, OnDestroy {
   showModal = signal(false);
   editTarget = signal<Category | null>(null);
 
-  form = { name: '', slug: '', description: '', is_active: true, show_in_customer_ui: true, parent: null as string | null };
+  form = { name: '', slug: '', description: '', icon_name: '', is_active: true, show_in_customer_ui: true, parent: null as string | null };
 
   ngOnInit() {
     this.reloadSub = timer(0, 15000).subscribe(() => {
@@ -95,14 +121,14 @@ export class CategoriesComponent implements OnInit, OnDestroy {
 
   openCreate(parentId: string | null = null) {
     this.editTarget.set(null);
-    this.form = { name: '', slug: '', description: '', is_active: true, show_in_customer_ui: true, parent: parentId };
+    this.form = { name: '', slug: '', description: '', icon_name: '', is_active: true, show_in_customer_ui: true, parent: parentId };
     this.error.set('');
     this.showModal.set(true);
   }
 
   openEdit(cat: Category) {
     this.editTarget.set(cat);
-    this.form = { name: cat.name, slug: cat.slug, description: cat.description, is_active: cat.is_active, show_in_customer_ui: cat.show_in_customer_ui, parent: cat.parent ?? null };
+    this.form = { name: cat.name, slug: cat.slug, description: cat.description, icon_name: cat.icon_name || '', is_active: cat.is_active, show_in_customer_ui: cat.show_in_customer_ui, parent: cat.parent ?? null };
     this.error.set('');
     this.showModal.set(true);
   }
@@ -169,5 +195,23 @@ export class CategoriesComponent implements OnInit, OnDestroy {
     if (!this.editTarget()) {
       this.form.slug = this.form.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
     }
+  }
+
+  selectIcon(option: CategoryIconOption) {
+    this.form.icon_name = option.key;
+  }
+
+  iconArtwork(iconName?: string | null) {
+    if (!iconName) return '';
+    return this.categoryIconOptions.find(option => option.key === iconName)?.url || '';
+  }
+
+  iconLabel(iconName?: string | null) {
+    if (!iconName) return '';
+    return this.categoryIconOptions.find(option => option.key === iconName)?.label || iconName;
+  }
+
+  displayIcon(cat: Category) {
+    return cat.icon_name || (cat.parent ? 'folder_open' : 'folder');
   }
 }

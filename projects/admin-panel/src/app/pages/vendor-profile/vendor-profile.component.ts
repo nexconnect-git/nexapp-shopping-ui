@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService, ToastService, AppCurrencyPipe } from '@shared/public-api';
 import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
+import { AdminProfileShellComponent, AdminProfileBadge, AdminProfileMetric, AdminProfileTab } from '../../shared/components/admin-profile-shell/admin-profile-shell.component';
 
 type Tab = 'overview' | 'products' | 'orders' | 'report';
 type Period = '30d' | '90d' | '12m';
@@ -11,7 +12,7 @@ type Period = '30d' | '90d' | '12m';
 @Component({
   selector: 'app-vendor-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, DynamicTableComponent, TableCellDirective, DecimalPipe, AppCurrencyPipe],
+  imports: [CommonModule, FormsModule, RouterLink, DynamicTableComponent, TableCellDirective, DecimalPipe, AppCurrencyPipe, AdminProfileShellComponent],
   templateUrl: './vendor-profile.component.html',
   styleUrl: './vendor-profile.component.scss'
 })
@@ -71,6 +72,13 @@ export class VendorProfileComponent implements OnInit {
 
   Math = Math;
 
+  profileTabs: AdminProfileTab[] = [
+    { id: 'overview', label: 'Overview', icon: 'info' },
+    { id: 'products', label: 'Products', icon: 'inventory_2' },
+    { id: 'orders', label: 'Orders', icon: 'receipt_long' },
+    { id: 'report', label: 'Sales Report', icon: 'bar_chart' },
+  ];
+
   toggleTempPassword() {
     this.showTempPassword.update(v => !v);
   }
@@ -102,6 +110,10 @@ export class VendorProfileComponent implements OnInit {
     if (tab === 'products' && !this.productsLoaded) this.loadProducts();
     if (tab === 'orders' && !this.ordersLoaded) this.loadOrders();
     if (tab === 'report' && !this.reportLoaded) this.loadReport();
+  }
+
+  setProfileTab(tab: string) {
+    this.setTab(tab as Tab);
   }
 
   loadProducts() {
@@ -191,6 +203,27 @@ export class VendorProfileComponent implements OnInit {
     let hash = 0;
     for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
     return colors[Math.abs(hash) % colors.length];
+  }
+
+  vendorBadges(): AdminProfileBadge[] {
+    const v = this.vendor();
+    if (!v) return [];
+    return [
+      { label: v.status, className: this.statusBadge(v.status) },
+      v.vendor_tier ? { label: v.vendor_tier, className: 'tier-badge' } : null,
+      { label: v.is_open ? 'Open Now' : 'Closed', className: v.is_open ? 'hero-open-badge open' : 'hero-open-badge' }
+    ].filter(Boolean) as AdminProfileBadge[];
+  }
+
+  vendorMetrics(): AdminProfileMetric[] {
+    const v = this.vendor();
+    if (!v) return [];
+    return [
+      { label: 'Store State', value: v.is_open ? 'Open' : 'Closed', subtext: `${v.status} account`, icon: 'storefront', priority: true },
+      { label: 'Orders', value: v.total_orders || this.ordersTotal() || 0, subtext: 'Operational volume', icon: 'receipt_long', tone: 'green' },
+      { label: 'Catalog', value: v.total_products || this.productsTotal() || 0, subtext: 'Listed products', icon: 'inventory_2', tone: 'warm' },
+      { label: 'Coverage', value: `${v.delivery_radius_km || 0} km`, subtext: v.city || 'City not set', icon: 'route', tone: 'slate' },
+    ];
   }
 
   statusBadge(s: string): string {

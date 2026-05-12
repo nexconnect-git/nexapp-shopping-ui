@@ -47,6 +47,7 @@ export class AppComponent implements OnInit {
 
     const growth = [
       { route: '/coupons', icon: 'local_activity', label: 'Promotions' },
+      { route: '/banners', icon: 'view_carousel', label: 'Home Banners' },
       { route: '/notifications', icon: 'campaign', label: 'Notifications' },
       { route: '/assets', icon: 'handyman', label: 'Assets' },
     ];

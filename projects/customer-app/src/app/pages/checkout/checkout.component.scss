@@ -144,6 +144,30 @@
   justify-content: start;
 }
 
+.payment-empty {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 1rem;
+  border-radius: 18px;
+  border: 1px dashed rgba(148, 163, 184, 0.5);
+  background: rgba(248, 250, 252, 0.86);
+  color: var(--text-secondary);
+
+  .material-icons-outlined {
+    color: var(--text-secondary);
+  }
+
+  div {
+    display: grid;
+    gap: 0.2rem;
+  }
+
+  strong {
+    color: var(--text-primary);
+  }
+}
+
 .payment-icon {
   width: 48px;
   height: 48px;

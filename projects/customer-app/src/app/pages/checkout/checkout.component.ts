@@ -15,6 +15,14 @@ interface PaymentMethod {
   disabled?: boolean;
 }
 
+const DEFAULT_ENABLED_PAYMENT_METHODS = ['razorpay_upi', 'razorpay_card', 'razorpay_wallet', 'razorpay_netbanking', 'cod'];
+const ONLINE_PAYMENT_OPTIONS = [
+  { key: 'razorpay_upi', label: 'UPI' },
+  { key: 'razorpay_card', label: 'Cards' },
+  { key: 'razorpay_wallet', label: 'Wallets' },
+  { key: 'razorpay_netbanking', label: 'Net Banking' },
+];
+
 @Component({
   selector: 'app-checkout',
   standalone: true,
@@ -34,7 +42,8 @@ export class CheckoutComponent implements OnInit {
   orderError = signal('');
 
   selectedAddressId: string | null = null;
-  selectedPayment = 'cod';
+  selectedPayment = 'razorpay';
+  enabledPaymentMethods = signal<string[]>(DEFAULT_ENABLED_PAYMENT_METHODS);
   notes = '';
   showAddressModal = signal(false);
 
@@ -57,12 +66,33 @@ export class CheckoutComponent implements OnInit {
   useLoyalty = signal<boolean>(false);
   loyaltyLoading = signal(false);
 
-  readonly paymentMethods: PaymentMethod[] = [
-    { id: 'cod',      label: 'Pay on Delivery',        icon: 'payments',               sub: 'Pay cash to delivery partner' },
-    { id: 'razorpay', label: 'Pay Online (Razorpay)',  icon: 'account_balance_wallet',  sub: 'UPI, Cards, Net Banking & more' },
-  ];
+  get paymentMethods(): PaymentMethod[] {
+    const enabled = this.enabledPaymentMethods();
+    const onlineLabels = ONLINE_PAYMENT_OPTIONS
+      .filter(option => enabled.includes(option.key))
+      .map(option => option.label);
+    const methods: PaymentMethod[] = [];
+    if (onlineLabels.length) {
+      methods.push({
+        id: 'razorpay',
+        label: 'Pay Online',
+        icon: 'account_balance_wallet',
+        sub: onlineLabels.join(', '),
+      });
+    }
+    if (enabled.includes('cod')) {
+      methods.push({
+        id: 'cod',
+        label: 'Cash on Delivery',
+        icon: 'payments',
+        sub: 'Pay cash to delivery partner',
+      });
+    }
+    return methods;
+  }
 
   ngOnInit() {
+    this.loadPaymentMethods();
     this.api.getCart().subscribe({
       next: (c) => { this.cart.set(c); this.loading.set(false); },
       error: () => this.loading.set(false)
@@ -87,6 +117,30 @@ export class CheckoutComponent implements OnInit {
       next: (l) => { this.loyaltyPoints.set(l.points || 0); this.loyaltyLoading.set(false); },
       error: () => this.loyaltyLoading.set(false),
     });
+  }
+
+  private loadPaymentMethods() {
+    this.api.getPaymentMethods().subscribe({
+      next: (settings) => {
+        const enabled = Array.isArray(settings?.enabled_payment_methods) && settings.enabled_payment_methods.length
+          ? settings.enabled_payment_methods
+          : DEFAULT_ENABLED_PAYMENT_METHODS;
+        this.enabledPaymentMethods.set(enabled);
+        this.normalizeSelectedPayment();
+      },
+      error: () => {
+        this.enabledPaymentMethods.set(DEFAULT_ENABLED_PAYMENT_METHODS);
+        this.normalizeSelectedPayment();
+      },
+    });
+  }
+
+  private normalizeSelectedPayment() {
+    const methods = this.paymentMethods;
+    if (!methods.length) return;
+    if (!methods.some(method => method.id === this.selectedPayment)) {
+      this.selectedPayment = methods[0].id;
+    }
   }
 
   get maxWalletApplicable(): number {
@@ -158,8 +212,8 @@ export class CheckoutComponent implements OnInit {
     if (!code) return;
     this.couponLoading.set(true);
     this.couponError.set('');
-    this.api.validateCoupon(code, Number(this.cart()?.total_amount || 0)).subscribe({
-      next: (res) => { this.appliedCoupon.set(res); this.couponLoading.set(false); },
+    this.api.validateCoupon(code, Number(this.cart()?.total_amount || 0), this.selectedAddressId).subscribe({
+      next: (res) => { this.appliedCoupon.set(res); this.couponCode = res.code || code; this.couponLoading.set(false); },
       error: (err) => {
         this.couponError.set(err.error?.error || 'Invalid coupon.');
         this.appliedCoupon.set(null);
@@ -184,6 +238,11 @@ export class CheckoutComponent implements OnInit {
 
   placeOrder() {
     if (!this.selectedAddressId) return;
+    this.normalizeSelectedPayment();
+    if (!this.paymentMethods.length) {
+      this.handleOrderError('No payment methods are enabled right now.');
+      return;
+    }
     if (this.requiresFarDeliveryConfirmation() && !this.farDeliveryConfirmed()) {
       this.openFarDeliveryConfirmation(() => {
         this.farDeliveryConfirmed.set(true);
@@ -342,6 +401,14 @@ export class CheckoutComponent implements OnInit {
     return !!this.deliveryFeePreview()?.requires_far_delivery_confirmation;
   }
 
+  instantRadiusLabel(): string {
+    const quotes = this.deliveryFeePreview()?.far_delivery_quotes || [];
+    const radius = quotes.find((quote: any) => quote.instant_radius_km != null)?.instant_radius_km;
+    if (!radius) return 'the instant delivery radius';
+    const numericRadius = Number(radius);
+    return `${numericRadius.toFixed(Number.isInteger(numericRadius) ? 0 : 1)} km`;
+  }
+
   private openFarDeliveryConfirmation(onConfirm: () => void, quotes?: any[]) {
     const farQuotes = quotes?.length ? quotes : this.deliveryFeePreview()?.far_delivery_quotes || [];
     const message = farQuotes.map((quote: any) => (
@@ -349,7 +416,7 @@ export class CheckoutComponent implements OnInit {
     )).join('\n');
     this.alerts.openModal({
       title: 'This order is from farther away',
-      message: `${message}\n\nDelivery will take longer than your normal 10 km instant radius. Do you still want to continue?`,
+      message: `${message}\n\nDelivery will take longer because one or more shops are outside ${this.instantRadiusLabel()}. Do you still want to continue?`,
       tone: 'warning',
       confirmLabel: 'Continue order',
       cancelLabel: 'Review basket',

@@ -156,3 +156,56 @@
 @keyframes map-spin {
   to { transform: rotate(360deg); }
 }
+
+.map-suggestions,
+.map-search-status {
+  position: absolute;
+  left: 0.5rem;
+  right: 0.5rem;
+  top: calc(100% - 0.25rem);
+  z-index: 10;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: var(--radius-sm, 6px);
+  background: white;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+
+.map-suggestion {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.125rem;
+  padding: 0.625rem 0.75rem;
+  border: 0;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  background: white;
+  color: var(--text-primary, #111827);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  text-align: left;
+  cursor: pointer;
+
+  &:last-child { border-bottom: 0; }
+  &:hover { background: var(--surface-hover, #f9fafb); }
+}
+
+.map-suggestion-main {
+  font-weight: 700;
+}
+
+.map-suggestion-secondary {
+  color: var(--text-muted, #6b7280);
+  font-size: 0.75rem;
+}
+
+.map-search-status {
+  padding: 0.625rem 0.75rem;
+  color: var(--text-muted, #6b7280);
+  font-size: 0.8125rem;
+}
+
+.map-search-error {
+  color: #b91c1c;
+}

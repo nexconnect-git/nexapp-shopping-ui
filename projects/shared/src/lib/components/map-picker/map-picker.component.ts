@@ -13,6 +13,12 @@ import {
   inject } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import {
+  autocompleteGooglePlaces,
+  DEFAULT_GOOGLE_MAPS_API_KEY,
+  getGooglePlaceDetails,
+  GooglePlaceSuggestion,
+} from '../../utils/google-api';
 
 export interface MapLocation {
   lat: number;
@@ -45,15 +51,19 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
   private map: any = null;
   private marker: any = null;
   private geocoder: any = null;
-  private autocomplete: any = null;
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
+  private searchRequestId = 0;
 
   geocoding = signal(false);
   pickedAddress = signal('');
   locating = signal(false);
   mapReady = signal(false);
   searchQuery = signal('');
+  placeSuggestions = signal<GooglePlaceSuggestion[]>([]);
+  searchingPlaces = signal(false);
+  placesError = signal('');
 
-  private readonly API_KEY = 'AIzaSyA2Uv9QDNG9IuDfJ70MuuMm-XMyXDEBUBA';
+  private readonly API_KEY = DEFAULT_GOOGLE_MAPS_API_KEY;
 
   ngAfterViewInit() {
     if (!isPlatformBrowser(this.platformId)) return;
@@ -64,14 +74,13 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
     this.map = null;
     this.marker = null;
     this.geocoder = null;
-    this.autocomplete = null;
+    if (this.searchTimer) clearTimeout(this.searchTimer);
   }
 
   private loadGoogleMaps() {
-    // Include the 'places' library for autocomplete search
-    const src = `https://maps.googleapis.com/maps/api/js?key=${this.API_KEY}&libraries=places`;
+    const src = `https://maps.googleapis.com/maps/api/js?key=${this.API_KEY}`;
 
-    if (typeof google !== 'undefined' && google.maps && google.maps.places) {
+    if (typeof google !== 'undefined' && google.maps) {
       this.initMap();
       return;
     }
@@ -87,12 +96,8 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
       document.head.appendChild(script);
     } else {
       // Script tag exists but may not have places — replace it
-      const hasSrc = existing.getAttribute('src') || '';
-      if (!hasSrc.includes('places')) {
-        existing.setAttribute('src', src);
-      }
       const interval = setInterval(() => {
-        if (typeof google !== 'undefined' && google.maps && google.maps.places) {
+        if (typeof google !== 'undefined' && google.maps) {
           clearInterval(interval);
           this.ngZone.run(() => this.initMap());
         }
@@ -139,9 +144,6 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
       this.ngZone.run(() => this.reverseGeocode(lat, lng));
     });
 
-    // Set up Places Autocomplete on the search box
-    this.initAutocomplete();
-
     this.mapReady.set(true);
 
     const lat = +this.initialLat;
@@ -151,59 +153,96 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  private initAutocomplete() {
-    const input = this.searchInputRef?.nativeElement;
-    if (!input || !google.maps.places) return;
+  onSearchInput(event: Event) {
+    const query = (event.target as HTMLInputElement).value;
+    this.searchQuery.set(query);
+    this.placesError.set('');
+    if (this.searchTimer) clearTimeout(this.searchTimer);
 
-    this.autocomplete = new google.maps.places.Autocomplete(input, {
-      fields: ['geometry', 'formatted_address', 'address_components', 'name'],
-    });
+    if (query.trim().length < 3) {
+      this.placeSuggestions.set([]);
+      this.searchingPlaces.set(false);
+      return;
+    }
 
-    this.autocomplete.addListener('place_changed', () => {
-      this.ngZone.run(() => {
-        const place = this.autocomplete.getPlace();
-        if (!place.geometry?.location) return;
+    const requestId = ++this.searchRequestId;
+    this.searchingPlaces.set(true);
+    this.searchTimer = setTimeout(() => {
+      autocompleteGooglePlaces(this.API_KEY, query)
+        .then((suggestions) => {
+          this.ngZone.run(() => {
+            if (requestId !== this.searchRequestId) return;
+            this.placeSuggestions.set(suggestions);
+            this.searchingPlaces.set(false);
+          });
+        })
+        .catch((error) => {
+          this.ngZone.run(() => {
+            if (requestId !== this.searchRequestId) return;
+            this.placeSuggestions.set([]);
+            this.searchingPlaces.set(false);
+            this.placesError.set('Location search is unavailable right now.');
+            console.warn('[Map] Places API (New) unavailable:', error);
+          });
+        });
+    }, 250);
+  }
 
-        const lat = place.geometry.location.lat();
-        const lng = place.geometry.location.lng();
+  selectPlace(suggestion: GooglePlaceSuggestion) {
+    this.searchingPlaces.set(true);
+    this.placesError.set('');
+    getGooglePlaceDetails(this.API_KEY, suggestion.placeId)
+      .then((place) => {
+        this.ngZone.run(() => {
+          this.searchingPlaces.set(false);
+          if (!place) return;
 
-        this.map.setCenter({ lat, lng });
-        this.map.setZoom(16);
-        this.marker.setPosition({ lat, lng });
+          const lat = place.lat;
+          const lng = place.lng;
 
-        // Build address from the place's address_components directly
-        const components: any[] = place.address_components || [];
-        const get = (type: string) =>
-          components.find((c: any) => c.types.includes(type))?.long_name || '';
+          this.map.setCenter({ lat, lng });
+          this.map.setZoom(16);
+          this.marker.setPosition({ lat, lng });
 
-        const streetParts = [
-          get('street_number'),
-          get('route'),
-          get('premise'),
-          get('sublocality_level_2'),
-          get('sublocality_level_1'),
-          get('neighborhood'),
-        ].filter(Boolean);
+          const get = (type: string) =>
+            place.addressComponents.find((c) => c.types?.includes(type))?.longText || '';
 
-        const address =
-          streetParts.join(' ') ||
-          place.formatted_address?.split(',')[0]?.trim() ||
-          place.name ||
-          '';
+          const streetParts = [
+            get('street_number'),
+            get('route'),
+            get('premise'),
+            get('sublocality_level_2'),
+            get('sublocality_level_1'),
+            get('neighborhood'),
+          ].filter(Boolean);
 
-        const city = get('locality') || get('administrative_area_level_2');
-        const state = get('administrative_area_level_1');
-        const postal_code = get('postal_code');
+          const address =
+            streetParts.join(' ') ||
+            place.formattedAddress.split(',')[0]?.trim() ||
+            place.displayName ||
+            '';
 
-        this.pickedAddress.set(place.formatted_address || address);
-        this.searchQuery.set('');
-        this.locationPicked.emit({
-          lat: Number(lat.toFixed(6)),
-          lng: Number(lng.toFixed(6)),
-          address, city, state, postal_code,
+          const city = get('locality') || get('administrative_area_level_2');
+          const state = get('administrative_area_level_1');
+          const postal_code = get('postal_code');
+
+          this.pickedAddress.set(place.formattedAddress || address);
+          this.searchQuery.set('');
+          this.placeSuggestions.set([]);
+          this.locationPicked.emit({
+            lat: Number(lat.toFixed(6)),
+            lng: Number(lng.toFixed(6)),
+            address, city, state, postal_code,
+          });
+        });
+      })
+      .catch((error) => {
+        this.ngZone.run(() => {
+          this.searchingPlaces.set(false);
+          this.placesError.set('Could not load that location.');
+          console.warn('[Map] Place details unavailable:', error);
         });
       });
-    });
   }
 
   private reverseGeocode(lat: number, lng: number) {

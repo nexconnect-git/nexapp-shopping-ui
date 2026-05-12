@@ -50,6 +50,16 @@
         <span class="discount-badge" [class]="row.discount_type">{{ discountLabel(row) }}</span>
       </ng-template>
 
+      <ng-template tableCell="placement" let-row="row">
+        <div class="placement-cell">
+          <span class="material-icons-outlined">{{ row.icon_name || 'local_offer' }}</span>
+          <div>
+            <span class="placement-title">{{ row.display_section === 'hero' ? 'Featured hero' : 'More offers' }}</span>
+            <span class="placement-meta">Order {{ row.display_order || 0 }}</span>
+          </div>
+        </div>
+      </ng-template>
+
       <ng-template tableCell="scope" let-row="row">
         <span class="scope-badge" [class.platform]="!row.vendor" [class.vendor]="row.vendor">
           {{ scopeLabel(row) }}
@@ -143,6 +153,41 @@
           <div class="form-group">
             <label class="form-label">Description</label>
             <textarea class="form-input" [(ngModel)]="form.description" rows="2" placeholder="Optional details for customers"></textarea>
+          </div>
+
+          <div class="form-row two">
+            <div class="form-group">
+              <label class="form-label">Deals Page Section</label>
+              <select class="form-input" [(ngModel)]="form.display_section">
+                @for (section of displaySections; track section.value) {
+                  <option [value]="section.value">{{ section.label }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Display Order</label>
+              <input type="number" class="form-input" [(ngModel)]="form.display_order" min="0" placeholder="0">
+            </div>
+          </div>
+
+          <div class="form-row two">
+            <div class="form-group">
+              <label class="form-label">Deals Icon</label>
+              <select class="form-input" [(ngModel)]="form.icon_name">
+                @for (icon of iconOptions; track icon.value) {
+                  <option [value]="icon.value">{{ icon.label }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Badge Text</label>
+              <input class="form-input" [(ngModel)]="form.badge_text" placeholder="e.g. Limited time">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Accent Color</label>
+            <input class="form-input" [(ngModel)]="form.accent_color" placeholder="#ff4b1f">
           </div>
 
           <div class="form-row two">

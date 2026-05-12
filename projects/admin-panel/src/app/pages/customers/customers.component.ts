@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '@shared/public-api';
-import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
+import { DynamicTableColumn, DynamicTableComponent, TableCellDirective } from '@shared/public-api';
 
 @Component({
   selector: 'app-customers',
@@ -27,13 +27,13 @@ export class CustomersComponent implements OnInit, OnDestroy {
   error = signal('');
   private timer: any;
 
-  tableColumns = [
-    { key: 'name', label: 'Name', flex: '1.5fr' },
-    { key: 'username', label: 'Username', flex: '1fr' },
-    { key: 'email', label: 'Email', flex: '1.5fr' },
-    { key: 'phone', label: 'Phone', flex: '1fr' },
-    { key: 'verified', label: 'Verified', flex: '0.8fr' },
-    { key: 'actions', label: 'Actions', flex: '1fr' }
+  tableColumns: DynamicTableColumn[] = [
+    { key: 'name', label: 'Customer', flex: '1.45fr' },
+    { key: 'username', label: 'Username', flex: '1.1fr' },
+    { key: 'email', label: 'Email', flex: '1.45fr' },
+    { key: 'phone', label: 'Phone', flex: '0.9fr' },
+    { key: 'verified', label: 'Status', flex: '0.75fr' },
+    { key: 'actions', label: '', flex: '0.55fr', align: 'right' }
   ];
 
   lastRefreshed = signal<Date | null>(null);

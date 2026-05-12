@@ -1,6 +1,7 @@
-<div>
-  <div class="page-header">
-    <div>
+<div class="customers-page">
+  <div class="page-header customers-header">
+    <div class="header-copy">
+      <span class="page-kicker">Admin panel</span>
       <h1 class="page-title">Customers</h1>
       <p class="page-subtitle">{{ total() }} registered customers</p>
     </div>
@@ -17,7 +18,7 @@
         {{ autoReload() ? 'Auto' : 'Paused' }}
       </button>
     </div>
-    <div class="filters">
+    <div class="filters customers-filters">
       <input class="filter-input" type="search" [(ngModel)]="search"
         (input)="onSearch()" placeholder="Search by name, email, username...">
       <select class="filter-input" [(ngModel)]="verifiedFilter" (change)="load()">
@@ -46,7 +47,10 @@
     <ng-template tableCell="name" let-c>
       <div class="customer-link">
         <span class="customer-thumb">{{ (c.first_name || c.username || '?')[0].toUpperCase() }}</span>
-        <span class="customer-name font-semibold">{{ c.first_name }} {{ c.last_name }}</span>
+        <span class="customer-name-block">
+          <span class="customer-name font-semibold">{{ c.first_name }} {{ c.last_name }}</span>
+          <span class="customer-subline">{{ c.is_active === false ? 'Suspended account' : 'Customer profile' }}</span>
+        </span>
       </div>
     </ng-template>
 

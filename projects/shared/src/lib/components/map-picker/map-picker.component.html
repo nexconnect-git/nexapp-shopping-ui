@@ -9,7 +9,25 @@
         type="text"
         class="map-search-input"
         placeholder="Search for a location…"
-        autocomplete="off" />
+        autocomplete="off"
+        [ngModel]="searchQuery()"
+        (input)="onSearchInput($event)" />
+      @if (placeSuggestions().length > 0) {
+        <div class="map-suggestions">
+          @for (suggestion of placeSuggestions(); track suggestion.placeId) {
+            <button type="button" class="map-suggestion" (click)="selectPlace(suggestion)">
+              <span class="map-suggestion-main">{{ suggestion.mainText }}</span>
+              @if (suggestion.secondaryText) {
+                <span class="map-suggestion-secondary">{{ suggestion.secondaryText }}</span>
+              }
+            </button>
+          }
+        </div>
+      } @else if (searchingPlaces()) {
+        <div class="map-search-status">Searching...</div>
+      } @else if (placesError()) {
+        <div class="map-search-status map-search-error">{{ placesError() }}</div>
+      }
     </div>
   }
 

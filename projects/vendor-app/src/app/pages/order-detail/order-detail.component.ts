@@ -2,7 +2,7 @@ import { Component, inject, signal, OnInit, OnDestroy, AfterViewInit, NgZone } f
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { ApiService, AuthService, AppCurrencyPipe, Order, openAuthenticatedWebSocket } from '@shared/public-api';
+import { ApiService, AuthService, AppCurrencyPipe, Order, openAuthenticatedWebSocket, computeGoogleRoute, decodeGooglePolyline } from '@shared/public-api';
 import { timer, Subscription } from 'rxjs';
 import { GoogleMapsModule } from '@angular/google-maps';
 import { environment } from '../../../environments/environment';
@@ -54,8 +54,8 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   customerMarkerOptions: google.maps.MarkerOptions = {};
   mapOptions: google.maps.MapOptions = {};
 
-  private directionsService?: google.maps.DirectionsService;
-  private directionsRenderer?: google.maps.DirectionsRenderer;
+  private nativeMap?: google.maps.Map;
+  private routePolyline?: google.maps.Polyline;
   private lastDirectionsTime = 0;
   private directionsEnabled = true;
 
@@ -75,7 +75,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     this.pollSub?.unsubscribe();
     this.closeWs();
     if (this.animFrameId) cancelAnimationFrame(this.animFrameId);
-    this.directionsRenderer?.setMap(null);
+    this.routePolyline?.setMap(null);
   }
 
   ngAfterViewInit() {
@@ -85,14 +85,8 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
 
   /** Called by (mapInitialized) on <google-map> when the map instance is ready. */
   onMapReady(nativeMap: google.maps.Map) {
-    this.directionsRenderer?.setMap(null);
-    this.directionsService = new google.maps.DirectionsService();
-    this.directionsRenderer = new google.maps.DirectionsRenderer({
-      suppressMarkers: true,
-      preserveViewport: false,
-      polylineOptions: {strokeColor: '#6C63FF', strokeWeight: 4, strokeOpacity: 0.8},
-    });
-    this.directionsRenderer.setMap(nativeMap);
+    this.routePolyline?.setMap(null);
+    this.nativeMap = nativeMap;
     this.lastDirectionsTime = 0;
 
     const pts = [this.vendorPosition, this.driverPosition, this.customerPosition].filter(Boolean) as google.maps.LatLngLiteral[];
@@ -141,24 +135,31 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private requestDirections() {
     if (!this.directionsEnabled) return;
-    if (!this.directionsService || !this.directionsRenderer) return;
+    if (!this.nativeMap) return;
     const origin = this.driverPosition ?? this.vendorPosition;
     const destination = this.customerPosition;
     if (!origin || !destination) return;
     const now = Date.now();
     if (now - this.lastDirectionsTime < 20000) return;
     this.lastDirectionsTime = now;
-    this.directionsService.route(
-      {origin, destination, travelMode: google.maps.TravelMode.DRIVING},
-      (result, status) => {
-        if (status === google.maps.DirectionsStatus.OK && result) {
-          this.zone.run(() => this.directionsRenderer?.setDirections(result));
-        } else if (status === 'REQUEST_DENIED' || status === 'NOT_FOUND') {
-          this.directionsEnabled = false;
-          console.warn('[Map] Directions API not available:', status, '— enable it in GCP Console. Markers only.');
-        }
-      }
-    );
+    computeGoogleRoute(environment.googleMapsApiKey, origin, destination)
+      .then((route) => {
+        this.zone.run(() => {
+          if (!route || !this.nativeMap) return;
+          this.routePolyline?.setMap(null);
+          this.routePolyline = new google.maps.Polyline({
+            path: decodeGooglePolyline(route.encodedPolyline),
+            map: this.nativeMap,
+            strokeColor: '#6C63FF',
+            strokeWeight: 4,
+            strokeOpacity: 0.8,
+          });
+        });
+      })
+      .catch((error) => {
+        this.directionsEnabled = false;
+        console.warn('[Map] Routes API not available. Markers only.', error);
+      });
   }
 
   loadOrder() {

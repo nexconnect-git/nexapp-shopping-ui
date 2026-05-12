@@ -1,4 +1,55 @@
 <div class="vendor-profile-page">
+  @if (loading() || vendor()) {
+    <app-admin-profile-shell
+      [loading]="loading()"
+      loadingLabel="Loading vendor..."
+      [title]="vendor()?.store_name || ''"
+      [subtitle]="(vendor()?.city || '') + (vendor()?.state ? ', ' + vendor().state : '') + ' • ' + (vendor()?.vendor_type || 'Vendor')"
+      [avatarText]="vendor()?.store_name ? vendor().store_name[0].toUpperCase() : 'V'"
+      [avatarImage]="vendor()?.logo || ''"
+      [avatarBg]="vendor()?.store_name ? vendorColor(vendor().store_name) : '#06b6d4'"
+      [badges]="vendorBadges()"
+      [metrics]="vendorMetrics()"
+      [tabs]="profileTabs"
+      [activeTab]="activeTab()"
+      (tabChange)="setProfileTab($event)"
+    >
+      <ng-container profile-avatar-action>
+        @if (vendor() && logoUploading()) {
+          <div class="avatar-overlay uploading">
+            <div class="spinner-sm-white"></div>
+          </div>
+        } @else if (vendor()) {
+          <button class="avatar-upload-btn" (click)="shellLogoInput.click()" title="Upload logo">
+            <span class="material-icons-outlined">photo_camera</span>
+          </button>
+        }
+        <input #shellLogoInput type="file" accept="image/*" hidden (change)="onLogoChange($event)" aria-label="Upload vendor logo">
+      </ng-container>
+      <ng-container profile-actions>
+        @if (vendor()) {
+          <a class="btn btn-secondary" [routerLink]="['/vendors', vendorId, 'edit']">
+            <span class="material-icons-outlined">edit</span>
+            Edit
+          </a>
+          <select
+            id="vendor-shell-status-select"
+            class="status-select"
+            [class]="'status-select status-' + vendor().status"
+            [value]="vendor().status"
+            (change)="onStatusChange($event)"
+            [disabled]="actionLoading()"
+            aria-label="Vendor status"
+          >
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="suspended">Suspended</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        }
+      </ng-container>
+    </app-admin-profile-shell>
+  }
 
   <!-- Loading -->
   @if (loading()) {

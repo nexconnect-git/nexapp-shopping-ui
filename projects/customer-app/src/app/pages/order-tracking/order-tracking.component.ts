@@ -1,9 +1,10 @@
 import { Component, inject, signal, OnInit, OnDestroy, AfterViewInit, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
-import { ApiService, AuthService, Order, OrderTracking, openAuthenticatedWebSocket } from '@shared/public-api';
+import { ApiService, AuthService, Order, OrderTracking, openAuthenticatedWebSocket, computeGoogleRoute, decodeGooglePolyline } from '@shared/public-api';
 import { timer, Subscription } from 'rxjs';
 import { GoogleMapsModule } from '@angular/google-maps';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-order-tracking',
@@ -42,8 +43,8 @@ export class OrderTrackingComponent implements OnInit, OnDestroy, AfterViewInit 
   etaMinutes = signal<number | null>(null);
 
   // Native Maps objects for directions (created in onMapReady)
-  private directionsService?: google.maps.DirectionsService;
-  private directionsRenderer?: google.maps.DirectionsRenderer;
+  private nativeMap?: google.maps.Map;
+  private routePolyline?: google.maps.Polyline;
   private lastDirectionsTime = 0;
   private directionsEnabled = true;
 
@@ -78,7 +79,7 @@ export class OrderTrackingComponent implements OnInit, OnDestroy, AfterViewInit 
     this.sub?.unsubscribe();
     this.closeWs();
     if (this.animFrameId) cancelAnimationFrame(this.animFrameId);
-    this.directionsRenderer?.setMap(null);
+    this.routePolyline?.setMap(null);
   }
 
   ngAfterViewInit() {
@@ -89,19 +90,8 @@ export class OrderTrackingComponent implements OnInit, OnDestroy, AfterViewInit 
   /** Called by (mapInitialized) output on <google-map> — fires when the map is ready. */
   onMapReady(nativeMap: google.maps.Map) {
     // Clean up any previous renderer
-    this.directionsRenderer?.setMap(null);
-
-    this.directionsService = new google.maps.DirectionsService();
-    this.directionsRenderer = new google.maps.DirectionsRenderer({
-      suppressMarkers: true,       // We use our own custom markers
-      preserveViewport: false,     // Fit to route on first load
-      polylineOptions: {
-        strokeColor: '#6C63FF',
-        strokeWeight: 5,
-        strokeOpacity: 0.85,
-      },
-    });
-    this.directionsRenderer.setMap(nativeMap);
+    this.routePolyline?.setMap(null);
+    this.nativeMap = nativeMap;
     this.lastDirectionsTime = 0;   // Reset throttle so first request always fires
 
     // If positions are already loaded, fit bounds and request route
@@ -171,7 +161,7 @@ export class OrderTrackingComponent implements OnInit, OnDestroy, AfterViewInit 
 
   private requestDirections() {
     if (!this.directionsEnabled) return;
-    if (!this.directionsService || !this.directionsRenderer) return;
+    if (!this.nativeMap) return;
 
     const origin = this.driverPosition ?? this.vendorPosition;
     const destination = this.customerPosition;
@@ -181,22 +171,29 @@ export class OrderTrackingComponent implements OnInit, OnDestroy, AfterViewInit 
     if (now - this.lastDirectionsTime < 20000) return;
     this.lastDirectionsTime = now;
 
-    const waypoints: google.maps.DirectionsWaypoint[] = [];
+    const waypoints: google.maps.LatLngLiteral[] = [];
     if (this.driverPosition && this.vendorPosition && this.order()?.status === 'ready') {
-      waypoints.push({location: new google.maps.LatLng(this.vendorPosition.lat, this.vendorPosition.lng), stopover: false});
+      waypoints.push(this.vendorPosition);
     }
 
-    this.directionsService.route(
-      {origin, destination, waypoints, travelMode: google.maps.TravelMode.DRIVING},
-      (result, status) => {
-        if (status === google.maps.DirectionsStatus.OK && result) {
-          this.zone.run(() => this.directionsRenderer?.setDirections(result));
-        } else if (status === 'REQUEST_DENIED' || status === 'NOT_FOUND') {
-          this.directionsEnabled = false;
-          console.warn('[Map] Directions API not available:', status, '— enable it in GCP Console. Markers only.');
-        }
-      }
-    );
+    computeGoogleRoute(environment.googleMapsApiKey, origin, destination, waypoints)
+      .then((route) => {
+        this.zone.run(() => {
+          if (!route || !this.nativeMap) return;
+          this.routePolyline?.setMap(null);
+          this.routePolyline = new google.maps.Polyline({
+            path: decodeGooglePolyline(route.encodedPolyline),
+            map: this.nativeMap,
+            strokeColor: '#6C63FF',
+            strokeWeight: 5,
+            strokeOpacity: 0.85,
+          });
+        });
+      })
+      .catch((error) => {
+        this.directionsEnabled = false;
+        console.warn('[Map] Routes API not available. Markers only.', error);
+      });
   }
 
   private connectWebSocket(orderId: string) {

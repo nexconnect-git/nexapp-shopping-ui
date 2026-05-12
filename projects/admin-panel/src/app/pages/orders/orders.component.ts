@@ -1,9 +1,10 @@
 import { Component, inject, signal, OnInit, OnDestroy, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService, AppCurrencyPipe, AuthService, Order, openAuthenticatedWebSocket } from '@shared/public-api';
+import { ApiService, AppCurrencyPipe, AuthService, Order, openAuthenticatedWebSocket, computeGoogleRoute, decodeGooglePolyline } from '@shared/public-api';
 import { timer, Subscription } from 'rxjs';
 import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
+import { environment } from '../../../environments/environment';
 
 // Google Maps loaded via <script> tag in index.html — no @types/google.maps needed
 declare const google: any;
@@ -53,8 +54,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
   private gmDriverMarker: any;
   private gmVendorMarker: any;
   private gmCustomerMarker: any;
-  private gmDirectionsService: any;
-  private gmDirectionsRenderer: any;
+  private gmRoutePolyline: any;
   private driverPos?: {lat: number; lng: number};
   private vendorPos?: {lat: number; lng: number};
   private customerPos?: {lat: number; lng: number};
@@ -87,7 +87,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.sub?.unsubscribe();
     this.closeWs();
     if (this.animFrameId) cancelAnimationFrame(this.animFrameId);
-    this.gmDirectionsRenderer?.setMap(null);
+    this.gmRoutePolyline?.setMap(null);
   }
 
   manualReload() { this.page.set(1); this.load(); }
@@ -194,38 +194,38 @@ export class OrdersComponent implements OnInit, OnDestroy {
       pts.forEach((p: any) => bounds.extend(p));
       this.gmMap.fitBounds(bounds, 40);
     }
-    // Setup directions renderer
-    this.gmDirectionsService = new google.maps.DirectionsService();
-    this.gmDirectionsRenderer = new google.maps.DirectionsRenderer({
-      suppressMarkers: true,
-      preserveViewport: false,
-      polylineOptions: {strokeColor: '#06B6D4', strokeWeight: 4, strokeOpacity: 0.85},
-    });
-    this.gmDirectionsRenderer.setMap(this.gmMap);
+    this.gmRoutePolyline?.setMap(null);
     this.lastDirectionsTime = 0;
     this.requestDirections();
   }
 
   private requestDirections() {
     if (!this.directionsEnabled) return;
-    if (!this.gmDirectionsService || !this.gmDirectionsRenderer) return;
+    if (!this.gmMap) return;
     const origin = this.driverPos ?? this.vendorPos;
     const destination = this.customerPos;
     if (!origin || !destination) return;
     const now = Date.now();
     if (now - this.lastDirectionsTime < 20000) return;
     this.lastDirectionsTime = now;
-    this.gmDirectionsService.route(
-      {origin, destination, travelMode: google.maps.TravelMode.DRIVING},
-      (result: any, status: any) => {
-        if (status === google.maps.DirectionsStatus.OK && result) {
-          this.zone.run(() => this.gmDirectionsRenderer?.setDirections(result));
-        } else if (status === 'REQUEST_DENIED' || status === 'NOT_FOUND') {
-          this.directionsEnabled = false;
-          console.warn('[Map] Directions API not available:', status, '— enable it in GCP Console. Markers only.');
-        }
-      }
-    );
+    computeGoogleRoute(environment.googleMapsApiKey, origin, destination)
+      .then((route) => {
+        this.zone.run(() => {
+          if (!route || !this.gmMap) return;
+          this.gmRoutePolyline?.setMap(null);
+          this.gmRoutePolyline = new google.maps.Polyline({
+            path: decodeGooglePolyline(route.encodedPolyline),
+            map: this.gmMap,
+            strokeColor: '#06B6D4',
+            strokeWeight: 4,
+            strokeOpacity: 0.85,
+          });
+        });
+      })
+      .catch((error) => {
+        this.directionsEnabled = false;
+        console.warn('[Map] Routes API not available. Markers only.', error);
+      });
   }
 
   private connectWebSocket(orderId: string) {
@@ -274,7 +274,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
   }
 
   private destroyMap() {
-    this.gmDirectionsRenderer?.setMap(null);
+    this.gmRoutePolyline?.setMap(null);
     this.gmDriverMarker?.setMap(null);
     this.gmVendorMarker?.setMap(null);
     this.gmCustomerMarker?.setMap(null);
@@ -282,8 +282,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.gmDriverMarker = undefined;
     this.gmVendorMarker = undefined;
     this.gmCustomerMarker = undefined;
-    this.gmDirectionsRenderer = undefined;
-    this.gmDirectionsService = undefined;
+    this.gmRoutePolyline = undefined;
     this.driverPos = undefined;
     this.vendorPos = undefined;
     this.customerPos = undefined;

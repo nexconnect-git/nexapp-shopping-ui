@@ -20,6 +20,459 @@
   --login-gradient: linear-gradient(135deg, #151515 0%, #34312F 52%, #0E7490 100%);
 }
 
+/* Admin profile pages: shared operations layout for vendor, customer, and delivery partner profiles */
+.vendor-profile-page,
+.customer-profile-page,
+.partner-profile-page {
+  --admin-profile-ink: #111827;
+  --admin-profile-muted: #667085;
+  --admin-profile-line: #e5e7eb;
+  --admin-profile-soft: #f8fafc;
+  --admin-profile-cyan: #06b6d4;
+  --admin-profile-amber: #f59e0b;
+  --admin-profile-green: #16a34a;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1rem !important;
+  padding-bottom: 2rem !important;
+}
+
+.vendor-profile-page > .loading-state,
+.customer-profile-page > .loading-state,
+.partner-profile-page > .loading-state,
+.vendor-profile-page > .profile-hero-card,
+.customer-profile-page > .profile-hero-card,
+.partner-profile-page > .profile-hero-card,
+.vendor-profile-page > .profile-intel-grid,
+.customer-profile-page > .profile-intel-grid,
+.partner-profile-page > .profile-intel-grid,
+.vendor-profile-page > .tab-strip,
+.customer-profile-page > .tab-strip,
+.partner-profile-page > .tab-strip {
+  display: none !important;
+}
+
+.vendor-profile-page .profile-hero-card,
+.customer-profile-page .profile-hero-card,
+.partner-profile-page .profile-hero-card,
+.vendor-profile-page .intel-card,
+.customer-profile-page .intel-card,
+.partner-profile-page .intel-card,
+.vendor-profile-page .tab-strip,
+.customer-profile-page .tab-strip,
+.partner-profile-page .tab-strip,
+.vendor-profile-page .info-card,
+.customer-profile-page .info-card,
+.partner-profile-page .info-card,
+.vendor-profile-page .profile-action-panel,
+.customer-profile-page .profile-action-panel,
+.partner-profile-page .profile-action-panel,
+.customer-profile-page .loyalty-card,
+.customer-profile-page .loyalty-tx-row {
+  border: 1px solid var(--admin-profile-line) !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04) !important;
+}
+
+.vendor-profile-page .profile-hero-card,
+.customer-profile-page .profile-hero-card,
+.partner-profile-page .profile-hero-card {
+  margin-bottom: 0 !important;
+  overflow: hidden !important;
+}
+
+.vendor-profile-page .hero-banner,
+.customer-profile-page .hero-banner,
+.partner-profile-page .hero-banner {
+  height: 11.5rem !important;
+  background-image: none !important;
+  background:
+    linear-gradient(135deg, rgba(17, 24, 39, 0.94), rgba(15, 23, 42, 0.9)),
+    radial-gradient(circle at 22% 28%, rgba(6, 182, 212, 0.34), transparent 32%),
+    radial-gradient(circle at 86% 18%, rgba(233, 69, 96, 0.26), transparent 30%) !important;
+  background-size: auto !important;
+  background-position: center !important;
+}
+
+.vendor-profile-page .hero-banner::after,
+.customer-profile-page .hero-banner::after,
+.partner-profile-page .hero-banner::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px) !important;
+  background-size: 28px 28px !important;
+  opacity: 0.32 !important;
+}
+
+.vendor-profile-page .hero-overlay,
+.customer-profile-page .hero-overlay,
+.partner-profile-page .hero-overlay {
+  display: none !important;
+}
+
+.vendor-profile-page .hero-identity,
+.customer-profile-page .hero-identity,
+.partner-profile-page .hero-identity {
+  position: absolute !important;
+  left: 1.5rem !important;
+  right: 1.5rem !important;
+  bottom: 1.35rem !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 1rem !important;
+  z-index: 2 !important;
+}
+
+.vendor-profile-page .hero-avatar,
+.customer-profile-page .hero-avatar,
+.partner-profile-page .hero-avatar {
+  width: 5.5rem !important;
+  height: 5.5rem !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(255, 255, 255, 0.32) !important;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.26) !important;
+  font-size: 2.1rem !important;
+}
+
+.vendor-profile-page .hero-title-block,
+.customer-profile-page .hero-title-block,
+.partner-profile-page .hero-title-block {
+  min-width: 0 !important;
+  padding: 0 !important;
+  color: #fff !important;
+}
+
+.vendor-profile-page .hero-title-block h1,
+.customer-profile-page .hero-title-block h1,
+.partner-profile-page .hero-title-block h1 {
+  margin: 0 !important;
+  color: #fff !important;
+  font-size: clamp(1.55rem, 3vw, 2.15rem) !important;
+  line-height: 1.12 !important;
+  font-weight: 900 !important;
+  letter-spacing: 0 !important;
+}
+
+.vendor-profile-page .hero-title-block p,
+.customer-profile-page .hero-title-block p,
+.partner-profile-page .hero-title-block p {
+  margin: 0.35rem 0 0 !important;
+  color: rgba(255, 255, 255, 0.78) !important;
+  font-size: 0.9rem !important;
+  font-weight: 650 !important;
+}
+
+.vendor-profile-page .hero-action-bar,
+.customer-profile-page .hero-action-bar,
+.partner-profile-page .hero-action-bar {
+  min-height: 0 !important;
+  padding: 1rem 1.25rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 1rem !important;
+  background: #fff !important;
+  border-top: 1px solid var(--admin-profile-line) !important;
+}
+
+.vendor-profile-page .hero-info-top,
+.customer-profile-page .hero-info-top,
+.partner-profile-page .hero-info-top,
+.vendor-profile-page .header-actions,
+.customer-profile-page .header-actions,
+.partner-profile-page .header-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.6rem !important;
+  flex-wrap: wrap !important;
+}
+
+.vendor-profile-page .badge,
+.customer-profile-page .badge,
+.partner-profile-page .badge,
+.vendor-profile-page .tier-badge,
+.customer-profile-page .role-badge,
+.vendor-profile-page .hero-open-badge {
+  min-height: 28px !important;
+  border-radius: 999px !important;
+  padding: 0.25rem 0.7rem !important;
+  border: 1px solid transparent !important;
+  font-size: 0.72rem !important;
+  font-weight: 850 !important;
+  letter-spacing: 0.02em !important;
+  text-transform: uppercase !important;
+}
+
+.vendor-profile-page .header-actions .btn,
+.customer-profile-page .header-actions .btn,
+.partner-profile-page .header-actions .btn,
+.vendor-profile-page .status-select,
+.customer-profile-page .inline-status-select,
+.partner-profile-page .status-select,
+.partner-profile-page .inline-status-select,
+.vendor-profile-page .filter-select,
+.customer-profile-page .filter-select,
+.partner-profile-page .filter-select {
+  min-height: 38px !important;
+  border-radius: 8px !important;
+  font-size: 0.85rem !important;
+  font-weight: 750 !important;
+  box-shadow: none !important;
+}
+
+.vendor-profile-page .status-select-label,
+.partner-profile-page .status-select-label {
+  display: none !important;
+}
+
+.vendor-profile-page .profile-intel-grid,
+.customer-profile-page .profile-intel-grid,
+.partner-profile-page .profile-intel-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 0.9rem !important;
+}
+
+.vendor-profile-page .intel-card,
+.customer-profile-page .intel-card,
+.partner-profile-page .intel-card {
+  min-height: 116px !important;
+  padding: 1rem !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 0.85rem !important;
+}
+
+.vendor-profile-page .intel-card.priority,
+.customer-profile-page .intel-card.priority,
+.partner-profile-page .intel-card.priority {
+  border-color: rgba(6, 182, 212, 0.35) !important;
+  background: linear-gradient(180deg, #fff, #f0fbff) !important;
+}
+
+.vendor-profile-page .intel-icon,
+.customer-profile-page .intel-icon,
+.partner-profile-page .intel-icon {
+  width: 2.65rem !important;
+  height: 2.65rem !important;
+  border-radius: 8px !important;
+  background: rgba(6, 182, 212, 0.11) !important;
+  color: var(--admin-profile-cyan) !important;
+}
+
+.vendor-profile-page .intel-icon.green,
+.customer-profile-page .intel-icon.green,
+.partner-profile-page .intel-icon.green { background: rgba(22, 163, 74, 0.1) !important; color: var(--admin-profile-green) !important; }
+.vendor-profile-page .intel-icon.warm,
+.customer-profile-page .intel-icon.warm,
+.partner-profile-page .intel-icon.warm { background: rgba(245, 158, 11, 0.12) !important; color: var(--admin-profile-amber) !important; }
+.vendor-profile-page .intel-icon.slate,
+.customer-profile-page .intel-icon.slate,
+.partner-profile-page .intel-icon.slate { background: rgba(17, 24, 39, 0.08) !important; color: var(--admin-profile-ink) !important; }
+
+.vendor-profile-page .intel-label,
+.customer-profile-page .intel-label,
+.partner-profile-page .intel-label {
+  color: var(--admin-profile-muted) !important;
+  font-size: 0.72rem !important;
+  font-weight: 850 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+}
+
+.vendor-profile-page .intel-card strong,
+.customer-profile-page .intel-card strong,
+.partner-profile-page .intel-card strong {
+  color: var(--admin-profile-ink) !important;
+  font-size: 1.35rem !important;
+  line-height: 1.15 !important;
+  font-weight: 900 !important;
+}
+
+.vendor-profile-page .intel-card small,
+.customer-profile-page .intel-card small,
+.partner-profile-page .intel-card small {
+  color: var(--admin-profile-muted) !important;
+  font-size: 0.78rem !important;
+  font-weight: 650 !important;
+}
+
+.vendor-profile-page .tab-strip,
+.customer-profile-page .tab-strip,
+.partner-profile-page .tab-strip {
+  margin: 0 !important;
+  padding: 0.35rem !important;
+  gap: 0.25rem !important;
+  border-bottom: 0 !important;
+  background: #fff !important;
+}
+
+.vendor-profile-page .tab-btn,
+.customer-profile-page .tab-btn,
+.partner-profile-page .tab-btn {
+  min-height: 42px !important;
+  padding: 0 0.95rem !important;
+  border: 0 !important;
+  border-radius: 7px !important;
+  margin: 0 !important;
+  color: var(--admin-profile-muted) !important;
+  font-size: 0.86rem !important;
+  font-weight: 800 !important;
+}
+
+.vendor-profile-page .tab-btn .material-icons-outlined,
+.customer-profile-page .tab-btn .material-icons-outlined,
+.partner-profile-page .tab-btn .material-icons-outlined {
+  display: inline-flex !important;
+  font-size: 18px !important;
+}
+
+.vendor-profile-page .tab-btn.active,
+.customer-profile-page .tab-btn.active,
+.partner-profile-page .tab-btn.active {
+  color: var(--admin-profile-ink) !important;
+  background: var(--admin-profile-soft) !important;
+  border: 0 !important;
+}
+
+.vendor-profile-page .info-card,
+.customer-profile-page .info-card,
+.partner-profile-page .info-card,
+.vendor-profile-page .profile-action-panel,
+.customer-profile-page .profile-action-panel,
+.partner-profile-page .profile-action-panel {
+  padding: 1.15rem !important;
+}
+
+.vendor-profile-page .info-card-title,
+.customer-profile-page .info-card-title,
+.partner-profile-page .info-card-title {
+  margin-bottom: 1rem !important;
+  color: var(--admin-profile-ink) !important;
+  font-size: 1rem !important;
+  font-weight: 900 !important;
+}
+
+.vendor-profile-page .info-card-title .material-icons-outlined,
+.customer-profile-page .info-card-title .material-icons-outlined,
+.partner-profile-page .info-card-title .material-icons-outlined {
+  display: inline-flex !important;
+  color: var(--admin-profile-cyan) !important;
+}
+
+.vendor-profile-page .review-item,
+.customer-profile-page .review-item,
+.partner-profile-page .review-item {
+  border-radius: 8px !important;
+  border: 1px solid var(--admin-profile-line) !important;
+  background: var(--admin-profile-soft) !important;
+  padding: 0.8rem !important;
+}
+
+.vendor-profile-page .review-item.complete,
+.customer-profile-page .review-item.complete,
+.partner-profile-page .review-item.complete {
+  background: #f0fdf4 !important;
+  border-color: rgba(22, 163, 74, 0.22) !important;
+}
+
+.vendor-profile-page .info-row,
+.customer-profile-page .info-row,
+.partner-profile-page .info-row {
+  padding: 0.75rem 0 !important;
+  border-bottom: 1px solid #f0f2f5 !important;
+}
+
+.vendor-profile-page .info-label,
+.customer-profile-page .info-label,
+.partner-profile-page .info-label {
+  color: var(--admin-profile-muted) !important;
+  font-size: 0.68rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.08em !important;
+}
+
+.vendor-profile-page .info-value,
+.customer-profile-page .info-value,
+.partner-profile-page .info-value {
+  color: var(--admin-profile-ink) !important;
+  font-size: 0.9rem !important;
+  font-weight: 700 !important;
+}
+
+.partner-profile-page .info-grid {
+  grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr) !important;
+  grid-template-rows: auto auto !important;
+  align-items: start !important;
+}
+
+.partner-profile-page .info-grid > .profile-action-panel {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+}
+
+.partner-profile-page .info-grid > .info-card:nth-of-type(1) {
+  grid-column: 1 !important;
+  grid-row: 2 !important;
+}
+
+.partner-profile-page .info-grid > .info-card:nth-of-type(2) {
+  grid-column: 2 !important;
+  grid-row: 1 / span 2 !important;
+}
+
+@media (max-width: 1100px) {
+  .vendor-profile-page .profile-intel-grid,
+  .customer-profile-page .profile-intel-grid,
+  .partner-profile-page .profile-intel-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .vendor-profile-page .hero-banner,
+  .customer-profile-page .hero-banner,
+  .partner-profile-page .hero-banner {
+    height: auto !important;
+    min-height: 13rem !important;
+  }
+
+  .vendor-profile-page .hero-identity,
+  .customer-profile-page .hero-identity,
+  .partner-profile-page .hero-identity {
+    position: relative !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    padding: 1.25rem !important;
+    align-items: flex-start !important;
+  }
+
+  .vendor-profile-page .hero-action-bar,
+  .customer-profile-page .hero-action-bar,
+  .partner-profile-page .hero-action-bar {
+    align-items: stretch !important;
+    flex-direction: column !important;
+  }
+
+  .vendor-profile-page .profile-intel-grid,
+  .customer-profile-page .profile-intel-grid,
+  .partner-profile-page .profile-intel-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .partner-profile-page .info-grid > .profile-action-panel,
+  .partner-profile-page .info-grid > .info-card:nth-of-type(1),
+  .partner-profile-page .info-grid > .info-card:nth-of-type(2) {
+    grid-column: auto !important;
+    grid-row: auto !important;
+  }
+}
+
 /* ═══════════════════════════════════════════════
    ADMIN PANEL — App-Specific Styles Only
    ═══════════════════════════════════════════════ */
@@ -605,4 +1058,20 @@ app-dynamic-table {
   .filters-row {
     grid-template-columns: 1fr !important;
   }
+}
+
+/* Shared profile shell owns hero, metrics and tabs. Hide legacy direct-child chrome from old profile templates. */
+.vendor-profile-page > .loading-state,
+.customer-profile-page > .loading-state,
+.partner-profile-page > .loading-state,
+.vendor-profile-page > .profile-hero-card,
+.customer-profile-page > .profile-hero-card,
+.partner-profile-page > .profile-hero-card,
+.vendor-profile-page > .profile-intel-grid,
+.customer-profile-page > .profile-intel-grid,
+.partner-profile-page > .profile-intel-grid,
+.vendor-profile-page > .tab-strip,
+.customer-profile-page > .tab-strip,
+.partner-profile-page > .tab-strip {
+  display: none !important;
 }

@@ -4,5 +4,6 @@
 //          'https://api.nexconnect.app/api' for production.
 export const environment = {
   production: true,
-  apiBaseUrl: 'https://nex-connect.in/sa/api'
+  apiBaseUrl: 'https://nex-connect.in/sa/api',
+  googleMapsApiKey: 'AIzaSyDzuk1DZxnNniff_FJbzHnobHuYbk4hMrc',
 };
