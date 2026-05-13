@@ -1,7 +1,7 @@
 <section class="home-page">
   <section class="instant-hero">
     <div class="hero-copy">
-      <span class="hero-kicker">Instant delivery, built around your block</span>
+      <span class="hero-kicker">Local commerce command center</span>
       <h1>Everything you need in one fast local storefront.</h1>
       <p>
         Groceries, takeout, pharmacy and daily essentials from nearby stores, delivered in minutes with live tracking.
@@ -12,7 +12,7 @@
           <span class="material-icons-outlined">search</span>
           Search for stores, meals or essentials
         </a>
-        <button class="hero-location-cta" (click)="detectLocation(true)">
+        <button class="hero-location-cta" type="button" (click)="detectLocation(true)">
           <span class="material-icons-outlined">my_location</span>
           Refresh my area
         </button>
@@ -27,7 +27,7 @@
       <div class="hero-metrics">
         <div>
           <strong>10 min</strong>
-          <span>quick buys</span>
+          <span>quick-buy aisles</span>
         </div>
         <div>
           <strong>Live</strong>
@@ -41,26 +41,38 @@
     </div>
 
     <div class="hero-stage">
-      <div class="hero-glow"></div>
       <div class="hero-board">
         <div class="hero-board-head">
           <span>Right now near you</span>
           <strong>{{ locationDisplay() }}</strong>
         </div>
-        <div class="hero-delivery-card">
-          <div class="hero-delivery-icon"><span class="material-icons-outlined">delivery_dining</span></div>
+        <div class="hero-delivery-card" aria-label="Express basket status">
+          <div class="hero-delivery-icon"><span class="material-icons-outlined">shopping_bag</span></div>
           <div>
             <strong>Express basket</strong>
             <span>Fresh picks, pantry refills and meals in one tap</span>
           </div>
+          <span class="hero-live-pill">Live</span>
         </div>
         <div class="hero-chip-row">
           @for (cat of categories().slice(1, 6); track cat.id) {
-            <button class="hero-chip" (click)="selectCategory(cat.id)">
+            <button class="hero-chip" type="button" (click)="selectCategory(cat.id)">
               <span class="material-icons-outlined" [style.color]="cat.color">{{ cat.icon }}</span>
               {{ cat.name }}
             </button>
           }
+        </div>
+        <div class="hero-status-list">
+          <div>
+            <span class="material-icons-outlined">inventory_2</span>
+            <strong>{{ filteredVendors().length || allVendors().length }}</strong>
+            <small>stores in view</small>
+          </div>
+          <div>
+            <span class="material-icons-outlined">verified</span>
+            <strong>Verified</strong>
+            <small>local partners</small>
+          </div>
         </div>
         <div class="hero-mini-grid">
           <div class="hero-mini-card">
@@ -138,9 +150,9 @@
       <a routerLink="/shops">See all stores</a>
     </div>
 
-    <div class="category-grid">
+    <div class="category-grid" aria-label="Customer categories">
       @for (cat of categories(); track cat.id) {
-        <button class="category-card" [class.active]="selectedCategory() === cat.id" (click)="selectCategory(cat.id)">
+        <button class="category-card" type="button" [class.active]="selectedCategory() === cat.id" (click)="selectCategory(cat.id)">
           <span class="category-icon" [style.background]="cat.bg">
             <span class="material-icons-outlined" [style.color]="cat.color">{{ cat.icon }}</span>
           </span>
@@ -158,11 +170,11 @@
 
     @if (currentSubcategories().length > 0) {
       <div class="subcat-row">
-        <button [class.active]="selectedSubCategory() === null" (click)="selectSubCategory(null)">
+        <button type="button" [class.active]="selectedSubCategory() === null" (click)="selectSubCategory(null)">
           All {{ selectedCategoryObj?.name }}
         </button>
         @for (sub of currentSubcategories(); track sub.id) {
-          <button [class.active]="selectedSubCategory() === sub.id" (click)="selectSubCategory(sub.id)">
+          <button type="button" [class.active]="selectedSubCategory() === sub.id" (click)="selectSubCategory(sub.id)">
             {{ sub.name }}
           </button>
         }
@@ -247,7 +259,7 @@
 
               <div class="repeat-footer">
                 <strong>{{ order.total | number:'1.2-2' }}</strong>
-                <button class="repeat-btn" (click)="reorder(order.id, $event)" [disabled]="reorderBusyId() === order.id">
+                <button class="repeat-btn" type="button" (click)="reorder(order.id, $event)" [disabled]="reorderBusyId() === order.id">
                   {{ reorderBusyId() === order.id ? 'Adding...' : 'Reorder basket' }}
                 </button>
               </div>
@@ -302,12 +314,12 @@
         Open now
       </label>
       @if (selectedSubCategory()) {
-        <button class="filter-pill active" (click)="selectSubCategory(null)">
+        <button class="filter-pill active" type="button" (click)="selectSubCategory(null)">
           <span class="material-icons-outlined">close</span>
           {{ selectedSubCategoryName() }}
         </button>
       } @else if (selectedCategory() !== 'all') {
-        <button class="filter-pill active" (click)="selectCategory('all')">
+        <button class="filter-pill active" type="button" (click)="selectCategory('all')">
           <span class="material-icons-outlined">close</span>
           {{ selectedCategoryObj?.name }}
         </button>
@@ -327,7 +339,7 @@
         <p>Choose your neighborhood, landmark, or pincode first so we can show stores that actually deliver there.</p>
         <div class="empty-actions">
           <a routerLink="/set-location" class="empty-primary-link">Set delivery area</a>
-          <button (click)="detectLocation(true)">Use my current location</button>
+          <button type="button" (click)="detectLocation(true)">Use my current location</button>
         </div>
       </div>
     } @else if (filteredVendors().length === 0) {
@@ -335,7 +347,7 @@
         <span class="material-icons-outlined">storefront</span>
         <h3>No stores match this area yet.</h3>
         <p>Try changing your category or refresh your location to widen the delivery radius.</p>
-        <button (click)="selectCategory('all')">See all nearby stores</button>
+        <button type="button" (click)="selectCategory('all')">See all nearby stores</button>
       </div>
     } @else {
       <div class="store-grid">

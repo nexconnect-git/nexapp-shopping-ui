@@ -13,11 +13,10 @@
 .discover-topbar,
 .discover-panel,
 .results-panel {
-  border: 1px solid rgba(234, 216, 196, 0.95);
-  background: rgba(255, 255, 255, 0.84);
-  box-shadow: 0 24px 60px rgba(64, 31, 15, 0.08);
-  backdrop-filter: blur(16px);
-  border-radius: 30px;
+  border: 1px solid var(--nx-line);
+  background: #fff;
+  box-shadow: var(--surface-shadow-soft);
+  border-radius: var(--radius-panel);
 }
 
 .discover-topbar {
@@ -29,9 +28,9 @@
 .icon-btn {
   width: 50px;
   height: 50px;
-  border: 1px solid rgba(234, 216, 196, 0.95);
+  border: 1px solid var(--nx-line);
   background: #fff;
-  border-radius: 18px;
+  border-radius: 14px;
   display: grid;
   place-items: center;
   cursor: pointer;
@@ -50,8 +49,9 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.2rem 0.5rem 0.2rem 1rem;
-  border-radius: 22px;
-  background: rgba(255, 248, 240, 0.84);
+  border-radius: 14px;
+  background: #f8fafc;
+  border: 1px solid var(--nx-line);
 
   input {
     flex: 1;
@@ -84,8 +84,8 @@
   display: inline-flex;
   padding: 0.4rem 0.7rem;
   border-radius: 999px;
-  background: rgba(255, 224, 204, 0.9);
-  color: var(--nx-orange-deep);
+  background: rgba(239, 246, 255, 0.95);
+  color: var(--nx-blue);
   text-transform: uppercase;
   letter-spacing: 0.12em;
   font-size: 0.72rem;
@@ -107,8 +107,8 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  border: 1px solid rgba(234, 216, 196, 0.95);
-  background: rgba(255, 248, 240, 0.92);
+  border: 1px solid var(--nx-line);
+  background: #f8fafc;
   border-radius: 999px;
   padding: 0.85rem 1rem;
   cursor: pointer;
@@ -138,8 +138,8 @@
   align-items: center;
   padding: 0.95rem 1rem;
   border-radius: 22px;
-  border: 1px solid rgba(234, 216, 196, 0.9);
-  background: rgba(255, 248, 240, 0.76);
+  border: 1px solid var(--nx-line);
+  background: #f8fafc;
   cursor: pointer;
   text-align: left;
 
@@ -148,9 +148,9 @@
     height: 48px;
     display: grid;
     place-items: center;
-    border-radius: 16px;
-    background: rgba(255, 224, 204, 0.92);
-    color: var(--nx-orange);
+    border-radius: 12px;
+    background: rgba(239, 246, 255, 0.95);
+    color: var(--nx-blue);
   }
 
   strong {
@@ -180,9 +180,9 @@
   width: 100%;
   text-align: left;
   padding: 0.95rem;
-  border-radius: 22px;
-  border: 1px solid rgba(234, 216, 196, 0.9);
-  background: rgba(255, 248, 240, 0.76);
+  border-radius: 14px;
+  border: 1px solid var(--nx-line);
+  background: #f8fafc;
   cursor: pointer;
 }
 
@@ -190,9 +190,9 @@
 .result-media {
   width: 64px;
   height: 64px;
-  border-radius: 18px;
+  border-radius: 14px;
   overflow: hidden;
-  background: rgba(255, 224, 204, 0.6);
+  background: #eef2f7;
   display: grid;
   place-items: center;
 
@@ -227,7 +227,7 @@
 
 .group-head {
   margin-top: 0.8rem;
-  color: var(--nx-orange-deep);
+  color: var(--nx-blue);
 }
 
 .product-row em {
@@ -262,7 +262,7 @@
   justify-content: center;
   gap: 0.5rem;
   border: 0;
-  border-radius: 20px;
+  border-radius: 14px;
   padding: 1rem 1.2rem;
   background: var(--primary-gradient);
   color: #fff;

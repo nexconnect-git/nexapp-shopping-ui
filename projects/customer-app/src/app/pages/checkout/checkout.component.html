@@ -1,10 +1,15 @@
 <section class="checkout-page">
   <div class="checkout-topbar">
-    <button class="checkout-icon" (click)="goBack()"><span class="material-icons-outlined">arrow_back</span></button>
+    <button class="checkout-icon" type="button" (click)="goBack()" aria-label="Go back"><span class="material-icons-outlined">arrow_back</span></button>
     <div>
       <span class="checkout-kicker">Final step</span>
       <h1>Checkout</h1>
       <p>Confirm delivery, payment and any savings before placing the order.</p>
+    </div>
+    <div class="checkout-steps" aria-label="Checkout progress">
+      <span>Cart</span>
+      <span class="active">Checkout</span>
+      <span>Track</span>
     </div>
   </div>
 
@@ -93,7 +98,7 @@
                   <strong>{{ appliedCoupon().code }}</strong>
                   <span>{{ appliedCoupon().message }}</span>
                 </div>
-                <button (click)="removeCoupon()">Remove</button>
+                <button type="button" (click)="removeCoupon()">Remove</button>
               </div>
             } @else {
               <div class="coupon-input-row">
@@ -113,9 +118,9 @@
                 <span>{{ walletBalance() | number:'1.2-2' }} available</span>
               </div>
               @if (walletAmountToUse() > 0) {
-                <button class="pill-btn" (click)="walletAmountToUse.set(0)">Remove</button>
+                <button class="pill-btn" type="button" (click)="walletAmountToUse.set(0)">Remove</button>
               } @else {
-                <button class="pill-btn" (click)="applyFullWallet()">Use max</button>
+                <button class="pill-btn" type="button" (click)="applyFullWallet()">Use max</button>
               }
             </div>
             @if (walletAmountToUse() === 0) {
@@ -136,7 +141,7 @@
                 <strong>Loyalty points</strong>
                 <span>{{ loyaltyPoints() }} points available</span>
               </div>
-              <button class="pill-btn" (click)="toggleLoyalty()">{{ useLoyalty() ? 'Remove' : 'Apply' }}</button>
+              <button class="pill-btn" type="button" (click)="toggleLoyalty()">{{ useLoyalty() ? 'Remove' : 'Apply' }}</button>
             </div>
             @if (useLoyalty() && loyaltyDiscount() > 0) {
               <div class="discount-row active">
@@ -176,7 +181,7 @@
                 <strong>Scheduled delivery</strong>
                 <span>{{ scheduledFor() | date:'EEE d MMM, h:mm a' }}</span>
               </div>
-              <button (click)="scheduledFor.set('')">Clear</button>
+              <button type="button" (click)="scheduledFor.set('')">Clear</button>
             </div>
           }
         </section>

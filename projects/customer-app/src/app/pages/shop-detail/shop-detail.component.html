@@ -9,12 +9,12 @@
 } @else {
   <section class="shop-page">
     <div class="shop-topbar">
-      <button class="shop-icon-btn" (click)="goBack()"><span class="material-icons-outlined">arrow_back</span></button>
+      <button class="shop-icon-btn" type="button" (click)="goBack()" aria-label="Go back"><span class="material-icons-outlined">arrow_back</span></button>
       <div class="shop-topbar-copy">
         <strong>{{ vendor()!.store_name }}</strong>
         <span>{{ vendor()!.city }}</span>
       </div>
-      <button class="shop-icon-btn" (click)="toggleSearch()"><span class="material-icons-outlined">{{ showSearch() ? 'close' : 'search' }}</span></button>
+      <button class="shop-icon-btn" type="button" (click)="toggleSearch()" aria-label="Search store menu"><span class="material-icons-outlined">{{ showSearch() ? 'close' : 'search' }}</span></button>
       <a routerLink="/cart" class="shop-icon-btn cart">
         <span class="material-icons-outlined">shopping_bag</span>
         @if (api.cartCount() > 0) {
@@ -56,11 +56,11 @@
       </div>
 
       <div class="shop-hero-actions">
-        <button class="info-pill" (click)="toggleInfo()">
+        <button class="info-pill" type="button" (click)="toggleInfo()">
           <span class="material-icons-outlined">info</span>
           Store info
         </button>
-        <button class="info-pill" (click)="toggleSearch()">
+        <button class="info-pill" type="button" (click)="toggleSearch()">
           <span class="material-icons-outlined">search</span>
           Search this menu
         </button>
@@ -85,7 +85,7 @@
         <span class="material-icons-outlined">search</span>
         <input [(ngModel)]="searchQuery" placeholder="Search within {{ vendor()!.store_name }}">
         @if (searchQuery) {
-          <button (click)="searchQuery = ''"><span class="material-icons-outlined">close</span></button>
+          <button type="button" (click)="searchQuery = ''" aria-label="Clear menu search"><span class="material-icons-outlined">close</span></button>
         }
       </div>
     }
@@ -120,7 +120,7 @@
         <h3>No items match your current filter.</h3>
         <p>Try clearing the search, removing the rating filter, or browse other nearby stores for similar picks.</p>
         <div class="shop-empty-actions">
-          <button (click)="searchQuery = ''; filterRating = false">Reset filters</button>
+          <button type="button" (click)="searchQuery = ''; filterRating = false">Reset filters</button>
           <a routerLink="/shops">Browse nearby stores</a>
         </div>
       </div>
@@ -170,7 +170,7 @@
       <div class="category-stack">
         @for (section of categorySections(); track section.key) {
           <section class="category-panel">
-            <button class="category-header" (click)="toggleCategory(section.key)">
+            <button class="category-header" type="button" (click)="toggleCategory(section.key)">
               <div>
                 <span class="section-kicker">{{ section.items.length }} item{{ section.items.length > 1 ? 's' : '' }}</span>
                 <h3>{{ section.title }}</h3>
@@ -225,14 +225,14 @@
                       <div class="menu-actions">
                         @if (product.is_available !== false && storeIsOpen()) {
                           @if (getQty(product.id) === 0) {
-                            <button class="add-btn" (click)="add(product)" [disabled]="addingId() === product.id">
+                            <button class="add-btn" type="button" (click)="add(product)" [disabled]="addingId() === product.id">
                               @if (addingId() === product.id) { <span class="shop-spinner small"></span> } @else { Add }
                             </button>
                           } @else {
                             <div class="qty-bar">
-                              <button (click)="decrement(product)"><span class="material-icons-outlined">{{ getQty(product.id) === 1 ? 'delete_outline' : 'remove' }}</span></button>
+                              <button type="button" (click)="decrement(product)" [attr.aria-label]="getQty(product.id) === 1 ? 'Remove item' : 'Decrease quantity'"><span class="material-icons-outlined">{{ getQty(product.id) === 1 ? 'delete_outline' : 'remove' }}</span></button>
                               <span>{{ getQty(product.id) }}</span>
-                              <button (click)="increment(product)"><span class="material-icons-outlined">add</span></button>
+                              <button type="button" (click)="increment(product)" aria-label="Increase quantity"><span class="material-icons-outlined">add</span></button>
                             </div>
                           }
                         } @else {
@@ -250,7 +250,7 @@
     }
 
     @if (totalCartItems() > 0) {
-      <button class="cart-bar" (click)="goToCart()">
+      <button class="cart-bar" type="button" (click)="goToCart()">
         <div>
           <strong>{{ totalCartItems() }} item{{ totalCartItems() > 1 ? 's' : '' }}</strong>
           <span>{{ totalCartAmount() | appCurrency }}</span>
@@ -266,8 +266,8 @@
           <h3>Start a new basket?</h3>
           <p>Your current cart has items from {{ cartVendorName() }}. Adding this item will clear that basket first.</p>
           <div class="dialog-actions">
-            <button class="ghost" (click)="cancelReplace()">Keep current cart</button>
-            <button class="solid" (click)="confirmReplace()" [disabled]="clearing()">Start new order</button>
+            <button class="ghost" type="button" (click)="cancelReplace()">Keep current cart</button>
+            <button class="solid" type="button" (click)="confirmReplace()" [disabled]="clearing()">Start new order</button>
           </div>
         </div>
       </div>

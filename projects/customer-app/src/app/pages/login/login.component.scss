@@ -10,30 +10,6 @@
   overflow: hidden;
 }
 
-.auth-ambient {
-  position: absolute;
-  border-radius: 999px;
-  pointer-events: none;
-  filter: blur(18px);
-  opacity: 0.85;
-}
-
-.auth-ambient-1 {
-  width: 34rem;
-  height: 34rem;
-  top: -10rem;
-  left: -8rem;
-  background: radial-gradient(circle, rgba(255, 162, 102, 0.28) 0%, rgba(255, 162, 102, 0) 72%);
-}
-
-.auth-ambient-2 {
-  width: 28rem;
-  height: 28rem;
-  right: -8rem;
-  bottom: -8rem;
-  background: radial-gradient(circle, rgba(255, 214, 170, 0.7) 0%, rgba(255, 214, 170, 0) 72%);
-}
-
 .auth-shell {
   position: relative;
   z-index: 1;
@@ -42,13 +18,10 @@
   min-height: calc(100vh - clamp(2rem, 4vw, 4rem));
   max-width: 1320px;
   margin: 0 auto;
-  border: 1px solid rgba(234, 216, 196, 0.88);
-  border-radius: 36px;
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(255, 248, 238, 0.84)),
-    rgba(255, 255, 255, 0.72);
-  box-shadow: 0 30px 80px rgba(88, 51, 31, 0.14);
-  backdrop-filter: blur(20px);
+  border: 1px solid var(--nx-line);
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: var(--surface-shadow);
   overflow: hidden;
 
   @media (max-width: 1024px) {
@@ -62,23 +35,13 @@
   min-height: 100%;
   padding: clamp(2.5rem, 4vw, 4rem);
   background:
-    radial-gradient(circle at top right, rgba(255, 189, 145, 0.45), transparent 30%),
-    radial-gradient(circle at bottom left, rgba(255, 228, 204, 0.55), transparent 32%),
-    linear-gradient(145deg, #fff4e7 0%, #ffe6cf 45%, #ffd7b8 100%);
+    linear-gradient(135deg, rgba(17, 24, 39, 0.88), rgba(30, 58, 138, 0.84)),
+    linear-gradient(145deg, #eff6ff 0%, #f8fafc 100%);
   overflow: hidden;
 
   @media (max-width: 1024px) {
     display: none;
   }
-}
-
-.auth-map-glow {
-  position: absolute;
-  inset: auto -6rem -6rem auto;
-  width: 22rem;
-  height: 22rem;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 107, 44, 0.25) 0%, rgba(255, 107, 44, 0) 68%);
 }
 
 .auth-badge-row {
@@ -95,10 +58,10 @@
   align-items: center;
   min-height: 2.4rem;
   padding: 0.55rem 1rem;
-  border: 1px solid rgba(255, 107, 44, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.7);
-  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
   font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -106,8 +69,8 @@
 }
 
 .auth-badge-muted {
-  color: var(--text-secondary);
-  background: rgba(255, 255, 255, 0.45);
+  color: rgba(255, 255, 255, 0.76);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .auth-left-inner {
@@ -125,10 +88,10 @@
   gap: 0.9rem;
   width: fit-content;
   padding: 0.8rem 1.1rem 0.8rem 0.85rem;
-  border: 1px solid rgba(255, 107, 44, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.7);
-  box-shadow: 0 12px 30px rgba(138, 84, 47, 0.1);
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: none;
 }
 
 .auth-brand-icon {
@@ -157,12 +120,12 @@
   font-family: var(--font-heading);
   font-size: 1.1rem;
   font-weight: 900;
-  color: var(--text-primary);
-  letter-spacing: -0.03em;
+  color: #fff;
+  letter-spacing: 0;
 }
 
 .brand-tag {
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.7);
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.16em;
@@ -171,17 +134,17 @@
 
 .auth-left-headline {
   margin: 2rem 0 1rem;
-  color: var(--text-primary);
+  color: #fff;
   font-family: var(--font-heading);
   font-size: clamp(2.7rem, 5vw, 4.4rem);
   line-height: 0.98;
-  letter-spacing: -0.06em;
+  letter-spacing: 0;
 }
 
 .auth-left-sub {
   max-width: 31rem;
   margin: 0;
-  color: var(--text-secondary);
+  color: rgba(255, 255, 255, 0.78);
   font-size: 1.06rem;
   line-height: 1.7;
 }
@@ -198,19 +161,19 @@
   flex-direction: column;
   gap: 0.35rem;
   padding: 1.2rem 1.25rem;
-  border: 1px solid rgba(255, 107, 44, 0.14);
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.1);
 
   strong {
-    color: var(--text-primary);
+    color: #fff;
     font-size: 1.45rem;
     font-weight: 900;
-    letter-spacing: -0.04em;
+    letter-spacing: 0;
   }
 
   span {
-    color: var(--text-secondary);
+    color: rgba(255, 255, 255, 0.76);
     font-size: 0.88rem;
     line-height: 1.5;
   }
@@ -230,9 +193,9 @@
   gap: 1rem;
   align-items: start;
   padding: 1rem 1.1rem;
-  border: 1px solid rgba(255, 107, 44, 0.12);
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .feature-icon {
@@ -242,8 +205,8 @@
   width: 3rem;
   height: 3rem;
   border-radius: 1rem;
-  background: rgba(255, 107, 44, 0.12);
-  color: var(--primary);
+  background: rgba(255, 255, 255, 0.12);
+  color: #bfdbfe;
 
   .material-icons-outlined {
     font-size: 1.35rem;
@@ -256,13 +219,13 @@
 }
 
 .feature-title {
-  color: var(--text-primary);
+  color: #fff;
   font-size: 1rem;
   font-weight: 800;
 }
 
 .feature-desc {
-  color: var(--text-secondary);
+  color: rgba(255, 255, 255, 0.76);
   font-size: 0.9rem;
   line-height: 1.5;
 }
@@ -277,7 +240,7 @@
   gap: 0.6rem;
   padding: 0.9rem 1.1rem;
   border-radius: 999px;
-  background: rgba(35, 22, 15, 0.88);
+  background: rgba(255, 255, 255, 0.14);
   color: #fff;
   font-size: 0.88rem;
   font-weight: 600;
@@ -288,7 +251,7 @@
 
   .material-icons-outlined {
     font-size: 1.05rem;
-    color: #ffbf89;
+    color: #bfdbfe;
   }
 }
 
@@ -297,9 +260,7 @@
   flex-direction: column;
   justify-content: center;
   padding: clamp(1.5rem, 4vw, 3rem);
-  background:
-    radial-gradient(circle at top, rgba(255, 206, 168, 0.18), transparent 24%),
-    linear-gradient(180deg, rgba(255, 252, 248, 0.96), rgba(255, 247, 239, 0.9));
+  background: linear-gradient(180deg, #ffffff, #f8fafc);
 
   @media (max-width: 768px) {
     padding: 1rem;
@@ -358,11 +319,10 @@
   max-width: 30rem;
   margin: 0 auto;
   padding: clamp(1.5rem, 4vw, 2.4rem);
-  border: 1px solid rgba(234, 216, 196, 0.88);
-  border-radius: 30px;
-  background: rgba(255, 255, 255, 0.88);
-  box-shadow: 0 24px 50px rgba(88, 51, 31, 0.12);
-  backdrop-filter: blur(18px);
+  border: 1px solid var(--nx-line);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: var(--surface-shadow-soft);
 }
 
 .auth-header {
@@ -377,9 +337,9 @@
   width: 4rem;
   height: 4rem;
   margin-bottom: 1rem;
-  border-radius: 1.4rem;
-  background: linear-gradient(180deg, rgba(255, 224, 204, 0.9), rgba(255, 244, 232, 0.9));
-  border: 1px solid rgba(255, 107, 44, 0.12);
+  border-radius: 1rem;
+  background: #fff7ed;
+  border: 1px solid rgba(249, 115, 22, 0.14);
 
   .material-icons-outlined {
     color: var(--primary);
@@ -393,7 +353,7 @@
   font-family: var(--font-heading);
   font-size: clamp(2rem, 4vw, 2.5rem);
   line-height: 1;
-  letter-spacing: -0.06em;
+  letter-spacing: 0;
 }
 
 .auth-header p {
@@ -419,8 +379,8 @@
   min-height: 2.2rem;
   padding: 0.45rem 0.8rem;
   border-radius: 999px;
-  background: #fff5ea;
-  border: 1px solid rgba(255, 107, 44, 0.12);
+  background: #f8fafc;
+  border: 1px solid var(--nx-line);
   color: var(--text-secondary);
   font-size: 0.8rem;
   font-weight: 700;
@@ -437,7 +397,7 @@
   align-items: flex-start;
   gap: 0.7rem;
   padding: 0.95rem 1rem;
-  border-radius: 18px;
+  border-radius: 14px;
   margin-bottom: 1rem;
   font-size: 0.9rem;
   font-weight: 600;
@@ -452,13 +412,13 @@
 
 .auth-error {
   background: rgba(203, 75, 47, 0.08);
-  border: 1px solid rgba(203, 75, 47, 0.14);
+  border: 1px solid rgba(220, 38, 38, 0.14);
   color: var(--nx-red);
 }
 
 .auth-info {
   background: rgba(29, 155, 97, 0.08);
-  border: 1px solid rgba(29, 155, 97, 0.14);
+  border: 1px solid rgba(5, 150, 105, 0.14);
   color: var(--nx-green);
 }
 
@@ -471,9 +431,9 @@
   display: grid;
   gap: 0.9rem;
   padding: 1rem;
-  border: 1px solid rgba(255, 107, 44, 0.12);
-  border-radius: 22px;
-  background: linear-gradient(180deg, rgba(255, 245, 235, 0.9), rgba(255, 255, 255, 0.92));
+  border: 1px solid var(--nx-line);
+  border-radius: 14px;
+  background: #f8fafc;
 }
 
 .otp-stage-head {
@@ -487,7 +447,7 @@
     color: var(--text-primary);
     font-size: 1.1rem;
     font-weight: 800;
-    letter-spacing: -0.03em;
+    letter-spacing: 0;
   }
 
   p {
@@ -504,15 +464,15 @@
   justify-content: center;
   width: 2.4rem;
   height: 2.4rem;
-  border-radius: 0.9rem;
-  background: rgba(255, 107, 44, 0.1);
+  border-radius: 0.75rem;
+  background: rgba(249, 115, 22, 0.1);
   color: var(--primary);
 }
 
 .otp-dev-note {
   padding: 0.85rem 0.95rem;
-  border-radius: 16px;
-  background: rgba(255, 107, 44, 0.08);
+  border-radius: 12px;
+  background: rgba(249, 115, 22, 0.08);
   color: var(--text-primary);
   font-size: 0.86rem;
   font-weight: 700;
@@ -549,7 +509,7 @@
 .auth-help-row {
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid rgba(234, 216, 196, 0.9);
+  border-top: 1px solid var(--nx-line);
   text-align: center;
   color: var(--text-muted);
   font-size: 0.82rem;

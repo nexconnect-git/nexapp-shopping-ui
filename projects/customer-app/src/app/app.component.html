@@ -1,6 +1,6 @@
 <app-alert-host></app-alert-host>
 
-<nav class="shell-nav">
+<nav class="shell-nav" aria-label="Customer navigation">
   <div class="shell-nav-inner">
     <a routerLink="/" class="shell-brand">
       <span class="shell-brand-mark"><span class="material-icons-outlined">bolt</span></span>
@@ -10,7 +10,7 @@
       </span>
     </a>
 
-    <button class="shell-location" (click)="openLocationPicker()">
+    <button class="shell-location" type="button" (click)="openLocationPicker()" aria-label="Change delivery location">
       <span class="material-icons-outlined">near_me</span>
       <span class="shell-location-copy">
         <small>Delivering to</small>
@@ -19,7 +19,7 @@
       <span class="material-icons-outlined">keyboard_arrow_down</span>
     </button>
 
-    <a routerLink="/search" class="shell-search">
+    <a routerLink="/search" class="shell-search" aria-label="Search stores and products">
       <span class="material-icons-outlined">search</span>
       <span>Search groceries, meals, medicine, essentials</span>
     </a>
@@ -35,7 +35,7 @@
 
     <div class="shell-actions">
       @if (auth.isLoggedIn()) {
-        <a routerLink="/cart" class="shell-icon-btn" title="Cart">
+        <a routerLink="/cart" class="shell-icon-btn" title="Cart" aria-label="Open cart">
           <span class="material-icons-outlined">shopping_bag</span>
           @if (api.cartCount() > 0) {
             <span class="shell-badge">{{ api.cartCount() > 9 ? '9+' : api.cartCount() }}</span>
@@ -43,7 +43,7 @@
         </a>
 
         <div class="shell-menu-wrap">
-          <button class="shell-icon-btn" (click)="toggleNotifMenu($event)" title="Notifications">
+          <button class="shell-icon-btn" type="button" (click)="toggleNotifMenu($event)" title="Notifications" aria-label="Open notifications">
             <span class="material-icons-outlined">notifications</span>
             @if (api.unreadNotifications() > 0) {
               <span class="shell-badge">{{ api.unreadNotifications() > 9 ? '9+' : api.unreadNotifications() }}</span>
@@ -54,7 +54,7 @@
               <div class="shell-dropdown-head">
                 <strong>Updates</strong>
                 @if (api.unreadNotifications() > 0) {
-                  <button (click)="clearNotifBadge()">Mark all read</button>
+                  <button type="button" (click)="clearNotifBadge()">Mark all read</button>
                 }
               </div>
               <div class="shell-dropdown-body">
@@ -85,7 +85,7 @@
         </div>
 
         <div class="shell-menu-wrap">
-          <button class="shell-profile-btn" (click)="toggleUserMenu($event)">
+          <button class="shell-profile-btn" type="button" (click)="toggleUserMenu($event)" aria-label="Open account menu">
             <span>{{ userInitials() }}</span>
           </button>
           @if (userMenuOpen()) {
@@ -103,7 +103,7 @@
               <a routerLink="/wallet" (click)="toggleUserMenu()">Wallet</a>
               <a routerLink="/wishlist" (click)="toggleUserMenu()">Wishlist</a>
               <a routerLink="/referral" (click)="toggleUserMenu()">Refer and earn</a>
-              <button class="shell-logout" (click)="logout()">Sign out</button>
+              <button class="shell-logout" type="button" (click)="logout()">Sign out</button>
             </div>
           }
         </div>
@@ -117,7 +117,7 @@
 
 <header class="mobile-shell" [class.hidden]="hideMobHeader()">
   <div class="mobile-shell-top">
-    <button class="mobile-location" (click)="openLocationPicker()">
+    <button class="mobile-location" type="button" (click)="openLocationPicker()" aria-label="Change delivery location">
       <span class="material-icons-outlined">location_on</span>
       <span>
         <small>Delivering to</small>
@@ -127,7 +127,7 @@
 
     @if (auth.isLoggedIn()) {
       <div class="shell-menu-wrap">
-        <button class="mobile-icon-btn" (click)="toggleNotifMenu($event)">
+        <button class="mobile-icon-btn" type="button" (click)="toggleNotifMenu($event)" aria-label="Open notifications">
           <span class="material-icons-outlined">notifications_none</span>
           @if (api.unreadNotifications() > 0) {
             <span class="shell-badge">{{ api.unreadNotifications() > 9 ? '9+' : api.unreadNotifications() }}</span>
@@ -138,7 +138,7 @@
             <div class="shell-dropdown-head">
               <strong>Updates</strong>
               @if (api.unreadNotifications() > 0) {
-                <button (click)="clearNotifBadge()">Mark all read</button>
+                <button type="button" (click)="clearNotifBadge()">Mark all read</button>
               }
             </div>
             <div class="shell-dropdown-body">
@@ -249,8 +249,6 @@
 
 @if (showSplash()) {
   <div class="splash-screen">
-    <div class="splash-orb orb-a"></div>
-    <div class="splash-orb orb-b"></div>
     <div class="splash-card">
       <div class="splash-mark"><span class="material-icons-outlined">bolt</span></div>
       <h1>NexConnect</h1>

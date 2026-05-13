@@ -1,9 +1,14 @@
 <section class="basket-page">
   <div class="basket-topbar">
-    <button class="basket-icon" (click)="goBack()"><span class="material-icons-outlined">arrow_back</span></button>
+    <button class="basket-icon" type="button" (click)="goBack()" aria-label="Go back"><span class="material-icons-outlined">arrow_back</span></button>
     <div>
       <span class="basket-kicker">Review your basket</span>
       <h1>Your cart</h1>
+    </div>
+    <div class="basket-steps" aria-label="Checkout progress">
+      <span class="active">Cart</span>
+      <span>Checkout</span>
+      <span>Track</span>
     </div>
     @if (cart() && cart()!.items.length > 0) {
       <span class="basket-count">{{ cart()!.items.length }} item{{ cart()!.items.length !== 1 ? 's' : '' }}</span>
@@ -44,7 +49,7 @@
               <span class="basket-kicker">Basket items</span>
               <h2>Everything from one store, ready to check out.</h2>
             </div>
-            <button class="clear-btn" (click)="clearCart()">Clear cart</button>
+            <button class="clear-btn" type="button" (click)="clearCart()">Clear cart</button>
           </div>
 
           <div class="basket-items">
@@ -71,11 +76,11 @@
                 <div class="item-actions">
                   <span class="item-subtotal">{{ item.subtotal | appCurrency }}</span>
                   <div class="qty-bar">
-                    <button (click)="updateQty(item, item.quantity - 1)" [disabled]="updatingId() === item.id">
+                    <button type="button" (click)="updateQty(item, item.quantity - 1)" [disabled]="updatingId() === item.id" [attr.aria-label]="item.quantity === 1 ? 'Remove item' : 'Decrease quantity'">
                       <span class="material-icons-outlined">{{ item.quantity === 1 ? 'delete_outline' : 'remove' }}</span>
                     </button>
                     <span>{{ item.quantity }}</span>
-                    <button (click)="updateQty(item, item.quantity + 1)" [disabled]="updatingId() === item.id || item.quantity >= item.product.stock">
+                    <button type="button" (click)="updateQty(item, item.quantity + 1)" [disabled]="updatingId() === item.id || item.quantity >= item.product.stock" aria-label="Increase quantity">
                       <span class="material-icons-outlined">add</span>
                     </button>
                   </div>
@@ -108,7 +113,7 @@
                   </div>
                   <strong>{{ prod.name }}</strong>
                   <span>{{ prod.price | appCurrency }}</span>
-                  <button (click)="addSuggestion(prod)" [disabled]="addingSuggId() === prod.id">
+                  <button type="button" (click)="addSuggestion(prod)" [disabled]="addingSuggId() === prod.id">
                     @if (addingSuggId() === prod.id) { Adding... } @else { Add to basket }
                   </button>
                 </div>
@@ -142,7 +147,7 @@
             <strong>{{ cart()!.total_amount | appCurrency }}</strong>
           </div>
 
-          <button class="checkout-btn" (click)="proceedToCheckout()">
+          <button class="checkout-btn" type="button" (click)="proceedToCheckout()">
             Continue to checkout
             <span class="material-icons-outlined">arrow_forward</span>
           </button>

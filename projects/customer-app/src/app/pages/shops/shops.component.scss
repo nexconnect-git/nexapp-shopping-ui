@@ -10,22 +10,23 @@
 .shops-toolbar,
 .shop-card,
 .shops-empty,
-.sort-sheet {
-  border: 1px solid rgba(234, 216, 196, 0.95);
-  background: rgba(255, 255, 255, 0.84);
-  box-shadow: 0 24px 60px rgba(64, 31, 15, 0.08);
-  backdrop-filter: blur(16px);
+.sort-sheet,
+.shops-summary {
+  border: 1px solid var(--nx-line);
+  background: #fff;
+  box-shadow: var(--surface-shadow-soft);
 }
 
 .shops-hero,
 .shops-toolbar,
 .shops-empty,
-.sort-sheet {
-  border-radius: 28px;
+.sort-sheet,
+.shops-summary {
+  border-radius: var(--radius-panel);
 }
 
 .shops-kicker {
-  color: var(--nx-orange-deep);
+  color: var(--nx-blue);
   text-transform: uppercase;
   letter-spacing: 0.12em;
   font-size: 0.72rem;
@@ -51,13 +52,28 @@
   }
 }
 
+.shops-summary {
+  margin-top: 0.75rem;
+  padding: 0.85rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--text-secondary);
+  font-weight: 700;
+
+  strong {
+    color: var(--text-primary);
+  }
+}
+
 .search-field {
   display: flex;
   align-items: center;
   gap: 0.7rem;
   padding: 0.9rem 1rem;
-  border-radius: 18px;
-  background: rgba(255, 248, 240, 0.9);
+  border-radius: 14px;
+  background: #f8fafc;
+  border: 1px solid var(--nx-line);
 
   input {
     flex: 1;
@@ -69,9 +85,9 @@
 
 .shops-toolbar select,
 .sort-btn {
-  border: 1px solid rgba(234, 216, 196, 0.95);
-  background: rgba(255, 248, 240, 0.92);
-  border-radius: 18px;
+  border: 1px solid var(--nx-line);
+  background: #f8fafc;
+  border-radius: 14px;
   padding: 0.95rem 1rem;
 }
 
@@ -87,6 +103,9 @@
 .sort-btn {
   font-weight: 700;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
 }
 
 .shops-grid {
@@ -97,7 +116,7 @@
 }
 
 .shop-card {
-  border-radius: 28px;
+  border-radius: var(--radius-card);
   overflow: hidden;
   text-decoration: none;
   color: inherit;
@@ -106,7 +125,7 @@
 .shop-media {
   position: relative;
   height: 220px;
-  background: rgba(255, 240, 223, 0.7);
+  background: #eef2f7;
 
   img {
     width: 100%;
@@ -165,7 +184,7 @@
   gap: 0.3rem;
   padding: 0.45rem 0.7rem;
   border-radius: 999px;
-  background: rgba(255, 240, 223, 0.9);
+  background: #fff7ed;
   color: var(--nx-orange-deep);
   font-weight: 800;
 }
@@ -212,7 +231,7 @@
 .sort-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(28, 16, 9, 0.4);
+  background: rgba(15, 23, 42, 0.48);
   display: grid;
   place-items: end center;
   padding: 1rem;
@@ -246,20 +265,21 @@
 
 .sort-option {
   padding: 0.95rem 1rem;
-  border-radius: 18px;
-  background: rgba(255, 248, 240, 0.9);
+  border-radius: 14px;
+  background: #f8fafc;
+  border: 1px solid transparent;
   cursor: pointer;
 
   &.active {
-    background: rgba(255, 240, 223, 0.95);
-    border: 1px solid rgba(255, 107, 44, 0.22);
+    background: #fff;
+    border: 1px solid rgba(249, 115, 22, 0.26);
   }
 }
 
 .apply-sort {
   width: 100%;
   border: 0;
-  border-radius: 18px;
+  border-radius: 14px;
   padding: 1rem;
   background: var(--primary-gradient);
   color: #fff;

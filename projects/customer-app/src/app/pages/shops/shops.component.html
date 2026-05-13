@@ -19,10 +19,24 @@
       }
     </select>
     @if (searchQuery) {
-      <button class="sort-btn" (click)="clearSearch()">Clear search</button>
+      <button class="sort-btn" type="button" (click)="clearSearch()">Clear search</button>
     }
-    <button class="sort-btn" (click)="openSortSheet()">{{ sortLabel() }}</button>
+    <button class="sort-btn" type="button" (click)="openSortSheet()">
+      <span class="material-icons-outlined">tune</span>
+      {{ sortLabel() }}
+    </button>
   </div>
+
+  @if (!loading()) {
+    <div class="shops-summary" aria-live="polite">
+      <span>{{ visibleVendors().length }} store{{ visibleVendors().length !== 1 ? 's' : '' }} found</span>
+      @if (cityFilter) {
+        <strong>{{ cityFilter }}</strong>
+      } @else {
+        <strong>All delivery cities</strong>
+      }
+    </div>
+  }
 
   @if (loading()) {
     <div class="shops-grid">
@@ -132,7 +146,7 @@
       <div class="sort-sheet" (click)="$event.stopPropagation()">
         <div class="sheet-head">
           <h3>Sort stores</h3>
-          <button (click)="showSortSheet = false"><span class="material-icons-outlined">close</span></button>
+          <button type="button" (click)="showSortSheet = false" aria-label="Close sort options"><span class="material-icons-outlined">close</span></button>
         </div>
         <div class="sort-options">
           @for (opt of sortOptions; track opt.value) {
@@ -142,7 +156,7 @@
             </label>
           }
         </div>
-        <button class="apply-sort" (click)="applySort()">Apply sort</button>
+        <button class="apply-sort" type="button" (click)="applySort()">Apply sort</button>
       </div>
     </div>
   }

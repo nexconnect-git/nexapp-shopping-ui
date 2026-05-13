@@ -1,6 +1,6 @@
 <section class="discover-page">
   <div class="discover-topbar">
-    <button class="icon-btn" (click)="goBack()">
+    <button class="icon-btn" type="button" (click)="goBack()" aria-label="Go back">
       <span class="material-icons-outlined">arrow_back</span>
     </button>
     <div class="search-box">
@@ -13,7 +13,7 @@
         placeholder="Search stores, products, ingredients or meals"
         autocomplete="off" />
       @if (queryValue) {
-        <button class="icon-btn ghost" (click)="queryValue = ''; storeResults.set([])">
+        <button class="icon-btn ghost" type="button" (click)="queryValue = ''; storeResults.set([])" aria-label="Clear search">
           <span class="material-icons-outlined">close</span>
         </button>
       }
@@ -32,7 +32,7 @@
 
         <div class="chip-row">
           @for (idea of quickIdeas; track idea) {
-            <button class="history-chip idea-chip" (click)="selectSearch(idea)">
+            <button class="history-chip idea-chip" type="button" (click)="selectSearch(idea)">
               <span class="material-icons-outlined">bolt</span>
               <span>{{ idea }}</span>
             </button>
@@ -42,7 +42,7 @@
         @if (quickCategories().length > 0) {
           <div class="category-shortcuts">
             @for (category of quickCategories(); track category.id) {
-              <button class="category-shortcut" (click)="selectCategory(category)">
+              <button class="category-shortcut" type="button" (click)="selectCategory(category)">
                 <span class="material-icons-outlined">category</span>
                 <div>
                   <strong>{{ category.name }}</strong>
@@ -64,7 +64,7 @@
           </div>
           <div class="chip-row">
             @for (q of pastSearches(); track q) {
-              <button class="history-chip" (click)="selectSearch(q)">
+              <button class="history-chip" type="button" (click)="selectSearch(q)">
                 <span class="material-icons-outlined">history</span>
                 <span>{{ q }}</span>
                 <span class="material-icons-outlined remove" (click)="removeSearch(q, $event)">close</span>
@@ -91,7 +91,7 @@
         } @else {
           <div class="popular-grid">
             @for (v of popularVendors(); track v.id) {
-              <button class="popular-card" (click)="selectVendor(v.id)">
+              <button class="popular-card" type="button" (click)="selectVendor(v.id)">
                 <div class="popular-media">
                   @if (v.logo) {
                     <img [src]="v.logo" [alt]="v.store_name" loading="lazy">
@@ -130,7 +130,7 @@
           <strong>Open shops with this item</strong>
         </div>
         @for (v of storeResults(); track v.id) {
-          <button class="result-row" (click)="selectVendor(v.id)">
+          <button class="result-row" type="button" (click)="selectVendor(v.id)">
             <div class="result-media">
               @if (v.logo) {
                 <img [src]="v.logo" [alt]="v.store_name" loading="lazy">
@@ -167,12 +167,12 @@
           <p>Try a broader item, ingredient, cuisine or store name.</p>
           <div class="chip-row">
             @for (idea of quickIdeas.slice(0, 3); track idea) {
-              <button class="history-chip idea-chip" (click)="selectSearch(idea)">{{ idea }}</button>
+              <button class="history-chip idea-chip" type="button" (click)="selectSearch(idea)">{{ idea }}</button>
             }
           </div>
         </div>
       } @else {
-        <button class="show-all-btn" (click)="showAll()">
+        <button class="show-all-btn" type="button" (click)="showAll()">
           Show every result for <strong>{{ queryValue }}</strong>
           <span class="material-icons-outlined">arrow_forward</span>
         </button>

@@ -16,7 +16,7 @@
 
   <div class="status-row">
     @for (tab of statusTabs; track tab.value) {
-      <button class="status-chip" [class.active]="activeStatus() === tab.value" (click)="setStatus(tab.value)">
+      <button class="status-chip" type="button" [class.active]="activeStatus() === tab.value" (click)="setStatus(tab.value)">
         {{ tab.label }}
       </button>
     }
