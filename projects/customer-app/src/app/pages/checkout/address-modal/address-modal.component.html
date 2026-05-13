@@ -29,6 +29,13 @@
           </select>
         </div>
 
+        @if (form.label === 'other') {
+          <div class="am-field">
+            <label class="am-label">Address name *</label>
+            <input class="am-input" type="text" [(ngModel)]="form.landmark" name="landmark" placeholder="Eg: Mom's house, Hostel, Front gate" required>
+          </div>
+        }
+
         <div class="am-row">
           <div class="am-field">
             <label class="am-label">Full Name *</label>

@@ -55,7 +55,7 @@
           <span class="hero-live-pill">Live</span>
         </div>
         <div class="hero-chip-row">
-          @for (cat of categories().slice(1, 6); track cat.id) {
+          @for (cat of visibleCategories().slice(1, 6); track cat.id) {
             <button class="hero-chip" type="button" (click)="selectCategory(cat.id)">
               <span class="material-icons-outlined" [style.color]="cat.color">{{ cat.icon }}</span>
               {{ cat.name }}
@@ -151,7 +151,7 @@
     </div>
 
     <div class="category-grid" aria-label="Customer categories">
-      @for (cat of categories(); track cat.id) {
+      @for (cat of visibleCategories(); track cat.id) {
         <button class="category-card" type="button" [class.active]="selectedCategory() === cat.id" (click)="selectCategory(cat.id)">
           <span class="category-icon" [style.background]="cat.bg">
             <span class="material-icons-outlined" [style.color]="cat.color">{{ cat.icon }}</span>
@@ -380,8 +380,8 @@
                 @if (v.distance_km) {
                   <span><span class="material-icons-outlined">near_me</span>{{ v.distance_km }} km</span>
                 }
-                @if (v.min_order_amount) {
-                  <span><span class="material-icons-outlined">payments</span>Min {{ v.min_order_amount | number:'1.0-0' }}</span>
+                @if (hasMinimumOrder(v)) {
+                  <span><span class="material-icons-outlined">payments</span>Min {{ v.min_order_amount | appCurrency }}</span>
                 }
               </div>
             </div>

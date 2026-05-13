@@ -2,7 +2,7 @@ import { Component, inject, signal, OnInit, OnDestroy, computed } from '@angular
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { AlertService, ApiService, AuthService, Category, Vendor, LocationService } from '@shared/public-api';
+import { AlertService, ApiService, AppCurrencyPipe, AuthService, Category, Vendor, LocationService } from '@shared/public-api';
 
 export interface PlatformBanner {
   id: string;
@@ -28,7 +28,7 @@ interface DisplayCategory {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, DecimalPipe],
+  imports: [CommonModule, RouterLink, FormsModule, DecimalPipe, AppCurrencyPipe],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss'
 })
@@ -69,10 +69,41 @@ export class HomeComponent implements OnInit, OnDestroy {
     { id: 'all', uuid: '', name: 'All', icon: 'grid_view', color: '#2563EB', bg: 'rgba(37,99,235,0.1)', children: [] }
   ]);
 
+  readonly availableCategorySlugs = computed(() => {
+    const slugs = new Set<string>();
+    for (const vendor of this.allVendors()) {
+      for (const product of vendor.products || []) {
+        const category = product.category;
+        if (category?.slug) slugs.add(category.slug);
+      }
+    }
+    return slugs;
+  });
+
+  readonly visibleCategories = computed<DisplayCategory[]>(() => {
+    const [allCategory, ...catalogCategories] = this.categories();
+    const availableSlugs = this.availableCategorySlugs();
+
+    if (this.loadingVendors()) {
+      return this.categories();
+    }
+
+    const visible = catalogCategories
+      .map((category) => {
+        const visibleChildren = category.children.filter((child) => availableSlugs.has(child.id));
+        const hasRootProducts = availableSlugs.has(category.id);
+        if (!hasRootProducts && visibleChildren.length === 0) return null;
+        return { ...category, children: visibleChildren };
+      })
+      .filter((category): category is DisplayCategory => Boolean(category));
+
+    return [allCategory, ...visible];
+  });
+
   /** Subcategories of the currently selected root category */
   currentSubcategories = computed<DisplayCategory[]>(() => {
     if (this.selectedCategory() === 'all') return [];
-    return this.categories().find(c => c.id === this.selectedCategory())?.children ?? [];
+    return this.visibleCategories().find(c => c.id === this.selectedCategory())?.children ?? [];
   });
 
   /** Name of the currently selected sub-category (for template display) */
@@ -193,6 +224,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         const vendors = (Array.isArray(res) ? res : (res.results || res)) as Vendor[];
         this.allVendors.set(vendors);
         this.filteredVendors.set(this.applyOpenFilter(vendors));
+        this.ensureSelectedCategoryIsAvailable();
         this.loadingVendors.set(false);
       },
       error: () => this.loadingVendors.set(false)
@@ -235,7 +267,24 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   get selectedCategoryObj(): DisplayCategory | null {
-    return this.categories().find(c => c.id === this.selectedCategory()) ?? null;
+    return this.visibleCategories().find(c => c.id === this.selectedCategory()) ?? null;
+  }
+
+  private ensureSelectedCategoryIsAvailable() {
+    const selected = this.selectedCategory();
+    if (selected === 'all') return;
+
+    const category = this.visibleCategories().find((item) => item.id === selected);
+    if (!category) {
+      this.selectedCategory.set('all');
+      this.selectedSubCategory.set(null);
+      return;
+    }
+
+    const sub = this.selectedSubCategory();
+    if (sub && !category.children.some((child) => child.id === sub)) {
+      this.selectedSubCategory.set(null);
+    }
   }
 
   reorder(orderId: string, event?: Event) {
@@ -262,5 +311,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   starsFor(rating: number): string {
     const full = Math.round(rating);
     return '★'.repeat(full) + '☆'.repeat(5 - full);
+  }
+
+  hasMinimumOrder(vendor: Vendor): boolean {
+    return Number(vendor.min_order_amount || 0) > 0;
   }
 }

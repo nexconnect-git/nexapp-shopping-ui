@@ -25,6 +25,7 @@ export class AddressModalComponent {
   private blankForm() {
     return {
       label: 'home' as 'home' | 'work' | 'other',
+      landmark: '',
       full_name: '',
       phone: '',
       address_line1: '',
@@ -52,9 +53,13 @@ export class AddressModalComponent {
       this.formError.set('Full name and address are required.');
       return;
     }
+    if (this.form.label === 'other' && !this.form.landmark.trim()) {
+      this.formError.set('Please enter a name for this address.');
+      return;
+    }
     this.saving.set(true);
     this.formError.set('');
-    this.api.createAddress(this.form).subscribe({
+    this.api.createAddress(this.addressPayload()).subscribe({
       next: (addr: Address) => {
         this.saving.set(false);
         this.created.emit(addr);
@@ -69,5 +74,12 @@ export class AddressModalComponent {
 
   cancel() {
     this.cancelled.emit();
+  }
+
+  private addressPayload() {
+    return {
+      ...this.form,
+      landmark: this.form.label === 'other' ? this.form.landmark.trim() : '',
+    };
   }
 }

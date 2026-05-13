@@ -3,7 +3,8 @@
 .shops-page {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 1rem 1.25rem 2rem;
+  padding: 1rem 1.25rem 3rem;
+  animation: pageFade 280ms ease both;
 }
 
 .shops-hero,
@@ -36,15 +37,19 @@
 .shops-hero {
   padding: 1.25rem;
 
-  h1 { margin: 0.5rem 0 0; font-size: clamp(2rem, 3vw, 3rem); }
+  h1 { margin: 0.5rem 0 0; font-size: clamp(1.65rem, 3vw, 2.55rem); line-height: 1.08; }
   p { margin: 0.5rem 0 0; color: var(--text-secondary); }
+}
+
+.shops-hero + .shops-grid {
+  margin-top: 1rem;
 }
 
 .shops-toolbar {
   margin-top: 1rem;
   padding: 1rem;
   display: grid;
-  grid-template-columns: 1.3fr repeat(3, auto);
+  grid-template-columns: minmax(260px, 1fr) minmax(150px, auto) auto auto;
   gap: 0.8rem;
 
   @media (max-width: 980px) {
@@ -77,6 +82,7 @@
 
   input {
     flex: 1;
+    min-width: 0;
     border: 0;
     background: transparent;
     outline: none;
@@ -89,15 +95,11 @@
   background: #f8fafc;
   border-radius: 14px;
   padding: 0.95rem 1rem;
+  min-height: 52px;
 }
 
-.toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
-  padding: 0.95rem 1rem;
-  border-radius: 18px;
-  background: rgba(255, 248, 240, 0.92);
+.shops-toolbar select {
+  max-width: 210px;
 }
 
 .sort-btn {
@@ -113,6 +115,12 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1rem;
+  transition: opacity 180ms ease, transform 180ms ease;
+
+  &.is-updating {
+    opacity: 0.58;
+    transform: translateY(4px);
+  }
 }
 
 .shop-card {
@@ -120,12 +128,22 @@
   overflow: hidden;
   text-decoration: none;
   color: inherit;
+  animation: cardIn 260ms ease both;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+
+  &:hover {
+    transform: translateY(-3px);
+    border-color: rgba(249, 115, 22, 0.24);
+    box-shadow: var(--surface-shadow);
+  }
 }
 
 .shop-media {
   position: relative;
-  height: 220px;
-  background: #eef2f7;
+  height: clamp(132px, 18vw, 176px);
+  background:
+    radial-gradient(circle at 78% 18%, rgba(249, 115, 22, 0.13), transparent 26%),
+    linear-gradient(135deg, #eef2f7, #f8fafc);
 
   img {
     width: 100%;
@@ -138,7 +156,11 @@
   height: 100%;
   display: grid;
   place-items: center;
-  color: var(--text-muted);
+  color: rgba(37, 99, 235, 0.34);
+
+  .material-icons-outlined {
+    font-size: 2.1rem;
+  }
 }
 
 .shop-overlay,
@@ -159,14 +181,14 @@
 
 .shop-flag {
   top: 1rem;
-  background: rgba(255,255,255,0.22);
-  color: #fff;
+  background: rgba(255,255,255,0.88);
+  color: var(--nx-orange-deep);
   text-transform: uppercase;
   letter-spacing: 0.12em;
 }
 
 .shop-copy {
-  padding: 1rem;
+  padding: 1rem 1rem 1.1rem;
 }
 
 .shop-row {
@@ -190,15 +212,15 @@
 }
 
 .shop-copy p {
-  margin: 0.55rem 0 0;
+  margin: 0.5rem 0 0;
   color: var(--text-secondary);
-  line-height: 1.55;
+  line-height: 1.45;
 }
 
 .shop-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.8rem;
+  gap: 0.65rem;
   margin-top: 0.9rem;
 
   span {
@@ -235,11 +257,14 @@
   display: grid;
   place-items: end center;
   padding: 1rem;
+  z-index: 1300;
+  animation: fadeIn 160ms ease both;
 }
 
 .sort-sheet {
   width: min(100%, 480px);
   padding: 1.2rem;
+  animation: sheetIn 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .sheet-head {
@@ -285,4 +310,63 @@
   color: #fff;
   font-weight: 800;
   cursor: pointer;
+}
+
+@keyframes pageFade {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes sheetIn {
+  from { opacity: 0; transform: translateY(18px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 640px) {
+  .shops-page {
+    padding: 0.75rem 0.85rem 6rem;
+  }
+
+  .shops-hero,
+  .shops-toolbar,
+  .shops-summary {
+    border-radius: var(--radius-card);
+  }
+
+  .shops-toolbar select {
+    max-width: none;
+    width: 100%;
+  }
+
+  .shops-summary {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .shop-media {
+    height: 120px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shops-page,
+  .shop-card,
+  .sort-backdrop,
+  .sort-sheet {
+    animation: none;
+  }
+
+  .shops-grid {
+    transition: none;
+  }
 }

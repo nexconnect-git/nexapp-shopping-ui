@@ -41,7 +41,7 @@
                 <label class="address-card" [class.active]="selectedAddressId === addr.id" (click)="selectAddress(addr.id)">
                   <input type="radio" [value]="addr.id" [(ngModel)]="selectedAddressId" hidden>
                   <div>
-                    <strong>{{ addr.label | titlecase }}</strong>
+                    <strong>{{ addressLabel(addr) }}</strong>
                     <span>{{ addr.address_line1 }}, {{ addr.city }}</span>
                   </div>
                   @if (selectedAddressId === addr.id) {
@@ -238,7 +238,6 @@
                       <span>{{ fee.vendor_name }}</span>
                       <small>
                         {{ fee.distance_km }} km · {{ fee.estimated_delivery_label }}
-                        @if (fee.vehicle_type) { · {{ fee.vehicle_type }} }
                       </small>
                     </div>
                     <strong>{{ fee.delivery_fee | appCurrency }}</strong>

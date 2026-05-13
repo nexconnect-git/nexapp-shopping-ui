@@ -1,5 +1,5 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
-import { CommonModule, TitleCasePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AddressModalComponent } from './address-modal/address-modal.component';
@@ -26,7 +26,7 @@ const ONLINE_PAYMENT_OPTIONS = [
 @Component({
   selector: 'app-checkout',
   standalone: true,
-  imports: [CommonModule, FormsModule, AppCurrencyPipe, TitleCasePipe, AddressModalComponent],
+  imports: [CommonModule, FormsModule, AppCurrencyPipe, AddressModalComponent],
   templateUrl: './checkout.component.html',
   styleUrl: './checkout.component.scss'
 })
@@ -194,6 +194,12 @@ export class CheckoutComponent implements OnInit {
 
   get selectedAddress(): Address | undefined {
     return this.addresses().find(a => a.id === this.selectedAddressId);
+  }
+
+  addressLabel(addr: Address): string {
+    if (addr.label === 'home') return 'Home';
+    if (addr.label === 'work') return 'Work';
+    return addr.landmark?.trim() || 'Other';
   }
 
   get deliveryFee(): number {
@@ -412,7 +418,7 @@ export class CheckoutComponent implements OnInit {
   private openFarDeliveryConfirmation(onConfirm: () => void, quotes?: any[]) {
     const farQuotes = quotes?.length ? quotes : this.deliveryFeePreview()?.far_delivery_quotes || [];
     const message = farQuotes.map((quote: any) => (
-      `${quote.vendor_name}: ${quote.distance_km} km away · ETA ${quote.far_order_eta_label || quote.estimated_delivery_label} · ${quote.vehicle_type}`
+      `${quote.vendor_name}: ${quote.distance_km} km away · ETA ${quote.far_order_eta_label || quote.estimated_delivery_label}`
     )).join('\n');
     this.alerts.openModal({
       title: 'This order is from farther away',

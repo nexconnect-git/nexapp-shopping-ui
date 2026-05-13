@@ -12,8 +12,8 @@
       <span class="material-icons-outlined">search</span>
       <input [(ngModel)]="searchQuery" (ngModelChange)="onSearch()" placeholder="Search nearby or same-state stores">
     </div>
-    <select [(ngModel)]="cityFilter">
-      <option value="">All cities</option>
+    <select [ngModel]="cityFilter()" (ngModelChange)="setCityFilter($event)" aria-label="Filter stores by delivery area">
+      <option value="">All delivery areas</option>
       @for (city of cities(); track city) {
         <option [value]="city">{{ city }}</option>
       }
@@ -30,11 +30,7 @@
   @if (!loading()) {
     <div class="shops-summary" aria-live="polite">
       <span>{{ visibleVendors().length }} store{{ visibleVendors().length !== 1 ? 's' : '' }} found</span>
-      @if (cityFilter) {
-        <strong>{{ cityFilter }}</strong>
-      } @else {
-        <strong>All delivery cities</strong>
-      }
+      <strong>{{ selectedCityLabel() }}</strong>
     </div>
   }
 
@@ -59,7 +55,7 @@
           <p>These are the stores available for your instant local delivery zone.</p>
         </div>
       </div>
-      <div class="shops-grid">
+      <div class="shops-grid" [class.is-updating]="filtering()">
         @for (v of nearbyVendors(); track v.id) {
           <a [routerLink]="['/shop', v.id]" class="shop-card">
             <div class="shop-media">
@@ -88,8 +84,8 @@
                 @if (v.estimated_delivery_label) {
                   <span><span class="material-icons-outlined">schedule</span>{{ v.estimated_delivery_label }}</span>
                 }
-                @if (v.min_order_amount) {
-                  <span><span class="material-icons-outlined">payments</span>Min {{ v.min_order_amount }}</span>
+                @if (hasMinimumOrder(v)) {
+                  <span><span class="material-icons-outlined">payments</span>Min {{ v.min_order_amount | appCurrency }}</span>
                 }
               </div>
             </div>
@@ -106,7 +102,7 @@
           <p>Ordering from them will show a delivery warning with a longer ETA before checkout.</p>
         </div>
       </div>
-      <div class="shops-grid">
+      <div class="shops-grid" [class.is-updating]="filtering()">
         @for (v of farVendors(); track v.id) {
           <a [routerLink]="['/shop', v.id]" class="shop-card far-card">
             <div class="shop-media">
@@ -129,9 +125,6 @@
                 }
                 @if (v.far_order_eta_label) {
                   <span><span class="material-icons-outlined">schedule</span>{{ v.far_order_eta_label }}</span>
-                }
-                @if (v.vehicle_type) {
-                  <span><span class="material-icons-outlined">local_shipping</span>{{ v.vehicle_type }}</span>
                 }
               </div>
             </div>

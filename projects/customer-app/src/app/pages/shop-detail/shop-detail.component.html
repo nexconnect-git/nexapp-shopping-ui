@@ -24,7 +24,10 @@
     </div>
 
     <div class="shop-hero">
-      <div class="shop-hero-media" [style.background-image]="vendor()!.banner ? 'linear-gradient(180deg, rgba(35,22,15,0.18), rgba(35,22,15,0.66)), url(' + vendor()!.banner + ')' : ''">
+      <div
+        class="shop-hero-media"
+        [class.no-banner]="!vendor()!.banner"
+        [style.background-image]="vendor()!.banner ? 'linear-gradient(180deg, rgba(35,22,15,0.18), rgba(35,22,15,0.66)), url(' + vendor()!.banner + ')' : ''">
         @if (!vendor()!.banner) {
           <div class="shop-placeholder"><span class="material-icons-outlined">storefront</span></div>
         }

@@ -36,6 +36,7 @@ export interface Address {
   phone: string;
   address_line1: string;
   address_line2: string;
+  landmark?: string;
   city: string;
   state: string;
   postal_code: string;

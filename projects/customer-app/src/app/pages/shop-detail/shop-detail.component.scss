@@ -72,26 +72,56 @@
 }
 
 .shop-hero-media {
-  min-height: 380px;
+  position: relative;
+  min-height: clamp(300px, 34vw, 420px);
   background-size: cover;
   background-position: center;
+  overflow: hidden;
+
+  &.no-banner {
+    background:
+      radial-gradient(circle at 82% 18%, rgba(249, 115, 22, 0.18), transparent 28%),
+      radial-gradient(circle at 16% 6%, rgba(37, 99, 235, 0.13), transparent 30%),
+      linear-gradient(135deg, #ffffff 0%, #f8fafc 46%, #fff7ed 100%);
+  }
 }
 
 .shop-placeholder {
-  min-height: 380px;
+  position: absolute;
+  inset: 0;
   display: grid;
-  place-items: center;
-  color: var(--text-muted);
+  place-items: start end;
+  padding: 2rem;
+  color: rgba(37, 99, 235, 0.12);
+  pointer-events: none;
+
+  .material-icons-outlined {
+    font-size: clamp(5rem, 12vw, 10rem);
+    max-width: none;
+  }
 }
 
 .shop-hero-overlay {
-  min-height: 380px;
+  position: relative;
+  min-height: clamp(300px, 34vw, 420px);
   padding: 2rem;
   display: flex;
   align-items: end;
   gap: 1.25rem;
   background: linear-gradient(180deg, rgba(35, 22, 15, 0.06), rgba(35, 22, 15, 0.72));
   color: #fff;
+
+  @media (max-width: 720px) {
+    align-items: flex-start;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 1.25rem;
+  }
+}
+
+.shop-hero-media.no-banner .shop-hero-overlay {
+  background: linear-gradient(180deg, rgba(255,255,255,0.38), rgba(255,247,237,0.92));
+  color: var(--text-primary);
 }
 
 .shop-logo-wrap {
@@ -111,6 +141,12 @@
   }
 
   span { font-size: 2rem; font-weight: 900; }
+}
+
+.shop-hero-media.no-banner .shop-logo-wrap {
+  background: var(--primary-gradient);
+  color: #fff;
+  box-shadow: var(--primary-shadow);
 }
 
 .shop-tag,
@@ -135,6 +171,16 @@
   }
 }
 
+.shop-hero-media.no-banner .shop-tag {
+  background: #ecfdf5;
+  color: var(--nx-green);
+
+  &.closed {
+    background: #fef2f2;
+    color: var(--nx-red);
+  }
+}
+
 .shop-hero-copy h1,
 .menu-head h2 {
   margin: 0;
@@ -146,6 +192,11 @@
   max-width: 620px;
   opacity: 0.9;
   line-height: 1.6;
+}
+
+.shop-hero-media.no-banner .shop-hero-copy p {
+  color: var(--text-secondary);
+  opacity: 1;
 }
 
 .shop-meta,
@@ -162,6 +213,10 @@
     align-items: center;
     gap: 0.35rem;
   }
+}
+
+.shop-hero-media.no-banner .shop-meta span {
+  color: var(--text-secondary);
 }
 
 .shop-hero-actions,

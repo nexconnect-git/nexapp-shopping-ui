@@ -3,7 +3,7 @@
     <div>
       <span class="page-kicker">Delivery setup</span>
       <h1>Saved addresses</h1>
-      <p>Manage where orders can arrive, and set a default handoff point for faster checkout.</p>
+      <p>Choose the address NexConnect should use for nearby stores, delivery estimates and checkout.</p>
     </div>
     <button class="primary-btn" (click)="openForm()">Add address</button>
   </div>
@@ -11,6 +11,19 @@
   @if (loading()) {
     <div class="addresses-loading"><div class="spinner"></div></div>
   } @else {
+    @if (pageMessage()) {
+      <div class="notice-row success" role="status">
+        <span class="material-icons-outlined">check_circle</span>
+        <span>{{ pageMessage() }}</span>
+      </div>
+    }
+    @if (pageError()) {
+      <div class="notice-row error" role="alert">
+        <span class="material-icons-outlined">error_outline</span>
+        <span>{{ pageError() }}</span>
+      </div>
+    }
+
     @if (addresses().length === 0 && !showForm()) {
       <div class="empty-panel">
         <span class="material-icons-outlined">location_off</span>
@@ -22,17 +35,25 @@
 
     <div class="address-grid">
       @for (addr of addresses(); track addr.id) {
-        <article class="address-card" [class.default]="addr.is_default">
+        <article
+          class="address-card"
+          [class.default]="addr.is_default"
+          tabindex="0"
+          role="button"
+          [attr.aria-pressed]="addr.is_default"
+          [attr.aria-label]="'Deliver to ' + addressSummary(addr)"
+          (click)="selectAddress(addr)"
+          (keydown)="onCardKeydown($event, addr)">
           <div class="address-head">
             <div>
-              <span class="label-chip">{{ addr.label }}</span>
+              <span class="label-chip">{{ displayLabel(addr) }}</span>
               @if (addr.is_default) {
                 <span class="default-chip">Default</span>
               }
             </div>
             <div class="card-actions">
-              <button (click)="editAddress(addr)"><span class="material-icons-outlined">edit</span></button>
-              <button class="danger" (click)="deleteAddress(addr.id)"><span class="material-icons-outlined">delete_outline</span></button>
+              <button type="button" (click)="editAddress(addr, $event)" aria-label="Edit address"><span class="material-icons-outlined">edit</span></button>
+              <button type="button" class="danger" (click)="deleteAddress(addr.id, $event)" aria-label="Delete address"><span class="material-icons-outlined">delete_outline</span></button>
             </div>
           </div>
           <h2>{{ addr.full_name }}</h2>
@@ -41,6 +62,22 @@
           @if (addr.phone) {
             <small>{{ addr.phone }}</small>
           }
+          <div class="address-card-foot">
+            @if (canUseForDelivery(addr)) {
+              <span><span class="material-icons-outlined">near_me</span>Ready for delivery estimates</span>
+            } @else {
+              <span class="warning"><span class="material-icons-outlined">location_searching</span>Pin this address on the map for accurate stores</span>
+            }
+            <button type="button" class="select-btn" [disabled]="selecting() === addr.id || addr.is_default">
+              @if (selecting() === addr.id) {
+                Selecting...
+              } @else if (addr.is_default) {
+                Selected
+              } @else {
+                Deliver here
+              }
+            </button>
+          </div>
         </article>
       }
     </div>
@@ -78,6 +115,13 @@
                 </select>
               </label>
             </div>
+
+            @if (form.label === 'other') {
+              <label>
+                <span>Address name</span>
+                <input [(ngModel)]="form.landmark" name="landmark" placeholder="Eg: Mom's house, Hostel, Front gate" required>
+              </label>
+            }
 
             <div class="field-grid two">
               <label><span>Full name</span><input [(ngModel)]="form.full_name" name="full_name" required></label>

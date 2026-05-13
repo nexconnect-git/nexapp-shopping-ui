@@ -28,6 +28,7 @@ export class SearchComponent implements OnInit, AfterViewInit {
   pastSearches = signal<string[]>([]);
   popularVendors = signal<Vendor[]>([]);
   quickCategories = signal<any[]>([]);
+  private allQuickCategories: any[] = [];
   quickIdeas = ['Milk & bread', 'Fresh vegetables', 'Chicken biryani', 'Pain relief', 'Bakery'];
 
   private timer: any;
@@ -59,6 +60,7 @@ export class SearchComponent implements OnInit, AfterViewInit {
     request$.subscribe({
       next: (res) => {
         this.popularVendors.set((res.results || res).slice(0, 12));
+        this.refreshQuickCategories();
         this.loadingPopular.set(false);
       },
       error: () => this.loadingPopular.set(false),
@@ -68,11 +70,26 @@ export class SearchComponent implements OnInit, AfterViewInit {
   loadQuickCategories() {
     this.api.getCategories().subscribe({
       next: (res) => {
-        const categories = (res.results || res).filter((c: any) => c.show_in_customer_ui !== false).slice(0, 6);
-        this.quickCategories.set(categories);
+        this.allQuickCategories = (res.results || res).filter((c: any) => c.show_in_customer_ui !== false);
+        this.refreshQuickCategories();
       },
       error: () => this.quickCategories.set([]),
     });
+  }
+
+  private refreshQuickCategories() {
+    if (!this.allQuickCategories.length) return;
+    const availableSlugs = new Set<string>();
+    for (const vendor of this.popularVendors()) {
+      for (const product of vendor.products || []) {
+        if (product.category?.slug) availableSlugs.add(product.category.slug);
+      }
+    }
+    const categories = this.allQuickCategories.filter((category) => {
+      if (availableSlugs.has(category.slug)) return true;
+      return (category.children || []).some((child: any) => availableSlugs.has(child.slug));
+    });
+    this.quickCategories.set(categories.slice(0, 6));
   }
 
   onSearch() {
