@@ -1,10 +1,12 @@
 <div class="vendors-page">
-  <div class="page-header">
-    <div>
+  <section class="admin-page-hero">
+    <div class="admin-page-copy">
+      <span class="eyebrow">Marketplace</span>
       <h1 class="page-title">Vendors</h1>
-      <p class="page-subtitle">{{ total() }} vendor{{ total() !== 1 ? 's' : '' }} registered</p>
+      <p>{{ total() }} vendor{{ total() !== 1 ? 's' : '' }} registered across onboarding, approvals, and store operations.</p>
     </div>
-    <div class="reload-bar">
+    <div class="admin-page-actions">
+      <div class="reload-bar">
       @if (lastRefreshed()) {
         <span class="reload-timestamp">Updated {{ lastRefreshed() | date:'HH:mm:ss' }}</span>
       }
@@ -17,10 +19,21 @@
         {{ autoReload() ? 'Auto' : 'Paused' }}
       </button>
     </div>
-    <div class="header-actions">
-      <div class="filters">
+      <button class="btn-create" routerLink="/vendors/onboard">
+        <span class="material-icons-outlined">person_add</span>
+        Create Vendor
+      </button>
+    </div>
+  </section>
+
+  <section class="admin-toolbar">
+      <label class="toolbar-search">
+        <span class="material-icons-outlined">search</span>
         <input class="filter-input" type="search" [(ngModel)]="search" (input)="onSearch()"
           placeholder="Search vendors...">
+      </label>
+      <label class="toolbar-field">
+        <span>Status</span>
         <select class="filter-input" [(ngModel)]="statusFilter" (change)="load()">
           <option value="">All Status</option>
           <option value="pending">Pending</option>
@@ -28,13 +41,8 @@
           <option value="suspended">Suspended</option>
           <option value="rejected">Rejected</option>
         </select>
-      </div>
-      <button class="btn-create" routerLink="/vendors/onboard">
-        <span class="material-icons-outlined">person_add</span>
-        Create Vendor
-      </button>
-    </div>
-  </div>
+      </label>
+  </section>
 
   <app-dynamic-table
     [loading]="loading()"

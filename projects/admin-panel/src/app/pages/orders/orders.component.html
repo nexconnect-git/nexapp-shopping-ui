@@ -1,10 +1,12 @@
-<div>
-  <div class="page-header">
-    <div>
+<div class="admin-workspace orders-workspace">
+  <section class="admin-page-hero">
+    <div class="admin-page-copy">
+      <span class="eyebrow">Fulfillment</span>
       <h1 class="page-title">Orders</h1>
-      <p class="page-subtitle">{{ total() }} total orders</p>
+      <p>{{ total() }} total orders across customer, vendor, and delivery workflows.</p>
     </div>
-    <div class="reload-bar">
+    <div class="admin-page-actions">
+      <div class="reload-bar">
       @if (lastRefreshed()) {
         <span class="reload-timestamp">Updated {{ lastRefreshed() | date:'HH:mm:ss' }}</span>
       }
@@ -17,9 +19,17 @@
         {{ autoReload() ? 'Auto' : 'Paused' }}
       </button>
     </div>
-    <div class="filters">
+    </div>
+  </section>
+
+  <section class="admin-toolbar">
+    <label class="toolbar-search">
+      <span class="material-icons-outlined">search</span>
       <input class="filter-input" type="search" [(ngModel)]="search"
         (input)="onSearch()" placeholder="Search order #...">
+    </label>
+    <label class="toolbar-field">
+      <span>Status</span>
       <select class="filter-input" [(ngModel)]="statusFilter" (change)="load()">
         <option value="">All Status</option>
         <option value="placed">Placed</option>
@@ -31,8 +41,8 @@
         <option value="delivered">Delivered</option>
         <option value="cancelled">Cancelled</option>
       </select>
-    </div>
-  </div>
+    </label>
+  </section>
 
   <app-dynamic-table
     [loading]="loading()"

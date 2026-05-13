@@ -1,13 +1,19 @@
 <div class="product-form-page fade-in">
-  <div class="page-header">
-    <div>
+  <section class="page-hero">
+    <div class="page-hero-copy">
+      <span class="eyebrow">{{ editMode() ? 'Catalog editor' : 'New products' }}</span>
       <h1>{{ editMode() ? (editProduct()?.name || 'Edit Product') : 'Add Catalog Variants' }}</h1>
-      <p class="page-subtitle">
+      <p>
         {{ editMode() ? 'Update live selling fields anytime. Customer-facing changes go back to admin review.' : 'Select base catalog items, customize vendor variants, validate, and submit for approval.' }}
       </p>
     </div>
-    <a routerLink="/products" class="btn-outline">Products</a>
-  </div>
+    <div class="page-hero-actions">
+      <a routerLink="/products" class="btn-outline">
+        <span class="material-icons-outlined">arrow_back</span>
+        Products
+      </a>
+    </div>
+  </section>
 
   @if (formError()) {
     <div class="growth-alert">

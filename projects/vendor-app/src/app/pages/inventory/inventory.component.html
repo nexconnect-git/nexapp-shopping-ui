@@ -1,15 +1,21 @@
 <div class="inventory-page">
-  <div class="page-header">
-    <div>
+  <section class="page-hero">
+    <div class="page-hero-copy">
+      <span class="eyebrow">Stock control</span>
       <h1 class="page-title">Inventory</h1>
-      <p class="page-subtitle">Fast stock, availability, and product-readiness controls.</p>
+      <p>Fast stock, availability, and product-readiness controls.</p>
     </div>
-    <button class="btn-primary" (click)="bulkSaveVisible()">Save Visible Stock</button>
-  </div>
+    <div class="page-hero-actions">
+      <button class="btn-primary" (click)="bulkSaveVisible()">
+        <span class="material-icons-outlined">save</span>
+        Save Visible Stock
+      </button>
+    </div>
+  </section>
 
-  <div class="filters">
+  <div class="segmented-filters" role="tablist" aria-label="Inventory filters">
     @for (f of filters; track f.key) {
-      <button [class.active]="filter() === f.key" (click)="setFilter(f.key)">
+      <button type="button" [class.active]="filter() === f.key" (click)="setFilter(f.key)">
         {{ f.label }}
       </button>
     }
@@ -18,6 +24,17 @@
   @if (loading()) {
     <div class="state-card">Loading inventory...</div>
   } @else {
+    <div class="inventory-workbar">
+      <div>
+        <strong>{{ filteredProducts().length }}</strong>
+        <span>visible products</span>
+      </div>
+      <div>
+        <strong>{{ filteredProducts().length ? 'Ready' : 'Empty' }}</strong>
+        <span>{{ filter() === 'all' ? 'all inventory' : filter() }}</span>
+      </div>
+      <button class="btn-primary" (click)="bulkSaveVisible()">Save All Visible</button>
+    </div>
     <div class="inventory-table">
       @for (product of filteredProducts(); track product.id) {
         <article class="inventory-row">

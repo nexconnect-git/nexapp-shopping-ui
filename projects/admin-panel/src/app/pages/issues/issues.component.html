@@ -1,12 +1,14 @@
 <div class="issues-page">
 
   <!-- ── Header ──────────────────────────────────────── -->
-  <div class="page-header">
-    <div>
+  <section class="admin-page-hero">
+    <div class="admin-page-copy">
+      <span class="eyebrow">Exceptions</span>
       <h1 class="page-title">Order Issues</h1>
-      <p class="page-subtitle">Returns, refunds, damages & mismatches</p>
+      <p>Returns, refunds, damages, mismatches, and other customer-facing exceptions.</p>
     </div>
-    <div class="header-filters">
+  </section>
+  <div class="admin-toolbar header-filters">
       <input class="search-input" type="text" [(ngModel)]="search"
         (ngModelChange)="onSearch()" placeholder="Search order / customer…">
       <select class="filter-select" [(ngModel)]="filterType" (ngModelChange)="onFilterChange()">
@@ -19,7 +21,6 @@
           <option [value]="s.value">{{ s.label }}</option>
         }
       </select>
-    </div>
   </div>
 
   <!-- ── Table ────────────────────────────────────────── -->

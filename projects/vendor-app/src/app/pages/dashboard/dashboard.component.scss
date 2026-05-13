@@ -90,7 +90,7 @@
 }
 
 /* Warn metric card */
-.warn-card { border-color: rgba(245,158,11,0.3) !important; background: linear-gradient(135deg, #fffbeb, white) !important; }
+.warn-card { border-color: rgba(245,158,11,0.3) !important; background: var(--surface-alt); }
 
 /* Modals */
 .modal-backdrop {
@@ -178,5 +178,6 @@
 @media (max-width: 1024px) {
   .dashboard-grid { grid-template-columns: 1fr; }
 }
+
 
 

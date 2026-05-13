@@ -1,17 +1,16 @@
 <div class="products-page">
 
-  <!-- Page Header -->
-  <div class="page-header">
-    <div>
+  <section class="admin-page-hero">
+    <div class="admin-page-copy">
+      <span class="eyebrow">Catalog operations</span>
       <h1 class="page-title">Vendor Products</h1>
-      <p class="page-subtitle">{{ total() }} products across {{ vendorGroups().length }} vendors</p>
+      <p>{{ total() }} products across {{ vendorGroups().length }} vendors, grouped for operational review.</p>
     </div>
-  </div>
+  </section>
 
-  <!-- Toolbar -->
-  <div class="toolbar">
-    <div class="search-wrap">
-      <span class="material-icons-outlined search-icon">search</span>
+  <section class="admin-toolbar">
+    <label class="toolbar-search">
+      <span class="material-icons-outlined">search</span>
       <input
         class="search-input"
         type="search"
@@ -19,7 +18,9 @@
         (input)="onSearch()"
         placeholder="Search products or vendors..."
       >
-    </div>
+    </label>
+    <label class="toolbar-field">
+      <span>Status</span>
     <select class="filter-select" [(ngModel)]="statusFilter" (change)="onFilterChange()">
       <option value="all">All Statuses</option>
       <option value="active">Active</option>
@@ -28,7 +29,8 @@
       <option value="coming_soon">Coming Soon</option>
       <option value="archived">Archived</option>
     </select>
-  </div>
+    </label>
+  </section>
 
   <!-- Loading -->
   @if (loading()) {

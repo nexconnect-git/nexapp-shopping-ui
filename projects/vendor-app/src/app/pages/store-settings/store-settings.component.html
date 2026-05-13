@@ -1,18 +1,44 @@
 <div class="settings-page">
-  <div class="page-header">
-    <div>
+  <section class="page-hero">
+    <div class="page-hero-copy">
+      <span class="eyebrow">Store profile</span>
       <h1 class="page-title">Store Settings</h1>
-      <p class="page-subtitle">Control availability, instant-delivery behavior, operating rules, and storefront details.</p>
+      <p>Control availability, instant-delivery behavior, operating rules, and storefront details.</p>
     </div>
-    <button class="btn-primary" [disabled]="saving()" (click)="save()">Save Settings</button>
-  </div>
+    <div class="page-hero-actions">
+      <button class="btn-primary" [disabled]="saving()" (click)="save()">
+        <span class="material-icons-outlined">save</span>
+        Save Settings
+      </button>
+    </div>
+  </section>
 
   @if (loading()) {
     <div class="state-card">Loading store settings...</div>
   } @else {
+    <section class="settings-command-strip">
+      <div>
+        <span class="material-icons-outlined">store</span>
+        <strong>{{ settings.is_open ? 'Open' : 'Closed' }}</strong>
+        <small>Store status</small>
+      </div>
+      <div>
+        <span class="material-icons-outlined">receipt_long</span>
+        <strong>{{ settings.is_accepting_orders ? 'Accepting' : 'Paused' }}</strong>
+        <small>Order intake</small>
+      </div>
+      <div>
+        <span class="material-icons-outlined">bolt</span>
+        <strong>{{ settings.auto_order_acceptance ? 'Auto' : 'Manual' }}</strong>
+        <small>Order approval</small>
+      </div>
+    </section>
     <form class="settings-grid" (ngSubmit)="save()">
       <section class="panel">
-        <h2>Store Profile</h2>
+        <div class="panel-heading">
+          <h2>Store Profile</h2>
+          <span class="panel-kicker">Public storefront</span>
+        </div>
         <label>Store name <input [(ngModel)]="settings.store_name" name="store_name" /></label>
         <label>Description <textarea [(ngModel)]="settings.description" name="description"></textarea></label>
         <label>Phone <input [(ngModel)]="settings.phone" name="phone" /></label>
@@ -20,7 +46,10 @@
       </section>
 
       <section class="panel">
-        <h2>Availability</h2>
+        <div class="panel-heading">
+          <h2>Availability</h2>
+          <span class="panel-kicker">Shift controls</span>
+        </div>
         <label class="switch-row"><input type="checkbox" [(ngModel)]="settings.is_open" name="is_open" /> Store open</label>
         <label class="switch-row"><input type="checkbox" [(ngModel)]="settings.is_accepting_orders" name="is_accepting_orders" /> Accepting orders</label>
         <label class="switch-row"><input type="checkbox" [(ngModel)]="settings.auto_order_acceptance" name="auto_order_acceptance" /> Auto-accept orders</label>
@@ -31,7 +60,10 @@
       </section>
 
       <section class="panel">
-        <h2>Instant Delivery Rules</h2>
+        <div class="panel-heading">
+          <h2>Instant Delivery Rules</h2>
+          <span class="panel-kicker">Fulfillment settings</span>
+        </div>
         <div class="two-col">
           <label>Minimum order <input type="number" min="0" [(ngModel)]="settings.min_order_amount" name="min_order_amount" /></label>
           <label>Base prep minutes <input type="number" min="0" [(ngModel)]="settings.base_prep_time_min" name="base_prep_time_min" /></label>
@@ -70,7 +102,10 @@
       </section>
 
       <section class="panel wide">
-        <h2>Packaging And Cancellation</h2>
+        <div class="panel-heading">
+          <h2>Packaging And Cancellation</h2>
+          <span class="panel-kicker">Customer expectations</span>
+        </div>
         <label>Packaging preferences <textarea [(ngModel)]="settings.packaging_preferences" name="packaging_preferences"></textarea></label>
         <label>Cancellation rules <textarea [(ngModel)]="settings.cancellation_rules" name="cancellation_rules"></textarea></label>
       </section>

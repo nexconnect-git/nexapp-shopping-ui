@@ -1,11 +1,12 @@
 <div class="orders-page fade-in">
 
-  <!-- Page Header -->
-  <div class="page-header">
-    <div>
+  <section class="page-hero">
+    <div class="page-hero-copy">
+      <span class="eyebrow">Fulfillment</span>
       <h1>Orders</h1>
-      <p class="page-subtitle">View and manage customer orders</p>
+      <p>View, filter, and progress every customer order from placement through delivery.</p>
     </div>
+    <div class="page-hero-actions">
     <div class="reload-bar">
       @if (lastRefreshed()) {
         <span class="reload-timestamp">Updated {{ lastRefreshed() | date:'HH:mm:ss' }}</span>
@@ -19,7 +20,12 @@
         {{ autoReload() ? 'Auto' : 'Paused' }}
       </button>
     </div>
-    <div class="header-controls">
+    </div>
+  </section>
+
+  <section class="workspace-toolbar">
+    <div class="toolbar-field">
+      <label>Status</label>
       <div class="filter-wrapper">
         <span class="material-icons-outlined filter-icon">filter_list</span>
         <select class="form-input form-select filter-select" [(ngModel)]="statusFilter" (change)="onFilterChange()" aria-label="select">
@@ -33,7 +39,31 @@
         </select>
       </div>
     </div>
-  </div>
+  </section>
+
+  <section class="order-command-strip">
+    <div class="order-command-card">
+      <span class="material-icons-outlined">receipt_long</span>
+      <div>
+        <strong>{{ total() }}</strong>
+        <small>Total orders</small>
+      </div>
+    </div>
+    <div class="order-command-card">
+      <span class="material-icons-outlined">filter_alt</span>
+      <div>
+        <strong>{{ statusFilter || 'All' }}</strong>
+        <small>Current view</small>
+      </div>
+    </div>
+    <a routerLink="/live-orders" class="order-command-card action">
+      <span class="material-icons-outlined">view_kanban</span>
+      <div>
+        <strong>Live board</strong>
+        <small>Run active fulfillment</small>
+      </div>
+    </a>
+  </section>
 
   @if (loading()) {
     <div class="loading-state">
@@ -49,9 +79,13 @@
       </div>
     </div>
   } @else {
-    <div class="card">
+    <div class="card orders-workspace-card">
       <div class="card-header">
-        <span class="badge badge-secondary">{{ orders().length }} order(s)</span>
+        <div>
+          <h3>Order Queue</h3>
+          <p>{{ orders().length }} visible order(s), newest first.</p>
+        </div>
+        <span class="badge badge-secondary">{{ orders().length }} visible</span>
       </div>
       <div class="table-wrapper" style="border:none;border-radius:0;">
         <table class="data-table">

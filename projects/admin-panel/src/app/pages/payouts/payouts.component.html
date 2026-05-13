@@ -1,17 +1,20 @@
 <div class="payouts-page fade-in">
-  <div class="page-header">
-    <div>
+  <section class="admin-page-hero">
+    <div class="admin-page-copy">
+      <span class="eyebrow">Finance operations</span>
       <h1 class="page-title">Payout Analysis &amp; Processing</h1>
-      <p class="page-subtitle">Manage settlements for vendors and delivery partners</p>
+      <p>Manage settlements for vendors and delivery partners, including approvals, invoices, and transfer status.</p>
     </div>
-    <button class="new-payout-btn" (click)="openModal()">
-      <span class="material-icons-outlined">add_card</span>
-      New Payout
-    </button>
-  </div>
+    <div class="admin-page-actions">
+      <button class="new-payout-btn" (click)="openModal()">
+        <span class="material-icons-outlined">add_card</span>
+        New Payout
+      </button>
+    </div>
+  </section>
 
   <!-- Tabs -->
-  <div class="tabs-nav">
+  <div class="admin-tabs tabs-nav" role="tablist" aria-label="Payout type">
     <button class="tab-btn" [class.active]="activeTab() === 'vendors'" (click)="setTab('vendors')">
       <span class="material-icons-outlined">storefront</span>
       Vendor Payouts

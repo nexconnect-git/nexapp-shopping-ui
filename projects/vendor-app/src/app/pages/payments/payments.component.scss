@@ -128,7 +128,7 @@ small  { font-family: monospace; font-size: 0.8125rem; letter-spacing: 0.05em; }
 .modal-header {
   display: flex; align-items: center; gap: 1rem;
   padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-light);
-  background: linear-gradient(135deg, var(--primary-light) 0%, rgba(99,102,241,0.04) 100%);
+  background: var(--surface-alt);
 }
 .modal-header-icon {
   width: 40px; height: 40px; border-radius: var(--radius-lg); flex-shrink: 0;
@@ -177,3 +177,4 @@ small  { font-family: monospace; font-size: 0.8125rem; letter-spacing: 0.05em; }
 @keyframes backdropIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes modalIn { from { opacity: 0; transform: translateY(16px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
 .fade-in { animation: fadeIn 0.35s ease-out; }
+

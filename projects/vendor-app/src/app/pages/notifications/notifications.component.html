@@ -1,21 +1,37 @@
 <div class="notifications-page">
-  <div class="page-header">
-    <div>
+  <section class="page-hero">
+    <div class="page-hero-copy">
+      <span class="eyebrow">Inbox</span>
       <h1 class="page-title">Notifications</h1>
-      <p class="page-subtitle">Order, delivery, payout, approval, support, and system messages.</p>
+      <p>Order, delivery, payout, approval, support, and system messages.</p>
     </div>
-    <button class="btn-primary" (click)="markAllRead()">Mark All Read</button>
-  </div>
+    <div class="page-hero-actions">
+      <button class="btn-primary" (click)="markAllRead()">
+        <span class="material-icons-outlined">done_all</span>
+        Mark All Read
+      </button>
+    </div>
+  </section>
 
-  <div class="filters">
+  <div class="segmented-filters" role="tablist" aria-label="Notification filters">
     @for (type of filters; track type) {
-      <button [class.active]="filter() === type" (click)="setFilter(type)">{{ type | titlecase }}</button>
+      <button type="button" [class.active]="filter() === type" (click)="setFilter(type)">{{ type | titlecase }}</button>
     }
   </div>
 
   @if (loading()) {
     <div class="state-card">Loading notifications...</div>
   } @else {
+    <section class="inbox-summary">
+      <div>
+        <strong>{{ filtered().length }}</strong>
+        <span>{{ filter() | titlecase }} messages</span>
+      </div>
+      <div>
+        <strong>{{ filter() === 'all' ? 'Unified' : 'Filtered' }}</strong>
+        <span>Inbox mode</span>
+      </div>
+    </section>
     <div class="notification-list">
       @for (n of filtered(); track n.id) {
         <article class="notification-card" [class.unread]="!n.is_read">

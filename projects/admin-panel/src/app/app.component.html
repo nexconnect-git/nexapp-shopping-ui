@@ -1,54 +1,59 @@
 @if (auth.isLoggedIn()) {
   <div class="admin-layout" [class.sidebar-collapsed]="sidebarCollapsed()" [class.sidebar-open]="mobileMenuOpen()">
-    <aside class="sidebar">
+    <aside class="sidebar" aria-label="Admin navigation">
       <div class="sidebar-header">
         <div class="brand">
           <span class="brand-icon">NX</span>
           @if (!sidebarCollapsed()) {
             <span class="brand-text">
               NexConnect
-              <small>Instant commerce ops</small>
+              <small>Operations admin</small>
             </span>
           }
         </div>
-        <button class="toggle-btn" (click)="toggleSidebar()" title="Toggle navigation">
+        <button class="toggle-btn" type="button" (click)="toggleSidebar()" title="Toggle navigation">
           <span class="material-icons-outlined">{{ sidebarCollapsed() ? 'chevron_right' : 'chevron_left' }}</span>
         </button>
       </div>
 
+      @if (!sidebarCollapsed()) {
+        <div class="ops-status">
+          <span class="status-dot"></span>
+          <div>
+            <strong>Command mode</strong>
+            <span>Live marketplace monitoring</span>
+          </div>
+        </div>
+      }
+
       <nav class="sidebar-nav">
         @for (section of navSections; track section.label) {
-          <div class="nav-section">
+          <section class="nav-section">
             @if (!sidebarCollapsed()) {
               <span class="nav-section-label">{{ section.label }}</span>
             }
             @for (item of section.items; track item.route) {
-              <a class="menu-item" [routerLink]="item.route" routerLinkActive="active"
-                [routerLinkActiveOptions]="{exact: item.route === '/'}" (click)="mobileMenuOpen.set(false)">
+              <a
+                class="menu-item"
+                [routerLink]="item.route"
+                routerLinkActive="active"
+                [routerLinkActiveOptions]="{exact: item.route === '/'}"
+                (click)="closeMobileMenu()">
                 <span class="material-icons-outlined">{{ item.icon }}</span>
                 @if (!sidebarCollapsed()) {
                   <span class="nav-label">{{ item.label }}</span>
                 }
               </a>
             }
-          </div>
+          </section>
         }
       </nav>
 
       <div class="sidebar-footer">
-        @if (!sidebarCollapsed()) {
-          <div class="ops-status">
-            <span class="status-dot"></span>
-            <div>
-              <strong>Ops console</strong>
-              <span>Live monitoring enabled</span>
-            </div>
-          </div>
-        }
-        <button class="menu-item logout-btn" (click)="logout()">
+        <button class="menu-item logout-btn" type="button" (click)="logout()">
           <span class="material-icons-outlined">logout</span>
           @if (!sidebarCollapsed()) {
-            <span class="nav-label">Logout</span>
+            <span class="nav-label">Sign Out</span>
           }
         </button>
       </div>
@@ -56,18 +61,39 @@
 
     <div class="main-wrapper">
       <header class="top-bar">
-        <button class="mobile-toggle" (click)="toggleSidebar()">
-          <span class="material-icons-outlined">menu</span>
-        </button>
-
-        <div class="search-box">
-          <span class="material-icons-outlined">search</span>
-          <input type="text" placeholder="Search orders, stores, customers..." />
+        <div class="top-bar-left">
+          <button class="mobile-toggle" type="button" (click)="toggleSidebar()" aria-label="Open navigation">
+            <span class="material-icons-outlined">menu</span>
+          </button>
+          <div class="top-context">
+            <nav class="global-breadcrumbs" aria-label="Breadcrumb">
+              @for (crumb of breadcrumbs(); track crumb.label + ($index || 0)) {
+                @if (crumb.url && $index < breadcrumbs().length - 1) {
+                  <a [routerLink]="crumb.url">{{ crumb.label }}</a>
+                } @else {
+                  <span>{{ crumb.label }}</span>
+                }
+                @if ($index < breadcrumbs().length - 1) {
+                  <span class="material-icons-outlined">chevron_right</span>
+                }
+              }
+            </nav>
+            <h1>{{ pageTitle() }}</h1>
+          </div>
         </div>
 
         <div class="top-bar-actions">
+          <div class="quick-links" aria-label="Quick actions">
+            @for (link of quickLinks; track link.route) {
+              <a [routerLink]="link.route" title="{{ link.label }}">
+                <span class="material-icons-outlined">{{ link.icon }}</span>
+                <span>{{ link.label }}</span>
+              </a>
+            }
+          </div>
+
           <div class="notif-wrapper" (click)="$event.stopPropagation()">
-            <button class="btn-icon notification-btn" (click)="toggleNotif($event)" title="Notifications">
+            <button class="btn-icon notification-btn" type="button" (click)="toggleNotif($event)" title="Notifications">
               <span class="material-icons-outlined">notifications</span>
               @if (unreadCount() > 0) {
                 <span class="notification-badge">{{ unreadCount() > 9 ? '9+' : unreadCount() }}</span>
@@ -77,53 +103,57 @@
             @if (notifOpen()) {
               <div class="notif-dropdown">
                 <div class="notif-header">
-                  <span class="notif-title">Notifications</span>
+                  <div>
+                    <span class="notif-title">Notifications</span>
+                    <small>{{ unreadCount() }} unread</small>
+                  </div>
                   @if (unreadCount() > 0) {
-                    <button class="notif-mark-read" (click)="markAllRead()">Mark all read</button>
+                    <button class="notif-mark-read" type="button" (click)="markAllRead()">Mark all read</button>
                   }
                 </div>
 
                 @if (notifLoading()) {
                   <div class="notif-loading">
                     <div class="notif-spinner"></div>
+                    <span>Loading updates...</span>
                   </div>
                 } @else if (notifications().length === 0) {
                   <div class="notif-empty">
                     <span class="material-icons-outlined">notifications_none</span>
-                    <span>No notifications</span>
+                    <strong>No notifications</strong>
+                    <span>Operational alerts will appear here.</span>
                   </div>
                 } @else {
                   <div class="notif-list">
                     @for (n of notifications(); track n.id) {
-                      <div class="notif-item" [class.notif-unread]="!n.is_read" (click)="handleNotificationClick(n)" style="cursor: pointer;">
-                        <div class="notif-icon-wrap">
+                      <button class="notif-item" type="button" [class.notif-unread]="!n.is_read" (click)="handleNotificationClick(n)">
+                        <span class="notif-icon-wrap">
                           <span class="material-icons-outlined">{{ notifIcon(n.notification_type) }}</span>
-                        </div>
-                        <div class="notif-body">
-                          <p class="notif-message">{{ n.message }}</p>
+                        </span>
+                        <span class="notif-body">
+                          <span class="notif-message">{{ n.message }}</span>
                           <span class="notif-time">{{ n.created_at | date: 'MMM d, h:mm a' }}</span>
-                        </div>
+                        </span>
                         @if (!n.is_read) {
                           <span class="notif-dot"></span>
                         }
-                      </div>
+                      </button>
                     }
                   </div>
                   <div class="notif-footer">
-                    <button class="notif-view-all" (click)="goToNotifications()">View all notifications</button>
+                    <button class="notif-view-all" type="button" (click)="goToNotifications()">View all notifications</button>
                   </div>
                 }
               </div>
             }
           </div>
 
-          <!-- Admin Profile -->
           <div class="admin-profile" (click)="toggleProfile($event)">
-            <div class="avatar">{{ getInitials() }}</div>
+            <button class="avatar" type="button" aria-label="Open profile menu">{{ getInitials() }}</button>
             @if (auth.user(); as user) {
               <span class="admin-name">{{ user.first_name || user.username }}</span>
             }
-            <span class="material-icons-outlined" style="font-size:18px;color:#94A3B8">expand_more</span>
+            <span class="material-icons-outlined expand-icon">expand_more</span>
           </div>
 
           @if (profileOpen()) {
@@ -131,46 +161,30 @@
               <div class="profile-dropdown-header">
                 <div class="pd-avatar">{{ getInitials() }}</div>
                 <div>
-                  <p class="pd-name">{{ auth.user()?.first_name }} {{ auth.user()?.last_name }}</p>
+                  <p class="pd-name">{{ auth.user()?.first_name || auth.user()?.username }} {{ auth.user()?.last_name }}</p>
                   <p class="pd-email">{{ auth.user()?.email }}</p>
                 </div>
               </div>
-              <div class="pd-divider"></div>
-              <button class="pd-item danger" (click)="logout()">
-                <span class="material-icons-outlined">logout</span> Sign Out
+              <button class="pd-item danger" type="button" (click)="logout()">
+                <span class="material-icons-outlined">logout</span>
+                Sign Out
               </button>
             </div>
           }
-
         </div>
       </header>
 
       <main class="main-content">
-        @if (breadcrumbs().length > 1) {
-          <nav class="global-breadcrumbs" aria-label="Breadcrumb">
-            @for (crumb of breadcrumbs(); track crumb.label + ($index || 0)) {
-              @if (crumb.url && $index < breadcrumbs().length - 1) {
-                <a [routerLink]="crumb.url">{{ crumb.label }}</a>
-              } @else {
-                <span>{{ crumb.label }}</span>
-              }
-              @if ($index < breadcrumbs().length - 1) {
-                <span class="material-icons-outlined">chevron_right</span>
-              }
-            }
-          </nav>
-        }
         <router-outlet />
       </main>
     </div>
   </div>
 
   @if (mobileMenuOpen()) {
-    <div class="mobile-overlay" (click)="toggleSidebar()"></div>
+    <button class="mobile-overlay" type="button" aria-label="Close navigation" (click)="toggleSidebar()"></button>
   }
 } @else {
   <router-outlet />
 }
 
 <app-toast />
-

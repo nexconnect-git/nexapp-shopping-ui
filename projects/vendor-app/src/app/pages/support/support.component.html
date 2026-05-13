@@ -1,18 +1,38 @@
 <div class="support-page fade-in">
-  <div class="page-header">
-    <div>
+  <section class="page-hero">
+    <div class="page-hero-copy">
+      <span class="eyebrow">Support</span>
       <h1>Customer Care</h1>
-      <p class="page-subtitle">Contact admin support for help or disputes</p>
+      <p>Contact admin support for order disputes, payout issues, catalog questions, or technical help.</p>
     </div>
-  </div>
+  </section>
 
-
+  <section class="support-command-strip">
+    <div>
+      <span class="material-icons-outlined">support_agent</span>
+      <strong>{{ tickets().length }}</strong>
+      <small>Total tickets</small>
+    </div>
+    <div>
+      <span class="material-icons-outlined">mark_unread_chat_alt</span>
+      <strong>{{ tickets().length ? 'Active' : 'Ready' }}</strong>
+      <small>Support desk</small>
+    </div>
+    <div>
+      <span class="material-icons-outlined">schedule</span>
+      <strong>Admin</strong>
+      <small>Response channel</small>
+    </div>
+  </section>
 
   <div class="support-layout">
     <!-- Ticket Form -->
     <div class="card create-ticket-card">
       <div class="card-header">
-        <h3>Submit a Ticket</h3>
+        <div>
+          <h3>New Support Request</h3>
+          <p>Send order, payout, catalog, or technical issues to admin.</p>
+        </div>
       </div>
       <div class="card-body">
         <form (ngSubmit)="submitTicket()">
@@ -47,7 +67,10 @@
     <!-- Ticket History -->
     <div class="card ticket-history-card">
       <div class="card-header">
-        <h3>Ticket History</h3>
+        <div>
+          <h3>Conversation History</h3>
+          <p>Track every request and admin response.</p>
+        </div>
       </div>
       <div class="card-body p-0">
         @if (loading()) {

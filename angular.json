@@ -393,6 +393,7 @@
               "zone.js/testing"
             ],
             "tsConfig": "projects/vendor-app/tsconfig.spec.json",
+            "karmaConfig": "projects/vendor-app/karma.conf.js",
             "inlineStyleLanguage": "scss",
             "assets": [
               {
@@ -403,7 +404,12 @@
             "styles": [
               "projects/vendor-app/src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [],
+            "stylePreprocessorOptions": {
+              "includePaths": [
+                "projects/shared/src/styles"
+              ]
+            }
           }
         }
       }
@@ -675,6 +681,7 @@
               "zone.js/testing"
             ],
             "tsConfig": "projects/admin-panel/tsconfig.spec.json",
+            "karmaConfig": "projects/admin-panel/karma.conf.js",
             "inlineStyleLanguage": "scss",
             "assets": [
               {
@@ -685,7 +692,12 @@
             "styles": [
               "projects/admin-panel/src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [],
+            "stylePreprocessorOptions": {
+              "includePaths": [
+                "projects/shared/src/styles"
+              ]
+            }
           }
         }
       }

@@ -1,11 +1,12 @@
 <div class="customers-page">
-  <div class="page-header customers-header">
-    <div class="header-copy">
-      <span class="page-kicker">Admin panel</span>
+  <section class="admin-page-hero customers-header">
+    <div class="admin-page-copy">
+      <span class="eyebrow">Customers</span>
       <h1 class="page-title">Customers</h1>
-      <p class="page-subtitle">{{ total() }} registered customers</p>
+      <p>{{ total() }} registered customers with account, contact, and verification details.</p>
     </div>
-    <div class="reload-bar">
+    <div class="admin-page-actions">
+      <div class="reload-bar">
       @if (lastRefreshed()) {
         <span class="reload-timestamp">Updated {{ lastRefreshed() | date:'HH:mm:ss' }}</span>
       }
@@ -18,7 +19,9 @@
         {{ autoReload() ? 'Auto' : 'Paused' }}
       </button>
     </div>
-    <div class="filters customers-filters">
+    </div>
+  </section>
+  <div class="admin-toolbar filters customers-filters">
       <input class="filter-input" type="search" [(ngModel)]="search"
         (input)="onSearch()" placeholder="Search by name, email, username...">
       <select class="filter-input" [(ngModel)]="verifiedFilter" (change)="load()">
@@ -26,7 +29,6 @@
         <option value="true">Verified</option>
         <option value="false">Unverified</option>
       </select>
-    </div>
   </div>
 
   <app-dynamic-table

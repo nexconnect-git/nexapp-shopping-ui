@@ -1,11 +1,12 @@
 <div class="products-page fade-in">
 
-  <div class="page-header">
-    <div>
+  <section class="page-hero">
+    <div class="page-hero-copy">
+      <span class="eyebrow">Catalog</span>
       <h1>Products</h1>
-      <p class="page-subtitle">Manage your store inventory</p>
+      <p>Manage pricing, approval readiness, stock health, and customer-facing product quality.</p>
     </div>
-    <div class="header-right">
+    <div class="page-hero-actions">
       <div class="reload-bar">
         @if (lastRefreshed()) {
           <span class="reload-timestamp">Updated {{ lastRefreshed() | date:'HH:mm:ss' }}</span>
@@ -23,13 +24,39 @@
         Add Product
       </a>
     </div>
-  </div>
+  </section>
 
-  <div class="search-bar">
-    <span class="material-icons-outlined search-icon">search</span>
-    <input type="search" class="form-input search-input" [(ngModel)]="search"
-           (input)="onSearch()" placeholder="Search products..." aria-label="Search products">
-  </div>
+  <section class="workspace-toolbar">
+    <label class="toolbar-search">
+      <span class="material-icons-outlined">search</span>
+      <input type="search" [(ngModel)]="search" (input)="onSearch()" placeholder="Search products, SKU, or category" aria-label="Search products">
+    </label>
+  </section>
+
+  @if (!loading()) {
+    <section class="catalog-command-strip">
+      <div>
+        <span class="material-icons-outlined">inventory_2</span>
+        <strong>{{ total() }}</strong>
+        <small>Total products</small>
+      </div>
+      <div>
+        <span class="material-icons-outlined">warning_amber</span>
+        <strong>{{ products().filter(isLowStock).length }}</strong>
+        <small>Low stock</small>
+      </div>
+      <div>
+        <span class="material-icons-outlined">tips_and_updates</span>
+        <strong>{{ products().filter(needsAttention).length }}</strong>
+        <small>Need fixes</small>
+      </div>
+      <a routerLink="/inventory">
+        <span class="material-icons-outlined">edit_note</span>
+        <strong>Stock editor</strong>
+        <small>Update quantities fast</small>
+      </a>
+    </section>
+  }
 
   @if (!loading() && products().some(isLowStock)) {
     <div class="low-stock-alert">

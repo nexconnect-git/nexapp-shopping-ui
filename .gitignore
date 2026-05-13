@@ -51,6 +51,8 @@ testem.log
 **/*.test.js
 **/*.test.jsx
 **/*.test.tsx
+!projects/vendor-app/src/**/*.spec.ts
+!projects/admin-panel/src/**/*.spec.ts
 
 # System files
 .DS_Store

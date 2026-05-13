@@ -55,7 +55,7 @@
 /* Settlement Summary */
 .settlement-summary-card {
   margin-bottom: 1.5rem; border-color: rgba(99,102,241,0.2) !important;
-  .widget-header { background: linear-gradient(135deg, rgba(99,102,241,0.06), rgba(99,102,241,0.01)); }
+  .widget-header { background: var(--surface-alt); }
 }
 .metric-card.compact { padding: 1.125rem 1.25rem; }
 .settlement-metrics {
@@ -105,7 +105,7 @@
   display: flex; flex-direction: column; align-items: center; justify-content: flex-end; width: 40px; height: 100%;
 }
 .bar {
-  width: 100%; background: linear-gradient(180deg, var(--primary), rgba(99,102,241,0.5));
+  width: 100%; background: var(--surface-alt);
   border-radius: var(--radius-sm) var(--radius-sm) 0 0; min-height: 4px; transition: height 0.5s ease;
   &:hover { background: var(--primary-dark); }
 }
@@ -130,3 +130,4 @@
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 .fade-in { animation: fadeIn 0.3s ease-out; }
+

@@ -1,11 +1,12 @@
 <div class="page-wrap">
 
-  <div class="page-header">
-    <div>
+  <section class="admin-page-hero">
+    <div class="admin-page-copy">
+      <span class="eyebrow">Payments</span>
       <h1 class="page-title">Payments</h1>
-      <p class="page-sub">All orders with online payment info</p>
+      <p>All orders with payment method, Razorpay collection, verification, and settlement context.</p>
     </div>
-  </div>
+  </section>
 
   <!-- Summary Cards -->
   <div class="summary-row">
@@ -28,7 +29,7 @@
   </div>
 
   <!-- Filters -->
-  <div class="filters-row">
+  <div class="admin-toolbar filters-row">
     <input class="filter-input" type="text" placeholder="Search order number…"
       [(ngModel)]="search" (input)="onSearch()">
 

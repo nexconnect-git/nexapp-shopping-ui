@@ -15,6 +15,24 @@
       <span class="status">{{ order()!.status | titlecase }}</span>
     </section>
 
+    <section class="prep-command-strip">
+      <div>
+        <span class="material-icons-outlined">checklist</span>
+        <strong>{{ progress() }}%</strong>
+        <small>Checklist done</small>
+      </div>
+      <div>
+        <span class="material-icons-outlined">timer</span>
+        <strong>{{ elapsedMinutes() }} min</strong>
+        <small>Since placed</small>
+      </div>
+      <div>
+        <span class="material-icons-outlined">payments</span>
+        <strong>{{ order()!.total | appCurrency }}</strong>
+        <small>Order total</small>
+      </div>
+    </section>
+
     <div class="prep-grid">
       <section class="panel">
         <div class="panel-head">

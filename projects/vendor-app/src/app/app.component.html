@@ -1,111 +1,103 @@
 @if (auth.isLoggedIn() && !isAuthRoute()) {
   <app-toast></app-toast>
-  <div class="app-shell">
-    <!-- Sidebar -->
+  <div class="app-shell" [class.sidebar-open]="!sidebarCollapsed()">
     @if (!isPendingRoute()) {
-      <aside class="sidebar">
-        <!-- Brand -->
+      <button class="mobile-scrim" type="button" aria-label="Close navigation" (click)="closeMobileSidebar()"></button>
+
+      <aside class="sidebar" aria-label="Vendor navigation">
         <div class="sidebar-brand">
-          <div class="brand-icon">
+          <div class="brand-mark">
             <span class="material-icons-outlined">storefront</span>
           </div>
-          <div class="brand-text">
+          <div class="brand-copy">
             <span class="brand-name">NexConnect</span>
-            <span class="brand-sub">Vendor Portal</span>
+            <span class="brand-sub">Vendor workspace</span>
           </div>
         </div>
 
-        <!-- Navigation -->
+        <div class="sidebar-status">
+          <span class="status-dot"></span>
+          <div>
+            <strong>{{ storeName() }}</strong>
+            <span>Operations console</span>
+          </div>
+        </div>
+
         <nav class="sidebar-nav">
-          <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="closeMobileSidebar()" class="menu-item">
-            <span class="material-icons-outlined">dashboard</span>
-            <span class="nav-label">Dashboard</span>
-          </a>
-          <a routerLink="/live-orders" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
-            <span class="material-icons-outlined">view_kanban</span>
-            <span class="nav-label">Live Orders</span>
-          </a>
-          <a routerLink="/inventory" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
-            <span class="material-icons-outlined">inventory</span>
-            <span class="nav-label">Inventory</span>
-          </a>
-          <a routerLink="/products" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
-            <span class="material-icons-outlined">inventory_2</span>
-            <span class="nav-label">Products</span>
-          </a>
-          <a routerLink="/catalog-requests" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
-            <span class="material-icons-outlined">playlist_add</span>
-            <span class="nav-label">Catalog Requests</span>
-          </a>
-          <a routerLink="/orders" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
-            <span class="material-icons-outlined">receipt_long</span>
-            <span class="nav-label">Orders</span>
-          </a>
-          <a routerLink="/promotions" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
-            <span class="material-icons-outlined">confirmation_number</span>
-            <span class="nav-label">Promotions</span>
-          </a>
-          <a routerLink="/analytics" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
-            <span class="material-icons-outlined">trending_up</span>
-            <span class="nav-label">Analytics</span>
-          </a>
-          <a routerLink="/payouts" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
-            <span class="material-icons-outlined">payments</span>
-            <span class="nav-label">Payouts</span>
-          </a>
-          <a routerLink="/reviews" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
-            <span class="material-icons-outlined">star_rate</span>
-            <span class="nav-label">Reviews</span>
-          </a>
-          <a routerLink="/support" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
-            <span class="material-icons-outlined">support_agent</span>
-            <span class="nav-label">Support</span>
-          </a>
-          <a routerLink="/notifications" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
-            <span class="material-icons-outlined">notifications</span>
-            <span class="nav-label">Notifications</span>
-          </a>
-          <a routerLink="/store-settings" routerLinkActive="active" (click)="closeMobileSidebar()" class="menu-item">
-            <span class="material-icons-outlined">manage_accounts</span>
-            <span class="nav-label">Store Settings</span>
-          </a>
+          @for (group of navGroups; track group.label) {
+            <section class="nav-group">
+              <p class="nav-section-label">{{ group.label }}</p>
+              @for (item of group.items; track item.route) {
+                <a
+                  [routerLink]="item.route"
+                  routerLinkActive="active"
+                  [routerLinkActiveOptions]="{ exact: item.exact === true }"
+                  (click)="closeMobileSidebar()"
+                  class="menu-item">
+                  <span class="material-icons-outlined">{{ item.icon }}</span>
+                  <span class="nav-label">{{ item.label }}</span>
+                </a>
+              }
+            </section>
+          }
         </nav>
 
-        <!-- Sidebar Footer -->
         <div class="sidebar-footer">
           <div class="sidebar-user">
-            <div class="user-avatar">
-              <span class="material-icons-outlined">person</span>
-            </div>
+            <div class="user-avatar">{{ userInitials() }}</div>
             <div class="user-meta">
               <span class="user-name">{{ auth.user()?.username }}</span>
-              <span class="user-role">Vendor</span>
+              <span class="user-role">Vendor account</span>
             </div>
           </div>
-          <button class="logout-btn" (click)="logout()">
+          <button class="logout-btn" type="button" (click)="logout()">
             <span class="material-icons-outlined">logout</span>
-            <span class="nav-label">Sign Out</span>
+            <span>Sign Out</span>
           </button>
         </div>
       </aside>
     }
 
-    <!-- Main Area -->
     <div class="main-area">
-      <!-- Top Bar -->
       <header class="topbar">
         <div class="topbar-left">
           @if (!isPendingRoute()) {
-            <div class="store-badge">
-              <span class="material-icons-outlined">store</span>
-              <span>{{ auth.user()?.username }}'s Store</span>
+            <button class="mobile-menu-btn" type="button" aria-label="Open navigation" (click)="toggleSidebar()">
+              <span class="material-icons-outlined">menu</span>
+            </button>
+            <div class="page-context">
+              <nav aria-label="Breadcrumb" class="breadcrumbs">
+                @for (crumb of breadcrumbs(); track $index) {
+                  @if (crumb.url) {
+                    <a [routerLink]="crumb.url">{{ crumb.label }}</a>
+                  } @else {
+                    <span>{{ crumb.label }}</span>
+                  }
+                  @if ($index < breadcrumbs().length - 1) {
+                    <span class="material-icons-outlined crumb-separator">chevron_right</span>
+                  }
+                }
+              </nav>
+              <h1>{{ pageTitle() }}</h1>
             </div>
           }
         </div>
+
         <div class="topbar-right">
           @if (!isPendingRoute()) {
+            <div class="quick-actions" aria-label="Quick actions">
+              <a routerLink="/products/new" title="Add product">
+                <span class="material-icons-outlined">add</span>
+                <span>Product</span>
+              </a>
+              <a routerLink="/live-orders" title="Open live orders">
+                <span class="material-icons-outlined">view_kanban</span>
+                <span>Orders</span>
+              </a>
+            </div>
+
             <div class="notif-wrapper" (click)="$event.stopPropagation()">
-              <button class="topbar-icon-btn notif-btn" (click)="toggleNotif($event)" title="Notifications">
+              <button class="topbar-icon-btn notif-btn" type="button" (click)="toggleNotif($event)" title="Notifications">
                 <span class="material-icons-outlined">notifications_none</span>
                 @if (unreadCount() > 0) {
                   <span class="notif-badge">{{ unreadCount() > 9 ? '9+' : unreadCount() }}</span>
@@ -114,9 +106,12 @@
               @if (notifOpen()) {
                 <div class="notif-dropdown">
                   <div class="notif-header">
-                    <span class="notif-title">Notifications</span>
+                    <div>
+                      <span class="notif-title">Notifications</span>
+                      <small>{{ unreadCount() }} unread update{{ unreadCount() === 1 ? '' : 's' }}</small>
+                    </div>
                     @if (unreadCount() > 0) {
-                      <button class="notif-mark-read" (click)="markAllRead()">Mark all read</button>
+                      <button class="notif-mark-read" type="button" (click)="markAllRead()">Mark all read</button>
                     }
                   </div>
                   @if (notifLoading()) {
@@ -124,19 +119,19 @@
                   } @else if (notifications().length === 0) {
                     <div class="notif-empty">
                       <span class="material-icons-outlined">notifications_none</span>
-                      <span>No notifications</span>
+                      <strong>No notifications</strong>
+                      <span>Your order and store alerts will appear here.</span>
                     </div>
                   } @else {
                     <div class="notif-list">
                       @for (n of notifications(); track n.id) {
-                        <div class="notif-item" [class.unread]="!n.is_read"
-                             (click)="handleNotificationClick(n)" style="cursor:pointer;">
+                        <button class="notif-item" type="button" [class.unread]="!n.is_read" (click)="handleNotificationClick(n)">
                           <span class="material-icons-outlined notif-icon">receipt_long</span>
-                          <div class="notif-body">
-                            <p class="notif-msg">{{ n.title }}</p>
-                            <p class="notif-sub">{{ n.message }}</p>
-                          </div>
-                        </div>
+                          <span class="notif-body">
+                            <span class="notif-msg">{{ n.title }}</span>
+                            <span class="notif-sub">{{ n.message }}</span>
+                          </span>
+                        </button>
                       }
                     </div>
                   }
@@ -144,28 +139,25 @@
               }
             </div>
           }
+
           <div class="profile-menu-wrapper" (click)="toggleProfile($event)">
-            <div class="topbar-avatar">
-              {{ (auth.user()?.first_name?.[0] || '') + (auth.user()?.last_name?.[0] || '') || auth.user()?.username?.[0]?.toUpperCase() || '?' }}
-            </div>
+            <button class="topbar-avatar" type="button" aria-label="Open profile menu">{{ userInitials() }}</button>
             @if (profileOpen()) {
               <div class="profile-dropdown" (click)="$event.stopPropagation()">
                 <div class="pd-header">
-                  <div class="pd-avatar-lg">
-                    {{ (auth.user()?.first_name?.[0] || '') + (auth.user()?.last_name?.[0] || '') || '?' }}
-                  </div>
+                  <div class="pd-avatar-lg">{{ userInitials() }}</div>
                   <div>
-                    <p class="pd-name">{{ auth.user()?.first_name }} {{ auth.user()?.last_name }}</p>
+                    <p class="pd-name">{{ auth.user()?.first_name || auth.user()?.username }} {{ auth.user()?.last_name }}</p>
                     <p class="pd-email">{{ auth.user()?.email }}</p>
                   </div>
                 </div>
-                <div class="pd-divider"></div>
                 <a routerLink="/store-settings" class="pd-item" (click)="closeProfile()">
-                  <span class="material-icons-outlined">manage_accounts</span> Store Profile
+                  <span class="material-icons-outlined">manage_accounts</span>
+                  Store Profile
                 </a>
-                <div class="pd-divider"></div>
-                <button class="pd-item danger" (click)="logout(); closeProfile()">
-                  <span class="material-icons-outlined">logout</span> Sign Out
+                <button class="pd-item danger" type="button" (click)="logout(); closeProfile()">
+                  <span class="material-icons-outlined">logout</span>
+                  Sign Out
                 </button>
               </div>
             }
@@ -173,49 +165,18 @@
         </div>
       </header>
 
-      <!-- Page Content -->
       <main class="page-content">
-        @if (!isPendingRoute()) {
-          <div class="breadcrumb-bar">
-            <nav aria-label="Breadcrumb" class="breadcrumbs">
-              @for (crumb of breadcrumbs(); track $index) {
-                @if (crumb.url) {
-                  <a [routerLink]="crumb.url">{{ crumb.label }}</a>
-                } @else {
-                  <span>{{ crumb.label }}</span>
-                }
-                @if ($index < breadcrumbs().length - 1) {
-                  <span class="material-icons-outlined crumb-separator">chevron_right</span>
-                }
-              }
-            </nav>
-            <h1>{{ pageTitle() }}</h1>
-          </div>
-        }
         <router-outlet />
       </main>
+
       @if (!isPendingRoute()) {
-        <nav class="mobile-bottom-nav">
-          <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-            <span class="material-icons-outlined">dashboard</span>
-            <small>Home</small>
-          </a>
-          <a routerLink="/live-orders" routerLinkActive="active">
-            <span class="material-icons-outlined">view_kanban</span>
-            <small>Orders</small>
-          </a>
-          <a routerLink="/inventory" routerLinkActive="active">
-            <span class="material-icons-outlined">inventory</span>
-            <small>Stock</small>
-          </a>
-          <a routerLink="/notifications" routerLinkActive="active">
-            <span class="material-icons-outlined">notifications</span>
-            <small>Inbox</small>
-          </a>
-          <a routerLink="/store-settings" routerLinkActive="active">
-            <span class="material-icons-outlined">settings</span>
-            <small>Store</small>
-          </a>
+        <nav class="mobile-bottom-nav" aria-label="Primary mobile navigation">
+          @for (item of mobileNavItems; track item.route) {
+            <a [routerLink]="item.route" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: item.exact === true }">
+              <span class="material-icons-outlined">{{ item.icon }}</span>
+              <small>{{ item.label }}</small>
+            </a>
+          }
         </nav>
       }
     </div>
@@ -224,5 +185,3 @@
   <app-toast></app-toast>
   <router-outlet />
 }
-
-<!-- aria-label -->

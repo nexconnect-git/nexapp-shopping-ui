@@ -1,7 +1,7 @@
 import { Component, inject, signal, HostListener, OnInit, DestroyRef, effect } from '@angular/core';
 import { Router, RouterOutlet, RouterLink, RouterLinkActive, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { AuthService, ApiService, ToastComponent, NotificationPollingService } from '@shared/public-api';
+import { AuthService, ApiService, ToastComponent, NotificationPollingService, setAppCountryFromLocation } from '@shared/public-api';
 
 @Component({
   selector: 'app-root',
@@ -23,6 +23,48 @@ export class AppComponent implements OnInit {
   notifLoading = signal(false);
   unreadCount = signal(0);
   private pollingStarted = false;
+  readonly navGroups = [
+    {
+      label: 'Operate',
+      items: [
+        { label: 'Dashboard', icon: 'space_dashboard', route: '/', exact: true },
+        { label: 'Live Orders', icon: 'view_kanban', route: '/live-orders' },
+        { label: 'Inventory', icon: 'inventory', route: '/inventory' },
+      ],
+    },
+    {
+      label: 'Catalog',
+      items: [
+        { label: 'Products', icon: 'inventory_2', route: '/products' },
+        { label: 'Catalog Requests', icon: 'playlist_add', route: '/catalog-requests' },
+        { label: 'Orders', icon: 'receipt_long', route: '/orders' },
+        { label: 'Promotions', icon: 'confirmation_number', route: '/promotions' },
+      ],
+    },
+    {
+      label: 'Growth',
+      items: [
+        { label: 'Analytics', icon: 'monitoring', route: '/analytics' },
+        { label: 'Payouts', icon: 'payments', route: '/payouts' },
+        { label: 'Reviews', icon: 'reviews', route: '/reviews' },
+      ],
+    },
+    {
+      label: 'Account',
+      items: [
+        { label: 'Support', icon: 'support_agent', route: '/support' },
+        { label: 'Notifications', icon: 'notifications', route: '/notifications' },
+        { label: 'Store Settings', icon: 'manage_accounts', route: '/store-settings' },
+      ],
+    },
+  ];
+  readonly mobileNavItems = [
+    { label: 'Home', icon: 'space_dashboard', route: '/', exact: true },
+    { label: 'Orders', icon: 'view_kanban', route: '/live-orders' },
+    { label: 'Stock', icon: 'inventory', route: '/inventory' },
+    { label: 'Inbox', icon: 'notifications', route: '/notifications' },
+    { label: 'Store', icon: 'settings', route: '/store-settings' },
+  ];
 
   constructor() {
     effect(() => {
@@ -38,7 +80,10 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit() {
-    if (this.auth.isLoggedIn()) this.startPolling();
+    if (this.auth.isLoggedIn()) {
+      this.startPolling();
+      this.configureVendorCurrency();
+    }
   }
 
   private startPolling() {
@@ -109,6 +154,38 @@ export class AppComponent implements OnInit {
 
   closeMobileSidebar() {
     this.sidebarCollapsed.set(true);
+  }
+
+  storeName(): string {
+    const username = this.auth.user()?.username || 'Vendor';
+    return `${username}'s Store`;
+  }
+
+  userInitials(): string {
+    const user = this.auth.user();
+    const initials = `${user?.first_name?.[0] || ''}${user?.last_name?.[0] || ''}`.trim();
+    return initials || user?.username?.[0]?.toUpperCase() || '?';
+  }
+
+  private configureVendorCurrency() {
+    this.api.getVendorProfile().subscribe({
+      next: (vendor) => {
+        setAppCountryFromLocation({
+          country: vendor?.country || vendor?.country_code || vendor?.user_info?.country,
+          latitude: vendor?.latitude,
+          longitude: vendor?.longitude,
+          address: vendor?.address,
+          city: vendor?.city,
+          state: vendor?.state,
+          postalCode: vendor?.postal_code,
+          name: vendor?.store_name,
+        });
+      },
+      error: () => {
+        const userCountry = this.auth.user()?.country;
+        if (userCountry) setAppCountryFromLocation({ country: userCountry });
+      },
+    });
   }
 
   breadcrumbs(): Array<{ label: string; url?: string }> {

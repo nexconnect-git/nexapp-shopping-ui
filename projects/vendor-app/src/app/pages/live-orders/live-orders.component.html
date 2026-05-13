@@ -1,10 +1,11 @@
 <div class="ops-page">
-  <div class="page-header">
-    <div>
+  <section class="page-hero">
+    <div class="page-hero-copy">
+      <span class="eyebrow">Live operations</span>
       <h1 class="page-title">Live Orders</h1>
-      <p class="page-subtitle">Run intake, prep, pickup, and delivery handoff from one board.</p>
+      <p>Run intake, prep, pickup, and delivery handoff from one board.</p>
     </div>
-    <div class="header-actions">
+    <div class="page-hero-actions">
       <span class="live-pill" [class.offline]="socketState() !== 'live'">
         <span class="material-icons-outlined">{{ socketState() === 'live' ? 'bolt' : 'sync_problem' }}</span>
         {{ socketState() === 'live' ? 'Live' : 'Polling fallback' }}
@@ -14,17 +15,29 @@
         Refresh
       </button>
     </div>
-  </div>
+  </section>
 
   @if (loading()) {
     <div class="state-card">Loading live orders...</div>
   } @else {
+    <div class="board-summary">
+      @for (column of columns(); track column.key) {
+        <a class="board-summary-item" [attr.href]="'#lane-' + column.key">
+          <span class="material-icons-outlined">{{ column.icon }}</span>
+          <strong>{{ column.orders.length }}</strong>
+          <small>{{ column.title }}</small>
+        </a>
+      }
+    </div>
     <div class="kanban">
       @for (column of columns(); track column.key) {
-        <section class="kanban-column">
+        <section class="kanban-column" [id]="'lane-' + column.key">
           <header>
             <span class="material-icons-outlined">{{ column.icon }}</span>
-            <strong>{{ column.title }}</strong>
+            <div>
+              <strong>{{ column.title }}</strong>
+              <small>{{ column.orders.length }} active</small>
+            </div>
             <em>{{ column.orders.length }}</em>
           </header>
 

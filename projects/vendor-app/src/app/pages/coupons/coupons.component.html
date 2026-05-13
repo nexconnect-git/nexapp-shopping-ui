@@ -1,16 +1,19 @@
 <div class="cp-page">
 
   <!-- ── Header ──────────────────────────────────────────── -->
-  <div class="cp-header">
-    <div>
+  <section class="page-hero">
+    <div class="page-hero-copy">
+      <span class="eyebrow">Promotions</span>
       <h1 class="cp-title">Coupons</h1>
-      <p class="cp-sub">Create discount codes for your customers</p>
+      <p>Create discount codes, campaign presets, and customer incentives.</p>
     </div>
-    <button class="cp-create-btn" (click)="openCreate()">
-      <span class="material-icons-outlined">add</span>
-      New Coupon
-    </button>
-  </div>
+    <div class="page-hero-actions">
+      <button class="cp-create-btn" (click)="openCreate()">
+        <span class="material-icons-outlined">add</span>
+        New Coupon
+      </button>
+    </div>
+  </section>
 
   <!-- ── Alerts ──────────────────────────────────────────── -->
   @if (success()) {
@@ -21,6 +24,10 @@
 
   @if (!loading() && coupons().length > 0) {
     <div class="cp-presets">
+      <div class="preset-title">
+        <strong>Campaign starters</strong>
+        <span>Pick a proven promotion template</span>
+      </div>
       @for (preset of campaignPresets; track preset.code) {
         <button (click)="applyPreset(preset)">
           <span class="material-icons-outlined">auto_awesome</span>
@@ -53,6 +60,7 @@
     </div>
 
     <div class="cp-filter-row">
+      <span class="filter-label">Show</span>
       @for (f of ['all', 'active', 'upcoming', 'expired', 'inactive']; track f) {
         <button [class.active]="filter() === f" (click)="filter.set($any(f))">{{ f | titlecase }}</button>
       }

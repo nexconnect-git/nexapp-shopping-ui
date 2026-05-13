@@ -19,17 +19,19 @@ interface ProposalDraftItem {
   imports: [CommonModule, FormsModule],
   template: `
     <div class="catalog-requests-page fade-in">
-      <div class="page-header">
-        <div>
-          <p class="eyebrow">Admin catalog</p>
+      <section class="page-hero">
+        <div class="page-hero-copy">
+          <span class="eyebrow">Admin catalog</span>
           <h1>Catalog Requests</h1>
-          <p class="page-subtitle">Request missing products so admins can review and add them to the shared catalog.</p>
+          <p>Request missing products so admins can review and add them to the shared catalog.</p>
         </div>
-        <button type="button" class="btn-primary" (click)="addItem()">
-          <span class="material-icons-outlined">add</span>
-          Add Item
-        </button>
-      </div>
+        <div class="page-hero-actions">
+          <button type="button" class="btn-primary" (click)="addItem()">
+            <span class="material-icons-outlined">add</span>
+            Add Item
+          </button>
+        </div>
+      </section>
 
       <div class="catalog-grid">
         <form class="card request-form" (ngSubmit)="submit()">

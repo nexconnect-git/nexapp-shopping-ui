@@ -3,7 +3,7 @@
 .pending-page { 
   display: flex; min-height: 100vh; align-items: center; justify-content: center; padding: 2rem;
   background: var(--surface-color); position: relative; overflow: hidden;
-  &::before { content: ""; position: absolute; top: -200px; left: 50%; transform: translateX(-50%); width: 800px; height: 500px; background: radial-gradient(circle, rgba(108, 99, 255, 0.1) 0%, transparent 70%); pointer-events: none; }
+  &::before { content: ""; position: absolute; top: -200px; left: 50%; transform: translateX(-50%); width: 800px; height: 500px; background: var(--surface-alt); pointer-events: none; }
 }
 
 .pending-card { 
@@ -14,7 +14,7 @@
 
 .brand { 
   display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 3rem; 
-  .brand-icon { width: 36px; height: 36px; background: var(--primary-gradient); color: white; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); font-size: 20px; box-shadow: var(--shadow-sm); }
+  .brand-icon { width: 36px; height: 36px; background: var(--orange); color: white; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); font-size: 20px; box-shadow: var(--shadow-sm); }
   .brand-name { font-size: 1.25rem; font-weight: 800; color: var(--text-primary); letter-spacing: -0.02em; }
 }
 
@@ -60,5 +60,6 @@
   .pending-card { padding: 2.5rem 1.5rem; }
   .title { font-size: 1.75rem; }
 }
+
 
 

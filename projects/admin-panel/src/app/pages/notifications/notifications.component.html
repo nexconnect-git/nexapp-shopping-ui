@@ -1,10 +1,19 @@
-<div>
-  <div class="page-header">
-    <div>
+<div class="admin-workspace notifications-workspace">
+  <section class="admin-page-hero">
+    <div class="admin-page-copy">
+      <span class="eyebrow">Messaging</span>
       <h1 class="page-title">Notifications</h1>
-      <p class="page-subtitle">{{ total() }} total notifications</p>
+      <p>{{ total() }} total notifications across targeted messages, broadcasts, alerts, and system updates.</p>
     </div>
-    <div class="filters">
+    <div class="admin-page-actions">
+      <button class="btn btn-primary" (click)="openSendModal()">
+        <span class="material-icons-outlined">send</span>
+        Send Notification
+      </button>
+    </div>
+  </section>
+
+  <div class="admin-toolbar filters">
       <input class="filter-input" type="search" [(ngModel)]="search" (input)="onSearch()" placeholder="Search username, title...">
       <select class="filter-input" [(ngModel)]="typeFilter" (change)="load()">
         <option value="">All Types</option>
@@ -14,11 +23,6 @@
         <option value="info">Info</option>
         <option value="system">System</option>
       </select>
-      <button class="btn btn-primary" (click)="openSendModal()">
-        <span class="material-icons-outlined">send</span>
-        Send Notification
-      </button>
-    </div>
   </div>
 
   @if (loading()) {

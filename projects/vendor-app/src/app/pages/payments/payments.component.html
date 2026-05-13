@@ -1,10 +1,35 @@
 <div class="payments-page fade-in">
-  <div class="page-header">
-    <div>
+  <section class="page-hero">
+    <div class="page-hero-copy">
+      <span class="eyebrow">Finance</span>
       <h1>Payments &amp; Settlements</h1>
-      <p class="page-subtitle">Track your revenue payouts and settle pending approvals</p>
+      <p>Track your revenue payouts, settlement periods, approvals, and credit verification.</p>
     </div>
-  </div>
+  </section>
+
+  <section class="finance-command-strip">
+    <div class="finance-card">
+      <span class="material-icons-outlined">approval</span>
+      <div>
+        <strong>{{ pendingApproval().length }}</strong>
+        <small>Need approval</small>
+      </div>
+    </div>
+    <div class="finance-card">
+      <span class="material-icons-outlined">verified</span>
+      <div>
+        <strong>{{ pendingVerify().length }}</strong>
+        <small>Need verification</small>
+      </div>
+    </div>
+    <div class="finance-card">
+      <span class="material-icons-outlined">account_balance_wallet</span>
+      <div>
+        <strong>{{ filteredPayouts().length }}</strong>
+        <small>In this view</small>
+      </div>
+    </div>
+  </section>
 
   <!-- ── Approval Banner ─────────────────────────────────────────── -->
   @if (pendingApproval().length > 0) {
@@ -31,7 +56,10 @@
   <!-- ── Payout Table ─────────────────────────────────────────────── -->
   <div class="card payments-card">
     <div class="card-header">
-      <h3>Payout History</h3>
+      <div>
+        <h3>Payout Workspace</h3>
+        <p>Approve, verify, download invoices, and review settlement periods.</p>
+      </div>
     </div>
     <div class="payout-tabs">
       @for (tab of payoutTabs; track tab.key) {

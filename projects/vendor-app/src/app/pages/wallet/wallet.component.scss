@@ -34,7 +34,7 @@
 /* Loading */
 .wl-loading { display: flex; flex-direction: column; gap: 8px; }
 .wl-skel { height: 60px; border-radius: 12px; }
-.shimmer { background: linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
+.shimmer { background: var(--surface-alt); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
 @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
 /* Empty */
@@ -118,3 +118,4 @@
   .wl-row > div:nth-child(3),
   .wl-row > div:nth-child(5) { display: none; }
 }
+

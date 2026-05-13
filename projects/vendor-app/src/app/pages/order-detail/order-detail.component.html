@@ -20,8 +20,9 @@
   @else {
 
     <!-- ══ Page Header ══ -->
-    <div class="page-header">
-      <div>
+    <section class="page-hero">
+      <div class="page-hero-copy">
+        <span class="eyebrow">Order detail</span>
         <div class="title-row">
           <h1 class="page-title">#{{ order()!.order_number }}</h1>
           <span [class]="orderStatusBadge(order()!.status)">{{ order()!.status | titlecase }}</span>
@@ -31,13 +32,13 @@
           {{ order()!.placed_at | date:'MMMM d, y — h:mm a' }}
         </p>
       </div>
-      <div class="header-actions">
+      <div class="page-hero-actions">
         <button id="btn-download-invoice" class="btn-invoice" (click)="downloadInvoice()">
           <span class="material-icons-outlined">download</span>
           Invoice
         </button>
       </div>
-    </div>
+    </section>
 
     <!-- ══ Vendor Status Action Bar ══ -->
     @if (canUpdateStatus()) {

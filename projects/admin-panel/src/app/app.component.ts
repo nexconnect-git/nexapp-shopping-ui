@@ -25,6 +25,11 @@ export class AppComponent implements OnInit {
   notifLoading = signal(false);
   unreadCount = signal(0);
   breadcrumbs = signal<Array<{ label: string; url?: string }>>([]);
+  readonly quickLinks = [
+    { route: '/orders', icon: 'receipt_long', label: 'Orders' },
+    { route: '/dispatch', icon: 'route', label: 'Dispatch' },
+    { route: '/vendors/onboard', icon: 'storefront', label: 'Vendor' },
+  ];
 
   get navSections() {
     const operations = [
@@ -229,6 +234,15 @@ export class AppComponent implements OnInit {
   goToNotifications() {
     this.notifOpen.set(false);
     this.router.navigate(['/notifications']);
+  }
+
+  pageTitle(): string {
+    const crumbs = this.breadcrumbs();
+    return crumbs[crumbs.length - 1]?.label || 'Command Center';
+  }
+
+  closeMobileMenu() {
+    this.mobileMenuOpen.set(false);
   }
 
   handleNotificationClick(n: any) {
