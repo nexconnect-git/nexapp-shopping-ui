@@ -52,9 +52,6 @@
         Detecting address...
       </span>
     }
-    @if (mapUnavailable() && placesError()) {
-      <span class="map-geocoding">{{ placesError() }}</span>
-    }
   </div>
 
   <div
@@ -65,13 +62,21 @@
   ></div>
 
   @if (mapUnavailable()) {
-    <div class="map-unavailable" [style.min-height]="height">
-      <span class="material-symbols-rounded" aria-hidden="true">map</span>
-      <strong>Google Maps is unavailable</strong>
-      <p>
-        Check the Google Maps API key, enabled APIs, billing, and allowed
-        website referrers for this domain.
-      </p>
+    <div class="map-unavailable" role="status" aria-live="polite">
+      <span
+        class="map-unavailable-icon material-symbols-rounded"
+        aria-hidden="true"
+      >
+        map
+      </span>
+      <div class="map-unavailable-copy">
+        <strong>Google Maps is unavailable</strong>
+        <p>{{ placesError() }}</p>
+        <small>
+          Check the Google Maps API key, enabled APIs, billing, and allowed
+          website referrers for this domain.
+        </small>
+      </div>
     </div>
   }
 
