@@ -11,6 +11,14 @@ COPY frontend/ .
 RUN test -f /packages/README.md
 RUN npm run build:packages
 
+# runtime-config.js is intentionally gitignored because it can contain
+# deployment-specific browser config. Generate it before Angular copies assets.
+ARG GOOGLE_MAPS_API_KEY=""
+ARG GOOGLE_MAPS_MAP_ID=""
+ENV GOOGLE_MAPS_API_KEY=$GOOGLE_MAPS_API_KEY
+ENV GOOGLE_MAPS_MAP_ID=$GOOGLE_MAPS_MAP_ID
+RUN node scripts/write-runtime-config.mjs
+
 # Build all applications with their respective base hrefs
 RUN npx ng build customer-app --configuration production
 RUN npx ng build admin-panel --configuration production
