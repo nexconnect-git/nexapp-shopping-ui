@@ -8,7 +8,7 @@ COPY packages /packages
 RUN npm install
 
 COPY frontend/ .
-COPY packages /packages
+RUN test -f /packages/README.md
 RUN npm run build:packages
 
 # Build all applications with their respective base hrefs
