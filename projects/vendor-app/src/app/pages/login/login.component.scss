@@ -1,9 +1,9 @@
 :host {
-  --login-accent: #ff4b13;
-  --login-accent-dark: #d83c0f;
-  --login-accent-soft: #fff1e8;
-  --login-ink: #15100f;
-  --login-muted: #745f59;
+  --login-accent: var(--nc-danger);
+  --login-accent-dark: var(--nc-danger);
+  --login-accent-soft: var(--nc-warning-soft);
+  --login-ink: var(--nc-text-primary);
+  --login-muted: var(--nc-muted);
   display: block;
 }
 
@@ -12,7 +12,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1.04fr) minmax(440px, 0.96fr);
   padding: clamp(1rem, 2.5vw, 2rem);
-  background: #f5f7fc;
+  background: var(--nc-surface-alt);
 }
 
 :host .login-left {
@@ -24,11 +24,8 @@
   justify-content: center;
   padding: clamp(2rem, 5vw, 5rem);
   border-radius: 8px 0 0 8px;
-  color: #fff;
-  background:
-    radial-gradient(circle at 104% 77%, #f5f7fc 0 23%, transparent 23.2%),
-    linear-gradient(135deg, rgba(255, 75, 19, 0.18), transparent 38%),
-    #171210;
+  color: var(--nc-white);
+  background: var(--primary);
 }
 
 :host .login-left::before {
@@ -36,9 +33,7 @@
   position: absolute;
   inset: 0;
   opacity: 0.22;
-  background-image:
-    linear-gradient(45deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
-    linear-gradient(-45deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-image: none;
   background-size: 32px 32px;
 }
 
@@ -54,18 +49,20 @@
   display: grid;
   place-items: center;
   margin-bottom: 2.1rem;
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  border: 1px solid color-mix(in srgb, var(--nc-white) 22%, transparent);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, var(--nc-white) 10%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--nc-white) 8%, transparent);
 
-  .material-icons-outlined { font-size: 36px; }
+  .material-icons-outlined {
+    font-size: 36px;
+  }
 }
 
 :host .left-heading {
   max-width: 620px;
   margin: 0;
-  color: #fff;
+  color: var(--nc-white);
   font-size: clamp(2.35rem, 5vw, 4.7rem);
   line-height: 0.98;
   font-weight: 950;
@@ -75,7 +72,7 @@
 :host .left-subtitle {
   max-width: 520px;
   margin: 1.15rem 0 3rem;
-  color: rgba(255, 255, 255, 0.75);
+  color: color-mix(in srgb, var(--nc-white) 75%, transparent);
   font-size: 1.02rem;
   line-height: 1.65;
   font-weight: 750;
@@ -97,9 +94,9 @@
   align-items: center;
   gap: 0.85rem;
   padding: 0.95rem 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid color-mix(in srgb, var(--nc-white) 15%, transparent);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.075);
+  background: color-mix(in srgb, var(--nc-white) 7.5%, transparent);
   backdrop-filter: blur(8px);
 }
 
@@ -109,7 +106,7 @@
   display: grid;
   place-items: center;
   border-radius: 6px;
-  color: #fff;
+  color: var(--nc-white);
   background: var(--login-accent);
   font-size: 20px;
 }
@@ -120,14 +117,14 @@
 }
 
 :host .feature-item strong {
-  color: #fff;
+  color: var(--nc-white);
   font-size: 0.97rem;
   font-weight: 950;
 }
 
 :host .feature-item span {
   margin-top: 0.18rem;
-  color: rgba(255, 255, 255, 0.68);
+  color: color-mix(in srgb, var(--nc-white) 68%, transparent);
   font-size: 0.84rem;
   line-height: 1.35;
   font-weight: 700;
@@ -144,10 +141,11 @@
 :host .login-form-card {
   width: min(440px, 100%);
   padding: clamp(1.75rem, 3vw, 2.5rem);
-  border: 1px solid #eaded8;
+  border: 1px solid var(--nc-line);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 28px 70px rgba(47, 33, 30, 0.12);
+  background: color-mix(in srgb, var(--nc-white) 96%, transparent);
+  box-shadow: 0 28px 70px
+    color-mix(in srgb, var(--nc-text-primary) 12%, transparent);
 }
 
 :host .form-card-header {
@@ -170,7 +168,9 @@
   }
 }
 
-:host .form-group { margin-bottom: 1.2rem; }
+:host .form-group {
+  margin-bottom: 1.2rem;
+}
 
 :host .form-label {
   display: block;
@@ -201,7 +201,7 @@
   min-height: 50px;
   box-sizing: border-box;
   padding: 0.8rem 1rem 0.8rem 3rem;
-  border: 1px solid #eaded8;
+  border: 1px solid var(--nc-line);
   border-radius: 8px;
   background: var(--login-accent-soft);
   color: var(--login-ink);
@@ -209,16 +209,19 @@
   font-size: 0.92rem;
   font-weight: 750;
   outline: none;
-  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
 
   &:focus {
-    border-color: rgba(255, 75, 19, 0.72);
-    background: #fff;
-    box-shadow: 0 0 0 4px rgba(255, 75, 19, 0.13);
+    border-color: color-mix(in srgb, var(--nc-primary) 72%, transparent);
+    background: var(--nc-white);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--nc-primary) 13%, transparent);
   }
 
   &::placeholder {
-    color: #8a746d;
+    color: var(--nc-muted);
     font-weight: 650;
   }
 }
@@ -234,18 +237,22 @@
   border: 0;
   border-radius: 8px;
   background: var(--login-accent);
-  color: #fff;
+  color: var(--nc-white);
   font: inherit;
   font-size: 1rem;
   font-weight: 950;
   cursor: pointer;
-  box-shadow: 0 18px 34px rgba(255, 75, 19, 0.24);
-  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+  box-shadow: 0 18px 34px color-mix(in srgb, var(--nc-primary) 24%, transparent);
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
 
   &:hover:not(:disabled) {
     transform: translateY(-1px);
     background: var(--login-accent-dark);
-    box-shadow: 0 22px 42px rgba(255, 75, 19, 0.28);
+    box-shadow: 0 22px 42px
+      color-mix(in srgb, var(--nc-primary) 28%, transparent);
   }
 
   &:disabled {
@@ -259,8 +266,8 @@
 :host .btn-spinner {
   width: 18px;
   height: 18px;
-  border: 2px solid rgba(255, 255, 255, 0.34);
-  border-top-color: #fff;
+  border: 2px solid color-mix(in srgb, var(--nc-white) 34%, transparent);
+  border-top-color: var(--nc-white);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -271,10 +278,10 @@
   gap: 0.65rem;
   margin-bottom: 1.15rem;
   padding: 0.9rem 1rem;
-  border: 1px solid rgba(213, 25, 19, 0.18);
+  border: 1px solid color-mix(in srgb, var(--nc-danger) 18%, transparent);
   border-radius: 8px;
-  background: #fff0f0;
-  color: #d51913;
+  background: var(--nc-danger-soft);
+  color: var(--nc-danger);
   font-size: 0.86rem;
   font-weight: 850;
 }
@@ -286,19 +293,25 @@
   font-size: 0.9rem;
   font-weight: 700;
 
-  p { margin: 0; }
+  p {
+    margin: 0;
+  }
 
   a {
     color: var(--login-accent);
     font-weight: 950;
     text-decoration: none;
 
-    &:hover { text-decoration: underline; }
+    &:hover {
+      text-decoration: underline;
+    }
   }
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (max-width: 980px) {
@@ -314,9 +327,15 @@
     align-items: flex-end;
   }
 
-  :host .left-heading { font-size: clamp(2rem, 10vw, 3.1rem); }
-  :host .left-subtitle { margin-bottom: 0; }
-  :host .feature-list { display: none; }
+  :host .left-heading {
+    font-size: clamp(2rem, 10vw, 3.1rem);
+  }
+  :host .left-subtitle {
+    margin-bottom: 0;
+  }
+  :host .feature-list {
+    display: none;
+  }
 
   :host .login-right {
     min-height: auto;

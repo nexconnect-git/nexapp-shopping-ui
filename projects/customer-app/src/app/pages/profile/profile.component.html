@@ -1,195 +1,172 @@
-@if (loading()) {
-  <div class="profile-loading"><div class="profile-spinner"></div></div>
-} @else {
-  @if (!isEditing) {
-    <section class="profile-page">
-      <div class="profile-hero">
-        <div class="profile-identity">
-          <div class="profile-avatar" (click)="avatarInput.click()">
-            @if (avatarPreview()) {
-              <img [src]="avatarPreview()" alt="avatar">
-            } @else {
-              <span>{{ initials() }}</span>
+﻿<main class="fd-content">
+  <fd-breadcrumbs [items]="[{ label: 'Profile' }]" />
+  <section class="profile-layout">
+    <div>
+      <section class="profile-hero fd-card">
+        <div class="avatar">
+          <span class="avatar-initials">{{
+            (auth.currentUser()?.name || "FD").slice(0, 2).toUpperCase()
+          }}</span>
+          <button
+            type="button"
+            aria-label="Edit profile"
+            (click)="ui.openEdit('profile')"
+          >
+            <span class="material-symbols-rounded" aria-hidden="true"
+              >edit</span
+            >
+          </button>
+        </div>
+        <div>
+          <h1>
+            {{ auth.currentUser()?.name || "FlashDrop customer" }}
+            @if (auth.currentUser()?.prime) {
+              <span>Prime</span>
             }
-            @if (avatarUploading()) {
-              <div class="avatar-overlay"><div class="profile-spinner small"></div></div>
-            }
-          </div>
-          <input #avatarInput type="file" accept="image/*" hidden (change)="onAvatarChange($event)">
+          </h1>
+          <p>
+            {{ auth.currentUser()?.email || "Sign in to view email" }} ·
+            {{ auth.currentUser()?.phone || "Add mobile" }}
+          </p>
+          <p>
+            {{
+              auth.currentUser()?.memberSince
+                ? "Member since " + auth.currentUser()?.memberSince
+                : "Member details load from server"
+            }}
+            · {{ totalOrders() }} orders
+          </p>
+        </div>
+        <button
+          type="button"
+          class="fd-btn outline"
+          (click)="ui.openEdit('profile')"
+        >
+          Edit Profile
+        </button>
+        <div class="stats">
           <div>
-            <span class="profile-kicker">Customer profile</span>
-            <h1>{{ form.first_name || form.username }} {{ form.last_name }}</h1>
-            <p>{{ form.email }}</p>
-            @if (form.phone) {
-              <small>{{ form.phone }}</small>
-            }
+            Orders <span>Total Orders</span><b>{{ totalOrders() }}</b>
+          </div>
+          <div>
+            Saved <span>Cart Savings</span
+            ><b>{{ state.discount() | appCurrency }}</b>
+          </div>
+          <div>
+            Wallet <span>Balance</span
+            ><b class="green">{{ walletBalance() | appCurrency }}</b>
+          </div>
+          <div>
+            Rewards <span>Rewards</span
+            ><b>{{ rewardAmount() | appCurrency }}</b>
           </div>
         </div>
-        <button class="pill-btn" (click)="isEditing = true">Edit profile</button>
+      </section>
+
+      <div class="fd-section-title">
+        <h2>Saved Addresses</h2>
+        <a routerLink="/addresses">View all</a>
       </div>
-
-      <div class="profile-grid">
-        <section class="profile-card">
-          <span class="profile-kicker">Account perks</span>
-          <h2>Delivery-ready account details</h2>
-          <div class="perk-list">
-            <article>
-              <span class="material-icons-outlined">stars</span>
-              <div>
-                <strong>{{ loyaltyPoints() }} loyalty points</strong>
-                <span>Use them as savings during checkout.</span>
-              </div>
-            </article>
-            <article>
-              <span class="material-icons-outlined">location_on</span>
-              <div>
-                <strong>Saved addresses</strong>
-                <span>Switch between home, work and favorites faster.</span>
-              </div>
-            </article>
-            <article>
-              <span class="material-icons-outlined">bolt</span>
-              <div>
-                <strong>Faster repeat ordering</strong>
-                <span>Your recent stores and orders stay easy to revisit.</span>
-              </div>
-            </article>
-          </div>
-        </section>
-
-        <section class="profile-card">
-          <span class="profile-kicker">Quick access</span>
-          <h2>Everything around your customer account</h2>
-          <div class="profile-links">
-            <a routerLink="/orders">Orders</a>
-            <a routerLink="/my-issues">Support issues</a>
-            <a routerLink="/wallet">Wallet</a>
-            <a routerLink="/addresses">Addresses</a>
-            <a routerLink="/wishlist">Wishlist</a>
-            <a routerLink="/referral">Referral</a>
-          </div>
-        </section>
-      </div>
-
-      <section class="profile-card">
-        <div class="recent-head">
-          <div>
-            <span class="profile-kicker">Recent activity</span>
-            <h2>Your latest orders</h2>
-          </div>
-          <a routerLink="/orders">See all</a>
-        </div>
-
-        @if (recentOrders().length > 0) {
-          <div class="profile-metrics">
-            <article>
-              <strong>{{ recentOrders().length }}</strong>
-              <span>Orders in your quick-access rail</span>
-            </article>
-            <article>
-              <strong>{{ recentOrders()[0].vendor_name || recentOrders()[0].vendor?.store_name || 'Store' }}</strong>
-              <span>Most recent store visited</span>
-            </article>
-          </div>
-
-          <div class="recent-grid">
-            @for (order of recentOrders(); track order.id) {
-              <a [routerLink]="['/order', order.id]" class="recent-card">
-                <div class="recent-row">
-                  <strong>{{ order.vendor_name || order.vendor?.store_name || 'Shop' }}</strong>
-                  <span class="recent-status {{ orderStatusClass(order.status) }}">{{ orderStatusLabel(order.status) }}</span>
-                </div>
-                <div class="recent-tags">
-                  @for (item of (order.items || []).slice(0, 3); track item.id) {
-                    <span>{{ item.product?.name || item.product_name }}</span>
-                  }
-                </div>
-                <div class="recent-row meta">
-                  <span>{{ (order.placed_at || order.created_at) | date:'MMM d, y · h:mm a' }}</span>
-                  <strong>{{ order.total }}</strong>
-                </div>
-                @if (['delivered', 'cancelled'].includes(order.status)) {
-                  <div class="recent-actions">
-                    <button class="reorder-btn" (click)="reorder(order.id, $event)" [disabled]="reorderingId() === order.id">
-                      {{ reorderingId() === order.id ? 'Adding...' : 'Reorder basket' }}
-                    </button>
-                  </div>
-                }
-              </a>
+      <section class="address-grid">
+        @for (address of state.addresses(); track address.id) {
+          <article class="fd-card address">
+            <span>{{ address.label }}</span
+            ><button
+              type="button"
+              aria-label="Edit address"
+              (click)="editAddress()"
+            >
+              <span class="material-symbols-rounded">more_horiz</span></button
+            ><b>{{ address.name }}</b>
+            <p>{{ address.line }}</p>
+            <small>{{ address.phone }}</small>
+            @if (address.isDefault) {
+              <em>Default</em>
             }
+          </article>
+        }
+        <a routerLink="/addresses" class="fd-card add-address"
+          ><span class="material-symbols-rounded">add</span
+          ><b>Add New Address</b></a
+        >
+      </section>
+
+      <section class="bottom-grid">
+        <article class="fd-card">
+          <div class="fd-section-title">
+            <h2>Payment Methods</h2>
+            <button type="button" (click)="ui.openEdit('payment')">Edit</button>
           </div>
-        } @else {
-          <div class="recent-empty">Your placed orders will show up here.</div>
+          @for (method of state.paymentMethods(); track method.id) {
+            <div class="pay-row">
+              <b>{{ method.icon }} {{ method.label }}</b
+              ><span>{{ method.isDefault ? "Default" : "Available" }}</span>
+            </div>
+          }
+          <a routerLink="/wallet" class="link">+ Add New Payment Method</a>
+        </article>
+        <article class="fd-card">
+          <div class="fd-section-title"><h2>Quick Links</h2></div>
+          @for (link of quickLinks; track link.path) {
+            <a [routerLink]="link.path" class="quick"
+              ><span class="material-symbols-rounded">{{ link.icon }}</span
+              ><b>{{ link.label }}</b
+              ><small>{{ link.sub }}</small
+              ><em>Open</em></a
+            >
+          }
+          <button
+            type="button"
+            class="quick location-action"
+            (click)="ui.openLocation()"
+          >
+            <span class="material-symbols-rounded">location_on</span
+            ><b>Change Location</b><small>Open location selector modal</small
+            ><em>Open</em>
+          </button>
+        </article>
+      </section>
+    </div>
+
+    <aside class="right-profile">
+      <section class="wallet-card fd-card">
+        <h3>FlashDrop Wallet</h3>
+        <p>Total Balance</p>
+        <h2>{{ walletBalance() | appCurrency }}</h2>
+        <a routerLink="/wallet" class="fd-btn primary">Add Money</a>
+      </section>
+      <section class="one-card fd-card">
+        <h3>
+          FlashDrop One
+          @if (auth.currentUser()?.prime) {
+            <span>Active</span>
+          }
+        </h3>
+        <p>Membership details update from your account.</p>
+        <button
+          type="button"
+          class="fd-btn outline"
+          (click)="manageMembership()"
+        >
+          Manage Membership
+        </button>
+      </section>
+      <section class="activity fd-card">
+        <div class="fd-section-title">
+          <h2>Recent Account Activity</h2>
+          <button type="button" (click)="viewActivity()">View all</button>
+        </div>
+        @for (item of activities(); track item.title + item.sub) {
+          <p>
+            <span class="material-symbols-rounded">{{ item.icon }}</span
+            ><b>{{ item.title }}</b
+            ><small>{{ item.sub }}</small
+            ><em>{{ item.amount }}</em>
+          </p>
+        } @empty {
+          <p>No recent account activity.</p>
         }
       </section>
-
-      <section class="profile-card">
-        <div class="recent-head">
-          <div>
-            <span class="profile-kicker">Appearance</span>
-            <h2>Personalize the customer app</h2>
-          </div>
-        </div>
-        <nx-palette-picker />
-      </section>
-
-      <button class="logout-btn" (click)="logout()">Sign out</button>
-    </section>
-  } @else {
-    <section class="profile-page">
-      <div class="profile-hero edit">
-        <button class="pill-btn" (click)="isEditing = false">Back</button>
-        <div>
-          <span class="profile-kicker">Profile editor</span>
-          <h1>Update your customer details</h1>
-        </div>
-      </div>
-
-      <form class="profile-form" (ngSubmit)="save()">
-        <div class="profile-avatar large" (click)="avatarInput.click()">
-          @if (avatarPreview()) {
-            <img [src]="avatarPreview()" alt="avatar">
-          } @else {
-            <span>{{ initials() }}</span>
-          }
-        </div>
-        <input #avatarInput type="file" accept="image/*" hidden (change)="onAvatarChange($event)">
-
-        <div class="field-grid">
-          <label><span>First name</span><input [(ngModel)]="form.first_name" name="first_name"></label>
-          <label><span>Last name</span><input [(ngModel)]="form.last_name" name="last_name"></label>
-        </div>
-        <label><span>Username</span><input [(ngModel)]="form.username" name="username" required></label>
-        <label><span>Email</span><input [(ngModel)]="form.email" name="email" type="email" required></label>
-        <label><span>Phone</span><input [(ngModel)]="form.phone" name="phone" type="tel"></label>
-        <label>
-          <span>Country</span>
-          <select [(ngModel)]="form.country" name="country">
-            <option value="US">United States</option>
-            <option value="GB">United Kingdom</option>
-            <option value="CA">Canada</option>
-            <option value="AU">Australia</option>
-            <option value="IN">India</option>
-            <option value="NG">Nigeria</option>
-            <option value="ZA">South Africa</option>
-            <option value="AE">United Arab Emirates</option>
-            <option value="SA">Saudi Arabia</option>
-            <option value="SG">Singapore</option>
-            <option value="MY">Malaysia</option>
-            <option value="PH">Philippines</option>
-            <option value="PK">Pakistan</option>
-            <option value="BD">Bangladesh</option>
-            <option value="DE">Germany</option>
-            <option value="FR">France</option>
-            <option value="BR">Brazil</option>
-          </select>
-        </label>
-
-        <div class="form-actions">
-          <button type="button" class="ghost-btn" (click)="isEditing = false">Cancel</button>
-          <button type="submit" class="save-btn" [disabled]="saving()">@if (saving()) { Saving... } @else { Save changes }</button>
-        </div>
-      </form>
-    </section>
-  }
-}
+    </aside>
+  </section>
+</main>

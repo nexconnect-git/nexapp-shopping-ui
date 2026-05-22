@@ -42,47 +42,33 @@
 }
 
 .profile-hero-card {
-  overflow: hidden;
+  overflow: visible;
 }
 
-.hero-banner {
-  position: relative;
-  height: 11.5rem;
-  background:
-    linear-gradient(135deg, rgba(17, 24, 39, 0.94), rgba(15, 23, 42, 0.9)),
-    radial-gradient(circle at 22% 28%, rgba(6, 182, 212, 0.34), transparent 32%),
-    radial-gradient(circle at 86% 18%, rgba(233, 69, 96, 0.26), transparent 30%);
-
-  &::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
-    background-size: 28px 28px;
-    opacity: 0.32;
-  }
+.hero-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  min-height: 116px;
+  padding: 1.25rem;
 }
 
 .hero-identity {
-  position: absolute;
-  left: 1.5rem;
-  right: 1.5rem;
-  bottom: 1.35rem;
-  z-index: 2;
   display: flex;
   align-items: center;
   gap: 1rem;
+  min-width: 0;
 }
 
 .hero-avatar {
   position: relative;
-  width: 5.5rem;
-  height: 5.5rem;
+  width: 5rem;
+  height: 5rem;
+  flex: 0 0 5rem;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.32);
-  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.26);
+  border: 1px solid #edeff3;
+  box-shadow: 0 12px 28px rgba(16, 24, 40, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -103,29 +89,18 @@
 
   h1 {
     margin: 0;
-    color: #fff;
-    font-size: clamp(1.55rem, 3vw, 2.15rem);
-    line-height: 1.12;
-    font-weight: 900;
+    color: #111827;
+    font-size: clamp(1.45rem, 2.5vw, 2rem);
+    line-height: 1.08;
+    font-weight: 850;
   }
 
   p {
-    margin: 0.35rem 0 0;
-    color: rgba(255, 255, 255, 0.78);
+    margin: 0.3rem 0 0;
+    color: #667085;
     font-size: 0.9rem;
-    font-weight: 650;
+    font-weight: 600;
   }
-}
-
-.hero-action-bar {
-  min-height: 0;
-  padding: 1rem 1.25rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  background: #fff;
-  border-top: 1px solid #e5e7eb;
 }
 
 .hero-info-top,
@@ -136,15 +111,23 @@
   flex-wrap: wrap;
 }
 
+.hero-info-top {
+  margin-top: 0.7rem;
+}
+
+.header-actions {
+  justify-content: flex-end;
+}
+
 .badge {
-  min-height: 28px;
+  min-height: 26px;
   border-radius: 999px;
-  padding: 0.25rem 0.7rem;
+  padding: 0.22rem 0.65rem;
   border: 1px solid transparent;
   font-size: 0.72rem;
-  font-weight: 850;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
+  font-weight: 750;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .profile-intel-grid {
@@ -154,15 +137,15 @@
 }
 
 .intel-card {
-  min-height: 116px;
-  padding: 1rem;
+  min-height: 92px;
+  padding: 0.9rem;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.85rem;
 
   &.priority {
     border-color: rgba(6, 182, 212, 0.35);
-    background: linear-gradient(180deg, #fff, #f0fbff);
+    background: var(--primary);
   }
 
   strong {
@@ -183,18 +166,28 @@
 }
 
 .intel-icon {
-  width: 2.65rem;
-  height: 2.65rem;
+  width: 2.45rem;
+  height: 2.45rem;
+  flex: 0 0 2.45rem;
   border-radius: 8px;
   background: rgba(6, 182, 212, 0.11);
-  color: #06b6d4;
+  color: #6c2bff;
   display: flex;
   align-items: center;
   justify-content: center;
 
-  &.green { background: rgba(22, 163, 74, 0.1); color: #16a34a; }
-  &.warm { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
-  &.slate { background: rgba(17, 24, 39, 0.08); color: #111827; }
+  &.green {
+    background: rgba(34, 197, 94, 0.12);
+    color: #22c55e;
+  }
+  &.warm {
+    background: rgba(139, 92, 255, 0.1);
+    color: #ef4444;
+  }
+  &.slate {
+    background: rgba(17, 24, 39, 0.08);
+    color: #111827;
+  }
 }
 
 .intel-label {
@@ -249,23 +242,18 @@
 }
 
 @media (max-width: 760px) {
-  .hero-banner {
-    height: auto;
-    min-height: 13rem;
+  .hero-main {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    min-height: 0;
   }
 
   .hero-identity {
-    position: relative;
-    left: auto;
-    right: auto;
-    bottom: auto;
-    padding: 1.25rem;
     align-items: flex-start;
   }
 
-  .hero-action-bar {
-    align-items: stretch;
-    flex-direction: column;
+  .header-actions {
+    justify-content: flex-start;
   }
 
   .profile-intel-grid {
@@ -274,5 +262,7 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }

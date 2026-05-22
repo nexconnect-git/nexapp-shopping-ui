@@ -1,161 +1,103 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
-import { CommonModule, Location } from '@angular/common';
-import { RouterLink, ActivatedRoute, Router } from '@angular/router';
-import { FormsModule } from '@angular/forms';
-import { ApiService, AppCurrencyPipe, AuthService } from '@shared/public-api';
+import { Component, computed, effect, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ApiService, AppCurrencyPipe } from '@shared/public-api';
+import { CatalogService } from '../../services/catalog.service';
+import { AppStateService } from '../../services/app-state.service';
+import { UiService } from '../../services/ui.service';
+import { ProductCardComponent } from '../../components/product-card/product-card.component';
 
 @Component({
-  selector: 'app-product-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, AppCurrencyPipe],
+  imports: [ProductCardComponent, AppCurrencyPipe],
   templateUrl: './product-detail.component.html',
-  styleUrl: './product-detail.component.scss'
+  styleUrls: ['./product-detail.component.scss'],
 })
-export class ProductDetailComponent implements OnInit {
-  private api = inject(ApiService);
-  private auth = inject(AuthService);
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
-  private location = inject(Location);
+export class ProductDetailComponent {
+  qty = signal(1);
+  selectedSize = signal('');
+  activePanel = signal<'details' | 'nutrition' | 'reviews'>('details');
+  activeImage = signal(1);
 
-  product = signal<any | null>(null);
-  reviews = signal<any[]>([]);
-  selectedImage = signal<string | null>(null);
-  loading = signal(true);
-  addingToCart = signal(false);
-  cartSuccess = signal(false);
-  cartError = signal('');
-  showClearCartDialog = signal(false);
-  pendingAction = signal<'cart' | 'buyNow' | null>(null);
-  qty = 1;
-  wishlisted = signal(false);
-  wishlistBusy = signal(false);
-
-  ngOnInit() {
-    const id = this.route.snapshot.paramMap.get('id');
-    if (!id) return;
-
-    this.api.getProduct(id).subscribe({
-      next: (res) => {
-        this.product.set(res);
-        this.selectedImage.set(
-          res.primary_image || (res.images?.length ? res.images[0].image : null)
-        );
-        this.loading.set(false);
-        this.api.getProductReviews(id).subscribe({
-          next: (rev) => this.reviews.set(rev.results || rev),
-          error: () => {}
-        });
-        this.api.getWishlistStatus([id]).subscribe({
-          next: (status) => this.wishlisted.set(!!status[id]),
-          error: () => {}
-        });
-      },
-      error: () => {
-        this.loading.set(false);
-      }
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private api: ApiService,
+    public catalog: CatalogService,
+    public state: AppStateService,
+    public ui: UiService,
+  ) {
+    const productId = this.route.snapshot.paramMap.get('id');
+    this.catalog.ensureProductLoaded(productId);
+    effect(() => {
+      const storeId = this.product().storeId;
+      if (storeId) this.catalog.ensureStoreProductsLoaded(storeId);
     });
   }
+  Math = Math;
 
-  toggleWishlist() {
-    const p = this.product();
-    if (!p || this.wishlistBusy()) return;
-    this.wishlistBusy.set(true);
-    this.api.toggleWishlist(p.id).subscribe({
-      next: (res) => { this.wishlisted.set(res.wishlisted); this.wishlistBusy.set(false); },
-      error: () => this.wishlistBusy.set(false),
-    });
+  product = computed(() =>
+    this.catalog.getProduct(this.route.snapshot.paramMap.get('id')),
+  );
+  store = computed(() =>
+    this.product().storeId
+      ? this.catalog.getStore(this.product().storeId)
+      : null,
+  );
+  deliveryLabel = computed(
+    () =>
+      this.store()?.eta ||
+      (this.product().raw as any)?.vendor?.estimated_delivery_label ||
+      'Delivery estimate confirmed at checkout',
+  );
+  deliveryMode = computed(
+    () =>
+      this.store()?.delivery || 'Delivery availability updates from the store',
+  );
+  sizes = computed(() => {
+    const product = this.product();
+    const variants =
+      (product.raw as any)?.variants ||
+      (product.raw as any)?.available_units ||
+      [];
+    if (Array.isArray(variants) && variants.length) {
+      return variants.map((variant: any) => ({
+        label: variant.unit || variant.label || variant.name || product.unit,
+        price: Number(variant.price || product.price || 0),
+        mrp: Number(
+          variant.compare_price ||
+            variant.mrp ||
+            variant.price ||
+            product.mrp ||
+            0,
+        ),
+      }));
+    }
+    return [{ label: product.unit, price: product.price, mrp: product.mrp }];
+  });
+  highlights = computed(() =>
+    this.product().highlights?.length
+      ? this.product().highlights
+      : ['Details update when the store provides them'],
+  );
+
+  buyNow(): void {
+    if (this.state.addToCart(this.product(), this.qty()))
+      this.router.navigate(['/checkout']);
   }
 
-  addToCart() {
-    if (!this.auth.isLoggedIn()) { this.router.navigate(['/login']); return; }
-    const p = this.product();
-    if (!p) return;
-
-    this.addingToCart.set(true);
-    this.cartError.set('');
-
-    this.api.addToCart(p.id, this.qty).subscribe({
-      next: () => {
-        this.cartSuccess.set(true);
-        this.addingToCart.set(false);
-        this.api.refreshCartCount();
-        setTimeout(() => this.cartSuccess.set(false), 3000);
-      },
-      error: (err) => {
-        this.addingToCart.set(false);
-        if (err.status === 409) {
-          this.pendingAction.set('cart');
-          this.showClearCartDialog.set(true);
-        } else {
-          this.cartError.set(err.error?.error || err.error?.detail || 'Could not add to cart.');
-        }
-      }
-    });
+  toggleWishlist(): void {
+    this.api
+      .toggleWishlist(this.product().apiId || this.product().id)
+      .subscribe({
+        next: (response) =>
+          this.state.showToast(
+            response.wishlisted ? 'Added to wishlist' : 'Removed from wishlist',
+          ),
+        error: () => this.state.showToast('Could not update wishlist'),
+      });
   }
 
-  buyNow() {
-    if (!this.auth.isLoggedIn()) { this.router.navigate(['/login']); return; }
-    const p = this.product();
-    if (!p) return;
-
-    this.addingToCart.set(true);
-    this.cartError.set('');
-    this.api.addToCart(p.id, this.qty).subscribe({
-      next: () => {
-        this.addingToCart.set(false);
-        this.api.refreshCartCount();
-        this.router.navigate(['/cart']);
-      },
-      error: (err) => {
-        this.addingToCart.set(false);
-        if (err.status === 409) {
-          this.pendingAction.set('buyNow');
-          this.showClearCartDialog.set(true);
-        } else {
-          this.cartError.set(err.error?.error || err.error?.detail || 'Could not add to cart.');
-        }
-      }
-    });
+  zoomImage(): void {
+    this.state.showToast('Image preview opened');
   }
-
-  confirmClearAndAdd() {
-    const p = this.product();
-    if (!p) return;
-    this.showClearCartDialog.set(false);
-    const action = this.pendingAction();
-    this.pendingAction.set(null);
-
-    this.api.clearCart().subscribe({
-      next: () => {
-        this.api.addToCart(p.id, this.qty).subscribe({
-          next: () => {
-            this.api.refreshCartCount();
-            if (action === 'buyNow') {
-              this.router.navigate(['/cart']);
-            } else {
-              this.cartSuccess.set(true);
-              setTimeout(() => this.cartSuccess.set(false), 3000);
-            }
-          },
-          error: (err) => {
-            this.cartError.set(err.error?.error || 'Could not add to cart.');
-          }
-        });
-      },
-      error: () => {
-        this.cartError.set('Could not clear cart. Please try again.');
-      }
-    });
-  }
-
-  dismissClearCartDialog() {
-    this.showClearCartDialog.set(false);
-    this.pendingAction.set(null);
-  }
-
-  goBack() { this.location.back(); }
-  decQty() { if (this.qty > 1) this.qty--; }
-  incQty() { const p = this.product(); if (p && (p.stock === 0 || this.qty < p.stock)) this.qty++; }
-  starsFor(r: number) { const f = Math.round(r); return '★'.repeat(f) + '☆'.repeat(5 - f); }
 }

@@ -1,4 +1,4 @@
-<div class="admin-users-container fade-in">
+<div class="saas-page admin-users-container fade-in">
   <div class="page-header">
     <div class="header-content">
       <div class="header-icon">
@@ -6,20 +6,25 @@
       </div>
       <div class="header-text">
         <h1 class="page-title">Admin Management</h1>
-        <p class="page-subtitle">Manage administrative and superuser accounts stack.</p>
+        <p class="page-subtitle">
+          Manage administrative and superuser accounts stack.
+        </p>
       </div>
     </div>
-    
-    <button class="btn btn-primary" (click)="showForm = !showForm" *ngIf="auth.isSuperUser()">
-      <span class="material-icons-outlined">{{ showForm ? 'close' : 'add' }}</span>
-      {{ showForm ? 'Cancel' : 'Create New Account' }}
+
+    <button
+      class="btn btn-primary"
+      (click)="showForm = !showForm"
+      *ngIf="auth.isSuperUser()"
+    >
+      <span class="material-icons-outlined">{{
+        showForm ? "close" : "add"
+      }}</span>
+      {{ showForm ? "Cancel" : "Create New Account" }}
     </button>
   </div>
 
-
-
   <div class="content-body" *ngIf="auth.isSuperUser()">
-    
     <!-- Create Form -->
     <div class="glass-card form-card" *ngIf="showForm">
       <h2 class="card-title">Create Account</h2>
@@ -27,29 +32,54 @@
         <div class="form-row">
           <div class="form-group">
             <label>First Name</label>
-            <input type="text" formControlName="first_name" class="form-control" placeholder="John">
+            <input
+              type="text"
+              formControlName="first_name"
+              class="form-control"
+              placeholder="John"
+            />
           </div>
           <div class="form-group">
             <label>Last Name</label>
-            <input type="text" formControlName="last_name" class="form-control" placeholder="Doe">
+            <input
+              type="text"
+              formControlName="last_name"
+              class="form-control"
+              placeholder="Doe"
+            />
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
             <label>Email Address</label>
-            <input type="email" formControlName="email" class="form-control" placeholder="johndoe@example.com">
+            <input
+              type="email"
+              formControlName="email"
+              class="form-control"
+              placeholder="johndoe@example.com"
+            />
           </div>
           <div class="form-group">
             <label>Username</label>
-            <input type="text" formControlName="username" class="form-control" placeholder="johndoe">
+            <input
+              type="text"
+              formControlName="username"
+              class="form-control"
+              placeholder="johndoe"
+            />
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
             <label>Password</label>
-            <input type="password" formControlName="password" class="form-control" placeholder="Minimum 8 characters">
+            <input
+              type="password"
+              formControlName="password"
+              class="form-control"
+              placeholder="Minimum 8 characters"
+            />
           </div>
           <div class="form-group">
             <label>Account Role</label>
@@ -61,9 +91,13 @@
         </div>
 
         <div class="form-actions">
-          <button type="submit" class="btn btn-primary" [disabled]="createForm.invalid || isSubmitting">
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="createForm.invalid || isSubmitting"
+          >
             <span class="spinner-inline" *ngIf="isSubmitting"></span>
-            {{ isSubmitting ? 'Creating...' : 'Create Account' }}
+            {{ isSubmitting ? "Creating..." : "Create Account" }}
           </button>
         </div>
       </form>
@@ -86,18 +120,22 @@
         emptyMessage="No administrative accounts found."
         emptySubMessage="Try adjusting your filters or create a new account."
         emptyIcon="manage_accounts"
-        (pageChange)="onPageChange($event)">
-
+        (pageChange)="onPageChange($event)"
+      >
         <ng-template tableCell="user" let-row="row">
           <div class="user-cell">
             <div class="avatar" *ngIf="row.avatar">
-              <img [src]="row.avatar" alt="Avatar">
+              <img [src]="row.avatar" alt="Avatar" />
             </div>
             <div class="avatar-placeholder" *ngIf="!row.avatar">
-              {{ row.first_name?.charAt(0) || row.username?.charAt(0) | uppercase }}
+              {{
+                row.first_name?.charAt(0) || row.username?.charAt(0) | uppercase
+              }}
             </div>
             <div class="user-details">
-              <span class="user-name">{{ row.first_name }} {{ row.last_name }}</span>
+              <span class="user-name"
+                >{{ row.first_name }} {{ row.last_name }}</span
+              >
               <span class="user-username">&#64;{{ row.username }}</span>
             </div>
           </div>
@@ -105,43 +143,56 @@
 
         <ng-template tableCell="contact" let-row="row">
           <div class="contact-info">
-            <span class="contact-item"><span class="material-icons-outlined">email</span> {{ row.email }}</span>
-            <span class="contact-item" *ngIf="row.phone"><span class="material-icons-outlined">phone</span> {{ row.phone }}</span>
+            <span class="contact-item"
+              ><span class="material-icons-outlined">email</span>
+              {{ row.email }}</span
+            >
+            <span class="contact-item" *ngIf="row.phone"
+              ><span class="material-icons-outlined">phone</span>
+              {{ row.phone }}</span
+            >
           </div>
         </ng-template>
 
         <ng-template tableCell="role" let-row="row">
-          <span class="role-badge" [ngClass]="row.is_superuser ? 'role-super' : 'role-admin'">
-            {{ row.is_superuser ? 'Superuser' : 'Administrator' }}
+          <span
+            class="role-badge"
+            [ngClass]="row.is_superuser ? 'role-super' : 'role-admin'"
+          >
+            {{ row.is_superuser ? "Superuser" : "Administrator" }}
           </span>
         </ng-template>
 
         <ng-template tableCell="status" let-row="row">
           <span class="badge" [ngClass]="row.is_active ? 'active' : 'inactive'">
-            {{ row.is_active ? 'Active' : 'Inactive' }}
+            {{ row.is_active ? "Active" : "Inactive" }}
           </span>
         </ng-template>
 
         <ng-template tableCell="joined" let-row="row">
-          <span class="date">{{ row.created_at | date:'mediumDate' }}</span>
+          <span class="date">{{ row.created_at | date: "mediumDate" }}</span>
         </ng-template>
 
         <ng-template tableCell="actions" let-row="row">
-          <div style="display: flex; justify-content: flex-end;">
-            <button class="action-btn danger" 
-                    *ngIf="(auth.user()?.id !== row.id)"
-                    (click)="deleteUser(row.id)" 
-                    title="Delete Account">
+          <div style="display: flex; justify-content: flex-end">
+            <button
+              class="action-btn danger"
+              *ngIf="auth.user()?.id !== row.id"
+              (click)="deleteUser(row.id)"
+              title="Delete Account"
+            >
               <span class="material-icons-outlined">delete_outline</span>
             </button>
-            <span class="action-btn disabled-action" *ngIf="(auth.user()?.id === row.id)" title="Current Session (You)">
+            <span
+              class="action-btn disabled-action"
+              *ngIf="auth.user()?.id === row.id"
+              title="Current Session (You)"
+            >
               <span class="material-icons-outlined">person</span>
             </span>
           </div>
         </ng-template>
-        
       </app-dynamic-table>
     </div>
-    
   </div>
 </div>

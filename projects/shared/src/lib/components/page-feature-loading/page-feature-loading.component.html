@@ -1,0 +1,16 @@
+@if (features.isLoading() && !features.hasResolved()) {
+  <section
+    class="nc-feature-loading"
+    role="status"
+    aria-live="polite"
+    aria-busy="true"
+  >
+    <div class="nc-feature-loading__card">
+      <span class="nc-feature-loading__spinner" aria-hidden="true"></span>
+      <strong>Loading workspace</strong>
+      <p>
+        Checking the latest page and feature access before showing this app.
+      </p>
+    </div>
+  </section>
+}

@@ -1,0 +1,174 @@
+<main class="nc-dynamic-review">
+  <header class="nc-review-head nc-compact-card">
+    <div>
+      <small>ADMIN PANEL</small>
+      <h1>{{ config.title }}</h1>
+      <p>{{ config.subtitle }}</p>
+    </div>
+    <div class="nc-review-head-actions">
+      <button
+        type="button"
+        class="nc-review-btn nc-review-btn-secondary"
+        (click)="back.emit()"
+      >
+        Back
+      </button>
+      <button
+        type="button"
+        class="nc-review-btn nc-review-btn-secondary"
+        (click)="saveDraft.emit()"
+      >
+        {{ config.saveDraftLabel || "Save Draft" }}
+      </button>
+      <button
+        type="button"
+        class="nc-review-btn nc-review-btn-primary"
+        (click)="submitForApproval.emit()"
+      >
+        {{ config.submitLabel || "Submit for Approval" }}
+      </button>
+    </div>
+  </header>
+
+  <section class="nc-review-overview">
+    <article class="nc-review-profile nc-compact-card">
+      <div class="nc-review-avatar">
+        {{
+          config.profileSummary.avatarInitials ||
+            config.profileSummary.entityName.slice(0, 2)
+        }}
+      </div>
+      <div class="nc-review-profile-title">
+        <h2>{{ config.profileSummary.entityName }}</h2>
+        <p>{{ config.profileSummary.entityTypeLabel }}</p>
+      </div>
+      <div class="nc-review-summary-meta">
+        <span *ngFor="let metric of config.profileSummary.metrics?.slice(0, 4)">
+          {{ metric.label }} <b>{{ metric.value }}</b>
+        </span>
+      </div>
+    </article>
+
+    <article class="nc-review-status nc-compact-card">
+      <h2>Review Status</h2>
+      <p>
+        <span>Completion</span><b>{{ config.completionPercent || 0 }}%</b>
+      </p>
+      <p>
+        <span>Readiness</span
+        ><b [attr.data-tone]="config.readinessTone || 'neutral'">{{
+          config.readinessLabel
+        }}</b>
+      </p>
+      <p>
+        <span>Total fields</span><b>{{ totalFields() }}</b>
+      </p>
+    </article>
+  </section>
+
+  <section
+    *ngIf="config.warning?.enabled"
+    class="nc-review-warning nc-compact-card"
+  >
+    <span class="nc-emoji-icon">🔐</span>
+    <div>
+      <b>{{ config.warning?.title }}</b>
+      <p>{{ config.warning?.message }}</p>
+      <code *ngIf="config.warning?.secretValue">
+        {{ config.warning?.secretLabel || "Temporary Password" }}:
+        <strong>{{ config.warning?.secretValue }}</strong>
+      </code>
+    </div>
+    <button type="button">{{ config.warning?.actionLabel }}</button>
+  </section>
+
+  <section class="nc-review-sections-grid">
+    <article
+      *ngFor="let section of config.sections"
+      class="nc-review-section nc-compact-card"
+    >
+      <header>
+        <h2>
+          <span class="nc-emoji-icon">{{ section.icon }}</span
+          >{{ section.title }}
+        </h2>
+        <button
+          type="button"
+          *ngIf="section.editStepId"
+          (click)="editSection.emit(section.editStepId)"
+        >
+          ✎ Edit
+        </button>
+      </header>
+
+      <div class="nc-review-grid">
+        <div
+          *ngFor="let field of visibleFields(section.fields)"
+          class="nc-review-item"
+          [class.full]="isWideField(field.value)"
+        >
+          <span>{{ field.label }}</span>
+          <strong [attr.data-tone]="field.tone || 'neutral'">{{
+            field.value | displayValue
+          }}</strong>
+        </div>
+      </div>
+
+      <details
+        *ngIf="hiddenFieldCount(section.fields) > 0"
+        class="nc-review-more-fields"
+      >
+        <summary>
+          Show {{ hiddenFieldCount(section.fields) }} more fields
+        </summary>
+        <div class="nc-review-grid">
+          <div
+            *ngFor="let field of hiddenFields(section.fields)"
+            class="nc-review-item"
+            [class.full]="isWideField(field.value)"
+          >
+            <span>{{ field.label }}</span>
+            <strong [attr.data-tone]="field.tone || 'neutral'">{{
+              field.value | displayValue
+            }}</strong>
+          </div>
+        </div>
+      </details>
+    </article>
+  </section>
+
+  <section
+    class="nc-review-attention nc-compact-card"
+    *ngIf="config.attentionItems?.length"
+  >
+    <h2>Attention Items</h2>
+    <article *ngFor="let item of config.attentionItems">
+      <b>{{ item.title }}</b>
+      <p>{{ item.description }}</p>
+    </article>
+  </section>
+
+  <footer class="nc-review-mobile-actions">
+    <button
+      type="button"
+      class="nc-review-btn nc-review-btn-secondary"
+      (click)="back.emit()"
+    >
+      Back
+    </button>
+    <button
+      type="button"
+      class="nc-review-btn nc-review-btn-secondary"
+      (click)="saveDraft.emit()"
+    >
+      {{ config.saveDraftLabel || "Save Draft" }}
+    </button>
+    <button
+      type="button"
+      class="nc-review-btn nc-review-btn-primary"
+      (click)="submitForApproval.emit()"
+    >
+      {{ config.submitLabel || "Submit for Approval" }}
+    </button>
+  </footer>
+</main>

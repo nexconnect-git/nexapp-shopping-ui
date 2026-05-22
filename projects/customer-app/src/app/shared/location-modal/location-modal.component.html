@@ -1,0 +1,117 @@
+﻿@if (ui.locationModalOpen()) {
+  <div class="overlay" (click)="ui.closeLocation()"></div>
+  <section class="location-modal animate-scale">
+    <span class="sheet-handle" aria-hidden="true"></span>
+    <header>
+      <div>
+        <span class="eyebrow">📍 Delivery address</span>
+        <h2>Choose location</h2>
+        <p>
+          Pick where we should show nearby stores, live offers, and accurate
+          fees.
+        </p>
+      </div>
+      <button
+        type="button"
+        aria-label="Close location selector"
+        (click)="ui.closeLocation()"
+      >
+        <span class="material-symbols-rounded">close</span>
+      </button>
+    </header>
+
+    <label class="search-box">
+      <span class="material-symbols-rounded">search</span>
+      <input
+        type="search"
+        placeholder="Search saved addresses"
+        [value]="query()"
+        (input)="query.set($any($event.target).value)"
+        autocomplete="off"
+      />
+      @if (query()) {
+        <button
+          type="button"
+          aria-label="Clear location search"
+          (click)="query.set('')"
+        >
+          <span class="material-symbols-rounded">close</span>
+        </button>
+      }
+    </label>
+
+    <div class="quick-actions" aria-label="Location quick actions">
+      <button type="button" class="current" (click)="useCurrentLocation()">
+        <span class="material-symbols-rounded">my_location</span>
+        <b>Use current</b>
+        <small>GPS location</small>
+      </button>
+
+      <button type="button" class="add-address" (click)="addAddress()">
+        <span class="material-symbols-rounded">add_location_alt</span>
+        <b>Add address</b>
+        <small>New saved address</small>
+      </button>
+    </div>
+
+    <div class="saved-head">
+      <h3>Saved Addresses</h3>
+      @if (savedAddresses().length) {
+        <small>{{ savedAddresses().length }} saved</small>
+      }
+    </div>
+    <div class="saved-list">
+      @for (address of filteredAddresses(); track address.id) {
+        <button
+          type="button"
+          [class.active]="
+            selectedAddressId() === address.id ||
+            selected().area === address.label
+          "
+          (click)="chooseSaved(address)"
+        >
+          <span class="material-symbols-rounded">{{
+            address.label === "Home"
+              ? "home"
+              : address.label === "Office"
+                ? "business"
+                : "location_on"
+          }}</span>
+          <span class="address-copy">
+            <b
+              >{{ address.label }}
+              @if (address.isDefault) {
+                <em>Default</em>
+              }
+            </b>
+            <small>{{ address.line }}</small>
+            <strong>{{ address.phone }}</strong>
+          </span>
+          <i class="material-symbols-rounded">{{
+            selectedAddressId() === address.id ||
+            selected().area === address.label
+              ? "check_circle"
+              : "radio_button_unchecked"
+          }}</i>
+        </button>
+      } @empty {
+        <p class="empty">
+          {{
+            query().trim()
+              ? "No saved addresses match your search."
+              : "No saved addresses yet. Add a delivery address or use your current location."
+          }}
+        </p>
+      }
+    </div>
+
+    <footer>
+      <fd-nx-button variant="outline" (clicked)="ui.closeLocation()"
+        >Cancel</fd-nx-button
+      >
+      <fd-nx-button variant="primary" (clicked)="save()"
+        >Save Location</fd-nx-button
+      >
+    </footer>
+  </section>
+}

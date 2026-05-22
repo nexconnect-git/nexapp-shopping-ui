@@ -3,19 +3,34 @@
     <div class="page-hero-copy">
       <span class="eyebrow">Analytics</span>
       <h1>Sales Report</h1>
-      <p>Analyze revenue, customers, coupons, product performance, and settlement health.</p>
+      <p>
+        Analyze revenue, customers, coupons, product performance, and settlement
+        health.
+      </p>
     </div>
     <div class="page-hero-actions">
-      <button class="export-btn" (click)="exportCsv()" [disabled]="loading() || !stats()">
+      <button
+        class="export-btn"
+        (click)="exportCsv()"
+        [disabled]="loading() || !stats()"
+      >
         <span class="material-icons-outlined">download</span>
         Export CSV
       </button>
-      <select class="form-select" [ngModel]="dateRange()" (ngModelChange)="dateRange.set($event); onRangeChange()">
+      <select
+        class="form-select"
+        [ngModel]="dateRange()"
+        (ngModelChange)="dateRange.set($event); onRangeChange()"
+      >
         <option value="7">Last 7 Days</option>
         <option value="30">Last 30 Days</option>
         <option value="90">Last 90 Days</option>
         <option value="all">All Time</option>
       </select>
+      <small class="field-hint"
+        >Choose the reporting period used for the dashboard and CSV
+        export.</small
+      >
     </div>
   </section>
 
@@ -28,21 +43,25 @@
     <section class="analytics-hero">
       <div>
         <span>Selected period</span>
-        <strong>{{ dateRange() === 'all' ? 'All time' : 'Last ' + dateRange() + ' days' }}</strong>
-        <p>Revenue, repeat customers, coupons, stock risk, and settlements in one workspace.</p>
+        <strong>{{
+          dateRange() === "all" ? "All time" : "Last " + dateRange() + " days"
+        }}</strong>
+        <p>
+          Revenue, repeat customers, coupons, stock risk, and settlements in one
+          workspace.
+        </p>
       </div>
       <div class="analytics-hero-metric">
         <small>Total revenue</small>
-        <strong>{{ (stats()?.total_revenue ?? 0) | appCurrency }}</strong>
+        <strong>{{ stats()?.total_revenue ?? 0 | appCurrency }}</strong>
       </div>
       <div class="analytics-hero-metric">
         <small>Average order</small>
-        <strong>{{ (stats()?.average_order_value ?? 0) | appCurrency }}</strong>
+        <strong>{{ stats()?.average_order_value ?? 0 | appCurrency }}</strong>
       </div>
     </section>
 
     <div class="report-grid">
-
       <!-- Settlement Summary Map -->
       <div class="widget-card full-width settlement-summary-card">
         <div class="widget-header">
@@ -54,21 +73,29 @@
         <div class="widget-body">
           <div class="settlement-metrics">
             <div class="s-metric">
-              <span class="s-icon material-icons-outlined text-success">verified</span>
+              <span class="s-icon material-icons-outlined text-success"
+                >verified</span
+              >
               <div class="s-info">
                 <span class="s-title">Successfully Settled</span>
                 <span class="s-value">{{ totalSettled() | appCurrency }}</span>
               </div>
             </div>
             <div class="s-metric">
-              <span class="s-icon material-icons-outlined text-warning">hourglass_empty</span>
+              <span class="s-icon material-icons-outlined text-warning"
+                >hourglass_empty</span
+              >
               <div class="s-info">
                 <span class="s-title">Pending Settlement</span>
-                <span class="s-value">{{ pendingSettled() | appCurrency }}</span>
+                <span class="s-value">{{
+                  pendingSettled() | appCurrency
+                }}</span>
               </div>
             </div>
             <div class="s-metric">
-              <span class="s-icon material-icons-outlined text-danger">cancel</span>
+              <span class="s-icon material-icons-outlined text-danger"
+                >cancel</span
+              >
               <div class="s-info">
                 <span class="s-title">Failed Transfers</span>
                 <span class="s-value">{{ failedSettled() | appCurrency }}</span>
@@ -77,39 +104,53 @@
           </div>
         </div>
       </div>
-      
+
       <!-- Key Metrics -->
       <div class="metrics-row">
         <div class="metric-card">
-          <div class="metric-icon primary"><span class="material-icons-outlined">attach_money</span></div>
+          <div class="metric-icon primary">
+            <span class="material-icons-outlined">attach_money</span>
+          </div>
           <div class="metric-info">
             <span class="label">Total Revenue</span>
-            <span class="value">{{ (stats()?.total_revenue ?? 0) | appCurrency }}</span>
+            <span class="value">{{
+              stats()?.total_revenue ?? 0 | appCurrency
+            }}</span>
           </div>
         </div>
         <div class="metric-card">
-          <div class="metric-icon success"><span class="material-icons-outlined">shopping_cart</span></div>
+          <div class="metric-icon success">
+            <span class="material-icons-outlined">shopping_cart</span>
+          </div>
           <div class="metric-info">
             <span class="label">Total Orders</span>
             <span class="value">{{ stats()?.total_orders }}</span>
           </div>
         </div>
         <div class="metric-card">
-          <div class="metric-icon info"><span class="material-icons-outlined">analytics</span></div>
+          <div class="metric-icon info">
+            <span class="material-icons-outlined">analytics</span>
+          </div>
           <div class="metric-info">
             <span class="label">Avg Order Value</span>
-            <span class="value">{{ (stats()?.average_order_value ?? 0) | appCurrency }}</span>
+            <span class="value">{{
+              stats()?.average_order_value ?? 0 | appCurrency
+            }}</span>
           </div>
         </div>
         <div class="metric-card">
-          <div class="metric-icon warning"><span class="material-icons-outlined">check_circle</span></div>
+          <div class="metric-icon warning">
+            <span class="material-icons-outlined">check_circle</span>
+          </div>
           <div class="metric-info">
             <span class="label">Delivered Orders</span>
             <span class="value">{{ stats()?.delivered_orders }}</span>
           </div>
         </div>
         <div class="metric-card">
-          <div class="metric-icon repeat"><span class="material-icons-outlined">loyalty</span></div>
+          <div class="metric-icon repeat">
+            <span class="material-icons-outlined">loyalty</span>
+          </div>
           <div class="metric-info">
             <span class="label">Repeat Customers</span>
             <span class="value">{{ stats()?.repeat_customers }}</span>
@@ -119,17 +160,25 @@
 
       <div class="metrics-row">
         <div class="metric-card compact">
-          <div class="metric-icon coupon"><span class="material-icons-outlined">confirmation_number</span></div>
+          <div class="metric-icon coupon">
+            <span class="material-icons-outlined">confirmation_number</span>
+          </div>
           <div class="metric-info">
             <span class="label">Coupon Revenue</span>
-            <span class="value">{{ (stats()?.coupon_contribution?.revenue ?? 0) | appCurrency }}</span>
+            <span class="value">{{
+              stats()?.coupon_contribution?.revenue ?? 0 | appCurrency
+            }}</span>
           </div>
         </div>
         <div class="metric-card compact">
-          <div class="metric-icon stock"><span class="material-icons-outlined">inventory</span></div>
+          <div class="metric-icon stock">
+            <span class="material-icons-outlined">inventory</span>
+          </div>
           <div class="metric-info">
             <span class="label">Low Stock Risk</span>
-            <span class="value">{{ stats()?.low_stock_impact?.low_stock_count || 0 }}</span>
+            <span class="value">{{
+              stats()?.low_stock_impact?.low_stock_count || 0
+            }}</span>
           </div>
         </div>
       </div>
@@ -147,17 +196,36 @@
             @if (stats()?.monthly_data?.length) {
               <div class="trend-chart-placeholder">
                 <div class="bars">
-                  @for (month of (stats()?.monthly_data || []); track month.month) {
+                  @for (
+                    month of stats()?.monthly_data || [];
+                    track month.month
+                  ) {
                     <div class="bar-col">
                       <!-- max bar height 150px representing max value roughly -->
-                      <div class="bar" [style.height.px]="mathMax(10, (stats()?.total_revenue ?? 0) ? month.revenue / (stats()?.total_revenue ?? 1) * 300 : 10)"></div>
-                      <span class="bar-label">{{ month.month | date:'MMM' }}</span>
+                      <div
+                        class="bar"
+                        [style.height.px]="
+                          mathMax(
+                            10,
+                            (stats()?.total_revenue ?? 0)
+                              ? (month.revenue /
+                                  (stats()?.total_revenue ?? 1)) *
+                                  300
+                              : 10
+                          )
+                        "
+                      ></div>
+                      <span class="bar-label">{{
+                        month.month | date: "MMM"
+                      }}</span>
                     </div>
                   }
                 </div>
               </div>
             } @else {
-              <div class="empty-state">No trend data available for this range.</div>
+              <div class="empty-state">
+                No trend data available for this range.
+              </div>
             }
           </div>
         </div>
@@ -182,7 +250,10 @@
                 </tr>
               </thead>
               <tbody>
-                @for (prod of (stats()?.top_products || []); track prod.product_id) {
+                @for (
+                  prod of stats()?.top_products || [];
+                  track prod.product_id
+                ) {
                   <tr>
                     <td>{{ prod.name }}</td>
                     <td class="text-right">{{ prod.total_sold }}</td>
@@ -196,7 +267,6 @@
           }
         </div>
       </div>
-      
     </div>
   }
 </div>

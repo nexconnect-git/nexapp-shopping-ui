@@ -1,7 +1,15 @@
-import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+import {
+  type ApplicationConfig,
+  provideZoneChangeDetection,
+} from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { authInterceptor, API_BASE_URL, AUTH_PREFIX, DYNAMIC_TABLE_DEFAULTS } from '@shared/public-api';
+import {
+  API_BASE_URL,
+  AUTH_PREFIX,
+  authInterceptor,
+  DYNAMIC_TABLE_DEFAULTS,
+} from '@shared/public-api';
 import { routes } from './app.routes';
 import { environment } from '../environments/environment';
 
@@ -21,6 +29,6 @@ export const appConfig: ApplicationConfig = {
         itemsPerPage: 20,
         hasPagination: true,
       },
-    }
-  ]
+    },
+  ],
 };

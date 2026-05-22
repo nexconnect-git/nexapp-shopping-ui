@@ -1,5 +1,4 @@
 <div class="order-detail-page">
-
   <!-- Loading -->
   @if (loading()) {
     <div class="loading-state">
@@ -15,25 +14,29 @@
       <strong>Order not found</strong>
       <p>This order may have been removed or you don't have access.</p>
     </div>
-  }
 
-  @else {
-
+  } @else {
     <!-- ══ Page Header ══ -->
     <section class="page-hero">
       <div class="page-hero-copy">
         <span class="eyebrow">Order detail</span>
         <div class="title-row">
           <h1 class="page-title">#{{ order()!.order_number }}</h1>
-          <span [class]="orderStatusBadge(order()!.status)">{{ order()!.status | titlecase }}</span>
+          <span [class]="orderStatusBadge(order()!.status)">{{
+            order()!.status | titlecase
+          }}</span>
         </div>
         <p class="page-subtitle">
           <span class="material-icons-outlined">calendar_today</span>
-          {{ order()!.placed_at | date:'MMMM d, y — h:mm a' }}
+          {{ order()!.placed_at | date: "MMMM d, y — h:mm a" }}
         </p>
       </div>
       <div class="page-hero-actions">
-        <button id="btn-download-invoice" class="btn-invoice" (click)="downloadInvoice()">
+        <button
+          id="btn-download-invoice"
+          class="btn-invoice"
+          (click)="downloadInvoice()"
+        >
           <span class="material-icons-outlined">download</span>
           Invoice
         </button>
@@ -45,28 +48,49 @@
       <div class="status-update-bar">
         <span class="status-label">Update order status:</span>
         <div class="status-actions">
-          @if (order()!.status === 'placed') {
-            <button id="btn-confirm-order" class="status-btn confirm" (click)="updateStatus('confirmed')">
+          @if (order()!.status === "placed") {
+            <button
+              id="btn-confirm-order"
+              class="status-btn confirm"
+              (click)="updateStatus('confirmed')"
+            >
               <span class="material-icons-outlined">check_circle</span>
               Confirm Order
             </button>
           }
-          @if (order()!.status === 'confirmed') {
-            <button id="btn-start-preparing" class="status-btn prepare" (click)="updateStatus('preparing')">
+          @if (order()!.status === "confirmed") {
+            <button
+              id="btn-start-preparing"
+              class="status-btn prepare"
+              (click)="updateStatus('preparing')"
+            >
               <span class="material-icons-outlined">local_fire_department</span>
               Start Preparing
             </button>
           }
-          @if (order()!.status === 'preparing') {
-            <button id="btn-mark-ready" class="status-btn ready" (click)="updateStatus('ready')">
+          @if (order()!.status === "preparing") {
+            <button
+              id="btn-mark-ready"
+              class="status-btn ready"
+              (click)="updateStatus('ready')"
+            >
               <span class="material-icons-outlined">done_all</span>
               Mark as Ready
             </button>
           }
         </div>
         @if (canVendorCancel()) {
-          <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-light);">
-            <button class="status-btn cancel-order-btn" (click)="updateStatus('cancelled')">
+          <div
+            style="
+              margin-top: 1rem;
+              padding-top: 1rem;
+              border-top: 1px solid var(--border-light);
+            "
+          >
+            <button
+              class="status-btn cancel-order-btn"
+              (click)="updateStatus('cancelled')"
+            >
               <span class="material-icons-outlined">cancel</span>
               Cancel Order
             </button>
@@ -77,10 +101,8 @@
 
     <!-- ══ Main Grid ══ -->
     <div class="detail-grid">
-
       <!-- LEFT column -->
       <div class="detail-col">
-
         <!-- Order Items -->
         <div class="card">
           <div class="card-header">
@@ -93,16 +115,22 @@
                 <th>Product</th>
                 <th>Unit Price</th>
                 <th>Qty</th>
-                <th style="text-align:right;">Subtotal</th>
+                <th style="text-align: right">Subtotal</th>
               </tr>
             </thead>
             <tbody>
               @for (item of order()!.items; track item.id) {
                 <tr>
                   <td class="item-name-cell">{{ item.product_name }}</td>
-                  <td class="text-muted">{{ item.product_price | appCurrency }}</td>
-                  <td><span class="qty-badge">×{{ item.quantity }}</span></td>
-                  <td class="text-right"><strong>{{ item.subtotal | appCurrency }}</strong></td>
+                  <td class="text-muted">
+                    {{ item.product_price | appCurrency }}
+                  </td>
+                  <td>
+                    <span class="qty-badge">×{{ item.quantity }}</span>
+                  </td>
+                  <td class="text-right">
+                    <strong>{{ item.subtotal | appCurrency }}</strong>
+                  </td>
                 </tr>
               }
             </tbody>
@@ -130,43 +158,67 @@
         </div>
 
         <!-- Delivery Assignment Panel (ready, no partner yet) -->
-        @if (order()!.status === 'ready' && !order()!.delivery_partner) {
-
+        @if (order()!.status === "ready" && !order()!.delivery_partner) {
           @if (searchError()) {
-            <p class="alert-error" style="margin-bottom: 0.5rem;">{{ searchError() }}</p>
+            <p class="alert-error" style="margin-bottom: 0.5rem">
+              {{ searchError() }}
+            </p>
           }
 
           <!-- No search started yet or search was cancelled -->
-          @if (!order()!.assignment_status || order()!.assignment_status === 'cancelled') {
+          @if (
+            !order()!.assignment_status ||
+            order()!.assignment_status === "cancelled"
+          ) {
             <div class="assignment-alert idle">
               <div class="alert-icon">
                 <span class="material-icons-outlined">local_shipping</span>
               </div>
               <div class="alert-body">
                 <strong>Ready to dispatch</strong>
-                <p>Start the search when you're ready to hand over the order to a delivery partner.</p>
+                <p>
+                  Start the search when you're ready to hand over the order to a
+                  delivery partner.
+                </p>
               </div>
-              <button id="btn-start-search" class="btn-retrigger" [disabled]="startingSearch()" (click)="startDeliverySearch()">
+              <button
+                id="btn-start-search"
+                class="btn-retrigger"
+                [disabled]="startingSearch()"
+                (click)="startDeliverySearch()"
+              >
                 @if (startingSearch()) {
                   <span class="spinner-xs"></span> Starting…
                 } @else {
-                  <span class="material-icons-outlined">search</span> Find Driver
+                  <span class="material-icons-outlined">search</span> Find
+                  Driver
                 }
               </button>
             </div>
           }
 
           <!-- Search in progress -->
-          @if (order()!.assignment_status === 'searching' || order()!.assignment_status === 'notified') {
+          @if (
+            order()!.assignment_status === "searching" ||
+            order()!.assignment_status === "notified"
+          ) {
             <div class="assignment-alert searching">
               <div class="alert-icon pulse">
                 <span class="material-icons-outlined">delivery_dining</span>
               </div>
               <div class="alert-body">
                 <strong>Searching for delivery partner…</strong>
-                <p>We're looking for the nearest available partner. This page updates automatically.</p>
+                <p>
+                  We're looking for the nearest available partner. This page
+                  updates automatically.
+                </p>
               </div>
-              <button id="btn-cancel-search" class="btn-cancel-search" [disabled]="cancellingSearch()" (click)="cancelDeliverySearch()">
+              <button
+                id="btn-cancel-search"
+                class="btn-cancel-search"
+                [disabled]="cancellingSearch()"
+                (click)="cancelDeliverySearch()"
+              >
                 @if (cancellingSearch()) {
                   <span class="spinner-xs"></span> Cancelling…
                 } @else {
@@ -177,29 +229,39 @@
           }
 
           <!-- Timed out or failed — allow restart -->
-          @if (order()!.assignment_status === 'timed_out' || order()!.assignment_status === 'failed') {
+          @if (
+            order()!.assignment_status === "timed_out" ||
+            order()!.assignment_status === "failed"
+          ) {
             <div class="assignment-alert timed-out">
               <div class="alert-icon">
                 <span class="material-icons-outlined">timer_off</span>
               </div>
               <div class="alert-body">
                 <strong>No delivery partner responded</strong>
-                <p>Nobody accepted within 1 minute. Tap below to search again.</p>
+                <p>
+                  Nobody accepted within 1 minute. Tap below to search again.
+                </p>
               </div>
-              <button id="btn-start-search-retry" class="btn-retrigger" [disabled]="startingSearch()" (click)="startDeliverySearch()">
+              <button
+                id="btn-start-search-retry"
+                class="btn-retrigger"
+                [disabled]="startingSearch()"
+                (click)="startDeliverySearch()"
+              >
                 @if (startingSearch()) {
                   <span class="spinner-xs"></span> Searching…
                 } @else {
-                  <span class="material-icons-outlined">refresh</span> Find Driver
+                  <span class="material-icons-outlined">refresh</span> Find
+                  Driver
                 }
               </button>
             </div>
           }
-
         }
 
         <!-- OTP Verification (ready + partner assigned) -->
-        @if (order()!.status === 'ready' && order()!.delivery_partner) {
+        @if (order()!.status === "ready" && order()!.delivery_partner) {
           <div class="card otp-card">
             <div class="card-header">
               <h3>
@@ -214,14 +276,24 @@
               </div>
             } @else {
               <div class="otp-body">
-                <p style="font-size:0.875rem;color:#464554;margin:0 0 1rem;font-weight:500;">
-                  Ask the delivery partner for their 6-digit OTP and enter it below to hand over the order.
+                <p
+                  style="
+                    font-size: 0.875rem;
+                    color: #464554;
+                    margin: 0 0 1rem;
+                    font-weight: 500;
+                  "
+                >
+                  Ask the delivery partner for their 6-digit OTP and enter it
+                  below to hand over the order.
                 </p>
                 @if (order()!.delivery_partner_info) {
                   <div class="partner-info">
                     <span class="material-icons-outlined">delivery_dining</span>
                     <strong>{{ order()!.delivery_partner_info!.name }}</strong>
-                    <span class="partner-vehicle">{{ order()!.delivery_partner_info!.vehicle_type | titlecase }}</span>
+                    <span class="partner-vehicle">{{
+                      order()!.delivery_partner_info!.vehicle_type | titlecase
+                    }}</span>
                   </div>
                 }
                 <div class="otp-input-row">
@@ -231,10 +303,16 @@
                     type="text"
                     maxlength="6"
                     inputmode="numeric"
-                    placeholder="• • • • • •"
+                    placeholder="e.g. 123456"
                     [value]="otpInput()"
-                    (input)="otpInput.set($any($event.target).value)" />
-                  <button id="btn-verify-otp" class="btn-verify" [disabled]="verifying()" (click)="verifyPickupOtp()">
+                    (input)="otpInput.set($any($event.target).value)"
+                  />
+                  <button
+                    id="btn-verify-otp"
+                    class="btn-verify"
+                    [disabled]="verifying()"
+                    (click)="verifyPickupOtp()"
+                  >
                     @if (verifying()) {
                       <span class="spinner-xs"></span> Verifying…
                     } @else {
@@ -242,6 +320,10 @@
                     }
                   </button>
                 </div>
+                <small class="field-hint"
+                  >Enter the 6-digit pickup code shown by the delivery partner
+                  before handoff.</small
+                >
                 @if (otpError()) {
                   <p class="otp-error-msg">{{ otpError() }}</p>
                 }
@@ -262,41 +344,64 @@
             <p class="notes-text">"{{ order()!.notes }}"</p>
           </div>
         }
-
       </div>
 
       <!-- RIGHT column -->
       <div class="detail-col">
-
         <!-- Live Map -->
-        @if (showLiveMap()) {
+        @if (showLiveMap() && mapsApiReady()) {
           <div class="map-card">
             <div class="map-header-banner">
               <span class="material-icons-outlined">radar</span>
               <span class="map-title">Live Driver Tracking</span>
               @if (order()!.delivery_partner_info) {
-                <span class="map-partner">{{ order()!.delivery_partner_info!.name }}</span>
+                <span class="map-partner">{{
+                  order()!.delivery_partner_info!.name
+                }}</span>
               }
             </div>
             <div class="map-el">
-              <google-map height="280px" width="100%"
-                [center]="center" [zoom]="zoom" [options]="mapOptions"
-                (mapInitialized)="onMapReady($event)">
+              <google-map
+                height="280px"
+                width="100%"
+                [center]="center"
+                [zoom]="zoom"
+                [options]="mapOptions"
+                (mapInitialized)="onMapReady($event)"
+              >
                 @if (vendorPosition) {
-                  <map-marker [position]="vendorPosition" [options]="vendorMarkerOptions"></map-marker>
+                  <map-marker
+                    [position]="vendorPosition"
+                    [options]="vendorMarkerOptions"
+                  ></map-marker>
                 }
                 @if (customerPosition) {
-                  <map-marker [position]="customerPosition" [options]="customerMarkerOptions"></map-marker>
+                  <map-marker
+                    [position]="customerPosition"
+                    [options]="customerMarkerOptions"
+                  ></map-marker>
                 }
                 @if (driverPosition) {
-                  <map-marker [position]="driverPosition" [options]="driverMarkerOptions"></map-marker>
+                  <map-marker
+                    [position]="driverPosition"
+                    [options]="driverMarkerOptions"
+                  ></map-marker>
                 }
               </google-map>
             </div>
             <div class="map-legend">
-              <span class="leg-item"><span class="leg-dot" style="background:#FF6B35;"></span>Your Store</span>
-              <span class="leg-item"><span class="leg-dot" style="background:#6366F1;"></span>Partner</span>
-              <span class="leg-item"><span class="leg-dot" style="background:#10B981;"></span>Customer</span>
+              <span class="leg-item"
+                ><span class="leg-dot" style="background: #ef4444"></span>Your
+                Store</span
+              >
+              <span class="leg-item"
+                ><span class="leg-dot" style="background: #6366f1"></span
+                >Partner</span
+              >
+              <span class="leg-item"
+                ><span class="leg-dot" style="background: #22c55e"></span
+                >Customer</span
+              >
             </div>
           </div>
         }
@@ -318,7 +423,10 @@
         @if (order()!.delivery_address) {
           <div class="card">
             <div class="card-header">
-              <h3><span class="material-icons-outlined">location_on</span>Delivery Address</h3>
+              <h3>
+                <span class="material-icons-outlined">location_on</span>Delivery
+                Address
+              </h3>
             </div>
             <p class="info-row">
               <strong>Name</strong>
@@ -331,7 +439,9 @@
                 @if (order()!.delivery_address.address_line2) {
                   , {{ order()!.delivery_address.address_line2 }}
                 }
-                <br/>{{ order()!.delivery_address.city }}, {{ order()!.delivery_address.state }} {{ order()!.delivery_address.postal_code }}
+                <br />{{ order()!.delivery_address.city }},
+                {{ order()!.delivery_address.state }}
+                {{ order()!.delivery_address.postal_code }}
               </span>
             </p>
             <p class="info-row">
@@ -345,25 +455,33 @@
         @if (order()!.tracking.length) {
           <div class="card">
             <div class="card-header">
-              <h3><span class="material-icons-outlined">timeline</span>Order Timeline</h3>
+              <h3>
+                <span class="material-icons-outlined">timeline</span>Order
+                Timeline
+              </h3>
             </div>
             <div class="tracking-list">
               @for (t of order()!.tracking; track t.id; let last = $last) {
                 <div class="tracking-item">
                   <div class="t-dot" [class.active]="last"></div>
                   <div class="t-body">
-                    <span [class]="orderStatusBadge(t.status)" style="font-size:0.65rem;align-self:flex-start;">{{ t.status | titlecase }}</span>
+                    <span
+                      [class]="orderStatusBadge(t.status)"
+                      style="font-size: 0.65rem; align-self: flex-start"
+                      >{{ t.status | titlecase }}</span
+                    >
                     @if (t.description) {
                       <p class="t-desc">{{ t.description }}</p>
                     }
-                    <span class="t-time">{{ t.timestamp | date:'MMM d, y — h:mm a' }}</span>
+                    <span class="t-time">{{
+                      t.timestamp | date: "MMM d, y — h:mm a"
+                    }}</span>
                   </div>
                 </div>
               }
             </div>
           </div>
         }
-
       </div>
     </div>
   }
@@ -382,7 +500,8 @@
           </div>
         </div>
         <p class="cancel-modal-desc">
-          Please provide a reason for cancellation. This will be communicated to the customer.
+          Please provide a reason for cancellation. This will be communicated to
+          the customer.
         </p>
         <div class="cancel-reason-group">
           <label class="cancel-reason-label">
@@ -392,19 +511,34 @@
             id="cancel-reason-input"
             class="cancel-reason-input"
             rows="3"
-            placeholder="e.g. Out of stock, store closing early, item unavailable…"
+            placeholder="e.g. Out of stock, store closing early, item unavailable..."
             [(ngModel)]="cancelReason"
-            [disabled]="cancelling()">
+            [disabled]="cancelling()"
+          >
           </textarea>
+          <small class="field-hint"
+            >Give a clear customer-facing reason so support can understand the
+            cancellation.</small
+          >
           @if (cancelError()) {
             <p class="cancel-error">{{ cancelError() }}</p>
           }
         </div>
         <div class="cancel-modal-footer">
-          <button id="btn-keep-order" class="cancel-modal-btn secondary" (click)="closeCancelModal()" [disabled]="cancelling()">
+          <button
+            id="btn-keep-order"
+            class="cancel-modal-btn secondary"
+            (click)="closeCancelModal()"
+            [disabled]="cancelling()"
+          >
             Keep Order
           </button>
-          <button id="btn-confirm-cancel" class="cancel-modal-btn danger" (click)="confirmCancel()" [disabled]="cancelling()">
+          <button
+            id="btn-confirm-cancel"
+            class="cancel-modal-btn danger"
+            (click)="confirmCancel()"
+            [disabled]="cancelling()"
+          >
             @if (cancelling()) {
               <span class="spinner-xs-red"></span> Cancelling…
             } @else {
@@ -415,5 +549,4 @@
       </div>
     </div>
   }
-
 </div>

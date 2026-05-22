@@ -1,24 +1,43 @@
-import { Component, inject, signal, OnInit, OnDestroy, AfterViewInit, NgZone } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  inject,
+  NgZone,
+  OnDestroy,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { ApiService, AuthService, AppCurrencyPipe, Order, openAuthenticatedWebSocket, computeGoogleRoute, decodeGooglePolyline } from '@shared/public-api';
-import { timer, Subscription } from 'rxjs';
+import {
+  ApiService,
+  AppCurrencyPipe,
+  AuthService,
+  decodeGooglePolyline,
+  GoogleMapsService,
+  openAuthenticatedWebSocket,
+  Order,
+} from '@shared/public-api';
+import { Subscription, timer } from 'rxjs';
 import { GoogleMapsModule } from '@angular/google-maps';
 import { environment } from '../../../environments/environment';
+import { VendorOrderActionsService } from '../../services/vendor-order-actions.service';
 
 @Component({
   selector: 'app-order-detail',
   standalone: true,
   imports: [CommonModule, FormsModule, AppCurrencyPipe, GoogleMapsModule],
   templateUrl: './order-detail.component.html',
-  styleUrl: './order-detail.component.scss'
+  styleUrl: './order-detail.component.scss',
 })
 export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   private api = inject(ApiService);
   private auth = inject(AuthService);
   private route = inject(ActivatedRoute);
   private zone = inject(NgZone);
+  private orderActions = inject(VendorOrderActionsService);
+  private googleMaps = inject(GoogleMapsService);
 
   order = signal<Order | null>(null);
   loading = signal(true);
@@ -43,7 +62,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   cancelling = signal(false);
 
   // Map state
-  center: google.maps.LatLngLiteral = {lat: 12.9716, lng: 77.5946};
+  center: google.maps.LatLngLiteral = { lat: 12.9716, lng: 77.5946 };
   zoom = 14;
   driverPosition?: google.maps.LatLngLiteral;
   vendorPosition?: google.maps.LatLngLiteral;
@@ -58,6 +77,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   private routePolyline?: google.maps.Polyline;
   private lastDirectionsTime = 0;
   private directionsEnabled = true;
+  mapsApiReady = signal(false);
 
   private ws: WebSocket | null = null;
   private animFrameId?: number;
@@ -80,6 +100,14 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
 
   ngAfterViewInit() {
     this.initMarkerOptions();
+    this.googleMaps
+      .loadJavaScriptApi()
+      .then(() => this.zone.run(() => this.mapsApiReady.set(true)))
+      .catch(() =>
+        console.warn(
+          '[Map] Google Maps JavaScript API is not configured or unavailable.',
+        ),
+      );
     this.connectWebSocket(this.route.snapshot.paramMap.get('id')!);
   }
 
@@ -89,10 +117,14 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     this.nativeMap = nativeMap;
     this.lastDirectionsTime = 0;
 
-    const pts = [this.vendorPosition, this.driverPosition, this.customerPosition].filter(Boolean) as google.maps.LatLngLiteral[];
+    const pts = [
+      this.vendorPosition,
+      this.driverPosition,
+      this.customerPosition,
+    ].filter(Boolean) as google.maps.LatLngLiteral[];
     if (pts.length >= 2) {
       const bounds = new google.maps.LatLngBounds();
-      pts.forEach(p => bounds.extend(p));
+      pts.forEach((p) => bounds.extend(p));
       nativeMap.fitBounds(bounds, 40);
     } else if (pts.length === 1) {
       nativeMap.setCenter(pts[0]);
@@ -101,18 +133,37 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private initMarkerOptions() {
-    this.mapOptions = {zoomControl: true, streetViewControl: false, fullscreenControl: false, mapTypeControl: false, clickableIcons: false};
+    this.mapOptions = {
+      zoomControl: true,
+      streetViewControl: false,
+      fullscreenControl: false,
+      mapTypeControl: false,
+      clickableIcons: false,
+    };
     this.driverMarkerOptions = {
-      icon: {url: 'https://maps.google.com/mapfiles/ms/micons/motorcycling.png', scaledSize: new google.maps.Size(36, 36), anchor: new google.maps.Point(18, 18)},
-      zIndex: 10, title: 'Delivery Partner',
+      icon: {
+        url: 'https://maps.google.com/mapfiles/ms/micons/motorcycling.png',
+        scaledSize: new google.maps.Size(36, 36),
+        anchor: new google.maps.Point(18, 18),
+      },
+      zIndex: 10,
+      title: 'Delivery Partner',
     };
     this.vendorMarkerOptions = {
-      icon: {url: 'https://maps.google.com/mapfiles/ms/icons/restaurant.png', scaledSize: new google.maps.Size(30, 30)},
-      zIndex: 5, title: 'Your Store',
+      icon: {
+        url: 'https://maps.google.com/mapfiles/ms/icons/restaurant.png',
+        scaledSize: new google.maps.Size(30, 30),
+      },
+      zIndex: 5,
+      title: 'Your Store',
     };
     this.customerMarkerOptions = {
-      icon: {url: 'https://maps.google.com/mapfiles/ms/icons/homegardenbusiness.png', scaledSize: new google.maps.Size(30, 30)},
-      zIndex: 5, title: 'Customer Location',
+      icon: {
+        url: 'https://maps.google.com/mapfiles/ms/icons/homegardenbusiness.png',
+        scaledSize: new google.maps.Size(30, 30),
+      },
+      zIndex: 5,
+      title: 'Customer Location',
     };
   }
 
@@ -142,7 +193,8 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     const now = Date.now();
     if (now - this.lastDirectionsTime < 20000) return;
     this.lastDirectionsTime = now;
-    computeGoogleRoute(environment.googleMapsApiKey, origin, destination)
+    this.googleMaps
+      .computeRoute(origin, destination)
       .then((route) => {
         this.zone.run(() => {
           if (!route || !this.nativeMap) return;
@@ -150,7 +202,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
           this.routePolyline = new google.maps.Polyline({
             path: decodeGooglePolyline(route.encodedPolyline),
             map: this.nativeMap,
-            strokeColor: '#6C63FF',
+            strokeColor: '#6C2BFF',
             strokeWeight: 4,
             strokeOpacity: 0.8,
           });
@@ -164,18 +216,28 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
 
   loadOrder() {
     this.api.getVendorOrder(this.orderId).subscribe({
-      next: (o) => { this.order.set(o); this.loading.set(false); this.updateMapPositions(o); },
-      error: () => this.loading.set(false)
+      next: (o) => {
+        this.order.set(o);
+        this.loading.set(false);
+        this.updateMapPositions(o);
+      },
+      error: () => this.loading.set(false),
     });
   }
 
   private connectWebSocket(orderId: string) {
     const wsPrefix = environment.apiBaseUrl.replace(/\/api$/, '');
-    this.ws = openAuthenticatedWebSocket(`${wsPrefix}/ws/delivery/${orderId}/tracking/`, this.auth.getToken());
+    this.ws = openAuthenticatedWebSocket(
+      `${wsPrefix}/ws/delivery/${orderId}/tracking/`,
+      this.auth.getToken(),
+    );
     this.ws.onmessage = (msg) => {
       const data = JSON.parse(msg.data);
       if (data.type === 'location_update' && data.lat && data.lng) {
-        const target: google.maps.LatLngLiteral = {lat: data.lat, lng: data.lng};
+        const target: google.maps.LatLngLiteral = {
+          lat: data.lat,
+          lng: data.lng,
+        };
         this.zone.run(() => {
           if (this.driverPosition) {
             this.animateToPosition(this.driverPosition, target);
@@ -189,7 +251,10 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     };
   }
 
-  private animateToPosition(from: google.maps.LatLngLiteral, to: google.maps.LatLngLiteral) {
+  private animateToPosition(
+    from: google.maps.LatLngLiteral,
+    to: google.maps.LatLngLiteral,
+  ) {
     if (this.animFrameId) cancelAnimationFrame(this.animFrameId);
     const startTime = performance.now();
     const duration = 1500;
@@ -205,13 +270,21 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
       if (t < 1) {
         this.animFrameId = requestAnimationFrame(step);
       } else {
-        this.zone.run(() => { this.driverPosition = to; this.requestDirections(); });
+        this.zone.run(() => {
+          this.driverPosition = to;
+          this.requestDirections();
+        });
       }
     };
     this.animFrameId = requestAnimationFrame(step);
   }
 
-  private closeWs() { if (this.ws) { this.ws.close(); this.ws = null; } }
+  private closeWs() {
+    if (this.ws) {
+      this.ws.close();
+      this.ws = null;
+    }
+  }
 
   showLiveMap(): boolean {
     const s = this.order()?.status;
@@ -219,72 +292,168 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   canUpdateStatus() {
-    return ['placed', 'confirmed', 'preparing', 'ready'].includes(this.order()?.status || '');
+    return ['placed', 'confirmed', 'preparing', 'ready'].includes(
+      this.order()?.status || '',
+    );
   }
 
   canVendorCancel() {
-    return ['placed', 'confirmed', 'preparing', 'ready'].includes(this.order()?.status || '');
+    return ['placed', 'confirmed', 'preparing', 'ready'].includes(
+      this.order()?.status || '',
+    );
   }
 
   updateStatus(newStatus: string) {
-    if (newStatus === 'cancelled') { this.cancelReason = ''; this.cancelError.set(''); this.showCancelModal.set(true); return; }
-    this.api.updateOrderStatus(this.order()!.id, newStatus).subscribe({next: (o) => this.order.set(o)});
+    if (newStatus === 'cancelled') {
+      this.cancelReason = '';
+      this.cancelError.set('');
+      this.showCancelModal.set(true);
+      return;
+    }
+    this.orderActions
+      .run(this.order()!.id, 'set_status', { status: newStatus })
+      .subscribe({ next: (o) => this.order.set(o) });
   }
 
   confirmCancel() {
-    if (!this.cancelReason.trim()) { this.cancelError.set('Please provide a reason for cancellation.'); return; }
+    if (!this.cancelReason.trim()) {
+      this.cancelError.set('Please provide a reason for cancellation.');
+      return;
+    }
     this.cancelling.set(true);
     this.cancelError.set('');
-    this.api.updateOrderStatus(this.order()!.id, 'cancelled', this.cancelReason.trim()).subscribe({
-      next: (o) => { this.order.set(o); this.showCancelModal.set(false); this.cancelling.set(false); },
-      error: (err) => { this.cancelError.set(err.error?.error || 'Failed to cancel order.'); this.cancelling.set(false); }
-    });
+    this.orderActions
+      .run(this.order()!.id, 'cancel_order', {
+        reason: this.cancelReason.trim(),
+      })
+      .subscribe({
+        next: (o) => {
+          this.order.set(o);
+          this.showCancelModal.set(false);
+          this.cancelling.set(false);
+        },
+        error: (err) => {
+          this.cancelError.set(
+            this.orderActions.errorMessage(err, 'Failed to cancel order.'),
+          );
+          this.cancelling.set(false);
+        },
+      });
   }
 
   closeCancelModal() {
     if (this.cancelling()) return;
-    this.showCancelModal.set(false); this.cancelReason = ''; this.cancelError.set('');
+    this.showCancelModal.set(false);
+    this.cancelReason = '';
+    this.cancelError.set('');
   }
 
   startDeliverySearch() {
-    this.startingSearch.set(true); this.searchError.set('');
-    this.api.startDeliverySearch(this.order()!.id).subscribe({
-      next: (o) => { this.order.set(o); this.startingSearch.set(false); },
-      error: (err) => { this.searchError.set(err.error?.error || 'Failed to start search. Please try again.'); this.startingSearch.set(false); }
+    this.startingSearch.set(true);
+    this.searchError.set('');
+    this.orderActions.run(this.order()!.id, 'start_delivery_search').subscribe({
+      next: (o) => {
+        this.order.set(o);
+        this.startingSearch.set(false);
+      },
+      error: (err) => {
+        this.searchError.set(
+          this.orderActions.errorMessage(
+            err,
+            'Failed to start search. Please try again.',
+          ),
+        );
+        this.startingSearch.set(false);
+      },
     });
   }
 
   cancelDeliverySearch() {
-    this.cancellingSearch.set(true); this.searchError.set('');
-    this.api.cancelDeliverySearch(this.order()!.id).subscribe({
-      next: (o) => { this.order.set(o); this.cancellingSearch.set(false); },
-      error: (err) => { this.searchError.set(err.error?.error || 'Failed to cancel search. Please try again.'); this.cancellingSearch.set(false); }
-    });
+    this.cancellingSearch.set(true);
+    this.searchError.set('');
+    this.orderActions
+      .run(this.order()!.id, 'cancel_delivery_search')
+      .subscribe({
+        next: (o) => {
+          this.order.set(o);
+          this.cancellingSearch.set(false);
+        },
+        error: (err) => {
+          this.searchError.set(
+            this.orderActions.errorMessage(
+              err,
+              'Failed to cancel search. Please try again.',
+            ),
+          );
+          this.cancellingSearch.set(false);
+        },
+      });
   }
 
   verifyPickupOtp() {
     const otp = this.otpInput().trim();
-    if (!otp) { this.otpError.set('Please enter the OTP.'); return; }
-    this.verifying.set(true); this.otpError.set('');
-    this.api.verifyPickupOtp(this.order()!.id, otp).subscribe({
-      next: (o) => { this.order.set(o); this.verifying.set(false); this.otpSuccess.set(true); this.otpInput.set(''); },
-      error: (err) => { this.verifying.set(false); this.otpError.set(err.error?.error || 'Invalid OTP.'); }
-    });
+    if (!otp) {
+      this.otpError.set('Please enter the OTP.');
+      return;
+    }
+    this.verifying.set(true);
+    this.otpError.set('');
+    this.orderActions
+      .run(this.order()!.id, 'verify_pickup_otp', { otp })
+      .subscribe({
+        next: (o) => {
+          this.order.set(o);
+          this.verifying.set(false);
+          this.otpSuccess.set(true);
+          this.otpInput.set('');
+        },
+        error: (err) => {
+          this.verifying.set(false);
+          this.otpError.set(
+            this.orderActions.errorMessage(err, 'Invalid OTP.'),
+          );
+        },
+      });
   }
 
   downloadInvoice() {
-    const o = this.order(); if (!o) return;
-    this.api.generateInvoice({invoice_type: 'customer_receipt', order: o.id, amount: o.total, notes: `Receipt for Order #${o.order_number}`}).subscribe({
-      next: (inv) => this.api.downloadInvoice(inv.id).subscribe({
-        next: (blob) => { const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `invoice-${o.order_number}.pdf`; a.click(); URL.revokeObjectURL(url); },
-        error: () => alert('Failed to download invoice.')
-      }),
-      error: () => alert('Failed to generate invoice.')
-    });
+    const o = this.order();
+    if (!o) return;
+    this.api
+      .generateInvoice({
+        invoice_type: 'customer_receipt',
+        order: o.id,
+        amount: o.total,
+        notes: `Receipt for Order #${o.order_number}`,
+      })
+      .subscribe({
+        next: (inv) =>
+          this.api.downloadInvoice(inv.id).subscribe({
+            next: (blob) => {
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `invoice-${o.order_number}.pdf`;
+              a.click();
+              URL.revokeObjectURL(url);
+            },
+            error: () => alert('Failed to download invoice.'),
+          }),
+        error: () => alert('Failed to generate invoice.'),
+      });
   }
 
   orderStatusBadge(s: string) {
-    const map: Record<string, string> = {placed: 'badge-placed', confirmed: 'badge-confirmed', preparing: 'badge-preparing', ready: 'badge-ready', picked_up: 'badge-ready', on_the_way: 'badge-preparing', delivered: 'badge-delivered', cancelled: 'badge-cancelled'};
+    const map: Record<string, string> = {
+      placed: 'badge-placed',
+      confirmed: 'badge-confirmed',
+      preparing: 'badge-preparing',
+      ready: 'badge-ready',
+      picked_up: 'badge-ready',
+      on_the_way: 'badge-preparing',
+      delivered: 'badge-delivered',
+      cancelled: 'badge-cancelled',
+    };
     return 'badge ' + (map[s] || 'badge-secondary');
   }
 }

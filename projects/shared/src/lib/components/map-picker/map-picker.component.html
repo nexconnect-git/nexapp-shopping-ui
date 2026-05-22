@@ -1,24 +1,28 @@
 <div class="map-picker-wrap">
-
-  <!-- ── Search Bar ── -->
   @if (mapReady()) {
     <div class="map-search-bar">
-      <span class="material-icons-outlined search-icon">search</span>
       <input
         #searchInput
         type="text"
         class="map-search-input"
-        placeholder="Search for a location…"
+        placeholder="Search for a location..."
         autocomplete="off"
         [ngModel]="searchQuery()"
-        (input)="onSearchInput($event)" />
+        (input)="onSearchInput($event)"
+      />
       @if (placeSuggestions().length > 0) {
         <div class="map-suggestions">
           @for (suggestion of placeSuggestions(); track suggestion.placeId) {
-            <button type="button" class="map-suggestion" (click)="selectPlace(suggestion)">
+            <button
+              type="button"
+              class="map-suggestion"
+              (click)="selectPlace(suggestion)"
+            >
               <span class="map-suggestion-main">{{ suggestion.mainText }}</span>
               @if (suggestion.secondaryText) {
-                <span class="map-suggestion-secondary">{{ suggestion.secondaryText }}</span>
+                <span class="map-suggestion-secondary">{{
+                  suggestion.secondaryText
+                }}</span>
               }
             </button>
           }
@@ -26,16 +30,21 @@
       } @else if (searchingPlaces()) {
         <div class="map-search-status">Searching...</div>
       } @else if (placesError()) {
-        <div class="map-search-status map-search-error">{{ placesError() }}</div>
+        <div class="map-search-status map-search-error">
+          {{ placesError() }}
+        </div>
       }
     </div>
   }
 
-  <!-- ── Toolbar ── -->
   <div class="map-toolbar">
-    <button type="button" class="map-locate-btn" (click)="useMyLocation()" [disabled]="locating()">
-      <span class="material-icons-outlined">{{ locating() ? 'hourglass_empty' : 'my_location' }}</span>
-      {{ locating() ? 'Locating...' : 'Use my location' }}
+    <button
+      type="button"
+      class="map-locate-btn"
+      (click)="useMyLocation()"
+      [disabled]="locating()"
+    >
+      {{ locating() ? "Locating..." : "Use my location" }}
     </button>
     @if (geocoding()) {
       <span class="map-geocoding">
@@ -43,19 +52,59 @@
         Detecting address...
       </span>
     }
+    @if (fallbackMapReady() && placesError()) {
+      <span class="map-geocoding">{{ placesError() }}</span>
+    }
   </div>
 
-  <!-- ── Map Canvas ── -->
-  <div #mapContainer class="map-container" [style.height]="height"></div>
+  <div
+    #mapContainer
+    class="map-container"
+    [style.height]="height"
+    [class.hidden]="mapUnavailable() || (fallbackMapReady() && !mapReady())"
+  ></div>
 
-  <!-- ── Result preview ── -->
+  @if (fallbackMapReady() && !mapReady()) {
+    <iframe
+      class="fallback-map"
+      title="Approximate selected location map"
+      [src]="fallbackMapUrl()"
+      [style.height]="height"
+      loading="lazy"
+    >
+    </iframe>
+    <div class="fallback-pin-card">
+      <span class="material-symbols-rounded" aria-hidden="true"
+        >location_on</span
+      >
+      <div>
+        <b>Approximate map</b>
+        <small
+          >Use your current location to pin coordinates, or enter address fields
+          manually.</small
+        >
+      </div>
+    </div>
+  }
+
+  @if (mapUnavailable()) {
+    <div class="map-unavailable" [style.min-height]="height">
+      <span class="material-symbols-rounded" aria-hidden="true">map</span>
+      <strong>Map is unavailable</strong>
+      <p>
+        Add a Google Maps API key in environment configuration, or enter the
+        address fields manually.
+      </p>
+    </div>
+  }
+
   @if (pickedAddress()) {
     <div class="map-address-preview">
-      <span class="material-icons-outlined">location_on</span>
       <span>{{ pickedAddress() }}</span>
     </div>
   } @else if (mapReady()) {
-    <p class="map-hint">Click on the map or drag the pin to select your location</p>
+    <p class="map-hint">
+      Click on the map or drag the pin to select your location
+    </p>
   }
-
 </div>

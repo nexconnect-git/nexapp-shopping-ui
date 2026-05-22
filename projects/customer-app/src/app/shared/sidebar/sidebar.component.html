@@ -1,0 +1,136 @@
+@if (ui.mobileSidebarOpen()) {
+  <button
+    type="button"
+    class="sidebar-backdrop"
+    aria-label="Close navigation"
+    (click)="ui.closeMobileSidebar()"
+  ></button>
+}
+
+<aside
+  class="sidebar"
+  [class.mobile-open]="ui.mobileSidebarOpen()"
+  [style.left]="ui.mobileSidebarOpen() ? '0' : null"
+  [style.transform]="ui.mobileSidebarOpen() ? 'none' : null"
+  aria-label="Customer navigation"
+>
+  <header class="sidebar-mobile-head">
+    <div>
+      <b>Browse FlashDrop</b>
+      <small>Categories, offers, and account links</small>
+    </div>
+    <button
+      type="button"
+      aria-label="Close navigation"
+      (click)="ui.closeMobileSidebar()"
+    >
+      <span class="material-symbols-rounded" aria-hidden="true">close</span>
+    </button>
+  </header>
+  <nav class="main">
+    @if (catalog.categoriesLoading()) {
+      <div class="nav-loading" role="status" aria-live="polite">
+        <span class="loading-spinner"></span>
+        <span>Filtering categories for this address</span>
+      </div>
+      @for (item of [1, 2, 3, 4, 5, 6, 7, 8]; track item) {
+        <span class="nav-skeleton"></span>
+      }
+    } @else if (canUseRoute("/stores")) {
+      @for (cat of catalog.categories(); track cat.id) {
+        <a
+          routerLink="/stores"
+          [queryParams]="categoryQueryParams(cat)"
+          [class.active]="isCategoryActive(cat)"
+          (click)="ui.closeMobileSidebar()"
+        >
+          <span class="nav-emoji material-symbols-rounded" aria-hidden="true">{{
+            categoryIcon(cat)
+          }}</span
+          >{{ cat.label }}
+        </a>
+      }
+    }
+  </nav>
+  <hr />
+  <nav>
+    @if (canUseRoute("/stores")) {
+      <a routerLink="/stores" (click)="ui.closeMobileSidebar()"
+        ><span class="nav-emoji material-symbols-rounded" aria-hidden="true"
+          >storefront</span
+        >Top Stores</a
+      >
+      <a routerLink="/stores" (click)="ui.closeMobileSidebar()"
+        ><span class="nav-emoji material-symbols-rounded" aria-hidden="true"
+          >bolt</span
+        >FlashDrop Express</a
+      >
+    }
+    @if (canUseRoute("/offers")) {
+      <a
+        routerLink="/offers"
+        [class.active]="isRouteActive('/offers')"
+        (click)="ui.closeMobileSidebar()"
+        ><span class="nav-emoji nav-badge" aria-hidden="true">%</span>Offers</a
+      >
+    }
+    @if (canUseRoute("/help")) {
+      <a routerLink="/help" (click)="ui.closeMobileSidebar()"
+        ><span class="nav-emoji material-symbols-rounded" aria-hidden="true"
+          >inventory_2</span
+        >Bulk Orders</a
+      >
+      <a
+        routerLink="/help"
+        [class.active]="isRouteActive('/help')"
+        (click)="ui.closeMobileSidebar()"
+        ><span class="nav-emoji material-symbols-rounded" aria-hidden="true"
+          >help</span
+        >Help & Support</a
+      >
+    }
+  </nav>
+  <hr />
+  <nav class="account">
+    <small>ACCOUNT</small>
+    @if (canUseRoute("/profile")) {
+      <a
+        routerLink="/profile"
+        [class.active]="isRouteActive('/profile')"
+        (click)="ui.closeMobileSidebar()"
+        ><span class="nav-emoji nav-badge" aria-hidden="true">ME</span>My
+        Profile</a
+      >
+    }
+    @if (canUseRoute("/addresses")) {
+      <a
+        routerLink="/addresses"
+        [class.active]="isRouteActive('/addresses')"
+        (click)="ui.closeMobileSidebar()"
+        ><span class="nav-emoji material-symbols-rounded" aria-hidden="true"
+          >location_on</span
+        >Addresses</a
+      >
+    }
+    @if (state.walletEnabled() && canUseRoute("/wallet")) {
+      <a
+        routerLink="/wallet"
+        [class.active]="isRouteActive('/wallet')"
+        (click)="ui.closeMobileSidebar()"
+        ><span class="nav-emoji material-symbols-rounded" aria-hidden="true"
+          >account_balance_wallet</span
+        >Wallet</a
+      >
+    }
+    @if (canUseRoute("/wishlist")) {
+      <a
+        routerLink="/wishlist"
+        [class.active]="isRouteActive('/wishlist')"
+        (click)="ui.closeMobileSidebar()"
+        ><span class="nav-emoji material-symbols-rounded" aria-hidden="true"
+          >favorite</span
+        >Wishlist</a
+      >
+    }
+  </nav>
+</aside>

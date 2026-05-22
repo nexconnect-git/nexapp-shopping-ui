@@ -1,0 +1,14 @@
+<footer class="site-footer">
+  <div>
+    <h2><span class="material-symbols-rounded">bolt</span> FlashDrop</h2>
+    <p>Fast groceries, fresh stores, and order support in one place.</p>
+  </div>
+  @for (group of content.footerGroups(); track group.title) {
+    <nav>
+      <h3>{{ group.title }}</h3>
+      @for (link of group.links; track link.route) {
+        <a [routerLink]="link.route">{{ link.label }}</a>
+      }
+    </nav>
+  }
+</footer>

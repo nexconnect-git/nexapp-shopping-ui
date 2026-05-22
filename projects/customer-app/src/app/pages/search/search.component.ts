@@ -1,189 +1,140 @@
-import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Component, OnDestroy, computed, effect, signal } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { buildStoreSelectionTarget } from '@nexconnect/customer-search';
 import { FormsModule } from '@angular/forms';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-
-import { ApiService, LocationService, Vendor } from '@shared/public-api';
+import { Subscription } from 'rxjs';
+import { CatalogService } from '../../services/catalog.service';
+import { UiService } from '../../services/ui.service';
+import { ProductCardComponent } from '../../components/product-card/product-card.component';
+import { RightRailComponent } from '../../components/right-rail/right-rail.component';
+import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
+import { AppCurrencyPipe } from '@shared/public-api';
+import {
+  CustomerContentConfigService,
+  CustomerPromoCard,
+  CustomerQuickFilter,
+} from '../../services/customer-content-config.service';
 
 @Component({
-  selector: 'app-search',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    FormsModule,
+    RouterLink,
+    ProductCardComponent,
+    RightRailComponent,
+    BreadcrumbsComponent,
+    AppCurrencyPipe,
+  ],
   templateUrl: './search.component.html',
-  styleUrl: './search.component.scss',
+  styleUrls: ['./search.component.scss'],
 })
-export class SearchComponent implements OnInit, AfterViewInit {
-  private api = inject(ApiService);
-  private router = inject(Router);
-  private sanitizer = inject(DomSanitizer);
-  private locationService = inject(LocationService);
+export class SearchComponent implements OnDestroy {
+  query = signal(this.route.snapshot.queryParamMap.get('q') ?? '');
+  activeTab = signal<'All' | 'Stores' | 'Products' | 'Categories'>('All');
+  activeFilters = signal<string[]>([]);
+  tabs = computed(() => this.content.search().tabs);
+  searchPromo = computed(() => this.content.ads().search[0] || null);
+  private readonly routeSub: Subscription;
 
-  @ViewChild('searchInput') searchInput!: ElementRef<HTMLInputElement>;
-
-  queryValue = '';
-  storeResults = signal<Vendor[]>([]);
-  searching = signal(false);
-  loadingPopular = signal(true);
-  pastSearches = signal<string[]>([]);
-  popularVendors = signal<Vendor[]>([]);
-  quickCategories = signal<any[]>([]);
-  private allQuickCategories: any[] = [];
-  quickIdeas = ['Milk & bread', 'Fresh vegetables', 'Chicken biryani', 'Pain relief', 'Bakery'];
-
-  private timer: any;
-
-  ngOnInit() {
-    this.loadPastSearches();
-    this.loadPopular();
-    this.loadQuickCategories();
-  }
-
-  ngAfterViewInit() {
-    setTimeout(() => this.searchInput?.nativeElement?.focus(), 100);
-  }
-
-  loadPastSearches() {
-    try {
-      const stored = localStorage.getItem('nx_searches');
-      if (stored) this.pastSearches.set(JSON.parse(stored));
-    } catch {
-      // Ignore local cache parsing errors.
-    }
-  }
-
-  loadPopular() {
-    const location = this.locationService.location();
-    const request$ = location
-      ? this.api.getNearbyVendors(location.lat, location.lng, 10, undefined, location.state, location.city, location.postalCode)
-      : this.api.getVendors({});
-    request$.subscribe({
-      next: (res) => {
-        this.popularVendors.set((res.results || res).slice(0, 12));
-        this.refreshQuickCategories();
-        this.loadingPopular.set(false);
-      },
-      error: () => this.loadingPopular.set(false),
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    public catalog: CatalogService,
+    public ui: UiService,
+    public content: CustomerContentConfigService,
+  ) {
+    effect(() => this.catalog.refreshSearch(this.query()));
+    this.routeSub = this.route.queryParamMap.subscribe((params) => {
+      const next = params.get('q') ?? '';
+      if (next !== this.query()) this.query.set(next);
     });
   }
 
-  loadQuickCategories() {
-    this.api.getCategories().subscribe({
-      next: (res) => {
-        this.allQuickCategories = (res.results || res).filter((c: any) => c.show_in_customer_ui !== false);
-        this.refreshQuickCategories();
-      },
-      error: () => this.quickCategories.set([]),
-    });
+  results = computed(() => this.catalog.search(this.query()));
+  noVisibleResults = computed(
+    () =>
+      !this.catalog.productsLoading() &&
+      !this.catalog.storesLoading() &&
+      this.count(this.activeTab()) === 0,
+  );
+
+  count(tab: string): number {
+    const r = this.results();
+    if (tab === 'Stores') return r.stores.length;
+    if (tab === 'Products') return r.products.length;
+    if (tab === 'Categories') return r.categories.length;
+    return r.stores.length + r.products.length + r.categories.length;
   }
 
-  private refreshQuickCategories() {
-    if (!this.allQuickCategories.length) return;
-    const availableSlugs = new Set<string>();
-    for (const vendor of this.popularVendors()) {
-      for (const product of vendor.products || []) {
-        if (product.category?.slug) availableSlugs.add(product.category.slug);
-      }
-    }
-    const categories = this.allQuickCategories.filter((category) => {
-      if (availableSlugs.has(category.slug)) return true;
-      return (category.children || []).some((child: any) => availableSlugs.has(child.slug));
-    });
-    this.quickCategories.set(categories.slice(0, 6));
-  }
-
-  onSearch() {
-    clearTimeout(this.timer);
-    if (!this.queryValue.trim()) {
-      this.storeResults.set([]);
+  applyQuickFilter(filter: CustomerQuickFilter): void {
+    const label = filter.label;
+    this.activeFilters.update((current) =>
+      current.includes(label) ? current : [...current, label],
+    );
+    if (filter.action === 'offers') {
+      this.updateQuery(this.query() ? `${this.query()} offers` : 'offers');
+      this.syncUrl();
       return;
     }
-    this.timer = setTimeout(() => this.doSearch(), 300);
-  }
-
-  doSearch() {
-    const query = this.queryValue.trim();
-    if (!query) {
-      this.storeResults.set([]);
+    if (filter.action === 'fast_delivery') {
+      this.activeTab.set('Stores');
       return;
     }
-    this.searching.set(true);
-    const location = this.locationService.location();
-    const request$ = location?.state
-      ? this.api.globalShopSearch({
-          lat: location.lat,
-          lng: location.lng,
-          state: location.state,
-          city: location.city,
-          postal_code: location.postalCode,
-          product_query: query,
-        })
-      : this.api.getVendors({ search: query });
-    request$.subscribe({
-      next: (res) => {
-        this.storeResults.set((res.results || res).slice(0, 12));
-        this.searching.set(false);
-      },
-      error: () => this.searching.set(false),
-    });
-  }
-
-  goBack() {
-    window.history.back();
-  }
-
-  get hasResults() {
-    return this.storeResults().length > 0;
-  }
-
-  selectVendor(vendorId: string) {
-    this.saveSearch(this.queryValue || '');
-    this.router.navigate(['/shop', vendorId]);
-  }
-
-  selectSearch(query: string) {
-    this.queryValue = query;
-    this.saveSearch(query);
-    this.doSearch();
-  }
-
-  selectCategory(category: any) {
-    this.router.navigate(['/shops'], { queryParams: { category: category.slug } });
-  }
-
-  showAll() {
-    this.saveSearch(this.queryValue);
-    this.router.navigate(['/shops'], { queryParams: { search: this.queryValue } });
-  }
-
-  saveSearch(query: string) {
-    if (!query.trim()) return;
-    const list = [query, ...this.pastSearches().filter((entry) => entry !== query)].slice(0, 8);
-    this.pastSearches.set(list);
-    try {
-      localStorage.setItem('nx_searches', JSON.stringify(list));
-    } catch {
-      // Ignore local storage write failures.
+    if (filter.action === 'rating_4_plus') {
+      this.activeTab.set('Stores');
+      return;
+    }
+    if (filter.action === 'under_budget') {
+      this.activeTab.set('Products');
     }
   }
 
-  removeSearch(query: string, event: Event) {
+  updateQuery(value: string): void {
+    this.query.set(value);
+  }
+
+  submitSearch(event: Event): void {
+    event.preventDefault();
+    this.syncUrl();
+  }
+
+  clearSearch(): void {
+    this.query.set('');
+    this.syncUrl();
+  }
+
+  clearFilters(): void {
+    this.activeFilters.set([]);
+    this.activeTab.set('All');
+  }
+
+  handleSearchPromo(promo: CustomerPromoCard): void {
+    if (promo.ctaUrl) {
+      this.router.navigateByUrl(promo.ctaUrl);
+      return;
+    }
+    this.ui.openFilter();
+  }
+
+  selectStore(event: Event, store: unknown): void {
+    event.preventDefault();
     event.stopPropagation();
-    const list = this.pastSearches().filter((entry) => entry !== query);
-    this.pastSearches.set(list);
-    try {
-      localStorage.setItem('nx_searches', JSON.stringify(list));
-    } catch {
-      // Ignore local storage write failures.
-    }
+    const target = buildStoreSelectionTarget(store as any, {
+      searchQuery: this.query(),
+    });
+    if (!target) return;
+    this.router.navigate(['/store', target.storeId], {
+      queryParams: target.searchQuery ? { q: target.searchQuery } : undefined,
+    });
   }
 
-  highlight(text: string): SafeHtml {
-    const query = this.queryValue.trim();
-    if (!query) return text;
-    const escaped = text.replace(/[<>&'"]/g, (char) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&#39;', '"': '&quot;' }[char] || char));
-    const safeQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const html = escaped.replace(new RegExp(`(${safeQuery})`, 'gi'), '<strong>$1</strong>');
-    return this.sanitizer.bypassSecurityTrustHtml(html);
+  ngOnDestroy(): void {
+    this.routeSub.unsubscribe();
+  }
+
+  private syncUrl(): void {
+    const q = this.query().trim();
+    this.query.set(q);
+    this.router.navigate(['/search'], { queryParams: q ? { q } : {} });
   }
 }

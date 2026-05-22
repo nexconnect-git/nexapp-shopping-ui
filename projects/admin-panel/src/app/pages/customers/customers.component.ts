@@ -1,17 +1,26 @@
-import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { Subscription, timer } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '@shared/public-api';
-import { DynamicTableColumn, DynamicTableComponent, TableCellDirective } from '@shared/public-api';
+import {
+  DynamicTableColumn,
+  DynamicTableComponent,
+  TableCellDirective,
+} from '@shared/public-api';
 
 @Component({
   selector: 'app-customers',
   standalone: true,
-  imports: [CommonModule, FormsModule, DynamicTableComponent, TableCellDirective],
+  imports: [
+    CommonModule,
+    FormsModule,
+    DynamicTableComponent,
+    TableCellDirective,
+  ],
   templateUrl: './customers.component.html',
-  styleUrl: './customers.component.scss'
+  styleUrl: './customers.component.scss',
 })
 export class CustomersComponent implements OnInit, OnDestroy {
   private api = inject(ApiService);
@@ -33,7 +42,7 @@ export class CustomersComponent implements OnInit, OnDestroy {
     { key: 'email', label: 'Email', flex: '1.45fr' },
     { key: 'phone', label: 'Phone', flex: '0.9fr' },
     { key: 'verified', label: 'Status', flex: '0.75fr' },
-    { key: 'actions', label: '', flex: '0.55fr', align: 'right' }
+    { key: 'actions', label: '', flex: '0.55fr', align: 'right' },
   ];
 
   lastRefreshed = signal<Date | null>(null);
@@ -42,7 +51,14 @@ export class CustomersComponent implements OnInit, OnDestroy {
 
   showModal = signal(false);
   editTarget = signal<any | null>(null);
-  form = { first_name: '', last_name: '', email: '', phone: '', is_verified: false, is_active: true };
+  form = {
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    is_verified: false,
+    is_active: true,
+  };
 
   ngOnInit() {
     this.reloadSub = timer(0, 15000).subscribe(() => {
@@ -50,12 +66,21 @@ export class CustomersComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnDestroy() { this.reloadSub?.unsubscribe(); }
+  ngOnDestroy() {
+    this.reloadSub?.unsubscribe();
+  }
 
-  goToProfile(c: any) { this.router.navigate(['/customers', c.id]); }
+  goToProfile(c: any) {
+    this.router.navigate(['/customers', c.id]);
+  }
 
-  manualReload() { this.page.set(1); this.load(); }
-  toggleAutoReload() { this.autoReload.update(v => !v); }
+  manualReload() {
+    this.page.set(1);
+    this.load();
+  }
+  toggleAutoReload() {
+    this.autoReload.update((v) => !v);
+  }
 
   load() {
     this.loading.set(true);
@@ -74,8 +99,17 @@ export class CustomersComponent implements OnInit, OnDestroy {
     });
   }
 
-  onSearch() { clearTimeout(this.timer); this.timer = setTimeout(() => { this.page.set(1); this.load(); }, 400); }
-  setPage(p: number) { this.page.set(p); this.load(); }
+  onSearch() {
+    clearTimeout(this.timer);
+    this.timer = setTimeout(() => {
+      this.page.set(1);
+      this.load();
+    }, 400);
+  }
+  setPage(p: number) {
+    this.page.set(p);
+    this.load();
+  }
 
   openEdit(c: any) {
     this.editTarget.set(c);
@@ -85,20 +119,30 @@ export class CustomersComponent implements OnInit, OnDestroy {
       email: c.email || '',
       phone: c.phone || '',
       is_verified: c.is_verified,
-      is_active: c.is_active !== false };
+      is_active: c.is_active !== false,
+    };
     this.error.set('');
     this.showModal.set(true);
   }
 
-  closeModal() { this.showModal.set(false); }
+  closeModal() {
+    this.showModal.set(false);
+  }
 
   save() {
     if (!this.editTarget()) return;
     this.saving.set(true);
     this.error.set('');
     this.api.updateAdminCustomer(this.editTarget().id, this.form).subscribe({
-      next: () => { this.saving.set(false); this.showModal.set(false); this.load(); },
-      error: (err) => { this.saving.set(false); this.error.set(err.error?.detail || 'Update failed.'); }
+      next: () => {
+        this.saving.set(false);
+        this.showModal.set(false);
+        this.load();
+      },
+      error: (err) => {
+        this.saving.set(false);
+        this.error.set(err.error?.detail || 'Update failed.');
+      },
     });
   }
 

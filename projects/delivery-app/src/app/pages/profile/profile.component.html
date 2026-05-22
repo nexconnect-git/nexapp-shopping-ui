@@ -15,17 +15,19 @@
       <div class="hero-info">
         <h2>{{ profile.first_name }} {{ profile.last_name }}</h2>
         <p>
-          <span class="material-icons-outlined" style="font-size:14px">delivery_dining</span>
+          <span class="material-icons-outlined" style="font-size: 14px"
+            >delivery_dining</span
+          >
           Delivery Partner
         </p>
         <span class="verified-badge" [class.unverified]="!profile.is_verified">
-          <span class="material-icons-outlined">{{ profile.is_verified ? 'verified' : 'pending' }}</span>
-          {{ profile.is_verified ? 'Verified' : 'Pending Verification' }}
+          <span class="material-icons-outlined">{{
+            profile.is_verified ? "verified" : "pending"
+          }}</span>
+          {{ profile.is_verified ? "Verified" : "Pending Verification" }}
         </span>
       </div>
     </div>
-
-
 
     <!-- Form Card -->
     <div class="form-card">
@@ -37,27 +39,55 @@
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">First Name</label>
-          <input class="form-control" type="text" [(ngModel)]="profile.first_name" name="first_name" placeholder="First name">
+          <input
+            class="form-control"
+            type="text"
+            [(ngModel)]="profile.first_name"
+            name="first_name"
+            placeholder="First name"
+          />
         </div>
         <div class="form-group">
           <label class="form-label">Last Name</label>
-          <input class="form-control" type="text" [(ngModel)]="profile.last_name" name="last_name" placeholder="Last name">
+          <input
+            class="form-control"
+            type="text"
+            [(ngModel)]="profile.last_name"
+            name="last_name"
+            placeholder="Last name"
+          />
         </div>
       </div>
 
       <div class="form-group">
         <label class="form-label">Email Address</label>
-        <input class="form-control" type="email" [(ngModel)]="profile.email" name="email" placeholder="your@email.com">
+        <input
+          class="form-control"
+          type="email"
+          [(ngModel)]="profile.email"
+          name="email"
+          placeholder="your@email.com"
+        />
       </div>
 
       <div class="form-group">
         <label class="form-label">Phone Number</label>
-        <input class="form-control" type="tel" [(ngModel)]="profile.phone" name="phone" placeholder="+1 (555) 000-0000">
+        <input
+          class="form-control"
+          type="tel"
+          [(ngModel)]="profile.phone"
+          name="phone"
+          placeholder="+1 (555) 000-0000"
+        />
       </div>
 
       <div class="form-group">
         <label class="form-label">Country</label>
-        <select class="form-control" [(ngModel)]="profile.country" name="country">
+        <select
+          class="form-control"
+          [(ngModel)]="profile.country"
+          name="country"
+        >
           <option value="US">United States</option>
           <option value="GB">United Kingdom</option>
           <option value="CA">Canada</option>
@@ -107,30 +137,49 @@
         <span class="material-icons-outlined">location_on</span>
         Base Location
       </div>
-      <p class="location-desc">Set your home/base location so dispatchers know your area.</p>
-
-
+      <p class="location-desc">
+        Set your home/base location so dispatchers know your area.
+      </p>
 
       @if (pickedLat()) {
         <div class="location-preview">
           <span class="material-icons-outlined">my_location</span>
-          <span>{{ pickedLat() | number:'1.4-4' }}, {{ pickedLng() | number:'1.4-4' }}</span>
+          <span
+            >{{ pickedLat() | number: "1.4-4" }},
+            {{ pickedLng() | number: "1.4-4" }}</span
+          >
         </div>
       }
 
-      <button class="map-open-btn" type="button" (click)="showMapPicker.set(!showMapPicker())">
+      <button
+        class="map-open-btn"
+        type="button"
+        (click)="showMapPicker.set(!showMapPicker())"
+      >
         <span class="material-icons-outlined">map</span>
-        {{ showMapPicker() ? 'Close Map' : (pickedLat() ? 'Update Location on Map' : 'Pick Location on Map') }}
+        {{
+          showMapPicker()
+            ? "Close Map"
+            : pickedLat()
+              ? "Update Location on Map"
+              : "Pick Location on Map"
+        }}
       </button>
 
       @if (showMapPicker()) {
         <div class="map-wrap">
           <app-map-picker
             [height]="'280px'"
-            (locationPicked)="onLocationPicked($event)">
+            (locationPicked)="onLocationPicked($event)"
+          >
           </app-map-picker>
           @if (pickedLat()) {
-            <button class="save-loc-btn" type="button" [disabled]="savingLocation()" (click)="saveLocation()">
+            <button
+              class="save-loc-btn"
+              type="button"
+              [disabled]="savingLocation()"
+              (click)="saveLocation()"
+            >
               @if (savingLocation()) {
                 <span class="spinner spinner-sm"></span> Saving...
               } @else {

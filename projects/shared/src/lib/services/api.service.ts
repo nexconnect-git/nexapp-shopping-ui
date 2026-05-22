@@ -1,4 +1,4 @@
-import { Injectable, signal, inject } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, shareReplay } from 'rxjs';
 import { API_BASE_URL } from '../tokens/api-url.token';
@@ -21,14 +21,14 @@ export class ApiService {
   refreshCartCount() {
     this.getCart().subscribe({
       next: (cart) => this.cartCount.set((cart.items || []).length),
-      error: () => {}
+      error: () => {},
     });
   }
 
   refreshUnreadCount() {
     this.getUnreadCount().subscribe({
       next: (r) => this.unreadNotifications.set(r.count ?? 0),
-      error: () => {}
+      error: () => {},
     });
   }
 
@@ -37,28 +37,59 @@ export class ApiService {
     return this.http.post(`${this.baseUrl}/auth/login/`, data);
   }
 
-  requestCustomerLoginOtp(data: { phone: string }): Observable<any> {
-    return this.http.post(`${this.baseUrl}/auth/mobile/request-login-otp/`, data);
+  requestCustomerLoginOtp(data: {
+    phone: string;
+    email?: string;
+  }): Observable<any> {
+    return this.http.post(
+      `${this.baseUrl}/auth/mobile/request-login-otp/`,
+      data,
+    );
   }
 
-  verifyCustomerLoginOtp(data: { phone: string; otp: string }): Observable<any> {
-    return this.http.post(`${this.baseUrl}/auth/mobile/verify-login-otp/`, data);
+  verifyCustomerLoginOtp(data: {
+    phone: string;
+    otp: string;
+    email?: string;
+  }): Observable<any> {
+    return this.http.post(
+      `${this.baseUrl}/auth/mobile/verify-login-otp/`,
+      data,
+    );
   }
 
   register(data: any): Observable<any> {
     return this.http.post(`${this.baseUrl}/auth/register/`, data);
   }
 
-  requestCustomerRegisterOtp(data: { phone: string; email?: string }): Observable<any> {
-    return this.http.post(`${this.baseUrl}/auth/mobile/request-register-otp/`, data);
+  requestCustomerRegisterOtp(data: {
+    phone: string;
+    email?: string;
+  }): Observable<any> {
+    return this.http.post(
+      `${this.baseUrl}/auth/mobile/request-register-otp/`,
+      data,
+    );
   }
 
-  verifyCustomerRegisterOtp(data: { phone: string; otp: string; first_name: string; last_name?: string; email?: string }): Observable<any> {
-    return this.http.post(`${this.baseUrl}/auth/mobile/verify-register-otp/`, data);
+  verifyCustomerRegisterOtp(data: {
+    phone: string;
+    otp: string;
+    first_name: string;
+    last_name?: string;
+    email?: string;
+  }): Observable<any> {
+    return this.http.post(
+      `${this.baseUrl}/auth/mobile/verify-register-otp/`,
+      data,
+    );
   }
 
-  refreshToken(): Observable<any> {
-    return this.http.post(`${this.baseUrl}/auth/refresh/`, {});
+  refreshToken(refresh?: string | null): Observable<any> {
+    return this.http.post(
+      `${this.baseUrl}/auth/refresh/`,
+      refresh ? { refresh } : {},
+    );
   }
 
   logout(): Observable<any> {
@@ -73,7 +104,10 @@ export class ApiService {
     return this.http.put(`${this.baseUrl}/auth/profile/`, data);
   }
 
-  changePassword(data: { current_password: string; new_password: string }): Observable<any> {
+  changePassword(data: {
+    current_password: string;
+    new_password: string;
+  }): Observable<any> {
     return this.http.post(`${this.baseUrl}/auth/change-password/`, data);
   }
 
@@ -82,17 +116,22 @@ export class ApiService {
   }
 
   confirmPasswordReset(token: string, newPassword: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/auth/password-reset/confirm/`, { token, new_password: newPassword });
+    return this.http.post(`${this.baseUrl}/auth/password-reset/confirm/`, {
+      token,
+      new_password: newPassword,
+    });
   }
 
-  checkSetup(setupToken?: string): Observable<any> {
-    const headers = setupToken ? { 'X-Setup-Token': setupToken } : undefined;
-    return this.http.get(`${this.baseUrl}/auth/setup/`, { headers });
+  checkSetup(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/auth/setup/`);
   }
 
-  setupSuperuser(data: any, setupToken?: string): Observable<any> {
-    const headers = setupToken ? { 'X-Setup-Token': setupToken } : undefined;
-    return this.http.post(`${this.baseUrl}/auth/setup/`, data, { headers });
+  setupSuperuser(data: {
+    username: string;
+    email: string;
+    password: string;
+  }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/auth/setup/`, data);
   }
 
   uploadAvatar(file: File): Observable<any> {
@@ -134,42 +173,72 @@ export class ApiService {
   getVendors(params?: any): Observable<any> {
     let httpParams = new HttpParams();
     if (params) {
-      Object.keys(params).forEach(key => {
+      Object.keys(params).forEach((key) => {
         if (params[key] !== null && params[key] !== undefined) {
           httpParams = httpParams.set(key, params[key]);
         }
       });
     }
-    return this.http.get(`${this.baseUrl}/vendors/list/`, { params: httpParams });
+    return this.http.get(`${this.baseUrl}/vendors/list/`, {
+      params: httpParams,
+    });
   }
 
-  getNearbyVendors(lat: number, lng: number, radius?: number, category?: string, state?: string, city?: string, postalCode?: string): Observable<any> {
+  getNearbyVendors(
+    lat: number,
+    lng: number,
+    radius?: number,
+    category?: string,
+    state?: string,
+    city?: string,
+    postalCode?: string,
+  ): Observable<any> {
     let params = new HttpParams()
       .set('lat', lat.toString())
       .set('lng', lng.toString())
       .set('search_mode', 'nearby');
     if (radius) params = params.set('radius_km', radius.toString());
-    if (category && category !== 'all') params = params.set('category', category);
+    if (category && category !== 'all')
+      params = params.set('category', category);
     if (state) params = params.set('state', state);
     if (city) params = params.set('city', city);
     if (postalCode) params = params.set('postal_code', postalCode);
     return this.http.get(`${this.baseUrl}/vendors/list/`, { params });
   }
 
-  searchFarVendors(params: { lat: number; lng: number; state: string; city?: string; postal_code?: string; search?: string; category?: string }): Observable<any> {
+  searchFarVendors(params: {
+    lat: number;
+    lng: number;
+    state: string;
+    city?: string;
+    postal_code?: string;
+    search?: string;
+    category?: string;
+  }): Observable<any> {
     let httpParams = new HttpParams()
       .set('lat', params.lat.toString())
       .set('lng', params.lng.toString())
       .set('state', params.state)
       .set('search_mode', 'manual_far');
     if (params.city) httpParams = httpParams.set('city', params.city);
-    if (params.postal_code) httpParams = httpParams.set('postal_code', params.postal_code);
+    if (params.postal_code)
+      httpParams = httpParams.set('postal_code', params.postal_code);
     if (params.search) httpParams = httpParams.set('search', params.search);
-    if (params.category && params.category !== 'all') httpParams = httpParams.set('category', params.category);
-    return this.http.get(`${this.baseUrl}/vendors/list/`, { params: httpParams });
+    if (params.category && params.category !== 'all')
+      httpParams = httpParams.set('category', params.category);
+    return this.http.get(`${this.baseUrl}/vendors/list/`, {
+      params: httpParams,
+    });
   }
 
-  globalShopSearch(params: { lat: number; lng: number; state: string; city?: string; postal_code?: string; product_query: string }): Observable<any> {
+  globalShopSearch(params: {
+    lat: number;
+    lng: number;
+    state: string;
+    city?: string;
+    postal_code?: string;
+    product_query: string;
+  }): Observable<any> {
     let httpParams = new HttpParams()
       .set('lat', params.lat.toString())
       .set('lng', params.lng.toString())
@@ -177,24 +246,43 @@ export class ApiService {
       .set('search_mode', 'global_item')
       .set('product_query', params.product_query);
     if (params.city) httpParams = httpParams.set('city', params.city);
-    if (params.postal_code) httpParams = httpParams.set('postal_code', params.postal_code);
-    return this.http.get(`${this.baseUrl}/vendors/list/`, { params: httpParams });
+    if (params.postal_code)
+      httpParams = httpParams.set('postal_code', params.postal_code);
+    return this.http.get(`${this.baseUrl}/vendors/list/`, {
+      params: httpParams,
+    });
   }
 
   getVendor(id: string, params?: any): Observable<any> {
     let httpParams = new HttpParams();
     if (params) {
       Object.keys(params).forEach((key) => {
-        if (params[key] !== null && params[key] !== undefined && params[key] !== '') {
+        if (
+          params[key] !== null &&
+          params[key] !== undefined &&
+          params[key] !== ''
+        ) {
           httpParams = httpParams.set(key, params[key]);
         }
       });
     }
-    return this.http.get(`${this.baseUrl}/vendors/${id}/`, { params: httpParams });
+    return this.http.get(`${this.baseUrl}/vendors/${id}/`, {
+      params: httpParams,
+    });
   }
 
   registerVendor(data: any): Observable<any> {
     return this.http.post(`${this.baseUrl}/vendors/register/`, data);
+  }
+
+  checkVendorIdentityAvailability(data: {
+    field: string;
+    value: string;
+  }): Observable<any> {
+    return this.http.post(
+      `${this.baseUrl}/vendors/identity-availability/`,
+      data,
+    );
   }
 
   getVendorDashboard(): Observable<any> {
@@ -204,25 +292,33 @@ export class ApiService {
   getVendorDashboardStats(params?: any): Observable<any> {
     let httpParams = new HttpParams();
     if (params) {
-      Object.keys(params).forEach(key => {
+      Object.keys(params).forEach((key) => {
         if (params[key] !== null && params[key] !== undefined) {
           httpParams = httpParams.set(key, params[key]);
         }
       });
     }
-    return this.http.get(`${this.baseUrl}/vendors/dashboard/`, { params: httpParams });
+    return this.http.get(`${this.baseUrl}/vendors/dashboard/`, {
+      params: httpParams,
+    });
   }
 
   getVendorAnalytics(params?: any): Observable<any> {
     let httpParams = new HttpParams();
     if (params) {
-      Object.keys(params).forEach(key => {
-        if (params[key] !== null && params[key] !== undefined && params[key] !== '') {
+      Object.keys(params).forEach((key) => {
+        if (
+          params[key] !== null &&
+          params[key] !== undefined &&
+          params[key] !== ''
+        ) {
           httpParams = httpParams.set(key, params[key]);
         }
       });
     }
-    return this.http.get(`${this.baseUrl}/vendors/analytics/`, { params: httpParams });
+    return this.http.get(`${this.baseUrl}/vendors/analytics/`, {
+      params: httpParams,
+    });
   }
 
   getVendorOperationsSummary(): Observable<any> {
@@ -248,13 +344,15 @@ export class ApiService {
   getVendorProducts(params?: any): Observable<any> {
     let httpParams = new HttpParams();
     if (params) {
-      Object.keys(params).forEach(k => {
+      Object.keys(params).forEach((k) => {
         if (params[k] !== null && params[k] !== undefined && params[k] !== '') {
           httpParams = httpParams.set(k, params[k]);
         }
       });
     }
-    return this.http.get(`${this.baseUrl}/vendors/products/`, { params: httpParams });
+    return this.http.get(`${this.baseUrl}/vendors/products/`, {
+      params: httpParams,
+    });
   }
 
   getVendorProduct(id: string): Observable<any> {
@@ -280,27 +378,40 @@ export class ApiService {
   getVendorAvailableCatalogProducts(params?: any): Observable<any> {
     let httpParams = new HttpParams();
     if (params) {
-      Object.keys(params).forEach(k => {
+      Object.keys(params).forEach((k) => {
         if (params[k] !== null && params[k] !== undefined && params[k] !== '') {
           httpParams = httpParams.set(k, params[k]);
         }
       });
     }
-    return this.http.get(`${this.baseUrl}/vendors/catalog-products/available/`, { params: httpParams });
+    return this.http.get(
+      `${this.baseUrl}/vendors/catalog-products/available/`,
+      { params: httpParams },
+    );
   }
 
   getVendorCatalogProductDetail(id: string): Observable<any> {
-    return this.http.get(`${this.baseUrl}/vendors/catalog-products/available/${id}/`);
+    return this.http.get(
+      `${this.baseUrl}/vendors/catalog-products/available/${id}/`,
+    );
   }
 
   createProductFromCatalog(data: any): Observable<any> {
-    return this.http.post(`${this.baseUrl}/vendors/products/from-catalog/`, data);
+    return this.http.post(
+      `${this.baseUrl}/vendors/products/from-catalog/`,
+      data,
+    );
   }
 
-  createInheritedProductDraftBatch(catalogProductIds: string[]): Observable<any> {
-    return this.http.post(`${this.baseUrl}/vendors/inherited-products/draft-batch/`, {
-      catalog_product_ids: catalogProductIds,
-    });
+  createInheritedProductDraftBatch(
+    catalogProductIds: string[],
+  ): Observable<any> {
+    return this.http.post(
+      `${this.baseUrl}/vendors/inherited-products/draft-batch/`,
+      {
+        catalog_product_ids: catalogProductIds,
+      },
+    );
   }
 
   getInheritedProducts(params?: { approval_status?: string }): Observable<any> {
@@ -308,37 +419,56 @@ export class ApiService {
     if (params?.approval_status) {
       httpParams = httpParams.set('approval_status', params.approval_status);
     }
-    return this.http.get(`${this.baseUrl}/vendors/inherited-products/`, { params: httpParams });
+    return this.http.get(`${this.baseUrl}/vendors/inherited-products/`, {
+      params: httpParams,
+    });
   }
 
   updateInheritedProduct(id: string, data: any): Observable<any> {
-    return this.http.patch(`${this.baseUrl}/vendors/inherited-products/${id}/`, data);
+    return this.http.patch(
+      `${this.baseUrl}/vendors/inherited-products/${id}/`,
+      data,
+    );
   }
 
   duplicateInheritedProduct(id: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/vendors/inherited-products/${id}/duplicate/`, {});
+    return this.http.post(
+      `${this.baseUrl}/vendors/inherited-products/${id}/duplicate/`,
+      {},
+    );
   }
 
   submitInheritedProducts(productIds: string[]): Observable<any> {
-    return this.http.post(`${this.baseUrl}/vendors/inherited-products/submit/`, { product_ids: productIds });
+    return this.http.post(
+      `${this.baseUrl}/vendors/inherited-products/submit/`,
+      { product_ids: productIds },
+    );
   }
 
-  setInheritedProductImagePolicy(id: string, inheritanceMode: 'base_image' | 'vendor_image_only' | 'mixed'): Observable<any> {
-    return this.http.post(`${this.baseUrl}/vendors/inherited-products/${id}/image-policy/`, {
-      inheritance_mode: inheritanceMode,
-    });
+  setInheritedProductImagePolicy(
+    id: string,
+    inheritanceMode: 'base_image' | 'vendor_image_only' | 'mixed',
+  ): Observable<any> {
+    return this.http.post(
+      `${this.baseUrl}/vendors/inherited-products/${id}/image-policy/`,
+      {
+        inheritance_mode: inheritanceMode,
+      },
+    );
   }
 
   getVendorCatalogProposals(params?: any): Observable<any> {
     let httpParams = new HttpParams();
     if (params) {
-      Object.keys(params).forEach(k => {
+      Object.keys(params).forEach((k) => {
         if (params[k] !== null && params[k] !== undefined && params[k] !== '') {
           httpParams = httpParams.set(k, params[k]);
         }
       });
     }
-    return this.http.get(`${this.baseUrl}/vendors/catalog-proposals/`, { params: httpParams });
+    return this.http.get(`${this.baseUrl}/vendors/catalog-proposals/`, {
+      params: httpParams,
+    });
   }
 
   createVendorCatalogProposal(data: any): Observable<any> {
@@ -357,41 +487,62 @@ export class ApiService {
   }
 
   deleteProductImage(productId: string, imageId: string): Observable<any> {
-    return this.http.delete(`${this.baseUrl}/products/${productId}/images/${imageId}/`);
+    return this.http.delete(
+      `${this.baseUrl}/products/${productId}/images/${imageId}/`,
+    );
   }
 
-  generateProductAiImage(data: { product_id: string; prompt: string }): Observable<any> {
+  generateProductAiImage(data: {
+    product_id: string;
+    prompt: string;
+  }): Observable<any> {
     return this.http.post(`${this.baseUrl}/products/ai-image/`, data);
   }
 
   // Stock Management
   updateProductStock(productId: string, data: any): Observable<any> {
-    return this.http.patch(`${this.baseUrl}/products/${productId}/stock/`, data);
+    return this.http.patch(
+      `${this.baseUrl}/products/${productId}/stock/`,
+      data,
+    );
   }
 
   getLowStockProducts(): Observable<any> {
     return this.http.get(`${this.baseUrl}/products/low-stock/`);
   }
 
-  bulkUpdateVendorStock(updates: { id: string; stock: number }[]): Observable<any> {
-    return this.http.post(`${this.baseUrl}/vendors/bulk-update-stock/`, { updates });
+  bulkUpdateVendorStock(
+    updates: { id: string; stock: number }[],
+  ): Observable<any> {
+    return this.http.post(`${this.baseUrl}/vendors/bulk-update-stock/`, {
+      updates,
+    });
   }
 
   setStoreStatus(isOpen: boolean, closingTime?: string): Observable<any> {
     return this.http.post(`${this.baseUrl}/vendors/store-status/`, {
       is_open: isOpen,
-      closing_time: closingTime });
+      closing_time: closingTime,
+    });
   }
 
-    getVendorOrders(params?: { status?: string; page?: number; page_size?: number; search?: string }): Observable<any> {
+  getVendorOrders(params?: {
+    status?: string;
+    page?: number;
+    page_size?: number;
+    search?: string;
+  }): Observable<any> {
     let httpParams = new HttpParams();
     if (params) {
-      Object.keys(params).forEach(k => {
+      Object.keys(params).forEach((k) => {
         const v = (params as any)[k];
-        if (v !== null && v !== undefined && v !== '') httpParams = httpParams.set(k, v);
+        if (v !== null && v !== undefined && v !== '')
+          httpParams = httpParams.set(k, v);
       });
     }
-    return this.http.get(`${this.baseUrl}/vendors/orders/`, { params: httpParams });
+    return this.http.get(`${this.baseUrl}/vendors/orders/`, {
+      params: httpParams,
+    });
   }
 
   getVendorOrder(id: string): Observable<any> {
@@ -402,50 +553,72 @@ export class ApiService {
     return this.http.get(`${this.baseUrl}/vendors/live-orders/`);
   }
 
-  updateOrderStatus(orderId: string, status: string, cancelReason?: string): Observable<any> {
+  updateOrderStatus(
+    orderId: string,
+    status: string,
+    cancelReason?: string,
+  ): Observable<any> {
     const body: any = { status };
     if (cancelReason) body.cancel_reason = cancelReason;
-    return this.http.patch(`${this.baseUrl}/vendors/orders/${orderId}/status/`, body);
+    return this.http.patch(
+      `${this.baseUrl}/vendors/orders/${orderId}/status/`,
+      body,
+    );
   }
 
   acceptVendorOrder(orderId: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/vendors/orders/${orderId}/accept/`, {});
+    return this.http.post(
+      `${this.baseUrl}/vendors/orders/${orderId}/accept/`,
+      {},
+    );
   }
 
   rejectVendorOrder(orderId: string, reason: string = ''): Observable<any> {
-    return this.http.post(`${this.baseUrl}/vendors/orders/${orderId}/reject/`, { reason });
+    return this.http.post(`${this.baseUrl}/vendors/orders/${orderId}/reject/`, {
+      reason,
+    });
   }
 
   startPreparingVendorOrder(orderId: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/vendors/orders/${orderId}/start-preparing/`, {});
+    return this.http.post(
+      `${this.baseUrl}/vendors/orders/${orderId}/start-preparing/`,
+      {},
+    );
   }
 
   markVendorOrderReady(orderId: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/vendors/orders/${orderId}/mark-ready/`, {});
+    return this.http.post(
+      `${this.baseUrl}/vendors/orders/${orderId}/mark-ready/`,
+      {},
+    );
   }
 
   getVendorPayouts(params?: any): Observable<any> {
     let httpParams = new HttpParams();
     if (params) {
-      Object.keys(params).forEach(k => {
+      Object.keys(params).forEach((k) => {
         if (params[k] !== null && params[k] !== undefined && params[k] !== '') {
           httpParams = httpParams.set(k, params[k]);
         }
       });
     }
-    return this.http.get(`${this.baseUrl}/vendors/payouts/`, { params: httpParams });
+    return this.http.get(`${this.baseUrl}/vendors/payouts/`, {
+      params: httpParams,
+    });
   }
 
   getVendorWalletTransactions(params?: any): Observable<any> {
     let httpParams = new HttpParams();
     if (params) {
-      Object.keys(params).forEach(k => {
+      Object.keys(params).forEach((k) => {
         if (params[k] !== null && params[k] !== undefined && params[k] !== '') {
           httpParams = httpParams.set(k, params[k]);
         }
       });
     }
-    return this.http.get(`${this.baseUrl}/vendors/wallet/transactions/`, { params: httpParams });
+    return this.http.get(`${this.baseUrl}/vendors/wallet/transactions/`, {
+      params: httpParams,
+    });
   }
 
   // Invoices
@@ -458,11 +631,16 @@ export class ApiService {
   }
 
   downloadInvoice(invoiceId: string): Observable<Blob> {
-    return this.http.get(`${this.baseUrl}/invoices/${invoiceId}/download/`, { responseType: 'blob' });
+    return this.http.get(`${this.baseUrl}/invoices/${invoiceId}/download/`, {
+      responseType: 'blob',
+    });
   }
 
   // Push Notifications (FCM)
-  registerDeviceToken(data: { token: string; platform: string }): Observable<any> {
+  registerDeviceToken(data: {
+    token: string;
+    platform: string;
+  }): Observable<any> {
     return this.http.post(`${this.baseUrl}/notifications/device-token/`, data);
   }
 
@@ -471,12 +649,22 @@ export class ApiService {
     return this.http.get(`${this.baseUrl}/vendors/categories/`);
   }
 
-  createVendorCategory(data: { name: string; slug?: string; description?: string }): Observable<any> {
+  createVendorCategory(data: {
+    name: string;
+    slug?: string;
+    description?: string;
+  }): Observable<any> {
     return this.http.post(`${this.baseUrl}/vendors/categories/`, data);
   }
 
-  createVendorSubcategory(parentId: string, data: { name: string; slug?: string; description?: string }): Observable<any> {
-    return this.http.post(`${this.baseUrl}/vendors/categories/${parentId}/subcategories/`, data);
+  createVendorSubcategory(
+    parentId: string,
+    data: { name: string; slug?: string; description?: string },
+  ): Observable<any> {
+    return this.http.post(
+      `${this.baseUrl}/vendors/categories/${parentId}/subcategories/`,
+      data,
+    );
   }
 
   // Products
@@ -487,13 +675,15 @@ export class ApiService {
   getProducts(params?: any): Observable<any> {
     let httpParams = new HttpParams();
     if (params) {
-      Object.keys(params).forEach(key => {
+      Object.keys(params).forEach((key) => {
         if (params[key] !== null && params[key] !== undefined) {
           httpParams = httpParams.set(key, params[key]);
         }
       });
     }
-    return this.http.get(`${this.baseUrl}/products/list/`, { params: httpParams });
+    return this.http.get(`${this.baseUrl}/products/list/`, {
+      params: httpParams,
+    });
   }
 
   getProduct(id: string): Observable<any> {
@@ -510,11 +700,16 @@ export class ApiService {
   }
 
   addToCart(productId: string, quantity: number = 1): Observable<any> {
-    return this.http.post(`${this.baseUrl}/orders/cart/add/`, { product_id: productId, quantity });
+    return this.http.post(`${this.baseUrl}/orders/cart/add/`, {
+      product_id: productId,
+      quantity,
+    });
   }
 
   updateCartItem(id: string, quantity: number): Observable<any> {
-    return this.http.patch(`${this.baseUrl}/orders/cart/items/${id}/`, { quantity });
+    return this.http.patch(`${this.baseUrl}/orders/cart/items/${id}/`, {
+      quantity,
+    });
   }
 
   removeCartItem(id: string): Observable<any> {
@@ -531,7 +726,9 @@ export class ApiService {
   }
 
   getDeliveryFeePreview(addressId: string): Observable<any> {
-    return this.http.get(`${this.baseUrl}/orders/delivery-fee-preview/`, { params: { address_id: addressId } });
+    return this.http.get(`${this.baseUrl}/orders/delivery-fee-preview/`, {
+      params: { address_id: addressId },
+    });
   }
 
   getPaymentMethods(): Observable<any> {
@@ -565,15 +762,30 @@ export class ApiService {
     return this.http.post(`${this.baseUrl}/orders/create/`, data);
   }
 
-  initiateCheckoutPayment(data: { delivery_address_id: string; coupon_code?: string; wallet_amount?: number; confirm_far_delivery?: boolean }): Observable<any> {
-    return this.http.post(`${this.baseUrl}/orders/initiate-checkout-payment/`, data);
+  initiateCheckoutPayment(data: {
+    delivery_address_id: string;
+    coupon_code?: string;
+    wallet_amount?: number;
+    confirm_far_delivery?: boolean;
+  }): Observable<any> {
+    return this.http.post(
+      `${this.baseUrl}/orders/initiate-checkout-payment/`,
+      data,
+    );
   }
 
   createRazorpayOrder(orderId: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/orders/${orderId}/create-payment/`, {});
+    return this.http.post(
+      `${this.baseUrl}/orders/${orderId}/create-payment/`,
+      {},
+    );
   }
 
-  verifyRazorpayPayment(orderId: string, razorpay_payment_id: string, razorpay_signature: string): Observable<any> {
+  verifyRazorpayPayment(
+    orderId: string,
+    razorpay_payment_id: string,
+    razorpay_signature: string,
+  ): Observable<any> {
     return this.http.post(`${this.baseUrl}/orders/${orderId}/verify-payment/`, {
       razorpay_payment_id,
       razorpay_signature,
@@ -603,10 +815,16 @@ export class ApiService {
   }
 
   submitOrderRating(orderId: string, rating: number): Observable<any> {
-    return this.http.post(`${this.baseUrl}/orders/${orderId}/rate/`, { rating });
+    return this.http.post(`${this.baseUrl}/orders/${orderId}/rate/`, {
+      rating,
+    });
   }
 
   // Order Issues
+  getIssueOptions(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/orders/issues/options/`);
+  }
+
   getMyIssues(): Observable<any> {
     return this.http.get(`${this.baseUrl}/orders/issues/`);
   }
@@ -615,25 +833,34 @@ export class ApiService {
     return this.http.get(`${this.baseUrl}/orders/issues/${id}/`);
   }
 
-  createIssue(data: { order: string; issue_type: string; description: string }): Observable<any> {
+  createIssue(data: {
+    order: string;
+    issue_type: string;
+    description: string;
+  }): Observable<any> {
     return this.http.post(`${this.baseUrl}/orders/issues/`, data);
   }
 
   sendIssueMessage(issueId: string, message: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/orders/issues/${issueId}/messages/`, { message });
+    return this.http.post(
+      `${this.baseUrl}/orders/issues/${issueId}/messages/`,
+      { message },
+    );
   }
 
   // Admin Issues
   getAdminIssues(params?: any): Observable<any> {
     let httpParams = new HttpParams();
     if (params) {
-      Object.keys(params).forEach(k => {
+      Object.keys(params).forEach((k) => {
         if (params[k] !== null && params[k] !== undefined && params[k] !== '') {
           httpParams = httpParams.set(k, params[k]);
         }
       });
     }
-    return this.http.get(`${this.baseUrl}/admin/issues/`, { params: httpParams });
+    return this.http.get(`${this.baseUrl}/admin/issues/`, {
+      params: httpParams,
+    });
   }
 
   getAdminIssue(id: string): Observable<any> {
@@ -645,7 +872,9 @@ export class ApiService {
   }
 
   sendAdminIssueMessage(issueId: string, message: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/admin/issues/${issueId}/messages/`, { message });
+    return this.http.post(`${this.baseUrl}/admin/issues/${issueId}/messages/`, {
+      message,
+    });
   }
 
   // Banners
@@ -674,21 +903,31 @@ export class ApiService {
     return this.http.get(`${this.baseUrl}/orders/coupons/`);
   }
 
-  validateCoupon(code: string, cartTotal: number, addressId?: string | null): Observable<any> {
-    return this.http.post(`${this.baseUrl}/orders/coupons/validate/`, { code, cart_total: cartTotal, address_id: addressId });
+  validateCoupon(
+    code: string,
+    cartTotal: number,
+    addressId?: string | null,
+  ): Observable<any> {
+    return this.http.post(`${this.baseUrl}/orders/coupons/validate/`, {
+      code,
+      cart_total: cartTotal,
+      address_id: addressId,
+    });
   }
 
   // Vendor coupons
   getVendorCoupons(params?: any): Observable<any> {
     let httpParams = new HttpParams();
     if (params) {
-      Object.keys(params).forEach(k => {
+      Object.keys(params).forEach((k) => {
         if (params[k] !== null && params[k] !== undefined && params[k] !== '') {
           httpParams = httpParams.set(k, params[k]);
         }
       });
     }
-    return this.http.get(`${this.baseUrl}/vendors/coupons/`, { params: httpParams });
+    return this.http.get(`${this.baseUrl}/vendors/coupons/`, {
+      params: httpParams,
+    });
   }
 
   createVendorCoupon(data: any): Observable<any> {
@@ -704,11 +943,17 @@ export class ApiService {
   }
 
   duplicateVendorCoupon(id: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/vendors/coupons/${id}/duplicate/`, {});
+    return this.http.post(
+      `${this.baseUrl}/vendors/coupons/${id}/duplicate/`,
+      {},
+    );
   }
 
   reactivateVendorCoupon(id: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/vendors/coupons/${id}/reactivate/`, {});
+    return this.http.post(
+      `${this.baseUrl}/vendors/coupons/${id}/reactivate/`,
+      {},
+    );
   }
 
   // Admin coupons
@@ -746,7 +991,10 @@ export class ApiService {
   }
 
   updateDeliveryStatus(orderId: string, status: string): Observable<any> {
-    return this.http.patch(`${this.baseUrl}/delivery/update-status/${orderId}/`, { status });
+    return this.http.patch(
+      `${this.baseUrl}/delivery/update-status/${orderId}/`,
+      { status },
+    );
   }
 
   confirmDelivery(orderId: string, otp: string, photo?: File): Observable<any> {
@@ -757,11 +1005,16 @@ export class ApiService {
   }
 
   updateLocation(latitude: number, longitude: number): Observable<any> {
-    return this.http.post(`${this.baseUrl}/delivery/update-location/`, { latitude, longitude });
+    return this.http.post(`${this.baseUrl}/delivery/update-location/`, {
+      latitude,
+      longitude,
+    });
   }
 
   setAvailability(isOnline: boolean): Observable<any> {
-    return this.http.post(`${this.baseUrl}/delivery/set-availability/`, { is_online: isOnline });
+    return this.http.post(`${this.baseUrl}/delivery/set-availability/`, {
+      is_online: isOnline,
+    });
   }
 
   getDeliveryHistory(): Observable<any> {
@@ -778,34 +1031,55 @@ export class ApiService {
   }
 
   acceptDeliveryRequest(assignmentId: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/delivery/requests/${assignmentId}/accept/`, {});
+    return this.http.post(
+      `${this.baseUrl}/delivery/requests/${assignmentId}/accept/`,
+      {},
+    );
   }
 
   rejectDeliveryRequest(assignmentId: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/delivery/requests/${assignmentId}/reject/`, {});
+    return this.http.post(
+      `${this.baseUrl}/delivery/requests/${assignmentId}/reject/`,
+      {},
+    );
   }
 
   cancelDeliveryAssignment(orderId: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/delivery/${orderId}/cancel-assignment/`, {});
+    return this.http.post(
+      `${this.baseUrl}/delivery/${orderId}/cancel-assignment/`,
+      {},
+    );
   }
 
   setDeliveryOnTheWay(orderId: string): Observable<any> {
-    return this.http.patch(`${this.baseUrl}/delivery/update-status/${orderId}/`, { status: 'on_the_way' });
+    return this.http.patch(
+      `${this.baseUrl}/delivery/update-status/${orderId}/`,
+      { status: 'on_the_way' },
+    );
   }
 
   // Vendor: verify pickup OTP from delivery partner
   verifyPickupOtp(orderId: string, otp: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/vendors/orders/${orderId}/verify-pickup-otp/`, { otp });
+    return this.http.post(
+      `${this.baseUrl}/vendors/orders/${orderId}/verify-pickup-otp/`,
+      { otp },
+    );
   }
 
   // Vendor: initiate (or re-initiate) delivery partner search
   startDeliverySearch(orderId: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/vendors/orders/${orderId}/start-delivery-search/`, {});
+    return this.http.post(
+      `${this.baseUrl}/vendors/orders/${orderId}/start-delivery-search/`,
+      {},
+    );
   }
 
   // Vendor: cancel an in-progress delivery partner search
   cancelDeliverySearch(orderId: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/vendors/orders/${orderId}/cancel-delivery-search/`, {});
+    return this.http.post(
+      `${this.baseUrl}/vendors/orders/${orderId}/cancel-delivery-search/`,
+      {},
+    );
   }
 
   // Payment QR code
@@ -834,13 +1108,15 @@ export class ApiService {
   getAdminUsers(params?: any): Observable<any> {
     let httpParams = new HttpParams();
     if (params) {
-      Object.keys(params).forEach(key => {
+      Object.keys(params).forEach((key) => {
         if (params[key] !== null && params[key] !== undefined) {
           httpParams = httpParams.set(key, params[key]);
         }
       });
     }
-    return this.http.get(`${this.baseUrl}/auth/admin-users/`, { params: httpParams });
+    return this.http.get(`${this.baseUrl}/auth/admin-users/`, {
+      params: httpParams,
+    });
   }
 
   createAdminUser(data: any): Observable<any> {
@@ -854,7 +1130,10 @@ export class ApiService {
   // Admin
   getAdminStats(): Observable<any> {
     const now = Date.now();
-    if (!this._adminStatsCache$ || now - this._adminStatsCacheTime > this._STATS_TTL_MS) {
+    if (
+      !this._adminStatsCache$ ||
+      now - this._adminStatsCacheTime > this._STATS_TTL_MS
+    ) {
       this._adminStatsCacheTime = now;
       this._adminStatsCache$ = this.http
         .get(`${this.baseUrl}/admin/stats/`)
@@ -863,20 +1142,32 @@ export class ApiService {
     return this._adminStatsCache$;
   }
 
+  checkAdminIdentityAvailability(data: {
+    field: string;
+    value: string;
+    exclude_user_id?: string;
+  }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/admin/identity-availability/`, data);
+  }
+
   getAdminVendors(params?: any): Observable<any> {
     let httpParams = new HttpParams();
     if (params) {
-      Object.keys(params).forEach(key => {
+      Object.keys(params).forEach((key) => {
         if (params[key] !== null && params[key] !== undefined) {
           httpParams = httpParams.set(key, params[key]);
         }
       });
     }
-    return this.http.get(`${this.baseUrl}/admin/vendors/`, { params: httpParams });
+    return this.http.get(`${this.baseUrl}/admin/vendors/`, {
+      params: httpParams,
+    });
   }
 
   setVendorStatus(id: string, status: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/admin/vendors/${id}/status/`, { status });
+    return this.http.post(`${this.baseUrl}/admin/vendors/${id}/status/`, {
+      status,
+    });
   }
 
   adminUpdateVendor(id: string, data: any): Observable<any> {
@@ -886,13 +1177,15 @@ export class ApiService {
   getAdminCustomers(params?: any): Observable<any> {
     let httpParams = new HttpParams();
     if (params) {
-      Object.keys(params).forEach(key => {
+      Object.keys(params).forEach((key) => {
         if (params[key] !== null && params[key] !== undefined) {
           httpParams = httpParams.set(key, params[key]);
         }
       });
     }
-    return this.http.get(`${this.baseUrl}/admin/customers/`, { params: httpParams });
+    return this.http.get(`${this.baseUrl}/admin/customers/`, {
+      params: httpParams,
+    });
   }
 
   getAdminCustomer(id: string): Observable<any> {
@@ -911,8 +1204,14 @@ export class ApiService {
     return this.http.get(`${this.baseUrl}/admin/customers/${id}/loyalty/`);
   }
 
-  adjustAdminCustomerLoyalty(id: string, data: { operation: 'credit' | 'debit'; amount: number; reason: string }): Observable<any> {
-    return this.http.post(`${this.baseUrl}/admin/customers/${id}/loyalty/adjust/`, data);
+  adjustAdminCustomerLoyalty(
+    id: string,
+    data: { operation: 'credit' | 'debit'; amount: number; reason: string },
+  ): Observable<any> {
+    return this.http.post(
+      `${this.baseUrl}/admin/customers/${id}/loyalty/adjust/`,
+      data,
+    );
   }
 
   createAdminDeliveryPartner(data: any): Observable<any> {
@@ -922,36 +1221,54 @@ export class ApiService {
   getAdminDeliveryPartners(params?: any): Observable<any> {
     let httpParams = new HttpParams();
     if (params) {
-      Object.keys(params).forEach(key => {
+      Object.keys(params).forEach((key) => {
         if (params[key] !== null && params[key] !== undefined) {
           httpParams = httpParams.set(key, params[key]);
         }
       });
     }
-    return this.http.get(`${this.baseUrl}/admin/delivery-partners/`, { params: httpParams });
+    return this.http.get(`${this.baseUrl}/admin/delivery-partners/`, {
+      params: httpParams,
+    });
   }
 
   getAdminDeliveryPartner(id: string): Observable<any> {
     return this.http.get(`${this.baseUrl}/admin/delivery-partners/${id}/`);
   }
 
-  approveDeliveryPartner(id: string, action: 'approve' | 'reject'): Observable<any> {
-    return this.http.post(`${this.baseUrl}/admin/delivery-partners/${id}/approve/`, { action });
+  approveDeliveryPartner(
+    id: string,
+    action: 'approve' | 'reject',
+  ): Observable<any> {
+    return this.http.post(
+      `${this.baseUrl}/admin/delivery-partners/${id}/approve/`,
+      { action },
+    );
   }
 
   updateAdminDeliveryPartner(id: string, data: any): Observable<any> {
-    return this.http.patch(`${this.baseUrl}/admin/delivery-partners/${id}/`, data);
+    return this.http.patch(
+      `${this.baseUrl}/admin/delivery-partners/${id}/`,
+      data,
+    );
   }
 
   deleteAdminDeliveryPartner(id: string): Observable<any> {
     return this.http.delete(`${this.baseUrl}/admin/delivery-partners/${id}/`);
   }
 
-  getAdminDeliveryPartnerEarnings(id: string, startDate?: string, endDate?: string): Observable<any> {
+  getAdminDeliveryPartnerEarnings(
+    id: string,
+    startDate?: string,
+    endDate?: string,
+  ): Observable<any> {
     let params = new HttpParams();
     if (startDate) params = params.set('start_date', startDate);
     if (endDate) params = params.set('end_date', endDate);
-    return this.http.get(`${this.baseUrl}/admin/delivery-partners/${id}/calculate-earnings/`, { params });
+    return this.http.get(
+      `${this.baseUrl}/admin/delivery-partners/${id}/calculate-earnings/`,
+      { params },
+    );
   }
 
   // Admin Vendors
@@ -977,15 +1294,27 @@ export class ApiService {
   }
 
   getVendorOnboarding(vendorId: string): Observable<any> {
-    return this.http.get(`${this.baseUrl}/admin/vendors/${vendorId}/onboarding/`);
+    return this.http.get(
+      `${this.baseUrl}/admin/vendors/${vendorId}/onboarding/`,
+    );
   }
 
   updateVendorOnboarding(vendorId: string, data: any): Observable<any> {
-    return this.http.patch(`${this.baseUrl}/admin/vendors/${vendorId}/onboarding/`, data);
+    return this.http.patch(
+      `${this.baseUrl}/admin/vendors/${vendorId}/onboarding/`,
+      data,
+    );
   }
 
-  reviewVendorKYC(vendorId: string, action: 'approve' | 'reject', rejectionReason?: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/admin/vendors/${vendorId}/kyc-review/`, { action, rejection_reason: rejectionReason || '' });
+  reviewVendorKYC(
+    vendorId: string,
+    action: 'approve' | 'reject',
+    rejectionReason?: string,
+  ): Observable<any> {
+    return this.http.post(
+      `${this.baseUrl}/admin/vendors/${vendorId}/kyc-review/`,
+      { action, rejection_reason: rejectionReason || '' },
+    );
   }
 
   getVendorBankDetails(vendorId: string): Observable<any> {
@@ -993,35 +1322,64 @@ export class ApiService {
   }
 
   updateVendorBankDetails(vendorId: string, data: any): Observable<any> {
-    return this.http.put(`${this.baseUrl}/admin/vendors/${vendorId}/bank/`, data);
+    return this.http.put(
+      `${this.baseUrl}/admin/vendors/${vendorId}/bank/`,
+      data,
+    );
   }
 
   verifyVendorBank(vendorId: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/admin/vendors/${vendorId}/bank/verify/`, {});
+    return this.http.post(
+      `${this.baseUrl}/admin/vendors/${vendorId}/bank/verify/`,
+      {},
+    );
   }
 
   getVendorDocuments(vendorId: string): Observable<any> {
-    return this.http.get(`${this.baseUrl}/admin/vendors/${vendorId}/documents/`);
+    return this.http.get(
+      `${this.baseUrl}/admin/vendors/${vendorId}/documents/`,
+    );
   }
 
   uploadVendorDocument(vendorId: string, data: FormData): Observable<any> {
-    return this.http.post(`${this.baseUrl}/admin/vendors/${vendorId}/documents/`, data);
+    return this.http.post(
+      `${this.baseUrl}/admin/vendors/${vendorId}/documents/`,
+      data,
+    );
   }
 
-  verifyVendorDocument(vendorId: string, docId: string, action: 'verify' | 'reject', rejectionReason?: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/admin/vendors/${vendorId}/documents/${docId}/verify/`, { action, rejection_reason: rejectionReason || '' });
+  verifyVendorDocument(
+    vendorId: string,
+    docId: string,
+    action: 'verify' | 'reject',
+    rejectionReason?: string,
+  ): Observable<any> {
+    return this.http.post(
+      `${this.baseUrl}/admin/vendors/${vendorId}/documents/${docId}/verify/`,
+      { action, rejection_reason: rejectionReason || '' },
+    );
   }
 
   getVendorServiceableAreas(vendorId: string): Observable<any> {
-    return this.http.get(`${this.baseUrl}/admin/vendors/${vendorId}/serviceable-areas/`);
+    return this.http.get(
+      `${this.baseUrl}/admin/vendors/${vendorId}/serviceable-areas/`,
+    );
   }
 
   addVendorServiceableArea(vendorId: string, data: any): Observable<any> {
-    return this.http.post(`${this.baseUrl}/admin/vendors/${vendorId}/serviceable-areas/`, data);
+    return this.http.post(
+      `${this.baseUrl}/admin/vendors/${vendorId}/serviceable-areas/`,
+      data,
+    );
   }
 
-  deleteVendorServiceableArea(vendorId: string, areaId: string): Observable<any> {
-    return this.http.delete(`${this.baseUrl}/admin/vendors/${vendorId}/serviceable-areas/${areaId}/`);
+  deleteVendorServiceableArea(
+    vendorId: string,
+    areaId: string,
+  ): Observable<any> {
+    return this.http.delete(
+      `${this.baseUrl}/admin/vendors/${vendorId}/serviceable-areas/${areaId}/`,
+    );
   }
 
   getVendorHolidays(vendorId: string): Observable<any> {
@@ -1029,49 +1387,67 @@ export class ApiService {
   }
 
   addVendorHoliday(vendorId: string, data: any): Observable<any> {
-    return this.http.post(`${this.baseUrl}/admin/vendors/${vendorId}/holidays/`, data);
+    return this.http.post(
+      `${this.baseUrl}/admin/vendors/${vendorId}/holidays/`,
+      data,
+    );
   }
 
   deleteVendorHoliday(vendorId: string, holidayId: string): Observable<any> {
-    return this.http.delete(`${this.baseUrl}/admin/vendors/${vendorId}/holidays/${holidayId}/`);
+    return this.http.delete(
+      `${this.baseUrl}/admin/vendors/${vendorId}/holidays/${holidayId}/`,
+    );
   }
 
   getVendorAuditLogs(vendorId: string): Observable<any> {
-    return this.http.get(`${this.baseUrl}/admin/vendors/${vendorId}/audit-logs/`);
+    return this.http.get(
+      `${this.baseUrl}/admin/vendors/${vendorId}/audit-logs/`,
+    );
   }
 
   // Admin Vendor Sales Report
   getAdminVendorSalesReport(id: string, params?: any): Observable<any> {
     let httpParams = new HttpParams();
     if (params) {
-      Object.keys(params).forEach(key => {
+      Object.keys(params).forEach((key) => {
         if (params[key] !== null && params[key] !== undefined) {
           httpParams = httpParams.set(key, params[key]);
         }
       });
     }
-    return this.http.get(`${this.baseUrl}/admin/vendors/${id}/sales-report/`, { params: httpParams });
+    return this.http.get(`${this.baseUrl}/admin/vendors/${id}/sales-report/`, {
+      params: httpParams,
+    });
   }
 
   /** Fetch gross sales + order stats for a vendor over a specific date range (used by payout modal). */
-  getAdminVendorSalesSummary(vendorId: string, startDate: string, endDate: string): Observable<any> {
+  getAdminVendorSalesSummary(
+    vendorId: string,
+    startDate: string,
+    endDate: string,
+  ): Observable<any> {
     const params = new HttpParams()
       .set('start_date', startDate)
       .set('end_date', endDate);
-    return this.http.get(`${this.baseUrl}/admin/vendors/${vendorId}/sales-report/`, { params });
+    return this.http.get(
+      `${this.baseUrl}/admin/vendors/${vendorId}/sales-report/`,
+      { params },
+    );
   }
 
   // Admin Categories
   getAdminCategories(params?: any): Observable<any> {
     let httpParams = new HttpParams();
     if (params) {
-      Object.keys(params).forEach(key => {
+      Object.keys(params).forEach((key) => {
         if (params[key] !== null && params[key] !== undefined) {
           httpParams = httpParams.set(key, params[key]);
         }
       });
     }
-    return this.http.get(`${this.baseUrl}/admin/categories/`, { params: httpParams });
+    return this.http.get(`${this.baseUrl}/admin/categories/`, {
+      params: httpParams,
+    });
   }
 
   createAdminCategory(data: any): Observable<any> {
@@ -1090,13 +1466,15 @@ export class ApiService {
   getAdminProducts(params?: any): Observable<any> {
     let httpParams = new HttpParams();
     if (params) {
-      Object.keys(params).forEach(key => {
+      Object.keys(params).forEach((key) => {
         if (params[key] !== null && params[key] !== undefined) {
           httpParams = httpParams.set(key, params[key]);
         }
       });
     }
-    return this.http.get(`${this.baseUrl}/admin/products/`, { params: httpParams });
+    return this.http.get(`${this.baseUrl}/admin/products/`, {
+      params: httpParams,
+    });
   }
 
   createAdminProduct(data: any): Observable<any> {
@@ -1114,13 +1492,19 @@ export class ApiService {
   getAdminCatalogProducts(params?: any): Observable<any> {
     let httpParams = new HttpParams();
     if (params) {
-      Object.keys(params).forEach(key => {
-        if (params[key] !== null && params[key] !== undefined && params[key] !== '') {
+      Object.keys(params).forEach((key) => {
+        if (
+          params[key] !== null &&
+          params[key] !== undefined &&
+          params[key] !== ''
+        ) {
           httpParams = httpParams.set(key, params[key]);
         }
       });
     }
-    return this.http.get(`${this.baseUrl}/admin/catalog-products/`, { params: httpParams });
+    return this.http.get(`${this.baseUrl}/admin/catalog-products/`, {
+      params: httpParams,
+    });
   }
 
   createAdminCatalogProduct(data: any): Observable<any> {
@@ -1128,7 +1512,10 @@ export class ApiService {
   }
 
   updateAdminCatalogProduct(id: string, data: any): Observable<any> {
-    return this.http.patch(`${this.baseUrl}/admin/catalog-products/${id}/`, data);
+    return this.http.patch(
+      `${this.baseUrl}/admin/catalog-products/${id}/`,
+      data,
+    );
   }
 
   deleteAdminCatalogProduct(id: string): Observable<any> {
@@ -1136,87 +1523,143 @@ export class ApiService {
   }
 
   getAdminCatalogProductImages(id: string): Observable<any> {
-    return this.http.get(`${this.baseUrl}/admin/catalog-products/${id}/images/`);
+    return this.http.get(
+      `${this.baseUrl}/admin/catalog-products/${id}/images/`,
+    );
   }
 
-  uploadAdminCatalogProductImage(id: string, file: File, isPrimary: boolean = true): Observable<any> {
+  uploadAdminCatalogProductImage(
+    id: string,
+    file: File,
+    isPrimary: boolean = true,
+  ): Observable<any> {
     const fd = new FormData();
     fd.append('image', file);
     fd.append('is_primary', String(isPrimary));
-    return this.http.post(`${this.baseUrl}/admin/catalog-products/${id}/images/`, fd);
+    return this.http.post(
+      `${this.baseUrl}/admin/catalog-products/${id}/images/`,
+      fd,
+    );
   }
 
-  deleteAdminCatalogProductImage(productId: string, imageId: string): Observable<any> {
-    return this.http.delete(`${this.baseUrl}/admin/catalog-products/${productId}/images/${imageId}/`);
+  deleteAdminCatalogProductImage(
+    productId: string,
+    imageId: string,
+  ): Observable<any> {
+    return this.http.delete(
+      `${this.baseUrl}/admin/catalog-products/${productId}/images/${imageId}/`,
+    );
   }
 
-  grantAdminCatalogProductToVendor(id: string, vendorId: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/admin/catalog-products/${id}/grant-vendor/`, { vendor_id: vendorId });
+  grantAdminCatalogProductToVendor(
+    id: string,
+    vendorId: string,
+  ): Observable<any> {
+    return this.http.post(
+      `${this.baseUrl}/admin/catalog-products/${id}/grant-vendor/`,
+      { vendor_id: vendorId },
+    );
   }
 
   getAdminCatalogProposals(params?: any): Observable<any> {
     let httpParams = new HttpParams();
     if (params) {
-      Object.keys(params).forEach(key => {
-        if (params[key] !== null && params[key] !== undefined && params[key] !== '') {
+      Object.keys(params).forEach((key) => {
+        if (
+          params[key] !== null &&
+          params[key] !== undefined &&
+          params[key] !== ''
+        ) {
           httpParams = httpParams.set(key, params[key]);
         }
       });
     }
-    return this.http.get(`${this.baseUrl}/admin/catalog-proposals/`, { params: httpParams });
+    return this.http.get(`${this.baseUrl}/admin/catalog-proposals/`, {
+      params: httpParams,
+    });
   }
 
-  approveAdminCatalogProposalItem(proposalId: string, itemId: string, data: any = {}): Observable<any> {
-    return this.http.post(`${this.baseUrl}/admin/catalog-proposals/${proposalId}/items/${itemId}/approve/`, data);
+  approveAdminCatalogProposalItem(
+    proposalId: string,
+    itemId: string,
+    data: any = {},
+  ): Observable<any> {
+    return this.http.post(
+      `${this.baseUrl}/admin/catalog-proposals/${proposalId}/items/${itemId}/approve/`,
+      data,
+    );
   }
 
-  rejectAdminCatalogProposalItem(proposalId: string, itemId: string, data: any = {}): Observable<any> {
-    return this.http.post(`${this.baseUrl}/admin/catalog-proposals/${proposalId}/items/${itemId}/reject/`, data);
+  rejectAdminCatalogProposalItem(
+    proposalId: string,
+    itemId: string,
+    data: any = {},
+  ): Observable<any> {
+    return this.http.post(
+      `${this.baseUrl}/admin/catalog-proposals/${proposalId}/items/${itemId}/reject/`,
+      data,
+    );
   }
 
   getAdminPendingVendorProducts(params?: any): Observable<any> {
     let httpParams = new HttpParams();
     if (params) {
-      Object.keys(params).forEach(key => {
-        if (params[key] !== null && params[key] !== undefined && params[key] !== '') {
+      Object.keys(params).forEach((key) => {
+        if (
+          params[key] !== null &&
+          params[key] !== undefined &&
+          params[key] !== ''
+        ) {
           httpParams = httpParams.set(key, params[key]);
         }
       });
     }
-    return this.http.get(`${this.baseUrl}/admin/vendor-products/pending/`, { params: httpParams });
+    return this.http.get(`${this.baseUrl}/admin/vendor-products/pending/`, {
+      params: httpParams,
+    });
   }
 
   approveAdminVendorProduct(id: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/admin/vendor-products/${id}/approve/`, {});
+    return this.http.post(
+      `${this.baseUrl}/admin/vendor-products/${id}/approve/`,
+      {},
+    );
   }
 
   rejectAdminVendorProduct(id: string, reason: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/admin/vendor-products/${id}/reject/`, { reason });
+    return this.http.post(
+      `${this.baseUrl}/admin/vendor-products/${id}/reject/`,
+      { reason },
+    );
   }
 
   // Admin Orders
   getAdminOrders(params?: any): Observable<any> {
     let httpParams = new HttpParams();
     if (params) {
-      Object.keys(params).forEach(key => {
+      Object.keys(params).forEach((key) => {
         if (params[key] !== null && params[key] !== undefined) {
           httpParams = httpParams.set(key, params[key]);
         }
       });
     }
-    return this.http.get(`${this.baseUrl}/admin/orders/`, { params: httpParams });
+    return this.http.get(`${this.baseUrl}/admin/orders/`, {
+      params: httpParams,
+    });
   }
 
   getAdminPayments(params?: any): Observable<any> {
     let httpParams = new HttpParams();
     if (params) {
-      Object.keys(params).forEach(key => {
+      Object.keys(params).forEach((key) => {
         if (params[key] !== null && params[key] !== undefined) {
           httpParams = httpParams.set(key, params[key]);
         }
       });
     }
-    return this.http.get(`${this.baseUrl}/admin/payments/`, { params: httpParams });
+    return this.http.get(`${this.baseUrl}/admin/payments/`, {
+      params: httpParams,
+    });
   }
 
   getPlatformSettings(): Observable<any> {
@@ -1227,16 +1670,37 @@ export class ApiService {
     return this.http.patch(`${this.baseUrl}/admin/settings/platform/`, data);
   }
 
+  getAdminPageFeatureConfig(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/admin/settings/page-features/`);
+  }
+
+  updateAdminPageFeatureConfig(data: any): Observable<any> {
+    return this.http.patch(
+      `${this.baseUrl}/admin/settings/page-features/`,
+      data,
+    );
+  }
+
+  getPageFeatureConfig(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/orders/page-features/`);
+  }
+
   getAdminAuditLogs(params?: any): Observable<any> {
     let httpParams = new HttpParams();
     if (params) {
-      Object.keys(params).forEach(key => {
-        if (params[key] !== null && params[key] !== undefined && params[key] !== '') {
+      Object.keys(params).forEach((key) => {
+        if (
+          params[key] !== null &&
+          params[key] !== undefined &&
+          params[key] !== ''
+        ) {
           httpParams = httpParams.set(key, params[key]);
         }
       });
     }
-    return this.http.get(`${this.baseUrl}/admin/audit-logs/`, { params: httpParams });
+    return this.http.get(`${this.baseUrl}/admin/audit-logs/`, {
+      params: httpParams,
+    });
   }
 
   updateAdminOrderStatus(id: string, status: string): Observable<any> {
@@ -1262,20 +1726,25 @@ export class ApiService {
   }
 
   createProductReview(productId: string, data: any): Observable<any> {
-    return this.http.post(`${this.baseUrl}/products/${productId}/reviews/`, data);
+    return this.http.post(
+      `${this.baseUrl}/products/${productId}/reviews/`,
+      data,
+    );
   }
 
   // Admin Notifications
   getAdminNotifications(params?: any): Observable<any> {
     let httpParams = new HttpParams();
     if (params) {
-      Object.keys(params).forEach(key => {
+      Object.keys(params).forEach((key) => {
         if (params[key] !== null && params[key] !== undefined) {
           httpParams = httpParams.set(key, params[key]);
         }
       });
     }
-    return this.http.get(`${this.baseUrl}/admin/notifications/`, { params: httpParams });
+    return this.http.get(`${this.baseUrl}/admin/notifications/`, {
+      params: httpParams,
+    });
   }
 
   sendAdminNotification(data: any): Observable<any> {
@@ -1290,13 +1759,15 @@ export class ApiService {
   getAssets(params?: any): Observable<any> {
     let httpParams = new HttpParams();
     if (params) {
-      Object.keys(params).forEach(key => {
+      Object.keys(params).forEach((key) => {
         if (params[key] !== null && params[key] !== undefined) {
           httpParams = httpParams.set(key, params[key]);
         }
       });
     }
-    return this.http.get(`${this.baseUrl}/admin/assets/`, { params: httpParams });
+    return this.http.get(`${this.baseUrl}/admin/assets/`, {
+      params: httpParams,
+    });
   }
 
   createAsset(data: any): Observable<any> {
@@ -1332,13 +1803,15 @@ export class ApiService {
   getAdminVendorPayouts(params?: any): Observable<any> {
     let httpParams = new HttpParams();
     if (params) {
-      Object.keys(params).forEach(key => {
+      Object.keys(params).forEach((key) => {
         if (params[key] !== null && params[key] !== undefined) {
           httpParams = httpParams.set(key, params[key]);
         }
       });
     }
-    return this.http.get(`${this.baseUrl}/admin/payouts/vendors/`, { params: httpParams });
+    return this.http.get(`${this.baseUrl}/admin/payouts/vendors/`, {
+      params: httpParams,
+    });
   }
 
   createAdminVendorPayout(data: any): Observable<any> {
@@ -1346,19 +1819,24 @@ export class ApiService {
   }
 
   updateAdminVendorPayout(id: string, data: any): Observable<any> {
-    return this.http.patch(`${this.baseUrl}/admin/payouts/vendors/${id}/`, data);
+    return this.http.patch(
+      `${this.baseUrl}/admin/payouts/vendors/${id}/`,
+      data,
+    );
   }
 
   getAdminDeliveryPayouts(params?: any): Observable<any> {
     let httpParams = new HttpParams();
     if (params) {
-      Object.keys(params).forEach(key => {
+      Object.keys(params).forEach((key) => {
         if (params[key] !== null && params[key] !== undefined) {
           httpParams = httpParams.set(key, params[key]);
         }
       });
     }
-    return this.http.get(`${this.baseUrl}/admin/payouts/delivery/`, { params: httpParams });
+    return this.http.get(`${this.baseUrl}/admin/payouts/delivery/`, {
+      params: httpParams,
+    });
   }
 
   createAdminDeliveryPayout(data: any): Observable<any> {
@@ -1366,7 +1844,10 @@ export class ApiService {
   }
 
   updateAdminDeliveryPayout(id: string, data: any): Observable<any> {
-    return this.http.patch(`${this.baseUrl}/admin/payouts/delivery/${id}/`, data);
+    return this.http.patch(
+      `${this.baseUrl}/admin/payouts/delivery/${id}/`,
+      data,
+    );
   }
 
   // ── Payout Lifecycle — Vendor ────────────────────────────────────────────
@@ -1375,37 +1856,63 @@ export class ApiService {
   }
 
   declinePayout(id: string, reason: string = ''): Observable<any> {
-    return this.http.post(`${this.baseUrl}/vendors/payouts/${id}/decline/`, { reason });
+    return this.http.post(`${this.baseUrl}/vendors/payouts/${id}/decline/`, {
+      reason,
+    });
   }
 
   verifyPayoutCredit(id: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/vendors/payouts/${id}/verify-credit/`, {});
+    return this.http.post(
+      `${this.baseUrl}/vendors/payouts/${id}/verify-credit/`,
+      {},
+    );
   }
 
   // ── Payout Lifecycle — Admin (vendor) ────────────────────────────────────
   scheduleAdminVendorPayout(id: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/admin/payouts/vendors/${id}/schedule/`, {});
+    return this.http.post(
+      `${this.baseUrl}/admin/payouts/vendors/${id}/schedule/`,
+      {},
+    );
   }
 
   sendAdminVendorPayment(id: string, transactionRef?: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/admin/payouts/vendors/${id}/send-payment/`, { transaction_ref: transactionRef || '' });
+    return this.http.post(
+      `${this.baseUrl}/admin/payouts/vendors/${id}/send-payment/`,
+      { transaction_ref: transactionRef || '' },
+    );
   }
 
   forceAdminVendorPayoutPaid(id: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/admin/payouts/vendors/${id}/force-paid/`, {});
+    return this.http.post(
+      `${this.baseUrl}/admin/payouts/vendors/${id}/force-paid/`,
+      {},
+    );
   }
 
   // ── Payout Lifecycle — Admin (delivery) ──────────────────────────────────
   scheduleAdminDeliveryPayout(id: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/admin/payouts/delivery/${id}/schedule/`, {});
+    return this.http.post(
+      `${this.baseUrl}/admin/payouts/delivery/${id}/schedule/`,
+      {},
+    );
   }
 
-  sendAdminDeliveryPayment(id: string, transactionRef?: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/admin/payouts/delivery/${id}/send-payment/`, { transaction_ref: transactionRef || '' });
+  sendAdminDeliveryPayment(
+    id: string,
+    transactionRef?: string,
+  ): Observable<any> {
+    return this.http.post(
+      `${this.baseUrl}/admin/payouts/delivery/${id}/send-payment/`,
+      { transaction_ref: transactionRef || '' },
+    );
   }
 
   forceAdminDeliveryPayoutPaid(id: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/admin/payouts/delivery/${id}/force-paid/`, {});
+    return this.http.post(
+      `${this.baseUrl}/admin/payouts/delivery/${id}/force-paid/`,
+      {},
+    );
   }
 
   // ── Payout Lifecycle — Delivery Partner (self) ───────────────────────────
@@ -1414,15 +1921,23 @@ export class ApiService {
   }
 
   approveDeliveryPayout(id: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/delivery/payouts/${id}/approve/`, {});
+    return this.http.post(
+      `${this.baseUrl}/delivery/payouts/${id}/approve/`,
+      {},
+    );
   }
 
   declineDeliveryPayout(id: string, reason: string = ''): Observable<any> {
-    return this.http.post(`${this.baseUrl}/delivery/payouts/${id}/decline/`, { reason });
+    return this.http.post(`${this.baseUrl}/delivery/payouts/${id}/decline/`, {
+      reason,
+    });
   }
 
   verifyDeliveryPayoutCredit(id: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/delivery/payouts/${id}/verify-credit/`, {});
+    return this.http.post(
+      `${this.baseUrl}/delivery/payouts/${id}/verify-credit/`,
+      {},
+    );
   }
 
   // Scheduled Tasks
@@ -1430,7 +1945,12 @@ export class ApiService {
     return this.http.get(`${this.baseUrl}/admin/scheduled-tasks/`);
   }
 
-  createScheduledTask(data: { task_key: string; scheduled_time?: string; repeat?: number; kwargs: Record<string, any> }): Observable<any> {
+  createScheduledTask(data: {
+    task_key: string;
+    scheduled_time?: string;
+    repeat?: number;
+    kwargs: Record<string, any>;
+  }): Observable<any> {
     return this.http.post(`${this.baseUrl}/admin/scheduled-tasks/`, data);
   }
 
@@ -1444,22 +1964,38 @@ export class ApiService {
   }
 
   toggleWishlist(productId: string): Observable<{ wishlisted: boolean }> {
-    return this.http.post<{ wishlisted: boolean }>(`${this.baseUrl}/products/wishlist/${productId}/toggle/`, {});
+    return this.http.post<{ wishlisted: boolean }>(
+      `${this.baseUrl}/products/wishlist/${productId}/toggle/`,
+      {},
+    );
   }
 
   getWishlistStatus(ids: string[]): Observable<Record<string, boolean>> {
-    return this.http.get<Record<string, boolean>>(`${this.baseUrl}/products/wishlist/status/`, {
-      params: { ids: ids.join(',') }
+    return this.http.get<Record<string, boolean>>(
+      `${this.baseUrl}/products/wishlist/status/`,
+      {
+        params: { ids: ids.join(',') },
+      },
+    );
+  }
+
+  getLoyaltyPreview(
+    orderTotal: number,
+  ): Observable<{ points: number; max_redeemable: number; discount: number }> {
+    return this.http.get<any>(`${this.baseUrl}/auth/loyalty/preview/`, {
+      params: { order_total: orderTotal.toString() },
     });
   }
 
-  getLoyaltyPreview(orderTotal: number): Observable<{ points: number; max_redeemable: number; discount: number }> {
-    return this.http.get<any>(`${this.baseUrl}/auth/loyalty/preview/`, { params: { order_total: orderTotal.toString() } });
-  }
-
   // Tip
-  tipDeliveryPartner(orderId: string, amount: number): Observable<{ delivery_tip: string }> {
-    return this.http.post<{ delivery_tip: string }>(`${this.baseUrl}/orders/${orderId}/tip/`, { amount });
+  tipDeliveryPartner(
+    orderId: string,
+    amount: number,
+  ): Observable<{ delivery_tip: string }> {
+    return this.http.post<{ delivery_tip: string }>(
+      `${this.baseUrl}/orders/${orderId}/tip/`,
+      { amount },
+    );
   }
 
   // Referral
@@ -1471,13 +2007,11 @@ export class ApiService {
     return this.http.post(`${this.baseUrl}/auth/referral/apply/`, { code });
   }
 
-  lookupReferralCode(code: string): Observable<{ valid: boolean; code: string }> {
-    return this.http.get<any>(`${this.baseUrl}/auth/referral/lookup/`, { params: { code } });
+  lookupReferralCode(
+    code: string,
+  ): Observable<{ valid: boolean; code: string }> {
+    return this.http.get<any>(`${this.baseUrl}/auth/referral/lookup/`, {
+      params: { code },
+    });
   }
 }
-
-
-
-
-
-

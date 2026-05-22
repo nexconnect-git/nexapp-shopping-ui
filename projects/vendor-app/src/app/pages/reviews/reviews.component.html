@@ -1,5 +1,4 @@
 <div class="rev-wrap">
-
   <!-- Top bar -->
   <section class="page-hero">
     <div class="page-hero-copy">
@@ -16,14 +15,14 @@
 
   @if (loading()) {
     <div class="rev-loading">
-      @for (n of [1,2,3,4]; track n) {
+      @for (n of [1, 2, 3, 4]; track n) {
         <div class="rev-skel shimmer"></div>
       }
     </div>
   } @else {
     <section class="review-command-strip">
       <div>
-        <strong>{{ averageRating() | number:'1.1-1' }}</strong>
+        <strong>{{ averageRating() | number: "1.1-1" }}</strong>
         <span>Average rating</span>
       </div>
       <div>
@@ -39,17 +38,27 @@
     <!-- Rating summary card -->
     <div class="rev-summary">
       <div class="rev-avg-block">
-        <div class="rev-avg-num">{{ averageRating() | number:'1.1-1' }}</div>
+        <div class="rev-avg-num">{{ averageRating() | number: "1.1-1" }}</div>
         <div class="rev-avg-stars">
           @for (s of stars; track s) {
-            <span class="material-icons-outlined rev-star"
+            <span
+              class="material-icons-outlined rev-star"
               [class.filled]="s <= averageRating()"
-              [class.half]="s > averageRating() && s - 0.5 <= averageRating()">
-              {{ s <= averageRating() ? 'star' : (s - 0.5 <= averageRating() ? 'star_half' : 'star_border') }}
+              [class.half]="s > averageRating() && s - 0.5 <= averageRating()"
+            >
+              {{
+                s <= averageRating()
+                  ? "star"
+                  : s - 0.5 <= averageRating()
+                    ? "star_half"
+                    : "star_border"
+              }}
             </span>
           }
         </div>
-        <div class="rev-avg-count">{{ totalReviews() }} review{{ totalReviews() !== 1 ? 's' : '' }}</div>
+        <div class="rev-avg-count">
+          {{ totalReviews() }} review{{ totalReviews() !== 1 ? "s" : "" }}
+        </div>
       </div>
 
       <div class="rev-breakdown">
@@ -58,9 +67,14 @@
             <span class="rev-bar-label">{{ 5 - i }}</span>
             <span class="material-icons-outlined rev-bar-star">star</span>
             <div class="rev-bar-track">
-              <div class="rev-bar-fill"
-                [style.width]="totalReviews() > 0 ? ((count / totalReviews()) * 100) + '%' : '0%'">
-              </div>
+              <div
+                class="rev-bar-fill"
+                [style.width]="
+                  totalReviews() > 0
+                    ? (count / totalReviews()) * 100 + '%'
+                    : '0%'
+                "
+              ></div>
             </div>
             <span class="rev-bar-count">{{ count }}</span>
           </div>
@@ -72,16 +86,33 @@
       <div class="rev-alert">
         <span class="material-icons-outlined">priority_high</span>
         <div>
-          <strong>{{ lowReviews().length }} low review{{ lowReviews().length === 1 ? '' : 's' }} need attention</strong>
-          <p>Use the product and order context to follow up from support until review replies are enabled.</p>
+          <strong
+            >{{ lowReviews().length }} low review{{
+              lowReviews().length === 1 ? "" : "s"
+            }}
+            need attention</strong
+          >
+          <p>
+            Use the product and order context to follow up from support until
+            review replies are enabled.
+          </p>
         </div>
       </div>
     }
 
     <div class="rev-filters">
-      <button [class.active]="filter() === 'all'" (click)="setFilter('all')">All</button>
-      <button [class.active]="filter() === 'low'" (click)="setFilter('low')">Low reviews</button>
-      <button [class.active]="filter() === 'recent'" (click)="setFilter('recent')">Recent</button>
+      <button [class.active]="filter() === 'all'" (click)="setFilter('all')">
+        All
+      </button>
+      <button [class.active]="filter() === 'low'" (click)="setFilter('low')">
+        Low reviews
+      </button>
+      <button
+        [class.active]="filter() === 'recent'"
+        (click)="setFilter('recent')"
+      >
+        Recent
+      </button>
     </div>
 
     <!-- Review list -->
@@ -89,7 +120,10 @@
       <div class="rev-empty">
         <span class="material-icons-outlined">rate_review</span>
         <p>No reviews yet</p>
-        <span>Reviews from customers will appear here after their orders are delivered.</span>
+        <span
+          >Reviews from customers will appear here after their orders are
+          delivered.</span
+        >
       </div>
     } @else {
       <div class="rev-list">
@@ -100,12 +134,18 @@
                 <span class="material-icons-outlined">person</span>
               </div>
               <div class="rev-meta">
-                <div class="rev-customer-name">{{ r.customer_name || 'Customer' }}</div>
-                <div class="rev-date">{{ r.created_at | date:'MMM d, y' }}</div>
+                <div class="rev-customer-name">
+                  {{ r.customer_name || "Customer" }}
+                </div>
+                <div class="rev-date">
+                  {{ r.created_at | date: "MMM d, y" }}
+                </div>
               </div>
               <div class="rev-card-stars">
                 @for (s of starsArray(r.rating); track s) {
-                  <span class="material-icons-outlined rev-star filled">star</span>
+                  <span class="material-icons-outlined rev-star filled"
+                    >star</span
+                  >
                 }
               </div>
             </div>
@@ -116,13 +156,15 @@
               @if (r.product_name) {
                 <span class="rev-context">Product: {{ r.product_name }}</span>
               }
-              <span class="rev-context">{{ r.rating <= 3 ? 'Reply-ready: support follow-up recommended' : 'No action needed' }}</span>
+              <span class="rev-context">{{
+                r.rating <= 3
+                  ? "Reply-ready: support follow-up recommended"
+                  : "No action needed"
+              }}</span>
             </div>
           </div>
         }
       </div>
     }
-
   }
-
 </div>

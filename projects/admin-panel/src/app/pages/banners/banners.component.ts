@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '@shared/public-api';
 
@@ -90,7 +90,9 @@ export class BannersComponent implements OnInit {
     this.saving.set(true);
     this.error.set('');
     const target = this.editTarget();
-    const req = target ? this.api.updateAdminBanner(target.id, payload) : this.api.createAdminBanner(payload);
+    const req = target
+      ? this.api.updateAdminBanner(target.id, payload)
+      : this.api.createAdminBanner(payload);
     req.subscribe({
       next: () => {
         this.saving.set(false);
@@ -99,20 +101,26 @@ export class BannersComponent implements OnInit {
       },
       error: (err: any) => {
         this.saving.set(false);
-        this.error.set(err.error?.title?.[0] || err.error?.detail || 'Save failed.');
+        this.error.set(
+          err.error?.title?.[0] || err.error?.detail || 'Save failed.',
+        );
       },
     });
   }
 
   toggleActive(banner: PlatformBanner) {
-    this.api.updateAdminBanner(banner.id, { is_active: !banner.is_active }).subscribe({
-      next: () => this.load(),
-    });
+    this.api
+      .updateAdminBanner(banner.id, { is_active: !banner.is_active })
+      .subscribe({
+        next: () => this.load(),
+      });
   }
 
   delete(banner: PlatformBanner) {
     if (!confirm(`Delete banner "${banner.title}"?`)) return;
-    this.api.deleteAdminBanner(banner.id).subscribe({ next: () => this.load() });
+    this.api
+      .deleteAdminBanner(banner.id)
+      .subscribe({ next: () => this.load() });
   }
 
   private emptyForm(): PlatformBanner {
@@ -124,7 +132,7 @@ export class BannersComponent implements OnInit {
       cta_label: 'Order Now',
       cta_url: '/shops',
       image: null,
-      bg_gradient: 'linear-gradient(135deg,#ffeadf,#fff7f2)',
+      bg_gradient: '#6C2BFF',
       display_order: 0,
       is_active: true,
     };

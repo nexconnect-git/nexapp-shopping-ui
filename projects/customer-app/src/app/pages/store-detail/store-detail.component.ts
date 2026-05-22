@@ -1,0 +1,210 @@
+import { Component, computed, effect, signal } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { CatalogService } from '../../services/catalog.service';
+import { AppStateService } from '../../services/app-state.service';
+import { UiService } from '../../services/ui.service';
+import { ProductCardComponent } from '../../components/product-card/product-card.component';
+import { OrderSummaryComponent } from '../../components/order-summary/order-summary.component';
+import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
+import { categoryIconFor } from '../../shared/category-icons';
+import { CustomerContentConfigService } from '../../services/customer-content-config.service';
+
+@Component({
+  standalone: true,
+  imports: [
+    FormsModule,
+    ProductCardComponent,
+    OrderSummaryComponent,
+    BreadcrumbsComponent,
+  ],
+  templateUrl: './store-detail.component.html',
+  styleUrls: ['./store-detail.component.scss'],
+})
+export class StoreDetailComponent {
+  activeCategory = signal('All');
+  storeQuery = signal('');
+  sortBy = signal('Sort: Relevance');
+
+  constructor(
+    private route: ActivatedRoute,
+    public catalog: CatalogService,
+    public state: AppStateService,
+    public ui: UiService,
+    public content: CustomerContentConfigService,
+  ) {
+    const initialSearch = this.route.snapshot.queryParamMap.get('q');
+    if (initialSearch) this.storeQuery.set(initialSearch);
+    effect(() => {
+      const storeId = this.route.snapshot.paramMap.get('id') || this.store().id;
+      const address = this.state.activeAddress();
+      if (!storeId) return;
+      this.catalog.loadStoreProducts(storeId, {
+        ...this.addressQuery(address),
+        ...this.storeProductQuery(),
+      });
+    });
+  }
+
+  store = computed(() =>
+    this.catalog.getStore(this.route.snapshot.paramMap.get('id')),
+  );
+  storeOfferPromo = computed(() => {
+    const store = this.store();
+    if (store.offer) {
+      return {
+        eyebrow: 'Running offer',
+        title: store.offer,
+        subtitle:
+          'Vendor offer eligibility is validated with your cart at checkout.',
+        icon: 'local_offer',
+      };
+    }
+    const fallback = this.content.ads().storeDetail[0];
+    return {
+      eyebrow: fallback?.eyebrow || 'Store offer',
+      title: fallback?.title || 'Live vendor deals',
+      subtitle:
+        fallback?.subtitle || 'Final discounts are confirmed at checkout.',
+      icon: fallback?.icon || 'sell',
+    };
+  });
+
+  availableStoreProducts = computed(() => {
+    const store = this.store();
+    if ((store.raw as any)?.is_serviceable === false) return [];
+    return this.catalog
+      .productsByStore(store.id)
+      .filter((product) => this.isProductAvailable(product));
+  });
+
+  categories = computed(() => {
+    const serverCategories = ((this.store().raw as any)?.available_categories ||
+      []) as Array<{ name?: string }>;
+    if (serverCategories.length) {
+      return [
+        'All',
+        ...(serverCategories
+          .map((category) => category.name)
+          .filter(Boolean) as string[]),
+      ];
+    }
+    const names = new Set(
+      this.availableStoreProducts()
+        .map((product) => product.category)
+        .filter(Boolean),
+    );
+    return ['All', ...names];
+  });
+  isOpen = computed(
+    () => this.store().raw?.is_open_now ?? this.store().raw?.is_open,
+  );
+  closingLabel = computed(() =>
+    this.store().raw?.closing_time
+      ? `Closes at ${this.store().raw?.closing_time}`
+      : this.store().raw?.availability_note || '',
+  );
+  filteringCategories = computed(() =>
+    this.catalog.isStoreProductsLoading(this.store().id),
+  );
+
+  groupedProducts = computed(() => {
+    const all = this.availableStoreProducts();
+    const groups = new Map<string, typeof all>();
+    for (const product of all) {
+      const name = product.category || 'Products';
+      groups.set(name, [...(groups.get(name) || []), product]);
+    }
+    return [...groups.entries()].map(([name, items]) => ({
+      name,
+      items: items.slice(0, 12),
+    }));
+  });
+
+  clearStoreSearch(): void {
+    this.storeQuery.set('');
+    this.activeCategory.set('All');
+  }
+
+  setStoreQuery(value: string): void {
+    this.storeQuery.set(value);
+  }
+
+  setSortBy(value: string): void {
+    this.sortBy.set(value);
+  }
+
+  setCategory(category: string): void {
+    this.activeCategory.set(category);
+  }
+
+  followStore(): void {
+    this.state.showToast(`${this.store().name} added to your favorites`);
+  }
+
+  shareStore(): void {
+    const store = this.store();
+    const url = `${location.origin}/store/${store.id}`;
+    if (navigator.share) {
+      navigator
+        .share({
+          title: store.name,
+          text: `Shop ${store.name} on FlashDrop`,
+          url,
+        })
+        .catch(() => {});
+    } else {
+      navigator.clipboard?.writeText(url);
+      this.state.showToast('Store link copied');
+    }
+  }
+
+  showAllInGroup(groupName: string): void {
+    this.activeCategory.set(groupName);
+    this.state.showToast(`Showing ${groupName}`);
+  }
+
+  icon(cat: string): string {
+    return categoryIconFor(
+      this.catalog.categories().find((category) => category.label === cat) ||
+        cat,
+    );
+  }
+
+  private isProductAvailable(product: any): boolean {
+    const raw = product?.raw || product || {};
+    if (raw.is_available === false || raw.in_stock === false) return false;
+    if (raw.status && raw.status !== 'active') return false;
+    if (raw.approval_status && raw.approval_status !== 'approved') return false;
+    const stock = Number(raw.stock);
+    return !Number.isFinite(stock) || stock > 0;
+  }
+
+  private addressQuery(
+    address: ReturnType<AppStateService['activeAddress']>,
+  ): Record<string, any> {
+    if (!address) return {};
+    const params: Record<string, any> = {
+      state: address.state || '',
+      city: address.city || '',
+      postal_code: address.pincode || '',
+    };
+    if (address.latitude != null && address.longitude != null) {
+      params['lat'] = Number(address.latitude);
+      params['lng'] = Number(address.longitude);
+    }
+    return params;
+  }
+
+  private storeProductQuery(): Record<string, any> {
+    const params: Record<string, any> = {};
+    const query = this.storeQuery().trim();
+    const category = this.activeCategory();
+    if (query) params['product_search'] = query;
+    if (category && category !== 'All') params['product_category'] = category;
+    if (this.sortBy() === 'Sort: Price Low to High')
+      params['product_sort'] = 'price_asc';
+    if (this.sortBy() === 'Sort: Rating') params['product_sort'] = 'rating';
+    return params;
+  }
+}

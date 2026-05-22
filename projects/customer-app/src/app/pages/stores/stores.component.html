@@ -1,0 +1,127 @@
+<main class="fd-content">
+  <fd-breadcrumbs [items]="[{ label: 'Stores' }]" />
+  <section class="fd-two-col">
+    <div>
+      <header class="fd-page-header">
+        <div>
+          <h1 class="fd-title">All Stores</h1>
+          <p class="fd-subtitle">
+            Showing stores delivering to <b>your selected location</b>
+          </p>
+        </div>
+        <div class="header-actions">
+          <button
+            type="button"
+            class="fd-btn outline"
+            (click)="ui.openFilter()"
+          >
+            <span class="material-symbols-rounded">tune</span> Filters
+          </button>
+          <button type="button" class="fd-btn outline" (click)="viewMap()">
+            <span class="material-symbols-rounded">location_on</span> Change
+            location
+          </button>
+        </div>
+      </header>
+
+      <div class="filters">
+        @if (catalog.categoriesLoading()) {
+          <div class="filter-loading" role="status" aria-live="polite">
+            <span class="loading-spinner"></span>
+            <span>Loading categories for your selected address</span>
+          </div>
+        }
+        @for (filter of filters(); track filter) {
+          <button
+            type="button"
+            class="fd-pill"
+            [disabled]="catalog.categoriesLoading() || catalog.storesLoading()"
+            [class.active]="active() === filter"
+            [attr.aria-label]="filter"
+            (click)="setFilter(filter)"
+          >
+            <span class="material-symbols-rounded">{{
+              filterIcon(filter)
+            }}</span>
+            <span class="filter-label">{{ filter }}</span>
+          </button>
+        }
+        <label class="mobile-sort-control" aria-label="Sort stores">
+          <span class="material-symbols-rounded">sort</span>
+          <select
+            class="fd-input"
+            [disabled]="catalog.storesLoading()"
+            [ngModel]="sortBy()"
+            (ngModelChange)="setSort($event)"
+          >
+            <option>Relevance</option>
+            <option>Rating</option>
+            <option>Delivery Time</option>
+          </select>
+        </label>
+      </div>
+
+      <section class="store-offer-strip" aria-label="Store offers">
+        @for (promo of storePromos(); track promo.id) {
+          <a
+            [routerLink]="promo.ctaUrl || '/stores'"
+            class="store-offer"
+            [class.green]="promo.tone === 'green'"
+            [class.orange]="promo.tone === 'orange'"
+            [class.blue]="promo.tone === 'blue'"
+          >
+            <span class="material-symbols-rounded">{{
+              promo.icon || "local_offer"
+            }}</span>
+            <div>
+              <small>{{ promo.eyebrow }}</small>
+              <b>{{ promo.title }}</b>
+              <em>{{ promo.subtitle }}</em>
+            </div>
+          </a>
+        }
+      </section>
+
+      @if (catalog.storesLoading()) {
+        <section
+          class="nc-skeleton-center"
+          role="status"
+          aria-live="polite"
+          aria-label="Loading stores"
+        >
+          <div class="nc-skeleton-list">
+            @for (item of [1, 2, 3, 4]; track item) {
+              <div class="nc-skeleton-card">
+                <span class="nc-skeleton-media"></span>
+                <span class="nc-skeleton-copy">
+                  <span class="nc-skeleton-line medium"></span>
+                  <span class="nc-skeleton-line long"></span>
+                  <span class="nc-skeleton-line short"></span>
+                </span>
+              </div>
+            }
+          </div>
+        </section>
+      } @else {
+        <section class="store-list">
+          @for (store of filteredStores(); track store.id) {
+            <fd-store-card [store]="store" />
+          } @empty {
+            <div class="empty-state">
+              <b>No stores found</b>
+              <p>Try another category or change your delivery location.</p>
+            </div>
+          }
+        </section>
+        @if (catalog.storesHasMore()) {
+          <div class="load-more-row">
+            <button type="button" class="fd-btn outline" (click)="loadMore()">
+              Load more stores
+            </button>
+          </div>
+        }
+      }
+    </div>
+    <fd-right-rail />
+  </section>
+</main>

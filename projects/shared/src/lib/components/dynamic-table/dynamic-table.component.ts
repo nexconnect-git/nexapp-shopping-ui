@@ -1,5 +1,18 @@
 import { CommonModule } from '@angular/common';
-import { Component, ContentChildren, Directive, EventEmitter, InjectionToken, Input, NgModule, Optional, Output, QueryList, TemplateRef, inject } from '@angular/core';
+import {
+  Component,
+  ContentChildren,
+  Directive,
+  EventEmitter,
+  inject,
+  InjectionToken,
+  Input,
+  NgModule,
+  Optional,
+  Output,
+  QueryList,
+  TemplateRef,
+} from '@angular/core';
 
 export interface DynamicTableColumn {
   key: string;
@@ -16,7 +29,9 @@ export interface DynamicTableDefaults {
   hasPagination?: boolean;
 }
 
-export const DYNAMIC_TABLE_DEFAULTS = new InjectionToken<DynamicTableDefaults>('DYNAMIC_TABLE_DEFAULTS');
+export const DYNAMIC_TABLE_DEFAULTS = new InjectionToken<DynamicTableDefaults>(
+  'DYNAMIC_TABLE_DEFAULTS',
+);
 
 @Directive({
   selector: '[tableCell]',
@@ -42,7 +57,9 @@ export class DynamicTableComponent {
   @Input() data: unknown[] = [];
   @Input() loading = false;
   @Input() emptyMessage = this.defaults?.emptyMessage ?? 'No data found';
-  @Input() emptySubMessage = this.defaults?.emptySubMessage ?? 'Try adjusting your filters or create a new record.';
+  @Input() emptySubMessage =
+    this.defaults?.emptySubMessage ??
+    'Try adjusting your filters or create a new record.';
   @Input() emptyIcon = this.defaults?.emptyIcon ?? 'inbox';
   @Input() totalItems = 0;
   @Input() itemsPerPage = this.defaults?.itemsPerPage ?? 20;
@@ -54,17 +71,20 @@ export class DynamicTableComponent {
   @Output() pageChange = new EventEmitter<number>();
   @Output() rowClick = new EventEmitter<unknown>();
 
-  @ContentChildren(TableCellDirective) cellTemplates!: QueryList<TableCellDirective>;
+  @ContentChildren(TableCellDirective)
+  cellTemplates!: QueryList<TableCellDirective>;
 
   readonly Math = Math;
 
   getTemplate(columnName: string): TemplateRef<unknown> | null {
-    const dir = this.cellTemplates?.find(template => template.columnName === columnName);
+    const dir = this.cellTemplates?.find(
+      (template) => template.columnName === columnName,
+    );
     return dir?.template ?? null;
   }
 
   getGridTemplate(): string {
-    return this.columns.map(column => column.flex || '1fr').join(' ');
+    return this.columns.map((column) => column.flex || '1fr').join(' ');
   }
 
   getAlignment(column: DynamicTableColumn): string {

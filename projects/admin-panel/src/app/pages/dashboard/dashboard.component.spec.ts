@@ -1,5 +1,10 @@
 import { Component } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import {
+  ComponentFixture,
+  fakeAsync,
+  TestBed,
+  tick,
+} from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, Subject, throwError } from 'rxjs';
 import { ApiService, AuthService } from '@shared/public-api';
@@ -14,7 +19,10 @@ class FakeWebSocket {
   onerror: (() => void) | null = null;
   close = jasmine.createSpy('close');
 
-  constructor(public url: string, public protocols?: string[]) {
+  constructor(
+    public url: string,
+    public protocols?: string[],
+  ) {
     FakeWebSocket.instances.push(this);
   }
 
@@ -44,7 +52,7 @@ describe('Admin DashboardComponent', () => {
     vendors: 5,
     pending_vendors: 1,
     products: 40,
-    customers: 100
+    customers: 100,
   };
 
   const order = {
@@ -53,26 +61,34 @@ describe('Admin DashboardComponent', () => {
     customer_name: 'Nina',
     vendor_name: 'Spice Hub',
     total: 650,
-    status: 'placed'
+    status: 'placed',
   };
 
   const vendor = {
     id: 'vendor-1',
     store_name: 'Spice Hub',
     city: 'Bengaluru',
-    average_rating: 4.6
+    average_rating: 4.6,
   };
 
   beforeEach(async () => {
     originalWebSocket = window.WebSocket;
     FakeWebSocket.instances = [];
     (window as any).WebSocket = FakeWebSocket;
-    api = jasmine.createSpyObj<ApiService>('ApiService', ['getAdminStats', 'getAdminOrders', 'getAdminVendors']);
+    api = jasmine.createSpyObj<ApiService>('ApiService', [
+      'getAdminStats',
+      'getAdminOrders',
+      'getAdminVendors',
+    ]);
     auth = jasmine.createSpyObj<AuthService>('AuthService', ['getToken']);
     auth.getToken.and.returnValue('token');
     api.getAdminStats.and.returnValue(of(stats as any));
-    api.getAdminOrders.and.returnValue(of({ results: [order], count: 1 } as any));
-    api.getAdminVendors.and.returnValue(of({ results: [vendor], count: 1 } as any));
+    api.getAdminOrders.and.returnValue(
+      of({ results: [order], count: 1 } as any),
+    );
+    api.getAdminVendors.and.returnValue(
+      of({ results: [vendor], count: 1 } as any),
+    );
 
     await TestBed.configureTestingModule({
       imports: [DashboardComponent],
@@ -81,11 +97,11 @@ describe('Admin DashboardComponent', () => {
           { path: 'orders', component: BlankComponent },
           { path: 'vendors', component: BlankComponent },
           { path: 'delivery-partners', component: BlankComponent },
-          { path: 'payments', component: BlankComponent }
+          { path: 'payments', component: BlankComponent },
         ]),
         { provide: ApiService, useValue: api },
-        { provide: AuthService, useValue: auth }
-      ]
+        { provide: AuthService, useValue: auth },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(DashboardComponent);
@@ -104,11 +120,23 @@ describe('Admin DashboardComponent', () => {
 
     expect(component).toBeTruthy();
     expect(api.getAdminStats).toHaveBeenCalled();
-    expect(api.getAdminOrders).toHaveBeenCalledWith({ page_size: 5, ordering: '-placed_at' });
-    expect(api.getAdminVendors).toHaveBeenCalledWith({ status: 'approved', ordering: '-average_rating', page_size: 5 });
+    expect(api.getAdminOrders).toHaveBeenCalledWith({
+      page_size: 5,
+      ordering: '-placed_at',
+    });
+    expect(api.getAdminVendors).toHaveBeenCalledWith({
+      status: 'approved',
+      ordering: '-average_rating',
+      page_size: 5,
+    });
     expect(FakeWebSocket.instances[0].url).toContain('/sa/ws/admin/stats/');
-    expect(FakeWebSocket.instances[0].protocols).toEqual(['nexconnect.jwt', 'token']);
-    expect(fixture.nativeElement.textContent).toContain("Today's marketplace operations");
+    expect(FakeWebSocket.instances[0].protocols).toEqual([
+      'nexconnect.jwt',
+      'token',
+    ]);
+    expect(fixture.nativeElement.textContent).toContain(
+      "Today's marketplace operations",
+    );
     expect(fixture.nativeElement.textContent).toContain('#1001');
     expect(fixture.nativeElement.textContent).toContain('Spice Hub');
   }));
@@ -120,7 +148,10 @@ describe('Admin DashboardComponent', () => {
     FakeWebSocket.instances[0].emit({ type: 'noop', data: { vendors: 999 } });
     expect(component.stats().vendors).toBe(5);
 
-    FakeWebSocket.instances[0].emit({ type: 'stats_update', data: { ...stats, vendors: 9 } });
+    FakeWebSocket.instances[0].emit({
+      type: 'stats_update',
+      data: { ...stats, vendors: 9 },
+    });
     fixture.detectChanges();
 
     expect(component.stats().vendors).toBe(9);
@@ -147,18 +178,24 @@ describe('Admin DashboardComponent', () => {
   it('renders loading, error, and empty states for independent dashboard tables', fakeAsync(() => {
     const pendingOrders = new Subject<any>();
     api.getAdminOrders.and.returnValue(pendingOrders.asObservable());
-    api.getAdminVendors.and.returnValue(throwError(() => ({ error: { detail: 'Vendor API failed' } })));
+    api.getAdminVendors.and.returnValue(
+      throwError(() => ({ error: { detail: 'Vendor API failed' } })),
+    );
     fixture.detectChanges();
     tick(0);
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.compact-loading')).toBeTruthy();
+    expect(
+      fixture.nativeElement.querySelector('.compact-loading'),
+    ).toBeTruthy();
 
     pendingOrders.next([]);
     pendingOrders.complete();
     tick();
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain('No live transactions yet.');
+    expect(fixture.nativeElement.textContent).toContain(
+      'No live transactions yet.',
+    );
     expect(component.vendorsError()).toBe('Vendor API failed');
     expect(fixture.nativeElement.textContent).toContain('Vendor API failed');
   }));
@@ -174,8 +211,22 @@ describe('Admin DashboardComponent', () => {
   }));
 
   it('limits recent orders and vendors to five items and formats star ratings', fakeAsync(() => {
-    api.getAdminOrders.and.returnValue(of(Array.from({ length: 8 }, (_, i) => ({ ...order, id: `o-${i}` })) as any));
-    api.getAdminVendors.and.returnValue(of({ results: Array.from({ length: 7 }, (_, i) => ({ ...vendor, id: `v-${i}` })) } as any));
+    api.getAdminOrders.and.returnValue(
+      of(
+        Array.from({ length: 8 }, (_, i) => ({
+          ...order,
+          id: `o-${i}`,
+        })) as any,
+      ),
+    );
+    api.getAdminVendors.and.returnValue(
+      of({
+        results: Array.from({ length: 7 }, (_, i) => ({
+          ...vendor,
+          id: `v-${i}`,
+        })),
+      } as any),
+    );
     fixture.detectChanges();
     tick(0);
 

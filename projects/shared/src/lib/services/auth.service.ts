@@ -1,9 +1,10 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, map, Observable, of, shareReplay, tap } from 'rxjs';
 import { ApiService } from './api.service';
 import { AuthResponse, User } from '../models';
 import { AUTH_PREFIX } from '../tokens/auth-prefix.token';
+import { CurrencyService } from './currency.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -13,30 +14,55 @@ export class AuthService {
   private refreshRequest$?: Observable<boolean>;
 
   readonly user = this.currentUser.asReadonly();
-  readonly isLoggedIn = computed(() => !!this.currentUser() && !!this.accessToken());
+  readonly isLoggedIn = computed(
+    () => !!this.currentUser() && !!this.accessToken(),
+  );
 
-  get tokenKey() { return `${this.prefix}_access_token`; }
-  get userKey() { return `${this.prefix}_user`; }
-  get vendorKey() { return `${this.prefix}_vendor_status`; }
+  get tokenKey() {
+    return `${this.prefix}_access_token`;
+  }
+  get refreshTokenKey() {
+    return `${this.prefix}_refresh_token`;
+  }
+  get userKey() {
+    return `${this.prefix}_user`;
+  }
+  get vendorKey() {
+    return `${this.prefix}_vendor_status`;
+  }
 
-  constructor(private api: ApiService, private router: Router) {
+  constructor(
+    private api: ApiService,
+    private router: Router,
+    private currency: CurrencyService,
+  ) {
     this.loadSession();
   }
 
   private loadSession() {
     const token = sessionStorage.getItem(this.tokenKey);
-    const userData = sessionStorage.getItem(this.userKey);
+    const refresh = localStorage.getItem(this.refreshTokenKey);
+    const userData =
+      localStorage.getItem(this.userKey) ||
+      sessionStorage.getItem(this.userKey);
 
     if (token) {
       this.accessToken.set(token);
     }
 
-    if (userData) {
+    if (userData && (token || refresh)) {
       try {
-        this.currentUser.set(JSON.parse(userData));
+        const user = JSON.parse(userData);
+        this.currentUser.set(user);
+        this.currency.configureFromLocation(user);
       } catch {
         sessionStorage.removeItem(this.userKey);
+        localStorage.removeItem(this.userKey);
       }
+    }
+
+    if (!token && refresh && userData) {
+      this.refreshAccessToken().subscribe({ error: () => this.clearSession() });
     }
   }
 
@@ -53,16 +79,32 @@ export class AuthService {
     return this.accessToken();
   }
 
+  getRefreshToken(): string | null {
+    return localStorage.getItem(this.refreshTokenKey);
+  }
+
+  async setTokens(tokens: {
+    access?: string | null;
+    refresh?: string | null;
+  }): Promise<void> {
+    if (tokens.access !== undefined) this.setAccessToken(tokens.access);
+    if (tokens.refresh !== undefined) {
+      if (tokens.refresh)
+        localStorage.setItem(this.refreshTokenKey, tokens.refresh);
+      else localStorage.removeItem(this.refreshTokenKey);
+    }
+  }
+
   login(username: string, password: string) {
     return this.api.login({ username, password });
   }
 
-  requestCustomerLoginOtp(phone: string) {
-    return this.api.requestCustomerLoginOtp({ phone });
+  requestCustomerLoginOtp(phone: string, email?: string) {
+    return this.api.requestCustomerLoginOtp({ phone, email: email || '' });
   }
 
-  verifyCustomerLoginOtp(phone: string, otp: string) {
-    return this.api.verifyCustomerLoginOtp({ phone, otp });
+  verifyCustomerLoginOtp(phone: string, otp: string, email?: string) {
+    return this.api.verifyCustomerLoginOtp({ phone, otp, email: email || '' });
   }
 
   register(data: any) {
@@ -73,14 +115,23 @@ export class AuthService {
     return this.api.requestCustomerRegisterOtp({ phone, email: email || '' });
   }
 
-  verifyCustomerRegisterOtp(data: { phone: string; otp: string; first_name: string; last_name?: string; email?: string }) {
+  verifyCustomerRegisterOtp(data: {
+    phone: string;
+    otp: string;
+    first_name: string;
+    last_name?: string;
+    email?: string;
+  }) {
     return this.api.verifyCustomerRegisterOtp(data);
   }
 
   handleAuthResponse(response: AuthResponse) {
     this.setAccessToken(response.tokens.access);
+    localStorage.setItem(this.refreshTokenKey, response.tokens.refresh);
+    localStorage.setItem(this.userKey, JSON.stringify(response.user));
     sessionStorage.setItem(this.userKey, JSON.stringify(response.user));
     this.currentUser.set(response.user);
+    this.currency.configureFromLocation(response.user);
     this.initializePushNotifications();
   }
 
@@ -89,8 +140,13 @@ export class AuthService {
       return this.refreshRequest$;
     }
 
-    this.refreshRequest$ = this.api.refreshToken().pipe(
-      tap((response) => this.setAccessToken(response.tokens.access)),
+    this.refreshRequest$ = this.api.refreshToken(this.getRefreshToken()).pipe(
+      tap((response) => {
+        const tokens = response.tokens || response;
+        this.setAccessToken(tokens.access);
+        if (tokens.refresh)
+          localStorage.setItem(this.refreshTokenKey, tokens.refresh);
+      }),
       map(() => true),
       catchError(() => {
         this.clearSession();
@@ -114,6 +170,8 @@ export class AuthService {
   private clearSession() {
     sessionStorage.removeItem(this.tokenKey);
     sessionStorage.removeItem(this.userKey);
+    localStorage.removeItem(this.refreshTokenKey);
+    localStorage.removeItem(this.userKey);
     localStorage.removeItem(this.vendorKey);
     this.accessToken.set(null);
     this.currentUser.set(null);
@@ -129,6 +187,10 @@ export class AuthService {
     }
   }
 
+  clearInvalidSession() {
+    this.clearSession();
+  }
+
   getRole(): string {
     return this.currentUser()?.role || '';
   }
@@ -139,6 +201,8 @@ export class AuthService {
 
   updateUserData(user: User) {
     sessionStorage.setItem(this.userKey, JSON.stringify(user));
+    localStorage.setItem(this.userKey, JSON.stringify(user));
     this.currentUser.set(user);
+    this.currency.configureFromLocation(user);
   }
 }

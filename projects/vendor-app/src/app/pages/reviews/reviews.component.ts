@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, computed } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ApiService } from '@shared/public-api';
@@ -9,7 +9,7 @@ import { forkJoin } from 'rxjs';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './reviews.component.html',
-  styleUrl: './reviews.component.scss'
+  styleUrl: './reviews.component.scss',
 })
 export class ReviewsComponent implements OnInit {
   private api = inject(ApiService);
@@ -32,13 +32,21 @@ export class ReviewsComponent implements OnInit {
     return counts.reverse(); // [5-star, 4-star, ..., 1-star]
   });
 
-  lowReviews = computed(() => this.reviews().filter(r => Number(r.rating) <= 3));
+  lowReviews = computed(() =>
+    this.reviews().filter((r) => Number(r.rating) <= 3),
+  );
 
   filteredReviews = computed(() => {
     const list = [...this.reviews()];
-    if (this.filter() === 'low') return list.filter(r => Number(r.rating) <= 3);
+    if (this.filter() === 'low')
+      return list.filter((r) => Number(r.rating) <= 3);
     if (this.filter() === 'recent') {
-      return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 10);
+      return list
+        .sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        )
+        .slice(0, 10);
     }
     return list;
   });
@@ -53,15 +61,17 @@ export class ReviewsComponent implements OnInit {
             this.reviews.set(list);
             this.totalReviews.set(list.length);
             if (list.length > 0) {
-              const avg = list.reduce((s: number, r: any) => s + r.rating, 0) / list.length;
+              const avg =
+                list.reduce((s: number, r: any) => s + r.rating, 0) /
+                list.length;
               this.averageRating.set(Math.round(avg * 10) / 10);
             }
             this.loading.set(false);
           },
-          error: () => this.loading.set(false)
+          error: () => this.loading.set(false),
         });
       },
-      error: () => this.loading.set(false)
+      error: () => this.loading.set(false),
     });
   }
 
@@ -73,5 +83,7 @@ export class ReviewsComponent implements OnInit {
     this.filter.set(filter);
   }
 
-  goBack() { window.history.back(); }
+  goBack() {
+    window.history.back();
+  }
 }

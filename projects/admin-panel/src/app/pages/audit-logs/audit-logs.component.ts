@@ -1,5 +1,5 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '@shared/public-api';
 
@@ -8,7 +8,7 @@ import { ApiService } from '@shared/public-api';
   standalone: true,
   imports: [CommonModule, FormsModule, DatePipe],
   templateUrl: './audit-logs.component.html',
-  styleUrl: './audit-logs.component.scss'
+  styleUrl: './audit-logs.component.scss',
 })
 export class AuditLogsComponent implements OnInit {
   private api = inject(ApiService);
@@ -42,7 +42,7 @@ export class AuditLogsComponent implements OnInit {
       error: () => {
         this.logs.set([]);
         this.loading.set(false);
-      }
+      },
     });
   }
 

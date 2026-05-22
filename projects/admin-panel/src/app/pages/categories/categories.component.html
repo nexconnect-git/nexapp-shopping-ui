@@ -1,21 +1,35 @@
-<div class="categories-page">
+<div class="saas-page categories-page">
   <div class="page-header">
     <div>
       <h1 class="page-title">Categories</h1>
       <p class="page-subtitle">{{ categories().length }} root categories</p>
     </div>
-    <div style="display:flex;align-items:center;gap:0.5rem;">
+    <div style="display: flex; align-items: center; gap: 0.5rem">
       <div class="reload-bar">
         @if (lastRefreshed()) {
-          <span class="reload-timestamp">Updated {{ lastRefreshed() | date:'HH:mm:ss' }}</span>
+          <span class="reload-timestamp"
+            >Updated {{ lastRefreshed() | date: "HH:mm:ss" }}</span
+          >
         }
-        <button class="btn btn-ghost btn-sm" (click)="manualReload()" [disabled]="loading()">
-          <span class="material-icons-outlined" [class.spin]="loading()">refresh</span>
+        <button
+          class="btn btn-ghost btn-sm"
+          (click)="manualReload()"
+          [disabled]="loading()"
+        >
+          <span class="material-icons-outlined" [class.spin]="loading()"
+            >refresh</span
+          >
         </button>
-        <button class="btn btn-sm" [class.btn-ghost]="!autoReload()" [class.btn-primary-soft]="autoReload()"
-                (click)="toggleAutoReload()">
-          <span class="material-icons-outlined">{{ autoReload() ? 'pause_circle' : 'play_circle' }}</span>
-          {{ autoReload() ? 'Auto' : 'Paused' }}
+        <button
+          class="btn btn-sm"
+          [class.btn-ghost]="!autoReload()"
+          [class.btn-primary-soft]="autoReload()"
+          (click)="toggleAutoReload()"
+        >
+          <span class="material-icons-outlined">{{
+            autoReload() ? "pause_circle" : "play_circle"
+          }}</span>
+          {{ autoReload() ? "Auto" : "Paused" }}
         </button>
       </div>
       <button class="btn-primary" (click)="openCreate(null)">
@@ -46,12 +60,16 @@
       <table class="cat-table">
         <thead>
           <tr>
-            <th style="width: 36px;"></th>
+            <th style="width: 36px"></th>
             <th>Category</th>
             <th>Type</th>
             <th>Subcategories</th>
             <th>Status</th>
-            <th title="Controls whether this category is visible in the customer app">Customer App</th>
+            <th
+              title="Controls whether this category is visible in the customer app"
+            >
+              Customer App
+            </th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -60,31 +78,74 @@
             <!-- Root category row -->
             <tr class="cat-row root-row" [class.expanded]="isExpanded(cat.id)">
               <td class="expand-cell">
-                <button class="expand-btn" (click)="toggleExpand(cat)"
+                <button
+                  class="expand-btn"
+                  (click)="toggleExpand(cat)"
                   [class.open]="isExpanded(cat.id)"
-                  [title]="isExpanded(cat.id) ? 'Collapse' : 'Expand subcategories'">
+                  [title]="
+                    isExpanded(cat.id) ? 'Collapse' : 'Expand subcategories'
+                  "
+                >
                   <span class="material-icons-outlined">chevron_right</span>
                 </button>
               </td>
               <td>
-                  <div class="cat-cell">
+                <div class="cat-cell">
                   <div class="cat-icon">
-                    @if (cat.image) { <img [src]="cat.image" alt="{{cat.name}}"> }
-                    @else if (iconArtwork(cat.icon_name)) { <img [src]="iconArtwork(cat.icon_name)" alt="{{ iconLabel(cat.icon_name) }}"> }
-                    @else { <span class="material-icons-outlined">{{ displayIcon(cat) }}</span> }
+                    @if (cat.image) {
+                      <img [src]="cat.image" alt="{{ cat.name }}" />
+                    } @else if (
+                      iconArtwork(cat.icon_name) &&
+                      !iconImageFailed(iconArtwork(cat.icon_name))
+                    ) {
+                      <img
+                        [src]="iconArtwork(cat.icon_name)"
+                        alt="{{ iconLabel(cat.icon_name) }}"
+                        (error)="
+                          markIconImageFailed(iconArtwork(cat.icon_name))
+                        "
+                      />
+                    } @else if (isEmojiIcon(cat.icon_name)) {
+                      <span class="cat-emoji">{{ cat.icon_name }}</span>
+                    } @else {
+                      <span class="material-icons-outlined">{{
+                        displayIcon(cat)
+                      }}</span>
+                    }
                   </div>
                   <div>
                     <p class="cat-name">{{ cat.name }}</p>
                     <p class="cat-slug">{{ cat.slug }}</p>
-                    @if (cat.icon_name) { <p class="cat-icon-name">@if (!iconArtwork(cat.icon_name)) { <span class="material-icons-outlined">{{ cat.icon_name }}</span> }{{ iconLabel(cat.icon_name) }}</p> }
+                    @if (cat.icon_name) {
+                      <p class="cat-icon-name">
+                        @if (isEmojiIcon(cat.icon_name)) {
+                          <span class="cat-emoji-inline">{{
+                            cat.icon_name
+                          }}</span>
+                        } @else if (!iconArtwork(cat.icon_name)) {
+                          <span class="material-icons-outlined">{{
+                            cat.icon_name
+                          }}</span>
+                        }
+                        {{ iconLabel(cat.icon_name) }}
+                      </p>
+                    }
                   </div>
                 </div>
               </td>
               <td><span class="type-badge root-type">Root</span></td>
-              <td><span class="text-muted text-sm">{{ cat.subcategory_count || 0 }}</span></td>
               <td>
-                <span class="status-badge" [class.active]="cat.is_active" [class.inactive]="!cat.is_active">
-                  {{ cat.is_active ? 'Active' : 'Inactive' }}
+                <span class="text-muted text-sm">{{
+                  cat.subcategory_count || 0
+                }}</span>
+              </td>
+              <td>
+                <span
+                  class="status-badge"
+                  [class.active]="cat.is_active"
+                  [class.inactive]="!cat.is_active"
+                >
+                  {{ cat.is_active ? "Active" : "Inactive" }}
                 </span>
               </td>
               <td>
@@ -92,20 +153,41 @@
                   class="ui-toggle"
                   [class.ui-toggle-on]="cat.show_in_customer_ui"
                   (click)="toggleCustomerUi(cat)"
-                  [title]="cat.show_in_customer_ui ? 'Visible in customer app — click to hide' : 'Hidden from customer app — click to show'">
-                  <span class="material-icons-outlined">{{ cat.show_in_customer_ui ? 'visibility' : 'visibility_off' }}</span>
-                  {{ cat.show_in_customer_ui ? 'Visible' : 'Hidden' }}
+                  [title]="
+                    cat.show_in_customer_ui
+                      ? 'Visible in customer app — click to hide'
+                      : 'Hidden from customer app — click to show'
+                  "
+                >
+                  <span class="material-icons-outlined">{{
+                    cat.show_in_customer_ui ? "visibility" : "visibility_off"
+                  }}</span>
+                  {{ cat.show_in_customer_ui ? "Visible" : "Hidden" }}
                 </button>
               </td>
               <td>
                 <div class="actions">
-                  <button class="action-btn" (click)="openCreate(cat.id)" title="Add subcategory">
-                    <span class="material-icons-outlined">create_new_folder</span>
+                  <button
+                    class="action-btn"
+                    (click)="openCreate(cat.id)"
+                    title="Add subcategory"
+                  >
+                    <span class="material-icons-outlined"
+                      >create_new_folder</span
+                    >
                   </button>
-                  <button class="action-btn" (click)="openEdit(cat)" title="Edit">
+                  <button
+                    class="action-btn"
+                    (click)="openEdit(cat)"
+                    title="Edit"
+                  >
                     <span class="material-icons-outlined">edit</span>
                   </button>
-                  <button class="action-btn danger" (click)="delete(cat)" title="Delete">
+                  <button
+                    class="action-btn danger"
+                    (click)="delete(cat)"
+                    title="Delete"
+                  >
                     <span class="material-icons-outlined">delete_outline</span>
                   </button>
                 </div>
@@ -132,22 +214,56 @@
                       <div class="cat-cell sub-indent">
                         <div class="sub-connector"></div>
                         <div class="cat-icon small">
-                          @if (sub.image) { <img [src]="sub.image" alt="{{sub.name}}"> }
-                          @else if (iconArtwork(sub.icon_name)) { <img [src]="iconArtwork(sub.icon_name)" alt="{{ iconLabel(sub.icon_name) }}"> }
-                          @else { <span class="material-icons-outlined">{{ displayIcon(sub) }}</span> }
+                          @if (sub.image) {
+                            <img [src]="sub.image" alt="{{ sub.name }}" />
+                          } @else if (
+                            iconArtwork(sub.icon_name) &&
+                            !iconImageFailed(iconArtwork(sub.icon_name))
+                          ) {
+                            <img
+                              [src]="iconArtwork(sub.icon_name)"
+                              alt="{{ iconLabel(sub.icon_name) }}"
+                              (error)="
+                                markIconImageFailed(iconArtwork(sub.icon_name))
+                              "
+                            />
+                          } @else if (isEmojiIcon(sub.icon_name)) {
+                            <span class="cat-emoji">{{ sub.icon_name }}</span>
+                          } @else {
+                            <span class="material-icons-outlined">{{
+                              displayIcon(sub)
+                            }}</span>
+                          }
                         </div>
                         <div>
                           <p class="cat-name">{{ sub.name }}</p>
                           <p class="cat-slug">{{ sub.slug }}</p>
-                          @if (sub.icon_name) { <p class="cat-icon-name">@if (!iconArtwork(sub.icon_name)) { <span class="material-icons-outlined">{{ sub.icon_name }}</span> }{{ iconLabel(sub.icon_name) }}</p> }
+                          @if (sub.icon_name) {
+                            <p class="cat-icon-name">
+                              @if (isEmojiIcon(sub.icon_name)) {
+                                <span class="cat-emoji-inline">{{
+                                  sub.icon_name
+                                }}</span>
+                              } @else if (!iconArtwork(sub.icon_name)) {
+                                <span class="material-icons-outlined">{{
+                                  sub.icon_name
+                                }}</span>
+                              }
+                              {{ iconLabel(sub.icon_name) }}
+                            </p>
+                          }
                         </div>
                       </div>
                     </td>
                     <td><span class="type-badge sub-type">Sub</span></td>
                     <td><span class="text-muted text-sm">—</span></td>
                     <td>
-                      <span class="status-badge" [class.active]="sub.is_active" [class.inactive]="!sub.is_active">
-                        {{ sub.is_active ? 'Active' : 'Inactive' }}
+                      <span
+                        class="status-badge"
+                        [class.active]="sub.is_active"
+                        [class.inactive]="!sub.is_active"
+                      >
+                        {{ sub.is_active ? "Active" : "Inactive" }}
                       </span>
                     </td>
                     <td>
@@ -155,18 +271,37 @@
                         class="ui-toggle"
                         [class.ui-toggle-on]="sub.show_in_customer_ui"
                         (click)="toggleCustomerUi(sub)"
-                        [title]="sub.show_in_customer_ui ? 'Visible in customer app — click to hide' : 'Hidden — click to show'">
-                        <span class="material-icons-outlined">{{ sub.show_in_customer_ui ? 'visibility' : 'visibility_off' }}</span>
-                        {{ sub.show_in_customer_ui ? 'Visible' : 'Hidden' }}
+                        [title]="
+                          sub.show_in_customer_ui
+                            ? 'Visible in customer app — click to hide'
+                            : 'Hidden — click to show'
+                        "
+                      >
+                        <span class="material-icons-outlined">{{
+                          sub.show_in_customer_ui
+                            ? "visibility"
+                            : "visibility_off"
+                        }}</span>
+                        {{ sub.show_in_customer_ui ? "Visible" : "Hidden" }}
                       </button>
                     </td>
                     <td>
                       <div class="actions">
-                        <button class="action-btn" (click)="openEdit(sub)" title="Edit">
+                        <button
+                          class="action-btn"
+                          (click)="openEdit(sub)"
+                          title="Edit"
+                        >
                           <span class="material-icons-outlined">edit</span>
                         </button>
-                        <button class="action-btn danger" (click)="delete(sub)" title="Delete">
-                          <span class="material-icons-outlined">delete_outline</span>
+                        <button
+                          class="action-btn danger"
+                          (click)="delete(sub)"
+                          title="Delete"
+                        >
+                          <span class="material-icons-outlined"
+                            >delete_outline</span
+                          >
                         </button>
                       </div>
                     </td>
@@ -177,7 +312,9 @@
                     <td colspan="6">
                       <div class="no-subs">
                         No subcategories yet.
-                        <button class="link-btn" (click)="openCreate(cat.id)">Add one</button>
+                        <button class="link-btn" (click)="openCreate(cat.id)">
+                          Add one
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -188,12 +325,34 @@
         </tbody>
       </table>
       @if (totalItems() > 20) {
-        <div class="pagination" style="padding: 1rem; border-top: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; gap: 1rem;">
-          <button class="btn btn-sm btn-ghost" [disabled]="page() === 1" (click)="onPageChange(page() - 1)" style="display: flex; align-items: center; gap: 4px;">
+        <div
+          class="pagination"
+          style="
+            padding: 1rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+          "
+        >
+          <button
+            class="btn btn-sm btn-ghost"
+            [disabled]="page() === 1"
+            (click)="onPageChange(page() - 1)"
+            style="display: flex; align-items: center; gap: 4px"
+          >
             <span class="material-icons-outlined">chevron_left</span> Previous
           </button>
-          <span style="font-size: 0.85rem; color: var(--text-color-muted)">Page {{ page() }} of {{ Math.ceil(totalItems() / 20) }}</span>
-          <button class="btn btn-sm btn-ghost" [disabled]="page() * 20 >= totalItems()" (click)="onPageChange(page() + 1)" style="display: flex; align-items: center; gap: 4px;">
+          <span style="font-size: 0.85rem; color: var(--text-color-muted)"
+            >Page {{ page() }} of {{ Math.ceil(totalItems() / 20) }}</span
+          >
+          <button
+            class="btn btn-sm btn-ghost"
+            [disabled]="page() * 20 >= totalItems()"
+            (click)="onPageChange(page() + 1)"
+            style="display: flex; align-items: center; gap: 4px"
+          >
             Next <span class="material-icons-outlined">chevron_right</span>
           </button>
         </div>
@@ -209,53 +368,173 @@
       <div class="modal-header">
         <div class="modal-title-group">
           <span class="material-icons-outlined modal-icon">folder</span>
-          <h2>{{ editTarget() ? 'Edit Category' : (form.parent ? 'New Subcategory' : 'New Category') }}</h2>
+          <h2>
+            {{
+              editTarget()
+                ? "Edit Category"
+                : form.parent
+                  ? "New Subcategory"
+                  : "New Category"
+            }}
+          </h2>
         </div>
         <button class="modal-close" (click)="closeModal()">&times;</button>
       </div>
       <div class="modal-body">
-        @if (error()) { <div class="alert-error"><span class="material-icons-outlined">error_outline</span>{{ error() }}</div> }
+        @if (error()) {
+          <div class="alert-error">
+            <span class="material-icons-outlined">error_outline</span
+            >{{ error() }}
+          </div>
+        }
         <div class="form-group">
           <label class="form-label">Name *</label>
-          <input class="form-input" [(ngModel)]="form.name" (input)="autoSlug()" placeholder="Category name">
+          <input
+            class="form-input"
+            [(ngModel)]="form.name"
+            (input)="autoSlug()"
+            placeholder="Category name"
+          />
         </div>
         <div class="form-group">
           <label class="form-label">Slug</label>
-          <input class="form-input" [(ngModel)]="form.slug" placeholder="category-slug">
+          <input
+            class="form-input"
+            [(ngModel)]="form.slug"
+            placeholder="category-slug"
+          />
         </div>
         <div class="form-group">
           <label class="form-label">Description</label>
-          <textarea class="form-input" [(ngModel)]="form.description" rows="3" placeholder="Optional description"></textarea>
+          <textarea
+            class="form-input"
+            [(ngModel)]="form.description"
+            rows="3"
+            placeholder="Optional description"
+          ></textarea>
         </div>
         <div class="form-group">
-          <label class="form-label">Category icon</label>
+          <label class="form-label">Customer app emoji</label>
+          <div class="emoji-picker-grid">
+            @for (option of categoryEmojiOptions; track option.key) {
+              <button
+                type="button"
+                class="emoji-picker-option"
+                [class.selected]="emojiSelected(option)"
+                (click)="selectEmoji(option)"
+                [title]="option.label"
+              >
+                <span>{{ option.url }}</span>
+                <small>{{ option.label }}</small>
+              </button>
+            }
+          </div>
+          <p class="field-hint">
+            This emoji is saved on the category by admin and used by customer
+            web and mobile apps.
+          </p>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Optional image icon</label>
           <div class="icon-picker-grid">
             @for (option of categoryIconOptions; track option.key) {
               <button
                 type="button"
                 class="icon-picker-option"
-                [class.selected]="form.icon_name === option.key"
+                [class.selected]="iconSelected(option)"
                 (click)="selectIcon(option)"
-                [title]="option.label">
-                <img [src]="option.url" [alt]="option.label">
+                [title]="option.label"
+              >
+                @if (!iconImageFailed(option.url)) {
+                  <img
+                    [src]="option.url"
+                    [alt]="option.label"
+                    (error)="markIconImageFailed(option.url)"
+                  />
+                } @else {
+                  <span class="material-icons-outlined">image</span>
+                }
                 <span>{{ option.label }}</span>
               </button>
             }
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">Icon key or Material icon fallback</label>
+          <label class="form-label">Icon value</label>
           <div class="icon-name-row">
             <span class="icon-preview">
-              @if (iconArtwork(form.icon_name)) {
-                <img [src]="iconArtwork(form.icon_name)" [alt]="iconLabel(form.icon_name)">
+              @if (
+                iconArtwork(form.icon_name) &&
+                !iconImageFailed(iconArtwork(form.icon_name))
+              ) {
+                <img
+                  [src]="iconArtwork(form.icon_name)"
+                  [alt]="iconLabel(form.icon_name)"
+                  (error)="markIconImageFailed(iconArtwork(form.icon_name))"
+                />
+              } @else if (isEmojiIcon(form.icon_name)) {
+                <span class="cat-emoji">{{ form.icon_name }}</span>
               } @else {
-                <span class="material-icons-outlined">{{ form.icon_name || 'category' }}</span>
+                <span class="material-icons-outlined">{{
+                  form.icon_name || "category"
+                }}</span>
               }
             </span>
-            <input class="form-input" [(ngModel)]="form.icon_name" placeholder="Icon key or Material icon, e.g. groceries">
+            <input
+              class="form-input"
+              [(ngModel)]="form.icon_name"
+              placeholder="Emoji, image URL, or Material icon name"
+            />
           </div>
-          <p class="field-hint">Choose from the curated icon list above, or type a Material icon name for a custom fallback.</p>
+          <p class="field-hint">
+            Customer apps prefer an admin-set emoji. If this is blank, they fall
+            back to category-name defaults.
+          </p>
+          @if (iconSuggestions().length > 0) {
+            <div
+              class="icon-suggestion-panel"
+              aria-label="Related icon suggestions"
+            >
+              <div class="suggestion-heading">
+                <span class="material-icons-outlined">auto_awesome</span>
+                Related icon options
+              </div>
+              <div class="icon-suggestion-grid">
+                @for (
+                  option of iconSuggestions();
+                  track option.source + option.key
+                ) {
+                  <button
+                    type="button"
+                    class="icon-suggestion"
+                    [class.selected]="suggestionSelected(option)"
+                    (click)="selectIconSuggestion(option)"
+                    [title]="option.label"
+                  >
+                    <span class="suggestion-preview">
+                      @if (option.url && !iconImageFailed(option.url)) {
+                        <img
+                          [src]="option.url"
+                          [alt]="option.label"
+                          (error)="markIconImageFailed(option.url)"
+                        />
+                      } @else {
+                        <span class="material-icons-outlined">{{
+                          option.key
+                        }}</span>
+                      }
+                    </span>
+                    <span class="suggestion-copy">
+                      <strong>{{ option.label }}</strong>
+                      <small>{{
+                        option.source === "curated" ? "App icon" : option.key
+                      }}</small>
+                    </span>
+                  </button>
+                }
+              </div>
+            </div>
+          }
         </div>
         @if (form.parent) {
           <div class="parent-note">
@@ -264,22 +543,30 @@
           </div>
         }
         <div class="form-check-row">
-          <input type="checkbox" id="is_active" [(ngModel)]="form.is_active">
+          <input type="checkbox" id="is_active" [(ngModel)]="form.is_active" />
           <label for="is_active">Active</label>
         </div>
         <div class="form-check-row">
-          <input type="checkbox" id="show_in_customer_ui" [(ngModel)]="form.show_in_customer_ui">
+          <input
+            type="checkbox"
+            id="show_in_customer_ui"
+            [(ngModel)]="form.show_in_customer_ui"
+          />
           <label for="show_in_customer_ui">Show in customer app</label>
         </div>
         <p class="form-hint-text">
-          <span class="material-icons-outlined" style="font-size:14px;vertical-align:middle;">info</span>
+          <span
+            class="material-icons-outlined"
+            style="font-size: 14px; vertical-align: middle"
+            >info</span
+          >
           Vendor-created categories are hidden by default until approved here.
         </p>
       </div>
       <div class="modal-footer">
         <button class="btn-secondary" (click)="closeModal()">Cancel</button>
         <button class="btn-primary" [disabled]="saving()" (click)="save()">
-          {{ saving() ? 'Saving…' : (editTarget() ? 'Update' : 'Create') }}
+          {{ saving() ? "Saving…" : editTarget() ? "Update" : "Create" }}
         </button>
       </div>
     </div>

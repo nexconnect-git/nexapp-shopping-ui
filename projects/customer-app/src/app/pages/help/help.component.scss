@@ -1,0 +1,94 @@
+.help-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  gap: 24px;
+  max-width: 1180px;
+  align-items: start;
+}
+.help-layout > div {
+  min-width: 0;
+}
+.help-form {
+  padding: 26px;
+  display: grid;
+  gap: 16px;
+  box-shadow: 0 14px 38px rgba(24, 18, 62, 0.06);
+}
+.help-form label {
+  font-weight: 900;
+}
+.help-form textarea {
+  height: 150px;
+  padding-top: 14px;
+  resize: vertical;
+}
+.photo {
+  height: 66px;
+  border: 1px dashed #ccbaff;
+  border-radius: 16px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-weight: 900;
+}
+.rating,
+.faq {
+  padding: 24px;
+  box-shadow: 0 12px 34px rgba(24, 18, 62, 0.05);
+}
+.help-layout aside {
+  display: grid;
+  gap: 16px;
+  position: sticky;
+  top: 102px;
+}
+.rating div {
+  display: flex;
+  gap: 10px;
+}
+.rating button {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  color: #ccd0df;
+}
+.rating button .material-symbols-rounded {
+  font-size: 22px;
+}
+.rating button.active {
+  color: #ffb800;
+}
+.faq p {
+  border-top: 1px solid var(--line);
+  padding: 12px 0;
+  margin: 0;
+  color: #3d4359;
+}
+.issue-thread {
+  display: grid;
+  gap: 10px;
+  max-height: 280px;
+  overflow: auto;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #f8fafc;
+}
+.issue-thread p {
+  margin: 0;
+  padding: 10px;
+  border-radius: 12px;
+  background: white;
+}
+.issue-thread b,
+.issue-thread span {
+  display: block;
+}
+@media (max-width: 900px) {
+  .help-layout {
+    grid-template-columns: 1fr;
+  }
+  .help-layout aside {
+    position: static;
+  }
+}

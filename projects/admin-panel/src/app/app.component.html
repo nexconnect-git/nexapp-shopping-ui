@@ -1,47 +1,82 @@
 @if (auth.isLoggedIn()) {
-  <div class="admin-layout" [class.sidebar-collapsed]="sidebarCollapsed()" [class.sidebar-open]="mobileMenuOpen()">
-    <aside class="sidebar" aria-label="Admin navigation">
-      <div class="sidebar-header">
-        <div class="brand">
-          <span class="brand-icon">NX</span>
+  <div
+    class="saas-admin-shell"
+    [class.nav-collapsed]="sidebarCollapsed()"
+    [class.nav-open]="mobileMenuOpen()"
+  >
+    <aside class="app-sidebar" aria-label="Admin navigation">
+      <div class="sidebar-brand-row">
+        <a class="brand-lockup" routerLink="/" (click)="closeMobileMenu()">
+          <span class="brand-mark">NX</span>
           @if (!sidebarCollapsed()) {
-            <span class="brand-text">
-              NexConnect
-              <small>Operations admin</small>
+            <span class="brand-copy">
+              <strong>NexConnect</strong>
+              <small>Admin Cloud</small>
             </span>
           }
-        </div>
-        <button class="toggle-btn" type="button" (click)="toggleSidebar()" title="Toggle navigation">
-          <span class="material-icons-outlined">{{ sidebarCollapsed() ? 'chevron_right' : 'chevron_left' }}</span>
+        </a>
+        <button
+          class="nav-collapse-btn"
+          type="button"
+          (click)="toggleSidebar()"
+          title="Toggle navigation"
+        >
+          <span class="material-icons-outlined">{{
+            sidebarCollapsed()
+              ? "keyboard_double_arrow_right"
+              : "keyboard_double_arrow_left"
+          }}</span>
         </button>
       </div>
 
       @if (!sidebarCollapsed()) {
-        <div class="ops-status">
-          <span class="status-dot"></span>
+        <div class="tenant-card">
+          <span class="tenant-icon material-icons-outlined">hub</span>
           <div>
-            <strong>Command mode</strong>
-            <span>Live marketplace monitoring</span>
+            <strong>Marketplace Ops</strong>
+            <span>Production workspace</span>
           </div>
+          <span class="live-pill">Live</span>
         </div>
+
+        <label class="nav-search">
+          <span class="material-icons-outlined">search</span>
+          <input
+            type="search"
+            placeholder="Search admin..."
+            [value]="navQuery()"
+            (input)="setNavQuery($any($event.target).value)"
+          />
+          @if (navQuery()) {
+            <button
+              type="button"
+              (click)="clearNavQuery()"
+              title="Clear search"
+            >
+              <span class="material-icons-outlined">close</span>
+            </button>
+          }
+        </label>
       }
 
-      <nav class="sidebar-nav">
-        @for (section of navSections; track section.label) {
-          <section class="nav-section">
+      <nav class="app-nav">
+        @for (section of filteredNavSections; track section.label) {
+          <section class="nav-group">
             @if (!sidebarCollapsed()) {
-              <span class="nav-section-label">{{ section.label }}</span>
+              <h2>{{ section.label }}</h2>
             }
             @for (item of section.items; track item.route) {
               <a
-                class="menu-item"
+                class="nav-link"
                 [routerLink]="item.route"
                 routerLinkActive="active"
-                [routerLinkActiveOptions]="{exact: item.route === '/'}"
-                (click)="closeMobileMenu()">
+                [routerLinkActiveOptions]="{ exact: item.route === '/' }"
+                [title]="sidebarCollapsed() ? item.label : ''"
+                (click)="closeMobileMenu()"
+              >
                 <span class="material-icons-outlined">{{ item.icon }}</span>
                 @if (!sidebarCollapsed()) {
-                  <span class="nav-label">{{ item.label }}</span>
+                  <span>{{ item.label }}</span>
                 }
               </a>
             }
@@ -49,41 +84,56 @@
         }
       </nav>
 
-      <div class="sidebar-footer">
-        <button class="menu-item logout-btn" type="button" (click)="logout()">
-          <span class="material-icons-outlined">logout</span>
+      <div class="sidebar-account">
+        <div class="account-chip">
+          <span class="account-avatar">{{ getInitials() }}</span>
           @if (!sidebarCollapsed()) {
-            <span class="nav-label">Sign Out</span>
+            <span class="account-copy">
+              <strong>{{ currentUserLabel() }}</strong>
+              <small>{{ currentRoleLabel() }}</small>
+            </span>
           }
+        </div>
+        <button
+          class="sidebar-logout"
+          type="button"
+          (click)="logout()"
+          title="Sign out"
+        >
+          <span class="material-icons-outlined">logout</span>
         </button>
       </div>
     </aside>
 
-    <div class="main-wrapper">
-      <header class="top-bar">
-        <div class="top-bar-left">
-          <button class="mobile-toggle" type="button" (click)="toggleSidebar()" aria-label="Open navigation">
+    <section class="app-workspace">
+      <header class="app-topbar">
+        <div class="topbar-left">
+          <button
+            class="mobile-menu-btn"
+            type="button"
+            (click)="toggleSidebar()"
+            aria-label="Open navigation"
+          >
             <span class="material-icons-outlined">menu</span>
           </button>
-          <div class="top-context">
-            <nav class="global-breadcrumbs" aria-label="Breadcrumb">
-              @for (crumb of breadcrumbs(); track crumb.label + ($index || 0)) {
-                @if (crumb.url && $index < breadcrumbs().length - 1) {
-                  <a [routerLink]="crumb.url">{{ crumb.label }}</a>
-                } @else {
-                  <span>{{ crumb.label }}</span>
-                }
-                @if ($index < breadcrumbs().length - 1) {
-                  <span class="material-icons-outlined">chevron_right</span>
-                }
-              }
-            </nav>
+
+          <div class="page-context">
             <h1>{{ pageTitle() }}</h1>
           </div>
         </div>
 
-        <div class="top-bar-actions">
-          <div class="quick-links" aria-label="Quick actions">
+        <div class="topbar-center" role="search">
+          <span class="material-icons-outlined">manage_search</span>
+          <input
+            type="search"
+            placeholder="Search orders, vendors, customers..."
+            [value]="navQuery()"
+            (input)="setNavQuery($any($event.target).value)"
+          />
+        </div>
+
+        <div class="topbar-actions">
+          <div class="quick-actions" aria-label="Quick actions">
             @for (link of quickLinks; track link.route) {
               <a [routerLink]="link.route" title="{{ link.label }}">
                 <span class="material-icons-outlined">{{ link.icon }}</span>
@@ -93,98 +143,156 @@
           </div>
 
           <div class="notif-wrapper" (click)="$event.stopPropagation()">
-            <button class="btn-icon notification-btn" type="button" (click)="toggleNotif($event)" title="Notifications">
+            <button
+              class="icon-button notification-btn"
+              type="button"
+              (click)="toggleNotif($event)"
+              title="Notifications"
+            >
               <span class="material-icons-outlined">notifications</span>
               @if (unreadCount() > 0) {
-                <span class="notification-badge">{{ unreadCount() > 9 ? '9+' : unreadCount() }}</span>
+                <span class="notification-badge">{{
+                  unreadCount() > 9 ? "9+" : unreadCount()
+                }}</span>
               }
             </button>
 
             @if (notifOpen()) {
-              <div class="notif-dropdown">
-                <div class="notif-header">
+              <div class="dropdown-panel notification-panel">
+                <div class="dropdown-header">
                   <div>
-                    <span class="notif-title">Notifications</span>
-                    <small>{{ unreadCount() }} unread</small>
+                    <strong>Notifications</strong>
+                    <span>{{ unreadCount() }} unread updates</span>
                   </div>
                   @if (unreadCount() > 0) {
-                    <button class="notif-mark-read" type="button" (click)="markAllRead()">Mark all read</button>
+                    <button type="button" (click)="markAllRead()">
+                      Mark all read
+                    </button>
                   }
                 </div>
 
                 @if (notifLoading()) {
-                  <div class="notif-loading">
+                  <div class="dropdown-state">
                     <div class="notif-spinner"></div>
                     <span>Loading updates...</span>
                   </div>
                 } @else if (notifications().length === 0) {
-                  <div class="notif-empty">
-                    <span class="material-icons-outlined">notifications_none</span>
+                  <div class="dropdown-state">
+                    <span class="material-icons-outlined"
+                      >notifications_none</span
+                    >
                     <strong>No notifications</strong>
                     <span>Operational alerts will appear here.</span>
                   </div>
                 } @else {
-                  <div class="notif-list">
+                  <div class="notification-list">
                     @for (n of notifications(); track n.id) {
-                      <button class="notif-item" type="button" [class.notif-unread]="!n.is_read" (click)="handleNotificationClick(n)">
-                        <span class="notif-icon-wrap">
-                          <span class="material-icons-outlined">{{ notifIcon(n.notification_type) }}</span>
+                      <button
+                        class="notification-row"
+                        type="button"
+                        [class.unread]="!n.is_read"
+                        (click)="handleNotificationClick(n)"
+                      >
+                        <span class="notification-icon">
+                          <span class="material-icons-outlined">{{
+                            notifIcon(n.notification_type)
+                          }}</span>
                         </span>
-                        <span class="notif-body">
-                          <span class="notif-message">{{ n.message }}</span>
-                          <span class="notif-time">{{ n.created_at | date: 'MMM d, h:mm a' }}</span>
+                        <span class="notification-body">
+                          <span class="notification-message">{{
+                            n.message
+                          }}</span>
+                          <span class="notification-time">{{
+                            n.created_at | date: "MMM d, h:mm a"
+                          }}</span>
                         </span>
                         @if (!n.is_read) {
-                          <span class="notif-dot"></span>
+                          <span class="unread-dot"></span>
                         }
                       </button>
                     }
                   </div>
-                  <div class="notif-footer">
-                    <button class="notif-view-all" type="button" (click)="goToNotifications()">View all notifications</button>
+                  <div class="dropdown-footer">
+                    <button type="button" (click)="goToNotifications()">
+                      View all notifications
+                    </button>
                   </div>
                 }
               </div>
             }
           </div>
 
-          <div class="admin-profile" (click)="toggleProfile($event)">
-            <button class="avatar" type="button" aria-label="Open profile menu">{{ getInitials() }}</button>
-            @if (auth.user(); as user) {
-              <span class="admin-name">{{ user.first_name || user.username }}</span>
-            }
-            <span class="material-icons-outlined expand-icon">expand_more</span>
-          </div>
+          <div class="profile-menu" (click)="toggleProfile($event)">
+            <button
+              class="profile-trigger"
+              type="button"
+              aria-label="Open profile menu"
+            >
+              <span class="avatar">{{ getInitials() }}</span>
+              <span class="profile-trigger-copy">
+                <strong>{{ currentUserLabel() }}</strong>
+                <small>{{ currentRoleLabel() }}</small>
+              </span>
+              <span class="material-icons-outlined">expand_more</span>
+            </button>
 
-          @if (profileOpen()) {
-            <div class="profile-dropdown" (click)="$event.stopPropagation()">
-              <div class="profile-dropdown-header">
-                <div class="pd-avatar">{{ getInitials() }}</div>
-                <div>
-                  <p class="pd-name">{{ auth.user()?.first_name || auth.user()?.username }} {{ auth.user()?.last_name }}</p>
-                  <p class="pd-email">{{ auth.user()?.email }}</p>
+            @if (profileOpen()) {
+              <div
+                class="dropdown-panel profile-panel"
+                (click)="$event.stopPropagation()"
+              >
+                <div class="profile-card-header">
+                  <span class="profile-card-avatar">{{ getInitials() }}</span>
+                  <div>
+                    <strong>{{ currentUserLabel() }}</strong>
+                    <span>{{ auth.user()?.email }}</span>
+                  </div>
                 </div>
+                <button
+                  class="profile-action danger"
+                  type="button"
+                  (click)="logout()"
+                >
+                  <span class="material-icons-outlined">logout</span>
+                  Sign Out
+                </button>
               </div>
-              <button class="pd-item danger" type="button" (click)="logout()">
-                <span class="material-icons-outlined">logout</span>
-                Sign Out
-              </button>
-            </div>
-          }
+            }
+          </div>
         </div>
       </header>
 
-      <main class="main-content">
+      <main class="workspace-content">
+        <nav class="workspace-breadcrumbs" aria-label="Breadcrumb">
+          @for (crumb of breadcrumbs(); track crumb.label + ($index || 0)) {
+            @if (crumb.url && $index < breadcrumbs().length - 1) {
+              <a [routerLink]="crumb.url">{{ crumb.label }}</a>
+            } @else {
+              <span [class.current]="$index === breadcrumbs().length - 1">{{
+                crumb.label
+              }}</span>
+            }
+            @if ($index < breadcrumbs().length - 1) {
+              <i>&gt;</i>
+            }
+          }
+        </nav>
         <router-outlet />
       </main>
-    </div>
+    </section>
   </div>
 
   @if (mobileMenuOpen()) {
-    <button class="mobile-overlay" type="button" aria-label="Close navigation" (click)="toggleSidebar()"></button>
+    <button
+      class="mobile-overlay"
+      type="button"
+      aria-label="Close navigation"
+      (click)="toggleSidebar()"
+    ></button>
   }
 } @else {
   <router-outlet />
 }
 
 <app-toast />
+<app-global-loading />

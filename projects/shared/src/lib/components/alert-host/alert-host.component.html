@@ -1,0 +1,62 @@
+<div class="alert-stack">
+  @for (banner of alerts.banners(); track banner.id) {
+    <section class="alert-banner" [class]="banner.tone">
+      <div class="alert-copy">
+        @if (banner.title) {
+          <strong>{{ banner.title }}</strong>
+        }
+        <p>{{ banner.message }}</p>
+      </div>
+      <button
+        type="button"
+        class="alert-close"
+        (click)="alerts.dismissBanner(banner.id!)"
+      >
+        <span class="material-icons-outlined">close</span>
+      </button>
+    </section>
+  }
+</div>
+
+@if (alerts.modal(); as modal) {
+  <div
+    class="alert-modal-backdrop"
+    (click)="modal.confirmOnly ? null : alerts.cancelModal()"
+  >
+    <section
+      class="alert-modal"
+      [class]="modal.tone || 'info'"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="alert-modal-badge">
+        <span class="material-icons-outlined">
+          {{
+            modal.tone === 'error'
+              ? 'error'
+              : modal.tone === 'warning'
+                ? 'warning'
+                : modal.tone === 'success'
+                  ? 'check_circle'
+                  : 'info'
+          }}
+        </span>
+      </div>
+      <h3>{{ modal.title }}</h3>
+      <p>{{ modal.message }}</p>
+      <div class="alert-modal-actions">
+        @if (!modal.confirmOnly) {
+          <button
+            type="button"
+            class="ghost"
+            (click)="alerts.cancelModal()"
+          >
+            {{ modal.cancelLabel || 'Cancel' }}
+          </button>
+        }
+        <button type="button" class="solid" (click)="alerts.confirmModal()">
+          {{ modal.confirmLabel || 'Okay' }}
+        </button>
+      </div>
+    </section>
+  </div>
+}

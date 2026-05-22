@@ -1,6 +1,5 @@
 <div class="register-page fade-in">
   <div class="register-container card">
-    
     <!-- Stylish Left Panel -->
     <div class="register-left">
       <div class="brand">
@@ -9,21 +8,42 @@
       </div>
       <div class="left-content">
         <h1>Partner With Us.</h1>
-        <p>Unlock new revenue streams by joining our elite network of local vendors and restaurants.</p>
-        
+        <p>
+          Unlock new revenue streams by joining our elite network of local
+          vendors and restaurants.
+        </p>
+
         <div class="progress-indicator">
-          <div class="step" [class.active]="step() === 1" [class.completed]="step() > 1">
-            <div class="step-icon"><span class="material-icons-outlined">{{ step() > 1 ? 'check' : 'person' }}</span></div>
+          <div
+            class="step"
+            [class.active]="step() === 1"
+            [class.completed]="step() > 1"
+          >
+            <div class="step-icon">
+              <span class="material-icons-outlined">{{
+                step() > 1 ? "check" : "person"
+              }}</span>
+            </div>
             <div class="step-text">Account Details</div>
           </div>
           <div class="step-line" [class.filled]="step() > 1"></div>
-          <div class="step" [class.active]="step() === 2" [class.completed]="step() > 2">
-            <div class="step-icon"><span class="material-icons-outlined">{{ step() > 2 ? 'check' : 'store' }}</span></div>
+          <div
+            class="step"
+            [class.active]="step() === 2"
+            [class.completed]="step() > 2"
+          >
+            <div class="step-icon">
+              <span class="material-icons-outlined">{{
+                step() > 2 ? "check" : "store"
+              }}</span>
+            </div>
             <div class="step-text">Store Profile</div>
           </div>
           <div class="step-line" [class.filled]="step() > 2"></div>
           <div class="step" [class.active]="step() === 3">
-            <div class="step-icon"><span class="material-icons-outlined">location_on</span></div>
+            <div class="step-icon">
+              <span class="material-icons-outlined">location_on</span>
+            </div>
             <div class="step-text">Store Location</div>
           </div>
         </div>
@@ -34,10 +54,22 @@
     <div class="register-right">
       <div class="form-wrapper">
         <h2 class="step-title">
-          {{ step() === 1 ? 'Create your account' : step() === 2 ? 'Store settings' : 'Location details' }}
+          {{
+            step() === 1
+              ? "Create your account"
+              : step() === 2
+                ? "Store settings"
+                : "Location details"
+          }}
         </h2>
         <p class="step-subtitle">
-          {{ step() === 1 ? 'Start by setting up your credentials.' : step() === 2 ? 'Tell us about your business.' : 'Pinpoint your exact store location.' }}
+          {{
+            step() === 1
+              ? "Start by setting up your credentials."
+              : step() === 2
+                ? "Tell us about your business."
+                : "Pinpoint your exact store location."
+          }}
         </p>
 
         @if (error()) {
@@ -48,27 +80,176 @@
         }
 
         <form (ngSubmit)="onSubmit()">
-
           <!-- STEP 1: Account -->
           <div class="form-step fade-in" *ngIf="step() === 1">
             <div class="form-group">
               <label>Username</label>
-              <input type="text" [(ngModel)]="form.username" name="username" class="form-input" placeholder="e.g. coffee_shop" required>
+              <input
+                type="text"
+                [(ngModel)]="form.username"
+                (ngModelChange)="onIdentityInput('username')"
+                name="username"
+                class="form-input"
+                [class.has-error]="fieldError('username')"
+                placeholder="e.g. coffee_shop"
+                required
+              />
+              <small class="field-hint"
+                >This becomes your login ID. Keep it short, memorable, and
+                unique.</small
+              >
+              @if (availabilityState("username")?.checking) {
+                <span class="field-checking">Checking availability...</span>
+              }
+              @if (
+                availabilityState("username")?.unique === true &&
+                !fieldError("username")
+              ) {
+                <span class="field-success">Username available</span>
+              }
+              @if (
+                availabilityState("username")?.unique === false &&
+                availabilityState("username")?.suggestions?.length
+              ) {
+                <div class="suggestions">
+                  @for (
+                    suggestion of availabilityState("username")!.suggestions;
+                    track suggestion
+                  ) {
+                    <button
+                      type="button"
+                      (click)="useSuggestion('username', suggestion)"
+                    >
+                      {{ suggestion }}
+                    </button>
+                  }
+                </div>
+              }
+              @if (fieldError("username")) {
+                <span class="field-error">{{ fieldError("username") }}</span>
+              }
             </div>
             <div class="form-group">
               <label>Email Address</label>
-              <input type="email" [(ngModel)]="form.email" name="email" class="form-input" placeholder="store@example.com" required>
+              <input
+                type="email"
+                [(ngModel)]="form.email"
+                (ngModelChange)="onIdentityInput('email')"
+                name="email"
+                class="form-input"
+                [class.has-error]="fieldError('email')"
+                placeholder="store@example.com"
+                required
+              />
+              <small class="field-hint"
+                >Used for account login, security messages, and admin
+                communication.</small
+              >
+              @if (availabilityState("email")?.checking) {
+                <span class="field-checking">Checking availability...</span>
+              }
+              @if (
+                availabilityState("email")?.unique === true &&
+                !fieldError("email")
+              ) {
+                <span class="field-success">Email available</span>
+              }
+              @if (
+                availabilityState("email")?.unique === false &&
+                availabilityState("email")?.suggestions?.length
+              ) {
+                <div class="suggestions">
+                  @for (
+                    suggestion of availabilityState("email")!.suggestions;
+                    track suggestion
+                  ) {
+                    <button
+                      type="button"
+                      (click)="useSuggestion('email', suggestion)"
+                    >
+                      {{ suggestion }}
+                    </button>
+                  }
+                </div>
+              }
+              @if (fieldError("email")) {
+                <span class="field-error">{{ fieldError("email") }}</span>
+              }
             </div>
             <div class="form-group">
               <label>Phone Number</label>
-              <input type="tel" [(ngModel)]="form.phone" name="phone" class="form-input" placeholder="+1 555 123 4567" required>
+              <input
+                type="tel"
+                [(ngModel)]="form.phone"
+                (ngModelChange)="onIdentityInput('phone')"
+                name="phone"
+                class="form-input"
+                [class.has-error]="fieldError('phone')"
+                placeholder="+91 9876543210"
+                required
+              />
+              <small class="field-hint"
+                >Primary business number for order or verification
+                follow-up.</small
+              >
+              @if (availabilityState("phone")?.checking) {
+                <span class="field-checking">Checking availability...</span>
+              }
+              @if (
+                availabilityState("phone")?.unique === true &&
+                !fieldError("phone")
+              ) {
+                <span class="field-success">Phone available</span>
+              }
+              @if (
+                availabilityState("phone")?.unique === false &&
+                availabilityState("phone")?.suggestions?.length
+              ) {
+                <div class="suggestions">
+                  @for (
+                    suggestion of availabilityState("phone")!.suggestions;
+                    track suggestion
+                  ) {
+                    <button
+                      type="button"
+                      (click)="useSuggestion('phone', suggestion)"
+                    >
+                      {{ suggestion }}
+                    </button>
+                  }
+                </div>
+              }
+              @if (fieldError("phone")) {
+                <span class="field-error">{{ fieldError("phone") }}</span>
+              }
             </div>
             <div class="form-group">
               <label>Password</label>
-              <input type="password" [(ngModel)]="form.password" name="password" class="form-input" placeholder="••••••••" required minlength="8">
+              <input
+                type="password"
+                [(ngModel)]="form.password"
+                (ngModelChange)="clearFieldError('password')"
+                name="password"
+                class="form-input"
+                [class.has-error]="fieldError('password')"
+                placeholder="••••••••"
+                required
+                minlength="8"
+              />
+              <small class="field-hint"
+                >Use at least 8 characters so your vendor account stays
+                secure.</small
+              >
+              @if (fieldError("password")) {
+                <span class="field-error">{{ fieldError("password") }}</span>
+              }
             </div>
             <div class="form-group mt-4">
-              <button type="button" class="btn btn-primary w-100 btn-lg" (click)="nextStep()">
+              <button
+                type="button"
+                class="btn btn-primary w-100 btn-lg"
+                (click)="nextStep()"
+              >
                 Continue to Store Profile
                 <span class="material-icons-outlined">arrow_forward</span>
               </button>
@@ -79,19 +260,70 @@
           <div class="form-step fade-in" *ngIf="step() === 2">
             <div class="form-group">
               <label>Store Name</label>
-              <input type="text" [(ngModel)]="form.store_name" name="store_name" class="form-input" placeholder="The Daily Grind" required>
+              <input
+                type="text"
+                [(ngModel)]="form.store_name"
+                (ngModelChange)="clearFieldError('store_name')"
+                name="store_name"
+                class="form-input"
+                [class.has-error]="fieldError('store_name')"
+                placeholder="The Daily Grind"
+                required
+              />
+              <small class="field-hint"
+                >Customer-facing store name shown in the marketplace.</small
+              >
+              @if (fieldError("store_name")) {
+                <span class="field-error">{{ fieldError("store_name") }}</span>
+              }
             </div>
             <div class="form-group">
               <label>Description (Optional)</label>
-              <textarea [(ngModel)]="form.description" name="description" class="form-input" placeholder="Tell customers about what you sell..." rows="3"></textarea>
+              <textarea
+                [(ngModel)]="form.description"
+                name="description"
+                class="form-input"
+                placeholder="Tell customers about what you sell..."
+                rows="3"
+              ></textarea>
+              <small class="field-hint"
+                >Mention your specialties, product range, or what makes the
+                store trustworthy.</small
+              >
             </div>
             <div class="form-group">
               <label>Public Contact Email (Optional)</label>
-              <input type="email" [(ngModel)]="form.vendor_email" name="vendor_email" class="form-input" placeholder="contact@thedailygrind.com">
+              <input
+                type="email"
+                [(ngModel)]="form.vendor_email"
+                (ngModelChange)="clearFieldError('vendor_email')"
+                name="vendor_email"
+                class="form-input"
+                [class.has-error]="fieldError('vendor_email')"
+                placeholder="contact@thedailygrind.com"
+              />
+              <small class="field-hint"
+                >Public store email for customer or admin follow-up.</small
+              >
+              @if (fieldError("vendor_email")) {
+                <span class="field-error">{{
+                  fieldError("vendor_email")
+                }}</span>
+              }
             </div>
             <div class="form-actions mt-4">
-              <button type="button" class="btn btn-secondary" (click)="prevStep()">Back</button>
-              <button type="button" class="btn btn-primary" (click)="nextStep()">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                (click)="prevStep()"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                class="btn btn-primary"
+                (click)="nextStep()"
+              >
                 Continue to Location
                 <span class="material-icons-outlined">arrow_forward</span>
               </button>
@@ -105,40 +337,101 @@
               [initialLng]="form.longitude"
               (locationPicked)="onLocationPicked($event)"
             ></app-map-picker>
-            
+
             <div class="form-group mt-3">
               <label>Street Address</label>
-              <input type="text" [(ngModel)]="form.address" name="address" class="form-input" placeholder="123 Main St" required>
+              <input
+                type="text"
+                [(ngModel)]="form.address"
+                (ngModelChange)="clearFieldError('address')"
+                name="address"
+                class="form-input"
+                [class.has-error]="fieldError('address')"
+                placeholder="123 Main St"
+                required
+              />
+              <small class="field-hint"
+                >Full pickup address where delivery partners collect
+                orders.</small
+              >
+              @if (fieldError("address")) {
+                <span class="field-error">{{ fieldError("address") }}</span>
+              }
             </div>
-            <div style="display:flex;gap:10px;">
-              <div class="form-group" style="flex:1;">
+            <div style="display: flex; gap: 10px">
+              <div class="form-group" style="flex: 1">
                 <label>City</label>
-                <input type="text" [(ngModel)]="form.city" name="city" class="form-input" placeholder="Metropolis" required>
+                <input
+                  type="text"
+                  [(ngModel)]="form.city"
+                  (ngModelChange)="clearFieldError('city')"
+                  name="city"
+                  class="form-input"
+                  [class.has-error]="fieldError('city')"
+                  placeholder="Metropolis"
+                  required
+                />
+                <small class="field-hint"
+                  >City where your store operates.</small
+                >
+                @if (fieldError("city")) {
+                  <span class="field-error">{{ fieldError("city") }}</span>
+                }
               </div>
-              <div class="form-group" style="flex:1;">
+              <div class="form-group" style="flex: 1">
                 <label>Postal Code</label>
-                <input type="text" [(ngModel)]="form.postal_code" name="postal_code" class="form-input" placeholder="10001">
+                <input
+                  type="text"
+                  [(ngModel)]="form.postal_code"
+                  (ngModelChange)="clearFieldError('postal_code')"
+                  name="postal_code"
+                  class="form-input"
+                  [class.has-error]="fieldError('postal_code')"
+                  placeholder="400001"
+                />
+                <small class="field-hint"
+                  >Postal or ZIP code for the pickup location.</small
+                >
+                @if (fieldError("postal_code")) {
+                  <span class="field-error">{{
+                    fieldError("postal_code")
+                  }}</span>
+                }
               </div>
             </div>
+            @if (fieldError("location")) {
+              <div class="field-error location-error">
+                {{ fieldError("location") }}
+              </div>
+            }
 
             <div class="form-actions mt-4">
-              <button type="button" class="btn btn-secondary" (click)="prevStep()">Back</button>
-              <button type="submit" class="btn btn-primary" [disabled]="loading() || !form.latitude">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                (click)="prevStep()"
+              >
+                Back
+              </button>
+              <button
+                type="submit"
+                class="btn btn-primary"
+                [disabled]="loading() || !form.latitude"
+              >
                 @if (loading()) {
                   <span class="spinner"></span> Processing...
                 } @else {
-                  Complete Registration <span class="material-icons-outlined">check_circle</span>
+                  Complete Registration
+                  <span class="material-icons-outlined">check_circle</span>
                 }
               </button>
             </div>
           </div>
-
         </form>
-        
+
         <p class="login-prompt mt-4 text-center">
           Already have a partner account? <a routerLink="/login">Log in here</a>
         </p>
-
       </div>
     </div>
   </div>

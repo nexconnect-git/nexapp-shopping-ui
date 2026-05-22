@@ -1,21 +1,28 @@
 import {
+  AfterViewInit,
   Component,
-  Input,
-  Output,
+  ElementRef,
   EventEmitter,
+  inject,
+  Input,
   NgZone,
   OnDestroy,
-  AfterViewInit,
-  signal,
-  ElementRef,
-  ViewChild,
+  Output,
   PLATFORM_ID,
-  inject } from '@angular/core';
+  computed,
+  signal,
+  ViewChild,
+} from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer } from '@angular/platform-browser';
+import {
+  buildOsmEmbedUrl,
+  fallbackMapUnavailableMessage,
+} from '@nexconnect/customer-location';
+import { GoogleMapsService } from '../../services/google-maps.service';
 import {
   autocompleteGooglePlaces,
-  DEFAULT_GOOGLE_MAPS_API_KEY,
   getGooglePlaceDetails,
   GooglePlaceSuggestion,
 } from '../../utils/google-api';
@@ -30,17 +37,19 @@ export interface MapLocation {
 }
 
 declare const google: any;
-
 @Component({
   selector: 'app-map-picker',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './map-picker.component.html',
-  styleUrl: './map-picker.component.scss' })
+  styleUrl: './map-picker.component.scss',
+})
 export class MapPickerComponent implements AfterViewInit, OnDestroy {
   @Input() initialLat = 6.5244;
   @Input() initialLng = 3.3792;
   @Input() height = '300px';
+  @Input() apiKey = '';
+  @Input() mapId = '';
   @Output() locationPicked = new EventEmitter<MapLocation>();
 
   @ViewChild('mapContainer') mapContainerRef!: ElementRef;
@@ -48,9 +57,13 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
 
   private platformId = inject(PLATFORM_ID);
   private ngZone = inject(NgZone);
+  private sanitizer = inject(DomSanitizer);
+  private googleMaps = inject(GoogleMapsService);
   private map: any = null;
   private marker: any = null;
   private geocoder: any = null;
+  private markerKind: 'legacy' | 'advanced' = 'legacy';
+  private advancedMarkersEnabled = false;
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
   private searchRequestId = 0;
 
@@ -58,12 +71,29 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
   pickedAddress = signal('');
   locating = signal(false);
   mapReady = signal(false);
+  mapUnavailable = signal(false);
+  fallbackMapReady = signal(false);
+  currentLat = signal(this.initialLat);
+  currentLng = signal(this.initialLng);
   searchQuery = signal('');
   placeSuggestions = signal<GooglePlaceSuggestion[]>([]);
   searchingPlaces = signal(false);
   placesError = signal('');
+  fallbackMapUrl = computed(() => {
+    const lat = Number(this.currentLat());
+    const lng = Number(this.currentLng());
+    return this.sanitizer.bypassSecurityTrustResourceUrl(
+      buildOsmEmbedUrl({ latitude: lat, longitude: lng }),
+    );
+  });
 
-  private readonly API_KEY = DEFAULT_GOOGLE_MAPS_API_KEY;
+  private get resolvedApiKey() {
+    return this.googleMaps.apiKey(this.apiKey);
+  }
+
+  private get resolvedMapId() {
+    return this.googleMaps.mapId(this.mapId);
+  }
 
   ngAfterViewInit() {
     if (!isPlatformBrowser(this.platformId)) return;
@@ -78,79 +108,156 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
   }
 
   private loadGoogleMaps() {
-    const src = `https://maps.googleapis.com/maps/api/js?key=${this.API_KEY}&loading=async`;
-
-    if (typeof google !== 'undefined' && google.maps) {
-      this.initMap();
+    const apiKey = this.resolvedApiKey;
+    if (!apiKey) {
+      this.enableFallbackMap();
       return;
     }
 
-    const existing = document.getElementById('google-maps-js');
-    if (!existing) {
-      const script = document.createElement('script');
-      script.id = 'google-maps-js';
-      script.src = src;
-      script.async = true;
-      script.defer = true;
-      script.onload = () => this.ngZone.run(() => this.initMap());
-      document.head.appendChild(script);
-    } else {
-      // Script tag exists but may not have places — replace it
-      const interval = setInterval(() => {
-        if (typeof google !== 'undefined' && google.maps) {
-          clearInterval(interval);
-          this.ngZone.run(() => this.initMap());
-        }
-      }, 50);
-      setTimeout(() => clearInterval(interval), 10000);
-    }
+    this.googleMaps
+      .loadJavaScriptApi(apiKey)
+      .then(() => this.ngZone.run(() => this.initMap()))
+      .catch(() =>
+        this.ngZone.run(() => {
+          this.mapUnavailable.set(true);
+          this.placesError.set('Google Maps could not be loaded.');
+        }),
+      );
   }
 
   private initMap() {
     const container = this.mapContainerRef?.nativeElement;
     if (!container || this.map) return;
 
-    const center = { lat: +this.initialLat, lng: +this.initialLng };
+    this.createMap(container).catch(() => {
+      this.mapUnavailable.set(true);
+      this.placesError.set('Google Maps could not be loaded.');
+    });
+  }
 
-    this.map = new google.maps.Map(container, {
+  private async createMap(container: HTMLElement) {
+    const center = { lat: +this.initialLat, lng: +this.initialLng };
+    this.currentLat.set(center.lat);
+    this.currentLng.set(center.lng);
+    const mapsLibrary = await this.importGoogleLibrary('maps');
+    const MapCtor = mapsLibrary?.Map || google?.maps?.Map;
+    if (typeof MapCtor !== 'function') {
+      throw new Error('Google Maps Map constructor unavailable');
+    }
+
+    const mapId = this.resolvedMapId;
+    this.advancedMarkersEnabled = !!mapId;
+    this.map = new MapCtor(container, {
       center,
       zoom: 13,
       mapTypeControl: false,
       streetViewControl: false,
       fullscreenControl: false,
       gestureHandling: 'greedy',
+      ...(mapId ? { mapId } : {}),
     });
 
-    this.marker = new google.maps.Marker({
-      position: center,
-      map: this.map,
-      draggable: true,
-      animation: google.maps.Animation.DROP,
-    });
+    await this.createMarker(center);
 
-    this.geocoder = new google.maps.Geocoder();
+    const geocodingLibrary = await this.importGoogleLibrary('geocoding');
+    const GeocoderCtor = geocodingLibrary?.Geocoder || google?.maps?.Geocoder;
+    if (typeof GeocoderCtor !== 'function') {
+      throw new Error('Google Maps geocoder constructor unavailable');
+    }
+    this.geocoder = new GeocoderCtor();
 
-    // Drag-end: update on marker drag
     this.marker.addListener('dragend', () => {
-      const pos = this.marker.getPosition();
-      this.ngZone.run(() => this.reverseGeocode(pos.lat(), pos.lng()));
+      const pos = this.getMarkerPosition();
+      if (pos) this.ngZone.run(() => this.reverseGeocode(pos.lat, pos.lng));
     });
 
-    // Click: move marker to clicked location
     this.map.addListener('click', (e: any) => {
       const lat = e.latLng.lat();
       const lng = e.latLng.lng();
-      this.marker.setPosition({ lat, lng });
+      this.setMarkerPosition({ lat, lng });
       this.ngZone.run(() => this.reverseGeocode(lat, lng));
     });
 
     this.mapReady.set(true);
+    this.refreshMapCanvas(center);
 
     const lat = +this.initialLat;
     const lng = +this.initialLng;
     if (lat !== 6.5244 || lng !== 3.3792) {
       this.reverseGeocode(lat, lng);
     }
+  }
+
+  private refreshMapCanvas(center: { lat: number; lng: number }) {
+    [0, 150, 400].forEach((delay) => {
+      window.setTimeout(() => {
+        if (!this.map) return;
+        google?.maps?.event?.trigger?.(this.map, 'resize');
+        this.map.setCenter(center);
+      }, delay);
+    });
+  }
+
+  private async importGoogleLibrary(name: 'maps' | 'marker' | 'geocoding') {
+    if (google?.maps?.importLibrary) {
+      return google.maps.importLibrary(name);
+    }
+    return google?.maps;
+  }
+
+  private async createMarker(position: { lat: number; lng: number }) {
+    if (this.advancedMarkersEnabled) {
+      const markerLibrary = await this.importGoogleLibrary('marker').catch(
+        () => null,
+      );
+      const AdvancedMarkerElement =
+        markerLibrary?.AdvancedMarkerElement ||
+        google?.maps?.marker?.AdvancedMarkerElement;
+      if (typeof AdvancedMarkerElement === 'function') {
+        this.markerKind = 'advanced';
+        this.marker = new AdvancedMarkerElement({
+          position,
+          map: this.map,
+          gmpDraggable: true,
+        });
+        return;
+      }
+    }
+
+    if (typeof google?.maps?.Marker === 'function') {
+      this.markerKind = 'legacy';
+      this.marker = new google.maps.Marker({
+        position,
+        map: this.map,
+        draggable: true,
+        animation: google.maps.Animation?.DROP,
+      });
+      return;
+    }
+    throw new Error('Google Maps marker constructor unavailable');
+  }
+
+  private setMarkerPosition(position: { lat: number; lng: number }) {
+    this.currentLat.set(position.lat);
+    this.currentLng.set(position.lng);
+    if (this.markerKind === 'legacy') {
+      this.marker.setPosition(position);
+    } else {
+      this.marker.position = position;
+    }
+  }
+
+  private getMarkerPosition(): { lat: number; lng: number } | null {
+    if (!this.marker) return null;
+    if (this.markerKind === 'legacy') {
+      const pos = this.marker.getPosition();
+      return pos ? { lat: pos.lat(), lng: pos.lng() } : null;
+    }
+    const pos = this.marker.position;
+    if (!pos) return null;
+    const lat = typeof pos.lat === 'function' ? pos.lat() : pos.lat;
+    const lng = typeof pos.lng === 'function' ? pos.lng() : pos.lng;
+    return { lat: Number(lat), lng: Number(lng) };
   }
 
   onSearchInput(event: Event) {
@@ -168,7 +275,7 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
     const requestId = ++this.searchRequestId;
     this.searchingPlaces.set(true);
     this.searchTimer = setTimeout(() => {
-      autocompleteGooglePlaces(this.API_KEY, query)
+      autocompleteGooglePlaces(this.resolvedApiKey, query)
         .then((suggestions) => {
           this.ngZone.run(() => {
             if (requestId !== this.searchRequestId) return;
@@ -191,7 +298,7 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
   selectPlace(suggestion: GooglePlaceSuggestion) {
     this.searchingPlaces.set(true);
     this.placesError.set('');
-    getGooglePlaceDetails(this.API_KEY, suggestion.placeId)
+    getGooglePlaceDetails(this.resolvedApiKey, suggestion.placeId)
       .then((place) => {
         this.ngZone.run(() => {
           this.searchingPlaces.set(false);
@@ -202,10 +309,11 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
 
           this.map.setCenter({ lat, lng });
           this.map.setZoom(16);
-          this.marker.setPosition({ lat, lng });
+          this.setMarkerPosition({ lat, lng });
 
           const get = (type: string) =>
-            place.addressComponents.find((c) => c.types?.includes(type))?.longText || '';
+            place.addressComponents.find((c) => c.types?.includes(type))
+              ?.longText || '';
 
           const streetParts = [
             get('street_number'),
@@ -232,7 +340,10 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
           this.locationPicked.emit({
             lat: Number(lat.toFixed(6)),
             lng: Number(lng.toFixed(6)),
-            address, city, state, postal_code,
+            address,
+            city,
+            state,
+            postal_code,
           });
         });
       })
@@ -247,47 +358,56 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
 
   private reverseGeocode(lat: number, lng: number) {
     this.geocoding.set(true);
-    this.geocoder.geocode({ location: { lat, lng } }, (results: any[], status: string) => {
-      this.ngZone.run(() => {
-        this.geocoding.set(false);
-        if (status === 'OK' && results?.length > 0) {
-          const result = results[0];
-          const components: any[] = result.address_components || [];
-          const get = (type: string) =>
-            components.find((c) => c.types.includes(type))?.long_name || '';
+    this.geocoder.geocode(
+      { location: { lat, lng } },
+      (results: any[], status: string) => {
+        this.ngZone.run(() => {
+          this.geocoding.set(false);
+          if (status === 'OK' && results?.length > 0) {
+            const result = results[0];
+            const components: any[] = result.address_components || [];
+            const get = (type: string) =>
+              components.find((c) => c.types.includes(type))?.long_name || '';
 
-          const streetParts = [
-            get('street_number'),
-            get('route'),
-            get('premise'),
-            get('sublocality_level_2'),
-            get('sublocality_level_1'),
-            get('neighborhood'),
-          ].filter(Boolean);
+            const streetParts = [
+              get('street_number'),
+              get('route'),
+              get('premise'),
+              get('sublocality_level_2'),
+              get('sublocality_level_1'),
+              get('neighborhood'),
+            ].filter(Boolean);
 
-          const address =
-            streetParts.join(' ') ||
-            result.formatted_address.split(',')[0].trim();
+            const address =
+              streetParts.join(' ') ||
+              result.formatted_address.split(',')[0].trim();
 
-          const city = get('locality') || get('administrative_area_level_2');
-          const state = get('administrative_area_level_1');
-          const postal_code = get('postal_code');
+            const city = get('locality') || get('administrative_area_level_2');
+            const state = get('administrative_area_level_1');
+            const postal_code = get('postal_code');
 
-          this.pickedAddress.set(result.formatted_address || '');
-          this.locationPicked.emit({
-            lat: Number(lat.toFixed(6)),
-            lng: Number(lng.toFixed(6)),
-            address, city, state, postal_code,
-          });
-        } else {
-          this.locationPicked.emit({
-            lat: Number(lat.toFixed(6)),
-            lng: Number(lng.toFixed(6)),
-            address: '', city: '', state: '', postal_code: '',
-          });
-        }
-      });
-    });
+            this.pickedAddress.set(result.formatted_address || '');
+            this.locationPicked.emit({
+              lat: Number(lat.toFixed(6)),
+              lng: Number(lng.toFixed(6)),
+              address,
+              city,
+              state,
+              postal_code,
+            });
+          } else {
+            this.locationPicked.emit({
+              lat: Number(lat.toFixed(6)),
+              lng: Number(lng.toFixed(6)),
+              address: '',
+              city: '',
+              state: '',
+              postal_code: '',
+            });
+          }
+        });
+      },
+    );
   }
 
   useMyLocation() {
@@ -298,16 +418,39 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
         const { latitude: lat, longitude: lng } = pos.coords;
         this.ngZone.run(() => {
           this.locating.set(false);
+          this.currentLat.set(Number(lat.toFixed(6)));
+          this.currentLng.set(Number(lng.toFixed(6)));
           if (this.map && this.marker) {
             this.map.setCenter({ lat, lng });
             this.map.setZoom(16);
-            this.marker.setPosition({ lat, lng });
+            this.setMarkerPosition({ lat, lng });
             this.reverseGeocode(lat, lng);
+          } else {
+            this.fallbackMapReady.set(true);
+            this.pickedAddress.set(
+              `Pinned location: ${lat.toFixed(6)}, ${lng.toFixed(6)}`,
+            );
+            this.locationPicked.emit({
+              lat: Number(lat.toFixed(6)),
+              lng: Number(lng.toFixed(6)),
+              address: '',
+              city: '',
+              state: '',
+              postal_code: '',
+            });
           }
         });
       },
       () => this.ngZone.run(() => this.locating.set(false)),
-      { timeout: 8000, enableHighAccuracy: true }
+      { timeout: 8000, enableHighAccuracy: true },
     );
+  }
+
+  private enableFallbackMap() {
+    this.currentLat.set(+this.initialLat);
+    this.currentLng.set(+this.initialLng);
+    this.fallbackMapReady.set(true);
+    this.mapUnavailable.set(false);
+    this.placesError.set(fallbackMapUnavailableMessage(false));
   }
 }

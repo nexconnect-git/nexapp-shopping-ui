@@ -15,7 +15,9 @@
     <div class="empty-state">
       <span class="material-icons-outlined">local_shipping</span>
       <h3>No new requests</h3>
-      <p>You'll be notified when an order in your area needs a delivery partner</p>
+      <p>
+        You'll be notified when an order in your area needs a delivery partner
+      </p>
       <button class="btn-outline-refresh" (click)="load()">
         <span class="material-icons-outlined">refresh</span> Refresh
       </button>
@@ -32,16 +34,20 @@
                 {{ req.current_radius_km }} km radius
               </span>
             </div>
-            <span class="earn-badge">₹{{ req.order_total }}</span>
+            <span class="earn-badge">{{ req.order_total | appCurrency }}</span>
           </div>
 
           <!-- Items preview -->
           <div class="items-preview">
             @for (item of req.order_items.slice(0, 3); track item.name) {
-              <span class="item-chip">{{ item.quantity }}x {{ item.name }}</span>
+              <span class="item-chip"
+                >{{ item.quantity }}x {{ item.name }}</span
+              >
             }
             @if (req.order_items.length > 3) {
-              <span class="item-chip more">+{{ req.order_items.length - 3 }} more</span>
+              <span class="item-chip more"
+                >+{{ req.order_items.length - 3 }} more</span
+              >
             }
           </div>
 
@@ -60,7 +66,9 @@
               </div>
               <div class="route-point">
                 <span class="route-label">Deliver to</span>
-                <span class="route-address">Customer address (after acceptance)</span>
+                <span class="route-address"
+                  >Customer address (after acceptance)</span
+                >
               </div>
             </div>
           </div>
@@ -73,11 +81,19 @@
 
           <!-- Accept / Reject -->
           <div class="action-row">
-            <button class="reject-btn" [disabled]="actionId() === req.id" (click)="reject(req)">
+            <button
+              class="reject-btn"
+              [disabled]="actionId() === req.id"
+              (click)="reject(req)"
+            >
               <span class="material-icons-outlined">close</span>
               Reject
             </button>
-            <button class="accept-btn" [disabled]="actionId() === req.id" (click)="accept(req)">
+            <button
+              class="accept-btn"
+              [disabled]="actionId() === req.id"
+              (click)="accept(req)"
+            >
               @if (actionId() === req.id) {
                 <span class="spinner spinner-sm"></span> Accepting...
               } @else {

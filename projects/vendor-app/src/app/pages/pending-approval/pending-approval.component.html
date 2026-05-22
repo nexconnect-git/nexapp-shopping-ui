@@ -9,11 +9,11 @@
       <div class="spinner-wrap"><div class="spinner"></div></div>
     } @else {
       <div class="status-icon" [class]="'status-icon--' + status()">
-        @if (status() === 'pending') {
+        @if (status() === "pending") {
           <span class="material-icons-outlined">hourglass_top</span>
-        } @else if (status() === 'rejected') {
+        } @else if (status() === "rejected") {
           <span class="material-icons-outlined">cancel</span>
-        } @else if (status() === 'suspended') {
+        } @else if (status() === "suspended") {
           <span class="material-icons-outlined">block</span>
         } @else {
           <span class="material-icons-outlined">check_circle</span>
@@ -32,7 +32,7 @@
         Account Status: <strong>{{ statusLabel }}</strong>
       </div>
 
-      @if (status() === 'pending') {
+      @if (status() === "pending") {
         <div class="info-list">
           <div class="info-item">
             <span class="material-icons-outlined">check</span>
@@ -47,11 +47,18 @@
             <span>Access granted upon approval</span>
           </div>
         </div>
-        <p class="poll-note">This page checks for updates automatically every 30 seconds.</p>
+        <p class="poll-note">
+          This page checks for updates automatically every 30 seconds.
+        </p>
       }
 
-      @if (status() === 'rejected' || status() === 'suspended') {
-        <a href="mailto:support@nexconnect.com" class="btn btn-outline">Contact Support</a>
+      @if (status() === "rejected" || status() === "suspended") {
+        <p class="poll-note">
+          Automatic checks are paused for this final status.
+        </p>
+        <a href="mailto:support@nexconnect.com" class="btn btn-outline"
+          >Contact Support</a
+        >
       }
 
       <button class="btn btn-logout" (click)="logout()">

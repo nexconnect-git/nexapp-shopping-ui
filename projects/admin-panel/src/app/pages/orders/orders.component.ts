@@ -1,10 +1,24 @@
-import { Component, inject, signal, OnInit, OnDestroy, NgZone } from '@angular/core';
+import {
+  Component,
+  inject,
+  NgZone,
+  OnDestroy,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService, AppCurrencyPipe, AuthService, Order, openAuthenticatedWebSocket, computeGoogleRoute, decodeGooglePolyline } from '@shared/public-api';
-import { timer, Subscription } from 'rxjs';
+import {
+  ApiService,
+  AppCurrencyPipe,
+  AuthService,
+  decodeGooglePolyline,
+  GoogleMapsService,
+  openAuthenticatedWebSocket,
+  Order,
+} from '@shared/public-api';
+import { Subscription, timer } from 'rxjs';
 import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
-import { environment } from '../../../environments/environment';
 
 // Google Maps loaded via <script> tag in index.html — no @types/google.maps needed
 declare const google: any;
@@ -12,14 +26,21 @@ declare const google: any;
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [CommonModule, FormsModule, DynamicTableComponent, TableCellDirective, AppCurrencyPipe],
+  imports: [
+    CommonModule,
+    FormsModule,
+    DynamicTableComponent,
+    TableCellDirective,
+    AppCurrencyPipe,
+  ],
   templateUrl: './orders.component.html',
-  styleUrl: './orders.component.scss'
+  styleUrl: './orders.component.scss',
 })
 export class OrdersComponent implements OnInit, OnDestroy {
   private api = inject(ApiService);
   private auth = inject(AuthService);
   private zone = inject(NgZone);
+  private googleMaps = inject(GoogleMapsService);
 
   orders = signal<Order[]>([]);
   loading = signal(true);
@@ -37,7 +58,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
     { key: 'total', label: 'Total', flex: '1fr' },
     { key: 'status', label: 'Status', flex: '1fr' },
     { key: 'date', label: 'Date', flex: '1fr' },
-    { key: 'actions', label: 'Update Status', flex: '1.5fr' }
+    { key: 'actions', label: 'Update Status', flex: '1.5fr' },
   ];
 
   lastRefreshed = signal<Date | null>(null);
@@ -55,23 +76,34 @@ export class OrdersComponent implements OnInit, OnDestroy {
   private gmVendorMarker: any;
   private gmCustomerMarker: any;
   private gmRoutePolyline: any;
-  private driverPos?: {lat: number; lng: number};
-  private vendorPos?: {lat: number; lng: number};
-  private customerPos?: {lat: number; lng: number};
+  private driverPos?: { lat: number; lng: number };
+  private vendorPos?: { lat: number; lng: number };
+  private customerPos?: { lat: number; lng: number };
   private lastDirectionsTime = 0;
   private directionsEnabled = true;
 
   private ws: WebSocket | null = null;
   private animFrameId?: number;
   private timer: any;
-  readonly statuses = ['placed', 'confirmed', 'preparing', 'ready', 'picked_up', 'on_the_way', 'delivered', 'cancelled'];
+  readonly statuses = [
+    'placed',
+    'confirmed',
+    'preparing',
+    'ready',
+    'picked_up',
+    'on_the_way',
+    'delivered',
+    'cancelled',
+  ];
 
   /** Admin can cancel any order that hasn't been delivered yet. */
   getAvailableStatuses(order: Order): string[] {
     if (order.status === 'delivered' || order.status === 'cancelled') {
       return [order.status]; // terminal — no transitions
     }
-    return this.statuses.filter(s => s !== 'cancelled' || order.status !== 'delivered');
+    return this.statuses.filter(
+      (s) => s !== 'cancelled' || order.status !== 'delivered',
+    );
   }
   private sub?: Subscription;
 
@@ -90,8 +122,13 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.gmRoutePolyline?.setMap(null);
   }
 
-  manualReload() { this.page.set(1); this.load(); }
-  toggleAutoReload() { this.autoReload.update(v => !v); }
+  manualReload() {
+    this.page.set(1);
+    this.load();
+  }
+  toggleAutoReload() {
+    this.autoReload.update((v) => !v);
+  }
 
   load() {
     this.loading.set(true);
@@ -106,19 +143,31 @@ export class OrdersComponent implements OnInit, OnDestroy {
         this.loading.set(false);
         this.lastRefreshed.set(new Date());
       },
-      error: () => this.loading.set(false)
+      error: () => this.loading.set(false),
     });
   }
 
-  onSearch() { clearTimeout(this.timer); this.timer = setTimeout(() => { this.page.set(1); this.load(); }, 400); }
-  setPage(p: number) { this.page.set(p); this.load(); }
+  onSearch() {
+    clearTimeout(this.timer);
+    this.timer = setTimeout(() => {
+      this.page.set(1);
+      this.load();
+    }, 400);
+  }
+  setPage(p: number) {
+    this.page.set(p);
+    this.load();
+  }
 
   updateStatus(order: Order, newStatus: string) {
     if (order.status === newStatus) return;
     this.updatingId.set(order.id);
     this.api.updateAdminOrderStatus(order.id, newStatus).subscribe({
-      next: () => { this.updatingId.set(null); this.load(); },
-      error: () => this.updatingId.set(null)
+      next: () => {
+        this.updatingId.set(null);
+        this.load();
+      },
+      error: () => this.updatingId.set(null),
     });
   }
 
@@ -128,8 +177,11 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.selectedOrder.set(o);
     this.closeTrackingMap();
     this.api.getAdminOrder(o.id).subscribe({
-      next: (fullOrder) => { this.selectedOrder.set(fullOrder); this.loadingDetails.set(false); },
-      error: () => this.loadingDetails.set(false)
+      next: (fullOrder) => {
+        this.selectedOrder.set(fullOrder);
+        this.loadingDetails.set(false);
+      },
+      error: () => this.loadingDetails.set(false),
     });
   }
 
@@ -156,7 +208,18 @@ export class OrdersComponent implements OnInit, OnDestroy {
     }
 
     this.connectWebSocket(o.id);
-    requestAnimationFrame(() => requestAnimationFrame(() => this.initNativeMap()));
+    this.googleMaps
+      .loadJavaScriptApi()
+      .then(() =>
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => this.initNativeMap()),
+        ),
+      )
+      .catch(() =>
+        console.warn(
+          '[Map] Google Maps JavaScript API is not configured or unavailable.',
+        ),
+      );
   }
 
   closeTrackingMap() {
@@ -168,23 +231,38 @@ export class OrdersComponent implements OnInit, OnDestroy {
   private initNativeMap() {
     const el = document.getElementById('admin-tracking-map');
     if (!el) return;
-    const center = this.vendorPos ?? {lat: 12.9716, lng: 77.5946};
+    const center = this.vendorPos ?? { lat: 12.9716, lng: 77.5946 };
     this.gmMap = new google.maps.Map(el, {
-      center, zoom: 13,
-      zoomControl: true, streetViewControl: false, fullscreenControl: false, mapTypeControl: false, clickableIcons: false,
+      center,
+      zoom: 13,
+      zoomControl: true,
+      streetViewControl: false,
+      fullscreenControl: false,
+      mapTypeControl: false,
+      clickableIcons: false,
     });
     if (this.vendorPos) {
       this.gmVendorMarker = new google.maps.Marker({
-        position: this.vendorPos, map: this.gmMap,
-        icon: {url: 'https://maps.google.com/mapfiles/ms/icons/restaurant.png', scaledSize: new google.maps.Size(30, 30)},
-        title: 'Vendor', zIndex: 5,
+        position: this.vendorPos,
+        map: this.gmMap,
+        icon: {
+          url: 'https://maps.google.com/mapfiles/ms/icons/restaurant.png',
+          scaledSize: new google.maps.Size(30, 30),
+        },
+        title: 'Vendor',
+        zIndex: 5,
       });
     }
     if (this.customerPos) {
       this.gmCustomerMarker = new google.maps.Marker({
-        position: this.customerPos, map: this.gmMap,
-        icon: {url: 'https://maps.google.com/mapfiles/ms/icons/homegardenbusiness.png', scaledSize: new google.maps.Size(30, 30)},
-        title: 'Customer', zIndex: 5,
+        position: this.customerPos,
+        map: this.gmMap,
+        icon: {
+          url: 'https://maps.google.com/mapfiles/ms/icons/homegardenbusiness.png',
+          scaledSize: new google.maps.Size(30, 30),
+        },
+        title: 'Customer',
+        zIndex: 5,
       });
     }
     // Fit bounds to known points
@@ -208,7 +286,8 @@ export class OrdersComponent implements OnInit, OnDestroy {
     const now = Date.now();
     if (now - this.lastDirectionsTime < 20000) return;
     this.lastDirectionsTime = now;
-    computeGoogleRoute(environment.googleMapsApiKey, origin, destination)
+    this.googleMaps
+      .computeRoute(origin, destination)
       .then((route) => {
         this.zone.run(() => {
           if (!route || !this.gmMap) return;
@@ -216,7 +295,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
           this.gmRoutePolyline = new google.maps.Polyline({
             path: decodeGooglePolyline(route.encodedPolyline),
             map: this.gmMap,
-            strokeColor: '#06B6D4',
+            strokeColor: '#6C2BFF',
             strokeWeight: 4,
             strokeOpacity: 0.85,
           });
@@ -230,11 +309,14 @@ export class OrdersComponent implements OnInit, OnDestroy {
 
   private connectWebSocket(orderId: string) {
     this.closeWs();
-    this.ws = openAuthenticatedWebSocket(`/sa/ws/delivery/${orderId}/tracking/`, this.auth.getToken());
+    this.ws = openAuthenticatedWebSocket(
+      `/sa/ws/delivery/${orderId}/tracking/`,
+      this.auth.getToken(),
+    );
     this.ws.onmessage = (msg) => {
       const data = JSON.parse(msg.data);
       if (data.type === 'location_update' && data.lat && data.lng) {
-        const target = {lat: data.lat as number, lng: data.lng as number};
+        const target = { lat: data.lat as number, lng: data.lng as number };
         this.zone.run(() => {
           if (this.driverPos && this.gmMap) {
             this.animateMarker(this.driverPos, target);
@@ -242,9 +324,15 @@ export class OrdersComponent implements OnInit, OnDestroy {
             this.driverPos = target;
             if (this.gmMap) {
               this.gmDriverMarker = new google.maps.Marker({
-                position: target, map: this.gmMap,
-                icon: {url: 'https://maps.google.com/mapfiles/ms/micons/motorcycling.png', scaledSize: new google.maps.Size(36, 36), anchor: new google.maps.Point(18, 18)},
-                title: 'Delivery Partner', zIndex: 10,
+                position: target,
+                map: this.gmMap,
+                icon: {
+                  url: 'https://maps.google.com/mapfiles/ms/micons/motorcycling.png',
+                  scaledSize: new google.maps.Size(36, 36),
+                  anchor: new google.maps.Point(18, 18),
+                },
+                title: 'Delivery Partner',
+                zIndex: 10,
               });
               this.lastDirectionsTime = 0;
               this.requestDirections();
@@ -255,19 +343,32 @@ export class OrdersComponent implements OnInit, OnDestroy {
     };
   }
 
-  private animateMarker(from: {lat: number; lng: number}, to: {lat: number; lng: number}) {
+  private animateMarker(
+    from: { lat: number; lng: number },
+    to: { lat: number; lng: number },
+  ) {
     if (this.animFrameId) cancelAnimationFrame(this.animFrameId);
     const startTime = performance.now();
     const duration = 1500;
     const step = (now: number) => {
       const t = Math.min((now - startTime) / duration, 1);
       const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
-      const pos = {lat: from.lat + (to.lat - from.lat) * ease, lng: from.lng + (to.lng - from.lng) * ease};
-      this.zone.run(() => { this.driverPos = pos; this.gmDriverMarker?.setPosition(pos); });
+      const pos = {
+        lat: from.lat + (to.lat - from.lat) * ease,
+        lng: from.lng + (to.lng - from.lng) * ease,
+      };
+      this.zone.run(() => {
+        this.driverPos = pos;
+        this.gmDriverMarker?.setPosition(pos);
+      });
       if (t < 1) {
         this.animFrameId = requestAnimationFrame(step);
       } else {
-        this.zone.run(() => { this.driverPos = to; this.gmDriverMarker?.setPosition(to); this.requestDirections(); });
+        this.zone.run(() => {
+          this.driverPos = to;
+          this.gmDriverMarker?.setPosition(to);
+          this.requestDirections();
+        });
       }
     };
     this.animFrameId = requestAnimationFrame(step);
@@ -288,7 +389,12 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.customerPos = undefined;
   }
 
-  private closeWs() { if (this.ws) { this.ws.close(); this.ws = null; } }
+  private closeWs() {
+    if (this.ws) {
+      this.ws.close();
+      this.ws = null;
+    }
+  }
 
   closeModal() {
     this.showModal.set(false);

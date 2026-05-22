@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { Subscription, timer } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -8,9 +8,14 @@ import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
 @Component({
   selector: 'app-assets',
   standalone: true,
-  imports: [CommonModule, FormsModule, DynamicTableComponent, TableCellDirective],
+  imports: [
+    CommonModule,
+    FormsModule,
+    DynamicTableComponent,
+    TableCellDirective,
+  ],
   templateUrl: './assets.component.html',
-  styleUrl: './assets.component.scss'
+  styleUrl: './assets.component.scss',
 })
 export class AssetsComponent implements OnInit, OnDestroy {
   private api = inject(ApiService);
@@ -68,10 +73,17 @@ export class AssetsComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnDestroy() { this.reloadSub?.unsubscribe(); }
+  ngOnDestroy() {
+    this.reloadSub?.unsubscribe();
+  }
 
-  manualReload() { this.page.set(1); this.load(); }
-  toggleAutoReload() { this.autoReload.update(v => !v); }
+  manualReload() {
+    this.page.set(1);
+    this.load();
+  }
+  toggleAutoReload() {
+    this.autoReload.update((v) => !v);
+  }
 
   load() {
     this.loading.set(true);
@@ -92,7 +104,7 @@ export class AssetsComponent implements OnInit, OnDestroy {
   loadPartners() {
     this.api.getAdminDeliveryPartners().subscribe({
       next: (r) => this.deliveryPartners.set(r.results || r),
-      error: () => {}
+      error: () => {},
     });
   }
 
@@ -104,8 +116,13 @@ export class AssetsComponent implements OnInit, OnDestroy {
   openCreate() {
     this.isCreating.set(true);
     this.editModel.set({
-      name: '', asset_type: 'vehicle', serial_number: '', description: '',
-      status: 'active', assigned_to: null, purchase_date: null
+      name: '',
+      asset_type: 'vehicle',
+      serial_number: '',
+      description: '',
+      status: 'active',
+      assigned_to: null,
+      purchase_date: null,
     });
     this.modalError.set('');
     this.showModal.set(true);
@@ -126,7 +143,10 @@ export class AssetsComponent implements OnInit, OnDestroy {
   saveAsset() {
     if (this.saving()) return;
     const m = this.editModel();
-    if (!m.name) { this.modalError.set('Asset name is required.'); return; }
+    if (!m.name) {
+      this.modalError.set('Asset name is required.');
+      return;
+    }
     this.saving.set(true);
     this.modalError.set('');
 
@@ -139,11 +159,17 @@ export class AssetsComponent implements OnInit, OnDestroy {
       : this.api.updateAsset(m.id, payload);
 
     req$.subscribe({
-      next: () => { this.saving.set(false); this.closeModal(); this.load(); },
+      next: () => {
+        this.saving.set(false);
+        this.closeModal();
+        this.load();
+      },
       error: (err: any) => {
         this.saving.set(false);
-        this.modalError.set(err.error ? JSON.stringify(err.error) : 'Failed to save asset.');
-      }
+        this.modalError.set(
+          err.error ? JSON.stringify(err.error) : 'Failed to save asset.',
+        );
+      },
     });
   }
 
@@ -154,17 +180,19 @@ export class AssetsComponent implements OnInit, OnDestroy {
 
   statusClass(s: string): string {
     const map: Record<string, string> = {
-      active: 'badge-active', inactive: 'badge-inactive',
-      maintenance: 'badge-maintenance', retired: 'badge-retired'
+      active: 'badge-active',
+      inactive: 'badge-inactive',
+      maintenance: 'badge-maintenance',
+      retired: 'badge-retired',
     };
     return map[s] || '';
   }
 
   typeLabel(t: string): string {
-    return this.assetTypes.find(x => x.value === t)?.label || t;
+    return this.assetTypes.find((x) => x.value === t)?.label || t;
   }
 
   statusLabel(s: string): string {
-    return this.assetStatuses.find(x => x.value === s)?.label || s;
+    return this.assetStatuses.find((x) => x.value === s)?.label || s;
   }
 }

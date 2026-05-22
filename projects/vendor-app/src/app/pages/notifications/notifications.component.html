@@ -6,16 +6,30 @@
       <p>Order, delivery, payout, approval, support, and system messages.</p>
     </div>
     <div class="page-hero-actions">
-      <button class="btn-primary" (click)="markAllRead()">
+      <button
+        class="btn-primary"
+        (click)="markAllRead()"
+        [disabled]="unreadCount() === 0"
+      >
         <span class="material-icons-outlined">done_all</span>
         Mark All Read
       </button>
     </div>
   </section>
 
-  <div class="segmented-filters" role="tablist" aria-label="Notification filters">
+  <div
+    class="segmented-filters"
+    role="tablist"
+    aria-label="Notification filters"
+  >
     @for (type of filters; track type) {
-      <button type="button" [class.active]="filter() === type" (click)="setFilter(type)">{{ type | titlecase }}</button>
+      <button
+        type="button"
+        [class.active]="filter() === type"
+        (click)="setFilter(type)"
+      >
+        {{ type | titlecase }}
+      </button>
     }
   </div>
 
@@ -28,30 +42,57 @@
         <span>{{ filter() | titlecase }} messages</span>
       </div>
       <div>
-        <strong>{{ filter() === 'all' ? 'Unified' : 'Filtered' }}</strong>
+        <strong>{{ unreadCount() }}</strong>
+        <span>Unread</span>
+      </div>
+      <div>
+        <strong>{{ filter() === "all" ? "Unified" : "Filtered" }}</strong>
         <span>Inbox mode</span>
       </div>
     </section>
     <div class="notification-list">
       @for (n of filtered(); track n.id) {
         <article class="notification-card" [class.unread]="!n.is_read">
-          <span class="material-icons-outlined">{{ n.notification_type === 'delivery' ? 'two_wheeler' : n.notification_type === 'payout' ? 'payments' : n.notification_type === 'support' ? 'support_agent' : 'notifications' }}</span>
+          <span class="material-icons-outlined">{{
+            n.notification_type === "delivery"
+              ? "two_wheeler"
+              : n.notification_type === "payout"
+                ? "payments"
+                : n.notification_type === "support"
+                  ? "support_agent"
+                  : "notifications"
+          }}</span>
           <div>
             <h3>{{ n.title }}</h3>
             <p>{{ n.message }}</p>
-            <small>{{ n.created_at | date:'medium' }}</small>
+            <small>{{ n.created_at | date: "medium" }}</small>
           </div>
           <div class="actions">
             @if (!n.is_read) {
               <button (click)="markRead(n)">Mark read</button>
             }
-            @if (n.notification_type === 'order' && (n.data?.order_id || n.data?.id)) {
-              <a [routerLink]="['/orders', n.data?.order_id || n.data?.id]">Open order</a>
+            @if (
+              n.notification_type === "order" &&
+              (n.data?.order_id || n.data?.id)
+            ) {
+              <a [routerLink]="['/orders', n.data?.order_id || n.data?.id]"
+                >Open order</a
+              >
             }
           </div>
         </article>
       } @empty {
-        <div class="state-card">No notifications in this filter.</div>
+        <div class="state-card notifications-empty">
+          <span class="material-icons-outlined">notifications_none</span>
+          <strong>You're all caught up</strong>
+          <p>
+            {{
+              filter() === "all"
+                ? "Order, payout, support, and store alerts will appear here."
+                : "No " + filter() + " notifications right now."
+            }}
+          </p>
+        </div>
       }
     </div>
   }

@@ -1,14 +1,14 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { AuthService, ApiService } from '@shared/public-api';
+import { ApiService, AuthService } from '@shared/public-api';
 
 @Component({
   selector: 'app-login',
   standalone: true,
   imports: [FormsModule, RouterLink],
   templateUrl: './login.component.html',
-  styleUrl: './login.component.scss'
+  styleUrl: './login.component.scss',
 })
 export class LoginComponent {
   private auth = inject(AuthService);
@@ -32,7 +32,9 @@ export class LoginComponent {
     this.auth.login(this.username, this.password).subscribe({
       next: (res) => {
         if (res.user.role !== 'vendor') {
-          this.error.set('Access denied. This portal is strictly for vendors and merchants.');
+          this.error.set(
+            'Access denied. This portal is strictly for vendors and merchants.',
+          );
           this.loading.set(false);
           return;
         }
@@ -41,7 +43,7 @@ export class LoginComponent {
         this.api.getVendorProfile().subscribe({
           next: (profile) => {
             localStorage.setItem(this.auth.vendorKey, profile.status);
-            
+
             if (profile.status === 'approved') {
               if (res.user.force_password_change) {
                 this.router.navigate(['/change-password']);
@@ -56,15 +58,17 @@ export class LoginComponent {
           error: () => {
             this.router.navigate(['/pending-approval']);
             this.loading.set(false);
-          }
+          },
         });
       },
       error: (err) => {
-        this.error.set(err.error?.detail || err.error?.error || 'Invalid credentials. Please try again.');
+        this.error.set(
+          err.error?.detail ||
+            err.error?.error ||
+            'Invalid credentials. Please try again.',
+        );
         this.loading.set(false);
-      }
+      },
     });
   }
 }
-
-

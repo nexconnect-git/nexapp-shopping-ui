@@ -1,0 +1,13 @@
+<button
+  [type]="type"
+  class="nx-btn"
+  [class.primary]="variant === 'primary'"
+  [class.outline]="variant === 'outline'"
+  [class.soft]="variant === 'soft'"
+  [class.green]="color === 'green'"
+  [class.full]="full"
+  [disabled]="disabled"
+  (click)="clicked.emit()"
+>
+  <ng-content />
+</button>

@@ -6,7 +6,11 @@
       <p>Fast stock, availability, and product-readiness controls.</p>
     </div>
     <div class="page-hero-actions">
-      <button class="btn-primary" (click)="bulkSaveVisible()">
+      <button
+        class="btn-primary"
+        (click)="bulkSaveVisible()"
+        [disabled]="!canBulkSaveVisible()"
+      >
         <span class="material-icons-outlined">save</span>
         Save Visible Stock
       </button>
@@ -15,7 +19,11 @@
 
   <div class="segmented-filters" role="tablist" aria-label="Inventory filters">
     @for (f of filters; track f.key) {
-      <button type="button" [class.active]="filter() === f.key" (click)="setFilter(f.key)">
+      <button
+        type="button"
+        [class.active]="filter() === f.key"
+        (click)="setFilter(f.key)"
+      >
         {{ f.label }}
       </button>
     }
@@ -25,15 +33,35 @@
     <div class="state-card">Loading inventory...</div>
   } @else {
     <div class="inventory-workbar">
-      <div>
-        <strong>{{ filteredProducts().length }}</strong>
-        <span>visible products</span>
+      <div class="workbar-metric">
+        <span class="material-icons-outlined">inventory_2</span>
+        <div>
+          <strong>{{ filteredProducts().length }}</strong>
+          <small>Visible products</small>
+        </div>
       </div>
-      <div>
-        <strong>{{ filteredProducts().length ? 'Ready' : 'Empty' }}</strong>
-        <span>{{ filter() === 'all' ? 'all inventory' : filter() }}</span>
+      <div class="workbar-metric">
+        <span class="material-icons-outlined">filter_alt</span>
+        <div>
+          <strong>{{ filterLabel() }}</strong>
+          <small>Current filter</small>
+        </div>
       </div>
-      <button class="btn-primary" (click)="bulkSaveVisible()">Save All Visible</button>
+      <div class="workbar-metric" [class.warn]="attentionCount() > 0">
+        <span class="material-icons-outlined">health_and_safety</span>
+        <div>
+          <strong>{{ attentionCount() }}</strong>
+          <small>Need attention</small>
+        </div>
+      </div>
+      <button
+        class="btn-primary workbar-save"
+        (click)="bulkSaveVisible()"
+        [disabled]="!canBulkSaveVisible()"
+      >
+        <span class="material-icons-outlined">save</span>
+        Save visible stock
+      </button>
     </div>
     <div class="inventory-table">
       @for (product of filteredProducts(); track product.id) {
@@ -46,33 +74,80 @@
                 <span class="material-icons-outlined">image_not_supported</span>
               }
             </div>
-            <div>
+            <div class="product-copy">
               <h3>{{ product.name }}</h3>
               <p>{{ healthLabel(product) }}</p>
               <div class="tags">
-                @if (isLowStock(product)) { <span class="warn">Low stock</span> }
-                @if (product.stock <= 0) { <span class="danger">Out of stock</span> }
-                @if (!product.is_available) { <span>Paused</span> }
-                @if ((product.image_count ?? product.images.length) === 0) { <span>Needs photo</span> }
+                @if (isLowStock(product)) {
+                  <span class="warn">Low stock</span>
+                }
+                @if (product.stock <= 0) {
+                  <span class="danger">Out of stock</span>
+                }
+                @if (!product.is_available) {
+                  <span>Paused</span>
+                }
+                @if ((product.image_count ?? product.images.length) === 0) {
+                  <span>Needs photo</span>
+                }
               </div>
             </div>
           </div>
 
           <div class="stock-edit">
-            <label>Stock</label>
-            <input type="number" min="0" [value]="stockDrafts()[product.id]" (input)="setDraft(product.id, $any($event.target).value)" />
-            <button [disabled]="savingId() === product.id" (click)="saveStock(product)">Save</button>
+            <div class="stock-field">
+              <label>Stock</label>
+              <input
+                type="number"
+                min="0"
+                placeholder="e.g. 25"
+                [value]="stockDrafts()[product.id]"
+                (input)="setDraft(product.id, $any($event.target).value)"
+              />
+            </div>
+            <small class="field-hint">Units available for ordering.</small>
+            @if (rowError(product.id)) {
+              <span class="row-error">{{ rowError(product.id) }}</span>
+            }
+            <button
+              class="save-stock-btn"
+              [disabled]="savingId() === product.id"
+              (click)="saveStock(product)"
+            >
+              {{ savingId() === product.id ? "Saving..." : "Save stock" }}
+            </button>
           </div>
 
           <div class="row-actions">
-            <button [disabled]="savingId() === product.id" (click)="toggleAvailable(product)">
-              {{ product.is_available ? 'Pause Today' : 'Unpause' }}
+            <button
+              [disabled]="savingId() === product.id"
+              (click)="toggleAvailable(product)"
+            >
+              {{ product.is_available ? "Pause Today" : "Unpause" }}
             </button>
-            <a [routerLink]="['/products/edit', product.id]">Edit</a>
+            <a [routerLink]="['/products', product.id, 'edit']">Edit</a>
           </div>
         </article>
       } @empty {
-        <div class="state-card">No products match this inventory filter.</div>
+        <div class="state-card inventory-empty">
+          <span class="material-icons-outlined">inventory_2</span>
+          <strong>{{
+            products().length
+              ? "No products match this inventory filter."
+              : "Add your first product"
+          }}</strong>
+          <p>
+            {{
+              products().length
+                ? "Try another filter or review your product catalog."
+                : "Inventory controls appear after you create a product from the catalog."
+            }}
+          </p>
+          <a routerLink="/products/new" class="btn-primary">
+            <span class="material-icons-outlined">add</span>
+            Add your first product
+          </a>
+        </div>
       }
     </div>
   }

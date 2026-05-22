@@ -1,16 +1,28 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { ApiService, AuthService, ToastService } from '@shared/public-api';
-import { NgIf, NgFor, NgClass } from '@angular/common';
+import { NgClass, NgFor, NgIf } from '@angular/common';
 import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
 
 @Component({
   selector: 'app-admin-users',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgIf, NgClass, DynamicTableComponent, TableCellDirective],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    NgIf,
+    NgClass,
+    DynamicTableComponent,
+    TableCellDirective,
+  ],
   templateUrl: './admin-users.component.html',
-  styleUrls: ['./admin-users.component.scss']
+  styleUrls: ['./admin-users.component.scss'],
 })
 export class AdminUsersComponent implements OnInit {
   private api = inject(ApiService);
@@ -33,7 +45,7 @@ export class AdminUsersComponent implements OnInit {
     { key: 'role', label: 'Role', flex: '1fr' },
     { key: 'status', label: 'Status', flex: '1fr' },
     { key: 'joined', label: 'Joined', flex: '1fr' },
-    { key: 'actions', label: 'Actions', flex: '0.5fr' }
+    { key: 'actions', label: 'Actions', flex: '0.5fr' },
   ];
 
   constructor() {
@@ -43,7 +55,7 @@ export class AdminUsersComponent implements OnInit {
       first_name: ['', Validators.required],
       last_name: ['', Validators.required],
       password: ['', [Validators.required, Validators.minLength(8)]],
-      account_type: ['admin', Validators.required]
+      account_type: ['admin', Validators.required],
     });
   }
 
@@ -67,7 +79,7 @@ export class AdminUsersComponent implements OnInit {
         this.toast.show('Error loading admin users.', 'error');
         this.isLoading = false;
         console.error(err);
-      }
+      },
     });
   }
 
@@ -78,7 +90,10 @@ export class AdminUsersComponent implements OnInit {
 
   onSubmit() {
     if (this.createForm.invalid) {
-      this.toast.show('Please fill out all required fields correctly.', 'error');
+      this.toast.show(
+        'Please fill out all required fields correctly.',
+        'error',
+      );
       return;
     }
 
@@ -96,12 +111,14 @@ export class AdminUsersComponent implements OnInit {
       error: (err) => {
         let msg = 'Failed to create user.';
         if (err.error && typeof err.error === 'object') {
-          msg = Object.values(err.error).map((e: any) => Array.isArray(e) ? e[0] : e).join(', ');
+          msg = Object.values(err.error)
+            .map((e: any) => (Array.isArray(e) ? e[0] : e))
+            .join(', ');
         }
         this.toast.show(msg, 'error');
         this.isSubmitting = false;
         console.error(err);
-      }
+      },
     });
   }
 
@@ -115,10 +132,8 @@ export class AdminUsersComponent implements OnInit {
         error: (err) => {
           this.toast.show('Failed to delete user.', 'error');
           console.error(err);
-        }
+        },
       });
     }
   }
 }
-
-

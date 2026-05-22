@@ -1,8 +1,10 @@
-import { Injectable, inject } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { ApiService } from './api.service';
 import { AlertService } from './alert.service';
 
-export type NotifRouteMapper = (n: any) => { label: string; url: string } | null;
+export type NotifRouteMapper = (
+  n: any,
+) => { label: string; url: string } | null;
 
 /**
  * Centralised notification-polling service.
@@ -45,8 +47,16 @@ export class NotificationPollingService {
       next: (r) => (r.results || r).forEach((n: any) => this.seenIds.add(n.id)),
     });
 
-    window.addEventListener('online',  () => this.handleOnline(), { passive: true });
-    window.addEventListener('offline', () => { this.isOnline = false; }, { passive: true });
+    window.addEventListener('online', () => this.handleOnline(), {
+      passive: true,
+    });
+    window.addEventListener(
+      'offline',
+      () => {
+        this.isOnline = false;
+      },
+      { passive: true },
+    );
 
     // Pause polling when tab is not visible — saves CPU and network across all open tabs.
     document.addEventListener('visibilitychange', () => {
@@ -112,7 +122,10 @@ export class NotificationPollingService {
         // (max ceiling 5 min). We restart the interval with the longer delay.
         if (this.consecutiveErrors >= 3) {
           this._stopInterval();
-          const backoffMs = Math.min(60_000 * Math.pow(2, this.consecutiveErrors - 2), 300_000);
+          const backoffMs = Math.min(
+            60_000 * Math.pow(2, this.consecutiveErrors - 2),
+            300_000,
+          );
           setTimeout(() => {
             if (this.intervalId === null) this._startInterval();
           }, backoffMs);
@@ -137,7 +150,10 @@ export class NotificationPollingService {
         if (!fresh.length) return;
 
         if (isReconnect && fresh.length > 3) {
-          this.alerts.info(`${fresh.length} new notifications while offline`, 'Notifications updated');
+          this.alerts.info(
+            `${fresh.length} new notifications while offline`,
+            'Notifications updated',
+          );
         } else {
           fresh.slice(0, 5).forEach((n) => this.showBanner(n));
         }

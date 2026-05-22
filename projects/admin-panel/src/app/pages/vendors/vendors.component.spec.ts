@@ -1,5 +1,10 @@
 import { Component } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import {
+  type ComponentFixture,
+  fakeAsync,
+  TestBed,
+  tick,
+} from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, Subject, throwError } from 'rxjs';
 import { ApiService } from '@shared/public-api';
@@ -23,7 +28,7 @@ describe('Admin VendorsComponent', () => {
     average_rating: 4.2,
     total_ratings: 11,
     min_order_amount: 250,
-    ...overrides
+    ...overrides,
   });
 
   beforeEach(async () => {
@@ -32,9 +37,11 @@ describe('Admin VendorsComponent', () => {
       'setVendorStatus',
       'deleteAdminVendor',
       'createAdminVendor',
-      'updateAdminVendor'
+      'updateAdminVendor',
     ]);
-    api.getAdminVendors.and.returnValue(of({ results: [vendor()], count: 1 } as any));
+    api.getAdminVendors.and.returnValue(
+      of({ results: [vendor()], count: 1 } as any),
+    );
     confirmSpy = spyOn(window, 'confirm').and.returnValue(true);
 
     await TestBed.configureTestingModule({
@@ -43,10 +50,10 @@ describe('Admin VendorsComponent', () => {
         provideRouter([
           { path: 'vendors/onboard', component: BlankComponent },
           { path: 'vendors/:id', component: BlankComponent },
-          { path: 'vendors/:id/edit', component: BlankComponent }
+          { path: 'vendors/:id/edit', component: BlankComponent },
         ]),
-        { provide: ApiService, useValue: api }
-      ]
+        { provide: ApiService, useValue: api },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(VendorsComponent);
@@ -73,17 +80,23 @@ describe('Admin VendorsComponent', () => {
     fixture.detectChanges();
     tick(0);
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.loading-panel')?.textContent).toContain('Loading workspace data');
+    expect(
+      fixture.nativeElement.querySelector('.loading-panel')?.textContent,
+    ).toContain('Loading workspace data');
 
     pending.next({ results: [], count: 0 });
     pending.complete();
     tick();
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.empty-state')?.textContent).toContain('No vendors found');
+    expect(
+      fixture.nativeElement.querySelector('.empty-state')?.textContent,
+    ).toContain('No vendors found');
   }));
 
   it('handles raw array responses and load errors without trapping loading state', fakeAsync(() => {
-    api.getAdminVendors.and.returnValue(of([vendor({ id: 'raw-vendor' })] as any));
+    api.getAdminVendors.and.returnValue(
+      of([vendor({ id: 'raw-vendor' })] as any),
+    );
     component.load();
     tick();
     expect(component.vendors()[0].id).toBe('raw-vendor');
@@ -100,30 +113,45 @@ describe('Admin VendorsComponent', () => {
     tick(0);
     api.getAdminVendors.calls.reset();
 
-    const search = fixture.nativeElement.querySelector('.toolbar-search input') as HTMLInputElement;
+    const search = fixture.nativeElement.querySelector(
+      '.toolbar-search input',
+    ) as HTMLInputElement;
     search.value = 'spice';
     search.dispatchEvent(new Event('input'));
     tick(399);
     expect(api.getAdminVendors).not.toHaveBeenCalled();
     tick(1);
-    expect(api.getAdminVendors).toHaveBeenCalledWith({ page: 1, search: 'spice' });
+    expect(api.getAdminVendors).toHaveBeenCalledWith({
+      page: 1,
+      search: 'spice',
+    });
 
     api.getAdminVendors.calls.reset();
     component.statusFilter = 'approved';
     component.load();
-    expect(api.getAdminVendors).toHaveBeenCalledWith({ page: 1, search: 'spice', status: 'approved' });
+    expect(api.getAdminVendors).toHaveBeenCalledWith({
+      page: 1,
+      search: 'spice',
+      status: 'approved',
+    });
 
     component.page.set(3);
     fixture.detectChanges();
-    fixture.nativeElement.querySelector('.admin-page-actions .btn-ghost').click();
+    fixture.nativeElement
+      .querySelector('.admin-page-actions .btn-ghost')
+      .click();
     expect(component.page()).toBe(1);
 
-    fixture.nativeElement.querySelector('.admin-page-actions .btn-sm:not(.btn-ghost)').click();
+    fixture.nativeElement
+      .querySelector('.admin-page-actions .btn-sm:not(.btn-ghost)')
+      .click();
     expect(component.autoReload()).toBeFalse();
   }));
 
   it('paginates within bounds and ignores out-of-range requests', fakeAsync(() => {
-    api.getAdminVendors.and.returnValue(of({ results: [vendor()], count: 45 } as any));
+    api.getAdminVendors.and.returnValue(
+      of({ results: [vendor()], count: 45 } as any),
+    );
     fixture.detectChanges();
     tick(0);
     api.getAdminVendors.calls.reset();
@@ -144,13 +172,17 @@ describe('Admin VendorsComponent', () => {
     tick(0);
     fixture.detectChanges();
 
-    (fixture.nativeElement.querySelector('.approve') as HTMLButtonElement).click();
+    (
+      fixture.nativeElement.querySelector('.approve') as HTMLButtonElement
+    ).click();
     tick();
 
     expect(api.setVendorStatus).toHaveBeenCalledWith('vendor-1', 'approved');
     expect(component.actionId()).toBeNull();
 
-    api.setVendorStatus.and.returnValue(throwError(() => new Error('reject failed')));
+    api.setVendorStatus.and.returnValue(
+      throwError(() => new Error('reject failed')),
+    );
     component.setStatus(vendor() as any, 'rejected');
     tick();
     expect(component.actionId()).toBeNull();
@@ -160,7 +192,9 @@ describe('Admin VendorsComponent', () => {
     api.deleteAdminVendor.and.returnValue(of({} as any));
     component.deleteVendor(vendor() as any);
     tick();
-    expect(confirmSpy).toHaveBeenCalledWith('Delete vendor "Spice Hub"? This is permanent.');
+    expect(confirmSpy).toHaveBeenCalledWith(
+      'Delete vendor "Spice Hub"? This is permanent.',
+    );
     expect(api.deleteAdminVendor).toHaveBeenCalledWith('vendor-1');
 
     confirmSpy.and.returnValue(false);
@@ -174,7 +208,9 @@ describe('Admin VendorsComponent', () => {
     fixture.detectChanges();
     expect(component.isCreating()).toBeTrue();
     expect(component.editModel().opening_time).toBe('09:00');
-    expect(fixture.nativeElement.querySelector('.modal-content')?.textContent).toContain('Create New Vendor');
+    expect(
+      fixture.nativeElement.querySelector('.modal-content')?.textContent,
+    ).toContain('Create New Vendor');
 
     component.closeModal();
     expect(component.showModal()).toBeFalse();
@@ -195,7 +231,9 @@ describe('Admin VendorsComponent', () => {
     component.saveVendor();
     tick();
 
-    expect(api.createAdminVendor).toHaveBeenCalledWith(jasmine.objectContaining({ store_name: 'New Store' }));
+    expect(api.createAdminVendor).toHaveBeenCalledWith(
+      jasmine.objectContaining({ store_name: 'New Store' }),
+    );
     expect(component.showModal()).toBeFalse();
 
     component.openCreate();
@@ -205,7 +243,9 @@ describe('Admin VendorsComponent', () => {
     expect(api.createAdminVendor).not.toHaveBeenCalled();
 
     component.saving.set(false);
-    api.createAdminVendor.and.returnValue(throwError(() => ({ error: { username: ['Taken'] } })));
+    api.createAdminVendor.and.returnValue(
+      throwError(() => ({ error: { username: ['Taken'] } })),
+    );
     component.saveVendor();
     tick();
     expect(component.modalError()).toContain('username');
@@ -216,7 +256,10 @@ describe('Admin VendorsComponent', () => {
     component.openEdit(vendor({ id: 'vendor-9' }) as any);
     component.saveVendor();
     tick();
-    expect(api.updateAdminVendor).toHaveBeenCalledWith('vendor-9', jasmine.objectContaining({ id: 'vendor-9' }));
+    expect(api.updateAdminVendor).toHaveBeenCalledWith(
+      'vendor-9',
+      jasmine.objectContaining({ id: 'vendor-9' }),
+    );
     expect(component.showModal()).toBeFalse();
 
     api.updateAdminVendor.calls.reset();
@@ -228,7 +271,9 @@ describe('Admin VendorsComponent', () => {
     expect(api.updateAdminVendor).not.toHaveBeenCalled();
 
     component.saving.set(false);
-    api.updateAdminVendor.and.returnValue(throwError(() => new Error('save failed')));
+    api.updateAdminVendor.and.returnValue(
+      throwError(() => new Error('save failed')),
+    );
     component.saveVendor();
     tick();
     expect(component.saving()).toBeFalse();

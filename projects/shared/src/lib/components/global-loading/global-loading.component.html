@@ -1,0 +1,14 @@
+@if (loading.isLoading()) {
+  <div
+    class="nc-global-loader"
+    role="status"
+    aria-live="polite"
+    aria-label="Loading"
+  >
+    <div class="nc-global-loader__bar"></div>
+    <div class="nc-global-loader__pill">
+      <span class="nc-global-loader__spinner" aria-hidden="true"></span>
+      <span>Loading...</span>
+    </div>
+  </div>
+}

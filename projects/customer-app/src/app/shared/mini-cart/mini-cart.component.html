@@ -1,0 +1,89 @@
+﻿@if (state.miniCartOpen() || ui.miniCartOpen()) {
+  <div class="overlay" (click)="close()"></div>
+  <aside class="mini-cart" [class.enter]="state.miniCartOpen()">
+    <header>
+      <div>
+        <h2>{{ content.cart().miniCartTitle }}</h2>
+        <p>{{ state.itemCount() }} items · {{ state.total() | appCurrency }}</p>
+      </div>
+      <button type="button" aria-label="Close cart" (click)="close()">
+        <span class="material-symbols-rounded">close</span>
+      </button>
+    </header>
+
+    @if (state.freeDeliveryUnlocked()) {
+      <section class="progress unlocked">
+        <span class="material-symbols-rounded">celebration</span> Free delivery
+        unlocked
+      </section>
+    } @else if (state.freeDeliveryRemaining() > 0) {
+      <section class="progress">
+        <b>{{ state.deliveryPromotion().title }}</b>
+        <div><span [style.width.%]="state.freeDeliveryProgress()"></span></div>
+      </section>
+    } @else {
+      <section class="progress">
+        <b>{{ state.deliveryPromotion().title }}</b>
+        <div><span [style.width.%]="100"></span></div>
+      </section>
+    }
+
+    <section class="items">
+      @for (item of state.cart(); track item.id) {
+        <article [class.flash]="state.lastAddedProductId() === item.id">
+          <img [src]="item.image" [alt]="item.name" />
+          <div>
+            <b>{{ item.name }}</b>
+            <small>{{ item.unit }}</small>
+            <strong>{{ item.price * item.quantity | appCurrency }}</strong>
+          </div>
+          <div class="qty">
+            <button
+              type="button"
+              aria-label="Decrease quantity"
+              (click)="state.updateQuantity(item.id, -1)"
+            >
+              <span class="material-symbols-rounded">remove</span>
+            </button>
+            <span>{{ item.quantity }}</span>
+            <button
+              type="button"
+              aria-label="Increase quantity"
+              (click)="state.updateQuantity(item.id, 1)"
+            >
+              <span class="material-symbols-rounded">add</span>
+            </button>
+          </div>
+        </article>
+      } @empty {
+        <p class="empty">
+          {{ content.cart().emptyTitle }}. {{ content.cart().emptyDescription }}
+        </p>
+      }
+    </section>
+
+    <footer>
+      @if (state.itemCount()) {
+        <div>
+          <span>Subtotal</span><b>{{ state.subtotal() | appCurrency }}</b>
+        </div>
+        <div>
+          <span>Delivery</span><b>{{ state.deliveryFeeLabel() }}</b>
+        </div>
+        <div class="total">
+          <span>To Pay</span><b>{{ state.total() | appCurrency }}</b>
+        </div>
+        <a routerLink="/cart" (click)="close()" class="fd-btn outline"
+          >View Cart</a
+        >
+        <a routerLink="/checkout" (click)="close()" class="fd-btn primary"
+          >Checkout</a
+        >
+      } @else {
+        <a routerLink="/stores" (click)="close()" class="fd-btn primary">{{
+          content.cart().browseCta
+        }}</a>
+      }
+    </footer>
+  </aside>
+}

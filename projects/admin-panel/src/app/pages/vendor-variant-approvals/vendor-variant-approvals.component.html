@@ -1,0 +1,156 @@
+<div class="saas-page variant-approvals-page">
+  <section class="hero">
+    <div>
+      <h1>Product Approvals</h1>
+      <p>
+        Review new products and vendor edits before customer visibility.
+      </p>
+    </div>
+    <button class="btn-refresh" (click)="load()" [disabled]="loading()">
+      <span class="material-icons-outlined" [class.spin]="loading()"
+        >refresh</span
+      >
+    </button>
+  </section>
+
+  <section class="stats">
+    <article>
+      <span>Pending</span><strong>{{ pendingCount() }}</strong>
+    </article>
+    <article>
+      <span>Vendors</span><strong>{{ vendorCount() }}</strong>
+    </article>
+    <article>
+      <span>Review Types</span><strong>{{ reviewTypeCount() }}</strong>
+    </article>
+  </section>
+
+  @if (loading()) {
+    <div class="state">Loading pending variants...</div>
+  } @else if (items().length === 0) {
+    <div class="state">No pending variants right now.</div>
+  } @else {
+    <section class="batch-toolbar">
+      <div class="batch-left">
+        <label class="select-all">
+          <input
+            type="checkbox"
+            [checked]="allSelected()"
+            (change)="toggleSelectAll($any($event.target).checked)"
+          />
+          <span>Select all</span>
+        </label>
+        <span class="selected-count">{{ selectedCount() }} selected</span>
+      </div>
+      <div class="batch-actions">
+        <button
+          class="approve"
+          (click)="approveSelected()"
+          [disabled]="selectedCount() === 0 || saving()"
+        >
+          Approve Selected
+        </button>
+        <button
+          class="reject"
+          (click)="openBatchReject()"
+          [disabled]="selectedCount() === 0 || saving()"
+        >
+          Reject Selected
+        </button>
+      </div>
+    </section>
+    <section class="table">
+      <header>
+        <span>Select</span>
+        <span>Variant</span>
+        <span>Vendor</span>
+        <span>Base Catalog</span>
+        <span>Changes</span>
+        <span>Price / Stock</span>
+        <span>Status</span>
+        <span>Actions</span>
+      </header>
+      @for (item of items(); track item.id) {
+        <div class="row">
+          <div>
+            <input
+              type="checkbox"
+              [checked]="isSelected(item.id)"
+              (change)="
+                toggleSelection(item.id, $any($event.target).checked)
+              "
+            />
+          </div>
+          <div>
+            <strong>{{ item.name }}</strong>
+            <small
+              >{{ item.brand || 'No brand' }} · {{ item.weight || '-' }}
+              {{ item.unit || '' }}</small
+            >
+          </div>
+          <div>{{ item.vendor.store_name || '-' }}</div>
+          <div>{{ item.catalog_product?.name || '-' }}</div>
+          <div>{{ changeSummary(item) }}</div>
+          <div>{{ item.price }} / {{ item.stock }}</div>
+          <div>
+            <span class="chip pending">{{
+              item.approval_status || 'pending_approval'
+            }}</span>
+          </div>
+          <div class="actions">
+            <button class="approve" (click)="approve(item)">Approve</button>
+            <button class="reject" (click)="openReject(item)">
+              Reject
+            </button>
+          </div>
+        </div>
+      }
+    </section>
+  }
+</div>
+
+@if (rejectingItem()) {
+  <div class="overlay" (click)="closeReject()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h3>Reject Variant</h3>
+      <p>{{ rejectingItem()?.name }}</p>
+      <textarea
+        [(ngModel)]="rejectReason"
+        placeholder="Enter rejection reason"
+      ></textarea>
+      <div class="modal-actions">
+        <button class="ghost" (click)="closeReject()">Cancel</button>
+        <button
+          class="reject"
+          (click)="confirmReject()"
+          [disabled]="saving()"
+        >
+          {{ saving() ? 'Saving...' : 'Reject' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (batchRejectOpen()) {
+  <div class="overlay" (click)="closeBatchReject()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h3>Reject Selected Variants</h3>
+      <p>{{ selectedCount() }} variants selected</p>
+      <textarea
+        [(ngModel)]="batchRejectReason"
+        placeholder="Enter rejection reason"
+      ></textarea>
+      <div class="modal-actions">
+        <button class="ghost" (click)="closeBatchReject()">Cancel</button>
+        <button
+          class="reject"
+          (click)="confirmBatchReject()"
+          [disabled]="saving()"
+        >
+          {{ saving() ? 'Saving...' : 'Reject Selected' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

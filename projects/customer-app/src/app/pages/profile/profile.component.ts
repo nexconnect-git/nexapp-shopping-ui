@@ -1,132 +1,137 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { RouterLink, Router } from '@angular/router';
-import { AlertService, ApiService, AuthService } from '@shared/public-api';
-import { NxPalettePickerComponent } from '../../design-system/index';
+import { Component, computed, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import {
+  ApiService,
+  AppCurrencyPipe,
+  CurrencyService,
+} from '@shared/public-api';
+import { UiService } from '../../services/ui.service';
+import { AppStateService } from '../../services/app-state.service';
+import { AuthService } from '../../services/auth.service';
+import { OrderService } from '../../services/order.service';
+import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
 
 @Component({
-  selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, NxPalettePickerComponent],
+  imports: [RouterLink, BreadcrumbsComponent, AppCurrencyPipe],
   templateUrl: './profile.component.html',
-  styleUrl: './profile.component.scss'
+  styleUrls: ['./profile.component.scss'],
 })
-export class ProfileComponent implements OnInit {
-  private api = inject(ApiService);
-  auth = inject(AuthService);
-  private alerts = inject(AlertService);
-  private router = inject(Router);
+export class ProfileComponent {
+  quickLinks = [
+    {
+      icon: 'shopping_bag',
+      label: 'My Orders',
+      sub: 'View your order history',
+      path: '/orders',
+    },
+    {
+      icon: 'favorite',
+      label: 'Wishlist',
+      sub: 'Items you saved for later',
+      path: '/wishlist',
+    },
+    {
+      icon: 'local_offer',
+      label: 'Offers',
+      sub: 'Available offers and coupons',
+      path: '/offers',
+    },
+    {
+      icon: 'support_agent',
+      label: 'Help & Support',
+      sub: 'Get help and contact support',
+      path: '/help',
+    },
+  ];
 
-  form: any = {};
-  avatarPreview = signal<string | null>(null);
-  loading = signal(true);
-  saving = signal(false);
-  avatarUploading = signal(false);
-  isEditing = false;
-  recentOrders = signal<any[]>([]);
-  loyaltyPoints = signal<number>(0);
-  reorderingId = signal<string | null>(null);
+  walletBalance = signal(0);
+  walletActivity = signal<
+    Array<{ icon: string; title: string; sub: string; amount: string }>
+  >([]);
+  rewardAmount = signal(0);
+  totalOrders = computed(
+    () =>
+      this.orders.orders().length ||
+      this.auth.currentUser()?.ordersDelivered ||
+      0,
+  );
+  activities = computed(() => {
+    const orderActivity = this.orders
+      .orders()
+      .slice(0, 3)
+      .map((order) => ({
+        icon: order.status === 'Delivered' ? 'local_shipping' : 'shopping_bag',
+        title:
+          order.status === 'Delivered' ? 'Order Delivered' : 'Order Placed',
+        sub: [order.date, order.time].filter(Boolean).join(', '),
+        amount: this.currency.format(order.amount),
+      }));
+    return [...orderActivity, ...this.walletActivity()].slice(0, 4);
+  });
 
-  ngOnInit() {
-    this.api.getLoyalty().subscribe({
-      next: (l) => this.loyaltyPoints.set(l.points ?? 0),
-      error: () => {}
-    });
-    this.api.getProfile().subscribe({
-      next: (u) => {
-        this.form = { ...u };
-        if (u.avatar) this.avatarPreview.set(u.avatar);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false)
-    });
-
-    this.api.getOrders().subscribe({
-      next: (res) => {
-        const orders = (res.results || res) as any[];
-        this.recentOrders.set(orders.slice(0, 5));
-      },
-      error: () => { /* ignore */ }
-    });
+  constructor(
+    public ui: UiService,
+    public state: AppStateService,
+    public auth: AuthService,
+    public orders: OrderService,
+    private api: ApiService,
+    private currency: CurrencyService,
+  ) {
+    this.loadWallet();
+    this.loadReferral();
   }
 
-  onAvatarChange(event: Event) {
-    const file = (event.target as HTMLInputElement).files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => this.avatarPreview.set(e.target?.result as string);
-    reader.readAsDataURL(file);
-    this.avatarUploading.set(true);
-    this.api.uploadAvatar(file).subscribe({
-      next: (u) => { if (u.avatar) this.avatarPreview.set(u.avatar); this.avatarUploading.set(false); },
-      error: () => this.avatarUploading.set(false)
-    });
+  editAddress(): void {
+    this.ui.openEdit('address');
   }
 
-  save() {
-    this.saving.set(true);
-    this.api.updateProfile(this.form).subscribe({
-      next: (u) => {
-        this.auth.updateUserData(u);
-        this.alerts.success('Profile updated successfully.');
-        this.saving.set(false);
-        this.isEditing = false;
-      },
-      error: (err) => {
-        const e = err.error;
-        this.alerts.error(typeof e === 'object' ? Object.values(e).flat().join(' ') : 'Update failed.');
-        this.saving.set(false);
-      }
-    });
+  manageMembership(): void {
+    this.state.showToast('FlashDrop One membership management is coming soon');
   }
 
-  logout() {
-    this.auth.logout();
-    this.router.navigate(['/login']);
+  viewActivity(): void {
+    this.state.showToast('Showing recent account activity');
   }
 
-  initials() {
-    const u = this.form;
-    if (!u) return '?';
-    return ((u.first_name?.[0] || '') + (u.last_name?.[0] || '')).toUpperCase() || u.username?.[0]?.toUpperCase() || '?';
-  }
-
-  orderStatusLabel(status: string): string {
-    const map: Record<string, string> = {
-      placed: 'Placed', confirmed: 'Confirmed', preparing: 'Preparing',
-      picked_up: 'Picked Up', on_the_way: 'On the Way',
-      delivered: 'Delivered', cancelled: 'Cancelled'
-    };
-    return map[status] || status;
-  }
-
-  orderStatusClass(status: string): string {
-    if (status === 'delivered') return 'delivered';
-    if (status === 'cancelled') return 'cancelled';
-    if (['on_the_way', 'picked_up'].includes(status)) return 'transit';
-    return 'active';
-  }
-
-  reorder(orderId: string, event?: Event) {
-    event?.preventDefault();
-    event?.stopPropagation();
-    this.reorderingId.set(orderId);
-    this.api.reorder(orderId).subscribe({
-      next: (cart) => {
-        this.reorderingId.set(null);
-        this.api.refreshCartCount();
-        if (cart.skipped?.length) {
-          this.alerts.warning(`${cart.skipped.length} item(s) were unavailable and skipped.`, 'Some items were skipped');
-        } else {
-          this.alerts.success('Basket rebuilt from your recent order.');
-        }
-        this.router.navigate(['/cart']);
+  private loadWallet(): void {
+    this.api.getWallet().subscribe({
+      next: (wallet) => {
+        this.walletBalance.set(Number(wallet.balance || wallet.amount || 0));
+        const txns = wallet.transactions || wallet.recent_transactions || [];
+        this.walletActivity.set(
+          txns.slice(0, 4).map((txn: any) => {
+            const amount = Number(txn.amount || 0);
+            return {
+              icon: 'account_balance_wallet',
+              title: txn.description || txn.type || 'Wallet transaction',
+              sub: txn.created_at
+                ? new Date(txn.created_at).toLocaleString()
+                : '',
+              amount: `${amount >= 0 ? '+' : ''}${this.currency.format(amount)}`,
+            };
+          }),
+        );
       },
       error: () => {
-        this.reorderingId.set(null);
-        this.alerts.error('Could not reorder this basket right now.');
-      }
+        this.walletBalance.set(0);
+        this.walletActivity.set([]);
+      },
+    });
+  }
+
+  private loadReferral(): void {
+    this.api.getReferral().subscribe({
+      next: (referral) =>
+        this.rewardAmount.set(
+          Number(
+            referral.total_earned ||
+              referral.reward_balance ||
+              referral.rewards ||
+              0,
+          ),
+        ),
+      error: () => this.rewardAmount.set(0),
     });
   }
 }

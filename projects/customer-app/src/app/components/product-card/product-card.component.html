@@ -1,0 +1,46 @@
+<article class="product-card" [class.compact]="compact">
+  <a [routerLink]="['/product', product.id]" class="image-wrap">
+    <img [src]="product.image" [alt]="product.name" loading="lazy" />
+    @if (product.discount) {
+      <span class="discount">{{ product.discount }}</span>
+    }
+  </a>
+  <div class="body">
+    <a [routerLink]="['/product', product.id]" class="name">{{
+      product.name
+    }}</a>
+    @if (product.storeName) {
+      <small class="store-name">{{ product.storeName }}</small>
+    }
+    <small>{{ product.unit }}</small>
+    <div class="bottom">
+      <div class="price">
+        <b>{{ product.price | appCurrency }}</b
+        ><del>{{ product.mrp | appCurrency }}</del>
+      </div>
+      @if (quantity()) {
+        <div class="qty">
+          <button
+            type="button"
+            aria-label="Decrease quantity"
+            (click)="state.updateQuantity(product.id, -1)"
+          >
+            <span class="material-symbols-rounded">remove</span>
+          </button>
+          <b>{{ quantity() }}</b>
+          <button
+            type="button"
+            aria-label="Increase quantity"
+            (click)="state.updateQuantity(product.id, 1)"
+          >
+            <span class="material-symbols-rounded">add</span>
+          </button>
+        </div>
+      } @else {
+        <button type="button" class="add" (click)="state.addToCart(product)">
+          Add
+        </button>
+      }
+    </div>
+  </div>
+</article>

@@ -1,0 +1,28 @@
+<article class="store-card">
+  <a [routerLink]="['/store', store.id]" class="store-img">
+    <img [src]="store.image" [alt]="store.name" loading="lazy" />
+  </a>
+  <div class="info">
+    <a [routerLink]="['/store', store.id]" class="name">{{ store.name }}</a>
+    <div class="meta">
+      <span
+        ><span class="material-symbols-rounded">star</span>
+        {{ store.rating }}</span
+      >
+      <small>({{ store.ratings }})</small>
+    </div>
+    <div class="eta">
+      <span class="material-symbols-rounded">schedule</span> {{ store.eta }}
+    </div>
+    @if (store.offer) {
+      <div class="offer">
+        <span class="material-symbols-rounded">local_offer</span>
+        {{ store.offer }}
+      </div>
+    } @else {
+      <div class="offer muted">
+        <span class="material-symbols-rounded">sell</span> Live catalog offers
+      </div>
+    }
+  </div>
+</article>

@@ -1,52 +1,58 @@
-import { Component, computed, inject, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { FormsModule } from '@angular/forms';
-import { ApiService, AppCurrencyPipe, Order } from '@shared/public-api';
+import { AppCurrencyPipe } from '@shared/public-api';
+import { OrderService } from '../../services/order.service';
+import { Order } from '../../models';
+import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
+import { UiService } from '../../services/ui.service';
+import { AppStateService } from '../../services/app-state.service';
+import { DisplayOrderIdPipe } from '../../shared/display-order-id.pipe';
 
 @Component({
-  selector: 'app-orders',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, AppCurrencyPipe],
+  imports: [
+    RouterLink,
+    BreadcrumbsComponent,
+    AppCurrencyPipe,
+    DisplayOrderIdPipe,
+  ],
   templateUrl: './orders.component.html',
-  styleUrl: './orders.component.scss'
+  styleUrls: ['./orders.component.scss'],
 })
-export class OrdersComponent implements OnInit {
-  private api = inject(ApiService);
-  private readonly activeStatuses = ['placed', 'confirmed', 'preparing', 'ready', 'picked_up', 'on_the_way'];
+export class OrdersComponent {
+  activeTab = signal('All Orders');
+  tabs = ['All Orders', 'Active', 'Delivered', 'Cancelled'];
+  Math = Math;
 
-  orders = signal<Order[]>([]);
-  loading = signal(true);
-  activeStatus = signal('');
+  constructor(
+    public orders: OrderService,
+    public ui: UiService,
+    private state: AppStateService,
+  ) {}
 
-  readonly filteredOrders = computed(() => {
-    const active = this.activeStatus();
-    const orders = this.orders();
-    if (!active) return orders;
-    if (active === 'active') {
-      return orders.filter((order) => this.activeStatuses.includes(order.status));
-    }
-    return orders.filter((order) => order.status === active);
+  filteredOrders = computed(() => {
+    const tab = this.activeTab();
+    if (tab === 'All Orders') return this.orders.orders();
+    return this.orders
+      .orders()
+      .filter(
+        (order) => order.status === (tab === 'Cancelled' ? 'Cancelled' : tab),
+      );
   });
+  totalSpent = computed(() =>
+    this.orders.orders().reduce((total, order) => total + order.amount, 0),
+  );
 
-  readonly statusTabs = [
-    { label: 'All', value: '' },
-    { label: 'Active', value: 'active' },
-    { label: 'Preparing', value: 'preparing' },
-    { label: 'On the way', value: 'on_the_way' },
-    { label: 'Delivered', value: 'delivered' },
-    { label: 'Cancelled', value: 'cancelled' },
-  ];
-
-  ngOnInit() { this.load(); }
-
-  load() {
-    this.loading.set(true);
-    this.api.getOrders().subscribe({
-      next: (r) => { this.orders.set(r.results || r); this.loading.set(false); },
-      error: () => this.loading.set(false)
-    });
+  count(tab: string): number {
+    if (tab === 'All Orders') return this.orders.orders().length;
+    return this.orders
+      .orders()
+      .filter(
+        (order) => order.status === (tab === 'Cancelled' ? 'Cancelled' : tab),
+      ).length;
   }
 
-  setStatus(s: string) { this.activeStatus.set(s); this.load(); }
+  chooseDateRange(): void {
+    this.state.showToast('Showing recent orders');
+  }
 }

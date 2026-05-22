@@ -1,0 +1,180 @@
+<main class="fd-content">
+  <fd-breadcrumbs
+    [items]="[
+      { label: 'Orders', link: '/orders' },
+      { label: 'Completed Order' },
+    ]"
+  />
+
+  <header class="page-head">
+    <a routerLink="/orders" class="fd-back">Back</a>
+    <div>
+      <h1 class="fd-title">Order Delivered</h1>
+      <p class="fd-subtitle">Your order has been successfully completed.</p>
+    </div>
+    <span class="delivered-badge"
+      ><span class="material-symbols-rounded">task_alt</span> Delivered</span
+    >
+  </header>
+
+  <section class="success-card">
+    <div class="success-icon">
+      <span class="material-symbols-rounded">task_alt</span>
+    </div>
+    <div>
+      <small>ORDER ID</small>
+      <h2>#{{ order() | displayOrderId }}</h2>
+      <p>Delivered on {{ order().date }} at {{ order().time }}</p>
+    </div>
+    <div>
+      <small>DELIVERED TO</small>
+      <h3>{{ state.activeAddress()?.label || "Selected location" }}</h3>
+      <p>{{ state.location() }}</p>
+    </div>
+    <div>
+      <small>TOTAL PAID</small>
+      <h2>{{ order().amount | appCurrency }}</h2>
+      <p>{{ order().payment }}</p>
+    </div>
+  </section>
+
+  <section class="finished-layout">
+    <div class="left-col">
+      <section class="fd-card status-panel">
+        <div class="timeline">
+          @for (step of steps(); track step.title) {
+            <div class="done">
+              <b><span class="material-symbols-rounded">task_alt</span></b>
+              <span>{{ step.title }}</span>
+              <small>{{ step.time }}</small>
+            </div>
+          }
+        </div>
+      </section>
+
+      <section class="fd-card items-panel">
+        <div class="section-head">
+          <h2>Items Delivered</h2>
+          <button type="button" (click)="downloadInvoice()">
+            Download Invoice
+          </button>
+        </div>
+
+        @for (item of order().items; track item.id) {
+          <article class="item-row">
+            <img [src]="item.image" [alt]="item.name" />
+            <div>
+              <b>{{ item.name }}</b>
+              <small>{{ item.unit }}</small>
+              <em>Delivered fresh and quality checked</em>
+            </div>
+            <span>Qty 1</span>
+            <strong>{{ item.price | appCurrency }}</strong>
+          </article>
+        }
+      </section>
+
+      <section class="fd-card rating-panel">
+        <div class="rating-title">
+          <div>
+            <h2>Rate your order</h2>
+            <p>How was your delivery experience?</p>
+          </div>
+          <span>{{ ratingLabel() }}</span>
+        </div>
+        <div class="stars">
+          @for (star of [1, 2, 3, 4, 5]; track star) {
+            <button
+              type="button"
+              [class.active]="rating() >= star"
+              (click)="rating.set(star)"
+            >
+              <span class="material-symbols-rounded">star</span>
+            </button>
+          }
+        </div>
+        <textarea
+          placeholder="Tell us what went well or what we can improve..."
+        ></textarea>
+        <button type="button" class="fd-btn primary" (click)="submitRating()">
+          Submit Rating
+        </button>
+      </section>
+    </div>
+
+    <aside class="right-col">
+      <section class="fd-card partner-card">
+        <h3>Delivery Partner</h3>
+        <div class="partner">
+          @if (partnerImage()) {
+            <img [src]="partnerImage()" alt="Delivery partner" />
+          } @else {
+            <span class="partner-initial"
+              ><span class="material-symbols-rounded">two_wheeler</span></span
+            >
+          }
+          <div>
+            <b>{{
+              order().raw?.delivery_partner_info?.name || "Delivery partner"
+            }}</b>
+            <span
+              >{{
+                order().raw?.delivery_partner_info?.average_rating || "New"
+              }}
+              rating</span
+            >
+            <small>Delivered with FlashDrop Express</small>
+          </div>
+        </div>
+        <p>Delivered safely by the assigned partner.</p>
+      </section>
+
+      <section class="fd-card bill-card">
+        <h3>Bill Summary</h3>
+        <p>
+          <span>Item Total</span><b>{{ order().amount | appCurrency }}</b>
+        </p>
+        <p>
+          <span>Delivery Fee</span
+          ><b class="green">{{ orderFee("delivery_fee") | appCurrency }}</b>
+        </p>
+        <p>
+          <span>Handling Fee</span
+          ><b>{{ orderFee("handling_fee") | appCurrency }}</b>
+        </p>
+        <p>
+          <span>Discount</span
+          ><b class="green">-{{ orderFee("discount_amount") | appCurrency }}</b>
+        </p>
+        <hr />
+        <p class="total">
+          <span>Total Paid</span><b>{{ order().amount | appCurrency }}</b>
+        </p>
+      </section>
+
+      <section class="fd-card actions-card">
+        <h3>Need anything else?</h3>
+        <a [routerLink]="['/tracking', order().id]" class="fd-btn outline"
+          >View Live Tracking Style</a
+        >
+        <button type="button" class="fd-btn primary" (click)="reorder()">
+          Reorder Items
+        </button>
+        <a routerLink="/help" class="fd-btn soft">Need Help?</a>
+      </section>
+
+      @if (nextCoupon(); as coupon) {
+        <section class="fd-card coupon-card">
+          <small>NEXT ORDER OFFER</small>
+          <h3>{{ couponTitle(coupon) }}</h3>
+          <p>
+            Use <b>{{ couponCode(coupon) }}</b> on your next FlashDrop order.
+          </p>
+          <button type="button" class="fd-btn outline" (click)="copyCoupon()">
+            Copy Coupon
+          </button>
+        </section>
+      }
+    </aside>
+  </section>
+</main>

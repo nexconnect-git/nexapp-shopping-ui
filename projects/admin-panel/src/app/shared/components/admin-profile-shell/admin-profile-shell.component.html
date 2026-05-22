@@ -1,4 +1,4 @@
-<div class="admin-profile-shell">
+<div class="admin-profile-shell saas-profile-shell">
   @if (loading) {
     <div class="loading-state">
       <div class="spinner"></div>
@@ -8,11 +8,14 @@
     <ng-content select="[profile-alert]" />
 
     <header class="profile-hero-card">
-      <div class="hero-banner">
+      <div class="hero-main">
         <div class="hero-identity">
-          <div class="hero-avatar" [style.background]="avatarImage ? 'transparent' : avatarBg">
+          <div
+            class="hero-avatar"
+            [style.background]="avatarImage ? 'transparent' : avatarBg"
+          >
             @if (avatarImage) {
-              <img [src]="avatarImage" alt="">
+              <img [src]="avatarImage" alt="" />
             } @else {
               {{ avatarText }}
             }
@@ -21,16 +24,18 @@
           <div class="hero-title-block">
             <h1>{{ title }}</h1>
             <p>{{ subtitle }}</p>
+            @if (badges.length) {
+              <div class="hero-info-top">
+                @for (badge of badges; track badge.label) {
+                  <span class="badge" [class]="badge.className || ''">{{
+                    badge.label
+                  }}</span>
+                }
+              </div>
+            }
           </div>
         </div>
-      </div>
 
-      <div class="hero-action-bar">
-        <div class="hero-info-top">
-          @for (badge of badges; track badge.label) {
-            <span class="badge" [class]="badge.className || ''">{{ badge.label }}</span>
-          }
-        </div>
         <div class="header-actions">
           <ng-content select="[profile-actions]" />
         </div>
@@ -38,10 +43,18 @@
     </header>
 
     @if (metrics.length) {
-      <section class="profile-intel-grid" aria-label="Profile operations summary">
+      <section
+        class="profile-intel-grid"
+        aria-label="Profile operations summary"
+      >
         @for (metric of metrics; track metric.label) {
           <div class="intel-card" [class.priority]="metric.priority">
-            <div class="intel-icon" [class.green]="metric.tone === 'green'" [class.warm]="metric.tone === 'warm'" [class.slate]="metric.tone === 'slate'">
+            <div
+              class="intel-icon"
+              [class.green]="metric.tone === 'green'"
+              [class.warm]="metric.tone === 'warm'"
+              [class.slate]="metric.tone === 'slate'"
+            >
               <span class="material-icons-outlined">{{ metric.icon }}</span>
             </div>
             <div>
@@ -59,7 +72,11 @@
     @if (tabs.length) {
       <div class="tab-strip">
         @for (tab of tabs; track tab.id) {
-          <button class="tab-btn" [class.active]="activeTab === tab.id" (click)="tabChange.emit(tab.id)">
+          <button
+            class="tab-btn"
+            [class.active]="activeTab === tab.id"
+            (click)="tabChange.emit(tab.id)"
+          >
             <span class="material-icons-outlined">{{ tab.icon }}</span>
             {{ tab.label }}
           </button>

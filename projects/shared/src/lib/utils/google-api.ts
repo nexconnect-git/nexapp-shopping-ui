@@ -28,7 +28,23 @@ export interface GoogleRouteResult {
   encodedPolyline: string;
 }
 
-export const DEFAULT_GOOGLE_MAPS_API_KEY = 'AIzaSyDzuk1DZxnNniff_FJbzHnobHuYbk4hMrc';
+export const DEFAULT_GOOGLE_MAPS_API_KEY = '';
+export const DEFAULT_GOOGLE_MAPS_MAP_ID = '';
+
+export function getGoogleMapsApiKey(
+  fallback = DEFAULT_GOOGLE_MAPS_API_KEY,
+): string {
+  const configured = (globalThis as any).__NEXCONNECT_CONFIG__
+    ?.googleMapsApiKey;
+  return String(configured || fallback || '').trim();
+}
+
+export function getGoogleMapsMapId(
+  fallback = DEFAULT_GOOGLE_MAPS_MAP_ID,
+): string {
+  const configured = (globalThis as any).__NEXCONNECT_CONFIG__?.googleMapsMapId;
+  return String(configured || fallback || '').trim();
+}
 
 const PLACES_AUTOCOMPLETE_FIELD_MASK = [
   'suggestions.placePrediction.placeId',
@@ -64,26 +80,32 @@ function googleLatLng(point: GoogleLatLng) {
 
 export async function autocompleteGooglePlaces(
   apiKey: string,
-  input: string
+  input: string,
 ): Promise<GooglePlaceSuggestion[]> {
   const trimmedInput = input.trim();
   if (!trimmedInput) return [];
+  if (!apiKey) throw new Error('Google Places API key is not configured');
 
-  const response = await fetch('https://places.googleapis.com/v1/places:autocomplete', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Goog-Api-Key': apiKey,
-      'X-Goog-FieldMask': PLACES_AUTOCOMPLETE_FIELD_MASK,
+  const response = await fetch(
+    'https://places.googleapis.com/v1/places:autocomplete',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': apiKey,
+        'X-Goog-FieldMask': PLACES_AUTOCOMPLETE_FIELD_MASK,
+      },
+      body: JSON.stringify({
+        input: trimmedInput,
+        includedRegionCodes: ['in'],
+      }),
     },
-    body: JSON.stringify({
-      input: trimmedInput,
-      includedRegionCodes: ['in'],
-    }),
-  });
+  );
 
   if (!response.ok) {
-    throw new Error(`Places autocomplete failed with status ${response.status}`);
+    throw new Error(
+      `Places autocomplete failed with status ${response.status}`,
+    );
   }
 
   const data = await response.json();
@@ -93,7 +115,10 @@ export async function autocompleteGooglePlaces(
     .map((prediction: any) => ({
       placeId: prediction.placeId || '',
       text: prediction.text?.text || '',
-      mainText: prediction.structuredFormat?.mainText?.text || prediction.text?.text || '',
+      mainText:
+        prediction.structuredFormat?.mainText?.text ||
+        prediction.text?.text ||
+        '',
       secondaryText: prediction.structuredFormat?.secondaryText?.text || '',
     }))
     .filter((place: GooglePlaceSuggestion) => place.placeId && place.text);
@@ -101,17 +126,21 @@ export async function autocompleteGooglePlaces(
 
 export async function getGooglePlaceDetails(
   apiKey: string,
-  placeId: string
+  placeId: string,
 ): Promise<GooglePlaceResult | null> {
   if (!placeId) return null;
+  if (!apiKey) throw new Error('Google Places API key is not configured');
 
-  const response = await fetch(`https://places.googleapis.com/v1/places/${placeId}`, {
-    method: 'GET',
-    headers: {
-      'X-Goog-Api-Key': apiKey,
-      'X-Goog-FieldMask': PLACES_DETAILS_FIELD_MASK,
+  const response = await fetch(
+    `https://places.googleapis.com/v1/places/${placeId}`,
+    {
+      method: 'GET',
+      headers: {
+        'X-Goog-Api-Key': apiKey,
+        'X-Goog-FieldMask': PLACES_DETAILS_FIELD_MASK,
+      },
     },
-  });
+  );
 
   if (!response.ok) {
     throw new Error(`Place details failed with status ${response.status}`);
@@ -133,22 +162,26 @@ export async function computeGoogleRoute(
   apiKey: string,
   origin: GoogleLatLng,
   destination: GoogleLatLng,
-  intermediates: GoogleLatLng[] = []
+  intermediates: GoogleLatLng[] = [],
 ): Promise<GoogleRouteResult | null> {
-  const response = await fetch('https://routes.googleapis.com/directions/v2:computeRoutes', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Goog-Api-Key': apiKey,
-      'X-Goog-FieldMask': ROUTES_FIELD_MASK,
+  if (!apiKey) throw new Error('Google Routes API key is not configured');
+  const response = await fetch(
+    'https://routes.googleapis.com/directions/v2:computeRoutes',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': apiKey,
+        'X-Goog-FieldMask': ROUTES_FIELD_MASK,
+      },
+      body: JSON.stringify({
+        origin: googleLatLng(origin),
+        destination: googleLatLng(destination),
+        intermediates: intermediates.map(googleLatLng),
+        travelMode: 'DRIVE',
+      }),
     },
-    body: JSON.stringify({
-      origin: googleLatLng(origin),
-      destination: googleLatLng(destination),
-      intermediates: intermediates.map(googleLatLng),
-      travelMode: 'DRIVE',
-    }),
-  });
+  );
 
   if (!response.ok) {
     throw new Error(`Routes API failed with status ${response.status}`);
@@ -183,7 +216,7 @@ export function decodeGooglePolyline(encoded: string): GoogleLatLng[] {
       shift += 5;
     } while (byte >= 0x20);
 
-    lat += (result & 1) ? ~(result >> 1) : (result >> 1);
+    lat += result & 1 ? ~(result >> 1) : result >> 1;
     shift = 0;
     result = 0;
 
@@ -193,7 +226,7 @@ export function decodeGooglePolyline(encoded: string): GoogleLatLng[] {
       shift += 5;
     } while (byte >= 0x20);
 
-    lng += (result & 1) ? ~(result >> 1) : (result >> 1);
+    lng += result & 1 ? ~(result >> 1) : result >> 1;
     points.push({ lat: lat / 1e5, lng: lng / 1e5 });
   }
 

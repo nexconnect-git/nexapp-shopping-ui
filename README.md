@@ -4,14 +4,14 @@ Angular 19 monorepo with four standalone applications for the NexConnect multi-v
 
 ## Tech Stack
 
-| | |
-|---|---|
-| Framework | Angular 19 (standalone components, no NgModules) |
-| State | Angular Signals (`signal()`, `computed()`) |
-| HTTP | `HttpClient` + auth interceptor |
-| Auth | JWT stored in `localStorage`, injected via `AuthInterceptor` |
-| Styling | SCSS with CSS custom properties (design tokens) |
-| Build | Angular CLI workspace — each app builds independently |
+|           |                                                              |
+| --------- | ------------------------------------------------------------ |
+| Framework | Angular 19 (standalone components, no NgModules)             |
+| State     | Angular Signals (`signal()`, `computed()`)                   |
+| HTTP      | `HttpClient` + auth interceptor                              |
+| Auth      | JWT stored in `localStorage`, injected via `AuthInterceptor` |
+| Styling   | SCSS with CSS custom properties (design tokens)              |
+| Build     | Angular CLI workspace — each app builds independently        |
 
 ## Workspace Structure
 
@@ -39,24 +39,26 @@ frontend/
 ## Applications
 
 ### customer-app
+
 Shopping experience for end customers.
 
-| Route | Component | Notes |
-|---|---|---|
-| `/` | `HomeComponent` | Hero, featured products, featured vendors |
-| `/shops` | `ShopsComponent` | Vendor list with search, city, open-only filters |
-| `/shops/:id` | `ShopDetailComponent` | Vendor info + product grid |
-| `/products` | `ProductsComponent` | Browse all products — sidebar filters (category, price, stock), sort |
-| `/products/:id` | `ProductDetailComponent` | Image gallery, add-to-cart, reviews |
-| `/cart` | `CartComponent` | Qty update, remove, address picker, place order |
-| `/orders` | `OrdersComponent` | Order history with status tabs |
-| `/orders/:id` | `OrderDetailComponent` | Items, pricing, tracking timeline, cancel |
-| `/profile` | `ProfileComponent` | Edit user account |
-| `/addresses` | `AddressesComponent` | Manage delivery addresses |
-| `/login` | `LoginComponent` | Validates `role=customer` |
-| `/register` | `RegisterComponent` | Flat form, sends `role: customer` |
+| Route           | Component                | Notes                                                                |
+| --------------- | ------------------------ | -------------------------------------------------------------------- |
+| `/`             | `HomeComponent`          | Hero, featured products, featured vendors                            |
+| `/shops`        | `ShopsComponent`         | Vendor list with search, city, open-only filters                     |
+| `/shops/:id`    | `ShopDetailComponent`    | Vendor info + product grid                                           |
+| `/products`     | `ProductsComponent`      | Browse all products — sidebar filters (category, price, stock), sort |
+| `/products/:id` | `ProductDetailComponent` | Image gallery, add-to-cart, reviews                                  |
+| `/cart`         | `CartComponent`          | Qty update, remove, address picker, place order                      |
+| `/orders`       | `OrdersComponent`        | Order history with status tabs                                       |
+| `/orders/:id`   | `OrderDetailComponent`   | Items, pricing, tracking timeline, cancel                            |
+| `/profile`      | `ProfileComponent`       | Edit user account                                                    |
+| `/addresses`    | `AddressesComponent`     | Manage delivery addresses                                            |
+| `/login`        | `LoginComponent`         | Validates `role=customer`                                            |
+| `/register`     | `RegisterComponent`      | Flat form, sends `role: customer`                                    |
 
 **App shell features:**
+
 - Sticky header with nav links
 - Cart icon badge (live count via `api.cartCount` signal, refreshed on navigation and after add-to-cart)
 - Notification bell badge (live unread count via `api.unreadNotifications`, marks all read on click)
@@ -66,51 +68,54 @@ Shopping experience for end customers.
 ---
 
 ### vendor-app
+
 Store management for approved vendors.
 
-| Route | Component | Notes |
-|---|---|---|
-| `/` | `DashboardComponent` | Stats cards, recent orders table |
-| `/products` | `ProductsComponent` | Product table with delete |
-| `/products/new` | `ProductFormComponent` | Create product — loads categories |
-| `/products/:id/edit` | `ProductFormComponent` | Edit product (same component) |
-| `/orders` | `OrdersComponent` | Order list with inline status updates |
-| `/orders/:id` | `OrderDetailComponent` | Detail + confirm/prepare/ready buttons |
-| `/profile` | `ProfileComponent` | Edit account + store info (two separate API calls) |
-| `/login` | `LoginComponent` | Validates `role=vendor` |
-| `/register` | `RegisterComponent` | 3-step wizard: personal → store → location |
+| Route                | Component              | Notes                                              |
+| -------------------- | ---------------------- | -------------------------------------------------- |
+| `/`                  | `DashboardComponent`   | Stats cards, recent orders table                   |
+| `/products`          | `ProductsComponent`    | Product table with delete                          |
+| `/products/new`      | `ProductFormComponent` | Create product — loads categories                  |
+| `/products/:id/edit` | `ProductFormComponent` | Edit product (same component)                      |
+| `/orders`            | `OrdersComponent`      | Order list with inline status updates              |
+| `/orders/:id`        | `OrderDetailComponent` | Detail + confirm/prepare/ready buttons             |
+| `/profile`           | `ProfileComponent`     | Edit account + store info (two separate API calls) |
+| `/login`             | `LoginComponent`       | Validates `role=vendor`                            |
+| `/register`          | `RegisterComponent`    | 3-step wizard: personal → store → location         |
 
 ---
 
 ### delivery-app
+
 Mobile-first UI for delivery partners.
 
-| Route | Component | Notes |
-|---|---|---|
-| `/` | `DashboardComponent` | Stats, availability toggle, active orders |
-| `/available` | `AvailableOrdersComponent` | `ready` orders — accept button |
-| `/active` | `ActiveDeliveryComponent` | Status progression: picked_up → on_the_way → delivered |
-| `/history` | `HistoryComponent` | Completed deliveries list |
-| `/earnings` | `EarningsComponent` | Total/monthly earnings, per-delivery table |
-| `/profile` | `ProfileComponent` | Edit account details |
-| `/login` | `LoginComponent` | Validates `role=delivery` |
-| `/register` | `RegisterComponent` | 2-step: personal info → vehicle info (single API call) |
+| Route        | Component                  | Notes                                                  |
+| ------------ | -------------------------- | ------------------------------------------------------ |
+| `/`          | `DashboardComponent`       | Stats, availability toggle, active orders              |
+| `/available` | `AvailableOrdersComponent` | `ready` orders — accept button                         |
+| `/active`    | `ActiveDeliveryComponent`  | Status progression: picked_up → on_the_way → delivered |
+| `/history`   | `HistoryComponent`         | Completed deliveries list                              |
+| `/earnings`  | `EarningsComponent`        | Total/monthly earnings, per-delivery table             |
+| `/profile`   | `ProfileComponent`         | Edit account details                                   |
+| `/login`     | `LoginComponent`           | Validates `role=delivery`                              |
+| `/register`  | `RegisterComponent`        | 2-step: personal info → vehicle info (single API call) |
 
 ---
 
 ### admin-panel
+
 Dark-theme admin dashboard.
 
-| Route | Component | Notes |
-|---|---|---|
-| `/` | `DashboardComponent` | 8 live stat cards + recent orders + top vendors |
-| `/vendors` | `VendorsComponent` | All vendors — search, status filter, approve/suspend/restore |
-| `/customers` | `CustomersComponent` | Customer list — search, verified filter, delete |
-| `/delivery-partners` | `DeliveryPartnersComponent` | Delivery partners — search, approval filter, approve/revoke |
-| `/orders` | `OrdersComponent` | All platform orders — status filter, pagination |
-| `/products` | `ProductsComponent` | All products across vendors — search, pagination |
-| `/categories` | `CategoriesComponent` | Category grid with active status |
-| `/login` | `LoginComponent` | Validates `role=admin` |
+| Route                | Component                   | Notes                                                        |
+| -------------------- | --------------------------- | ------------------------------------------------------------ |
+| `/`                  | `DashboardComponent`        | 8 live stat cards + recent orders + top vendors              |
+| `/vendors`           | `VendorsComponent`          | All vendors — search, status filter, approve/suspend/restore |
+| `/customers`         | `CustomersComponent`        | Customer list — search, verified filter, delete              |
+| `/delivery-partners` | `DeliveryPartnersComponent` | Delivery partners — search, approval filter, approve/revoke  |
+| `/orders`            | `OrdersComponent`           | All platform orders — status filter, pagination              |
+| `/products`          | `ProductsComponent`         | All products across vendors — search, pagination             |
+| `/categories`        | `CategoriesComponent`       | Category grid with active status                             |
+| `/login`             | `LoginComponent`            | Validates `role=admin`                                       |
 
 ---
 
@@ -121,21 +126,21 @@ Imported in all apps as `@shared/public-api`.
 ### Models (`models/index.ts`)
 
 ```typescript
-User          // id, username, email, role, phone, avatar, is_verified
-AuthResponse  // { user: User, tokens: { access, refresh } }
-Address       // label, full_name, phone, address fields, lat/lng, is_default
-Vendor        // store_name, logo, banner, contact, location, hours, status, ratings
-Category      // name, slug, is_active, children
-Product       // name, price, stock, images, category, vendor, ratings
-CartItem      // product, quantity, subtotal
-Cart          // items[], total_items, total_amount
-Order         // order_number, status, pricing, items[], tracking[], delivery_address
-OrderTracking // status, description, lat/lng, timestamp
-DeliveryPartner // vehicle info, is_approved, status, location, earnings
-Notification  // title, message, notification_type, is_read, data
-PaginatedResponse<T> // count, next, previous, results: T[]
-DashboardStats       // total_orders, total_products, average_rating, recent_orders
-DeliveryDashboard    // total_deliveries, total_earnings, active_orders
+User; // id, username, email, role, phone, avatar, is_verified
+AuthResponse; // { user: User, tokens: { access, refresh } }
+Address; // label, full_name, phone, address fields, lat/lng, is_default
+Vendor; // store_name, logo, banner, contact, location, hours, status, ratings
+Category; // name, slug, is_active, children
+Product; // name, price, stock, images, category, vendor, ratings
+CartItem; // product, quantity, subtotal
+Cart; // items[], total_items, total_amount
+Order; // order_number, status, pricing, items[], tracking[], delivery_address
+OrderTracking; // status, description, lat/lng, timestamp
+DeliveryPartner; // vehicle info, is_approved, status, location, earnings
+Notification; // title, message, notification_type, is_read, data
+PaginatedResponse<T>; // count, next, previous, results: T[]
+DashboardStats; // total_orders, total_products, average_rating, recent_orders
+DeliveryDashboard; // total_deliveries, total_earnings, active_orders
 ```
 
 ### ApiService
@@ -144,42 +149,42 @@ All HTTP calls go through `ApiService`. Base URL: `http://localhost:8000/api`.
 
 **Reactive state (signals):**
 
-| Signal | Updated by |
-|---|---|
-| `cartCount` | `refreshCartCount()` — called on navigation, after add-to-cart, after place-order |
-| `unreadNotifications` | `refreshUnreadCount()` — called on navigation, cleared on notification click |
+| Signal                | Updated by                                                                        |
+| --------------------- | --------------------------------------------------------------------------------- |
+| `cartCount`           | `refreshCartCount()` — called on navigation, after add-to-cart, after place-order |
+| `unreadNotifications` | `refreshUnreadCount()` — called on navigation, cleared on notification click      |
 
 **Method groups:**
 
-| Group | Methods |
-|---|---|
-| Auth | `login()`, `register()`, `getProfile()`, `updateProfile()` |
-| Addresses | `getAddresses()`, `createAddress()`, `updateAddress()`, `deleteAddress()` |
-| Vendors | `getVendors()`, `getNearbyVendors()`, `getVendor()`, `registerVendor()`, `getVendorDashboard()`, `getVendorProfile()`, `updateVendorProfile()` |
-| Vendor orders | `getVendorOrders()`, `updateOrderStatus()` |
-| Vendor products | `getVendorProducts()`, `createProduct()`, `updateProduct()`, `deleteProduct()` |
-| Products | `getCategories()`, `getProducts()`, `getProduct()`, `getFeaturedProducts()` |
-| Cart | `getCart()`, `addToCart()`, `updateCartItem()`, `removeCartItem()`, `clearCart()` |
-| Orders | `createOrder()`, `getOrders()`, `getOrder()`, `cancelOrder()`, `getOrderTracking()` |
-| Delivery | `registerDeliveryPartner()`, `getDeliveryDashboard()`, `getAvailableOrders()`, `acceptDelivery()`, `updateDeliveryStatus()`, `updateLocation()`, `getDeliveryHistory()`, `getDeliveryEarnings()` |
-| Notifications | `getNotifications()`, `markNotificationRead()`, `markAllNotificationsRead()`, `getUnreadCount()` |
-| Reviews | `getVendorReviews()`, `createVendorReview()`, `getProductReviews()`, `createProductReview()` |
-| Admin | `getAdminStats()`, `getAdminCustomers()`, `getAdminCustomer()`, `updateAdminCustomer()`, `deleteAdminCustomer()`, `getAdminVendors()`, `setVendorStatus()`, `getAdminDeliveryPartners()`, `getAdminDeliveryPartner()`, `approveDeliveryPartner()` |
+| Group           | Methods                                                                                                                                                                                                                                           |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Auth            | `login()`, `register()`, `getProfile()`, `updateProfile()`                                                                                                                                                                                        |
+| Addresses       | `getAddresses()`, `createAddress()`, `updateAddress()`, `deleteAddress()`                                                                                                                                                                         |
+| Vendors         | `getVendors()`, `getNearbyVendors()`, `getVendor()`, `registerVendor()`, `getVendorDashboard()`, `getVendorProfile()`, `updateVendorProfile()`                                                                                                    |
+| Vendor orders   | `getVendorOrders()`, `updateOrderStatus()`                                                                                                                                                                                                        |
+| Vendor products | `getVendorProducts()`, `createProduct()`, `updateProduct()`, `deleteProduct()`                                                                                                                                                                    |
+| Products        | `getCategories()`, `getProducts()`, `getProduct()`, `getFeaturedProducts()`                                                                                                                                                                       |
+| Cart            | `getCart()`, `addToCart()`, `updateCartItem()`, `removeCartItem()`, `clearCart()`                                                                                                                                                                 |
+| Orders          | `createOrder()`, `getOrders()`, `getOrder()`, `cancelOrder()`, `getOrderTracking()`                                                                                                                                                               |
+| Delivery        | `registerDeliveryPartner()`, `getDeliveryDashboard()`, `getAvailableOrders()`, `acceptDelivery()`, `updateDeliveryStatus()`, `updateLocation()`, `getDeliveryHistory()`, `getDeliveryEarnings()`                                                  |
+| Notifications   | `getNotifications()`, `markNotificationRead()`, `markAllNotificationsRead()`, `getUnreadCount()`                                                                                                                                                  |
+| Reviews         | `getVendorReviews()`, `createVendorReview()`, `getProductReviews()`, `createProductReview()`                                                                                                                                                      |
+| Admin           | `getAdminStats()`, `getAdminCustomers()`, `getAdminCustomer()`, `updateAdminCustomer()`, `deleteAdminCustomer()`, `getAdminVendors()`, `setVendorStatus()`, `getAdminDeliveryPartners()`, `getAdminDeliveryPartner()`, `approveDeliveryPartner()` |
 
 ### AuthService
 
 Wraps auth state using Angular Signals.
 
 ```typescript
-currentUser   // signal<User | null>
-isLoggedIn    // computed(() => !!currentUser())
-user()        // alias for currentUser()
+currentUser; // signal<User | null>
+isLoggedIn; // computed(() => !!currentUser())
+user(); // alias for currentUser()
 
-login(username, password)
-register(data)
-handleAuthResponse(response)  // stores tokens + user in localStorage
-updateUserData(user)          // updates signal + localStorage
-logout()                      // clears everything
+login(username, password);
+register(data);
+handleAuthResponse(response); // stores tokens + user in localStorage
+updateUserData(user); // updates signal + localStorage
+logout(); // clears everything
 ```
 
 ### AuthInterceptor
@@ -219,6 +224,58 @@ npx ng build delivery-app --configuration production
 npx ng build admin-panel --configuration production
 ```
 
+Run linting:
+
+```bash
+npm run lint
+```
+
+Auto-fix safe lint issues:
+
+```bash
+npm run lint:fix
+```
+
+Linting uses ESLint with Angular ESLint for TypeScript, Angular templates, and inline component templates. The rules include Angular selector conventions, unused variable checks, explicit `any` warnings, import consistency, and basic template accessibility checks.
+
+Run unit tests with coverage:
+
+```bash
+npm run test:coverage
+```
+
+Angular CLI 19 uses the `--code-coverage` flag for direct project commands:
+
+```bash
+npx ng test customer-app --code-coverage
+```
+
+Run CI-friendly coverage for every Angular project:
+
+```bash
+npm run test:coverage:ci
+```
+
+Per-project coverage commands are also available, for example:
+
+```bash
+npm run test:coverage:customer
+npm run test:coverage:customer:ci
+```
+
+Coverage reports are written under `coverage/<project-name>/`. Open `coverage/customer-app/index.html`, `coverage/vendor-app/index.html`, `coverage/delivery-app/index.html`, `coverage/admin-panel/index.html`, or `coverage/frontend/index.html` in a browser to view the HTML report. LCOV output is generated as `coverage/<project-name>/lcov.info`.
+
+The global coverage thresholds enforced by Karma are:
+
+| Metric     | Threshold |
+| ---------- | --------: |
+| Statements |       80% |
+| Branches   |       75% |
+| Functions  |       80% |
+| Lines      |       80% |
+
+The CI command runs Headless Chrome with watch mode disabled and exits non-zero if tests fail or coverage drops below these thresholds.
+
 ---
 
 ## Design System
@@ -228,15 +285,9 @@ npx ng build admin-panel --configuration production
 Light theme using CSS custom properties defined in `styles.scss`:
 
 ```scss
---primary:        #6C63FF   // Purple
---primary-dark:   #4A3FCC
---secondary:      #FF6584   // Pink/red accent
---text:           #1A1A2E
---text-secondary: #6B7280
---card:           #FFFFFF
---border:         #E5E7EB
---radius:         12px
---header-height:  64px
+--primary: #6c63ff // Purple
+  --primary-dark: #4a3fcc --secondary: #ff6584 // Pink/red accent
+  --text: #1a1a2e --text-secondary: #6b7280 --card: #ffffff --border: #e5e7eb --radius: 12px --header-height: 64px;
 ```
 
 Key utility classes: `.btn`, `.btn-primary`, `.btn-ghost`, `.card`, `.badge`, `.badge-*status*`, `.form-input`, `.container`, `.page-padding`
@@ -262,6 +313,7 @@ Text:        #E0E0E0 / #CCD6F6 / #8892B0 (muted)
 ## Key Patterns
 
 ### Signals for local state
+
 ```typescript
 loading = signal(true);
 items = signal<Product[]>([]);
@@ -269,6 +321,7 @@ page = signal(1);
 ```
 
 ### Debounced search
+
 ```typescript
 private timer: any;
 onSearch() {
@@ -278,22 +331,24 @@ onSearch() {
 ```
 
 ### Paginated API response
+
 ```typescript
 this.api.getSomething(params).subscribe({
   next: (r) => {
-    this.items.set(r.results || r);   // handles paginated and plain array responses
+    this.items.set(r.results || r); // handles paginated and plain array responses
     this.total.set(r.count || r.length);
     this.totalPages.set(Math.ceil((r.count || 0) / 20) || 1);
-  }
+  },
 });
 ```
 
 ### Role validation on login
+
 ```typescript
 // Each app's LoginComponent rejects users with the wrong role
-if (res.user.role !== 'vendor') {
+if (res.user.role !== "vendor") {
   this.auth.logout();
-  this.error.set('This portal is for vendors only.');
+  this.error.set("This portal is for vendors only.");
   return;
 }
 ```

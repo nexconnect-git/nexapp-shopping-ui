@@ -1,0 +1,30 @@
+<div class="toast-container">
+  <div
+    *ngFor="let t of toastService.toasts()"
+    class="toast-item"
+    [ngClass]="t.type"
+  >
+    <div class="toast-content">
+      <span class="material-icons-outlined icon_custom">
+        <ng-container *ngIf="t.type === 'success'"
+          >check_circle</ng-container
+        >
+        <ng-container *ngIf="t.type === 'error'">error</ng-container>
+        <ng-container *ngIf="t.type === 'info'">notifications</ng-container>
+      </span>
+      <p class="toast-msg">{{ t.message }}</p>
+    </div>
+    <div class="toast-actions">
+      <button
+        *ngIf="t.actionLabel && t.actionUrl"
+        class="action-btn"
+        (click)="performAction(t.actionUrl, t.id)"
+      >
+        {{ t.actionLabel }}
+      </button>
+      <button class="close-btn" (click)="toastService.remove(t.id)">
+        &times;
+      </button>
+    </div>
+  </div>
+</div>

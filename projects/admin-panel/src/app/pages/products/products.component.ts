@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, computed } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService, AppCurrencyPipe } from '@shared/public-api';
@@ -28,7 +28,7 @@ interface VendorGroup {
   standalone: true,
   imports: [CommonModule, FormsModule, AppCurrencyPipe],
   templateUrl: './products.component.html',
-  styleUrl: './products.component.scss'
+  styleUrl: './products.component.scss',
 })
 export class ProductsComponent implements OnInit {
   private api = inject(ApiService);
@@ -52,10 +52,25 @@ export class ProductsComponent implements OnInit {
   editTarget = signal<any | null>(null);
   error = signal('');
   categories = signal<any[]>([]);
-  form: any = { name: '', description: '', price: '', compare_price: '', sku: '', stock: 0, unit: 'pcs', weight: '', is_available: true, status: 'active', is_featured: false, category: null };
+  form: any = {
+    name: '',
+    description: '',
+    price: '',
+    compare_price: '',
+    sku: '',
+    stock: 0,
+    unit: 'pcs',
+    weight: '',
+    is_available: true,
+    status: 'active',
+    is_featured: false,
+    category: null,
+  };
 
   ngOnInit() {
-    this.api.getAdminCategories().subscribe({ next: (r) => this.categories.set(r.results || r) });
+    this.api
+      .getAdminCategories()
+      .subscribe({ next: (r) => this.categories.set(r.results || r) });
     this.load();
   }
 
@@ -84,7 +99,13 @@ export class ProductsComponent implements OnInit {
       const vname = p.vendor_name || p.vendor?.store_name || 'Unknown Vendor';
       const city = p.vendor?.city || '';
       if (!map.has(vid)) {
-        map.set(vid, { vendorId: vid, vendorName: vname, city, products: [], collapsed: false });
+        map.set(vid, {
+          vendorId: vid,
+          vendorName: vname,
+          city,
+          products: [],
+          collapsed: false,
+        });
       }
       map.get(vid)!.products.push(p);
     }
@@ -96,42 +117,74 @@ export class ProductsComponent implements OnInit {
     this.searchTimer = setTimeout(() => this.load(), 400);
   }
 
-  onFilterChange() { this.load(); }
+  onFilterChange() {
+    this.load();
+  }
 
-  toggleGroup(group: VendorGroup) { group.collapsed = !group.collapsed; }
+  toggleGroup(group: VendorGroup) {
+    group.collapsed = !group.collapsed;
+  }
 
   openEdit(p: any) {
     this.editTarget.set(p);
     this.form = {
-      name: p.name, description: p.description || '', price: p.price,
-      compare_price: p.compare_price || '', sku: p.sku || '', stock: p.stock,
-      unit: p.unit || 'pcs', weight: p.weight || '', is_available: p.is_available,
-      status: p.status || 'active', is_featured: p.is_featured,
-      category: p.category?.id ?? null
+      name: p.name,
+      description: p.description || '',
+      price: p.price,
+      compare_price: p.compare_price || '',
+      sku: p.sku || '',
+      stock: p.stock,
+      unit: p.unit || 'pcs',
+      weight: p.weight || '',
+      is_available: p.is_available,
+      status: p.status || 'active',
+      is_featured: p.is_featured,
+      category: p.category?.id ?? null,
     };
     this.error.set('');
     this.showModal.set(true);
   }
 
-  closeModal() { this.showModal.set(false); }
+  closeModal() {
+    this.showModal.set(false);
+  }
 
   save() {
-    if (!this.form.name?.trim()) { this.error.set('Name is required.'); return; }
-    if (!this.form.price) { this.error.set('Price is required.'); return; }
+    if (!this.form.name?.trim()) {
+      this.error.set('Name is required.');
+      return;
+    }
+    if (!this.form.price) {
+      this.error.set('Price is required.');
+      return;
+    }
     this.saving.set(true);
     this.error.set('');
     const data: any = {
-      name: this.form.name, description: this.form.description, price: this.form.price,
-      stock: this.form.stock, unit: this.form.unit, is_available: this.form.is_available,
-      status: this.form.status, is_featured: this.form.is_featured, category: this.form.category
+      name: this.form.name,
+      description: this.form.description,
+      price: this.form.price,
+      stock: this.form.stock,
+      unit: this.form.unit,
+      is_available: this.form.is_available,
+      status: this.form.status,
+      is_featured: this.form.is_featured,
+      category: this.form.category,
     };
     if (this.form.compare_price) data.compare_price = this.form.compare_price;
     if (this.form.sku) data.sku = this.form.sku;
     if (this.form.weight) data.weight = this.form.weight;
     const target = this.editTarget();
     this.api.updateAdminProduct(target.id, data).subscribe({
-      next: () => { this.saving.set(false); this.showModal.set(false); this.load(); },
-      error: (err) => { this.saving.set(false); this.error.set(err.error?.detail || 'Save failed.'); }
+      next: () => {
+        this.saving.set(false);
+        this.showModal.set(false);
+        this.load();
+      },
+      error: (err) => {
+        this.saving.set(false);
+        this.error.set(err.error?.detail || 'Save failed.');
+      },
     });
   }
 
@@ -141,11 +194,27 @@ export class ProductsComponent implements OnInit {
   }
 
   statusLabel(s: string): string {
-    return ({ active: 'Active', draft: 'Draft', sold_out: 'Sold Out', coming_soon: 'Coming Soon', archived: 'Archived' })[s] || s;
+    return (
+      {
+        active: 'Active',
+        draft: 'Draft',
+        sold_out: 'Sold Out',
+        coming_soon: 'Coming Soon',
+        archived: 'Archived',
+      }[s] || s
+    );
   }
 
   statusClass(s: string): string {
-    return ({ active: 'chip-active', draft: 'chip-draft', sold_out: 'chip-sold-out', coming_soon: 'chip-coming-soon', archived: 'chip-archived' })[s] || '';
+    return (
+      {
+        active: 'chip-active',
+        draft: 'chip-draft',
+        sold_out: 'chip-sold-out',
+        coming_soon: 'chip-coming-soon',
+        archived: 'chip-archived',
+      }[s] || ''
+    );
   }
 
   stockClass(p: ProductRow): string {

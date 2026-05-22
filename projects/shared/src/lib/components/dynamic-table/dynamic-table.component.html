@@ -32,9 +32,22 @@
             (click)="clickableRows && rowClick.emit(row)"
           >
             @for (col of columns; track col.key) {
-              <div class="t-cell" [class]="getAlignment(col)" [attr.data-label]="col.label">
+              <div
+                class="t-cell"
+                [class]="getAlignment(col)"
+                [attr.data-label]="col.label"
+              >
                 @if (getTemplate(col.key); as template) {
-                  <ng-container *ngTemplateOutlet="template; context: { $implicit: row, row: row, value: getValue(row, col.key) }"></ng-container>
+                  <ng-container
+                    *ngTemplateOutlet="
+                      template;
+                      context: {
+                        $implicit: row,
+                        row: row,
+                        value: getValue(row, col.key),
+                      }
+                    "
+                  ></ng-container>
                 } @else {
                   {{ getValue(row, col.key) }}
                 }
@@ -47,12 +60,22 @@
 
     @if (hasPagination && totalItems > itemsPerPage) {
       <div class="pagination">
-        <button class="page-btn" [disabled]="page === 1" (click)="onPageChange(page - 1)">
+        <button
+          class="page-btn"
+          [disabled]="page === 1"
+          (click)="onPageChange(page - 1)"
+        >
           <span class="material-icons-outlined">chevron_left</span>
           <span>Previous</span>
         </button>
-        <span class="page-indicator">Page {{ page }} of {{ Math.ceil(totalItems / itemsPerPage) }}</span>
-        <button class="page-btn" [disabled]="page * itemsPerPage >= totalItems" (click)="onPageChange(page + 1)">
+        <span class="page-indicator"
+          >Page {{ page }} of {{ Math.ceil(totalItems / itemsPerPage) }}</span
+        >
+        <button
+          class="page-btn"
+          [disabled]="page * itemsPerPage >= totalItems"
+          (click)="onPageChange(page + 1)"
+        >
           <span>Next</span>
           <span class="material-icons-outlined">chevron_right</span>
         </button>

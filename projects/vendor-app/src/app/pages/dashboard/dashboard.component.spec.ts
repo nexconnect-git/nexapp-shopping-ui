@@ -1,5 +1,10 @@
 import { Component } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import {
+  type ComponentFixture,
+  fakeAsync,
+  TestBed,
+  tick,
+} from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { of, Subject, throwError } from 'rxjs';
 import { ApiService, AuthService, ToastService } from '@shared/public-api';
@@ -22,7 +27,7 @@ describe('DashboardComponent', () => {
     newStock: 4,
     low_stock_threshold: 5,
     unit: 'pcs',
-    ...overrides
+    ...overrides,
   });
 
   const stats = (overrides: Record<string, unknown> = {}) => ({
@@ -41,10 +46,10 @@ describe('DashboardComponent', () => {
         order_number: '1001',
         customer_name: 'Asha Rao',
         total: 420,
-        status: 'placed'
-      }
+        status: 'placed',
+      },
     ],
-    ...overrides
+    ...overrides,
   });
 
   const ops = {
@@ -52,7 +57,12 @@ describe('DashboardComponent', () => {
     orders: { new: 2, preparing: 1, ready: 1 },
     delivery: { assigned: 1 },
     store: { is_accepting_orders: false, auto_order_acceptance: true },
-    alerts: { low_stock: 1, product_attention: 0, pending_payouts: 0, support_open: 1 }
+    alerts: {
+      low_stock: 1,
+      product_attention: 0,
+      pending_payouts: 0,
+      support_open: 1,
+    },
   };
 
   beforeEach(async () => {
@@ -61,7 +71,7 @@ describe('DashboardComponent', () => {
       'getVendorOperationsSummary',
       'setStoreStatus',
       'getVendorProducts',
-      'bulkUpdateVendorStock'
+      'bulkUpdateVendorStock',
     ]);
     toast = jasmine.createSpyObj<ToastService>('ToastService', ['show']);
     api.getVendorDashboard.and.returnValue(of(stats() as any));
@@ -74,12 +84,12 @@ describe('DashboardComponent', () => {
           { path: 'orders/:id', component: BlankComponent },
           { path: 'orders', component: BlankComponent },
           { path: 'live-orders', component: BlankComponent },
-          { path: 'inventory', component: BlankComponent }
+          { path: 'inventory', component: BlankComponent },
         ]),
         { provide: ApiService, useValue: api },
         { provide: ToastService, useValue: toast },
-        { provide: AuthService, useValue: {} }
-      ]
+        { provide: AuthService, useValue: {} },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(DashboardComponent);
@@ -100,7 +110,9 @@ describe('DashboardComponent', () => {
     expect(api.getVendorOperationsSummary).toHaveBeenCalled();
     expect(fixture.nativeElement.textContent).toContain('Vendor Dashboard');
     expect(fixture.nativeElement.textContent).toContain('Today Revenue');
-    expect(fixture.nativeElement.textContent).toContain('1 product is running low on stock');
+    expect(fixture.nativeElement.textContent).toContain(
+      '1 product is running low on stock',
+    );
     expect(fixture.nativeElement.textContent).toContain('#1001');
   }));
 
@@ -110,11 +122,15 @@ describe('DashboardComponent', () => {
     fixture.detectChanges();
     tick(0);
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.loading-state')?.textContent).toContain('Loading analytics');
+    expect(
+      fixture.nativeElement.querySelector('.loading-state')?.textContent,
+    ).toContain('Loading analytics');
     pending.next(stats());
     pending.complete();
 
-    api.getVendorDashboard.and.returnValue(throwError(() => new Error('network')));
+    api.getVendorDashboard.and.returnValue(
+      throwError(() => new Error('network')),
+    );
     component.ngOnDestroy();
     component.loading.set(true);
     component.stats.set(null);
@@ -123,11 +139,15 @@ describe('DashboardComponent', () => {
     fixture.detectChanges();
 
     expect(component.loading()).toBeFalse();
-    expect(fixture.nativeElement.textContent).toContain('Unable to load dashboard');
+    expect(fixture.nativeElement.textContent).toContain(
+      'Unable to load dashboard',
+    );
   }));
 
   it('ignores operations summary errors without blocking dashboard stats', fakeAsync(() => {
-    api.getVendorOperationsSummary.and.returnValue(throwError(() => new Error('ops failed')));
+    api.getVendorOperationsSummary.and.returnValue(
+      throwError(() => new Error('ops failed')),
+    );
     fixture.detectChanges();
     tick(0);
 
@@ -141,14 +161,23 @@ describe('DashboardComponent', () => {
     tick(0);
     fixture.detectChanges();
 
-    (fixture.nativeElement.querySelector('.store-toggle-btn') as HTMLButtonElement).click();
+    (
+      fixture.nativeElement.querySelector(
+        '.store-toggle-btn',
+      ) as HTMLButtonElement
+    ).click();
     fixture.detectChanges();
     expect(component.showStoreModal()).toBeTrue();
-    expect(fixture.nativeElement.querySelector('.modal-box')?.textContent).toContain('Open Your Store');
+    expect(
+      fixture.nativeElement.querySelector('.modal-box')?.textContent,
+    ).toContain('Open Your Store');
 
     component.closingTime = '';
     component.confirmOpenStore();
-    expect(toast.show).toHaveBeenCalledWith('Please enter a closing time.', 'error');
+    expect(toast.show).toHaveBeenCalledWith(
+      'Please enter a closing time.',
+      'error',
+    );
   }));
 
   it('opens and closes the store through the API with interaction state feedback', fakeAsync(() => {
@@ -175,21 +204,35 @@ describe('DashboardComponent', () => {
     fixture.detectChanges();
     tick(0);
 
-    api.setStoreStatus.and.returnValue(throwError(() => new Error('open failed')));
+    api.setStoreStatus.and.returnValue(
+      throwError(() => new Error('open failed')),
+    );
     component.confirmOpenStore();
     tick();
     expect(component.storeToggling()).toBeFalse();
     expect(toast.show).toHaveBeenCalledWith('Failed to open store.', 'error');
 
-    component.stats.update(s => s ? { ...s, is_open: true } : s);
+    component.stats.update((s) => (s ? { ...s, is_open: true } : s));
     component.toggleStore();
     tick();
-    expect(toast.show).toHaveBeenCalledWith('Failed to update store status.', 'error');
+    expect(toast.show).toHaveBeenCalledWith(
+      'Failed to update store status.',
+      'error',
+    );
   }));
 
   it('requires stock review before going online when the backend asks for it', fakeAsync(() => {
-    api.getVendorDashboard.and.returnValue(of(stats({ require_stock_check: true }) as any));
-    api.getVendorProducts.and.returnValue(of({ results: [product(), product({ id: 'product-2', stock: 20, low_stock_threshold: 5 })] } as any));
+    api.getVendorDashboard.and.returnValue(
+      of(stats({ require_stock_check: true }) as any),
+    );
+    api.getVendorProducts.and.returnValue(
+      of({
+        results: [
+          product(),
+          product({ id: 'product-2', stock: 20, low_stock_threshold: 5 }),
+        ],
+      } as any),
+    );
     fixture.detectChanges();
     tick(0);
 
@@ -203,20 +246,28 @@ describe('DashboardComponent', () => {
 
     component.stockMode = 'new';
     component.onStockModeChange();
-    expect(component.stockProducts().every(p => p.newStock === 0)).toBeTrue();
+    expect(component.stockProducts().every((p) => p.newStock === 0)).toBeTrue();
 
     component.stockMode = 'previous';
     component.onStockModeChange();
     expect(component.stockProducts()[1].newStock).toBe(20);
 
-    component.stockProducts.update(ps => ps.map(p => ({ ...p, newStock: 12 })));
+    component.stockProducts.update((ps) =>
+      ps.map((p) => ({ ...p, newStock: 12 })),
+    );
     component.onStockInput();
     expect(component.stockHasWarnings()).toBeFalse();
   }));
 
   it('accepts raw array product responses during stock review', fakeAsync(() => {
-    api.getVendorDashboard.and.returnValue(of(stats({ require_stock_check: true }) as any));
-    api.getVendorProducts.and.returnValue(of([product({ id: 'array-product', stock: 9, low_stock_threshold: 2 })] as any));
+    api.getVendorDashboard.and.returnValue(
+      of(stats({ require_stock_check: true }) as any),
+    );
+    api.getVendorProducts.and.returnValue(
+      of([
+        product({ id: 'array-product', stock: 9, low_stock_threshold: 2 }),
+      ] as any),
+    );
     fixture.detectChanges();
     tick(0);
 
@@ -228,8 +279,12 @@ describe('DashboardComponent', () => {
   }));
 
   it('saves reviewed stock before going online and blocks warning submissions', fakeAsync(() => {
-    api.getVendorDashboard.and.returnValue(of(stats({ require_stock_check: true }) as any));
-    api.getVendorProducts.and.returnValue(of({ results: [product({ stock: 10 })] } as any));
+    api.getVendorDashboard.and.returnValue(
+      of(stats({ require_stock_check: true }) as any),
+    );
+    api.getVendorProducts.and.returnValue(
+      of({ results: [product({ stock: 10 })] } as any),
+    );
     api.bulkUpdateVendorStock.and.returnValue(of({} as any));
     api.setStoreStatus.and.returnValue(of({ closing_time: '22:00' } as any));
     fixture.detectChanges();
@@ -237,12 +292,16 @@ describe('DashboardComponent', () => {
 
     component.confirmOpenStore();
     tick();
-    component.stockProducts.update(ps => ps.map(p => ({ ...p, newStock: 15 })));
+    component.stockProducts.update((ps) =>
+      ps.map((p) => ({ ...p, newStock: 15 })),
+    );
     component.onStockInput();
     component.submitStock();
     tick();
 
-    expect(api.bulkUpdateVendorStock).toHaveBeenCalledWith([{ id: 'product-1', stock: 15 }]);
+    expect(api.bulkUpdateVendorStock).toHaveBeenCalledWith([
+      { id: 'product-1', stock: 15 },
+    ]);
     expect(api.setStoreStatus).toHaveBeenCalledWith(true, '22:00');
 
     api.bulkUpdateVendorStock.calls.reset();
@@ -252,18 +311,28 @@ describe('DashboardComponent', () => {
   }));
 
   it('handles stock review failures and stock save errors', fakeAsync(() => {
-    api.getVendorDashboard.and.returnValue(of(stats({ require_stock_check: true }) as any));
-    api.getVendorProducts.and.returnValue(throwError(() => new Error('products failed')));
+    api.getVendorDashboard.and.returnValue(
+      of(stats({ require_stock_check: true }) as any),
+    );
+    api.getVendorProducts.and.returnValue(
+      throwError(() => new Error('products failed')),
+    );
     api.setStoreStatus.and.returnValue(of({ closing_time: '22:00' } as any));
     fixture.detectChanges();
     tick(0);
 
     component.confirmOpenStore();
     tick();
-    expect(toast.show).toHaveBeenCalledWith('Could not load products, proceeding anyway.', 'info');
-    expect(api.setStoreStatus).toHaveBeenCalledWith(true, '22:00');
+    expect(toast.show).toHaveBeenCalledWith(
+      'Could not load products for the required stock check. Retry before opening the store.',
+      'error',
+    );
+    expect(api.setStoreStatus).not.toHaveBeenCalled();
+    expect(component.showStoreModal()).toBeTrue();
 
-    api.bulkUpdateVendorStock.and.returnValue(throwError(() => new Error('stock failed')));
+    api.bulkUpdateVendorStock.and.returnValue(
+      throwError(() => new Error('stock failed')),
+    );
     component.stockHasWarnings.set(false);
     component.stockProducts.set([product({ newStock: 9 }) as any]);
     component.submitStock();
@@ -287,6 +356,10 @@ describe('DashboardComponent', () => {
   it('detects low stock based on the edited daily quantity', () => {
     expect(component.isLowStock(product({ newStock: 5 }) as any)).toBeTrue();
     expect(component.isLowStock(product({ newStock: 6 }) as any)).toBeFalse();
-    expect(component.isLowStock(product({ low_stock_threshold: 0, newStock: 0 }) as any)).toBeFalse();
+    expect(
+      component.isLowStock(
+        product({ low_stock_threshold: 0, newStock: 0 }) as any,
+      ),
+    ).toBeFalse();
   });
 });

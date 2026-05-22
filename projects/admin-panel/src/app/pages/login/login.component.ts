@@ -1,14 +1,14 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AuthService, ApiService } from '@shared/public-api';
+import { ApiService, AuthService } from '@shared/public-api';
 
 @Component({
   selector: 'app-login',
   standalone: true,
   imports: [FormsModule],
   templateUrl: './login.component.html',
-  styleUrl: './login.component.scss'
+  styleUrl: './login.component.scss',
 })
 export class LoginComponent implements OnInit {
   private auth = inject(AuthService);
@@ -32,12 +32,15 @@ export class LoginComponent implements OnInit {
       },
       error: () => {
         this.checkingSetup.set(false);
-      }
+      },
     });
   }
 
   onLogin() {
-    if (!this.username || !this.password) { this.error.set('Please fill in all fields.'); return; }
+    if (!this.username || !this.password) {
+      this.error.set('Please fill in all fields.');
+      return;
+    }
     this.loading.set(true);
     this.error.set('');
     this.auth.login(this.username, this.password).subscribe({
@@ -60,9 +63,7 @@ export class LoginComponent implements OnInit {
       error: (err) => {
         this.error.set(err.error?.detail || 'Invalid credentials.');
         this.loading.set(false);
-      }
+      },
     });
   }
 }
-
-

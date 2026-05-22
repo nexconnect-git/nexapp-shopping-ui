@@ -1,0 +1,284 @@
+﻿<header class="topbar">
+  <button
+    type="button"
+    class="mobile-menu"
+    (click)="ui.toggleMobileSidebar()"
+    aria-label="Open navigation"
+  >
+    <span class="material-symbols-rounded">menu</span>
+  </button>
+  <a
+    routerLink="/"
+    class="brand"
+    (click)="ui.closeMenus()"
+    aria-label="FlashDrop home"
+  >
+    <span class="logo material-symbols-rounded">bolt</span>
+    <b>FlashDrop</b>
+  </a>
+
+  <button type="button" class="location" (click)="openLocation()">
+    <span class="material-symbols-rounded">location_on</span>
+    <b>{{ state.location().split(",")[0] }}</b>
+    <span class="material-symbols-rounded">keyboard_arrow_down</span>
+  </button>
+
+  <form class="global-search" (submit)="goSearch($event)">
+    <span class="material-symbols-rounded">search</span>
+    <input
+      [value]="query()"
+      (input)="onSearch($any($event.target).value)"
+      (focus)="searchOpen.set(true)"
+      placeholder="Search live products, stores, and categories"
+    />
+    @if (query()) {
+      <button
+        type="button"
+        class="clear"
+        aria-label="Clear search"
+        (click)="clearSearch()"
+      >
+        <span class="material-symbols-rounded">close</span>
+      </button>
+    }
+
+    @if (searchOpen()) {
+      <section class="live-search animate-up">
+        <div class="head">
+          <b>Live Search</b><small>{{ totalResults() }} results</small>
+        </div>
+
+        @if (!query()) {
+          <div class="quick">
+            @for (item of quickSuggestions(); track item) {
+              <button type="button" (click)="onSearch(item)">
+                <span class="material-symbols-rounded">search</span>{{ item }}
+              </button>
+            }
+          </div>
+        } @else {
+          <div class="columns">
+            <div>
+              <h4>Stores</h4>
+              @for (
+                store of searchResults().stores.slice(0, 3);
+                track store.id
+              ) {
+                <a
+                  [routerLink]="['/store', store.id]"
+                  (click)="selectStore($event, store)"
+                >
+                  <img [src]="store.image" alt="" />
+                  <span
+                    ><b>{{ store.name }}</b
+                    ><small
+                      >{{ store.eta }} · {{ store.rating }} rating</small
+                    ></span
+                  >
+                </a>
+              } @empty {
+                <p class="empty">No stores found</p>
+              }
+            </div>
+            <div>
+              <h4>Products</h4>
+              @for (
+                product of searchResults().products.slice(0, 4);
+                track product.id
+              ) {
+                <a
+                  [routerLink]="['/product', product.id]"
+                  (click)="closeSearch()"
+                >
+                  <img [src]="product.image" alt="" />
+                  <span
+                    ><b>{{ product.name }}</b
+                    ><small
+                      >{{ product.price | appCurrency }} ·
+                      {{ product.unit }}</small
+                    ></span
+                  >
+                </a>
+              } @empty {
+                <p class="empty">No products found</p>
+              }
+            </div>
+          </div>
+          <button type="submit" class="view-all">
+            View all results for "{{ query() }}"
+          </button>
+        }
+      </section>
+    }
+  </form>
+
+  <nav>
+    @if (canUseRoute("/offers")) {
+      <a
+        routerLink="/offers"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        (click)="ui.closeMenus()"
+        >Offers</a
+      >
+    }
+    @if (canUseRoute("/orders")) {
+      <a
+        routerLink="/orders"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        (click)="ui.closeMenus()"
+        >Orders</a
+      >
+    }
+    @if (state.walletEnabled()) {
+      @if (canUseRoute("/wallet")) {
+        <a
+          routerLink="/wallet"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          (click)="ui.closeMenus()"
+          >Wallet</a
+        >
+      }
+    }
+    @if (canUseRoute("/stores")) {
+      <a
+        routerLink="/stores"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        (click)="ui.closeMenus()"
+        >Stores</a
+      >
+    }
+  </nav>
+
+  <button
+    type="button"
+    class="cart"
+    aria-label="Open cart"
+    (click)="openCart()"
+  >
+    <span class="material-symbols-rounded">shopping_cart</span>
+    @if (state.itemCount()) {
+      <i>{{ state.itemCount() }}</i>
+    }
+  </button>
+
+  <div class="menu-wrap user-wrap">
+    <button type="button" class="avatar" (click)="ui.toggleUserMenu()">
+      {{ (auth.currentUser()?.name || "FD").slice(0, 2).toUpperCase() }}
+    </button>
+    @if (ui.userMenuOpen()) {
+      <section class="dropdown user-menu animate-scale">
+        <header>
+          <b>{{ auth.currentUser()?.name || "Guest customer" }}</b>
+          <small>{{
+            auth.currentUser()?.phone || "Sign in for checkout"
+          }}</small>
+        </header>
+        @if (auth.isLoggedIn()) {
+          @if (canUseRoute("/profile")) {
+            <a routerLink="/profile" (click)="ui.closeMenus()"
+              ><span class="material-symbols-rounded">person</span>Profile /
+              Account</a
+            >
+          }
+          @if (canUseRoute("/orders")) {
+            <a routerLink="/orders" (click)="ui.closeMenus()"
+              ><span class="material-symbols-rounded">receipt_long</span
+              >Orders</a
+            >
+          }
+          @if (canUseRoute("/addresses")) {
+            <a routerLink="/addresses" (click)="ui.closeMenus()"
+              ><span class="material-symbols-rounded">location_on</span
+              >Addresses</a
+            >
+          }
+          @if (canUseRoute("/referral")) {
+            <a routerLink="/referral" (click)="ui.closeMenus()"
+              ><span class="material-symbols-rounded">redeem</span>Referral</a
+            >
+          }
+          @if (canUseRoute("/help")) {
+            <a routerLink="/help" (click)="ui.closeMenus()"
+              ><span class="material-symbols-rounded">help</span>Help</a
+            >
+          }
+          @if (canUseRoute("/issues")) {
+            <a routerLink="/issues" (click)="ui.closeMenus()"
+              ><span class="material-symbols-rounded">support_agent</span
+              >Issues</a
+            >
+          }
+          <button type="button" class="danger" (click)="logout()">
+            <span class="material-symbols-rounded">logout</span>Logout
+          </button>
+        } @else {
+          <button type="button" (click)="ui.openLogin()">
+            <span class="material-symbols-rounded">lock_open</span>Login
+          </button>
+          @if (canUseRoute("/help")) {
+            <a routerLink="/help" (click)="ui.closeMenus()"
+              ><span class="material-symbols-rounded">help</span>Help</a
+            >
+          }
+          @if (canUseRoute("/issues")) {
+            <a routerLink="/issues" (click)="ui.closeMenus()"
+              ><span class="material-symbols-rounded">support_agent</span
+              >Issues</a
+            >
+          }
+        }
+      </section>
+    }
+  </div>
+
+  <section class="mobile-discovery" aria-label="Mobile search and location">
+    <button type="button" class="mobile-location" (click)="openLocation()">
+      <span class="material-symbols-rounded">location_on</span>
+      <span
+        ><small>Delivering to</small
+        ><b>{{ state.location().split(",")[0] }}</b></span
+      >
+      <span class="material-symbols-rounded">keyboard_arrow_down</span>
+    </button>
+    <form class="mobile-search" (submit)="goSearch($event)">
+      <span class="material-symbols-rounded">search</span>
+      <input
+        [value]="query()"
+        (input)="onSearch($any($event.target).value)"
+        (focus)="searchOpen.set(false)"
+        placeholder="Search items"
+        aria-label="Search products or stores"
+      />
+      @if (query()) {
+        <button
+          type="button"
+          aria-label="Clear mobile search"
+          (click)="clearSearch()"
+        >
+          <span class="material-symbols-rounded">close</span>
+        </button>
+      }
+    </form>
+  </section>
+</header>
+
+@if (searchOpen()) {
+  <button
+    class="search-backdrop"
+    (click)="closeSearch()"
+    type="button"
+    aria-label="Close search"
+  ></button>
+}
+@if (ui.userMenuOpen()) {
+  <button
+    class="menu-backdrop"
+    (click)="ui.closeMenus()"
+    type="button"
+    aria-label="Close menu"
+  ></button>
+}

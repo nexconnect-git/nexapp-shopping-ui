@@ -3,7 +3,10 @@
     <div class="page-hero-copy">
       <span class="eyebrow">Support</span>
       <h1>Customer Care</h1>
-      <p>Contact admin support for order disputes, payout issues, catalog questions, or technical help.</p>
+      <p>
+        Contact admin support for order disputes, payout issues, catalog
+        questions, or technical help.
+      </p>
     </div>
   </section>
 
@@ -15,7 +18,7 @@
     </div>
     <div>
       <span class="material-icons-outlined">mark_unread_chat_alt</span>
-      <strong>{{ tickets().length ? 'Active' : 'Ready' }}</strong>
+      <strong>{{ tickets().length ? "Active" : "Ready" }}</strong>
       <small>Support desk</small>
     </div>
     <div>
@@ -35,25 +38,67 @@
         </div>
       </div>
       <div class="card-body">
+        @if (createdMessage()) {
+          <div class="support-alert success">{{ createdMessage() }}</div>
+        }
+        @if (formError()) {
+          <div class="support-alert error">{{ formError() }}</div>
+        }
         <form (ngSubmit)="submitTicket()">
           <div class="form-group">
             <label class="form-label">Category</label>
-            <select class="form-select w-100" [(ngModel)]="form.category" name="category">
-              <option value="general">General Support</option>
-              <option value="billing">Billing & Payouts</option>
-              <option value="technical">Technical Issue</option>
-              <option value="dispute">Order Dispute</option>
+            <select
+              class="form-select w-100"
+              [(ngModel)]="form.category"
+              name="category"
+            >
+              @for (category of categories; track category.value) {
+                <option [value]="category.value">{{ category.label }}</option>
+              }
             </select>
+            <small class="field-hint"
+              >Pick the closest topic so admin can route the ticket
+              faster.</small
+            >
           </div>
           <div class="form-group">
-            <label class="form-label">Subject <span class="required">*</span></label>
-            <input type="text" class="form-input w-100" [(ngModel)]="form.subject" name="subject" required placeholder="Brief description of the issue">
+            <label class="form-label"
+              >Subject <span class="required">*</span></label
+            >
+            <input
+              type="text"
+              class="form-input w-100"
+              [(ngModel)]="form.subject"
+              name="subject"
+              required
+              placeholder="Brief description of the issue"
+            />
+            <small class="field-hint"
+              >One clear line, for example "Payout missing for Apr 12".</small
+            >
           </div>
           <div class="form-group">
-            <label class="form-label">Message <span class="required">*</span></label>
-            <textarea class="form-input w-100" [(ngModel)]="form.message" name="message" rows="5" required placeholder="Explain your issue in detail..."></textarea>
+            <label class="form-label"
+              >Message <span class="required">*</span></label
+            >
+            <textarea
+              class="form-input w-100"
+              [(ngModel)]="form.message"
+              name="message"
+              rows="5"
+              required
+              placeholder="Explain your issue in detail..."
+            ></textarea>
+            <small class="field-hint"
+              >Include order ID, payout period, screenshots notes, or steps to
+              reproduce if relevant.</small
+            >
           </div>
-          <button type="submit" class="btn-primary w-100" [disabled]="creating()">
+          <button
+            type="submit"
+            class="btn-primary w-100"
+            [disabled]="creating()"
+          >
             @if (creating()) {
               <span class="spinner-inline"></span> Submitting...
             } @else {
@@ -76,15 +121,21 @@
         @if (loading()) {
           <div class="p-4 text-center text-muted">Loading tickets...</div>
         } @else if (!tickets().length) {
-          <div class="p-4 text-center text-muted">You haven't submitted any support tickets yet.</div>
+          <div class="p-4 text-center text-muted">
+            You haven't submitted any support tickets yet.
+          </div>
         } @else {
           <div class="ticket-list">
             @for (ticket of tickets(); track ticket.id) {
               <div class="ticket-item">
                 <div class="ticket-content">
                   <div class="ticket-title-row">
-                    <span class="badge" [class]="'badge-' + ticket.status">{{ ticket.status | uppercase }}</span>
-                    <span class="ticket-cat">[{{ ticket.category | uppercase }}]</span>
+                    <span class="badge" [class]="'badge-' + ticket.status">{{
+                      ticket.status | uppercase
+                    }}</span>
+                    <span class="ticket-cat"
+                      >[{{ ticket.category | uppercase }}]</span
+                    >
                     <strong class="ticket-subj">{{ ticket.subject }}</strong>
                   </div>
                   <p class="ticket-desc">{{ ticket.message }}</p>
@@ -96,8 +147,12 @@
                   }
                 </div>
                 <div class="ticket-meta">
-                  <span class="material-icons-outlined text-muted" style="font-size:16px;">schedule</span>
-                  <span>{{ ticket.created_at | date:'medium' }}</span>
+                  <span
+                    class="material-icons-outlined text-muted"
+                    style="font-size: 16px"
+                    >schedule</span
+                  >
+                  <span>{{ ticket.created_at | date: "medium" }}</span>
                 </div>
               </div>
             }

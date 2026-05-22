@@ -1,0 +1,15 @@
+@if (loading()) {
+  <div class="nc-skeleton-center">
+    <div class="spinner"></div>
+    <p>Loading editor...</p>
+  </div>
+} @else if (editConfig() && entity()) {
+  <nc-dynamic-edit-page
+    [config]="editConfig()!"
+    [entity]="entity()!"
+    [initialStepId]="initialStepId()"
+    (cancelEdit)="cancel()"
+    (saveDraft)="saveDraft($event)"
+    (finalSubmit)="finalSubmit($event)"
+  />
+}

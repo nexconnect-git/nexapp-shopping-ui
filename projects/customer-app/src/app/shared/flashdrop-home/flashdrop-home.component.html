@@ -1,0 +1,229 @@
+<main class="flash-mobile-shell">
+  <section class="hero-top">
+    <header class="app-header">
+      <button
+        type="button"
+        class="brand"
+        aria-label="FlashDrop home"
+        (click)="home.navigateTab('home')"
+      >
+        <span>⚡</span>
+        <b>FlashDrop</b>
+      </button>
+
+      <div class="header-actions">
+        <button type="button" class="offer-btn" (click)="home.openOffers()">
+          🎟️
+          <small>Offers</small>
+        </button>
+        <button
+          type="button"
+          class="bell-btn"
+          aria-label="Notifications"
+          (click)="home.openNotifications()"
+        >
+          🔔
+          <i></i>
+        </button>
+      </div>
+    </header>
+
+    <div class="search-row">
+      <button type="button" class="location-pill" (click)="openLocation()">
+        <span>📍</span>
+        <div>
+          <small>Delivering to</small>
+          <b>{{ home.locationLabel() }}</b>
+        </div>
+        <em>⌄</em>
+      </button>
+
+      <label class="search-pill">
+        <span>⌕</span>
+        <input
+          type="search"
+          placeholder='Search for "milk, eggs, chips..."'
+          [ngModel]="home.searchQuery()"
+          (ngModelChange)="onSearch($event)"
+          (keydown.enter)="submitSearch()"
+        />
+        <button type="button" aria-label="Search" (click)="submitSearch()">
+          🔎
+        </button>
+      </label>
+    </div>
+  </section>
+
+  <section class="content-card">
+    <nav class="category-tabs" aria-label="Featured categories">
+      <button
+        *ngFor="let category of home.categories()"
+        type="button"
+        [class.active]="home.activeCategoryId() === category.id"
+        (click)="home.setCategory(category.id)"
+      >
+        <span>{{ category.icon }}</span>
+        <b>{{ category.name }}</b>
+      </button>
+    </nav>
+
+    <section class="delivery-banner">
+      <div class="banner-copy">
+        <span class="eta-badge">⚡ Delivery in <b>20 mins</b></span>
+        <h1>Everything you need, delivered <em>in minutes</em></h1>
+        <p>Fresh products from top stores near you.</p>
+        <button type="button" (click)="home.navigateTab('categories')">
+          Shop now →
+        </button>
+      </div>
+
+      <div class="banner-art">
+        <div class="bag">⚡</div>
+        <div class="timer"><b>20</b><small>mins</small></div>
+        <span class="food one">🥛</span>
+        <span class="food two">🥦</span>
+        <span class="food three">🍎</span>
+      </div>
+
+      <div class="slider-dots" aria-hidden="true">
+        <span></span><span></span><span></span><span></span>
+      </div>
+    </section>
+
+    <section class="promo-grid" aria-label="Promotions">
+      <button
+        *ngFor="let promo of home.promotions()"
+        type="button"
+        class="promo-card"
+        [attr.data-tone]="promo.tone"
+        (click)="home.openOffers()"
+      >
+        <span>{{ promo.icon }}</span>
+        <div>
+          <b>{{ promo.title }}</b>
+          <p>{{ promo.subtitle }}</p>
+          <em *ngIf="promo.code">{{ promo.code }}</em>
+        </div>
+      </button>
+    </section>
+
+    <section class="quick-grid" aria-label="Quick actions">
+      <button
+        *ngFor="let tile of home.quickTiles()"
+        type="button"
+        (click)="home.openQuickTile(tile.id)"
+      >
+        <span>{{ tile.icon }}</span>
+        <b>{{ tile.name }}</b>
+        <small>
+          {{
+            tile.id === "deals"
+              ? "Best offers"
+              : tile.id === "shops"
+                ? "Live catalog"
+                : tile.id === "daily"
+                  ? "Quick basket"
+                  : "For you"
+          }}
+        </small>
+      </button>
+    </section>
+
+    <section class="section-head">
+      <h2>Top Stores Near You</h2>
+      <button type="button" (click)="home.navigateTab('categories')">
+        See all ›
+      </button>
+    </section>
+
+    <div class="store-carousel">
+      <article
+        *ngFor="let store of home.filteredStores()"
+        class="store-card"
+        (click)="selectStore(store)"
+      >
+        <div class="store-image" [attr.data-store]="store.logoTone">
+          <img *ngIf="store.imageUrl" [src]="store.imageUrl" alt="" />
+          <span class="eta">📍 {{ store.etaMinutes }} mins</span>
+          <span class="delivery" *ngIf="store.freeDelivery">Free delivery</span>
+          <div class="fake-store-art" *ngIf="!store.imageUrl">
+            <span class="shelf"></span>
+            <span class="shelf"></span>
+            <span class="shelf"></span>
+          </div>
+          <div class="logo" [attr.data-tone]="store.logoTone">
+            {{ store.logoText }}
+          </div>
+        </div>
+
+        <div class="store-body">
+          <h3>{{ store.name }}</h3>
+          <p>
+            <span>★ {{ store.rating }}</span
+            ><i></i>{{ store.etaMinutes }} mins
+          </p>
+          <div class="store-tags">
+            <span>{{ store.category }}</span>
+            <span *ngIf="store.freeDelivery">Free delivery</span>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <section class="section-head">
+      <h2>Recommended for you</h2>
+      <button type="button" (click)="home.navigateTab('search')">
+        See all ›
+      </button>
+    </section>
+
+    <div class="product-grid">
+      <article
+        *ngFor="let product of home.filteredProducts()"
+        class="product-card"
+        (click)="openProduct(product)"
+      >
+        <span class="discount" *ngIf="product.badge">{{ product.badge }}</span>
+        <div class="product-image">
+          <img
+            *ngIf="home.isImageUrl(product.image); else productEmoji"
+            [src]="product.image"
+            alt=""
+          />
+          <ng-template #productEmoji>{{ product.image }}</ng-template>
+        </div>
+        <h3>{{ product.name }}</h3>
+        <p>{{ product.unit }}</p>
+        <div class="price-row">
+          <b>₹{{ product.price | number: "1.0-0" }}</b>
+          <del *ngIf="product.comparePrice"
+            >₹{{ product.comparePrice | number: "1.0-0" }}</del
+          >
+          <button
+            type="button"
+            (click)="$event.stopPropagation(); addProduct(product)"
+          >
+            Add
+          </button>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <nav class="bottom-tabs" aria-label="FlashDrop mobile navigation">
+    <button
+      *ngFor="let tab of tabs"
+      type="button"
+      [class.active]="home.selectedTab() === tab.id"
+      (click)="tabClick(tab.id)"
+    >
+      <span>{{ tab.icon }}</span>
+      <i *ngIf="tab.id === 'cart' && home.cartCount()">{{
+        home.cartCount()
+      }}</i>
+      <b>{{ tab.label }}</b>
+    </button>
+  </nav>
+
+  <div class="toast" *ngIf="home.toast()">{{ home.toast() }}</div>
+</main>

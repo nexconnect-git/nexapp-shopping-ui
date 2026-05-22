@@ -1,15 +1,29 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Observable } from 'rxjs';
 import { ApiService } from '@shared/public-api';
-import { DynamicStepperComponent, StepperConfig } from '../../shared/components/dynamic-stepper/dynamic-stepper.component';
+import {
+  DynamicStepperComponent,
+  StepperConfig,
+  StepperField,
+  UniqueValidationResult,
+} from '../../shared/components/dynamic-stepper/dynamic-stepper.component';
+
+const USERNAME_PATTERN = /^[a-zA-Z0-9_.-]{3,30}$/;
+const INDIA_PINCODE_PATTERN = /^[1-9][0-9]{5}$/;
+const PAN_PATTERN = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
+const GSTIN_PATTERN = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][A-Z0-9]Z[A-Z0-9]$/;
+const IFSC_PATTERN = /^[A-Z]{4}0[A-Z0-9]{6}$/;
+const UPI_PATTERN = /^[a-zA-Z0-9._-]{2,256}@[a-zA-Z][a-zA-Z0-9._-]{2,64}$/;
+const VEHICLE_NUMBER_PATTERN = /^[A-Z]{2}[0-9]{1,2}[A-Z]{1,3}[0-9]{4}$/;
 
 @Component({
   selector: 'app-onboarding-form',
   standalone: true,
   imports: [CommonModule, DynamicStepperComponent],
   templateUrl: './onboarding-form.component.html',
-  styleUrl: './onboarding-form.component.scss'
+  styleUrl: './onboarding-form.component.scss',
 })
 export class OnboardingFormComponent implements OnInit {
   private api = inject(ApiService);
@@ -28,47 +42,171 @@ export class OnboardingFormComponent implements OnInit {
 
   stepperConfig!: StepperConfig;
 
+  uniqueChecker = (
+    field: StepperField,
+    value: string,
+  ): Observable<UniqueValidationResult> => {
+    return this.api.checkAdminIdentityAvailability({
+      field: field.key,
+      value,
+      exclude_user_id: this.prefillData()?.['user_id'] || '',
+    });
+  };
+
   private readonly VENDOR_CONFIG: StepperConfig = {
     title: 'Onboard New Vendor',
-    subtitle: 'Complete all steps to create and submit the vendor account for review.',
+    subtitle:
+      'Complete all steps to create and submit the vendor account for review.',
     submitLabel: 'Submit & Create Vendor',
     steps: [
       {
         label: 'Account',
         title: 'Account Credentials',
         subtitle: 'Create the login account for this vendor.',
-        sections: [{
-          fields: [
-            { key: 'username', label: 'Username', type: 'text', required: true, placeholder: 'e.g. vendor_john', fullWidth: true },
-            { key: 'first_name', label: 'First Name', type: 'text', placeholder: 'John' },
-            { key: 'last_name', label: 'Last Name', type: 'text', placeholder: 'Doe' }
-          ]
-        }]
+        sections: [
+          {
+            fields: [
+              {
+                key: 'username',
+                label: 'Username',
+                type: 'text',
+                required: true,
+                unique: true,
+                placeholder: 'e.g. vendor_john',
+                fullWidth: true,
+                minLength: 3,
+                maxLength: 30,
+                pattern: USERNAME_PATTERN,
+                patternMessage:
+                  'Use 3-30 letters, numbers, dots, dashes, or underscores.',
+                hint: 'This becomes the vendor login ID. Keep it simple and unique.',
+              },
+              {
+                key: 'first_name',
+                label: 'First Name',
+                type: 'text',
+                placeholder: 'John',
+                maxLength: 40,
+              },
+              {
+                key: 'last_name',
+                label: 'Last Name',
+                type: 'text',
+                placeholder: 'Doe',
+                maxLength: 40,
+              },
+            ],
+          },
+        ],
       },
       {
         label: 'Store Info',
         title: 'Store Information',
         subtitle: 'Business details and store location.',
-        sections: [{
-          fields: [
-            { key: 'store_name', label: 'Store / Business Name', type: 'text', required: true, placeholder: 'e.g. FreshMart' },
-            { key: 'vendor_type', label: 'Vendor Type', type: 'select', options: [
-              { value: 'individual', label: 'Individual' },
-              { value: 'company', label: 'Company' },
-              { value: 'partnership', label: 'Partnership' }
-            ]},
-            { key: 'email', label: 'Business Email', type: 'email', required: true, placeholder: 'store@email.com' },
-            { key: 'phone', label: 'Phone Number', type: 'tel', required: true, placeholder: '+91 9876543210' },
-            { key: 'description', label: 'Description', type: 'textarea', placeholder: 'Brief description…' },
-            { key: 'address', label: 'Address', type: 'text', fullWidth: true, placeholder: 'Street address' },
-            { key: 'city', label: 'City', type: 'text', placeholder: 'Mumbai' },
-            { key: 'state', label: 'State', type: 'text', placeholder: 'Maharashtra' },
-            { key: 'postal_code', label: 'Postal Code', type: 'text', placeholder: '400001' },
-            { key: 'latitude', label: 'Latitude', type: 'number', placeholder: '19.076090' },
-            { key: 'longitude', label: 'Longitude', type: 'number', placeholder: '72.877426' },
-            { key: 'gst_registered', label: 'Registered for GST', type: 'checkbox' }
-          ]
-        }]
+        sections: [
+          {
+            fields: [
+              {
+                key: 'store_name',
+                label: 'Store / Business Name',
+                type: 'text',
+                required: true,
+                placeholder: 'e.g. FreshMart',
+                minLength: 2,
+                maxLength: 120,
+                hint: 'Use the name customers and operations teams will recognize.',
+              },
+              {
+                key: 'vendor_type',
+                label: 'Vendor Type',
+                type: 'select',
+                options: [
+                  { value: 'individual', label: 'Individual' },
+                  { value: 'company', label: 'Company' },
+                  { value: 'partnership', label: 'Partnership' },
+                ],
+              },
+              {
+                key: 'email',
+                label: 'Business Email',
+                type: 'email',
+                required: true,
+                unique: true,
+                placeholder: 'store@email.com',
+                maxLength: 120,
+                inputMode: 'email',
+              },
+              {
+                key: 'phone',
+                label: 'Phone Number',
+                type: 'tel',
+                required: true,
+                unique: true,
+                placeholder: '+91 9876543210',
+                inputMode: 'tel',
+                hint: 'Use a reachable operations contact number.',
+              },
+              {
+                key: 'description',
+                label: 'Description',
+                type: 'textarea',
+                placeholder: 'Brief description…',
+              },
+              {
+                key: 'address',
+                label: 'Address',
+                type: 'text',
+                fullWidth: true,
+                placeholder: 'Street address',
+              },
+              {
+                key: 'city',
+                label: 'City',
+                type: 'text',
+                placeholder: 'Mumbai',
+              },
+              {
+                key: 'state',
+                label: 'State',
+                type: 'text',
+                placeholder: 'Maharashtra',
+              },
+              {
+                key: 'postal_code',
+                label: 'Postal Code',
+                type: 'text',
+                placeholder: '400001',
+                pattern: INDIA_PINCODE_PATTERN,
+                patternMessage: 'Enter a valid 6-digit pincode.',
+                inputMode: 'numeric',
+                maxLength: 6,
+              },
+              {
+                key: 'latitude',
+                label: 'Latitude',
+                type: 'number',
+                placeholder: '19.076090',
+                min: -90,
+                max: 90,
+                inputMode: 'decimal',
+              },
+              {
+                key: 'longitude',
+                label: 'Longitude',
+                type: 'number',
+                placeholder: '72.877426',
+                min: -180,
+                max: 180,
+                inputMode: 'decimal',
+              },
+              {
+                key: 'gst_registered',
+                label: 'Registered for GST',
+                type: 'checkbox',
+              },
+            ],
+          },
+        ],
       },
       {
         label: 'Compliance',
@@ -77,21 +215,86 @@ export class OnboardingFormComponent implements OnInit {
         sections: [
           {
             fields: [
-              { key: 'legal_name', label: 'Legal / Business Name', type: 'text', placeholder: 'Registered legal name' },
-              { key: 'pan_number', label: 'PAN Number', type: 'text', placeholder: 'ABCDE1234F', maxLength: 10 },
-              { key: 'gstin', label: 'GSTIN', type: 'text', placeholder: '15-character GSTIN', maxLength: 15 },
-              { key: 'cin_udyam', label: 'CIN / Udyam Registration', type: 'text', placeholder: 'CIN or Udyam number' },
-              { key: 'fssai_license', label: 'FSSAI License', type: 'text', optional: true, placeholder: 'FSSAI licence number' },
-              { key: 'trademark_number', label: 'Trademark Number', type: 'text', optional: true, placeholder: 'Trademark registration no.' }
-            ]
+              {
+                key: 'legal_name',
+                label: 'Legal / Business Name',
+                type: 'text',
+                placeholder: 'Registered legal name',
+                maxLength: 160,
+              },
+              {
+                key: 'pan_number',
+                label: 'PAN Number',
+                type: 'text',
+                placeholder: 'ABCDE1234F',
+                maxLength: 10,
+                uppercase: true,
+                pattern: PAN_PATTERN,
+                patternMessage: 'PAN must look like ABCDE1234F.',
+              },
+              {
+                key: 'gstin',
+                label: 'GSTIN',
+                type: 'text',
+                placeholder: '15-character GSTIN',
+                maxLength: 15,
+                uppercase: true,
+                pattern: GSTIN_PATTERN,
+                patternMessage: 'Enter a valid 15-character GSTIN.',
+              },
+              {
+                key: 'cin_udyam',
+                label: 'CIN / Udyam Registration',
+                type: 'text',
+                placeholder: 'CIN or Udyam number',
+                maxLength: 40,
+                uppercase: true,
+              },
+              {
+                key: 'fssai_license',
+                label: 'FSSAI License',
+                type: 'text',
+                optional: true,
+                placeholder: 'FSSAI licence number',
+                maxLength: 20,
+                inputMode: 'numeric',
+              },
+              {
+                key: 'trademark_number',
+                label: 'Trademark Number',
+                type: 'text',
+                optional: true,
+                placeholder: 'Trademark registration no.',
+                maxLength: 40,
+                uppercase: true,
+              },
+            ],
           },
           {
             title: 'Contact Person',
             fields: [
-              { key: 'contact_person_name', label: 'Contact Person Name', type: 'text', placeholder: 'Full name' },
-              { key: 'contact_person_email', label: 'Contact Email', type: 'email', placeholder: 'contact@business.com' },
-              { key: 'contact_person_phone', label: 'Contact Phone', type: 'tel', placeholder: '+91 XXXXXXXXXX' }
-            ]
+              {
+                key: 'contact_person_name',
+                label: 'Contact Person Name',
+                type: 'text',
+                placeholder: 'Full name',
+                maxLength: 80,
+              },
+              {
+                key: 'contact_person_email',
+                label: 'Contact Email',
+                type: 'email',
+                placeholder: 'contact@business.com',
+                inputMode: 'email',
+              },
+              {
+                key: 'contact_person_phone',
+                label: 'Contact Phone',
+                type: 'tel',
+                placeholder: '+91 XXXXXXXXXX',
+                inputMode: 'tel',
+              },
+            ],
           },
           {
             title: 'Business Addresses',
@@ -103,41 +306,138 @@ export class OnboardingFormComponent implements OnInit {
               itemTitleKey: 'label',
               itemSubtitleKeys: ['city', 'state'],
               fields: [
-                { key: 'label', label: 'Label', type: 'text', placeholder: 'e.g. Warehouse' },
-                { key: 'street', label: 'Street', type: 'text', placeholder: 'Street' },
-                { key: 'city', label: 'City', type: 'text', placeholder: 'City' },
-                { key: 'state', label: 'State', type: 'text', placeholder: 'State' },
-                { key: 'pincode', label: 'Pincode', type: 'text', placeholder: 'Zip code' }
-              ]
-            }
-          }
-        ]
+                {
+                  key: 'label',
+                  label: 'Label',
+                  type: 'text',
+                  required: true,
+                  placeholder: 'e.g. Warehouse',
+                  maxLength: 50,
+                },
+                {
+                  key: 'street',
+                  label: 'Street',
+                  type: 'text',
+                  placeholder: 'Street',
+                  maxLength: 160,
+                },
+                {
+                  key: 'city',
+                  label: 'City',
+                  type: 'text',
+                  placeholder: 'City',
+                  maxLength: 80,
+                },
+                {
+                  key: 'state',
+                  label: 'State',
+                  type: 'text',
+                  placeholder: 'State',
+                  maxLength: 80,
+                },
+                {
+                  key: 'pincode',
+                  label: 'Pincode',
+                  type: 'text',
+                  placeholder: 'Zip code',
+                  pattern: INDIA_PINCODE_PATTERN,
+                  patternMessage: 'Enter a valid 6-digit pincode.',
+                  inputMode: 'numeric',
+                  maxLength: 6,
+                },
+              ],
+            },
+          },
+        ],
       },
       {
         label: 'Bank',
         title: 'Bank & Payment',
         subtitle: 'Settlement account and commission configuration.',
-        sections: [{
-          fields: [
-            { key: 'account_holder_name', label: 'Account Holder Name', type: 'text', fullWidth: true, placeholder: 'Name as per bank records' },
-            { key: 'account_number', label: 'Account Number', type: 'text', placeholder: 'Stored encrypted' },
-            { key: 'ifsc_code', label: 'IFSC Code', type: 'text', placeholder: 'e.g. SBIN0001234' },
-            { key: 'bank_name', label: 'Bank Name', type: 'text', placeholder: 'State Bank of India' },
-            { key: 'branch_name', label: 'Branch Name', type: 'text', placeholder: 'Branch area' },
-            { key: 'account_type', label: 'Account Type', type: 'select', options: [
-              { value: 'savings', label: 'Savings' },
-              { value: 'current', label: 'Current' }
-            ]},
-            { key: 'upi_id', label: 'UPI ID', type: 'text', optional: true, placeholder: 'vendor@upi' },
-            { key: 'settlement_cycle', label: 'Settlement Cycle', type: 'select', options: [
-              { value: 'T+1', label: 'T+1 (Next Day)' },
-              { value: 'T+7', label: 'T+7 (Weekly)' },
-              { value: 'T+15', label: 'T+15 (Fortnightly)' },
-              { value: 'T+30', label: 'T+30 (Monthly)' }
-            ]},
-            { key: 'commission_percentage', label: 'Commission (%)', type: 'number', placeholder: '12.5', min: 0, max: 100 }
-          ]
-        }]
+        sections: [
+          {
+            fields: [
+              {
+                key: 'account_holder_name',
+                label: 'Account Holder Name',
+                type: 'text',
+                fullWidth: true,
+                placeholder: 'Name as per bank records',
+                maxLength: 120,
+              },
+              {
+                key: 'account_number',
+                label: 'Account Number',
+                type: 'text',
+                placeholder: 'Stored encrypted',
+                minLength: 6,
+                maxLength: 20,
+                inputMode: 'numeric',
+              },
+              {
+                key: 'ifsc_code',
+                label: 'IFSC Code',
+                type: 'text',
+                placeholder: 'e.g. SBIN0001234',
+                uppercase: true,
+                pattern: IFSC_PATTERN,
+                patternMessage: 'IFSC must look like SBIN0001234.',
+              },
+              {
+                key: 'bank_name',
+                label: 'Bank Name',
+                type: 'text',
+                placeholder: 'State Bank of India',
+                maxLength: 120,
+              },
+              {
+                key: 'branch_name',
+                label: 'Branch Name',
+                type: 'text',
+                placeholder: 'Branch area',
+                maxLength: 120,
+              },
+              {
+                key: 'account_type',
+                label: 'Account Type',
+                type: 'select',
+                options: [
+                  { value: 'savings', label: 'Savings' },
+                  { value: 'current', label: 'Current' },
+                ],
+              },
+              {
+                key: 'upi_id',
+                label: 'UPI ID',
+                type: 'text',
+                optional: true,
+                placeholder: 'vendor@upi',
+                pattern: UPI_PATTERN,
+                patternMessage: 'Enter a valid UPI ID, for example vendor@upi.',
+              },
+              {
+                key: 'settlement_cycle',
+                label: 'Settlement Cycle',
+                type: 'select',
+                options: [
+                  { value: 'T+1', label: 'T+1 (Next Day)' },
+                  { value: 'T+7', label: 'T+7 (Weekly)' },
+                  { value: 'T+15', label: 'T+15 (Fortnightly)' },
+                  { value: 'T+30', label: 'T+30 (Monthly)' },
+                ],
+              },
+              {
+                key: 'commission_percentage',
+                label: 'Commission (%)',
+                type: 'number',
+                placeholder: '12.5',
+                min: 0,
+                max: 100,
+                inputMode: 'decimal',
+              },
+            ],
+          },
+        ],
       },
       {
         label: 'Logistics',
@@ -146,14 +446,37 @@ export class OnboardingFormComponent implements OnInit {
         sections: [
           {
             fields: [
-              { key: 'fulfillment_type', label: 'Fulfillment Type', type: 'select', options: [
-                { value: 'vendor', label: 'Vendor Fulfilled' },
-                { value: 'platform', label: 'Platform Fulfilled' }
-              ]},
-              { key: 'dispatch_sla_hours', label: 'Dispatch SLA (hours)', type: 'number', placeholder: '24' },
-              { key: 'return_policy', label: 'Return Policy', type: 'textarea', placeholder: 'Describe the return policy…' },
-              { key: 'packaging_preferences', label: 'Packaging Preferences', type: 'textarea', placeholder: 'Packaging requirements…' }
-            ]
+              {
+                key: 'fulfillment_type',
+                label: 'Fulfillment Type',
+                type: 'select',
+                options: [
+                  { value: 'vendor', label: 'Vendor Fulfilled' },
+                  { value: 'platform', label: 'Platform Fulfilled' },
+                ],
+              },
+              {
+                key: 'dispatch_sla_hours',
+                label: 'Dispatch SLA (hours)',
+                type: 'number',
+                placeholder: '24',
+                min: 0,
+                max: 168,
+                inputMode: 'decimal',
+              },
+              {
+                key: 'return_policy',
+                label: 'Return Policy',
+                type: 'textarea',
+                placeholder: 'Describe the return policy…',
+              },
+              {
+                key: 'packaging_preferences',
+                label: 'Packaging Preferences',
+                type: 'textarea',
+                placeholder: 'Packaging requirements…',
+              },
+            ],
           },
           {
             title: 'Serviceable Pincodes',
@@ -164,13 +487,35 @@ export class OnboardingFormComponent implements OnInit {
               itemTitleKey: 'pincode',
               itemSubtitleKeys: ['city'],
               fields: [
-                { key: 'pincode', label: 'Pincode', type: 'text', placeholder: 'Pincode' },
-                { key: 'city', label: 'City', type: 'text', placeholder: 'City' },
-                { key: 'state', label: 'State', type: 'text', placeholder: 'State' }
-              ]
-            }
-          }
-        ]
+                {
+                  key: 'pincode',
+                  label: 'Pincode',
+                  type: 'text',
+                  required: true,
+                  placeholder: 'Pincode',
+                  pattern: INDIA_PINCODE_PATTERN,
+                  patternMessage: 'Enter a valid 6-digit pincode.',
+                  inputMode: 'numeric',
+                  maxLength: 6,
+                },
+                {
+                  key: 'city',
+                  label: 'City',
+                  type: 'text',
+                  placeholder: 'City',
+                  maxLength: 80,
+                },
+                {
+                  key: 'state',
+                  label: 'State',
+                  type: 'text',
+                  placeholder: 'State',
+                  maxLength: 80,
+                },
+              ],
+            },
+          },
+        ],
       },
       {
         label: 'Operations',
@@ -181,19 +526,53 @@ export class OnboardingFormComponent implements OnInit {
             fields: [
               { key: 'opening_time', label: 'Opening Time', type: 'time' },
               { key: 'closing_time', label: 'Closing Time', type: 'time' },
-              { key: 'min_order_amount', label: 'Min Order Amount', type: 'number', placeholder: '0' },
-              { key: 'delivery_radius_km', label: 'Delivery Radius (km)', type: 'number', placeholder: '5' },
-              { key: 'vendor_tier', label: 'Vendor Tier', type: 'select', options: [
-                { value: 'basic', label: 'Basic' },
-                { value: 'silver', label: 'Silver' },
-                { value: 'gold', label: 'Gold' },
-                { value: 'platinum', label: 'Platinum' }
-              ]},
-              { key: 'cancellation_rules', label: 'Cancellation Rules', type: 'textarea', placeholder: 'Describe cancellation policy…' },
+              {
+                key: 'min_order_amount',
+                label: 'Min Order Amount',
+                type: 'number',
+                placeholder: '0',
+                min: 0,
+                max: 100000,
+                inputMode: 'decimal',
+              },
+              {
+                key: 'delivery_radius_km',
+                label: 'Delivery Radius (km)',
+                type: 'number',
+                placeholder: '5',
+                min: 0,
+                max: 100,
+                inputMode: 'decimal',
+              },
+              {
+                key: 'vendor_tier',
+                label: 'Vendor Tier',
+                type: 'select',
+                options: [
+                  { value: 'basic', label: 'Basic' },
+                  { value: 'silver', label: 'Silver' },
+                  { value: 'gold', label: 'Gold' },
+                  { value: 'platinum', label: 'Platinum' },
+                ],
+              },
+              {
+                key: 'cancellation_rules',
+                label: 'Cancellation Rules',
+                type: 'textarea',
+                placeholder: 'Describe cancellation policy…',
+              },
               { key: 'is_open', label: 'Open for Business', type: 'checkbox' },
-              { key: 'auto_order_acceptance', label: 'Auto-Accept Orders', type: 'checkbox' },
-              { key: 'is_featured', label: 'Featured Vendor', type: 'checkbox' }
-            ]
+              {
+                key: 'auto_order_acceptance',
+                label: 'Auto-Accept Orders',
+                type: 'checkbox',
+              },
+              {
+                key: 'is_featured',
+                label: 'Featured Vendor',
+                type: 'checkbox',
+              },
+            ],
           },
           {
             title: 'Holiday Calendar',
@@ -204,14 +583,20 @@ export class OnboardingFormComponent implements OnInit {
               itemTitleKey: 'date',
               itemSubtitleKeys: ['reason'],
               fields: [
-                { key: 'date', label: 'Date', type: 'date' },
-                { key: 'reason', label: 'Reason', type: 'text', placeholder: 'Public holiday' }
-              ]
-            }
-          }
-        ]
-      }
-    ]
+                { key: 'date', label: 'Date', type: 'date', required: true },
+                {
+                  key: 'reason',
+                  label: 'Reason',
+                  type: 'text',
+                  placeholder: 'Public holiday',
+                  maxLength: 80,
+                },
+              ],
+            },
+          },
+        ],
+      },
+    ],
   };
 
   private readonly PARTNER_CONFIG: StepperConfig = {
@@ -223,45 +608,129 @@ export class OnboardingFormComponent implements OnInit {
         label: 'Account',
         title: 'Account Details',
         subtitle: 'Basic login and personal information.',
-        sections: [{
-          fields: [
-            { key: 'username', label: 'Username', type: 'text', required: true, placeholder: 'e.g. rider_john', fullWidth: true },
-            { key: 'first_name', label: 'First Name', type: 'text', placeholder: 'John' },
-            { key: 'last_name', label: 'Last Name', type: 'text', placeholder: 'Doe' },
-            { key: 'email', label: 'Email', type: 'email', required: true, placeholder: 'rider@email.com' },
-            { key: 'phone', label: 'Phone', type: 'tel', required: true, placeholder: '+91 9876543210' }
-          ]
-        }]
+        sections: [
+          {
+            fields: [
+              {
+                key: 'username',
+                label: 'Username',
+                type: 'text',
+                required: true,
+                unique: true,
+                placeholder: 'e.g. rider_john',
+                fullWidth: true,
+                minLength: 3,
+                maxLength: 30,
+                pattern: USERNAME_PATTERN,
+                patternMessage:
+                  'Use 3-30 letters, numbers, dots, dashes, or underscores.',
+              },
+              {
+                key: 'first_name',
+                label: 'First Name',
+                type: 'text',
+                placeholder: 'John',
+                maxLength: 40,
+              },
+              {
+                key: 'last_name',
+                label: 'Last Name',
+                type: 'text',
+                placeholder: 'Doe',
+                maxLength: 40,
+              },
+              {
+                key: 'email',
+                label: 'Email',
+                type: 'email',
+                required: true,
+                unique: true,
+                placeholder: 'rider@email.com',
+                maxLength: 120,
+                inputMode: 'email',
+              },
+              {
+                key: 'phone',
+                label: 'Phone',
+                type: 'tel',
+                required: true,
+                unique: true,
+                placeholder: '+91 9876543210',
+                inputMode: 'tel',
+              },
+            ],
+          },
+        ],
       },
       {
         label: 'Vehicle',
         title: 'Vehicle Details',
         subtitle: 'Vehicle and licence information.',
-        sections: [{
-          fields: [
-            { key: 'vehicle_type', label: 'Vehicle Type', type: 'select', required: true, options: [
-              { value: 'bicycle', label: 'Bicycle' },
-              { value: 'motorcycle', label: 'Motorcycle' },
-              { value: 'car', label: 'Car' },
-              { value: 'van', label: 'Van' }
-            ]},
-            { key: 'vehicle_number', label: 'Vehicle Number', type: 'text', placeholder: 'e.g. MH12AB1234' },
-            { key: 'license_number', label: 'License Number', type: 'text', required: true, placeholder: 'Driving licence no.' }
-          ]
-        }]
+        sections: [
+          {
+            fields: [
+              {
+                key: 'vehicle_type',
+                label: 'Vehicle Type',
+                type: 'select',
+                required: true,
+                options: [
+                  { value: 'bicycle', label: 'Bicycle' },
+                  { value: 'motorcycle', label: 'Motorcycle' },
+                  { value: 'car', label: 'Car' },
+                  { value: 'van', label: 'Van' },
+                ],
+              },
+              {
+                key: 'vehicle_number',
+                label: 'Vehicle Number',
+                type: 'text',
+                placeholder: 'e.g. MH12AB1234',
+                uppercase: true,
+                pattern: VEHICLE_NUMBER_PATTERN,
+                patternMessage:
+                  'Use a valid vehicle number, for example MH12AB1234.',
+              },
+              {
+                key: 'license_number',
+                label: 'License Number',
+                type: 'text',
+                required: true,
+                placeholder: 'Driving licence no.',
+                minLength: 5,
+                maxLength: 30,
+                uppercase: true,
+              },
+            ],
+          },
+        ],
       },
       {
         label: 'Notes',
         title: 'Assignment Notes',
         subtitle: 'Optional notes about area or assignment.',
-        sections: [{
-          fields: [
-            { key: 'assigned_area', label: 'Assigned Area', type: 'text', placeholder: 'e.g. South Mumbai', fullWidth: true },
-            { key: 'notes', label: 'Notes', type: 'textarea', placeholder: 'Any additional notes…' }
-          ]
-        }]
-      }
-    ]
+        sections: [
+          {
+            fields: [
+              {
+                key: 'assigned_area',
+                label: 'Assigned Area',
+                type: 'text',
+                placeholder: 'e.g. South Mumbai',
+                fullWidth: true,
+                maxLength: 120,
+              },
+              {
+                key: 'notes',
+                label: 'Notes',
+                type: 'textarea',
+                placeholder: 'Any additional notes…',
+              },
+            ],
+          },
+        ],
+      },
+    ],
   };
 
   ngOnInit() {
@@ -278,7 +747,7 @@ export class OnboardingFormComponent implements OnInit {
         ...this.VENDOR_CONFIG,
         title: 'Edit Vendor',
         subtitle: 'Update vendor information.',
-        submitLabel: 'Save Changes'
+        submitLabel: 'Save Changes',
       };
       this.loadVendorData(id);
     } else {
@@ -294,6 +763,7 @@ export class OnboardingFormComponent implements OnInit {
         this.loading.set(false);
         this.prefillData.set({
           // User Info
+          user_id: vendor.user_info?.id || vendor.user || '',
           username: vendor.user_info?.username || '',
           first_name: vendor.user_info?.first_name || '',
           last_name: vendor.user_info?.last_name || '',
@@ -326,25 +796,34 @@ export class OnboardingFormComponent implements OnInit {
           cancellation_rules: vendor.cancellation_rules || '',
           is_open: vendor.is_open ?? true,
           auto_order_acceptance: vendor.auto_order_acceptance || false,
-          is_featured: vendor.is_featured || false });
+          is_featured: vendor.is_featured || false,
+        });
       },
       error: () => {
         this.loading.set(false);
-      }
+      },
     });
   }
 
   onSubmit(model: any) {
     if (this.saving()) return;
 
-    this.saving.set(true);
     this.errors.set({});
-    const payload = { ...model };
+    const payload = this.normalizePayload(model);
+    const clientErrors = this.validatePayload(payload);
+    if (Object.keys(clientErrors).length > 0) {
+      this.errors.set(clientErrors);
+      return;
+    }
+
+    this.saving.set(true);
 
     if (this.mode === 'vendor-onboard' || this.mode === 'vendor-edit') {
       payload.latitude = payload.latitude || 0;
       payload.longitude = payload.longitude || 0;
-      payload.commission_percentage = Number(payload.commission_percentage || 0);
+      payload.commission_percentage = Number(
+        payload.commission_percentage || 0,
+      );
       payload.min_order_amount = Number(payload.min_order_amount || 0);
       payload.delivery_radius_km = Number(payload.delivery_radius_km || 0);
       payload.dispatch_sla_hours = Number(payload.dispatch_sla_hours || 0);
@@ -367,15 +846,23 @@ export class OnboardingFormComponent implements OnInit {
           this.tempPassword.set(res.temp_password);
         } else {
           // Edit mode or no temp password — redirect automatically
-          const dest = this.mode === 'vendor-edit' ? `/vendors/${this.entityId}` :
-                       this.mode === 'partner-onboard' ? '/delivery-partners' : '/vendors';
+          const dest =
+            this.mode === 'vendor-edit'
+              ? `/vendors/${this.entityId}`
+              : this.mode === 'partner-onboard'
+                ? '/delivery-partners'
+                : '/vendors';
           setTimeout(() => this.router.navigate([dest]), 1800);
         }
       },
       error: (err: any) => {
         this.saving.set(false);
-        this.errors.set(err.error || { detail: 'Submission failed. Please check all fields.' });
-      }
+        this.errors.set(
+          err.error || {
+            detail: 'Submission failed. Please check all fields.',
+          },
+        );
+      },
     });
   }
 
@@ -385,13 +872,76 @@ export class OnboardingFormComponent implements OnInit {
   }
 
   proceedAfterPassword() {
-    const dest = this.mode === 'partner-onboard' ? '/delivery-partners' : '/vendors';
+    const dest =
+      this.mode === 'partner-onboard' ? '/delivery-partners' : '/vendors';
     this.router.navigate([dest]);
   }
 
+  private normalizePayload(model: any) {
+    const payload = { ...model };
+    for (const key of Object.keys(payload)) {
+      if (typeof payload[key] === 'string') payload[key] = payload[key].trim();
+    }
+
+    for (const key of [
+      'pan_number',
+      'gstin',
+      'ifsc_code',
+      'cin_udyam',
+      'trademark_number',
+      'vehicle_number',
+      'license_number',
+    ]) {
+      if (payload[key])
+        payload[key] = String(payload[key]).trim().toUpperCase();
+    }
+
+    return payload;
+  }
+
+  private validatePayload(payload: any): Record<string, string> {
+    const nextErrors: Record<string, string> = {};
+
+    if (this.mode === 'vendor-onboard' || this.mode === 'vendor-edit') {
+      if (payload.gst_registered && !payload.gstin) {
+        nextErrors['gstin'] =
+          'GSTIN is required when the vendor is marked as GST registered.';
+      }
+      if (
+        (payload.latitude && !payload.longitude) ||
+        (!payload.latitude && payload.longitude)
+      ) {
+        nextErrors['latitude'] =
+          'Enter both latitude and longitude, or leave both blank.';
+        nextErrors['longitude'] =
+          'Enter both latitude and longitude, or leave both blank.';
+      }
+      if (
+        payload.opening_time &&
+        payload.closing_time &&
+        payload.opening_time >= payload.closing_time
+      ) {
+        nextErrors['closing_time'] =
+          'Closing time must be later than opening time.';
+      }
+      if (payload.account_number && !payload.ifsc_code) {
+        nextErrors['ifsc_code'] =
+          'IFSC code is required when account number is provided.';
+      }
+      if (payload.ifsc_code && !payload.account_number) {
+        nextErrors['account_number'] =
+          'Account number is required when IFSC code is provided.';
+      }
+    }
+
+    return nextErrors;
+  }
+
   onCancel() {
-    if (this.mode === 'partner-onboard') this.router.navigate(['/delivery-partners']);
-    else if (this.mode === 'vendor-edit') this.router.navigate([`/vendors/${this.entityId}`]);
+    if (this.mode === 'partner-onboard')
+      this.router.navigate(['/delivery-partners']);
+    else if (this.mode === 'vendor-edit')
+      this.router.navigate([`/vendors/${this.entityId}`]);
     else this.router.navigate(['/vendors']);
   }
 
@@ -414,8 +964,10 @@ export class OnboardingFormComponent implements OnInit {
   }
 
   get pageSubtitle(): string {
-    if (this.mode === 'vendor-edit') return 'Update vendor account and store details.';
-    if (this.mode === 'partner-onboard') return 'Complete all steps to create the delivery partner account.';
+    if (this.mode === 'vendor-edit')
+      return 'Update vendor account and store details.';
+    if (this.mode === 'partner-onboard')
+      return 'Complete all steps to create the delivery partner account.';
     return 'Complete all steps to create and submit the vendor account for review.';
   }
 }

@@ -1,7 +1,7 @@
-import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService, ToastService } from '@shared/public-api';
+import { ApiService, AppCurrencyPipe, ToastService } from '@shared/public-api';
 import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
 
 interface TaskDef {
@@ -30,9 +30,15 @@ interface ScheduledJob {
 @Component({
   selector: 'app-scheduled-tasks',
   standalone: true,
-  imports: [CommonModule, FormsModule, DynamicTableComponent, TableCellDirective],
+  imports: [
+    CommonModule,
+    FormsModule,
+    DynamicTableComponent,
+    TableCellDirective,
+    AppCurrencyPipe,
+  ],
   templateUrl: './scheduled-tasks.component.html',
-  styleUrl: './scheduled-tasks.component.scss'
+  styleUrl: './scheduled-tasks.component.scss',
 })
 export class ScheduledTasksComponent implements OnInit, OnDestroy {
   private api = inject(ApiService);
@@ -51,7 +57,7 @@ export class ScheduledTasksComponent implements OnInit, OnDestroy {
     { key: 'parameters', label: 'Parameters', flex: '2fr' },
     { key: 'time', label: 'Time', flex: '1.5fr' },
     { key: 'status', label: 'Status', flex: '1fr' },
-    { key: 'actions', label: 'Action', flex: '1fr' }
+    { key: 'actions', label: 'Action', flex: '1fr' },
   ];
 
   // Vendor/partner lists for param selects
@@ -67,7 +73,8 @@ export class ScheduledTasksComponent implements OnInit, OnDestroy {
     schedule_mode: 'now' as 'now' | 'later',
     scheduled_time: '',
     repeat_mode: 'once' as 'once' | 'daily' | 'weekly',
-    kwargs: {} as Record<string, any> };
+    kwargs: {} as Record<string, any>,
+  };
 
   private refreshInterval: any;
 
@@ -100,7 +107,7 @@ export class ScheduledTasksComponent implements OnInit, OnDestroy {
       error: () => {
         this.toast.show('Failed to load scheduled tasks.', 'error');
         this.loading.set(false);
-      }
+      },
     });
   }
 
@@ -114,21 +121,21 @@ export class ScheduledTasksComponent implements OnInit, OnDestroy {
         });
         this.jobs.set(sortedJobs);
       },
-      error: () => {}
+      error: () => {},
     });
   }
 
   loadVendors() {
     this.api.getAdminVendors({ page_size: 200 }).subscribe({
       next: (res) => this.vendors.set(res.results || res),
-      error: () => {}
+      error: () => {},
     });
   }
 
   loadPartners() {
     this.api.getAdminDeliveryPartners({ page_size: 200 }).subscribe({
       next: (res) => this.partners.set(res.results || res),
-      error: () => {}
+      error: () => {},
     });
   }
 
@@ -136,21 +143,24 @@ export class ScheduledTasksComponent implements OnInit, OnDestroy {
     // Vendor payouts: show 'approved' ones (vendor has approved, admin needs to schedule/send)
     this.api.getAdminVendorPayouts().subscribe({
       next: (res) => {
-        const payouts = (res.results || res).filter((p: any) =>
-          p.status === 'approved' || p.status === 'pending_approval'
+        const payouts = (res.results || res).filter(
+          (p: any) =>
+            p.status === 'approved' || p.status === 'pending_approval',
         );
         this.pendingVendorPayouts.set(payouts);
       },
-      error: () => {}
+      error: () => {},
     });
 
     // Delivery payouts: show 'scheduled' ones (no approval step, ready to send payment)
     this.api.getAdminDeliveryPayouts().subscribe({
       next: (res) => {
-        const payouts = (res.results || res).filter((p: any) => p.status === 'scheduled');
+        const payouts = (res.results || res).filter(
+          (p: any) => p.status === 'scheduled',
+        );
         this.pendingDeliveryPayouts.set(payouts);
       },
-      error: () => {}
+      error: () => {},
     });
   }
 
@@ -177,7 +187,10 @@ export class ScheduledTasksComponent implements OnInit, OnDestroy {
 
   submit() {
     const task = this.selectedTask();
-    if (!task) { this.toast.show('Select a task type first.', 'error'); return; }
+    if (!task) {
+      this.toast.show('Select a task type first.', 'error');
+      return;
+    }
 
     // Validate required kwargs
     for (const p of task.params) {
@@ -189,10 +202,14 @@ export class ScheduledTasksComponent implements OnInit, OnDestroy {
 
     const payload: any = {
       task_key: this.form.task_key,
-      kwargs: { ...this.form.kwargs } };
+      kwargs: { ...this.form.kwargs },
+    };
 
     if (this.form.schedule_mode === 'later') {
-      if (!this.form.scheduled_time) { this.toast.show('Provide a scheduled datetime.', 'error'); return; }
+      if (!this.form.scheduled_time) {
+        this.toast.show('Provide a scheduled datetime.', 'error');
+        return;
+      }
       payload.scheduled_time = new Date(this.form.scheduled_time).toISOString();
       if (this.repeatSeconds) payload.repeat = this.repeatSeconds;
     }
@@ -200,7 +217,10 @@ export class ScheduledTasksComponent implements OnInit, OnDestroy {
     this.submitting.set(true);
     this.api.createScheduledTask(payload).subscribe({
       next: (res) => {
-        const when = this.form.schedule_mode === 'now' ? 'queued immediately' : `scheduled for ${new Date(payload.scheduled_time).toLocaleString()}`;
+        const when =
+          this.form.schedule_mode === 'now'
+            ? 'queued immediately'
+            : `scheduled for ${new Date(payload.scheduled_time).toLocaleString()}`;
         this.toast.show(`"${task.label}" ${when}.`, 'success');
         this.submitting.set(false);
         this.clearSelection();
@@ -210,7 +230,7 @@ export class ScheduledTasksComponent implements OnInit, OnDestroy {
         const msg = err.error?.error || 'Failed to schedule task.';
         this.toast.show(msg, 'error');
         this.submitting.set(false);
-      }
+      },
     });
   }
 
@@ -221,22 +241,30 @@ export class ScheduledTasksComponent implements OnInit, OnDestroy {
       next: () => {
         this.toast.show('Job cancelled.', 'success');
         this.cancellingId.set(null);
-        this.jobs.update(list => list.filter(j => j.id !== jobId));
+        this.jobs.update((list) => list.filter((j) => j.id !== jobId));
       },
       error: () => {
         this.toast.show('Failed to cancel job.', 'error');
         this.cancellingId.set(null);
-      }
+      },
     });
   }
 
   categoryLabel(cat: string): string {
-    const m: Record<string, string> = { payouts: 'Payouts', reports: 'Reports', notifications: 'Notifications' };
+    const m: Record<string, string> = {
+      payouts: 'Payouts',
+      reports: 'Reports',
+      notifications: 'Notifications',
+    };
     return m[cat] || cat;
   }
 
   categoryIcon(cat: string): string {
-    const m: Record<string, string> = { payouts: 'payments', reports: 'bar_chart', notifications: 'campaign' };
+    const m: Record<string, string> = {
+      payouts: 'payments',
+      reports: 'bar_chart',
+      notifications: 'campaign',
+    };
     return m[cat] || 'schedule';
   }
 
@@ -248,22 +276,24 @@ export class ScheduledTasksComponent implements OnInit, OnDestroy {
       finished: 'status-done',
       failed: 'status-failed',
       deferred: 'status-scheduled',
-      canceled: 'status-failed'
+      canceled: 'status-failed',
     };
     return m[s] || 'status-queued';
   }
 
   formatKwargs(kwargs: Record<string, any>): string {
-    return Object.entries(kwargs).map(([k, v]) => `${k}: ${v}`).join(' · ') || '—';
+    return (
+      Object.entries(kwargs)
+        .map(([k, v]) => `${k}: ${v}`)
+        .join(' · ') || '—'
+    );
   }
 
   tasksByCategory(cat: string): TaskDef[] {
-    return this.taskDefs().filter(t => t.category === cat);
+    return this.taskDefs().filter((t) => t.category === cat);
   }
 
   get categories(): string[] {
-    return [...new Set(this.taskDefs().map(t => t.category))];
+    return [...new Set(this.taskDefs().map((t) => t.category))];
   }
 }
-
-

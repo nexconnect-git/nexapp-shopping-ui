@@ -1,7 +1,20 @@
-import { Component, inject, signal, OnInit, OnDestroy, AfterViewChecked } from '@angular/core';
+import {
+  AfterViewChecked,
+  Component,
+  inject,
+  OnDestroy,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ApiService, Order, PaymentQR, openAuthenticatedWebSocket } from '@shared/public-api';
-import { timer, Subscription } from 'rxjs';
+import {
+  ApiService,
+  AppCurrencyPipe,
+  openAuthenticatedWebSocket,
+  Order,
+  PaymentQR,
+} from '@shared/public-api';
+import { Subscription, timer } from 'rxjs';
 import { AuthService } from '@shared/public-api';
 
 declare const L: any;
@@ -9,11 +22,13 @@ declare const L: any;
 @Component({
   selector: 'app-active-delivery',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, AppCurrencyPipe],
   templateUrl: './active-delivery.component.html',
-  styleUrls: ['./active-delivery.component.scss']
+  styleUrls: ['./active-delivery.component.scss'],
 })
-export class ActiveDeliveryComponent implements OnInit, OnDestroy, AfterViewChecked {
+export class ActiveDeliveryComponent
+  implements OnInit, OnDestroy, AfterViewChecked
+{
   private api = inject(ApiService);
   private auth = inject(AuthService);
 
@@ -54,7 +69,7 @@ export class ActiveDeliveryComponent implements OnInit, OnDestroy, AfterViewChec
   ngOnDestroy() {
     this.sub?.unsubscribe();
     this.stopLocationTracking();
-    this.leafletMaps.forEach(m => m.remove());
+    this.leafletMaps.forEach((m) => m.remove());
     this.leafletMaps.clear();
     this.partnerMarkers.clear();
   }
@@ -63,9 +78,10 @@ export class ActiveDeliveryComponent implements OnInit, OnDestroy, AfterViewChec
   private startLocationTracking() {
     if ('geolocation' in navigator) {
       this.watchId = navigator.geolocation.watchPosition(
-        (pos) => this.broadcastLocation(pos.coords.latitude, pos.coords.longitude),
+        (pos) =>
+          this.broadcastLocation(pos.coords.latitude, pos.coords.longitude),
         (err) => console.warn('Geolocation error:', err),
-        { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
+        { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 },
       );
     }
   }
@@ -74,7 +90,7 @@ export class ActiveDeliveryComponent implements OnInit, OnDestroy, AfterViewChec
     if (this.watchId !== undefined && 'geolocation' in navigator) {
       navigator.geolocation.clearWatch(this.watchId);
     }
-    this.wsConns.forEach(ws => ws.close());
+    this.wsConns.forEach((ws) => ws.close());
     this.wsConns.clear();
   }
 
@@ -85,19 +101,21 @@ export class ActiveDeliveryComponent implements OnInit, OnDestroy, AfterViewChec
     const currentOrders = this.orders();
     if (!currentOrders || currentOrders.length === 0) return;
 
-    currentOrders.forEach(order => {
+    currentOrders.forEach((order) => {
       if (order.status !== 'delivered' && order.status !== 'cancelled') {
         let ws = this.wsConns.get(order.id);
         if (!ws || ws.readyState === WebSocket.CLOSED) {
           ws = this.connectTrackerSocket(order.id);
         }
         if (ws && ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({
-            action: 'update_location',
-            lat,
-            lng,
-            partner_id: this.auth.user()?.id,
-          }));
+          ws.send(
+            JSON.stringify({
+              action: 'update_location',
+              lat,
+              lng,
+              partner_id: this.auth.user()?.id,
+            }),
+          );
         }
         // Update partner marker on the Leaflet map
         const marker = this.partnerMarkers.get(order.id);
@@ -108,8 +126,11 @@ export class ActiveDeliveryComponent implements OnInit, OnDestroy, AfterViewChec
 
   private initMapsForOrders() {
     if (typeof L === 'undefined') return;
-    this.orders().forEach(order => {
-      if (['picked_up', 'on_the_way'].includes(order.status) && !this.leafletMaps.has(order.id)) {
+    this.orders().forEach((order) => {
+      if (
+        ['picked_up', 'on_the_way'].includes(order.status) &&
+        !this.leafletMaps.has(order.id)
+      ) {
         const el = document.getElementById(`delivery-map-${order.id}`);
         if (!el) return;
 
@@ -120,7 +141,10 @@ export class ActiveDeliveryComponent implements OnInit, OnDestroy, AfterViewChec
         const centerLat = this.currentLat || vLat;
         const centerLng = this.currentLng || vLng;
 
-        const map = L.map(el, { zoomControl: true }).setView([centerLat, centerLng], 14);
+        const map = L.map(el, { zoomControl: true }).setView(
+          [centerLat, centerLng],
+          14,
+        );
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '© OpenStreetMap contributors',
         }).addTo(map);
@@ -128,39 +152,67 @@ export class ActiveDeliveryComponent implements OnInit, OnDestroy, AfterViewChec
         // Vendor marker
         if (vLat && vLng) {
           L.marker([vLat, vLng], {
-            icon: L.divIcon({ className: 'map-icon-vendor', html: '🏪', iconSize: [24, 24] }),
-          }).addTo(map).bindPopup('Pickup: ' + (order.vendor_info?.store_name || 'Vendor'));
+            icon: L.divIcon({
+              className: 'map-icon-vendor',
+              html: '🏪',
+              iconSize: [24, 24],
+            }),
+          })
+            .addTo(map)
+            .bindPopup(
+              'Pickup: ' + (order.vendor_info?.store_name || 'Vendor'),
+            );
         }
 
         // Customer marker
         if (cLat && cLng) {
           L.marker([cLat, cLng], {
-            icon: L.divIcon({ className: 'map-icon-customer', html: '📍', iconSize: [24, 24] }),
-          }).addTo(map).bindPopup('Drop-off');
+            icon: L.divIcon({
+              className: 'map-icon-customer',
+              html: '📍',
+              iconSize: [24, 24],
+            }),
+          })
+            .addTo(map)
+            .bindPopup('Drop-off');
         }
 
         // Partner marker (own location)
         if (this.currentLat && this.currentLng) {
           const partnerMarker = L.marker([this.currentLat, this.currentLng], {
-            icon: L.divIcon({ className: 'map-icon-partner', html: '🛵', iconSize: [28, 28] }),
-          }).addTo(map).bindPopup('You');
+            icon: L.divIcon({
+              className: 'map-icon-partner',
+              html: '🛵',
+              iconSize: [28, 28],
+            }),
+          })
+            .addTo(map)
+            .bindPopup('You');
           this.partnerMarkers.set(order.id, partnerMarker);
         }
 
         // Polyline: partner → vendor → customer
         const points: [number, number][] = [];
-        if (this.currentLat && this.currentLng) points.push([this.currentLat, this.currentLng]);
+        if (this.currentLat && this.currentLng)
+          points.push([this.currentLat, this.currentLng]);
         if (vLat && vLng) points.push([vLat, vLng]);
         if (cLat && cLng) points.push([cLat, cLng]);
         if (points.length >= 2) {
-          L.polyline(points, { color: '#00C853', weight: 3, dashArray: '6,4' }).addTo(map);
+          L.polyline(points, {
+            color: '#22C55E',
+            weight: 3,
+            dashArray: '6,4',
+          }).addTo(map);
         }
 
         this.leafletMaps.set(order.id, map);
       }
 
       // Remove map if order no longer needs it
-      if (!['picked_up', 'on_the_way'].includes(order.status) && this.leafletMaps.has(order.id)) {
+      if (
+        !['picked_up', 'on_the_way'].includes(order.status) &&
+        this.leafletMaps.has(order.id)
+      ) {
         this.leafletMaps.get(order.id).remove();
         this.leafletMaps.delete(order.id);
         this.partnerMarkers.delete(order.id);
@@ -169,8 +221,12 @@ export class ActiveDeliveryComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   private connectTrackerSocket(orderId: string): WebSocket {
-    const ws = openAuthenticatedWebSocket(`/sa/ws/delivery/${orderId}/tracking/`, this.auth.getToken());
-    ws.onopen = () => console.log(`Connected tracking socket for order ${orderId}`);
+    const ws = openAuthenticatedWebSocket(
+      `/sa/ws/delivery/${orderId}/tracking/`,
+      this.auth.getToken(),
+    );
+    ws.onopen = () =>
+      console.log(`Connected tracking socket for order ${orderId}`);
     ws.onerror = (err) => console.error('WS Error:', err);
     this.wsConns.set(orderId, ws);
     return ws;
@@ -179,8 +235,11 @@ export class ActiveDeliveryComponent implements OnInit, OnDestroy, AfterViewChec
   load() {
     this.loading.set(true);
     this.api.getDeliveryDashboard().subscribe({
-      next: (d) => { this.orders.set(d.active_orders || []); this.loading.set(false); },
-      error: () => this.loading.set(false)
+      next: (d) => {
+        this.orders.set(d.active_orders || []);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
     });
   }
 
@@ -188,7 +247,10 @@ export class ActiveDeliveryComponent implements OnInit, OnDestroy, AfterViewChec
     const lat = order.vendor_info?.latitude;
     const lng = order.vendor_info?.longitude;
     if (lat && lng) {
-      window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
+      window.open(
+        `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
+        '_blank',
+      );
     }
   }
 
@@ -196,17 +258,25 @@ export class ActiveDeliveryComponent implements OnInit, OnDestroy, AfterViewChec
     const lat = order.delivery_latitude;
     const lng = order.delivery_longitude;
     if (lat && lng) {
-      window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
+      window.open(
+        `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
+        '_blank',
+      );
     }
   }
 
   setOnTheWay(order: Order) {
-    this.api.setDeliveryOnTheWay(order.id).subscribe({ next: () => this.load() });
+    this.api
+      .setDeliveryOnTheWay(order.id)
+      .subscribe({ next: () => this.load() });
   }
 
   cancelAssignment(order: Order) {
-    if (!confirm('Cancel this delivery? The system will find another partner.')) return;
-    this.api.cancelDeliveryAssignment(order.id).subscribe({ next: () => this.load() });
+    if (!confirm('Cancel this delivery? The system will find another partner.'))
+      return;
+    this.api
+      .cancelDeliveryAssignment(order.id)
+      .subscribe({ next: () => this.load() });
   }
 
   openConfirmModal(order: Order) {
@@ -218,8 +288,11 @@ export class ActiveDeliveryComponent implements OnInit, OnDestroy, AfterViewChec
     // Load QR when opening modal
     this.loadingQR.set(true);
     this.api.getPaymentQR(order.id).subscribe({
-      next: (qr) => { this.paymentQR.set(qr); this.loadingQR.set(false); },
-      error: () => this.loadingQR.set(false)
+      next: (qr) => {
+        this.paymentQR.set(qr);
+        this.loadingQR.set(false);
+      },
+      error: () => this.loadingQR.set(false),
     });
   }
 
@@ -237,19 +310,29 @@ export class ActiveDeliveryComponent implements OnInit, OnDestroy, AfterViewChec
     const order = this.confirmModalOrder();
     if (!order) return;
     const otp = this.confirmOtp().trim();
-    if (!otp) { this.confirmError.set('Please enter the OTP from the customer.'); return; }
-    if (!this.confirmPhoto()) { this.confirmError.set('Please take a delivery photo.'); return; }
+    if (!otp) {
+      this.confirmError.set('Please enter the OTP from the customer.');
+      return;
+    }
+    if (!this.confirmPhoto()) {
+      this.confirmError.set('Please take a delivery photo.');
+      return;
+    }
 
     this.confirming.set(true);
     this.confirmError.set('');
     this.api.confirmDelivery(order.id, otp, this.confirmPhoto()!).subscribe({
-      next: () => { this.confirming.set(false); this.closeConfirmModal(); this.load(); },
+      next: () => {
+        this.confirming.set(false);
+        this.closeConfirmModal();
+        this.load();
+      },
       error: (err) => {
         this.confirming.set(false);
-        this.confirmError.set(err.error?.error || 'Failed. Check the OTP and try again.');
-      }
+        this.confirmError.set(
+          err.error?.error || 'Failed. Check the OTP and try again.',
+        );
+      },
     });
   }
 }
-
-

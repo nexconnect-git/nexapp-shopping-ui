@@ -1,0 +1,460 @@
+<main class="store-settings-page">
+  <header class="page-header">
+    <div>
+      <small>STORE PROFILE</small>
+      <h1>Edit Store Settings</h1>
+      <p>
+        Update your store information, availability, delivery rules and more.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="primary-btn"
+      [disabled]="service.loading() || service.saving()"
+      (click)="save()"
+    >
+      <span>{{ service.saving() ? "◌" : "▣" }}</span>
+      {{ service.saving() ? "Saving..." : "Save Settings" }}
+    </button>
+  </header>
+
+  <section *ngIf="service.loading()" class="state-card">
+    <span class="loader-dot"></span>
+    <strong>Loading store settings...</strong>
+  </section>
+
+  <ng-container *ngIf="!service.loading()">
+    <section class="status-grid">
+      <article
+        *ngFor="let card of statusCards()"
+        class="status-card"
+        [attr.data-tone]="card.tone"
+      >
+        <span class="status-icon nc-emoji-icon">{{ card.icon }}</span>
+        <div>
+          <small>{{ card.label }}</small>
+          <h2>{{ card.value }} <i></i></h2>
+          <p>{{ card.caption }}</p>
+        </div>
+      </article>
+    </section>
+
+    <section class="settings-grid">
+      <article class="settings-card">
+        <header>
+          <h2><span class="nc-emoji-icon">🏪</span> Store Profile</h2>
+          <em>Public storefront</em>
+        </header>
+
+        <div class="form-grid">
+          <label>
+            <span>Store name <i>*</i></span>
+            <input
+              type="text"
+              [ngModel]="service.settings().storeName"
+              (ngModelChange)="update('storeName', $event)"
+            />
+            <small
+              >Public store name shown to customers in search, carts, and
+              orders.</small
+            >
+            <small
+              class="field-error"
+              *ngIf="service.fieldError('storeName')"
+              >{{ service.fieldError("storeName") }}</small
+            >
+          </label>
+
+          <label>
+            <span>Description</span>
+            <textarea
+              rows="4"
+              placeholder="Tell customers what you sell, your specialty, and service area."
+              [ngModel]="service.settings().description"
+              (ngModelChange)="update('description', $event)"
+            >
+            </textarea>
+            <small
+              >Short storefront description that helps customers decide where to
+              order.</small
+            >
+          </label>
+
+          <label>
+            <span>Phone <i>*</i></span>
+            <input
+              type="tel"
+              [ngModel]="service.settings().phone"
+              (ngModelChange)="update('phone', $event)"
+            />
+            <small
+              >Business contact number for order or support follow-up.</small
+            >
+            <small class="field-error" *ngIf="service.fieldError('phone')">{{
+              service.fieldError("phone")
+            }}</small>
+          </label>
+
+          <label>
+            <span>Email <i>*</i></span>
+            <input
+              type="email"
+              [ngModel]="service.settings().email"
+              (ngModelChange)="update('email', $event)"
+            />
+            <small>Business email for store related communication.</small>
+            <small class="field-error" *ngIf="service.fieldError('email')">{{
+              service.fieldError("email")
+            }}</small>
+          </label>
+        </div>
+      </article>
+
+      <article class="settings-card availability-card">
+        <header>
+          <h2><span class="nc-emoji-icon">🟢</span> Availability</h2>
+          <em>Shift controls</em>
+        </header>
+
+        <div class="toggle-list">
+          <button
+            type="button"
+            class="toggle-row"
+            [class.enabled]="service.settings().storeOpen"
+            (click)="toggle('storeOpen')"
+          >
+            <span></span>
+            <div>
+              <b>Store open</b>
+              <small>Turn on when your store is operating for the day.</small>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            class="toggle-row"
+            [class.enabled]="service.settings().acceptingOrders"
+            (click)="toggle('acceptingOrders')"
+          >
+            <span></span>
+            <div>
+              <b>Accepting orders</b>
+              <small
+                >Allow customers to place new orders while the store is
+                open.</small
+              >
+            </div>
+          </button>
+
+          <button
+            type="button"
+            class="toggle-row"
+            [class.enabled]="service.settings().autoAcceptOrders"
+            (click)="toggle('autoAcceptOrders')"
+          >
+            <span></span>
+            <div>
+              <b>Auto-accept orders</b>
+              <small
+                >Automatically confirm incoming orders instead of manual
+                review.</small
+              >
+            </div>
+          </button>
+        </div>
+
+        <div class="time-grid">
+          <label>
+            <span>Opening time <i>*</i></span>
+            <input
+              type="time"
+              [ngModel]="service.settings().openingTime"
+              (ngModelChange)="update('openingTime', $event)"
+            />
+            <small>Customers can start placing orders from this time.</small>
+          </label>
+
+          <label>
+            <span>Closing time <i>*</i></span>
+            <input
+              type="time"
+              [ngModel]="service.settings().closingTime"
+              (ngModelChange)="update('closingTime', $event)"
+            />
+            <small>Orders will not be accepted after this time.</small>
+            <small
+              class="field-error"
+              *ngIf="service.fieldError('closingTime')"
+              >{{ service.fieldError("closingTime") }}</small
+            >
+          </label>
+        </div>
+      </article>
+
+      <article class="settings-card">
+        <header>
+          <h2><span class="nc-emoji-icon">🚚</span> Instant Delivery Rules</h2>
+          <em>Fulfillment settings</em>
+        </header>
+
+        <div class="form-grid">
+          <label>
+            <span>Minimum order <i>*</i></span>
+            <input
+              type="number"
+              min="0"
+              [ngModel]="service.settings().minimumOrder"
+              (ngModelChange)="update('minimumOrder', +$event)"
+            />
+            <small>Lowest cart value customers must reach.</small>
+            <small
+              class="field-error"
+              *ngIf="service.fieldError('minimumOrder')"
+              >{{ service.fieldError("minimumOrder") }}</small
+            >
+          </label>
+
+          <label>
+            <span>Base prep minutes <i>*</i></span>
+            <input
+              type="number"
+              min="0"
+              [ngModel]="service.settings().basePrepMinutes"
+              (ngModelChange)="update('basePrepMinutes', +$event)"
+            />
+            <small>Default preparation time for orders.</small>
+            <small
+              class="field-error"
+              *ngIf="service.fieldError('basePrepMinutes')"
+              >{{ service.fieldError("basePrepMinutes") }}</small
+            >
+          </label>
+
+          <label>
+            <span>Delivery radius (km) <i>*</i></span>
+            <input
+              type="number"
+              min="0"
+              step="0.1"
+              [ngModel]="service.settings().deliveryRadiusKm"
+              (ngModelChange)="update('deliveryRadiusKm', +$event)"
+            />
+            <small>Maximum distance for regular delivery.</small>
+            <small
+              class="field-error"
+              *ngIf="service.fieldError('deliveryRadiusKm')"
+              >{{ service.fieldError("deliveryRadiusKm") }}</small
+            >
+          </label>
+
+          <label>
+            <span>Instant radius (km) <i>*</i></span>
+            <input
+              type="number"
+              min="0"
+              step="0.1"
+              [ngModel]="service.settings().instantRadiusKm"
+              (ngModelChange)="update('instantRadiusKm', +$event)"
+            />
+            <small>Smaller distance for fast/instant delivery.</small>
+            <small
+              class="field-error"
+              *ngIf="service.fieldError('instantRadiusKm')"
+              >{{ service.fieldError("instantRadiusKm") }}</small
+            >
+          </label>
+        </div>
+      </article>
+
+      <article class="settings-card location-card">
+        <header>
+          <h2><span class="nc-emoji-icon">📍</span> Location</h2>
+          <button
+            type="button"
+            class="soft-btn"
+            (click)="mapVisible.set(!mapVisible())"
+          >
+            🗺 {{ mapVisible() ? "Hide Map" : "Pick on Map" }}
+          </button>
+        </header>
+
+        <div class="location-search">
+          <span>⌕</span>
+          <input
+            type="search"
+            placeholder="Search saved locations..."
+            [ngModel]="locationQuery()"
+            (ngModelChange)="locationQuery.set($event)"
+          />
+        </div>
+
+        <div class="suggestions" *ngIf="mapVisible() || locationQuery()">
+          <button type="button" class="use-location" (click)="useMyLocation()">
+            Use my location
+          </button>
+
+          <button
+            *ngFor="let location of filteredLocations()"
+            type="button"
+            class="location-option"
+            (click)="service.selectLocation(location)"
+          >
+            <span class="nc-emoji-icon">📍</span>
+            <div>
+              <b>{{ location.label }}</b>
+              <small
+                >{{ location.city }}, {{ location.state }}
+                {{ location.postalCode }}</small
+              >
+            </div>
+            <em *ngIf="service.settings().address === location.address"
+              >Selected</em
+            >
+          </button>
+        </div>
+
+        <div class="map-picker-panel" *ngIf="mapVisible()">
+          <app-map-picker
+            [height]="'300px'"
+            [initialLat]="service.settings().latitude || 6.5244"
+            [initialLng]="service.settings().longitude || 3.3792"
+            (locationPicked)="onLocationPicked($event)"
+          >
+          </app-map-picker>
+          <p>
+            Pick a point or search an address. The fields below update
+            automatically.
+          </p>
+        </div>
+
+        <div class="location-form">
+          <label class="full">
+            <span>Address <i>*</i></span>
+            <input
+              type="text"
+              [ngModel]="service.settings().address"
+              (ngModelChange)="update('address', $event)"
+            />
+            <small
+              >Full pickup address used for driver routing and customer distance
+              checks.</small
+            >
+            <small class="field-error" *ngIf="service.fieldError('address')">{{
+              service.fieldError("address")
+            }}</small>
+          </label>
+
+          <label>
+            <span>City <i>*</i></span>
+            <input
+              type="text"
+              [ngModel]="service.settings().city"
+              (ngModelChange)="update('city', $event)"
+            />
+            <small class="field-error" *ngIf="service.fieldError('city')">{{
+              service.fieldError("city")
+            }}</small>
+          </label>
+
+          <label>
+            <span>State <i>*</i></span>
+            <input
+              type="text"
+              [ngModel]="service.settings().state"
+              (ngModelChange)="update('state', $event)"
+            />
+            <small class="field-error" *ngIf="service.fieldError('state')">{{
+              service.fieldError("state")
+            }}</small>
+          </label>
+
+          <label>
+            <span>Postal code <i>*</i></span>
+            <input
+              type="text"
+              [ngModel]="service.settings().postalCode"
+              (ngModelChange)="update('postalCode', $event)"
+            />
+            <small
+              class="field-error"
+              *ngIf="service.fieldError('postalCode')"
+              >{{ service.fieldError("postalCode") }}</small
+            >
+          </label>
+
+          <label>
+            <span>Latitude <i>*</i></span>
+            <input
+              type="number"
+              step="0.000001"
+              [ngModel]="service.settings().latitude"
+              (ngModelChange)="update('latitude', +$event)"
+            />
+            <small class="field-error" *ngIf="service.fieldError('latitude')">{{
+              service.fieldError("latitude")
+            }}</small>
+          </label>
+
+          <label>
+            <span>Longitude <i>*</i></span>
+            <input
+              type="number"
+              step="0.000001"
+              [ngModel]="service.settings().longitude"
+              (ngModelChange)="update('longitude', +$event)"
+            />
+            <small
+              class="field-error"
+              *ngIf="service.fieldError('longitude')"
+              >{{ service.fieldError("longitude") }}</small
+            >
+          </label>
+        </div>
+      </article>
+
+      <article class="settings-card packaging-card">
+        <header>
+          <h2>
+            <span class="nc-emoji-icon">📦</span> Packaging and Cancellation
+          </h2>
+          <em>Customer expectations</em>
+        </header>
+
+        <div class="form-grid">
+          <label>
+            <span>Packaging preferences</span>
+            <textarea
+              rows="4"
+              placeholder="e.g. Seal liquids upright, keep bakery items in paper bags."
+              [ngModel]="service.settings().packagingPreferences"
+              (ngModelChange)="update('packagingPreferences', $event)"
+            >
+            </textarea>
+            <small
+              >Instructions your staff should follow before handing over
+              orders.</small
+            >
+          </label>
+
+          <label>
+            <span>Cancellation rules</span>
+            <textarea
+              rows="4"
+              placeholder="e.g. Cancel before preparation starts, or contact support for exceptions."
+              [ngModel]="service.settings().cancellationRules"
+              (ngModelChange)="update('cancellationRules', $event)"
+            >
+            </textarea>
+            <small
+              >Customer-facing expectations for when an order can be
+              cancelled.</small
+            >
+          </label>
+        </div>
+      </article>
+    </section>
+  </ng-container>
+
+  <div class="toast" *ngIf="service.toast()">{{ service.toast() }}</div>
+</main>

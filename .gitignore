@@ -38,6 +38,7 @@ yarn-error.log
 /connect.lock
 /coverage
 /libpeerconnection.log
+projects/*/public/runtime-config.js
 testem.log
 /typings
 
@@ -53,7 +54,17 @@ testem.log
 **/*.test.tsx
 !projects/vendor-app/src/**/*.spec.ts
 !projects/admin-panel/src/**/*.spec.ts
+!src/**/*.spec.ts
+!projects/customer-app/src/**/*.spec.ts
+!projects/delivery-app/src/**/*.spec.ts
 
 # System files
 .DS_Store
 Thumbs.db
+
+# Mockups
+projects/customer-app/src/assets/mockups/
+# Agent files
+.agent/
+.codex-artifacts/
+

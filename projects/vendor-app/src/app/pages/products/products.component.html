@@ -1,22 +1,40 @@
 <div class="products-page fade-in">
-
   <section class="page-hero">
     <div class="page-hero-copy">
       <span class="eyebrow">Catalog</span>
       <h1>Products</h1>
-      <p>Manage pricing, approval readiness, stock health, and customer-facing product quality.</p>
+      <p>
+        Manage pricing, approval readiness, stock health, and customer-facing
+        product quality.
+      </p>
     </div>
     <div class="page-hero-actions">
       <div class="reload-bar">
         @if (lastRefreshed()) {
-          <span class="reload-timestamp">Updated {{ lastRefreshed() | date:'HH:mm:ss' }}</span>
+          <span class="reload-timestamp"
+            >Updated {{ lastRefreshed() | date: "HH:mm:ss" }}</span
+          >
         }
-        <button class="btn-icon" (click)="manualReload()" [disabled]="loading()" title="Reload">
-          <span class="material-icons-outlined" [class.spin]="loading()">refresh</span>
+        <button
+          class="btn-icon"
+          (click)="manualReload()"
+          [disabled]="loading()"
+          title="Reload"
+        >
+          <span class="material-icons-outlined" [class.spin]="loading()"
+            >refresh</span
+          >
         </button>
-        <button class="reload-toggle" [class.active]="autoReload()" (click)="toggleAutoReload()" title="Toggle auto-reload">
-          <span class="material-icons-outlined">{{ autoReload() ? 'pause_circle' : 'play_circle' }}</span>
-          {{ autoReload() ? 'Auto' : 'Paused' }}
+        <button
+          class="reload-toggle"
+          [class.active]="autoReload()"
+          (click)="toggleAutoReload()"
+          title="Toggle auto-reload"
+        >
+          <span class="material-icons-outlined">{{
+            autoReload() ? "pause_circle" : "play_circle"
+          }}</span>
+          {{ autoReload() ? "Auto" : "Paused" }}
         </button>
       </div>
       <a routerLink="/products/new" class="btn-primary">
@@ -29,8 +47,18 @@
   <section class="workspace-toolbar">
     <label class="toolbar-search">
       <span class="material-icons-outlined">search</span>
-      <input type="search" [(ngModel)]="search" (input)="onSearch()" placeholder="Search products, SKU, or category" aria-label="Search products">
+      <input
+        type="search"
+        [(ngModel)]="search"
+        (input)="onSearch()"
+        placeholder="Search products, SKU, or category"
+        aria-label="Search products"
+      />
     </label>
+    <small class="field-hint"
+      >Search by product name, internal SKU, or category to find items
+      quickly.</small
+    >
   </section>
 
   @if (!loading()) {
@@ -41,7 +69,7 @@
         <small>Total products</small>
       </div>
       <div>
-        <span class="material-icons-outlined">warning_amber</span>
+        <span class="material-icons-outlined">error_outline</span>
         <strong>{{ products().filter(isLowStock).length }}</strong>
         <small>Low stock</small>
       </div>
@@ -60,9 +88,14 @@
 
   @if (!loading() && products().some(isLowStock)) {
     <div class="low-stock-alert">
-      <span class="material-icons-outlined">warning_amber</span>
+      <span class="material-icons-outlined">error_outline</span>
       <span>
-        <strong>{{ products().filter(isLowStock).length }} product{{ products().filter(isLowStock).length > 1 ? 's are' : ' is' }} low on stock.</strong>
+        <strong
+          >{{ products().filter(isLowStock).length }} product{{
+            products().filter(isLowStock).length > 1 ? "s are" : " is"
+          }}
+          low on stock.</strong
+        >
         Update inventory to keep selling.
       </span>
     </div>
@@ -72,8 +105,14 @@
     <div class="growth-alert">
       <span class="material-icons-outlined">tips_and_updates</span>
       <span>
-        <strong>{{ products().filter(needsAttention).length }} product{{ products().filter(needsAttention).length > 1 ? 's need' : ' needs' }} selling fixes.</strong>
-        Add images, stock, categories, or availability to improve customer conversion.
+        <strong
+          >{{ products().filter(needsAttention).length }} product{{
+            products().filter(needsAttention).length > 1 ? "s need" : " needs"
+          }}
+          selling fixes.</strong
+        >
+        Add images, stock, categories, or availability to improve customer
+        conversion.
       </span>
     </div>
   }
@@ -94,7 +133,7 @@
       <div class="product-cell">
         <div class="product-thumb">
           @if (product.primary_image) {
-            <img [src]="product.primary_image" alt="{{product.name}}">
+            <img [src]="product.primary_image" alt="{{ product.name }}" />
           } @else {
             <div class="img-placeholder">
               <span class="material-icons-outlined">image</span>
@@ -109,7 +148,9 @@
           @if (!product.image_count) {
             <span class="product-warning">Missing photo</span>
           }
-          @if (product.approval_status && product.approval_status !== 'approved') {
+          @if (
+            product.approval_status && product.approval_status !== "approved"
+          ) {
             <span class="product-warning">{{ approvalText(product) }}</span>
           }
         </div>
@@ -128,10 +169,14 @@
       <div class="price-cell">
         <span class="price-main">{{ product.price | appCurrency }}</span>
         @if (product.compare_price) {
-          <span class="price-compare">{{ product.compare_price | appCurrency }}</span>
+          <span class="price-compare">{{
+            product.compare_price | appCurrency
+          }}</span>
         }
         @if (product.revenue) {
-          <span class="price-revenue">{{ product.revenue | appCurrency }} sold</span>
+          <span class="price-revenue"
+            >{{ product.revenue | appCurrency }} sold</span
+          >
         }
       </div>
     </ng-template>
@@ -143,7 +188,7 @@
         </span>
         @if (isLowStock(product)) {
           <span class="low-stock-badge">
-            <span class="material-icons-outlined">warning_amber</span>
+            <span class="material-icons-outlined">error_outline</span>
             Low
           </span>
         }
@@ -153,7 +198,11 @@
     <ng-template tableCell="growth" let-product>
       <div class="growth-cell">
         @if (needsAttention(product)) {
-          <button type="button" class="health-badge attention health-action" (click)="openFixes(product)">
+          <button
+            type="button"
+            class="health-badge attention health-action"
+            (click)="openFixes(product)"
+          >
             <span class="material-icons-outlined">priority_high</span>
             {{ productHealthLabel(product) }}
           </button>
@@ -163,13 +212,18 @@
             {{ productHealthLabel(product) }}
           </span>
         }
-        <span class="growth-meta">{{ product.sales_count || 0 }} sold / {{ categoryVisibilityLabel(product) }}</span>
+        <span class="growth-meta"
+          >{{ product.sales_count || 0 }} sold /
+          {{ categoryVisibilityLabel(product) }}</span
+        >
       </div>
     </ng-template>
 
     <ng-template tableCell="status" let-product>
       <div class="status-stack">
-        <span [class]="approvalClass(product)">{{ approvalText(product) }}</span>
+        <span [class]="approvalClass(product)">{{
+          approvalText(product)
+        }}</span>
         <small>{{ approvalReason(product) }}</small>
       </div>
     </ng-template>
@@ -184,13 +238,23 @@
             [disabled]="submittingApproval() === product.id"
             title="Submit for admin approval"
           >
-            <span class="material-icons-outlined">{{ submittingApproval() === product.id ? 'hourglass_top' : 'approval' }}</span>
+            <span class="material-icons-outlined">{{
+              submittingApproval() === product.id ? "hourglass_top" : "approval"
+            }}</span>
           </button>
         }
-        <a [routerLink]="['/products/edit', product.id]" class="btn-ghost btn-sm" title="Edit">
+        <a
+          [routerLink]="['/products', product.id, 'edit']"
+          class="btn-ghost btn-sm"
+          title="Edit"
+        >
           <span class="material-icons-outlined">edit</span>
         </a>
-        <button class="btn-ghost btn-sm danger-hover" (click)="confirmDelete(product)" title="Delete">
+        <button
+          class="btn-ghost btn-sm danger-hover"
+          (click)="confirmDelete(product)"
+          title="Delete"
+        >
           <span class="material-icons-outlined">delete_outline</span>
         </button>
       </div>
@@ -206,13 +270,22 @@
       </div>
       <h3 class="delete-modal-title">Delete Product?</h3>
       <p class="delete-modal-desc">
-        Are you sure you want to delete <strong>"{{ deleteTarget()!.name }}"</strong>?
-        This action cannot be undone.
+        Are you sure you want to delete
+        <strong>"{{ deleteTarget()!.name }}"</strong>? This action cannot be
+        undone.
       </p>
       <div class="delete-modal-actions">
-        <button class="btn-secondary" (click)="cancelDelete()" [disabled]="deleting()">Cancel</button>
+        <button
+          class="btn-secondary"
+          (click)="cancelDelete()"
+          [disabled]="deleting()"
+        >
+          Cancel
+        </button>
         <button class="btn-danger" (click)="doDelete()" [disabled]="deleting()">
-          @if (deleting()) { <span class="btn-spinner"></span> }
+          @if (deleting()) {
+            <span class="btn-spinner"></span>
+          }
           Delete
         </button>
       </div>
@@ -228,21 +301,32 @@
           <h3>{{ fixesTarget()!.name }} needs attention</h3>
           <p>Fix these items before the product is ready for customers.</p>
         </div>
-        <button class="btn-ghost" type="button" (click)="closeFixes()" title="Close">
+        <button
+          class="btn-ghost"
+          type="button"
+          (click)="closeFixes()"
+          title="Close"
+        >
           <span class="material-icons-outlined">close</span>
         </button>
       </div>
       <div class="fixes-list">
-        @if (fixesTarget()!.approval_status === 'pending_approval') {
+        @if (fixesTarget()!.approval_status === "pending_approval") {
           <div class="fix-row review">
             <span class="material-icons-outlined">hourglass_top</span>
-            <span>This product is waiting for admin approval and is hidden from customers.</span>
+            <span
+              >This product is waiting for admin approval and is hidden from
+              customers.</span
+            >
           </div>
         }
-        @if (fixesTarget()!.approval_status === 'rejected') {
+        @if (fixesTarget()!.approval_status === "rejected") {
           <div class="fix-row review">
             <span class="material-icons-outlined">report</span>
-            <span>{{ fixesTarget()!.rejection_reason || 'Admin rejected this product. Edit and resubmit it for approval.' }}</span>
+            <span>{{
+              fixesTarget()!.rejection_reason ||
+                "Admin rejected this product. Edit and resubmit it for approval."
+            }}</span>
           </div>
         }
         @for (fix of fixesTarget()!.visibility_blockers || []; track fix) {
@@ -253,7 +337,9 @@
         }
       </div>
       <div class="fixes-actions">
-        <button class="btn-secondary" type="button" (click)="closeFixes()">Later</button>
+        <button class="btn-secondary" type="button" (click)="closeFixes()">
+          Later
+        </button>
         @if (canSubmitForApproval(fixesTarget())) {
           <button
             class="btn-primary"
@@ -261,11 +347,23 @@
             (click)="submitForApproval(fixesTarget())"
             [disabled]="submittingApproval() === fixesTarget()!.id"
           >
-            <span class="material-icons-outlined">{{ submittingApproval() === fixesTarget()!.id ? 'hourglass_top' : 'approval' }}</span>
-            {{ submittingApproval() === fixesTarget()!.id ? 'Submitting...' : 'Submit For Approval' }}
+            <span class="material-icons-outlined">{{
+              submittingApproval() === fixesTarget()!.id
+                ? "hourglass_top"
+                : "approval"
+            }}</span>
+            {{
+              submittingApproval() === fixesTarget()!.id
+                ? "Submitting..."
+                : "Submit For Approval"
+            }}
           </button>
         }
-        <a class="btn-primary" [routerLink]="['/products/edit', fixesTarget()!.id]" (click)="closeFixes()">
+        <a
+          class="btn-primary"
+          [routerLink]="['/products', fixesTarget()!.id, 'edit']"
+          (click)="closeFixes()"
+        >
           <span class="material-icons-outlined">edit</span>
           Edit Product
         </a>

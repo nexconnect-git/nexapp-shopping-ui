@@ -1,32 +1,56 @@
-<div class="admin-workspace orders-workspace">
+<div class="saas-page admin-workspace orders-workspace">
   <section class="admin-page-hero">
     <div class="admin-page-copy">
       <span class="eyebrow">Fulfillment</span>
       <h1 class="page-title">Orders</h1>
-      <p>{{ total() }} total orders across customer, vendor, and delivery workflows.</p>
+      <p>
+        {{ total() }} total orders across customer, vendor, and delivery
+        workflows.
+      </p>
     </div>
     <div class="admin-page-actions">
       <div class="reload-bar">
-      @if (lastRefreshed()) {
-        <span class="reload-timestamp">Updated {{ lastRefreshed() | date:'HH:mm:ss' }}</span>
-      }
-      <button class="btn btn-ghost btn-sm" (click)="manualReload()" [disabled]="loading()" title="Reload">
-        <span class="material-icons-outlined" [class.spin]="loading()">refresh</span>
-      </button>
-      <button class="btn btn-sm" [class.btn-ghost]="!autoReload()" [class.btn-primary-soft]="autoReload()"
-              (click)="toggleAutoReload()" title="Toggle auto-reload every 15 s">
-        <span class="material-icons-outlined">{{ autoReload() ? 'pause_circle' : 'play_circle' }}</span>
-        {{ autoReload() ? 'Auto' : 'Paused' }}
-      </button>
-    </div>
+        @if (lastRefreshed()) {
+          <span class="reload-timestamp"
+            >Updated {{ lastRefreshed() | date: "HH:mm:ss" }}</span
+          >
+        }
+        <button
+          class="btn btn-ghost btn-sm"
+          (click)="manualReload()"
+          [disabled]="loading()"
+          title="Reload"
+        >
+          <span class="material-icons-outlined" [class.spin]="loading()"
+            >refresh</span
+          >
+        </button>
+        <button
+          class="btn btn-sm"
+          [class.btn-ghost]="!autoReload()"
+          [class.btn-primary-soft]="autoReload()"
+          (click)="toggleAutoReload()"
+          title="Toggle auto-reload every 15 s"
+        >
+          <span class="material-icons-outlined">{{
+            autoReload() ? "pause_circle" : "play_circle"
+          }}</span>
+          {{ autoReload() ? "Auto" : "Paused" }}
+        </button>
+      </div>
     </div>
   </section>
 
   <section class="admin-toolbar">
     <label class="toolbar-search">
       <span class="material-icons-outlined">search</span>
-      <input class="filter-input" type="search" [(ngModel)]="search"
-        (input)="onSearch()" placeholder="Search order #...">
+      <input
+        class="filter-input"
+        type="search"
+        [(ngModel)]="search"
+        (input)="onSearch()"
+        placeholder="Search order #..."
+      />
     </label>
     <label class="toolbar-field">
       <span>Status</span>
@@ -83,18 +107,33 @@
 
     <!-- Custom date column -->
     <ng-template tableCell="date" let-order>
-      <span class="text-muted text-sm">{{ order.placed_at | date:'MMM d, y' }}</span>
+      <span class="text-muted text-sm">{{
+        order.placed_at | date: "MMM d, y"
+      }}</span>
     </ng-template>
 
     <!-- Custom actions column -->
     <ng-template tableCell="actions" let-order>
       <div class="actions">
-        <button class="action-btn" (click)="viewDetails(order)" title="View Details">
-          <span class="material-icons-outlined" style="font-size: 18px;">visibility</span>
+        <button
+          class="action-btn"
+          (click)="viewDetails(order)"
+          title="View Details"
+        >
+          <span class="material-icons-outlined" style="font-size: 18px"
+            >visibility</span
+          >
         </button>
-        <select class="status-select" [value]="order.status"
-          [disabled]="updatingId() === order.id || order.status === 'delivered' || order.status === 'cancelled'"
-          (change)="updateStatus(order, $any($event.target).value)">
+        <select
+          class="status-select"
+          [value]="order.status"
+          [disabled]="
+            updatingId() === order.id ||
+            order.status === 'delivered' ||
+            order.status === 'cancelled'
+          "
+          (change)="updateStatus(order, $any($event.target).value)"
+        >
           @for (s of getAvailableStatuses(order); track s) {
             <option [value]="s">{{ s }}</option>
           }
@@ -114,13 +153,20 @@
           @if (loadingDetails()) {
             <div class="loading-panel"><div class="spinner"></div></div>
           } @else {
-
             <!-- Live Tracking Map -->
             @if (canTrackOrder()) {
               <div class="detail-section tracking-section">
                 <div class="tracking-section-header">
                   <h3>
-                    <span class="material-icons-outlined" style="font-size:16px;vertical-align:middle;margin-right:0.25rem;">radar</span>
+                    <span
+                      class="material-icons-outlined"
+                      style="
+                        font-size: 16px;
+                        vertical-align: middle;
+                        margin-right: 0.25rem;
+                      "
+                      >radar</span
+                    >
                     Live Tracking
                   </h3>
                   @if (!showTrackingMap()) {
@@ -129,7 +175,10 @@
                       Track on Map
                     </button>
                   } @else {
-                    <button class="btn btn-track-close" (click)="closeTrackingMap()">
+                    <button
+                      class="btn btn-track-close"
+                      (click)="closeTrackingMap()"
+                    >
                       <span class="material-icons-outlined">close</span>
                       Hide Map
                     </button>
@@ -139,9 +188,15 @@
                   <div class="tracking-map-wrap">
                     <div id="admin-tracking-map" class="native-map"></div>
                     <div class="map-legend-row">
-                      <span class="legend-chip"><span class="dot dot-vendor"></span>Vendor</span>
-                      <span class="legend-chip"><span class="dot dot-driver"></span>Partner</span>
-                      <span class="legend-chip"><span class="dot dot-customer"></span>Customer</span>
+                      <span class="legend-chip"
+                        ><span class="dot dot-vendor"></span>Vendor</span
+                      >
+                      <span class="legend-chip"
+                        ><span class="dot dot-driver"></span>Partner</span
+                      >
+                      <span class="legend-chip"
+                        ><span class="dot dot-customer"></span>Customer</span
+                      >
                     </div>
                   </div>
                 }
@@ -152,8 +207,15 @@
               <h3>Customer Information</h3>
               <p><strong>Name:</strong> {{ selectedOrder()?.customer_name }}</p>
               @if (selectedOrder()?.delivery_address) {
-                <p><strong>Address:</strong> {{ selectedOrder()?.delivery_address?.street }}, {{ selectedOrder()?.delivery_address?.city }}</p>
-                <p><strong>Phone:</strong> {{ selectedOrder()?.delivery_address?.phone }}</p>
+                <p>
+                  <strong>Address:</strong>
+                  {{ selectedOrder()?.delivery_address?.street }},
+                  {{ selectedOrder()?.delivery_address?.city }}
+                </p>
+                <p>
+                  <strong>Phone:</strong>
+                  {{ selectedOrder()?.delivery_address?.phone }}
+                </p>
               }
             </div>
 
@@ -165,14 +227,33 @@
             @if (selectedOrder()?.delivery_partner_info) {
               <div class="detail-section">
                 <h3>Delivery Partner Information</h3>
-                <p><strong>Name:</strong> {{ selectedOrder()?.delivery_partner_info?.name }}</p>
-                <p><strong>Vehicle:</strong> {{ selectedOrder()?.delivery_partner_info?.vehicle_type | titlecase }} 
+                <p>
+                  <strong>Name:</strong>
+                  {{ selectedOrder()?.delivery_partner_info?.name }}
+                </p>
+                <p>
+                  <strong>Vehicle:</strong>
+                  {{
+                    selectedOrder()?.delivery_partner_info?.vehicle_type
+                      | titlecase
+                  }}
                   @if (selectedOrder()?.delivery_partner_info?.vehicle_number) {
-                    ({{ selectedOrder()?.delivery_partner_info?.vehicle_number }})
+                    ({{
+                      selectedOrder()?.delivery_partner_info?.vehicle_number
+                    }})
                   }
                 </p>
-                <p><strong>Rating:</strong> 
-                  <span class="material-icons-outlined" style="font-size: 14px; vertical-align: text-bottom; color: #fbbf24;">star</span> 
+                <p>
+                  <strong>Rating:</strong>
+                  <span
+                    class="material-icons-outlined"
+                    style="
+                      font-size: 14px;
+                      vertical-align: text-bottom;
+                      color: #8b5cff;
+                    "
+                    >star</span
+                  >
                   {{ selectedOrder()?.delivery_partner_info?.average_rating }}
                 </p>
               </div>
@@ -199,12 +280,19 @@
               <div class="tracking-list">
                 @for (track of selectedOrder()?.tracking; track track.id) {
                   <div class="tracking-item">
-                    <span class="track-status badge-{{ track.status }}">{{ track.status }}</span>
-                    <span class="track-time text-muted text-sm">{{ track.timestamp | date:'short' }}</span>
+                    <span class="track-status badge-{{ track.status }}">{{
+                      track.status
+                    }}</span>
+                    <span class="track-time text-muted text-sm">{{
+                      track.timestamp | date: "short"
+                    }}</span>
                     <p class="track-desc">{{ track.description }}</p>
                   </div>
                 }
-                @if (!selectedOrder()?.tracking || selectedOrder()?.tracking?.length === 0) {
+                @if (
+                  !selectedOrder()?.tracking ||
+                  selectedOrder()?.tracking?.length === 0
+                ) {
                   <p class="text-muted text-sm">No tracking history yet.</p>
                 }
               </div>
@@ -212,7 +300,9 @@
           }
         </div>
         <div class="modal-footer">
-          <button class="btn btn-secondary" (click)="closeModal()">Close</button>
+          <button class="btn btn-secondary" (click)="closeModal()">
+            Close
+          </button>
         </div>
       </div>
     </div>

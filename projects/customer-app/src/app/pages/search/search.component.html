@@ -1,182 +1,229 @@
-<section class="discover-page">
-  <div class="discover-topbar">
-    <button class="icon-btn" type="button" (click)="goBack()" aria-label="Go back">
-      <span class="material-icons-outlined">arrow_back</span>
-    </button>
-    <div class="search-box">
-      <span class="material-icons-outlined">search</span>
-      <input
-        #searchInput
-        type="search"
-        [(ngModel)]="queryValue"
-        (ngModelChange)="onSearch()"
-        placeholder="Search stores, products, ingredients or meals"
-        autocomplete="off" />
-      @if (queryValue) {
-        <button class="icon-btn ghost" type="button" (click)="queryValue = ''; storeResults.set([])" aria-label="Clear search">
-          <span class="material-icons-outlined">close</span>
-        </button>
-      }
-    </div>
-  </div>
+﻿<main class="fd-content">
+  <fd-breadcrumbs [items]="[{ label: 'Search Results' }]" />
+  <section class="fd-two-col">
+    <div>
+      <h1 class="fd-title">
+        {{ query() ? 'Results for "' + query() + '"' : "Search live catalog" }}
+      </h1>
+      <p class="fd-subtitle">{{ content.search().subtitle }}</p>
 
-  @if (!queryValue) {
-    <div class="discover-grid">
-      <section class="discover-panel">
-        <div class="panel-head">
-          <div>
-            <span class="panel-kicker">Quick starts</span>
-            <h2>Jump into a common instant-delivery mission.</h2>
-          </div>
-        </div>
-
-        <div class="chip-row">
-          @for (idea of quickIdeas; track idea) {
-            <button class="history-chip idea-chip" type="button" (click)="selectSearch(idea)">
-              <span class="material-icons-outlined">bolt</span>
-              <span>{{ idea }}</span>
+      <form class="local-search fd-card" (submit)="submitSearch($event)">
+        <div class="fd-search">
+          <span class="material-symbols-rounded">search</span>
+          <input
+            [value]="query()"
+            (input)="updateQuery($any($event.target).value)"
+            placeholder="Search stores, products, brands..."
+          />
+          @if (query()) {
+            <button
+              type="button"
+              aria-label="Clear search"
+              (click)="clearSearch()"
+            >
+              <span class="material-symbols-rounded">close</span>
             </button>
           }
         </div>
+        <button type="submit" class="fd-btn primary">
+          <span class="material-symbols-rounded">search</span> Search
+        </button>
+        <button type="button" class="fd-btn outline" (click)="ui.openFilter()">
+          <span class="material-symbols-rounded">tune</span> Filters
+        </button>
+      </form>
 
-        @if (quickCategories().length > 0) {
-          <div class="category-shortcuts">
-            @for (category of quickCategories(); track category.id) {
-              <button class="category-shortcut" type="button" (click)="selectCategory(category)">
-                <span class="material-icons-outlined">category</span>
-                <div>
-                  <strong>{{ category.name }}</strong>
-                  <span>Browse nearby {{ category.name.toLowerCase() }}</span>
-                </div>
-              </button>
-            }
-          </div>
+      <div class="tabs">
+        @for (tab of tabs(); track tab) {
+          <button
+            type="button"
+            [class.active]="activeTab() === tab"
+            (click)="activeTab.set(tab)"
+          >
+            {{ tab }} ({{ count(tab) }})
+          </button>
         }
-      </section>
+      </div>
 
-      @if (pastSearches().length > 0) {
-        <section class="discover-panel">
-          <div class="panel-head">
-            <div>
-              <span class="panel-kicker">Recent intent</span>
-              <h2>Pick up where you left off.</h2>
-            </div>
+      <div class="filters">
+        <button type="button" class="fd-pill" (click)="ui.openFilter()">
+          <span class="material-symbols-rounded">tune</span> Filters
+        </button>
+        @for (filter of content.filters().quickFilters; track filter.action) {
+          <button
+            type="button"
+            class="fd-pill"
+            (click)="applyQuickFilter(filter)"
+          >
+            @if (filter.icon) {
+              <span class="material-symbols-rounded">{{ filter.icon }}</span>
+            }
+            {{
+              filter.action === "under_budget"
+                ? "Under " + (100 | appCurrency)
+                : filter.label
+            }}
+          </button>
+        }
+        <label class="mobile-sort-control" aria-label="Sort search results">
+          <span class="material-symbols-rounded">sort</span>
+          <select class="fd-input">
+            @for (sort of content.filters().sortOptions; track sort) {
+              <option>Sort by: {{ sort }}</option>
+            }
+          </select>
+        </label>
+      </div>
+
+      @if (searchPromo(); as promo) {
+        <button
+          type="button"
+          class="search-promo"
+          (click)="handleSearchPromo(promo)"
+        >
+          <span class="material-symbols-rounded">{{
+            promo.icon || "tune"
+          }}</span>
+          <div>
+            <small>{{ promo.eyebrow }}</small>
+            <b>{{ promo.title }}</b>
+            <em>{{ promo.subtitle }}</em>
           </div>
-          <div class="chip-row">
-            @for (q of pastSearches(); track q) {
-              <button class="history-chip" type="button" (click)="selectSearch(q)">
-                <span class="material-icons-outlined">history</span>
-                <span>{{ q }}</span>
-                <span class="material-icons-outlined remove" (click)="removeSearch(q, $event)">close</span>
+        </button>
+      }
+
+      @if (activeFilters().length) {
+        <div class="active-filters" aria-label="Active filters">
+          @for (filter of activeFilters(); track filter) {
+            <span>{{ filter }}</span>
+          }
+          <button type="button" (click)="clearFilters()">
+            {{ content.search().clearFiltersLabel }}
+          </button>
+        </div>
+      }
+
+      @if (noVisibleResults()) {
+        <section class="empty-results fd-card">
+          <span class="material-symbols-rounded">search_off</span>
+          <h2>{{ content.search().emptyTitle }}</h2>
+          <p>
+            @if (activeFilters().length) {
+              {{ content.search().emptyFiltered }}
+            } @else {
+              {{ content.search().emptyDefault }}
+            }
+          </p>
+          <div>
+            @if (activeFilters().length) {
+              <button
+                type="button"
+                class="fd-btn outline"
+                (click)="clearFilters()"
+              >
+                {{ content.search().clearFiltersLabel }}
               </button>
             }
+            <button
+              type="button"
+              class="fd-btn primary"
+              (click)="ui.openLocation()"
+            >
+              Change location
+            </button>
           </div>
         </section>
       }
 
-      <section class="discover-panel">
-        <div class="panel-head">
-          <div>
-            <span class="panel-kicker">Popular nearby</span>
-            <h2>What customers are opening most right now.</h2>
-          </div>
+      @if (
+        !noVisibleResults() &&
+        (activeTab() === "All" || activeTab() === "Stores")
+      ) {
+        <div class="fd-section-title">
+          <h2>
+            <span class="material-symbols-rounded">storefront</span> Stores
+            <small>{{ results().stores.length }} stores found</small>
+          </h2>
+          <a routerLink="/stores">See all stores</a>
         </div>
-
-        @if (loadingPopular()) {
-          <div class="popular-grid">
-            @for (n of [1,2,3,4,5,6]; track n) {
-              <div class="popular-skeleton shimmer"></div>
-            }
-          </div>
+        @if (catalog.storesLoading()) {
+          <section
+            class="nc-skeleton-center"
+            role="status"
+            aria-live="polite"
+            aria-label="Loading matching stores"
+          >
+            <div class="nc-skeleton-list">
+              @for (item of [1, 2, 3]; track item) {
+                <div class="nc-skeleton-card">
+                  <span class="nc-skeleton-media"></span>
+                  <span class="nc-skeleton-copy">
+                    <span class="nc-skeleton-line medium"></span>
+                    <span class="nc-skeleton-line long"></span>
+                    <span class="nc-skeleton-line short"></span>
+                  </span>
+                </div>
+              }
+            </div>
+          </section>
         } @else {
-          <div class="popular-grid">
-            @for (v of popularVendors(); track v.id) {
-              <button class="popular-card" type="button" (click)="selectVendor(v.id)">
-                <div class="popular-media">
-                  @if (v.logo) {
-                    <img [src]="v.logo" [alt]="v.store_name" loading="lazy">
-                  } @else {
-                    <span class="material-icons-outlined">storefront</span>
-                  }
-                </div>
-                <div class="popular-copy">
-                  <strong>{{ v.store_name }}</strong>
-                  <span>{{ v.city || 'Local delivery' }}</span>
-                </div>
-                <span class="material-icons-outlined">north_east</span>
-              </button>
+          <section class="store-mini-grid">
+            @for (store of results().stores; track store.id) {
+              <a
+                [routerLink]="['/store', store.id]"
+                class="mini-store fd-card"
+                (click)="selectStore($event, store)"
+              >
+                <img [src]="store.image" [alt]="store.name" /><b>{{
+                  store.name
+                }}</b
+                ><span>{{ store.rating }} rating · {{ store.eta }}</span
+                ><em>{{ store.offer }}</em>
+              </a>
             }
-          </div>
-        }
-      </section>
-    </div>
-  }
-
-  @if (queryValue && searching()) {
-    <div class="results-panel">
-      <div class="result-loading">
-        @for (n of [1,2,3,4]; track n) {
-          <div class="popular-skeleton shimmer"></div>
-        }
-      </div>
-    </div>
-  }
-
-  @if (queryValue && !searching()) {
-    <div class="results-panel">
-      @if (storeResults().length > 0) {
-        <div class="group-head">
-          <span class="material-icons-outlined">storefront</span>
-          <strong>Open shops with this item</strong>
-        </div>
-        @for (v of storeResults(); track v.id) {
-          <button class="result-row" type="button" (click)="selectVendor(v.id)">
-            <div class="result-media">
-              @if (v.logo) {
-                <img [src]="v.logo" [alt]="v.store_name" loading="lazy">
-              } @else {
-                <span class="material-icons-outlined">storefront</span>
-              }
-            </div>
-            <div class="result-copy">
-              <strong [innerHTML]="highlight(v.store_name)"></strong>
-              <span>
-                @if (v.has_previously_ordered) { Previously ordered here - }
-                {{ v.city || 'Instant local store' }}
-              </span>
-              @if (v.matched_products_preview?.length) {
-                <small>Matches: {{ v.matched_products_preview!.join(', ') }}</small>
-              }
-            </div>
-            <div class="result-trailing">
-              @if (v.distance_km != null) {
-                <em>{{ v.distance_km }} km</em>
-              }
-              @if (v.estimated_delivery_label) {
-                <small>{{ v.estimated_delivery_label }}</small>
-              }
-            </div>
-          </button>
+          </section>
         }
       }
 
-      @if (!hasResults) {
-        <div class="empty-results">
-          <span class="material-icons-outlined">search_off</span>
-          <h3>No matches for "{{ queryValue }}"</h3>
-          <p>Try a broader item, ingredient, cuisine or store name.</p>
-          <div class="chip-row">
-            @for (idea of quickIdeas.slice(0, 3); track idea) {
-              <button class="history-chip idea-chip" type="button" (click)="selectSearch(idea)">{{ idea }}</button>
-            }
-          </div>
+      @if (
+        !noVisibleResults() &&
+        (activeTab() === "All" || activeTab() === "Products")
+      ) {
+        <div class="fd-section-title">
+          <h2>
+            <span class="material-symbols-rounded">shopping_bag</span> Products
+            <small>{{ results().products.length }} products found</small>
+          </h2>
         </div>
-      } @else {
-        <button class="show-all-btn" type="button" (click)="showAll()">
-          Show every result for <strong>{{ queryValue }}</strong>
-          <span class="material-icons-outlined">arrow_forward</span>
-        </button>
+        @if (catalog.productsLoading()) {
+          <section
+            class="nc-skeleton-center"
+            role="status"
+            aria-live="polite"
+            aria-label="Loading matching products"
+          >
+            <div class="nc-skeleton-list grid">
+              @for (item of [1, 2, 3, 4]; track item) {
+                <div class="nc-skeleton-card">
+                  <span class="nc-skeleton-media"></span>
+                  <span class="nc-skeleton-copy">
+                    <span class="nc-skeleton-line medium"></span>
+                    <span class="nc-skeleton-line long"></span>
+                    <span class="nc-skeleton-line short"></span>
+                  </span>
+                </div>
+              }
+            </div>
+          </section>
+        } @else {
+          <section class="product-grid">
+            @for (product of results().products; track product.id) {
+              <fd-product-card [product]="product" />
+            }
+          </section>
+        }
       }
     </div>
-  }
-</section>
+    <fd-right-rail />
+  </section>
+</main>

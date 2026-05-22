@@ -1,30 +1,28 @@
-@import 'design-system';
+@use "design-system";
 
 /* ── Delivery app — Emerald Orbit Design System ──────────────── */
 :root {
-  --primary: #059669;
-  --primary-hover: #047857;
-  --primary-dark: #006948;
-  --primary-light: #e6f6f1;
-  --primary-gradient: linear-gradient(135deg, #10B981 0%, #059669 100%);
-  --primary-shadow: rgba(5, 150, 105, 0.28);
-  
-  --bg-color: #f7fefb;
+  --primary-gradient: linear-gradient(135deg, #6c2bff 0%, #8b5cff 100%);
+  --primary: #6c2bff;
+  --primary-hover: #5a1fe0;
+  --primary-dark: #4a18ba;
+  --primary-light: #f5f2ff;
+  --primary-shadow: rgba(108, 43, 255, 0.24);
+
+  --bg-color: #ffffff;
   --surface-color: #ffffff;
-  --surface-hover: #effcf8;
-  
-  --text-primary: #121e1c;
-  --text-secondary: #3d4a42;
-  --text-muted: #6d7a72;
-  --border-color: #d8e5e1;
-  --border-light: #e9f6f2;
+  --surface-hover: #f5f2ff;
+
+  --text-primary: #111827;
+  --text-secondary: #374151;
+  --text-muted: #6b7280;
+  --border-color: #f3f4f6;
+  --border-light: #f3f4f6;
 
   --sidebar-bg: #effcf8;
-  --sidebar-text-active: #006948;
+  --sidebar-text-active: #22c55e;
   --sidebar-item-active-bg: #e4f1ed;
-  
-  --login-gradient: linear-gradient(135deg, #059669 0%, #047857 50%, #10B981 100%);
-  
+
   --shadow-sm: 0 2px 8px -2px rgba(18, 30, 28, 0.04);
   --shadow-md: 0 8px 24px -4px rgba(18, 30, 28, 0.06);
   --shadow-lg: 0 16px 32px -4px rgba(18, 30, 28, 0.08);
@@ -34,20 +32,73 @@
   --radius-lg: 16px;
   --radius-xl: 24px;
   --radius-full: 9999px;
-  
-  --font-heading: 'Plus Jakarta Sans', sans-serif;
-  --font-body: 'Plus Jakarta Sans', sans-serif;
+
+  --font-family: var(--nc-font-family);
+  --font-heading: var(--font-family);
+  --font-body: var(--font-family);
+  --cream: #ffffff;
+  --peach: #ffffff;
+  --surface: #ffffff;
+  --surface-alt: #f5f2ff;
+  --brand-accent: #8b5cff;
+  --brand-accent-deep: #6c2bff;
+  --coral: #8b5cff;
+  --coral-soft: #f5f2ff;
+  --purple: #6c2bff;
+  --purple-soft: #f5f2ff;
+  --teal: #22c55e;
+  --teal-soft: rgba(34, 197, 94, 0.12);
+  --cyan: #8b5cff;
+  --cyan-soft: #f5f2ff;
+  --attention: #8b5cff;
+  --attention-soft: #f5f2ff;
+  --indigo: #6c2bff;
+  --indigo-soft: #f5f2ff;
+  --mint: #22c55e;
+  --mint-soft: rgba(34, 197, 94, 0.12);
+  --charcoal: #111827;
+  --ink: #111827;
+  --muted: #6b7280;
+  --faint: #9ca3af;
+  --line: #f3f4f6;
+  --white: #ffffff;
+  --green: #22c55e;
+  --red: #ef4444;
+  --highlight: #6c2bff;
+  --blue: #6c2bff;
+
+  --primary: #6c2bff;
+  --primary-hover: #5a1fe0;
+  --primary-dark: #4a18ba;
+  --primary-light: #f5f2ff;
+  --primary-shadow: rgba(108, 43, 255, 0.24);
+  --bg-color: #ffffff;
+  --surface-color: #ffffff;
+  --surface-hover: #f5f2ff;
+  --text-primary: #111827;
+  --text-secondary: #374151;
+  --text-muted: #6b7280;
+  --border-color: #f3f4f6;
+  --border-light: #f3f4f6;
+  --sidebar-bg: var(--surface-alt);
+  --sidebar-text-active: var(--indigo);
+  --sidebar-item-active-bg: var(--indigo-soft);
+  --shadow-sm: 0 2px 8px -2px rgba(59, 19, 8, 0.04);
+  --shadow-md: 0 8px 24px -4px rgba(59, 19, 8, 0.06);
+  --shadow-lg: 0 16px 32px -4px rgba(47, 33, 30, 0.1);
 }
 
 /* ── Mobile / Capacitor safe-area support ────────────────────────── */
 :root {
+  --primary-gradient: linear-gradient(135deg, #6c2bff 0%, #8b5cff 100%);
   --safe-area-top: env(safe-area-inset-top, 0px);
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
   --safe-area-left: env(safe-area-inset-left, 0px);
   --safe-area-right: env(safe-area-inset-right, 0px);
 }
 
-html, body {
+html,
+body {
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
   overscroll-behavior: none;
@@ -58,21 +109,62 @@ html, body {
   padding-bottom: var(--safe-area-bottom);
 }
 
-.scroll-container, main, .page-content {
+.scroll-container,
+main,
+.page-content {
   -webkit-overflow-scrolling: touch;
 }
 
 body {
   font-family: var(--font-body);
+  font-weight: 400;
   background-color: var(--bg-color);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
 }
 
-h1, h2, h3, h4, h5, h6 {
+body *:not(.material-icons-outlined) {
+  font-family: var(--font-family) !important;
+}
+
+body p,
+body li,
+body td,
+body input,
+body textarea,
+body select,
+body small,
+body span:not(.material-icons-outlined) {
+  font-weight: 400 !important;
+}
+
+body label,
+body th,
+body button,
+body a,
+body .btn {
+  font-weight: 500 !important;
+}
+
+body strong,
+body b {
+  font-weight: 600 !important;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-heading);
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-weight: 700 !important;
+  letter-spacing: 0;
+}
+
+.material-icons-outlined {
+  font-family: "Material Icons Outlined" !important;
+  font-weight: normal !important;
 }
 
 /* Base Form overrides if any */
@@ -82,11 +174,13 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border-light);
   overflow: hidden;
-  transition: box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s;
+  transition:
+    box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.2s;
 }
 
 .btn-primary {
-  background: var(--primary-gradient);
+  background: var(--primary);
   color: white;
   border-radius: var(--radius-lg);
   font-weight: 700;
@@ -94,8 +188,49 @@ h1, h2, h3, h4, h5, h6 {
   border: none;
   cursor: pointer;
   box-shadow: 0 4px 12px var(--primary-shadow);
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 .btn-primary:active {
   transform: scale(0.98);
+}
+/* Final canvas guard: white page backgrounds, palette only on components. */
+:root {
+  --primary-gradient: linear-gradient(135deg, #6c2bff 0%, #8b5cff 100%);
+  --background: #ffffff;
+  --bg-color: #ffffff;
+  --cream: #ffffff;
+  --peach: #ffffff;
+  --surface: #ffffff;
+  --surface-alt: #f5f2ff;
+  --surface-card: #ffffff;
+  --sidebar-bg: #ffffff;
+  --sidebar-item-active-bg: rgba(108, 43, 255, 0.1);
+}
+
+html,
+body,
+app-root,
+.main-content,
+.page-content,
+.delivery-page,
+.dashboard-page,
+.available-orders-page,
+.active-delivery-page,
+.history-page,
+.earnings-page,
+.profile-page {
+  background: #ffffff !important;
+}
+
+.page-header,
+.section-hero,
+.hero,
+.login-page,
+.register-page,
+.change-pw-page {
+  background: #ffffff !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
 }

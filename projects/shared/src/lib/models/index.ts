@@ -253,10 +253,19 @@ export interface VendorAnalytics {
   delivered_orders: number;
   average_order_value: number;
   repeat_customers: number;
-  top_products: Array<{ product_id: string; name: string; total_sold: number; revenue: number }>;
+  top_products: Array<{
+    product_id: string;
+    name: string;
+    total_sold: number;
+    revenue: number;
+  }>;
   monthly_data: Array<{ month: string; revenue: number; orders: number }>;
   payout_summary: Array<{ status: string; count: number; amount: number }>;
-  coupon_contribution: { usage_count: number; discount: number; revenue: number };
+  coupon_contribution: {
+    usage_count: number;
+    discount: number;
+    revenue: number;
+  };
   low_stock_impact: { low_stock_count: number };
 }
 
@@ -509,5 +518,3 @@ export interface DeliveryDashboard {
   active_orders: Order[];
   partner_status: 'available' | 'offline' | 'on_delivery';
 }
-
-

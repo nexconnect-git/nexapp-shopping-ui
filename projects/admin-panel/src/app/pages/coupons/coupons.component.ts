@@ -1,7 +1,7 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService } from '@shared/public-api';
+import { ApiService, AppCurrencyPipe } from '@shared/public-api';
 import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
 
 interface CouponForm {
@@ -28,9 +28,15 @@ interface CouponForm {
 @Component({
   selector: 'app-coupons',
   standalone: true,
-  imports: [CommonModule, FormsModule, DynamicTableComponent, TableCellDirective],
+  imports: [
+    CommonModule,
+    FormsModule,
+    DynamicTableComponent,
+    TableCellDirective,
+    AppCurrencyPipe,
+  ],
   templateUrl: './coupons.component.html',
-  styleUrl: './coupons.component.scss'
+  styleUrl: './coupons.component.scss',
 })
 export class CouponsComponent implements OnInit {
   private api = inject(ApiService);
@@ -55,14 +61,14 @@ export class CouponsComponent implements OnInit {
     { key: 'scope', label: 'Scope', flex: '1fr' },
     { key: 'limits', label: 'Used / Limit', flex: '1fr' },
     { key: 'status', label: 'Status', flex: '1.5fr' },
-    { key: 'actions', label: 'Actions', flex: '0.5fr' }
+    { key: 'actions', label: 'Actions', flex: '0.5fr' },
   ];
 
   form: CouponForm = this.blankForm();
 
   readonly discountTypes = [
-    { value: 'percentage',    label: 'Percentage (%)' },
-    { value: 'fixed',         label: 'Fixed Amount (Rs.)' },
+    { value: 'percentage', label: 'Percentage (%)' },
+    { value: 'fixed', label: 'Fixed Amount (Rs.)' },
     { value: 'free_delivery', label: 'Free Delivery' },
   ];
 
@@ -80,7 +86,9 @@ export class CouponsComponent implements OnInit {
     { value: 'redeem', label: 'Reward' },
   ];
 
-  ngOnInit() { this.load(); }
+  ngOnInit() {
+    this.load();
+  }
 
   load() {
     this.loading.set(true);
@@ -90,7 +98,8 @@ export class CouponsComponent implements OnInit {
         this.totalItems = res.count || this.coupons().length;
         this.loading.set(false);
       },
-      error: () => this.loading.set(false) });
+      error: () => this.loading.set(false),
+    });
   }
 
   onPageChange(page: number) {
@@ -100,12 +109,21 @@ export class CouponsComponent implements OnInit {
 
   blankForm(): CouponForm {
     const now = new Date();
-    const later = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate());
+    const later = new Date(
+      now.getFullYear() + 1,
+      now.getMonth(),
+      now.getDate(),
+    );
     return {
-      code: '', title: '', description: '',
-      discount_type: 'percentage', discount_value: 10,
-      min_order_amount: 0, max_discount_amount: null,
-      usage_limit: null, per_user_limit: 1,
+      code: '',
+      title: '',
+      description: '',
+      discount_type: 'percentage',
+      discount_value: 10,
+      min_order_amount: 0,
+      max_discount_amount: null,
+      usage_limit: null,
+      per_user_limit: 1,
       valid_from: now.toISOString().slice(0, 16),
       valid_until: later.toISOString().slice(0, 16),
       is_active: true,
@@ -114,7 +132,8 @@ export class CouponsComponent implements OnInit {
       badge_text: '',
       icon_name: 'local-offer',
       accent_color: '#ff4b1f',
-      display_order: 0 };
+      display_order: 0,
+    };
   }
 
   openCreate() {
@@ -126,10 +145,15 @@ export class CouponsComponent implements OnInit {
 
   openEdit(c: any) {
     this.form = {
-      code: c.code, title: c.title, description: c.description || '',
-      discount_type: c.discount_type, discount_value: c.discount_value,
-      min_order_amount: c.min_order_amount, max_discount_amount: c.max_discount_amount,
-      usage_limit: c.usage_limit, per_user_limit: c.per_user_limit,
+      code: c.code,
+      title: c.title,
+      description: c.description || '',
+      discount_type: c.discount_type,
+      discount_value: c.discount_value,
+      min_order_amount: c.min_order_amount,
+      max_discount_amount: c.max_discount_amount,
+      usage_limit: c.usage_limit,
+      per_user_limit: c.per_user_limit,
       valid_from: c.valid_from?.slice(0, 16) || '',
       valid_until: c.valid_until?.slice(0, 16) || '',
       is_active: c.is_active,
@@ -138,7 +162,8 @@ export class CouponsComponent implements OnInit {
       badge_text: c.badge_text || '',
       icon_name: c.icon_name || 'local-offer',
       accent_color: c.accent_color || '#ff4b1f',
-      display_order: c.display_order || 0 };
+      display_order: c.display_order || 0,
+    };
     this.editingId.set(c.id);
     this.error.set('');
     this.showForm.set(true);
@@ -151,7 +176,10 @@ export class CouponsComponent implements OnInit {
       ...this.form,
       code: this.form.code.trim().toUpperCase(),
       valid_from: new Date(this.form.valid_from).toISOString(),
-      valid_until: this.form.valid_until ? new Date(this.form.valid_until).toISOString() : null };
+      valid_until: this.form.valid_until
+        ? new Date(this.form.valid_until).toISOString()
+        : null,
+    };
     const req = this.editingId()
       ? this.api.updateAdminCoupon(this.editingId()!, payload)
       : this.api.createAdminCoupon(payload);
@@ -160,23 +188,34 @@ export class CouponsComponent implements OnInit {
       next: () => {
         this.saving.set(false);
         this.showForm.set(false);
-        this.success.set(this.editingId() ? 'Coupon updated.' : 'Coupon created.');
+        this.success.set(
+          this.editingId() ? 'Coupon updated.' : 'Coupon created.',
+        );
         setTimeout(() => this.success.set(''), 3000);
         this.load();
       },
       error: (err) => {
         this.saving.set(false);
         const data = err.error;
-        this.error.set(typeof data === 'object' ? JSON.stringify(data) : 'Failed to save coupon.');
-      } });
+        this.error.set(
+          typeof data === 'object'
+            ? JSON.stringify(data)
+            : 'Failed to save coupon.',
+        );
+      },
+    });
   }
 
   delete(id: string) {
     if (!confirm('Delete this coupon?')) return;
     this.deleting.set(id);
     this.api.deleteAdminCoupon(id).subscribe({
-      next: () => { this.deleting.set(null); this.load(); },
-      error: () => this.deleting.set(null) });
+      next: () => {
+        this.deleting.set(null);
+        this.load();
+      },
+      error: () => this.deleting.set(null),
+    });
   }
 
   discountLabel(c: any): string {
@@ -193,4 +232,3 @@ export class CouponsComponent implements OnInit {
     return c.valid_until && new Date(c.valid_until) < new Date();
   }
 }
-

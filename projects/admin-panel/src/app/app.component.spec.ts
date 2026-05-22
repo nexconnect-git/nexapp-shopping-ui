@@ -1,9 +1,18 @@
 import { Component } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { Router, provideRouter } from '@angular/router';
-import { Subject, of, throwError } from 'rxjs';
+import {
+  type ComponentFixture,
+  fakeAsync,
+  TestBed,
+  tick,
+} from '@angular/core/testing';
+import { provideRouter, Router } from '@angular/router';
+import { of, Subject, throwError } from 'rxjs';
 import { signal } from '@angular/core';
-import { ApiService, AuthService, NotificationPollingService } from '@shared/public-api';
+import {
+  ApiService,
+  AuthService,
+  NotificationPollingService,
+} from '@shared/public-api';
 import { AppComponent } from './app.component';
 
 @Component({ standalone: true, template: '' })
@@ -22,14 +31,14 @@ describe('Admin AppComponent shell', () => {
     username: 'admin',
     first_name: 'Ada',
     last_name: 'Lovelace',
-    email: 'ada@nex.test'
+    email: 'ada@nex.test',
   });
 
   beforeEach(async () => {
     api = jasmine.createSpyObj<ApiService>('ApiService', [
       'getAdminNotifications',
       'markAllNotificationsRead',
-      'markNotificationRead'
+      'markNotificationRead',
     ]);
     api.getAdminNotifications.and.returnValue(of({ results: [] } as any));
     api.markAllNotificationsRead.and.returnValue(of({} as any));
@@ -38,9 +47,12 @@ describe('Admin AppComponent shell', () => {
       isLoggedIn: jasmine.createSpy('isLoggedIn').and.returnValue(true),
       isSuperUser: jasmine.createSpy('isSuperUser').and.returnValue(true),
       user: userSignal,
-      logout: jasmine.createSpy('logout')
+      logout: jasmine.createSpy('logout'),
     };
-    polling = jasmine.createSpyObj<NotificationPollingService>('NotificationPollingService', ['onUnreadChange', 'start']);
+    polling = jasmine.createSpyObj<NotificationPollingService>(
+      'NotificationPollingService',
+      ['onUnreadChange', 'start'],
+    );
 
     await TestBed.configureTestingModule({
       imports: [AppComponent],
@@ -50,12 +62,12 @@ describe('Admin AppComponent shell', () => {
           { path: 'orders/:id', component: BlankComponent },
           { path: 'delivery-partners/:id', component: BlankComponent },
           { path: 'notifications', component: BlankComponent },
-          { path: 'vendors/onboard', component: BlankComponent }
+          { path: 'vendors/onboard', component: BlankComponent },
         ]),
         { provide: ApiService, useValue: api },
         { provide: AuthService, useValue: auth },
         { provide: NotificationPollingService, useValue: polling },
-      ]
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(AppComponent);
@@ -80,18 +92,32 @@ describe('Admin AppComponent shell', () => {
 
     expect(polling.onUnreadChange).toHaveBeenCalled();
     expect(polling.start).toHaveBeenCalled();
-    expect(component.breadcrumbs().map(c => c.label)).toEqual(['Command Center', 'Live Orders', 'Profile']);
+    expect(component.breadcrumbs().map((c) => c.label)).toEqual([
+      'Command Center',
+      'Live Orders',
+      'Profile',
+    ]);
     expect(component.pageTitle()).toBe('Profile');
     expect(fixture.nativeElement.textContent).toContain('Admin Access');
   }));
 
   it('maps polling notification actions for order, delivery, and generic notifications', fakeAsync(() => {
     fixture.detectChanges();
-    const resolver = polling.start.calls.mostRecent().args[0] as (n: any) => { label: string; url: string };
+    const resolver = polling.start.calls.mostRecent().args[0] as (n: any) => {
+      label: string;
+      url: string;
+    };
 
-    expect(resolver({ notification_type: 'order', related_entity_id: 'o1' })).toEqual({ label: 'View Order', url: '/orders/o1' });
-    expect(resolver({ notification_type: 'delivery', related_entity_id: 'd1' })).toEqual({ label: 'View Partner', url: '/delivery-partners/d1' });
-    expect(resolver({ notification_type: 'system' })).toEqual({ label: 'View', url: '/notifications' });
+    expect(
+      resolver({ notification_type: 'order', related_entity_id: 'o1' }),
+    ).toEqual({ label: 'View Order', url: '/orders/o1' });
+    expect(
+      resolver({ notification_type: 'delivery', related_entity_id: 'd1' }),
+    ).toEqual({ label: 'View Partner', url: '/delivery-partners/d1' });
+    expect(resolver({ notification_type: 'system' })).toEqual({
+      label: 'View',
+      url: '/notifications',
+    });
   }));
 
   it('toggles profile and notification dropdowns without bubbling document clicks', fakeAsync(() => {
@@ -108,7 +134,10 @@ describe('Admin AppComponent shell', () => {
     component.toggleNotif(event);
     expect(component.notifOpen()).toBeTrue();
     expect(component.profileOpen()).toBeFalse();
-    expect(api.getAdminNotifications).toHaveBeenCalledWith({ page: 1, page_size: 8 });
+    expect(api.getAdminNotifications).toHaveBeenCalledWith({
+      page: 1,
+      page_size: 8,
+    });
 
     component.closeDropdowns();
     expect(component.notifOpen()).toBeFalse();
@@ -116,13 +145,19 @@ describe('Admin AppComponent shell', () => {
   }));
 
   it('fetches notification loading, empty, success, and error states', fakeAsync(() => {
-    api.getAdminNotifications.and.returnValue(of({ results: Array.from({ length: 10 }, (_, i) => ({ id: `n-${i}` })) } as any));
+    api.getAdminNotifications.and.returnValue(
+      of({
+        results: Array.from({ length: 10 }, (_, i) => ({ id: `n-${i}` })),
+      } as any),
+    );
     component.fetchNotifications();
     tick();
     expect(component.notifications().length).toBe(8);
     expect(component.notifLoading()).toBeFalse();
 
-    api.getAdminNotifications.and.returnValue(throwError(() => new Error('failed')));
+    api.getAdminNotifications.and.returnValue(
+      throwError(() => new Error('failed')),
+    );
     component.fetchNotifications();
     tick();
     expect(component.notifLoading()).toBeFalse();
@@ -135,14 +170,19 @@ describe('Admin AppComponent shell', () => {
 
   it('marks notifications read and handles read errors without breaking state', fakeAsync(() => {
     component.unreadCount.set(2);
-    component.notifications.set([{ id: 'n1', is_read: false }, { id: 'n2', is_read: false }]);
+    component.notifications.set([
+      { id: 'n1', is_read: false },
+      { id: 'n2', is_read: false },
+    ]);
 
     component.markAllRead();
     tick();
     expect(component.unreadCount()).toBe(0);
-    expect(component.notifications().every(n => n.is_read)).toBeTrue();
+    expect(component.notifications().every((n) => n.is_read)).toBeTrue();
 
-    api.markAllNotificationsRead.and.returnValue(throwError(() => new Error('failed')));
+    api.markAllNotificationsRead.and.returnValue(
+      throwError(() => new Error('failed')),
+    );
     component.markAllRead();
     tick();
     expect(component.unreadCount()).toBe(0);
@@ -150,27 +190,50 @@ describe('Admin AppComponent shell', () => {
 
   it('handles notification clicks and navigation for order, delivery, and generic records', fakeAsync(() => {
     component.unreadCount.set(2);
-    component.notifications.set([{ id: 'n1', is_read: false }, { id: 'n2', is_read: true }]);
+    component.notifications.set([
+      { id: 'n1', is_read: false },
+      { id: 'n2', is_read: true },
+    ]);
 
-    component.handleNotificationClick({ id: 'n1', is_read: false, notification_type: 'order', related_entity_id: 'o1' });
+    component.handleNotificationClick({
+      id: 'n1',
+      is_read: false,
+      notification_type: 'order',
+      related_entity_id: 'o1',
+    });
     tick();
     expect(api.markNotificationRead).toHaveBeenCalledWith('n1');
     expect(component.unreadCount()).toBe(1);
     expect(router.navigate).toHaveBeenCalledWith(['/orders', 'o1']);
 
-    component.handleNotificationClick({ id: 'n2', is_read: true, notification_type: 'delivery', related_entity_id: 'd1' });
+    component.handleNotificationClick({
+      id: 'n2',
+      is_read: true,
+      notification_type: 'delivery',
+      related_entity_id: 'd1',
+    });
     expect(router.navigate).toHaveBeenCalledWith(['/delivery-partners', 'd1']);
 
-    component.handleNotificationClick({ id: 'n3', is_read: true, notification_type: 'system' });
+    component.handleNotificationClick({
+      id: 'n3',
+      is_read: true,
+      notification_type: 'system',
+    });
     expect(router.navigate).toHaveBeenCalledWith(['/notifications']);
   }));
 
   it('switches between desktop collapse and mobile menu behavior', () => {
-    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1280 });
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      value: 1280,
+    });
     component.toggleSidebar();
     expect(component.sidebarCollapsed()).toBeTrue();
 
-    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 800 });
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      value: 800,
+    });
     component.toggleSidebar();
     expect(component.mobileMenuOpen()).toBeTrue();
     component.closeMobileMenu();
@@ -180,7 +243,11 @@ describe('Admin AppComponent shell', () => {
   it('formats user initials, notification icons, breadcrumbs, and logout behavior', fakeAsync(() => {
     fixture.detectChanges();
     (component as any).setBreadcrumbs('/vendors/onboard?tab=store');
-    expect(component.breadcrumbs().map(c => c.label)).toEqual(['Command Center', 'Stores', 'Onboarding']);
+    expect(component.breadcrumbs().map((c) => c.label)).toEqual([
+      'Command Center',
+      'Stores',
+      'Onboarding',
+    ]);
 
     expect(component.getInitials()).toBe('AL');
     userSignal.set({ username: 'root', email: 'root@nex.test' });

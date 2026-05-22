@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
-import { CanActivateFn, Router } from '@angular/router';
-import { map, catchError, of } from 'rxjs';
+import { type CanActivateFn, Router } from '@angular/router';
+import { catchError, map, of } from 'rxjs';
 import { ApiService } from '../services/api.service';
 import { AuthService } from '../services/auth.service';
 import { AUTH_PREFIX } from '../tokens/auth-prefix.token';
@@ -15,7 +15,11 @@ function getScopedUser(): any | null {
   const prefix = inject(AUTH_PREFIX);
   const raw = sessionStorage.getItem(`${prefix}_user`);
   if (!raw) return null;
-  try { return JSON.parse(raw); } catch { return null; }
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -24,7 +28,11 @@ function getScopedUser(): any | null {
 export const authGuard: CanActivateFn = () => {
   const router = inject(Router);
   if (getScopedToken()) return true;
-  router.navigate(['/login']);
+  const returnUrl = router.url && router.url !== '/' ? router.url : undefined;
+  router.navigate(
+    ['/login'],
+    returnUrl ? { queryParams: { returnUrl } } : undefined,
+  );
   return false;
 };
 
@@ -98,7 +106,13 @@ export const approvedVendorGuard: CanActivateFn = () => {
   return api.getVendorProfile().pipe(
     map((profile: any) => {
       localStorage.setItem(`${prefix}_vendor_status`, profile.status);
-      if (profile.status === 'approved') return true;
+      if (profile.status === 'approved') {
+        if (user.force_password_change) {
+          router.navigate(['/change-password']);
+          return false;
+        }
+        return true;
+      }
       router.navigate(['/pending-approval']);
       return false;
     }),
@@ -106,6 +120,6 @@ export const approvedVendorGuard: CanActivateFn = () => {
       localStorage.removeItem(`${prefix}_vendor_status`);
       router.navigate(['/pending-approval']);
       return of(false);
-    })
+    }),
   );
 };

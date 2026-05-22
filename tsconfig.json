@@ -19,11 +19,64 @@
     "module": "ES2022",
     "baseUrl": ".",
     "paths": {
-      "@shared/*": ["projects/shared/src/*"]
+      "@shared/*": ["projects/shared/src/*"],
+      "@nexconnect/customer-analytics": [
+        "../packages/customer-analytics/src/index.ts"
+      ],
+      "@nexconnect/customer-api-client": [
+        "../packages/customer-api-client/src/index.ts"
+      ],
+      "@nexconnect/customer-address": [
+        "../packages/customer-address/src/index.ts"
+      ],
+      "@nexconnect/customer-auth": ["../packages/customer-auth/src/index.ts"],
+      "@nexconnect/customer-cart": ["../packages/customer-cart/src/index.ts"],
+      "@nexconnect/customer-checkout": [
+        "../packages/customer-checkout/src/index.ts"
+      ],
+      "@nexconnect/customer-config": [
+        "../packages/customer-config/src/index.ts"
+      ],
+      "@nexconnect/customer-core": ["../packages/customer-core/src/index.ts"],
+      "@nexconnect/customer-design-tokens": [
+        "../packages/customer-design-tokens/src/index.ts"
+      ],
+      "@nexconnect/customer-email-templates": [
+        "../packages/customer-email-templates/src/index.ts"
+      ],
+      "@nexconnect/customer-errors": [
+        "../packages/customer-errors/src/index.ts"
+      ],
+      "@nexconnect/customer-location": [
+        "../packages/customer-location/src/index.ts"
+      ],
+      "@nexconnect/customer-offers": [
+        "../packages/customer-offers/src/index.ts"
+      ],
+      "@nexconnect/customer-orders": [
+        "../packages/customer-orders/src/index.ts"
+      ],
+      "@nexconnect/customer-payments": [
+        "../packages/customer-payments/src/index.ts"
+      ],
+      "@nexconnect/customer-pricing": [
+        "../packages/customer-pricing/src/index.ts"
+      ],
+      "@nexconnect/customer-products": [
+        "../packages/customer-products/src/index.ts"
+      ],
+      "@nexconnect/customer-search": [
+        "../packages/customer-search/src/index.ts"
+      ],
+      "@nexconnect/customer-types": ["../packages/customer-types/src/index.ts"],
+      "@nexconnect/customer-ui-specs": [
+        "../packages/customer-ui-specs/src/index.ts"
+      ],
+      "@nexconnect/customer-validation": [
+        "../packages/customer-validation/src/index.ts"
+      ]
     },
-    "typeRoots": [
-      "./node_modules/@types"
-    ]
+    "typeRoots": ["./node_modules/@types"]
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

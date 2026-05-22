@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ApiService, AuthService } from '@shared/public-api';
@@ -8,7 +8,7 @@ import { ApiService, AuthService } from '@shared/public-api';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './pending-approval.component.html',
-  styleUrl: './pending-approval.component.scss'
+  styleUrl: './pending-approval.component.scss',
 })
 export class PendingApprovalComponent implements OnInit, OnDestroy {
   private api = inject(ApiService);
@@ -39,9 +39,11 @@ export class PendingApprovalComponent implements OnInit, OnDestroy {
         if (profile.status === 'approved') {
           clearInterval(this.pollInterval);
           this.router.navigate(['/']);
+        } else if (['rejected', 'suspended'].includes(profile.status)) {
+          clearInterval(this.pollInterval);
         }
       },
-      error: () => this.loading.set(false)
+      error: () => this.loading.set(false),
     });
   }
 
@@ -54,15 +56,20 @@ export class PendingApprovalComponent implements OnInit, OnDestroy {
       pending: 'Pending Review',
       approved: 'Approved',
       rejected: 'Rejected',
-      suspended: 'Suspended' };
+      suspended: 'Suspended',
+    };
     return labels[this.status()] ?? this.status();
   }
 
   get statusMessage(): string {
     const messages: Record<string, string> = {
-      pending: 'Your store registration is under review. Our team will verify your details and get back to you shortly.',
-      rejected: 'Your application was not approved. Please contact support for more information.',
-      suspended: 'Your vendor account has been suspended. Please contact support.' };
+      pending:
+        'Your store registration is under review. Our team will verify your details and get back to you shortly.',
+      rejected:
+        'Your application was not approved. Please contact support for more information.',
+      suspended:
+        'Your vendor account has been suspended. Please contact support.',
+    };
     return messages[this.status()] ?? '';
   }
 }

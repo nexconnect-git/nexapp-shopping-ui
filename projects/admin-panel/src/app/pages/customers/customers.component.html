@@ -1,34 +1,58 @@
-<div class="customers-page">
+<div class="saas-page customers-page">
   <section class="admin-page-hero customers-header">
     <div class="admin-page-copy">
       <span class="eyebrow">Customers</span>
       <h1 class="page-title">Customers</h1>
-      <p>{{ total() }} registered customers with account, contact, and verification details.</p>
+      <p>
+        {{ total() }} registered customers with account, contact, and
+        verification details.
+      </p>
     </div>
     <div class="admin-page-actions">
       <div class="reload-bar">
-      @if (lastRefreshed()) {
-        <span class="reload-timestamp">Updated {{ lastRefreshed() | date:'HH:mm:ss' }}</span>
-      }
-      <button class="btn btn-ghost btn-sm" (click)="manualReload()" [disabled]="loading()" title="Reload">
-        <span class="material-icons-outlined" [class.spin]="loading()">refresh</span>
-      </button>
-      <button class="btn btn-sm" [class.btn-ghost]="!autoReload()" [class.btn-primary-soft]="autoReload()"
-              (click)="toggleAutoReload()" title="Toggle auto-reload every 15 s">
-        <span class="material-icons-outlined">{{ autoReload() ? 'pause_circle' : 'play_circle' }}</span>
-        {{ autoReload() ? 'Auto' : 'Paused' }}
-      </button>
-    </div>
+        @if (lastRefreshed()) {
+          <span class="reload-timestamp"
+            >Updated {{ lastRefreshed() | date: "HH:mm:ss" }}</span
+          >
+        }
+        <button
+          class="btn btn-ghost btn-sm"
+          (click)="manualReload()"
+          [disabled]="loading()"
+          title="Reload"
+        >
+          <span class="material-icons-outlined" [class.spin]="loading()"
+            >refresh</span
+          >
+        </button>
+        <button
+          class="btn btn-sm"
+          [class.btn-ghost]="!autoReload()"
+          [class.btn-primary-soft]="autoReload()"
+          (click)="toggleAutoReload()"
+          title="Toggle auto-reload every 15 s"
+        >
+          <span class="material-icons-outlined">{{
+            autoReload() ? "pause_circle" : "play_circle"
+          }}</span>
+          {{ autoReload() ? "Auto" : "Paused" }}
+        </button>
+      </div>
     </div>
   </section>
   <div class="admin-toolbar filters customers-filters">
-      <input class="filter-input" type="search" [(ngModel)]="search"
-        (input)="onSearch()" placeholder="Search by name, email, username...">
-      <select class="filter-input" [(ngModel)]="verifiedFilter" (change)="load()">
-        <option value="">All</option>
-        <option value="true">Verified</option>
-        <option value="false">Unverified</option>
-      </select>
+    <input
+      class="filter-input"
+      type="search"
+      [(ngModel)]="search"
+      (input)="onSearch()"
+      placeholder="Search by name, email, username..."
+    />
+    <select class="filter-input" [(ngModel)]="verifiedFilter" (change)="load()">
+      <option value="">All</option>
+      <option value="true">Verified</option>
+      <option value="false">Unverified</option>
+    </select>
   </div>
 
   <app-dynamic-table
@@ -48,10 +72,16 @@
     <!-- Custom name column -->
     <ng-template tableCell="name" let-c>
       <div class="customer-link">
-        <span class="customer-thumb">{{ (c.first_name || c.username || '?')[0].toUpperCase() }}</span>
+        <span class="customer-thumb">{{
+          (c.first_name || c.username || "?")[0].toUpperCase()
+        }}</span>
         <span class="customer-name-block">
-          <span class="customer-name font-semibold">{{ c.first_name }} {{ c.last_name }}</span>
-          <span class="customer-subline">{{ c.is_active === false ? 'Suspended account' : 'Customer profile' }}</span>
+          <span class="customer-name font-semibold"
+            >{{ c.first_name }} {{ c.last_name }}</span
+          >
+          <span class="customer-subline">{{
+            c.is_active === false ? "Suspended account" : "Customer profile"
+          }}</span>
         </span>
       </div>
     </ng-template>
@@ -68,13 +98,17 @@
 
     <!-- Custom phone column -->
     <ng-template tableCell="phone" let-c>
-      <span class="text-muted text-sm">{{ c.phone || '—' }}</span>
+      <span class="text-muted text-sm">{{ c.phone || "—" }}</span>
     </ng-template>
 
     <!-- Custom verified column -->
     <ng-template tableCell="verified" let-c>
-      <span class="badge" [class.badge-approved]="c.is_verified" [class.badge-rejected]="!c.is_verified">
-        {{ c.is_verified ? 'Verified' : 'Unverified' }}
+      <span
+        class="badge"
+        [class.badge-approved]="c.is_verified"
+        [class.badge-rejected]="!c.is_verified"
+      >
+        {{ c.is_verified ? "Verified" : "Unverified" }}
       </span>
     </ng-template>
 
@@ -84,7 +118,11 @@
         <button class="action-btn" (click)="openEdit(c)" title="Edit">
           <span class="material-icons-outlined">edit</span>
         </button>
-        <button class="action-btn danger" (click)="deleteCustomer(c)" title="Delete">
+        <button
+          class="action-btn danger"
+          (click)="deleteCustomer(c)"
+          title="Delete"
+        >
           <span class="material-icons-outlined">delete_outline</span>
         </button>
       </div>
@@ -101,38 +139,44 @@
       <button class="modal-close" (click)="closeModal()">&#10005;</button>
     </div>
     <div class="modal-body">
-      @if (error()) { <div class="alert-error">{{ error() }}</div> }
+      @if (error()) {
+        <div class="alert-error">{{ error() }}</div>
+      }
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">First Name</label>
-          <input class="form-input" [(ngModel)]="form.first_name">
+          <input class="form-input" [(ngModel)]="form.first_name" />
         </div>
         <div class="form-group">
           <label class="form-label">Last Name</label>
-          <input class="form-input" [(ngModel)]="form.last_name">
+          <input class="form-input" [(ngModel)]="form.last_name" />
         </div>
       </div>
       <div class="form-group">
         <label class="form-label">Email</label>
-        <input class="form-input" type="email" [(ngModel)]="form.email">
+        <input class="form-input" type="email" [(ngModel)]="form.email" />
       </div>
       <div class="form-group">
         <label class="form-label">Phone</label>
-        <input class="form-input" [(ngModel)]="form.phone">
+        <input class="form-input" [(ngModel)]="form.phone" />
       </div>
       <div class="form-check">
-        <input type="checkbox" id="is_verified" [(ngModel)]="form.is_verified">
+        <input
+          type="checkbox"
+          id="is_verified"
+          [(ngModel)]="form.is_verified"
+        />
         <label for="is_verified">Email Verified</label>
       </div>
       <div class="form-check">
-        <input type="checkbox" id="is_active" [(ngModel)]="form.is_active">
+        <input type="checkbox" id="is_active" [(ngModel)]="form.is_active" />
         <label for="is_active">Account Active</label>
       </div>
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" (click)="closeModal()">Cancel</button>
       <button class="btn-primary" [disabled]="saving()" (click)="save()">
-        {{ saving() ? 'Saving...' : 'Update' }}
+        {{ saving() ? "Saving..." : "Update" }}
       </button>
     </div>
   </div>

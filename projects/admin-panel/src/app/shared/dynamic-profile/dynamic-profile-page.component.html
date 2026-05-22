@@ -1,0 +1,164 @@
+<main class="profile-page">
+  <section class="profile-hero">
+    <div class="avatar">
+      <img
+        *ngIf="config.avatarUrl"
+        [src]="config.avatarUrl"
+        [alt]="config.entityName"
+      />
+      <span *ngIf="!config.avatarUrl && config.avatarIcon">{{
+        config.avatarIcon
+      }}</span>
+      <b *ngIf="!config.avatarUrl && !config.avatarIcon">{{
+        config.avatarInitials || config.entityName.slice(0, 2)
+      }}</b>
+    </div>
+
+    <div class="hero-copy">
+      <h1>{{ config.entityName }}</h1>
+      <p>{{ config.subtitle || config.entityTypeLabel }}</p>
+
+      <div class="badges">
+        <span
+          *ngFor="let badge of config.badges"
+          class="badge"
+          [attr.data-tone]="badge.tone || 'neutral'"
+        >
+          {{ badge.label }}
+        </span>
+      </div>
+    </div>
+
+    <div class="hero-actions">
+      <button
+        *ngFor="let item of config.actions"
+        type="button"
+        class="btn"
+        [attr.data-variant]="item.variant || 'outline'"
+        (click)="action.emit(item)"
+      >
+        <span *ngIf="item.icon">{{ item.icon }}</span>
+        {{ item.label }}
+      </button>
+    </div>
+  </section>
+
+  <section class="metric-grid" *ngIf="config.metrics?.length">
+    <article
+      *ngFor="let metric of config.metrics; trackBy: trackById"
+      class="metric-card"
+    >
+      <span class="metric-icon" [attr.data-tone]="metric.tone || 'purple'">{{
+        metric.icon || "📌"
+      }}</span>
+      <div>
+        <small>{{ metric.label }}</small>
+        <strong>{{ metric.value }}</strong>
+        <p>{{ metric.subtext }}</p>
+      </div>
+    </article>
+  </section>
+
+  <nav class="tabs" *ngIf="config.tabs?.length">
+    <button
+      *ngFor="let tab of config.tabs"
+      type="button"
+      [class.active]="tab.id === (config.activeTabId || config.tabs?.[0]?.id)"
+    >
+      <span>{{ tab.icon }}</span
+      >{{ tab.label }}
+    </button>
+  </nav>
+
+  <section *ngIf="config.passwordNotice?.enabled" class="notice">
+    <span>🔐</span>
+    <div>
+      <b>{{ config.passwordNotice?.title }}</b>
+      <p>{{ config.passwordNotice?.message }}</p>
+      <code *ngIf="config.passwordNotice?.secretValue">
+        {{ config.passwordNotice?.secretLabel || "Temporary Password" }}:
+        <strong>{{ config.passwordNotice?.secretValue }}</strong>
+      </code>
+    </div>
+    <button *ngIf="config.passwordNotice?.actionLabel" type="button">
+      {{ config.passwordNotice?.actionLabel }}
+    </button>
+  </section>
+
+  <section class="main-grid">
+    <div class="left-stack">
+      <section class="card checklist" *ngIf="config.checklist?.length">
+        <header>
+          <div>
+            <h2>{{ config.checklistTitle || "Checklist" }}</h2>
+            <p>{{ config.checklistCompletion || 0 }}% complete</p>
+          </div>
+          <div class="ring" [style.--value.%]="config.checklistCompletion || 0">
+            <span>{{ config.checklistCompletion || 0 }}%</span>
+          </div>
+        </header>
+
+        <div class="check-grid">
+          <article *ngFor="let item of config.checklist">
+            <i [class.done]="item.completed">{{
+              item.completed ? "✅" : "⚠️"
+            }}</i>
+            <div>
+              <b>{{ item.label }}</b>
+              <small [attr.data-tone]="item.tone || 'neutral'">{{
+                item.status
+              }}</small>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="card activity" *ngIf="config.activities?.length">
+        <header>
+          <h2>Recent Activity</h2>
+        </header>
+        <article
+          *ngFor="let item of config.activities"
+          [attr.data-tone]="item.tone || 'purple'"
+        >
+          <i></i>
+          <div>
+            <b>{{ item.title }}</b>
+            <p>{{ item.description }}</p>
+            <small>{{ item.timestamp }}</small>
+          </div>
+        </article>
+      </section>
+    </div>
+
+    <div class="section-grid">
+      <section
+        *ngFor="let section of config.sections; trackBy: trackById"
+        class="card info-card"
+      >
+        <header>
+          <h2>
+            <span>{{ section.icon }}</span
+            >{{ section.title }}
+          </h2>
+          <button
+            *ngIf="section.editStepId"
+            type="button"
+            (click)="editSection.emit(section.editStepId)"
+          >
+            Edit
+          </button>
+        </header>
+
+        <div class="field-grid" [attr.data-columns]="section.columns || 2">
+          <article *ngFor="let field of section.fields">
+            <small>{{ field.label }}</small>
+            <b [attr.data-tone]="field.tone || 'neutral'">{{
+              field.value | displayValue
+            }}</b>
+          </article>
+        </div>
+      </section>
+    </div>
+  </section>
+</main>

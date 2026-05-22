@@ -1,259 +1,34 @@
-<app-alert-host></app-alert-host>
-
-<nav class="shell-nav" aria-label="Customer navigation">
-  <div class="shell-nav-inner">
-    <a routerLink="/" class="shell-brand">
-      <span class="shell-brand-mark"><span class="material-icons-outlined">bolt</span></span>
-      <span class="shell-brand-copy">
-        <strong>NexConnect</strong>
-        <small>instant local commerce</small>
-      </span>
-    </a>
-
-    <button class="shell-location" type="button" (click)="openLocationPicker()" aria-label="Change delivery location">
-      <span class="material-icons-outlined">near_me</span>
-      <span class="shell-location-copy">
-        <small>Delivering to</small>
-        <strong>{{ locationService.locationDisplay() }}</strong>
-      </span>
-      <span class="material-icons-outlined">keyboard_arrow_down</span>
-    </button>
-
-    <a routerLink="/search" class="shell-search" aria-label="Search stores and products">
-      <span class="material-icons-outlined">search</span>
-      <span>Search groceries, meals, medicine, essentials</span>
-    </a>
-
-    <div class="shell-links">
-      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">Home</a>
-      <a routerLink="/shops" routerLinkActive="active">Browse</a>
-      <a routerLink="/offers" routerLinkActive="active">Deals</a>
-      @if (auth.isLoggedIn()) {
-        <a routerLink="/orders" routerLinkActive="active">Orders</a>
-      }
-    </div>
-
-    <div class="shell-actions">
-      @if (auth.isLoggedIn()) {
-        <a routerLink="/cart" class="shell-icon-btn" title="Cart" aria-label="Open cart">
-          <span class="material-icons-outlined">shopping_bag</span>
-          @if (api.cartCount() > 0) {
-            <span class="shell-badge">{{ api.cartCount() > 9 ? '9+' : api.cartCount() }}</span>
-          }
-        </a>
-
-        <div class="shell-menu-wrap">
-          <button class="shell-icon-btn" type="button" (click)="toggleNotifMenu($event)" title="Notifications" aria-label="Open notifications">
-            <span class="material-icons-outlined">notifications</span>
-            @if (api.unreadNotifications() > 0) {
-              <span class="shell-badge">{{ api.unreadNotifications() > 9 ? '9+' : api.unreadNotifications() }}</span>
-            }
-          </button>
-          @if (notifMenuOpen()) {
-            <div class="shell-dropdown shell-dropdown-notif">
-              <div class="shell-dropdown-head">
-                <strong>Updates</strong>
-                @if (api.unreadNotifications() > 0) {
-                  <button type="button" (click)="clearNotifBadge()">Mark all read</button>
-                }
-              </div>
-              <div class="shell-dropdown-body">
-                @if (notifications().length === 0) {
-                  <div class="shell-empty-state">
-                    <span class="material-icons-outlined">notifications_none</span>
-                    <span>No notifications yet</span>
-                  </div>
-                } @else {
-                  @for (n of notifications(); track n.id) {
-                    <a
-                      [routerLink]="n.data?.order_id ? ['/order', n.data.order_id] : ['/orders']"
-                      class="shell-notif-row"
-                      [class.unread]="!n.is_read"
-                      (click)="toggleNotifMenu()">
-                      <span class="shell-notif-dot" [class.visible]="!n.is_read"></span>
-                      <span class="shell-notif-copy">
-                        <strong>{{ n.title }}</strong>
-                        <small>{{ n.message }}</small>
-                        <em>{{ n.created_at | date:'MMM d, h:mm a' }}</em>
-                      </span>
-                    </a>
-                  }
-                }
-              </div>
-            </div>
-          }
-        </div>
-
-        <div class="shell-menu-wrap">
-          <button class="shell-profile-btn" type="button" (click)="toggleUserMenu($event)" aria-label="Open account menu">
-            <span>{{ userInitials() }}</span>
-          </button>
-          @if (userMenuOpen()) {
-            <div class="shell-dropdown shell-dropdown-user">
-              <div class="shell-user-head">
-                <div class="shell-user-avatar">{{ userInitials() }}</div>
-                <div>
-                  <strong>{{ auth.user()?.first_name }} {{ auth.user()?.last_name }}</strong>
-                  <small>{{ auth.user()?.email }}</small>
-                </div>
-              </div>
-              <a routerLink="/profile" (click)="toggleUserMenu()">Profile</a>
-              <a routerLink="/orders" (click)="toggleUserMenu()">My orders</a>
-              <a routerLink="/addresses" (click)="toggleUserMenu()">Addresses</a>
-              <a routerLink="/wallet" (click)="toggleUserMenu()">Wallet</a>
-              <a routerLink="/wishlist" (click)="toggleUserMenu()">Wishlist</a>
-              <a routerLink="/referral" (click)="toggleUserMenu()">Refer and earn</a>
-              <button class="shell-logout" type="button" (click)="logout()">Sign out</button>
-            </div>
-          }
-        </div>
-      } @else {
-        <a routerLink="/login" class="shell-ghost-btn">Sign in</a>
-        <a routerLink="/register" class="shell-primary-btn">Start ordering</a>
-      }
-    </div>
-  </div>
-</nav>
-
-<header class="mobile-shell" [class.hidden]="hideMobHeader()">
-  <div class="mobile-shell-top">
-    <button class="mobile-location" type="button" (click)="openLocationPicker()" aria-label="Change delivery location">
-      <span class="material-icons-outlined">location_on</span>
-      <span>
-        <small>Delivering to</small>
-        <strong>{{ locationService.locationDisplay() }}</strong>
-      </span>
-    </button>
-
-    @if (auth.isLoggedIn()) {
-      <div class="shell-menu-wrap">
-        <button class="mobile-icon-btn" type="button" (click)="toggleNotifMenu($event)" aria-label="Open notifications">
-          <span class="material-icons-outlined">notifications_none</span>
-          @if (api.unreadNotifications() > 0) {
-            <span class="shell-badge">{{ api.unreadNotifications() > 9 ? '9+' : api.unreadNotifications() }}</span>
-          }
-        </button>
-        @if (notifMenuOpen()) {
-          <div class="mobile-dropdown">
-            <div class="shell-dropdown-head">
-              <strong>Updates</strong>
-              @if (api.unreadNotifications() > 0) {
-                <button type="button" (click)="clearNotifBadge()">Mark all read</button>
-              }
-            </div>
-            <div class="shell-dropdown-body">
-              @if (notifications().length === 0) {
-                <div class="shell-empty-state">
-                  <span class="material-icons-outlined">notifications_none</span>
-                  <span>No notifications yet</span>
-                </div>
-              } @else {
-                @for (n of notifications(); track n.id) {
-                  <a
-                    [routerLink]="n.data?.order_id ? ['/order', n.data.order_id] : ['/orders']"
-                    class="shell-notif-row"
-                    [class.unread]="!n.is_read"
-                    (click)="toggleNotifMenu()">
-                    <span class="shell-notif-dot" [class.visible]="!n.is_read"></span>
-                    <span class="shell-notif-copy">
-                      <strong>{{ n.title }}</strong>
-                      <small>{{ n.message }}</small>
-                      <em>{{ n.created_at | date:'MMM d, h:mm a' }}</em>
-                    </span>
-                  </a>
-                }
-              }
-            </div>
-          </div>
-        }
-      </div>
-    }
-  </div>
-
-  <div class="mobile-search-row">
-    <a routerLink="/search" class="mobile-search">
-      <span class="material-icons-outlined">search</span>
-      <span>Search stores, groceries, snacks, medicine</span>
-    </a>
-  </div>
-</header>
-
-<main class="main-content" [class.full-screen-mode]="hideMobHeader()">
-  <div class="main-stage">
-    <nav class="app-breadcrumbs" aria-label="Breadcrumb">
-      @for (crumb of breadcrumbs(); track crumb.url; let last = $last) {
-        @if (!last) {
-          <a [routerLink]="crumb.url">{{ crumb.label }}</a>
-          <span class="material-icons-outlined">chevron_right</span>
-        } @else {
-          <span class="current">{{ crumb.label }}</span>
-        }
-      }
-    </nav>
-    @if (api.activeIssue(); as issue) {
-      <div class="issue-banner" (click)="router.navigate(['/issue', issue.id])">
-        <span class="material-icons-outlined">support_agent</span>
-        <div>
-          <div class="issue-banner-title">Support is active for order #{{ issue.order_number }}</div>
-          <div class="issue-banner-sub">Open your live support thread</div>
-        </div>
-        <span class="material-icons-outlined">chevron_right</span>
-      </div>
-    }
-    <div class="route-stage">
-      <router-outlet />
-    </div>
-  </div>
-</main>
-
-@if (!hideMobHeader()) {
-  <app-footer></app-footer>
-}
-
-<nav class="mobile-tabs" [class.hidden]="hideMobTabs()">
-  <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">
-    <span class="material-icons-outlined">home</span>
-    <span>Home</span>
-  </a>
-  <a routerLink="/search" routerLinkActive="active">
-    <span class="material-icons-outlined">travel_explore</span>
-    <span>Search</span>
-  </a>
-  @if (auth.isLoggedIn()) {
-    <a routerLink="/cart" routerLinkActive="active" class="mobile-tab-cart">
-      <span class="material-icons-outlined">shopping_bag</span>
-      @if (api.cartCount() > 0) {
-        <span class="shell-badge">{{ api.cartCount() > 9 ? '9+' : api.cartCount() }}</span>
-      }
-      <span>Cart</span>
-    </a>
-    <a routerLink="/orders" routerLinkActive="active">
-      <span class="material-icons-outlined">receipt_long</span>
-      <span>Orders</span>
-    </a>
-    <a routerLink="/profile" routerLinkActive="active">
-      <span class="material-icons-outlined">person</span>
-      <span>Profile</span>
-    </a>
-  } @else {
-    <a routerLink="/offers" routerLinkActive="active">
-      <span class="material-icons-outlined">local_offer</span>
-      <span>Deals</span>
-    </a>
-    <a routerLink="/login">
-      <span class="material-icons-outlined">login</span>
-      <span>Sign in</span>
-    </a>
+<div class="fd-page" [class.flash-home-shell]="isFlashHome()">
+  <fd-app-loader />
+  <fd-topbar />
+  @if (loading()) {
+    <div class="page-loader" role="progressbar" aria-label="Loading page"></div>
   }
-</nav>
-
-@if (showSplash()) {
-  <div class="splash-screen">
-    <div class="splash-card">
-      <div class="splash-mark"><span class="material-icons-outlined">bolt</span></div>
-      <h1>NexConnect</h1>
-      <p>Fast local delivery for everyday essentials.</p>
-      <div class="splash-spinner"></div>
-    </div>
-  </div>
-}
+  <fd-sidebar />
+  <router-outlet />
+  @defer (when ui.loginSliderOpen()) {
+    <fd-login-slider />
+  }
+  @defer (when state.miniCartOpen() || ui.miniCartOpen()) {
+    <fd-mini-cart />
+  }
+  @defer (when ui.filterSliderOpen()) {
+    <fd-filter-slider />
+  }
+  @defer (when ui.locationModalOpen()) {
+    <fd-location-modal />
+  }
+  @defer (when ui.editModal()) {
+    <fd-edit-modal />
+  }
+  @defer (when ui.confirmDialog()) {
+    <fd-confirm-dialog />
+  }
+  <fd-mobile-sticky-cart-bar />
+  <fd-mobile-bottom-nav />
+  <app-global-loading />
+  <app-page-feature-loading />
+  @if (state.toast()) {
+    <div class="toast animate-up">{{ state.toast() }}</div>
+  }
+</div>

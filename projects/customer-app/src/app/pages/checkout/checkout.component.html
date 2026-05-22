@@ -1,307 +1,291 @@
-<section class="checkout-page">
-  <div class="checkout-topbar">
-    <button class="checkout-icon" type="button" (click)="goBack()" aria-label="Go back"><span class="material-icons-outlined">arrow_back</span></button>
+<main class="fd-content">
+  <fd-breadcrumbs
+    [items]="[{ label: 'Cart', link: '/cart' }, { label: 'Checkout' }]"
+  />
+  <section class="checkout-layout">
     <div>
-      <span class="checkout-kicker">Final step</span>
-      <h1>Checkout</h1>
-      <p>Confirm delivery, payment and any savings before placing the order.</p>
-    </div>
-    <div class="checkout-steps" aria-label="Checkout progress">
-      <span>Cart</span>
-      <span class="active">Checkout</span>
-      <span>Track</span>
-    </div>
-  </div>
-
-  @if (loading()) {
-    <div class="checkout-loading"><div class="checkout-spinner"></div></div>
-  } @else {
-    <div class="checkout-layout">
-      <div class="checkout-main">
-        <section class="checkout-card">
-          <div class="card-head">
-            <div>
-              <span class="checkout-kicker">Delivery point</span>
-              <h2>Choose where this order lands.</h2>
-            </div>
-            <button class="pill-btn" type="button" (click)="showAddressModal.set(true)">Add address</button>
-          </div>
-
-          @if (addresses().length === 0) {
-            <div class="empty-inline">
-              <span class="material-icons-outlined">location_off</span>
-              <div>
-                <strong>No saved addresses yet</strong>
-                <span>Add one to unlock delivery fee estimates and ordering.</span>
-              </div>
-            </div>
-          } @else {
-            <div class="address-list">
-              @for (addr of addresses(); track addr.id) {
-                <label class="address-card" [class.active]="selectedAddressId === addr.id" (click)="selectAddress(addr.id)">
-                  <input type="radio" [value]="addr.id" [(ngModel)]="selectedAddressId" hidden>
-                  <div>
-                    <strong>{{ addressLabel(addr) }}</strong>
-                    <span>{{ addr.address_line1 }}, {{ addr.city }}</span>
-                  </div>
-                  @if (selectedAddressId === addr.id) {
-                    <span class="material-icons-outlined">check_circle</span>
-                  }
-                </label>
-              }
-            </div>
-          }
-        </section>
-
-        <section class="checkout-card">
-          <div class="card-head">
-            <div>
-              <span class="checkout-kicker">Payment path</span>
-              <h2>Choose how you want to pay.</h2>
-            </div>
-          </div>
-          <div class="payment-list">
-            @if (!paymentMethods.length) {
-              <div class="payment-empty">
-                <span class="material-icons-outlined">payments</span>
-                <div>
-                  <strong>Payment unavailable</strong>
-                  <span>No checkout payment modes are enabled right now.</span>
-                </div>
-              </div>
-            }
-            @for (pm of paymentMethods; track pm.id) {
-              <label class="payment-card" [class.active]="selectedPayment === pm.id">
-                <input type="radio" [value]="pm.id" [(ngModel)]="selectedPayment" hidden>
-                <div class="payment-icon"><span class="material-icons-outlined">{{ pm.icon }}</span></div>
-                <div>
-                  <strong>{{ pm.label }}</strong>
-                  @if (pm.sub) { <span>{{ pm.sub }}</span> }
-                </div>
-              </label>
-            }
-          </div>
-        </section>
-
-        <section class="checkout-card">
-          <div class="card-head">
-            <div>
-              <span class="checkout-kicker">Discount stack</span>
-              <h2>Apply promos, wallet or loyalty.</h2>
-            </div>
-          </div>
-
-          <div class="coupon-block">
-            @if (appliedCoupon()) {
-              <div class="discount-row active">
-                <div>
-                  <strong>{{ appliedCoupon().code }}</strong>
-                  <span>{{ appliedCoupon().message }}</span>
-                </div>
-                <button type="button" (click)="removeCoupon()">Remove</button>
-              </div>
-            } @else {
-              <div class="coupon-input-row">
-                <input [(ngModel)]="couponCode" placeholder="Enter coupon code" (keyup.enter)="applyCoupon()">
-                <button (click)="applyCoupon()" [disabled]="couponLoading() || !couponCode.trim()">Apply</button>
-              </div>
-              @if (couponError()) {
-                <div class="error-row"><span class="material-icons-outlined">error_outline</span>{{ couponError() }}</div>
-              }
-            }
-          </div>
-
-          @if (walletBalance() > 0) {
-            <div class="stack-row">
-              <div>
-                <strong>Wallet balance</strong>
-                <span>{{ walletBalance() | number:'1.2-2' }} available</span>
-              </div>
-              @if (walletAmountToUse() > 0) {
-                <button class="pill-btn" type="button" (click)="walletAmountToUse.set(0)">Remove</button>
-              } @else {
-                <button class="pill-btn" type="button" (click)="applyFullWallet()">Use max</button>
-              }
-            </div>
-            @if (walletAmountToUse() === 0) {
-              <input class="inline-field" type="number" [max]="maxWalletApplicable" min="0" [ngModel]="walletAmountToUse()" (ngModelChange)="walletAmountToUse.set(Math.min($event, maxWalletApplicable))" placeholder="Enter wallet amount">
-            } @else {
-              <div class="discount-row active">
-                <div>
-                  <strong>Wallet applied</strong>
-                  <span>{{ walletAmountToUse() | number:'1.2-2' }} will be deducted</span>
-                </div>
-              </div>
-            }
-          }
-
-          @if (loyaltyPoints() > 0) {
-            <div class="stack-row">
-              <div>
-                <strong>Loyalty points</strong>
-                <span>{{ loyaltyPoints() }} points available</span>
-              </div>
-              <button class="pill-btn" type="button" (click)="toggleLoyalty()">{{ useLoyalty() ? 'Remove' : 'Apply' }}</button>
-            </div>
-            @if (useLoyalty() && loyaltyDiscount() > 0) {
-              <div class="discount-row active">
-                <div>
-                  <strong>{{ loyaltyMaxRedeemable() }} pts redeemed</strong>
-                  <span>Discount of {{ loyaltyDiscount() | number:'1.2-2' }}</span>
-                </div>
-              </div>
-            }
-          }
-        </section>
-
-        <section class="checkout-card">
-          <div class="card-head">
-            <div>
-              <span class="checkout-kicker">Delivery details</span>
-              <h2>Add notes or schedule it later.</h2>
-            </div>
-          </div>
-
-          <textarea [(ngModel)]="notes" rows="3" placeholder="Gate code, rider note, packing preference or anything else"></textarea>
-
-          <div class="schedule-grid">
-            <label>
-              <span>Date</span>
-              <input type="date" [min]="minScheduleDate" [value]="scheduledForDate" (change)="setScheduledDate(($any($event.target)).value)">
-            </label>
-            <label>
-              <span>Time</span>
-              <input type="time" [value]="scheduledForTime" (change)="setScheduledTime(($any($event.target)).value)">
-            </label>
-          </div>
-
-          @if (scheduledFor()) {
-            <div class="discount-row active">
-              <div>
-                <strong>Scheduled delivery</strong>
-                <span>{{ scheduledFor() | date:'EEE d MMM, h:mm a' }}</span>
-              </div>
-              <button type="button" (click)="scheduledFor.set('')">Clear</button>
-            </div>
-          }
-        </section>
-
-        @if (orderError()) {
-          <div class="error-row wide order-alert">
-            <span class="material-icons-outlined">error_outline</span>
-            <div>
-              <strong>We could not place this order</strong>
-              <span>{{ orderError() }}</span>
-            </div>
-          </div>
+      <h1 class="fd-title">Checkout</h1>
+      <section class="stepper fd-card">
+        @for (s of steps; track s.id) {
+          <button
+            type="button"
+            [class.active]="step() === s.id"
+            (click)="step.set(s.id)"
+          >
+            <b>{{ s.id }}</b
+            ><span
+              >{{ s.title }}<small>{{ s.sub }}</small></span
+            >
+          </button>
         }
-      </div>
+      </section>
 
-      <aside class="checkout-side">
-        <div class="summary-card">
-          <span class="checkout-kicker">Order summary</span>
-          <h2>What you are paying today.</h2>
-
-          @if (cart()) {
-            <div class="line-items">
-              @for (item of cart()!.items; track item.id) {
-                <div class="line-item">
-                  <span>{{ item.quantity }} x {{ item.product.name }}</span>
-                  <strong>{{ item.subtotal | appCurrency }}</strong>
-                </div>
+      @if (step() === 1) {
+        <section class="fd-card block">
+          <h2>Delivery Address</h2>
+          <details class="mobile-address-dropdown">
+            <summary>
+              <span class="material-symbols-rounded">location_on</span>
+              <span>
+                <small>Deliver to</small>
+                <b>{{ state.activeAddress()?.label || "Select address" }}</b>
+                <em>{{
+                  state.activeAddress()?.line || "Choose a saved address"
+                }}</em>
+              </span>
+              <span class="material-symbols-rounded">expand_more</span>
+            </summary>
+            <div class="mobile-address-options">
+              @for (address of state.addresses(); track address.id) {
+                <button
+                  type="button"
+                  [class.active]="isActiveAddress(address.id)"
+                  [disabled]="!!addressDisabledReason(address)"
+                  (click)="selectAddress(address.id)"
+                >
+                  <span class="material-symbols-rounded">{{
+                    address.label === "Home"
+                      ? "home"
+                      : address.label === "Office"
+                        ? "business"
+                        : "location_on"
+                  }}</span>
+                  <span>
+                    <b
+                      >{{ address.label }}
+                      @if (address.isDefault) {
+                        <em>Default</em>
+                      }
+                    </b>
+                    <small>{{ address.line }}</small>
+                    <strong [class.error]="!!addressDisabledReason(address)">{{
+                      addressMessage(address)
+                    }}</strong>
+                  </span>
+                </button>
               }
+              <button
+                type="button"
+                class="add-address-option"
+                (click)="goAddresses()"
+              >
+                <span class="material-symbols-rounded">add_location_alt</span>
+                Add new address
+              </button>
             </div>
-
-            <div class="bill-row">
-              <span>Items total</span>
-              <strong>{{ cart()!.total_amount | appCurrency }}</strong>
-            </div>
-            @if (appliedCoupon()) {
-              <div class="bill-row saving">
-                <span>Coupon</span>
-                <strong>- {{ appliedCoupon().discount | appCurrency }}</strong>
+          </details>
+          @for (address of state.addresses(); track address.id) {
+            <label
+              class="address-row"
+              [class.active]="isActiveAddress(address.id)"
+              [class.disabled]="!!addressDisabledReason(address)"
+            >
+              <input
+                type="radio"
+                name="address"
+                [disabled]="!!addressDisabledReason(address)"
+                [checked]="isActiveAddress(address.id)"
+                (change)="selectAddress(address.id)"
+              />
+              <div>
+                <b
+                  ><span>{{ address.label }}</span> {{ address.name }}
+                  @if (address.isDefault) {
+                    <em>Default</em>
+                  }
+                </b>
+                <p>{{ address.line }}</p>
+                <small>{{ address.phone }}</small>
+                <small
+                  class="address-note"
+                  [class.error]="!!addressDisabledReason(address)"
+                  >{{ addressMessage(address) }}</small
+                >
               </div>
+              <button type="button" (click)="goAddresses()">Edit</button
+              ><button
+                type="button"
+                class="danger"
+                (click)="state.deleteAddress(address.id)"
+              >
+                Remove
+              </button>
+            </label>
+          }
+          <button type="button" class="link-add" (click)="goAddresses()">
+            + Add New Address
+          </button>
+        </section>
+      }
+
+      @if (step() === 2) {
+        <section class="fd-card block">
+          <h2>Delivery Slot</h2>
+          <div class="slots">
+            @for (slot of slots; track slot.name) {
+              <button
+                type="button"
+                [class.active]="selectedSlot() === slot.name"
+                (click)="selectedSlot.set(slot.name)"
+              >
+                <b>{{ slot.name }}</b
+                ><span>{{ slot.type }}</span>
+                @if (slot.time) {
+                  <small>{{ slot.time }}</small>
+                }
+                <em>{{ slot.price }}</em>
+              </button>
             }
-            <div class="bill-row">
-              <span>Delivery fee</span>
-              @if (deliveryFeeLoading()) {
-                <strong>Calculating...</strong>
-              } @else {
-                <strong>{{ deliveryFee | appCurrency }}</strong>
+          </div>
+          @if (state.freeDeliveryUnlocked()) {
+            <p class="free-note">
+              Yay! You're getting FREE delivery on this order.
+            </p>
+          }
+        </section>
+      }
+
+      @if (step() === 3) {
+        <section class="fd-card block payment">
+          <h2>Payment Method</h2>
+          <div class="pay-grid">
+            <div class="pay-list">
+              @for (method of state.paymentMethods(); track method.id) {
+                <label
+                  [class.active]="
+                    (selectedPayment() || state.selectedPaymentMethod()) ===
+                    method.id
+                  "
+                >
+                  <input
+                    type="radio"
+                    name="payment"
+                    [checked]="
+                      selectedPayment() === method.id ||
+                      state.selectedPaymentMethod() === method.id
+                    "
+                    (change)="selectPayment(method.id)"
+                  />
+                  <span
+                    class="pay-dot"
+                    [attr.data-icon]="paymentIcon(method.id)"
+                    aria-hidden="true"
+                  ></span>
+                  <span class="pay-copy">
+                    <b>{{ method.label }}</b>
+                    <small>{{ method.description }}</small>
+                  </span>
+                </label>
+              } @empty {
+                <section class="no-payment">
+                  <b>No payment method available</b>
+                  <small
+                    >Admin has not enabled any checkout payment method for this
+                    order.</small
+                  >
+                </section>
               }
             </div>
-            @if (deliveryFeePreview()?.fees?.length) {
-              <div class="line-items delivery-breakdown">
-                @for (fee of deliveryFeePreview()!.fees; track fee.vendor_id) {
-                  <div class="line-item delivery-line" [class.far]="fee.is_far_delivery">
+            @if (selectedPaymentMeta(); as method) {
+              <div class="pay-panel">
+                <h3>{{ paymentPanelTitle(method.id) }}</h3>
+                @if (isUpiPayment(method.id)) {
+                  <div class="upi-apps">
+                    @for (app of sharedUpiApps; track app.name) {
+                      <button type="button" (click)="selectUpiApp(app.name)">
+                        <span [class]="app.className">{{ app.logo }}</span
+                        >{{ app.name }}
+                      </button>
+                    }
+                  </div>
+                  <input
+                    class="fd-input"
+                    placeholder="Enter your UPI ID (e.g., name@upi)"
+                  />
+                  <small
+                    >You will be redirected to your UPI app to complete payment
+                    securely.</small
+                  >
+                } @else {
+                  <div class="pay-method-card">
+                    <span
+                      class="pay-method-logo"
+                      [attr.data-icon]="paymentIcon(method.id)"
+                    ></span>
                     <div>
-                      <span>{{ fee.vendor_name }}</span>
-                      <small>
-                        {{ fee.distance_km }} km · {{ fee.estimated_delivery_label }}
-                      </small>
+                      <b>{{ method.label }}</b>
+                      <small>{{ method.description }}</small>
                     </div>
-                    <strong>{{ fee.delivery_fee | appCurrency }}</strong>
                   </div>
                 }
               </div>
             }
-            @if (deliveryFeePreview()?.requires_far_delivery_confirmation) {
-              <div class="error-row wide order-alert">
-                <span class="material-icons-outlined">local_shipping</span>
-                <div>
-                  <strong>Long-distance delivery in this basket</strong>
-                  <span>One or more shops are outside {{ instantRadiusLabel() }}. You can still order after confirming the longer ETA.</span>
-                </div>
-              </div>
-            }
-            @if (walletAmountToUse() > 0) {
-              <div class="bill-row saving">
-                <span>Wallet</span>
-                <strong>- {{ walletAmountToUse() | number:'1.2-2' }}</strong>
-              </div>
-            }
-            @if (useLoyalty() && loyaltyDiscount() > 0) {
-              <div class="bill-row saving">
-                <span>Loyalty discount</span>
-                <strong>- {{ loyaltyDiscount() | number:'1.2-2' }}</strong>
-              </div>
-            }
-            <div class="bill-row total">
-              <span>Total payable</span>
-              <strong>{{ finalTotal | number:'1.2-2' }}</strong>
-            </div>
-          }
+          </div>
+        </section>
+      }
 
-          <button class="place-btn" [disabled]="!selectedAddressId || placingOrder() || addresses().length === 0 || !paymentMethods.length" (click)="placeOrder()">
-            @if (placingOrder()) {
-              {{ selectedPayment === 'razorpay' ? 'Opening payment...' : 'Placing order...' }}
-            } @else if (selectedPayment === 'razorpay') {
-              Pay {{ finalTotal | number:'1.2-2' }} securely
-            } @else {
-              Place order
+      @if (sameStoreSuggestions().length) {
+        <section class="fd-card block recommendation-block">
+          <h2>Add more from this store</h2>
+          <section class="checkout-products">
+            @for (product of sameStoreSuggestions(); track product.id) {
+              <fd-product-card [product]="product" />
             }
+          </section>
+        </section>
+      }
+
+      @if (otherStoreSuggestions().length) {
+        <section class="fd-card block recommendation-block">
+          <h2>Similar products from other stores</h2>
+          <p class="section-note">
+            Adding these may ask you to clear the current cart because one order
+            can use one store only.
+          </p>
+          <section class="checkout-products">
+            @for (product of otherStoreSuggestions(); track product.id) {
+              <fd-product-card [product]="product" />
+            }
+          </section>
+        </section>
+      }
+    </div>
+
+    <aside class="checkout-aside">
+      <fd-order-summary [showButton]="false" />
+      <div class="continue-row fd-card">
+        @if (step() > 1) {
+          <button
+            type="button"
+            class="fd-btn outline"
+            (click)="step.set(step() - 1)"
+          >
+            Back
           </button>
-        </div>
-      </aside>
-    </div>
-  }
-</section>
-
-@if (showAddressModal()) {
-  <app-address-modal (created)="onAddressCreated($event)" (cancelled)="showAddressModal.set(false)"></app-address-modal>
-}
-
-@if (showPaymentFailedDialog()) {
-  <div class="dialog-backdrop" (click)="dismissPaymentDialog()">
-    <div class="dialog-card" (click)="$event.stopPropagation()">
-      <span class="material-icons-outlined">payment</span>
-      <h3>Payment was not completed</h3>
-      <p>{{ paymentFailedMsg() }}</p>
-      <div class="dialog-actions">
-        <button class="solid" (click)="retryPayment()">Retry payment</button>
-        <button class="ghost" (click)="placeOrderPayLater()">Place and pay later</button>
-        <button class="plain" (click)="dismissPaymentDialog()">Cancel</button>
+        }
+        @if (step() < 3) {
+          <button
+            type="button"
+            class="fd-btn primary"
+            (click)="
+              step() === 1 ? continueFromAddress() : step.set(step() + 1)
+            "
+          >
+            Continue
+          </button>
+        } @else {
+          <button
+            type="button"
+            class="fd-btn primary"
+            [disabled]="
+              !state.paymentMethods().length || state.checkoutSubmitting()
+            "
+            (click)="placeOrder()"
+          >
+            Place Order
+          </button>
+        }
       </div>
-    </div>
-  </div>
-}
+    </aside>
+  </section>
+</main>

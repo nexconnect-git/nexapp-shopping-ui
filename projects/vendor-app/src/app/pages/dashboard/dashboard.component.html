@@ -1,10 +1,12 @@
 <div class="dashboard-page fade-in">
-
   <section class="dashboard-hero">
     <div class="page-hero-copy">
       <span class="eyebrow">Today at a glance</span>
       <h1 class="page-title">Vendor Dashboard</h1>
-      <p>Welcome back. Monitor demand, stock, order flow, and payout readiness from one workspace.</p>
+      <p>
+        Welcome back. Monitor demand, stock, order flow, and payout readiness
+        from one workspace.
+      </p>
     </div>
     <div class="page-hero-actions">
       @if (stats()) {
@@ -12,13 +14,14 @@
           class="store-toggle-btn"
           [class.open]="stats()!.is_open"
           [disabled]="storeToggling()"
-          (click)="toggleStore()">
+          (click)="toggleStore()"
+        >
           @if (storeToggling()) {
             <span class="btn-spinner"></span>
           } @else {
             <span class="toggle-dot"></span>
           }
-          {{ stats()!.is_open ? 'Store Online' : 'Store Offline' }}
+          {{ stats()!.is_open ? "Store Online" : "Store Offline" }}
           @if (stats()!.is_open && stats()!.closing_time) {
             <span class="closing-tag">Closes {{ stats()!.closing_time }}</span>
           }
@@ -38,15 +41,17 @@
         <span class="material-icons-outlined">storefront</span>
         <div>
           <small>Store mode</small>
-          <strong>{{ stats()!.is_open ? 'Open for orders' : 'Closed right now' }}</strong>
-          <p>{{ stats()!.is_open && stats()!.closing_time ? 'Taking orders until ' + stats()!.closing_time : 'Open when stock and team are ready.' }}</p>
+          <strong>{{ storeModeTitle() }}</strong>
+          <p>{{ storeModeCaption() }}</p>
         </div>
       </div>
       <a routerLink="/live-orders" class="command-card action">
         <span class="material-icons-outlined">view_kanban</span>
         <div>
           <small>Next action</small>
-          <strong>{{ ops() ? ops()!.orders.new + ' new order(s)' : 'Check live orders' }}</strong>
+          <strong>{{
+            ops() ? ops()!.orders.new + " new order(s)" : "Check live orders"
+          }}</strong>
           <p>Accept, prepare, and hand off orders from one board.</p>
         </div>
       </a>
@@ -90,7 +95,9 @@
           </div>
           <div class="mc-details">
             <p class="mc-label">Preparing / Ready</p>
-            <h3 class="mc-value">{{ ops()!.orders.preparing + ops()!.orders.ready }}</h3>
+            <h3 class="mc-value">
+              {{ ops()!.orders.preparing + ops()!.orders.ready }}
+            </h3>
           </div>
         </div>
         <div class="metric-card">
@@ -105,10 +112,13 @@
       </div>
 
       <div class="low-stock-banner">
-        <span class="material-icons-outlined">{{ ops()!.store.is_accepting_orders ? 'bolt' : 'pause_circle' }}</span>
+        <span class="material-icons-outlined">{{
+          ops()!.store.is_accepting_orders ? "bolt" : "pause_circle"
+        }}</span>
         <span>
-          <strong>{{ ops()!.store.is_accepting_orders ? 'Accepting orders' : 'Orders paused' }}</strong>
-          Auto-accept is {{ ops()!.store.auto_order_acceptance ? 'on' : 'off' }}. Alerts:
+          <strong>{{ storeModeTitle() }}</strong>
+          Auto-accept is
+          {{ ops()!.store.auto_order_acceptance ? "on" : "off" }}. Alerts:
           {{ ops()!.alerts.low_stock }} low stock,
           {{ ops()!.alerts.product_attention }} product health,
           {{ ops()!.alerts.pending_payouts }} payout,
@@ -118,12 +128,58 @@
       </div>
     }
 
+    <section class="onboarding-card card">
+      <div class="card-header">
+        <div>
+          <h3>Launch Checklist</h3>
+          <p>
+            Complete these steps so your store is ready for real customer
+            orders.
+          </p>
+        </div>
+        <span class="badge badge-secondary"
+          >{{ onboardingCompleteCount() }}/{{
+            onboardingItems().length
+          }}
+          ready</span
+        >
+      </div>
+      <div class="card-body">
+        <div class="onboarding-progress">
+          <span [style.width.%]="onboardingPercent()"></span>
+        </div>
+        <div class="onboarding-list">
+          @for (item of onboardingItems(); track item.label) {
+            <a
+              [routerLink]="item.route"
+              class="onboarding-item"
+              [class.done]="item.done"
+            >
+              <span class="material-icons-outlined">{{
+                item.done ? "check_circle" : "radio_button_unchecked"
+              }}</span>
+              <div>
+                <strong>{{ item.label }}</strong>
+                <small>{{ item.caption }}</small>
+              </div>
+              <span class="material-icons-outlined arrow">chevron_right</span>
+            </a>
+          }
+        </div>
+      </div>
+    </section>
+
     <!-- Low Stock Warning Banner -->
     @if (stats()!.low_stock_count > 0) {
       <div class="low-stock-banner">
-        <span class="material-icons-outlined">warning_amber</span>
+        <span class="material-icons-outlined">error_outline</span>
         <span>
-          <strong>{{ stats()!.low_stock_count }} product{{ stats()!.low_stock_count > 1 ? 's are' : ' is' }} running low on stock.</strong>
+          <strong
+            >{{ stats()!.low_stock_count }} product{{
+              stats()!.low_stock_count > 1 ? "s are" : " is"
+            }}
+            running low on stock.</strong
+          >
           Check inventory to avoid disappointing customers.
         </span>
         <a routerLink="/products" class="banner-link">View Products</a>
@@ -160,25 +216,45 @@
         </div>
         <div class="mc-details">
           <p class="mc-label">Store Rating</p>
-          <h3 class="mc-value">{{ stats()!.average_rating | number:'1.1-1' }} <span class="mc-sub">/ 5.0</span></h3>
+          <h3 class="mc-value">
+            {{ stats()!.average_rating | number: "1.1-1" }}
+            <span class="mc-sub">/ 5.0</span>
+          </h3>
         </div>
       </div>
       <div class="metric-card" [class.warn-card]="stats()!.low_stock_count > 0">
-        <div class="mc-icon-wrap" [class]="stats()!.low_stock_count > 0 ? 'bg-warning-soft' : 'bg-info-soft'">
-          <span class="material-icons-outlined" [class]="stats()!.low_stock_count > 0 ? 'text-warning' : 'text-info'">
-            {{ stats()!.low_stock_count > 0 ? 'warning_amber' : 'reviews' }}
+        <div
+          class="mc-icon-wrap"
+          [class]="
+            stats()!.low_stock_count > 0 ? 'bg-warning-soft' : 'bg-info-soft'
+          "
+        >
+          <span
+            class="material-icons-outlined"
+            [class]="
+              stats()!.low_stock_count > 0 ? 'text-warning' : 'text-info'
+            "
+          >
+            {{ stats()!.low_stock_count > 0 ? "error_outline" : "reviews" }}
           </span>
         </div>
         <div class="mc-details">
-          <p class="mc-label">{{ stats()!.low_stock_count > 0 ? 'Low Stock' : 'Total Reviews' }}</p>
-          <h3 class="mc-value">{{ stats()!.low_stock_count > 0 ? stats()!.low_stock_count : stats()!.total_ratings }}</h3>
+          <p class="mc-label">
+            {{ stats()!.low_stock_count > 0 ? "Low Stock" : "Total Reviews" }}
+          </p>
+          <h3 class="mc-value">
+            {{
+              stats()!.low_stock_count > 0
+                ? stats()!.low_stock_count
+                : stats()!.total_ratings
+            }}
+          </h3>
         </div>
       </div>
     </div>
 
     <!-- Dashboard Grid -->
     <div class="dashboard-grid mt-4">
-
       <!-- Recent Orders -->
       <div class="card panel-card">
         <div class="card-header">
@@ -204,15 +280,27 @@
                 <tbody>
                   @for (order of stats()!.recent_orders; track order.id) {
                     <tr class="order-row" (click)="viewOrder(order.id)">
-                      <td class="font-weight-600 font-monospace">#{{ order.order_number }}</td>
+                      <td class="font-weight-600 font-monospace">
+                        #{{ order.order_number }}
+                      </td>
                       <td>{{ order.customer_name }}</td>
-                      <td class="font-weight-600">{{ order.total | appCurrency }}</td>
-                      <td>
-                        <span class="badge badge-{{ order.status }}">{{ order.status | titlecase }}</span>
+                      <td class="font-weight-600">
+                        {{ order.total | appCurrency }}
                       </td>
                       <td>
-                        <a [routerLink]="['/orders', order.id]" class="view-btn" (click)="$event.stopPropagation()">
-                          <span class="material-icons-outlined">chevron_right</span>
+                        <span class="badge badge-{{ order.status }}">{{
+                          order.status | titlecase
+                        }}</span>
+                      </td>
+                      <td>
+                        <a
+                          [routerLink]="['/orders', order.id]"
+                          class="view-btn"
+                          (click)="$event.stopPropagation()"
+                        >
+                          <span class="material-icons-outlined"
+                            >chevron_right</span
+                          >
                         </a>
                       </td>
                     </tr>
@@ -222,7 +310,9 @@
             </div>
           } @else {
             <div class="empty-panel">
-              <span class="material-icons-outlined text-muted text-4xl mb-2">receipt_long</span>
+              <span class="material-icons-outlined text-muted text-4xl mb-2"
+                >receipt_long</span
+              >
               <p class="text-muted m-0">No recent orders found.</p>
             </div>
           }
@@ -240,35 +330,44 @@
         <div class="card-body">
           <div class="qa-grid">
             <a routerLink="/products/new" class="qa-btn">
-              <div class="qa-icon"><span class="material-icons-outlined">add_circle</span></div>
+              <div class="qa-icon">
+                <span class="material-icons-outlined">add_circle</span>
+              </div>
               <span>Add Product</span>
             </a>
             <a routerLink="/orders" class="qa-btn">
-              <div class="qa-icon"><span class="material-icons-outlined">list_alt</span></div>
+              <div class="qa-icon">
+                <span class="material-icons-outlined">list_alt</span>
+              </div>
               <span>View Orders</span>
             </a>
             <a routerLink="/payments" class="qa-btn">
-              <div class="qa-icon"><span class="material-icons-outlined">payments</span></div>
+              <div class="qa-icon">
+                <span class="material-icons-outlined">payments</span>
+              </div>
               <span>Payouts</span>
             </a>
             <a routerLink="/profile" class="qa-btn">
-              <div class="qa-icon"><span class="material-icons-outlined">storefront</span></div>
+              <div class="qa-icon">
+                <span class="material-icons-outlined">storefront</span>
+              </div>
               <span>Store Settings</span>
             </a>
           </div>
         </div>
       </div>
-
     </div>
-
   } @else {
     <div class="card empty-state p-5 text-center mt-4">
-      <span class="material-icons-outlined text-muted" style="font-size: 48px">analytics</span>
+      <span class="material-icons-outlined text-muted" style="font-size: 48px"
+        >analytics</span
+      >
       <h3 class="mt-3">Unable to load dashboard</h3>
-      <p class="text-muted">There was a problem fetching your store analytics.</p>
+      <p class="text-muted">
+        There was a problem fetching your store analytics.
+      </p>
     </div>
   }
-
 </div>
 
 <!-- ══ Store Open Modal ══ -->
@@ -280,19 +379,36 @@
           <span class="material-icons-outlined modal-icon">storefront</span>
           <h2>Open Your Store</h2>
         </div>
-        <button class="modal-close" (click)="showStoreModal.set(false)">&times;</button>
+        <button class="modal-close" (click)="showStoreModal.set(false)">
+          &times;
+        </button>
       </div>
       <div class="modal-body">
-        <p class="modal-desc">Set today's closing time before going online. Customers will see your store as available until then.</p>
+        <p class="modal-desc">
+          Set today's closing time before going online. Customers will see your
+          store as available until then.
+        </p>
         <div class="form-group">
           <label class="form-label required">Closing Time</label>
           <input class="form-input" type="time" [(ngModel)]="closingTime" />
+          <small class="field-hint"
+            >Choose the exact time your store should stop accepting today's
+            orders.</small
+          >
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn-secondary" (click)="showStoreModal.set(false)">Cancel</button>
-        <button class="btn-success" [disabled]="!closingTime || storeToggling()" (click)="confirmOpenStore()">
-          @if (storeToggling()) { <span class="btn-spinner-dark"></span> }
+        <button class="btn-secondary" (click)="showStoreModal.set(false)">
+          Cancel
+        </button>
+        <button
+          class="btn-success"
+          [disabled]="!closingTime || storeToggling()"
+          (click)="confirmOpenStore()"
+        >
+          @if (storeToggling()) {
+            <span class="btn-spinner-dark"></span>
+          }
           Open Store
         </button>
       </div>
@@ -311,19 +427,40 @@
         </div>
       </div>
       <div class="modal-body">
-        <p class="modal-desc">Review your inventory before going online. Customers can only order items with available stock.</p>
+        <p class="modal-desc">
+          Review your inventory before going online. Customers can only order
+          items with available stock.
+        </p>
 
         <div class="stock-mode-row">
-          <label class="stock-mode-option" [class.selected]="stockMode === 'previous'">
-            <input type="radio" name="stockMode" value="previous" [(ngModel)]="stockMode" (change)="onStockModeChange()">
+          <label
+            class="stock-mode-option"
+            [class.selected]="stockMode === 'previous'"
+          >
+            <input
+              type="radio"
+              name="stockMode"
+              value="previous"
+              [(ngModel)]="stockMode"
+              (change)="onStockModeChange()"
+            />
             <span class="material-icons-outlined">history</span>
             <div>
               <strong>Use Previous Stock</strong>
               <span>Update quantities from last session</span>
             </div>
           </label>
-          <label class="stock-mode-option" [class.selected]="stockMode === 'new'">
-            <input type="radio" name="stockMode" value="new" [(ngModel)]="stockMode" (change)="onStockModeChange()">
+          <label
+            class="stock-mode-option"
+            [class.selected]="stockMode === 'new'"
+          >
+            <input
+              type="radio"
+              name="stockMode"
+              value="new"
+              [(ngModel)]="stockMode"
+              (change)="onStockModeChange()"
+            />
             <span class="material-icons-outlined">refresh</span>
             <div>
               <strong>Fresh Stock for Today</strong>
@@ -334,8 +471,9 @@
 
         @if (stockHasWarnings()) {
           <div class="stock-warning-bar">
-            <span class="material-icons-outlined">warning_amber</span>
-            Some products are at or below their low-stock threshold. Update quantities or they won't be listed as available.
+            <span class="material-icons-outlined">error_outline</span>
+            Some products are at or below their low-stock threshold. Update
+            quantities or they won't be listed as available.
           </div>
         }
 
@@ -345,7 +483,7 @@
               <tr>
                 <th>Product</th>
                 <th>Threshold</th>
-                <th style="width:140px;">Stock Qty</th>
+                <th style="width: 140px">Stock Qty</th>
               </tr>
             </thead>
             <tbody>
@@ -360,7 +498,10 @@
                     </div>
                   </td>
                   <td class="threshold-cell">
-                    {{ p.low_stock_threshold > 0 ? p.low_stock_threshold : '—' }} {{ p.unit }}
+                    {{
+                      p.low_stock_threshold > 0 ? p.low_stock_threshold : "—"
+                    }}
+                    {{ p.unit }}
                   </td>
                   <td>
                     <input
@@ -368,8 +509,13 @@
                       [class.stock-input-warn]="isLowStock(p)"
                       type="number"
                       min="0"
+                      placeholder="e.g. 25"
                       [(ngModel)]="p.newStock"
-                      (input)="onStockInput()" />
+                      (input)="onStockInput()"
+                    />
+                    <small class="field-hint"
+                      >Ready units for today's sales.</small
+                    >
                   </td>
                 </tr>
               }
@@ -378,13 +524,21 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn-secondary" (click)="showStockModal.set(false); showStoreModal.set(false)">Cancel</button>
+        <button
+          class="btn-secondary"
+          (click)="showStockModal.set(false); showStoreModal.set(false)"
+        >
+          Cancel
+        </button>
         <button
           class="btn-success"
           [disabled]="stockHasWarnings() || stockSubmitting()"
-          (click)="submitStock()">
-          @if (stockSubmitting()) { <span class="btn-spinner-dark"></span> }
-          {{ stockHasWarnings() ? 'Fix Warnings First' : 'Save & Go Online' }}
+          (click)="submitStock()"
+        >
+          @if (stockSubmitting()) {
+            <span class="btn-spinner-dark"></span>
+          }
+          {{ stockHasWarnings() ? "Fix Warnings First" : "Save & Go Online" }}
         </button>
       </div>
     </div>

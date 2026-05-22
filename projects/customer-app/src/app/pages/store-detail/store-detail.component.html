@@ -1,0 +1,186 @@
+﻿<main class="fd-content">
+  <fd-breadcrumbs
+    [items]="[{ label: 'Stores', link: '/stores' }, { label: store().name }]"
+  />
+
+  <section class="fd-two-col">
+    <div>
+      <section
+        class="hero"
+        [style.background-image]="
+          'linear-gradient(90deg, rgba(7,8,20,.92), rgba(7,8,20,.35)), url(' +
+          store().hero +
+          ')'
+        "
+      >
+        <img [src]="store().image" [alt]="store().name" />
+        <div>
+          <h1>{{ store().name }}</h1>
+          <p>{{ store().category }}</p>
+          <div class="meta">
+            <span class="material-symbols-rounded">star</span>
+            {{ store().rating }} ({{ store().ratings }}) ·
+            <span class="material-symbols-rounded">schedule</span>
+            {{ store().eta }} ·
+            <span class="material-symbols-rounded">near_me</span>
+            {{ store().distance }}
+          </div>
+          <div class="tags">
+            @for (tag of store().tags; track tag) {
+              <span>{{ tag }}</span>
+            }
+          </div>
+          <div class="actions">
+            <button
+              type="button"
+              class="fd-btn outline"
+              (click)="followStore()"
+            >
+              <span class="material-symbols-rounded">favorite</span>
+              Follow</button
+            ><button
+              type="button"
+              class="fd-btn outline"
+              (click)="shareStore()"
+            >
+              <span class="material-symbols-rounded">share</span> Share
+            </button>
+          </div>
+        </div>
+        <aside class="delivery fd-card">
+          <b
+            ><span class="material-symbols-rounded">bolt</span>
+            {{ store().eta }}</b
+          ><span>{{ store().delivery }}</span>
+          @if (store().offer) {
+            <b
+              ><span class="material-symbols-rounded">payments</span>
+              {{ store().offer }}</b
+            ><span>Store order rule</span>
+          }
+          @if (isOpen() !== undefined) {
+            <b
+              ><span class="material-symbols-rounded"
+                >radio_button_checked</span
+              >
+              {{ isOpen() ? "Open now" : "Closed now" }}</b
+            ><span>{{ closingLabel() }}</span>
+          }
+        </aside>
+      </section>
+
+      <section class="store-tools fd-card">
+        <div class="fd-search">
+          <span class="material-symbols-rounded">search</span>
+          <input
+            [ngModel]="storeQuery()"
+            (ngModelChange)="setStoreQuery($event)"
+            placeholder="Search inside {{ store().name }}..."
+          />
+          @if (storeQuery()) {
+            <button
+              type="button"
+              aria-label="Clear store search"
+              (click)="setStoreQuery('')"
+            >
+              <span class="material-symbols-rounded">close</span>
+            </button>
+          }
+        </div>
+        <button type="button" class="fd-btn outline" (click)="ui.openFilter()">
+          <span class="material-symbols-rounded">tune</span> Filters
+        </button>
+        <select
+          class="fd-input"
+          [ngModel]="sortBy()"
+          (ngModelChange)="setSortBy($event)"
+        >
+          <option>Sort: Relevance</option>
+          <option>Sort: Price Low to High</option>
+          <option>Sort: Rating</option>
+        </select>
+      </section>
+
+      <section class="store-offer-banner" aria-label="Store promotion">
+        <span class="material-symbols-rounded">{{
+          storeOfferPromo().icon
+        }}</span>
+        <div>
+          <small>{{ storeOfferPromo().eyebrow }}</small>
+          <b>{{ storeOfferPromo().title }}</b>
+          <p>{{ storeOfferPromo().subtitle }}</p>
+        </div>
+      </section>
+
+      <div class="cat-row" [class.is-filtering]="filteringCategories()">
+        @for (cat of categories(); track cat) {
+          <button
+            type="button"
+            [class.active]="activeCategory() === cat"
+            (click)="setCategory(cat)"
+          >
+            <span
+              class="category-emoji material-symbols-rounded"
+              aria-hidden="true"
+              >{{ icon(cat) }}</span
+            >{{ cat }}
+          </button>
+        }
+      </div>
+
+      @if (filteringCategories()) {
+        <section
+          class="nc-skeleton-center"
+          role="status"
+          aria-live="polite"
+          aria-label="Loading products for this store"
+        >
+          <div class="nc-skeleton-list grid">
+            @for (item of [1, 2, 3, 4]; track item) {
+              <div class="nc-skeleton-card">
+                <span class="nc-skeleton-media"></span>
+                <span class="nc-skeleton-copy">
+                  <span class="nc-skeleton-line medium"></span>
+                  <span class="nc-skeleton-line long"></span>
+                  <span class="nc-skeleton-line short"></span>
+                </span>
+              </div>
+            }
+          </div>
+        </section>
+      }
+
+      @if (!filteringCategories() && !groupedProducts().length) {
+        <section class="empty fd-card">
+          <h2><span class="material-symbols-rounded">search_off</span></h2>
+          <h3>No products found</h3>
+          <p>Try another search term or clear filters.</p>
+          <button
+            type="button"
+            class="fd-btn primary"
+            (click)="clearStoreSearch()"
+          >
+            Clear Search
+          </button>
+        </section>
+      }
+
+      @if (!filteringCategories()) {
+        @for (group of groupedProducts(); track group.name) {
+          <div class="fd-section-title">
+            <h2>{{ group.name }}</h2>
+            <button type="button" (click)="showAllInGroup(group.name)">
+              See all
+            </button>
+          </div>
+          <section class="product-row">
+            @for (product of group.items; track product.id) {
+              <fd-product-card [product]="product" />
+            }
+          </section>
+        }
+      }
+    </div>
+    <fd-order-summary [showButton]="true" />
+  </section>
+</main>

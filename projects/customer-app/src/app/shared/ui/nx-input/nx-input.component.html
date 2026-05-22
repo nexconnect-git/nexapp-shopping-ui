@@ -1,0 +1,25 @@
+<label class="nx-field">
+  @if (label) {
+    <span>{{ label }}</span>
+  }
+  <div class="box">
+    @if (icon) {
+      <i class="material-symbols-rounded">{{ icon }}</i>
+    }
+    <input
+      [type]="type"
+      [placeholder]="placeholder"
+      [value]="value"
+      (input)="valueChange.emit($any($event.target).value)"
+    />
+    @if (value && clearable) {
+      <button
+        type="button"
+        aria-label="Clear field"
+        (click)="valueChange.emit('')"
+      >
+        <span class="material-symbols-rounded">close</span>
+      </button>
+    }
+  </div>
+</label>

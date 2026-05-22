@@ -1,16 +1,28 @@
-import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { Subscription, timer } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService, AuthService, openAuthenticatedWebSocket } from '@shared/public-api';
+import {
+  ApiService,
+  AppCurrencyPipe,
+  AuthService,
+  openAuthenticatedWebSocket,
+} from '@shared/public-api';
 import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
 
 @Component({
   selector: 'app-issues',
   standalone: true,
-  imports: [CommonModule, FormsModule, DynamicTableComponent, TableCellDirective],
+  imports: [
+    CommonModule,
+    FormsModule,
+    DynamicTableComponent,
+    TableCellDirective,
+    AppCurrencyPipe,
+  ],
   templateUrl: './issues.component.html',
-  styleUrl: './issues.component.scss' })
+  styleUrl: './issues.component.scss',
+})
 export class IssuesComponent implements OnInit, OnDestroy {
   private api = inject(ApiService);
   private auth = inject(AuthService);
@@ -25,7 +37,7 @@ export class IssuesComponent implements OnInit, OnDestroy {
     { key: 'order', label: 'Order', flex: '1.5fr' },
     { key: 'type', label: 'Type', flex: '1fr' },
     { key: 'status', label: 'Status', flex: '1fr' },
-    { key: 'date', label: 'Date', flex: '1fr' }
+    { key: 'date', label: 'Date', flex: '1fr' },
   ];
 
   filterType = signal('');
@@ -51,18 +63,18 @@ export class IssuesComponent implements OnInit, OnDestroy {
 
   readonly issueTypes = [
     { value: '', label: 'All Types' },
-    { value: 'return',   label: 'Return' },
-    { value: 'refund',   label: 'Refund' },
-    { value: 'damage',   label: 'Damage' },
+    { value: 'return', label: 'Return' },
+    { value: 'refund', label: 'Refund' },
+    { value: 'damage', label: 'Damage' },
     { value: 'mismatch', label: 'Mismatch' },
   ];
 
   readonly statuses = [
     { value: '', label: 'All Statuses' },
-    { value: 'open',             label: 'Open' },
-    { value: 'in_review',        label: 'In Review' },
-    { value: 'resolved',         label: 'Resolved' },
-    { value: 'rejected',         label: 'Rejected' },
+    { value: 'open', label: 'Open' },
+    { value: 'in_review', label: 'In Review' },
+    { value: 'resolved', label: 'Resolved' },
+    { value: 'rejected', label: 'Rejected' },
     { value: 'refund_initiated', label: 'Refund Initiated' },
   ];
 
@@ -72,25 +84,37 @@ export class IssuesComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnDestroy() { this.reloadSub?.unsubscribe(); this.closeWebSocket(); }
+  ngOnDestroy() {
+    this.reloadSub?.unsubscribe();
+    this.closeWebSocket();
+  }
 
-  manualReload() { this.page.set(1); this.load(); }
-  toggleAutoReload() { this.autoReload.update(v => !v); }
+  manualReload() {
+    this.page.set(1);
+    this.load();
+  }
+  toggleAutoReload() {
+    this.autoReload.update((v) => !v);
+  }
 
   load() {
     this.loading.set(true);
-    this.api.getAdminIssues({
-      issue_type: this.filterType() || undefined,
-      status: this.filterStatus() || undefined,
-      search: this.search || undefined,
-      page: this.page() }).subscribe({
-      next: (res) => {
-        this.issues.set(res.results || res);
-        this.totalCount.set(res.count ?? (res.results ?? res).length);
-        this.loading.set(false);
-        this.lastRefreshed.set(new Date());
-      },
-      error: () => this.loading.set(false) });
+    this.api
+      .getAdminIssues({
+        issue_type: this.filterType() || undefined,
+        status: this.filterStatus() || undefined,
+        search: this.search || undefined,
+        page: this.page(),
+      })
+      .subscribe({
+        next: (res) => {
+          this.issues.set(res.results || res);
+          this.totalCount.set(res.count ?? (res.results ?? res).length);
+          this.loading.set(false);
+          this.lastRefreshed.set(new Date());
+        },
+        error: () => this.loading.set(false),
+      });
   }
 
   onSearch() {
@@ -104,7 +128,10 @@ export class IssuesComponent implements OnInit, OnDestroy {
     this.load();
   }
 
-  onFilterChange() { this.page.set(1); this.load(); }
+  onFilterChange() {
+    this.page.set(1);
+    this.load();
+  }
 
   closeWebSocket() {
     if (this.ws) {
@@ -115,13 +142,16 @@ export class IssuesComponent implements OnInit, OnDestroy {
 
   connectWebSocket(issueId: string) {
     this.closeWebSocket();
-    this.ws = openAuthenticatedWebSocket(`/ws/issues/${issueId}/`, this.auth.getToken());
+    this.ws = openAuthenticatedWebSocket(
+      `/ws/issues/${issueId}/`,
+      this.auth.getToken(),
+    );
 
     this.ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
       if (data.type === 'chat_message') {
         const msg = data.message;
-        this.selectedIssue.update(iss => {
+        this.selectedIssue.update((iss) => {
           if (!iss || !iss.messages) return iss;
           if (iss.messages.find((m: any) => m.id === msg.id)) {
             return iss; // Already present
@@ -147,11 +177,12 @@ export class IssuesComponent implements OnInit, OnDestroy {
         this.loadingDetail.set(false);
         this.connectWebSocket(iss.id);
       },
-      error: () => this.loadingDetail.set(false) });
+      error: () => this.loadingDetail.set(false),
+    });
   }
 
-  closePanel() { 
-    this.selectedIssue.set(null); 
+  closePanel() {
+    this.selectedIssue.set(null);
     this.closeWebSocket();
   }
 
@@ -161,22 +192,24 @@ export class IssuesComponent implements OnInit, OnDestroy {
     this.sending.set(true);
     this.api.sendAdminIssueMessage(this.selectedIssue().id, text).subscribe({
       next: (msg) => {
-        this.selectedIssue.update(iss => {
-            if (!iss || !iss.messages) return iss;
-            if (iss.messages.find((m: any) => m.id === msg.id)) return iss;
-            return { ...iss, messages: [...iss.messages, msg] };
+        this.selectedIssue.update((iss) => {
+          if (!iss || !iss.messages) return iss;
+          if (iss.messages.find((m: any) => m.id === msg.id)) return iss;
+          return { ...iss, messages: [...iss.messages, msg] };
         });
         this.newMessage = '';
         this.sending.set(false);
       },
-      error: () => this.sending.set(false) });
+      error: () => this.sending.set(false),
+    });
   }
 
   saveResolution() {
     this.saving.set(true);
     const payload: any = {
       status: this.newStatus,
-      admin_notes: this.adminNotes };
+      admin_notes: this.adminNotes,
+    };
     if (this.refundAmount) payload.refund_amount = this.refundAmount;
     if (this.refundMethod) payload.refund_method = this.refundMethod;
 
@@ -186,25 +219,38 @@ export class IssuesComponent implements OnInit, OnDestroy {
         this.saving.set(false);
         this.load();
       },
-      error: () => this.saving.set(false) });
+      error: () => this.saving.set(false),
+    });
   }
 
   typeLabel(type: string): string {
-    const map: Record<string, string> = { return: 'Return', refund: 'Refund', damage: 'Damage', mismatch: 'Mismatch' };
+    const map: Record<string, string> = {
+      return: 'Return',
+      refund: 'Refund',
+      damage: 'Damage',
+      mismatch: 'Mismatch',
+    };
     return map[type] ?? type;
   }
 
   typeIcon(type: string): string {
-    const map: Record<string, string> = { return: 'undo', refund: 'payments', damage: 'broken_image', mismatch: 'compare_arrows' };
+    const map: Record<string, string> = {
+      return: 'undo',
+      refund: 'payments',
+      damage: 'broken_image',
+      mismatch: 'compare_arrows',
+    };
     return map[type] ?? 'help_outline';
   }
 
   statusClass(s: string): string {
     const map: Record<string, string> = {
-      open: 'badge-open', in_review: 'badge-review', resolved: 'badge-resolved',
-      rejected: 'badge-rejected', refund_initiated: 'badge-refund' };
+      open: 'badge-open',
+      in_review: 'badge-review',
+      resolved: 'badge-resolved',
+      rejected: 'badge-rejected',
+      refund_initiated: 'badge-refund',
+    };
     return map[s] ?? '';
   }
 }
-
-

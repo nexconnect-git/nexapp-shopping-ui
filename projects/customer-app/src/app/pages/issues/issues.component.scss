@@ -1,0 +1,29 @@
+.tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.issue-list {
+  display: grid;
+  gap: 14px;
+}
+.issue-list article {
+  padding: 22px;
+  display: grid;
+  grid-template-columns: 1fr auto 80px;
+  gap: 18px;
+  align-items: center;
+}
+.issue-list p,
+.issue-list small {
+  color: var(--muted);
+}
+.issue-list a {
+  color: var(--primary);
+  font-weight: 900;
+}
+@media (max-width: 700px) {
+  .issue-list article {
+    grid-template-columns: 1fr;
+  }
+}

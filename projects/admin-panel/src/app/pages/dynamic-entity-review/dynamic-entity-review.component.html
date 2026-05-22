@@ -1,0 +1,14 @@
+@if (loading()) {
+  <div class="nc-skeleton-center">
+    <div class="spinner"></div>
+    <p>Loading review...</p>
+  </div>
+} @else if (reviewConfig()) {
+  <nc-dynamic-review-page
+    [config]="reviewConfig()!"
+    (back)="back()"
+    (editSection)="editSection($event)"
+    (saveDraft)="saveDraft()"
+    (submitForApproval)="submitForApproval()"
+  />
+}

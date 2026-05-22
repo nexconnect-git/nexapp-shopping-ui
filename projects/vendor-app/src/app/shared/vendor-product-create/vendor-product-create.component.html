@@ -1,0 +1,754 @@
+<main class="create-product-page">
+  <section class="hero-card">
+    <div>
+      <small>CATALOG INHERITANCE WORKFLOW</small>
+      <h1>Build vendor-ready variants from approved catalog items</h1>
+      <p>
+        Select approved catalog items from the master catalog and customize
+        vendor-specific details like pricing, inventory, and packaging.
+      </p>
+    </div>
+
+    <aside class="hero-stats">
+      <article>
+        <span>▧</span>
+        <b>{{ service.selectedCatalogItems().length }}</b>
+        <p>Catalog items<br />selected</p>
+      </article>
+      <article>
+        <span>✎</span>
+        <b>{{ service.variants().length }}</b>
+        <p>Variant drafts<br />created</p>
+      </article>
+    </aside>
+  </section>
+
+  <section class="wizard-steps">
+    <button
+      type="button"
+      [class.active]="service.activeStep() === 'catalog'"
+      [class.done]="stepNumber() > 1"
+      (click)="service.setStep('catalog')"
+    >
+      <span>{{ stepNumber() > 1 ? "✓" : "1" }}</span>
+      <b>Catalog Select</b>
+      <small>Choose approved items</small>
+    </button>
+
+    <button
+      *ngFor="let item of service.visibleStepItems(); let i = index"
+      type="button"
+      [class.active]="
+        (service.activeStep() === 'variant-1' ||
+          service.activeStep() === 'variant-2') &&
+        service.activeVariantIndex() === i
+      "
+      [class.done]="stepNumber() > i + 2"
+      (click)="
+        item.created
+          ? service.setStep(i === 0 ? 'variant-1' : 'variant-2', i)
+          : null
+      "
+    >
+      <span>{{ stepNumber() > i + 2 ? "✓" : i + 2 }}</span>
+      <b>{{ i + 1 }}. {{ item.label }}</b>
+      <small>{{ service.variantStepCaption(i) }}</small>
+    </button>
+
+    <button
+      type="button"
+      [class.active]="service.activeStep() === 'review'"
+      (click)="service.setStep('review')"
+    >
+      <span>{{ service.visibleStepItems().length + 2 }}</span>
+      <b>Review & Submit</b>
+      <small>Validate & submit</small>
+    </button>
+  </section>
+
+  <p class="form-error" *ngIf="service.error()">{{ service.error() }}</p>
+
+  <section class="workspace" *ngIf="service.activeStep() === 'catalog'">
+    <section class="catalog-card">
+      <header>
+        <div>
+          <h2>Select Approved Catalog Items</h2>
+          <p>
+            Search and select approved items to create vendor-specific variants.
+          </p>
+        </div>
+      </header>
+
+      <div class="toolbar">
+        <label class="search">
+          <span>⌕</span>
+          <input
+            type="search"
+            placeholder="Search by product, brand, category, or barcode..."
+            [ngModel]="service.searchQuery()"
+            (ngModelChange)="service.searchQuery.set($event)"
+          />
+        </label>
+
+        <select
+          [ngModel]="service.categoryFilter()"
+          (ngModelChange)="service.categoryFilter.set($event)"
+        >
+          <option
+            *ngFor="let category of service.categoryOptions()"
+            [value]="category"
+          >
+            {{ category === "all" ? "All Categories" : category }}
+          </option>
+        </select>
+
+        <button
+          type="button"
+          class="outline-btn"
+          [disabled]="service.loadingCatalog()"
+          (click)="service.applyFilters()"
+        >
+          {{ service.loadingCatalog() ? "Loading..." : "☷ Apply Filters" }}
+        </button>
+      </div>
+      <p class="toolbar-note">
+        Search by product, brand, category, or barcode, then apply filters to
+        narrow the approved catalog list.
+      </p>
+
+      <div class="selected-chips">
+        <button
+          *ngFor="let item of service.selectedCatalogItems()"
+          type="button"
+          (click)="service.removeSelectedCatalog(item.id)"
+        >
+          {{ item.icon }} {{ item.name }} ×
+        </button>
+      </div>
+
+      <div class="catalog-table">
+        <div class="table-head">
+          <b>Approved Catalog Items</b>
+          <b>Brand</b>
+          <b>Category</b>
+          <b>Unit</b>
+          <b>Status</b>
+        </div>
+
+        <button
+          *ngFor="let item of service.filteredCatalogItems()"
+          type="button"
+          class="table-row"
+          [class.selected]="service.selectedCatalogIds().includes(item.id)"
+          (click)="service.toggleCatalog(item.id)"
+        >
+          <span class="checkbox">{{
+            service.selectedCatalogIds().includes(item.id) ? "✓" : ""
+          }}</span>
+          <span class="item">
+            <i>{{ item.icon }}</i>
+            <span
+              ><b>{{ item.name }}</b
+              ><small>{{ item.category }} • {{ item.brand }}</small></span
+            >
+          </span>
+          <span>{{ item.brand }}</span>
+          <span>{{ item.category }}</span>
+          <span>{{ item.unit }}</span>
+          <span class="approved">✓ {{ item.status }}</span>
+        </button>
+      </div>
+    </section>
+
+    <aside class="right-rail">
+      <section class="rail-card">
+        <h3>Selection Summary</h3>
+        <p>
+          <span>🍃</span
+          ><b>{{ service.selectedCatalogItems().length }}</b> Catalog items
+          selected
+        </p>
+        <p>
+          <span>✎</span><b>{{ service.variants().length }}</b> Variant drafts in
+          progress
+        </p>
+        <button
+          type="button"
+          (click)="
+            service.showToast(
+              'Selected catalog items are highlighted in the list.',
+              'info'
+            )
+          "
+        >
+          View selected items ›
+        </button>
+      </section>
+
+      <section class="rail-card">
+        <h3>Readiness Checklist</h3>
+        <ul>
+          <li class="done">Catalog items selected</li>
+          <li>Variant details added</li>
+          <li>Pricing & inventory set</li>
+          <li>Ready for review</li>
+        </ul>
+      </section>
+
+      <section class="rail-card tips">
+        <h3>Need help?</h3>
+        <p>Learn more about catalog inheritance and variant creation.</p>
+        <button type="button" routerLink="/support">View guide ↗</button>
+      </section>
+    </aside>
+  </section>
+
+  <section
+    class="workspace variant-workspace"
+    *ngIf="
+      service.activeStep() === 'variant-1' ||
+      service.activeStep() === 'variant-2'
+    "
+  >
+    <section class="variant-card">
+      <header>
+        <div class="variant-title">
+          <span>🍃</span>
+          <div>
+            <h2>
+              {{
+                service.activeVariantIndex() > 0
+                  ? "Edit Variant: " +
+                    (service.activeVariantIndex() + 1) +
+                    ". " +
+                    service.activeVariant().productName
+                  : "Variant Details: " + service.activeVariant().productName
+              }}
+            </h2>
+            <p>Customize vendor-specific details for this variant.</p>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button
+            type="button"
+            class="outline-btn"
+            (click)="service.duplicateActiveVariant()"
+          >
+            ⧉ Duplicate This Item
+          </button>
+          <button
+            type="button"
+            class="danger-btn"
+            (click)="service.removeActiveVariant()"
+          >
+            🗑 Remove This Variant
+          </button>
+        </div>
+      </header>
+
+      <div class="variant-grid">
+        <label>
+          <span>Brand <i>*</i></span>
+          <input
+            type="text"
+            placeholder="e.g. Nandini, Amul, or your store brand"
+            [class.has-error]="service.fieldError('brand')"
+            [ngModel]="service.activeVariant().brand"
+            (ngModelChange)="updateVariant('brand', $event)"
+          />
+          <small>The customer-facing brand for this variant.</small>
+          <small class="field-error" *ngIf="service.fieldError('brand')">{{
+            service.fieldError("brand")
+          }}</small>
+        </label>
+
+        <label>
+          <span>Unit <i>*</i></span>
+          <select
+            [class.has-error]="service.fieldError('unit')"
+            [ngModel]="service.activeVariant().unit"
+            (ngModelChange)="updateVariant('unit', $event)"
+          >
+            <option>Gram (g)</option>
+            <option>Kilogram (kg)</option>
+            <option>Pack</option>
+            <option>Piece</option>
+          </select>
+          <small>Choose the measurement customers will compare.</small>
+          <small class="field-error" *ngIf="service.fieldError('unit')">{{
+            service.fieldError("unit")
+          }}</small>
+        </label>
+
+        <label>
+          <span>Quantity / Pack Size <i>*</i></span>
+          <input
+            type="text"
+            placeholder="e.g. 500 g, 1 litre, 6 pcs"
+            [class.has-error]="service.fieldError('quantityPackSize')"
+            [ngModel]="service.activeVariant().quantityPackSize"
+            (ngModelChange)="updateVariant('quantityPackSize', $event)"
+          />
+          <small>Show the exact pack size printed on the item.</small>
+          <small
+            class="field-error"
+            *ngIf="service.fieldError('quantityPackSize')"
+            >{{ service.fieldError("quantityPackSize") }}</small
+          >
+        </label>
+
+        <label>
+          <span>Price <i>*</i></span>
+          <div class="money" [class.has-error]="service.fieldError('price')">
+            <b>{{ 0 | appCurrency: true }}</b
+            ><input
+              type="number"
+              placeholder="e.g. 120.00"
+              [ngModel]="service.activeVariant().price"
+              (ngModelChange)="updateVariant('price', +$event)"
+            />
+          </div>
+          <small
+            >Final selling price before discounts or delivery charges.</small
+          >
+          <small class="field-error" *ngIf="service.fieldError('price')">{{
+            service.fieldError("price")
+          }}</small>
+        </label>
+
+        <label>
+          <span>Stock <i>*</i></span>
+          <input
+            type="number"
+            placeholder="e.g. 25"
+            [class.has-error]="service.fieldError('stock')"
+            [ngModel]="service.activeVariant().stock"
+            (ngModelChange)="updateVariant('stock', +$event)"
+          />
+          <small>Units currently available for customers to order.</small>
+          <small class="field-error" *ngIf="service.fieldError('stock')">{{
+            service.fieldError("stock")
+          }}</small>
+        </label>
+
+        <label>
+          <span>Compare Price</span>
+          <div
+            class="money"
+            [class.has-error]="service.fieldError('comparePrice')"
+          >
+            <b>{{ 0 | appCurrency: true }}</b
+            ><input
+              type="number"
+              placeholder="e.g. 150.00"
+              [ngModel]="service.activeVariant().comparePrice"
+              (ngModelChange)="
+                updateVariant('comparePrice', $event ? +$event : null)
+              "
+            />
+          </div>
+          <small>Optional higher price used to show a discount.</small>
+          <small
+            class="field-error"
+            *ngIf="service.fieldError('comparePrice')"
+            >{{ service.fieldError("comparePrice") }}</small
+          >
+        </label>
+
+        <label>
+          <span>SKU</span>
+          <input
+            type="text"
+            placeholder="e.g. PANEER-500G"
+            [class.has-error]="service.fieldError('sku')"
+            [ngModel]="service.activeVariant().sku"
+            (ngModelChange)="updateVariant('sku', $event)"
+          />
+          <small>Your internal stock keeping code.</small>
+          <small class="field-error" *ngIf="service.fieldError('sku')">{{
+            service.fieldError("sku")
+          }}</small>
+        </label>
+
+        <label>
+          <span>Barcode</span>
+          <input
+            type="text"
+            placeholder="Scan or enter the package barcode"
+            [class.has-error]="service.fieldError('barcode')"
+            [ngModel]="service.activeVariant().barcode"
+            (ngModelChange)="updateVariant('barcode', $event)"
+          />
+          <small
+            >Optional barcode for faster receiving and inventory checks.</small
+          >
+          <small class="field-error" *ngIf="service.fieldError('barcode')">{{
+            service.fieldError("barcode")
+          }}</small>
+        </label>
+
+        <label class="wide">
+          <span>Description <i>*</i></span>
+          <textarea
+            rows="4"
+            placeholder="Describe quality, use, freshness, origin, or key benefits."
+            [class.has-error]="service.fieldError('description')"
+            [ngModel]="service.activeVariant().description"
+            (ngModelChange)="updateVariant('description', $event)"
+          ></textarea>
+          <small>Shown to customers on the product page.</small>
+          <small
+            class="field-error"
+            *ngIf="service.fieldError('description')"
+            >{{ service.fieldError("description") }}</small
+          >
+        </label>
+
+        <label class="wide">
+          <span>Packaging Notes</span>
+          <textarea
+            rows="4"
+            placeholder="e.g. Keep chilled, pack upright, seal before dispatch"
+            [class.has-error]="service.fieldError('packagingNotes')"
+            [ngModel]="service.activeVariant().packagingNotes"
+            (ngModelChange)="updateVariant('packagingNotes', $event)"
+          ></textarea>
+          <small
+            >Instructions for packing, handling, or delivery preparation.</small
+          >
+          <small
+            class="field-error"
+            *ngIf="service.fieldError('packagingNotes')"
+            >{{ service.fieldError("packagingNotes") }}</small
+          >
+        </label>
+
+        <label>
+          <span>Shelf Life</span>
+          <input
+            type="text"
+            placeholder="e.g. 3 days refrigerated"
+            [class.has-error]="service.fieldError('shelfLife')"
+            [ngModel]="service.activeVariant().shelfLife"
+            (ngModelChange)="updateVariant('shelfLife', $event)"
+          />
+          <small>How long the product remains usable after packing.</small>
+          <small class="field-error" *ngIf="service.fieldError('shelfLife')">{{
+            service.fieldError("shelfLife")
+          }}</small>
+        </label>
+
+        <div
+          class="availability wide"
+          [class.has-error]="service.fieldError('availability')"
+        >
+          <b>Availability</b>
+          <button
+            type="button"
+            [class.active]="service.activeVariant().availability === 'In Stock'"
+            (click)="updateVariant('availability', 'In Stock')"
+          >
+            ● In Stock
+          </button>
+          <button
+            type="button"
+            [class.active]="service.activeVariant().availability === 'Preorder'"
+            (click)="updateVariant('availability', 'Preorder')"
+          >
+            ○ Preorder
+          </button>
+          <button
+            type="button"
+            [class.active]="
+              service.activeVariant().availability === 'Out of Stock'
+            "
+            (click)="updateVariant('availability', 'Out of Stock')"
+          >
+            ○ Out of Stock
+          </button>
+          <small
+            class="field-error"
+            *ngIf="service.fieldError('availability')"
+            >{{ service.fieldError("availability") }}</small
+          >
+        </div>
+
+        <div class="tags wide">
+          <b>Tags / Attributes</b>
+          <button
+            *ngFor="let tag of service.variantTagOptions()"
+            type="button"
+            [class.active]="service.activeVariant().tags.includes(tag)"
+            (click)="toggleTag(tag)"
+          >
+            {{ tag }} ×
+          </button>
+        </div>
+
+        <div class="control-row wide">
+          <button
+            type="button"
+            [class.enabled]="service.activeVariant().allowBackorder"
+            (click)="toggleVariant('allowBackorder')"
+          >
+            <span></span> Allow Backorder
+          </button>
+          <button
+            type="button"
+            [class.enabled]="service.activeVariant().visibleOnStore"
+            (click)="toggleVariant('visibleOnStore')"
+          >
+            <span></span> Visible on Store
+          </button>
+          <button
+            type="button"
+            [class.enabled]="service.activeVariant().requiresShipping"
+            (click)="toggleVariant('requiresShipping')"
+          >
+            <span></span> Requires Shipping
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <aside class="right-rail">
+      <section class="rail-card">
+        <h3>Product Image</h3>
+        <div class="upload-zone">
+          <span>▧</span>
+          <b>Upload product image</b>
+          <p>PNG, JPG up to 5MB</p>
+          <button
+            type="button"
+            (click)="
+              service.showToast(
+                'Image upload is handled from product edit after the draft is created.',
+                'info'
+              )
+            "
+          >
+            Upload Image
+          </button>
+        </div>
+      </section>
+
+      <section class="rail-card">
+        <h3>Variant Summary</h3>
+        <p>
+          <b>{{ service.activeVariant().productName }}</b>
+          <span class="approved">Approved Item</span>
+        </p>
+        <p>Catalog ID: {{ service.activeVariant().catalogId }}</p>
+      </section>
+
+      <section class="rail-card">
+        <h3>Progress</h3>
+        <ul>
+          <li
+            *ngFor="let variant of service.variants(); let i = index"
+            [class.done]="i < service.activeVariantIndex()"
+            [class.active]="i === service.activeVariantIndex()"
+          >
+            {{ i + 1 }}. {{ variant.productName }} •
+            {{
+              i === service.activeVariantIndex()
+                ? "Editing"
+                : i < service.activeVariantIndex()
+                  ? "Saved"
+                  : "Pending"
+            }}
+          </li>
+          <li>Review & Submit • Pending</li>
+        </ul>
+      </section>
+
+      <section class="rail-card tips">
+        <h3>Variant Tips</h3>
+        <p>
+          Provide accurate pricing and stock to improve visibility and customer
+          trust.
+        </p>
+        <button type="button" routerLink="/support">Learn more ↗</button>
+      </section>
+    </aside>
+  </section>
+
+  <section class="review-layout" *ngIf="service.activeStep() === 'review'">
+    <div class="review-grid">
+      <section class="review-card review-list-card">
+        <header>
+          <h3>Selected Catalog Items</h3>
+          <span>{{ service.selectedCatalogItems().length }} items</span>
+        </header>
+        <article
+          class="review-list-row"
+          *ngFor="let item of service.selectedCatalogItems()"
+        >
+          <span class="review-icon">{{ item.icon }}</span>
+          <div class="review-copy">
+            <b>{{ item.name }}</b
+            ><small>{{ item.category }} • {{ item.brand }}</small>
+          </div>
+          <em class="status-pill">✓ Approved</em>
+        </article>
+      </section>
+
+      <section class="review-card review-list-card">
+        <header>
+          <h3>Prepared Variants</h3>
+          <span>{{ service.variants().length }} variants</span>
+        </header>
+        <article
+          class="review-list-row variant-row"
+          *ngFor="let variant of service.variants()"
+        >
+          <span class="review-icon">🍃</span>
+          <div class="review-copy">
+            <b>{{ variant.productName }}</b
+            ><small>SKU: {{ variant.sku || "Not set" }}</small>
+          </div>
+          <div class="review-metrics">
+            <strong>{{ variant.price | appCurrency }}</strong>
+            <em>{{ variant.stock }} {{ variant.availability }}</em>
+          </div>
+        </article>
+      </section>
+
+      <section class="review-card summary">
+        <h3>Pricing & Inventory Summary</h3>
+        <p>
+          <span>Total Variants</span><b>{{ service.variants().length }}</b>
+        </p>
+        <p>
+          <span>Price Range</span><b>{{ service.priceRange() }}</b>
+        </p>
+        <p>
+          <span>Total Inventory</span
+          ><b>{{ service.totalInventory() }} units</b>
+        </p>
+        <p>
+          <span>Avg. Price</span><b>{{ service.averagePrice() }}</b>
+        </p>
+      </section>
+
+      <section class="review-card preview">
+        <h3>Product Preview</h3>
+        <div class="preview-grid">
+          <span *ngFor="let item of service.selectedCatalogItems()">{{
+            item.icon
+          }}</span>
+        </div>
+        <button
+          type="button"
+          class="outline-btn"
+          (click)="
+            service.showToast(
+              'Preview is available after products are approved.',
+              'info'
+            )
+          "
+        >
+          👁 View Details
+        </button>
+      </section>
+
+      <section class="review-card notes">
+        <h3>Approval Notes (Optional)</h3>
+        <textarea
+          rows="5"
+          placeholder="Add any context the admin should know before reviewing these variants."
+          [ngModel]="service.approvalNote()"
+          (ngModelChange)="service.approvalNote.set($event)"
+        ></textarea>
+        <small
+          >Optional review note for admin. {{ service.approvalNote().length }} /
+          500 characters</small
+        >
+      </section>
+    </div>
+
+    <aside class="right-rail">
+      <section class="rail-card">
+        <h3>Validation Checklist</h3>
+        <ul>
+          <li *ngFor="let item of service.readiness()" [class.done]="item.done">
+            {{ item.label }} <small>{{ item.subtext }}</small>
+          </li>
+        </ul>
+
+        <div class="warning">
+          <b>⚠ Review before submitting</b>
+          <p>
+            Once submitted, you will not be able to edit until the admin reviews
+            your request.
+          </p>
+        </div>
+      </section>
+
+      <section class="rail-card tips">
+        <h3>What happens next?</h3>
+        <p>
+          Admins review your product request. You will be notified about
+          approval or changes.
+        </p>
+      </section>
+    </aside>
+  </section>
+
+  <footer class="sticky-actions">
+    <button
+      type="button"
+      class="outline-btn"
+      (click)="
+        service.activeStep() === 'catalog' ? cancelCreate.emit() : service.back()
+      "
+    >
+      {{ service.activeStep() === "catalog" ? "Cancel" : "Back" }}
+    </button>
+
+    <div>
+      <button
+        type="button"
+        class="outline-btn"
+        [disabled]="service.activeStep() === 'catalog' || service.saving()"
+        (click)="service.saveDraft()"
+      >
+        ▣ Save Draft
+      </button>
+
+      <button
+        *ngIf="service.activeStep() !== 'review'"
+        type="button"
+        class="primary-btn"
+        [disabled]="
+          service.saving() ||
+          (service.activeStep() === 'catalog' &&
+            service.selectedCatalogIds().length === 0)
+        "
+        (click)="service.next()"
+      >
+        {{
+          service.activeStep() === "catalog"
+            ? service.catalogPrimaryActionLabel()
+            : service.activeVariantIndex() === service.variants().length - 1
+              ? "Review & Submit"
+              : "Next Variant"
+        }}
+        →
+      </button>
+
+      <button
+        *ngIf="service.activeStep() === 'review'"
+        type="button"
+        class="primary-btn"
+        [disabled]="service.saving()"
+        (click)="submit()"
+      >
+        {{ service.saving() ? "Submitting..." : "Submit For Approval" }} ✈
+      </button>
+    </div>
+  </footer>
+
+  <div class="toast" *ngIf="service.toast()">{{ service.toast() }}</div>
+</main>

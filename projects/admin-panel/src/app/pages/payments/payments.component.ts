@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -9,7 +9,7 @@ import { ApiService, AppCurrencyPipe } from '@shared/public-api';
   standalone: true,
   imports: [CommonModule, FormsModule, DatePipe, RouterLink, AppCurrencyPipe],
   templateUrl: './payments.component.html',
-  styleUrl: './payments.component.scss'
+  styleUrl: './payments.component.scss',
 })
 export class PaymentsComponent implements OnInit {
   private api = inject(ApiService);
@@ -25,7 +25,9 @@ export class PaymentsComponent implements OnInit {
   search = '';
   private searchTimer: any;
 
-  ngOnInit() { this.load(); }
+  ngOnInit() {
+    this.load();
+  }
 
   load() {
     this.loading.set(true);
@@ -40,18 +42,27 @@ export class PaymentsComponent implements OnInit {
         this.totalPages.set(Math.ceil((r.count || 0) / 20) || 1);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false)
+      error: () => this.loading.set(false),
     });
   }
 
   onSearch() {
     clearTimeout(this.searchTimer);
-    this.searchTimer = setTimeout(() => { this.page.set(1); this.load(); }, 400);
+    this.searchTimer = setTimeout(() => {
+      this.page.set(1);
+      this.load();
+    }, 400);
   }
 
-  applyFilters() { this.page.set(1); this.load(); }
+  applyFilters() {
+    this.page.set(1);
+    this.load();
+  }
 
-  setPage(p: number) { this.page.set(p); this.load(); }
+  setPage(p: number) {
+    this.page.set(p);
+    this.load();
+  }
 
   paymentMethodLabel(m: string): string {
     return m === 'razorpay' ? 'Razorpay' : 'Cash on Delivery';
@@ -72,16 +83,23 @@ export class PaymentsComponent implements OnInit {
   }
 
   get totalRevenue(): number {
-    return this.payments().filter(p => p.is_payment_verified || p.payment_method === 'cod')
+    return this.payments()
+      .filter((p) => p.is_payment_verified || p.payment_method === 'cod')
       .reduce((sum, p) => sum + Number(p.total || 0), 0);
   }
 
   get razorpayRevenue(): number {
-    return this.payments().filter(p => p.is_payment_verified && p.payment_method === 'razorpay')
+    return this.payments()
+      .filter((p) => p.is_payment_verified && p.payment_method === 'razorpay')
       .reduce((sum, p) => sum + Number(p.total || 0), 0);
   }
 
   get pendingCount(): number {
-    return this.payments().filter(p => p.payment_method === 'razorpay' && !p.is_payment_verified && p.status !== 'cancelled').length;
+    return this.payments().filter(
+      (p) =>
+        p.payment_method === 'razorpay' &&
+        !p.is_payment_verified &&
+        p.status !== 'cancelled',
+    ).length;
   }
 }

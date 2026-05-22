@@ -1,0 +1,280 @@
+<div class="saas-page catalog-page">
+  <section class="catalog-hero">
+    <div class="hero-copy">
+      <span class="eyebrow">Admin catalog</span>
+      <h1 class="page-title">Master Catalog</h1>
+      <p class="page-subtitle">
+        Curate the approved product library vendors can use for faster
+        listings.
+      </p>
+    </div>
+    <div class="hero-actions">
+      <button
+        class="btn-secondary"
+        (click)="load()"
+        [disabled]="loading()"
+        title="Refresh catalog"
+      >
+        <span class="material-icons-outlined" [class.spin]="loading()"
+          >refresh</span
+        >
+      </button>
+      <button class="btn-primary" (click)="openCreate()">
+        <span class="material-icons-outlined">add</span>
+        New Item
+      </button>
+    </div>
+  </section>
+
+  <section class="catalog-stats">
+    <div class="stat-tile">
+      <span>Total items</span>
+      <strong>{{ total() }}</strong>
+    </div>
+    <div class="stat-tile">
+      <span>Active</span>
+      <strong>{{ activeCount() }}</strong>
+    </div>
+    <div class="stat-tile">
+      <span>Inactive</span>
+      <strong>{{ inactiveCount() }}</strong>
+    </div>
+    <div class="stat-tile">
+      <span>Categories</span>
+      <strong>{{ categories().length }}</strong>
+    </div>
+  </section>
+
+  <section class="catalog-tools">
+    <div class="search-wrap">
+      <span class="material-icons-outlined search-icon">search</span>
+      <input
+        class="search-input"
+        [(ngModel)]="search"
+        (input)="onSearch()"
+        placeholder="Search name, brand, barcode"
+      />
+    </div>
+    <select
+      class="filter-select"
+      [(ngModel)]="categoryFilter"
+      (change)="load()"
+    >
+      <option value="">All categories</option>
+      @for (cat of categories(); track cat.id) {
+        <option [value]="cat.id">{{ cat.name }}</option>
+      }
+    </select>
+    <select
+      class="filter-select"
+      [(ngModel)]="statusFilter"
+      (change)="load()"
+    >
+      <option value="all">All statuses</option>
+      <option value="active">Active</option>
+      <option value="inactive">Inactive</option>
+    </select>
+  </section>
+
+  <app-dynamic-table
+    [columns]="columns"
+    [data]="items()"
+    [loading]="loading()"
+    [totalItems]="total()"
+    [itemsPerPage]="pageSize"
+    [page]="page()"
+    emptyIcon="inventory_2"
+    emptyMessage="No catalog items found"
+    emptySubMessage="Try another filter or create a new catalog item."
+    (pageChange)="setPage($event)"
+  >
+    <ng-template tableCell="item" let-item>
+      <div class="item-cell">
+        <div class="item-thumb">
+          @if (primaryImage(item)) {
+            <img [src]="primaryImage(item)" alt="{{ item.name }}" />
+          } @else {
+            <span>{{ item.name?.[0] || '?' }}</span>
+          }
+        </div>
+        <div class="item-copy">
+          <strong>{{ item.name }}</strong>
+          <small
+            >{{ item.brand || 'No brand'
+            }}{{ item.barcode ? ' / ' + item.barcode : '' }}</small
+          >
+        </div>
+      </div>
+    </ng-template>
+
+    <ng-template tableCell="category" let-item>
+      <span class="soft-pill">{{
+        item.category?.name || 'Uncategorized'
+      }}</span>
+    </ng-template>
+
+    <ng-template tableCell="unit" let-item>
+      <span class="unit-text">{{ item.unit || 'piece' }}</span>
+    </ng-template>
+
+    <ng-template tableCell="status" let-item>
+      <span class="status-chip" [class.inactive]="!item.is_active">
+        <span class="status-dot"></span>
+        {{ item.is_active ? 'Active' : 'Inactive' }}
+      </span>
+    </ng-template>
+
+    <ng-template tableCell="actions" let-item>
+      <div class="actions">
+        <button class="icon-action" (click)="openEdit(item)" title="Edit">
+          <span class="material-icons-outlined">edit</span>
+        </button>
+        <button
+          class="icon-action danger"
+          (click)="delete(item)"
+          title="Delete"
+        >
+          <span class="material-icons-outlined">delete_outline</span>
+        </button>
+      </div>
+    </ng-template>
+  </app-dynamic-table>
+</div>
+
+@if (showModal()) {
+  <div class="catalog-modal-backdrop" (click)="closeModal()">
+    <div class="catalog-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <span class="eyebrow">{{
+            editTarget() ? 'Edit item' : 'Create item'
+          }}</span>
+          <h2>
+            {{ editTarget() ? 'Update Catalog Item' : 'New Catalog Item' }}
+          </h2>
+        </div>
+        <button class="modal-close" (click)="closeModal()" title="Close">
+          <span class="material-icons-outlined">close</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Name *</label
+            ><input class="form-input" [(ngModel)]="form.name" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Brand</label
+            ><input class="form-input" [(ngModel)]="form.brand" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label
+          ><textarea
+            class="form-input"
+            rows="3"
+            [(ngModel)]="form.description"
+          ></textarea>
+        </div>
+        <div class="form-row three">
+          <div class="form-group">
+            <label class="form-label">Category</label>
+            <select class="form-input" [(ngModel)]="form.category_id">
+              <option [ngValue]="null">None</option>
+              @for (cat of categories(); track cat.id) {
+                <option [ngValue]="cat.id">{{ cat.name }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Unit</label
+            ><input class="form-input" [(ngModel)]="form.unit" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Barcode</label
+            ><input class="form-input" [(ngModel)]="form.barcode" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Search Keywords</label
+            ><input class="form-input" [(ngModel)]="form.search_keywords" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <select class="form-input" [(ngModel)]="form.is_active">
+              <option [ngValue]="true">Active</option>
+              <option [ngValue]="false">Inactive</option>
+            </select>
+          </div>
+        </div>
+        @if (editTarget()) {
+          <div class="form-group image-manager">
+            <label class="form-label">Catalog Images</label>
+            <div class="image-grid">
+              @for (image of modalImages(); track image.id) {
+                <div class="image-tile">
+                  <img [src]="image.image" alt="Catalog image" />
+                  @if (image.is_primary) {
+                    <span class="image-badge">Primary</span>
+                  }
+                  <button
+                    class="image-delete"
+                    (click)="deleteImage(image.id)"
+                    title="Delete image"
+                  >
+                    <span class="material-icons-outlined"
+                      >delete_outline</span
+                    >
+                  </button>
+                </div>
+              }
+              <label class="image-upload">
+                <input
+                  type="file"
+                  accept="image/*"
+                  (change)="onImageSelected($event)"
+                  hidden
+                />
+                @if (imageUploading()) {
+                  <span class="material-icons-outlined spin">refresh</span>
+                  Uploading
+                } @else {
+                  <span class="material-icons-outlined"
+                    >add_photo_alternate</span
+                  >
+                  Add Image
+                }
+              </label>
+            </div>
+            <p class="image-hint">
+              Images upload through Django storage. With USE_S3=True they
+              are saved to your S3/R2 bucket.
+            </p>
+          </div>
+        } @else {
+          <div class="image-notice">
+            <span class="material-icons-outlined">image</span>
+            Save the catalog item first, then upload images.
+          </div>
+        }
+        <div class="form-group">
+          <label class="form-label">Compliance Notes</label
+          ><textarea
+            class="form-input"
+            rows="2"
+            [(ngModel)]="form.compliance_notes"
+          ></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary text" (click)="closeModal()">
+          Cancel
+        </button>
+        <button class="btn-primary" [disabled]="saving()" (click)="save()">
+          {{ saving() ? 'Saving...' : 'Save Item' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

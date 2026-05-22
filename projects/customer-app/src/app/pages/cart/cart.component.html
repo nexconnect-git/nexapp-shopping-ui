@@ -1,158 +1,165 @@
-<section class="basket-page">
-  <div class="basket-topbar">
-    <button class="basket-icon" type="button" (click)="goBack()" aria-label="Go back"><span class="material-icons-outlined">arrow_back</span></button>
+﻿<main class="fd-content">
+  <fd-breadcrumbs [items]="[{ label: 'Cart' }]" />
+  <section class="cart-layout">
     <div>
-      <span class="basket-kicker">Review your basket</span>
-      <h1>Your cart</h1>
-    </div>
-    <div class="basket-steps" aria-label="Checkout progress">
-      <span class="active">Cart</span>
-      <span>Checkout</span>
-      <span>Track</span>
-    </div>
-    @if (cart() && cart()!.items.length > 0) {
-      <span class="basket-count">{{ cart()!.items.length }} item{{ cart()!.items.length !== 1 ? 's' : '' }}</span>
-    }
-  </div>
-
-  @if (loading()) {
-    <div class="basket-loading"><div class="basket-spinner"></div></div>
-  } @else if (!cart() || cart()!.items.length === 0) {
-    <div class="basket-empty">
-      <span class="material-icons-outlined">shopping_bag</span>
-      <h2>Your instant basket is empty.</h2>
-      <p>Browse nearby stores and start building a fast local order.</p>
-      <a routerLink="/shops">Browse stores</a>
-    </div>
-  } @else {
-    <div class="basket-layout">
-      <div class="basket-main">
-        @if (savings() > 0) {
-          <div class="savings-callout">
-            <span class="material-icons-outlined">local_offer</span>
-            <strong>You are already saving {{ savings() | appCurrency }} on this order.</strong>
+      <h1 class="fd-title">
+        Your Cart <small>({{ state.itemCount() }} items)</small>
+      </h1>
+      @if (!state.cart().length) {
+        <section class="empty fd-card">
+          <h2><span class="material-symbols-rounded">shopping_cart</span></h2>
+          <h3>{{ content.cart().emptyTitle }}</h3>
+          <p>{{ content.cart().emptyDescription }}</p>
+          <a routerLink="/stores" class="fd-btn primary">{{
+            content.cart().emptyCta
+          }}</a>
+        </section>
+      } @else {
+        <section class="cart-table fd-card">
+          <div class="table-head">
+            <span>Item</span><span>Price</span><span>Quantity</span
+            ><span>Subtotal</span><span></span>
           </div>
-        }
-
-        <a routerLink="/offers" class="coupon-link">
-          <span class="material-icons-outlined">confirmation_number</span>
-          <div>
-            <strong>Apply store offers or coupons</strong>
-            <span>Stack discounts before you checkout</span>
-          </div>
-          <span class="material-icons-outlined">chevron_right</span>
-        </a>
-
-        <section class="basket-panel">
-          <div class="panel-head">
-            <div>
-              <span class="basket-kicker">Basket items</span>
-              <h2>Everything from one store, ready to check out.</h2>
+          @for (item of state.cart(); track item.id) {
+            <div class="cart-row">
+              <div class="item">
+                <img [src]="item.image" [alt]="item.name" />
+                <div>
+                  <b>{{ item.name }}</b
+                  ><small>{{ item.unit }}</small>
+                </div>
+              </div>
+              <div>
+                <b>{{ item.price | appCurrency }}</b
+                ><del>{{ item.mrp | appCurrency }}</del>
+              </div>
+              <div class="qty">
+                <button
+                  type="button"
+                  (click)="state.updateQuantity(item.id, -1)"
+                >
+                  <span class="material-symbols-rounded">remove</span></button
+                ><b>{{ item.quantity }}</b
+                ><button
+                  type="button"
+                  (click)="state.updateQuantity(item.id, 1)"
+                >
+                  <span class="material-symbols-rounded">add</span>
+                </button>
+              </div>
+              <b>{{ item.price * item.quantity | appCurrency }}</b>
+              <div class="row-actions">
+                <button type="button" (click)="state.removeItem(item.id)">
+                  <span class="material-symbols-rounded">delete</span>
+                  Remove</button
+                ><button
+                  type="button"
+                  (click)="saveForLater(item.apiId || item.id)"
+                >
+                  <span class="material-symbols-rounded">favorite</span> Save
+                  for later
+                </button>
+              </div>
             </div>
-            <button class="clear-btn" type="button" (click)="clearCart()">Clear cart</button>
-          </div>
+          }
+        </section>
 
-          <div class="basket-items">
-            @for (item of cart()!.items; track item.id) {
-              <article class="basket-item">
-                <div class="item-media">
-                  @if (item.product.primary_image) {
-                    <img [src]="item.product.primary_image" [alt]="item.product.name">
-                  } @else {
-                    <div class="item-placeholder"><span class="material-icons-outlined">inventory_2</span></div>
-                  }
-                </div>
-                <div class="item-copy">
-                  <h3>{{ item.product.name }}</h3>
-                  <p>{{ item.product.vendor_name }}</p>
-                  <div class="item-price-row">
-                    <strong>{{ item.product.price | appCurrency }}</strong>
-                    @if (item.product.compare_price && item.product.compare_price > item.product.price) {
-                      <span class="compare-price">{{ item.product.compare_price | appCurrency }}</span>
-                      <span class="item-discount">{{ item.product.discount_percentage }}% off</span>
-                    }
-                  </div>
-                </div>
-                <div class="item-actions">
-                  <span class="item-subtotal">{{ item.subtotal | appCurrency }}</span>
-                  <div class="qty-bar">
-                    <button type="button" (click)="updateQty(item, item.quantity - 1)" [disabled]="updatingId() === item.id" [attr.aria-label]="item.quantity === 1 ? 'Remove item' : 'Decrease quantity'">
-                      <span class="material-icons-outlined">{{ item.quantity === 1 ? 'delete_outline' : 'remove' }}</span>
-                    </button>
-                    <span>{{ item.quantity }}</span>
-                    <button type="button" (click)="updateQty(item, item.quantity + 1)" [disabled]="updatingId() === item.id || item.quantity >= item.product.stock" aria-label="Increase quantity">
-                      <span class="material-icons-outlined">add</span>
-                    </button>
-                  </div>
-                </div>
-              </article>
-            }
+        <div class="coupon-row">
+          <section class="coupon fd-card">
+            <b
+              ><span class="material-symbols-rounded">local_offer</span> Have a
+              coupon code?</b
+            ><input
+              class="fd-input"
+              placeholder="Enter coupon code"
+              #coupon
+            /><button
+              type="button"
+              class="fd-btn outline"
+              (click)="applyCoupon(coupon.value)"
+            >
+              Apply
+            </button>
+          </section>
+          <section class="saving fd-card">
+            <span class="material-symbols-rounded">celebration</span> You're
+            saving {{ state.discount() | appCurrency }} on this order with
+            offers and discounts
+          </section>
+        </div>
+      }
+
+      <div class="fd-section-title"><h2>You might also need</h2></div>
+      <section class="product-grid">
+        @for (p of catalog.products().slice(9, 14); track p.id) {
+          <fd-product-card [product]="p" />
+        }
+      </section>
+    </div>
+
+    @if (state.cart().length) {
+      <aside class="summary-col">
+        <section class="fd-card address">
+          <h3>
+            <span class="material-symbols-rounded">location_on</span> Delivering
+            to
+            <span>{{
+              state.activeAddress()?.label || "Selected location"
+            }}</span>
+          </h3>
+          <p>{{ state.activeAddress()?.line || state.location() }}</p>
+          <button type="button" (click)="ui.openLocation()">Change</button>
+        </section>
+
+        <section class="progress-promo">
+          @if (state.freeDeliveryUnlocked()) {
+            <b>{{ state.deliveryPromotion().title }}</b>
+            <p>{{ state.deliveryPromotion().description }}</p>
+          } @else if (state.freeDeliveryRemaining() > 0) {
+            <b>{{ state.deliveryPromotion().title }}</b>
+            <p>{{ state.deliveryPromotion().description }}</p>
+          } @else {
+            <b>{{ state.deliveryPromotion().title }}</b>
+            <p>{{ state.deliveryPromotion().description }}</p>
+          }
+          <div>
+            <span [style.width.%]="state.freeDeliveryProgress()"></span>
           </div>
         </section>
 
-        @if (suggestions().length > 0) {
-          <section class="basket-panel">
-            <div class="panel-head compact">
-              <div>
-                <span class="basket-kicker">Add-on lane</span>
-                <h2>Last-minute extras from the same store.</h2>
-              </div>
-            </div>
-            <div class="addon-row">
-              @for (prod of suggestions(); track prod.id) {
-                <div class="addon-card">
-                  <div class="addon-media">
-                    @if (prod.primary_image) {
-                      <img [src]="prod.primary_image" [alt]="prod.name" loading="lazy">
-                    } @else {
-                      <div class="item-placeholder"><span class="material-icons-outlined">add_shopping_cart</span></div>
-                    }
-                    @if (prod.discount_percentage > 0) {
-                      <span class="addon-discount">{{ prod.discount_percentage }}% off</span>
-                    }
-                  </div>
-                  <strong>{{ prod.name }}</strong>
-                  <span>{{ prod.price | appCurrency }}</span>
-                  <button type="button" (click)="addSuggestion(prod)" [disabled]="addingSuggId() === prod.id">
-                    @if (addingSuggId() === prod.id) { Adding... } @else { Add to basket }
-                  </button>
-                </div>
-              }
-            </div>
-          </section>
-        }
-      </div>
-
-      <aside class="basket-summary">
-        <div class="summary-card">
-          <span class="basket-kicker">Payment snapshot</span>
-          <h2>Order summary</h2>
-
-          <div class="summary-row">
-            <span>Items</span>
-            <strong>{{ cart()!.total_amount | appCurrency }}</strong>
-          </div>
-          @if (savings() > 0) {
-            <div class="summary-row saving">
-              <span>Discounted item savings</span>
-              <strong>- {{ savings() | appCurrency }}</strong>
-            </div>
-          }
-          <div class="summary-row">
-            <span>Delivery fee</span>
-            <strong>Calculated at checkout</strong>
-          </div>
-          <div class="summary-row total">
-            <span>Current total</span>
-            <strong>{{ cart()!.total_amount | appCurrency }}</strong>
-          </div>
-
-          <button class="checkout-btn" type="button" (click)="proceedToCheckout()">
-            Continue to checkout
-            <span class="material-icons-outlined">arrow_forward</span>
-          </button>
-        </div>
+        <section class="fd-card price">
+          <h3>Price Details</h3>
+          <p>
+            <span>Item Total ({{ state.itemCount() }} items)</span
+            ><b>{{ state.subtotal() | appCurrency }}</b>
+          </p>
+          <p>
+            <span>MRP Total</span><b>{{ state.mrpTotal() | appCurrency }}</b>
+          </p>
+          <p>
+            <span>Total Savings</span
+            ><b class="green">- {{ state.discount() | appCurrency }}</b>
+          </p>
+          <hr />
+          <p>
+            <span>Delivery Fee</span><b>{{ state.deliveryFeeLabel() }}</b>
+          </p>
+          <p>
+            <span>Handling Fee</span
+            ><b>{{ state.handlingFee() | appCurrency }}</b>
+          </p>
+          <p class="total">
+            <span>To Pay</span><b>{{ state.total() | appCurrency }}</b>
+          </p>
+          <a routerLink="/checkout" class="fd-btn primary"
+            >Proceed to Checkout</a
+          >
+          <small
+            ><span class="material-symbols-rounded">verified_user</span>
+            {{ content.cart().securePayment }}</small
+          >
+        </section>
       </aside>
-    </div>
-  }
-</section>
+    }
+  </section>
+</main>

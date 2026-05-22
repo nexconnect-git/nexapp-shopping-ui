@@ -1,0 +1,83 @@
+<main class="fd-content">
+  <fd-breadcrumbs [items]="[{ label: title() }]" />
+  <section class="fd-two-col">
+    <div>
+      <header class="category-head">
+        <span class="material-symbols-rounded">nutrition</span>
+        <div>
+          <h1 class="fd-title">{{ title() }}</h1>
+          <p class="fd-subtitle">Live products from active stores</p>
+        </div>
+        <div class="delivery-box">
+          <small>Delivery to</small><b>Selected location</b
+          ><span>Fee and ETA at checkout</span>
+        </div>
+      </header>
+
+      <div class="filters">
+        @for (filter of categoryFilters(); track filter) {
+          <button
+            type="button"
+            class="fd-pill"
+            [class.active]="activeFilter() === filter"
+            [attr.aria-label]="filter"
+            (click)="activeFilter.set(filter)"
+          >
+            <span class="material-symbols-rounded">{{
+              filterIcon(filter)
+            }}</span>
+            <span class="filter-label">{{ filter }}</span>
+          </button>
+        }
+        <label class="mobile-sort-control" aria-label="Sort products">
+          <span class="material-symbols-rounded">sort</span>
+          <select class="fd-input" [(ngModel)]="sortBy">
+            <option>Popularity</option>
+            <option>Price Low to High</option>
+            <option>Rating</option>
+          </select>
+        </label>
+      </div>
+
+      <section class="banner">
+        <div>
+          <b
+            ><span class="material-symbols-rounded">verified_user</span> Live
+            inventory</b
+          >
+          <p>Availability and pricing come from the server.</p>
+        </div>
+        <span class="material-symbols-rounded">eco</span>
+      </section>
+
+      @if (catalog.productsLoading()) {
+        <section
+          class="nc-skeleton-center"
+          role="status"
+          aria-live="polite"
+          aria-label="Loading category products"
+        >
+          <div class="nc-skeleton-list grid">
+            @for (item of [1, 2, 3, 4, 5, 6]; track item) {
+              <div class="nc-skeleton-card">
+                <span class="nc-skeleton-media"></span>
+                <span class="nc-skeleton-copy">
+                  <span class="nc-skeleton-line medium"></span>
+                  <span class="nc-skeleton-line long"></span>
+                  <span class="nc-skeleton-line short"></span>
+                </span>
+              </div>
+            }
+          </div>
+        </section>
+      } @else {
+        <section class="product-grid">
+          @for (product of visibleProducts(); track product.id) {
+            <fd-product-card [product]="product" />
+          }
+        </section>
+      }
+    </div>
+    <fd-right-rail />
+  </section>
+</main>

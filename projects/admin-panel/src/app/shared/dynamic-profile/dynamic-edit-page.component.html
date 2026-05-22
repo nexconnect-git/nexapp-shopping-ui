@@ -1,0 +1,185 @@
+<main class="edit-page">
+  <header class="edit-header">
+    <div>
+      <small>ADMIN PANEL</small>
+      <h1>{{ config.title }}</h1>
+      <p>{{ config.subtitle }}</p>
+    </div>
+    <div>
+      <button type="button" class="btn outline" (click)="cancelEdit.emit()">
+        {{ config.cancelLabel || "Cancel" }}
+      </button>
+      <button
+        type="button"
+        class="btn primary"
+        (click)="saveDraft.emit(formValue)"
+      >
+        {{ config.saveDraftLabel || "Save Draft" }}
+      </button>
+    </div>
+  </header>
+
+  <section class="wizard-card">
+    <nav class="stepper">
+      <button
+        *ngFor="let step of config.steps; let index = index"
+        type="button"
+        [class.active]="index === activeStepIndex()"
+        [class.done]="index < activeStepIndex()"
+        (click)="goTo(index)"
+      >
+        <span>{{
+          index < activeStepIndex() ? "✅" : step.icon || index + 1
+        }}</span>
+        <b>{{ step.label }}</b>
+      </button>
+    </nav>
+
+    <div class="section-grid">
+      <section *ngFor="let section of activeStep.sections" class="form-card">
+        <header>
+          <span>{{ section.icon || "📋" }}</span>
+          <div>
+            <h2>{{ section.title }}</h2>
+            <p>{{ section.subtitle }}</p>
+          </div>
+        </header>
+
+        <div class="form-grid" [attr.data-columns]="section.columns || 2">
+          <label
+            *ngFor="let field of section.fields"
+            [class.full]="
+              field.colSpan === 2 ||
+              field.type === 'textarea' ||
+              field.type === 'file'
+            "
+            [attr.for]="fieldId(field)"
+          >
+            <span>{{ field.label }} <i *ngIf="field.required">*</i></span>
+
+            <ng-container [ngSwitch]="field.type">
+              <input
+                *ngSwitchCase="'text'"
+                [id]="fieldId(field)"
+                type="text"
+                [placeholder]="field.placeholder || ''"
+                [ngModel]="formValue[field.key]"
+                (ngModelChange)="setValue(field.key, $event)"
+              />
+              <input
+                *ngSwitchCase="'email'"
+                [id]="fieldId(field)"
+                type="email"
+                [ngModel]="formValue[field.key]"
+                (ngModelChange)="setValue(field.key, $event)"
+              />
+              <input
+                *ngSwitchCase="'tel'"
+                [id]="fieldId(field)"
+                type="tel"
+                [ngModel]="formValue[field.key]"
+                (ngModelChange)="setValue(field.key, $event)"
+              />
+              <input
+                *ngSwitchCase="'number'"
+                [id]="fieldId(field)"
+                type="number"
+                [ngModel]="formValue[field.key]"
+                (ngModelChange)="setValue(field.key, $event)"
+              />
+              <input
+                *ngSwitchCase="'currency'"
+                [id]="fieldId(field)"
+                type="number"
+                [ngModel]="formValue[field.key]"
+                (ngModelChange)="setValue(field.key, $event)"
+              />
+              <input
+                *ngSwitchCase="'date'"
+                [id]="fieldId(field)"
+                type="date"
+                [ngModel]="formValue[field.key]"
+                (ngModelChange)="setValue(field.key, $event)"
+              />
+              <input
+                *ngSwitchCase="'time'"
+                [id]="fieldId(field)"
+                type="time"
+                [ngModel]="formValue[field.key]"
+                (ngModelChange)="setValue(field.key, $event)"
+              />
+
+              <select
+                *ngSwitchCase="'select'"
+                [id]="fieldId(field)"
+                [ngModel]="formValue[field.key]"
+                (ngModelChange)="setValue(field.key, $event)"
+              >
+                <option
+                  *ngFor="let option of field.options"
+                  [ngValue]="option.value"
+                >
+                  {{ option.label }}
+                </option>
+              </select>
+
+              <textarea
+                *ngSwitchCase="'textarea'"
+                [id]="fieldId(field)"
+                rows="5"
+                [ngModel]="formValue[field.key]"
+                (ngModelChange)="setValue(field.key, $event)"
+              ></textarea>
+
+              <button
+                *ngSwitchCase="'toggle'"
+                class="toggle"
+                type="button"
+                [class.on]="formValue[field.key]"
+                (click)="toggle(field.key)"
+              >
+                <span></span>
+                {{ formValue[field.key] ? "Enabled" : "Disabled" }}
+              </button>
+
+              <div *ngSwitchCase="'file'" class="upload">
+                <span>{{ field.label }}</span>
+                <button type="button">Upload</button>
+                <small>{{ field.hint }}</small>
+              </div>
+            </ng-container>
+
+            <small *ngIf="field.hint && field.type !== 'file'">{{
+              field.hint
+            }}</small>
+          </label>
+        </div>
+      </section>
+    </div>
+
+    <footer class="form-actions">
+      <button
+        type="button"
+        class="btn outline"
+        (click)="activeStepIndex() === 0 ? cancelEdit.emit() : previous()"
+      >
+        {{ activeStepIndex() === 0 ? config.cancelLabel || "Cancel" : "Back" }}
+      </button>
+      <div>
+        <button
+          type="button"
+          class="btn outline"
+          (click)="saveDraft.emit(formValue)"
+        >
+          {{ config.saveDraftLabel || "Save Draft" }}
+        </button>
+        <button type="button" class="btn primary" (click)="next()">
+          {{
+            isLastStep() ? "Review & Submit" : config.submitLabel || "Continue"
+          }}
+          ->
+        </button>
+      </div>
+    </footer>
+  </section>
+</main>

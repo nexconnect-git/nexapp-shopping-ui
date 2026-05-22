@@ -1,61 +1,56 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { RouterLink, Router } from '@angular/router';
-import { AlertService, ApiService, AppCurrencyPipe } from '@shared/public-api';
+import { Component, signal } from '@angular/core';
+import { ApiService } from '@shared/public-api';
+import { Product } from '../../models';
+import { ProductCardComponent } from '../../components/product-card/product-card.component';
+import { AppStateService } from '../../services/app-state.service';
+import { CatalogService } from '../../services/catalog.service';
+import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
 
 @Component({
-  selector: 'app-wishlist',
   standalone: true,
-  imports: [CommonModule, RouterLink, AppCurrencyPipe],
+  imports: [ProductCardComponent, BreadcrumbsComponent],
   templateUrl: './wishlist.component.html',
-  styleUrl: './wishlist.component.scss'
+  styleUrls: ['./wishlist.component.scss'],
 })
-export class WishlistComponent implements OnInit {
-  private api = inject(ApiService);
-  private router = inject(Router);
-  private alerts = inject(AlertService);
+export class WishlistComponent {
+  items = signal<Product[]>([]);
 
-  products = signal<any[]>([]);
-  loading = signal(true);
-  removingId = signal('');
-  addingId = signal('');
-
-  availableCount() {
-    return this.products().filter((product) => product.status !== 'sold_out').length;
+  constructor(
+    private api: ApiService,
+    private catalog: CatalogService,
+    private state: AppStateService,
+  ) {
+    this.load();
   }
 
-  ngOnInit() {
+  load(): void {
     this.api.getWishlist().subscribe({
-      next: (res) => { this.products.set(res.results || res); this.loading.set(false); },
-      error: () => this.loading.set(false),
+      next: (response) =>
+        this.items.set(
+          this.unwrap(response).map((product) =>
+            this.catalog.mapProduct(product),
+          ),
+        ),
+      error: () => this.items.set([]),
     });
   }
 
-  removeFromWishlist(product: any) {
-    this.removingId.set(product.id);
-    this.api.toggleWishlist(product.id).subscribe({
+  remove(id: string): void {
+    this.api.toggleWishlist(id).subscribe({
       next: () => {
-        this.products.update(list => list.filter(p => p.id !== product.id));
-        this.removingId.set('');
+        this.items.update((list) =>
+          list.filter((product) => product.id !== id),
+        );
+        this.state.showToast('Removed from wishlist');
       },
-      error: () => this.removingId.set(''),
+      error: () => this.state.showToast('Could not update wishlist'),
     });
   }
 
-  addToCart(product: any) {
-    this.addingId.set(product.id);
-    this.api.addToCart(product.id, 1).subscribe({
-      next: () => {
-        this.api.refreshCartCount();
-        this.alerts.success(`${product.name} added to cart`);
-        this.addingId.set('');
-      },
-      error: () => {
-        this.alerts.error('Could not add to cart.');
-        this.addingId.set('');
-      },
-    });
+  private unwrap(response: any): any[] {
+    if (Array.isArray(response)) return response;
+    if (Array.isArray(response?.results)) return response.results;
+    if (Array.isArray(response?.products)) return response.products;
+    return [];
   }
-
-  goBack() { window.history.back(); }
 }

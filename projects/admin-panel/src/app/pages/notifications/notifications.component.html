@@ -1,9 +1,12 @@
-<div class="admin-workspace notifications-workspace">
+<div class="saas-page admin-workspace notifications-workspace">
   <section class="admin-page-hero">
     <div class="admin-page-copy">
       <span class="eyebrow">Messaging</span>
       <h1 class="page-title">Notifications</h1>
-      <p>{{ total() }} total notifications across targeted messages, broadcasts, alerts, and system updates.</p>
+      <p>
+        {{ total() }} total notifications across targeted messages, broadcasts,
+        alerts, and system updates.
+      </p>
     </div>
     <div class="admin-page-actions">
       <button class="btn btn-primary" (click)="openSendModal()">
@@ -14,15 +17,21 @@
   </section>
 
   <div class="admin-toolbar filters">
-      <input class="filter-input" type="search" [(ngModel)]="search" (input)="onSearch()" placeholder="Search username, title...">
-      <select class="filter-input" [(ngModel)]="typeFilter" (change)="load()">
-        <option value="">All Types</option>
-        <option value="order_update">Order Update</option>
-        <option value="promo">Promo</option>
-        <option value="alert">Alert</option>
-        <option value="info">Info</option>
-        <option value="system">System</option>
-      </select>
+    <input
+      class="filter-input"
+      type="search"
+      [(ngModel)]="search"
+      (input)="onSearch()"
+      placeholder="Search username, title..."
+    />
+    <select class="filter-input" [(ngModel)]="typeFilter" (change)="load()">
+      <option value="">All Types</option>
+      <option value="order_update">Order Update</option>
+      <option value="promo">Promo</option>
+      <option value="alert">Alert</option>
+      <option value="info">Info</option>
+      <option value="system">System</option>
+    </select>
   </div>
 
   @if (loading()) {
@@ -31,31 +40,51 @@
     <div class="empty-state">
       <div class="empty-icon">&#128276;</div>
       <h3>No notifications found</h3>
-      <p class="text-muted text-sm mt-2">Click 'Send Notification' to create one.</p>
+      <p class="text-muted text-sm mt-2">
+        Click 'Send Notification' to create one.
+      </p>
     </div>
   } @else {
     <div class="table-card">
       <div class="t-header">
-        <span>Type</span><span>Title</span><span>Message</span><span>Recipient</span><span>Sent At</span><span>Actions</span>
+        <span>Type</span><span>Title</span><span>Message</span
+        ><span>Recipient</span><span>Sent At</span><span>Actions</span>
       </div>
       @for (n of notifications(); track n.id) {
         <div class="t-row">
-          <span><span class="badge badge-{{ n.notification_type }}">{{ n.notification_type }}</span></span>
+          <span
+            ><span class="badge badge-{{ n.notification_type }}">{{
+              n.notification_type
+            }}</span></span
+          >
           <span class="text-light">{{ n.title }}</span>
-          <span class="text-muted text-sm message-cell" [title]="n.message">{{ n.message }}</span>
+          <span class="text-muted text-sm message-cell" [title]="n.message">{{
+            n.message
+          }}</span>
           <span>
             @if (n.user) {
-              <span class="user-pill">{{ n.username || 'User #' + n.user }}</span>
+              <span class="user-pill">{{
+                n.username || "User #" + n.user
+              }}</span>
             } @else {
               <span class="broadcast-pill">
-                <span class="material-icons-outlined" style="font-size:12px">campaign</span>
+                <span class="material-icons-outlined" style="font-size: 12px"
+                  >campaign</span
+                >
                 Broadcast
               </span>
             }
           </span>
-          <span class="text-muted text-sm">{{ n.created_at | date:'MMM d, hh:mm a' }}</span>
+          <span class="text-muted text-sm">{{
+            n.created_at | date: "MMM d, hh:mm a"
+          }}</span>
           <div class="actions">
-            <button class="action-btn danger" (click)="deleteNotification(n.id)">Delete</button>
+            <button
+              class="action-btn danger"
+              (click)="deleteNotification(n.id)"
+            >
+              Delete
+            </button>
           </div>
         </div>
       }
@@ -63,9 +92,23 @@
 
     @if (totalPages() > 1) {
       <div class="pagination">
-        <button class="page-btn" [disabled]="page() === 1" (click)="setPage(page()-1)">&#8592;</button>
-        <span class="text-muted text-sm">{{ page() }} / {{ totalPages() }}</span>
-        <button class="page-btn" [disabled]="page() === totalPages()" (click)="setPage(page()+1)">&#8594;</button>
+        <button
+          class="page-btn"
+          [disabled]="page() === 1"
+          (click)="setPage(page() - 1)"
+        >
+          &#8592;
+        </button>
+        <span class="text-muted text-sm"
+          >{{ page() }} / {{ totalPages() }}</span
+        >
+        <button
+          class="page-btn"
+          [disabled]="page() === totalPages()"
+          (click)="setPage(page() + 1)"
+        >
+          &#8594;
+        </button>
       </div>
     }
   }
@@ -80,13 +123,14 @@
           </div>
           <div>
             <h2>Send Notification</h2>
-            <p class="modal-subtitle">Broadcast to users or target a specific audience</p>
+            <p class="modal-subtitle">
+              Broadcast to users or target a specific audience
+            </p>
           </div>
           <button class="close-btn" (click)="closeModal()">&times;</button>
         </div>
 
         <div class="modal-body">
-
           @if (sendError()) {
             <div class="alert-error">{{ sendError() }}</div>
           }
@@ -101,11 +145,29 @@
           <div class="form-group">
             <label class="input-label">Target Audience</label>
             <div class="audience-grid">
-              @for (opt of [{v:'all',label:'All Users',icon:'groups'},{v:'customer',label:'Customers',icon:'person'},{v:'vendor',label:'Vendors',icon:'storefront'},{v:'delivery',label:'Delivery Partners',icon:'delivery_dining'},{v:'user',label:'Specific User',icon:'manage_accounts'}]; track opt.v) {
+              @for (
+                opt of [
+                  { v: "all", label: "All Users", icon: "groups" },
+                  { v: "customer", label: "Customers", icon: "person" },
+                  { v: "vendor", label: "Vendors", icon: "storefront" },
+                  {
+                    v: "delivery",
+                    label: "Delivery Partners",
+                    icon: "delivery_dining",
+                  },
+                  {
+                    v: "user",
+                    label: "Specific User",
+                    icon: "manage_accounts",
+                  },
+                ];
+                track opt.v
+              ) {
                 <button
                   class="audience-btn"
                   [class.active]="form.audience === opt.v"
-                  (click)="form.audience = opt.v">
+                  (click)="form.audience = opt.v"
+                >
                   <span class="material-icons-outlined">{{ opt.icon }}</span>
                   {{ opt.label }}
                 </button>
@@ -113,21 +175,36 @@
             </div>
           </div>
 
-          @if (form.audience === 'user') {
+          @if (form.audience === "user") {
             <div class="form-group">
               <label class="input-label">User ID</label>
-              <input class="input-field" type="number" [(ngModel)]="form.user_id" placeholder="Enter the user's numeric ID">
+              <input
+                class="input-field"
+                type="number"
+                [(ngModel)]="form.user_id"
+                placeholder="Enter the user's numeric ID"
+              />
             </div>
           }
 
           <div class="form-group">
             <label class="input-label">Title *</label>
-            <input class="input-field" type="text" [(ngModel)]="form.title" placeholder="E.g., Special Weekend Promo!">
+            <input
+              class="input-field"
+              type="text"
+              [(ngModel)]="form.title"
+              placeholder="E.g., Special Weekend Promo!"
+            />
           </div>
 
           <div class="form-group">
             <label class="input-label">Message *</label>
-            <textarea class="input-field" rows="3" [(ngModel)]="form.message" placeholder="Type notification content..."></textarea>
+            <textarea
+              class="input-field"
+              rows="3"
+              [(ngModel)]="form.message"
+              placeholder="Type notification content..."
+            ></textarea>
           </div>
 
           <div class="form-group">
@@ -145,24 +222,32 @@
             <div class="notif-preview">
               <div class="notif-preview-label">Preview</div>
               <div class="notif-preview-card">
-                <div class="notif-preview-title">{{ form.title || '(no title)' }}</div>
-                <div class="notif-preview-msg">{{ form.message || '(no message)' }}</div>
+                <div class="notif-preview-title">
+                  {{ form.title || "(no title)" }}
+                </div>
+                <div class="notif-preview-msg">
+                  {{ form.message || "(no message)" }}
+                </div>
                 <div class="notif-preview-meta">
-                  <span class="badge badge-{{ form.notification_type }}">{{ form.notification_type }}</span>
+                  <span class="badge badge-{{ form.notification_type }}">{{
+                    form.notification_type
+                  }}</span>
                   &nbsp;→&nbsp; {{ audienceLabel() }}
                 </div>
               </div>
             </div>
           }
-
         </div>
 
         <div class="modal-footer">
-          <button class="btn btn-secondary" (click)="closeModal()">Cancel</button>
+          <button class="btn btn-secondary" (click)="closeModal()">
+            Cancel
+          </button>
           <button
             class="btn btn-primary"
             [disabled]="sending() || !form.title.trim() || !form.message.trim()"
-            (click)="sendNotification()">
+            (click)="sendNotification()"
+          >
             @if (sending()) {
               <div class="btn-spinner"></div>
               Sending...

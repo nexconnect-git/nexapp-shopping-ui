@@ -1,8 +1,13 @@
-import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { ApiService, AppCurrencyPipe, AuthService, DeliveryDashboard } from '@shared/public-api';
-import { timer, Subscription } from 'rxjs';
+import {
+  ApiService,
+  AppCurrencyPipe,
+  AuthService,
+  DeliveryDashboard,
+} from '@shared/public-api';
+import { Subscription, timer } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 @Component({
@@ -10,7 +15,7 @@ import { environment } from '../../../environments/environment';
   standalone: true,
   imports: [CommonModule, RouterLink, AppCurrencyPipe],
   templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.scss']
+  styleUrls: ['./dashboard.component.scss'],
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   auth = inject(AuthService);
@@ -36,14 +41,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
           // On first load sync toggle with server; don't override user's manual toggle later
           if (!this.initialized) {
             this.initialized = true;
-            const serverOnline = d.partner_status === 'available' || d.partner_status === 'on_delivery';
+            const serverOnline =
+              d.partner_status === 'available' ||
+              d.partner_status === 'on_delivery';
             this.isAvailable.set(serverOnline);
             if (serverOnline) {
               this._startLocationTracking();
             }
           }
         },
-        error: () => this.loading.set(false)
+        error: () => this.loading.set(false),
       });
     });
   }
@@ -61,7 +68,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       error: () => {
         // Revert on failure
         this.isAvailable.set(!goOnline);
-      }
+      },
     });
 
     if (goOnline) {
@@ -85,15 +92,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     // Send current position immediately, then every 15 seconds
     this._sendCurrentLocation();
-    this.locationIntervalId = setInterval(() => this._sendCurrentLocation(), 15000);
+    this.locationIntervalId = setInterval(
+      () => this._sendCurrentLocation(),
+      15000,
+    );
 
     // Also watch for significant position changes (e.g. partner is driving)
     this.locationWatchId = navigator.geolocation.watchPosition(
       (pos) => this._pushLocation(pos.coords.latitude, pos.coords.longitude),
       (err) => {
-        this.locationStatus.set(err.code === err.PERMISSION_DENIED ? 'denied' : 'error');
+        this.locationStatus.set(
+          err.code === err.PERMISSION_DENIED ? 'denied' : 'error',
+        );
       },
-      { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
+      { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 },
     );
   }
 
@@ -113,7 +125,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     navigator.geolocation.getCurrentPosition(
       (pos) => this._pushLocation(pos.coords.latitude, pos.coords.longitude),
       () => {},
-      { enableHighAccuracy: true, timeout: 10000 }
+      { enableHighAccuracy: true, timeout: 10000 },
     );
   }
 

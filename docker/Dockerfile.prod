@@ -3,10 +3,13 @@ FROM node:20-alpine AS build
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY frontend/package*.json ./
+COPY packages /packages
 RUN npm install
 
-COPY . .
+COPY frontend/ .
+COPY packages /packages
+RUN npm run build:packages
 
 # Build all applications with their respective base hrefs
 RUN npx ng build customer-app --configuration production

@@ -1,30 +1,48 @@
-<div class="issues-page">
-
+<div class="saas-page issues-page">
   <!-- ── Header ──────────────────────────────────────── -->
   <section class="admin-page-hero">
     <div class="admin-page-copy">
       <span class="eyebrow">Exceptions</span>
       <h1 class="page-title">Order Issues</h1>
-      <p>Returns, refunds, damages, mismatches, and other customer-facing exceptions.</p>
+      <p>
+        Returns, refunds, damages, mismatches, and other customer-facing
+        exceptions.
+      </p>
     </div>
   </section>
   <div class="admin-toolbar header-filters">
-      <input class="search-input" type="text" [(ngModel)]="search"
-        (ngModelChange)="onSearch()" placeholder="Search order / customer…">
-      <select class="filter-select" [(ngModel)]="filterType" (ngModelChange)="onFilterChange()">
-        @for (t of issueTypes; track t.value) {
-          <option [value]="t.value">{{ t.label }}</option>
-        }
-      </select>
-      <select class="filter-select" [(ngModel)]="filterStatus" (ngModelChange)="onFilterChange()">
-        @for (s of statuses; track s.value) {
-          <option [value]="s.value">{{ s.label }}</option>
-        }
-      </select>
+    <input
+      class="search-input"
+      type="text"
+      [(ngModel)]="search"
+      (ngModelChange)="onSearch()"
+      placeholder="Search order / customer…"
+    />
+    <select
+      class="filter-select"
+      [(ngModel)]="filterType"
+      (ngModelChange)="onFilterChange()"
+    >
+      @for (t of issueTypes; track t.value) {
+        <option [value]="t.value">{{ t.label }}</option>
+      }
+    </select>
+    <select
+      class="filter-select"
+      [(ngModel)]="filterStatus"
+      (ngModelChange)="onFilterChange()"
+    >
+      @for (s of statuses; track s.value) {
+        <option [value]="s.value">{{ s.label }}</option>
+      }
+    </select>
   </div>
 
   <!-- ── Table ────────────────────────────────────────── -->
-  <div class="table-card" style="padding: 0; background: transparent; box-shadow: none;">
+  <div
+    class="table-card"
+    style="padding: 0; background: transparent; box-shadow: none"
+  >
     <app-dynamic-table
       [columns]="tableColumns"
       [data]="issues()"
@@ -35,13 +53,24 @@
       emptyMessage="No issues found"
       emptySubMessage="No order issues match your filters."
       emptyIcon="inbox"
-      (pageChange)="onPageChange($event)">
-
+      (pageChange)="onPageChange($event)"
+    >
       <ng-template tableCell="issue" let-row="row">
-        <div class="customer-name" style="font-weight: 500;">
+        <div class="customer-name" style="font-weight: 500">
           {{ row.customer_name || row.customer_username }}
         </div>
-        <div class="text-muted" style="font-size: 0.85rem; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 300px;" [title]="row.description">
+        <div
+          class="text-muted"
+          style="
+            font-size: 0.85rem;
+            margin-top: 4px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+          "
+          [title]="row.description"
+        >
           {{ row.description }}
         </div>
       </ng-template>
@@ -51,8 +80,13 @@
       </ng-template>
 
       <ng-template tableCell="type" let-row="row">
-        <span class="type-badge" style="display: inline-flex; align-items: center; gap: 4px;">
-          <span class="material-icons-outlined" style="font-size: 16px;">{{ typeIcon(row.issue_type) }}</span>
+        <span
+          class="type-badge"
+          style="display: inline-flex; align-items: center; gap: 4px"
+        >
+          <span class="material-icons-outlined" style="font-size: 16px">{{
+            typeIcon(row.issue_type)
+          }}</span>
           {{ typeLabel(row.issue_type) }}
         </span>
       </ng-template>
@@ -64,33 +98,41 @@
       </ng-template>
 
       <ng-template tableCell="date" let-row="row">
-        <div class="text-muted">{{ row.created_at | date:'MMM d, y' }}</div>
+        <div class="text-muted">{{ row.created_at | date: "MMM d, y" }}</div>
       </ng-template>
 
       <ng-template tableCell="actions" let-row="row">
-        <button class="action-btn" (click)="openIssue(row)" title="Open Details">
+        <button
+          class="action-btn"
+          (click)="openIssue(row)"
+          title="Open Details"
+        >
           <span class="material-icons-outlined">open_in_new</span>
         </button>
       </ng-template>
-
     </app-dynamic-table>
   </div>
-
 </div>
 
 <!-- ── Detail Side Panel ─────────────────────────────── -->
 @if (selectedIssue() || loadingDetail()) {
   <div class="panel-backdrop" (click)="closePanel()"></div>
   <div class="side-panel">
-
     @if (loadingDetail()) {
       <div class="panel-loading"><div class="spinner"></div></div>
     } @else {
       <!-- Panel Header -->
       <div class="panel-header">
         <div>
-          <div class="panel-title">{{ selectedIssue().issue_type_display }}</div>
-          <div class="panel-sub">{{ selectedIssue().order_number }} · {{ selectedIssue().customer_name || selectedIssue().customer_username }}</div>
+          <div class="panel-title">
+            {{ selectedIssue().issue_type_display }}
+          </div>
+          <div class="panel-sub">
+            {{ selectedIssue().order_number }} ·
+            {{
+              selectedIssue().customer_name || selectedIssue().customer_username
+            }}
+          </div>
         </div>
         <button class="panel-close" (click)="closePanel()">
           <span class="material-icons-outlined">close</span>
@@ -108,11 +150,24 @@
         <div class="section-label">Chat</div>
         <div class="chat-messages">
           @for (msg of selectedIssue().messages; track msg.id) {
-            <div class="chat-msg" [class.chat-msg-admin]="msg.is_admin" [class.chat-msg-customer]="!msg.is_admin">
+            <div
+              class="chat-msg"
+              [class.chat-msg-admin]="msg.is_admin"
+              [class.chat-msg-customer]="!msg.is_admin"
+            >
               <div class="chat-bubble">
-                <div class="chat-sender">{{ msg.is_admin ? 'Support Team' : (selectedIssue().customer_name || selectedIssue().customer_username) }}</div>
+                <div class="chat-sender">
+                  {{
+                    msg.is_admin
+                      ? "Support Team"
+                      : selectedIssue().customer_name ||
+                        selectedIssue().customer_username
+                  }}
+                </div>
                 <div class="chat-text">{{ msg.message }}</div>
-                <div class="chat-time">{{ msg.created_at | date:'MMM d · h:mm a' }}</div>
+                <div class="chat-time">
+                  {{ msg.created_at | date: "MMM d · h:mm a" }}
+                </div>
               </div>
             </div>
           }
@@ -121,9 +176,17 @@
           }
         </div>
         <div class="chat-input-row">
-          <input class="chat-input" [(ngModel)]="newMessage" placeholder="Reply to customer…"
-            (keydown.enter)="sendMessage()">
-          <button class="chat-send-btn" (click)="sendMessage()" [disabled]="!newMessage.trim() || sending()">
+          <input
+            class="chat-input"
+            [(ngModel)]="newMessage"
+            placeholder="Reply to customer…"
+            (keydown.enter)="sendMessage()"
+          />
+          <button
+            class="chat-send-btn"
+            (click)="sendMessage()"
+            [disabled]="!newMessage.trim() || sending()"
+          >
             <span class="material-icons-outlined">send</span>
           </button>
         </div>
@@ -142,27 +205,50 @@
           </select>
         </div>
 
-        @if (newStatus === 'refund_initiated') {
+        @if (newStatus === "refund_initiated") {
           <div class="form-row two">
             <div>
-              <label class="form-label">Refund Amount (₦)</label>
-              <input type="number" class="form-input" [(ngModel)]="refundAmount" min="0" placeholder="e.g. 2500">
+              <label class="form-label"
+                >Refund Amount ({{ 0 | appCurrency: true }})</label
+              >
+              <input
+                type="number"
+                class="form-input"
+                [(ngModel)]="refundAmount"
+                min="0"
+                placeholder="e.g. 2500"
+              />
             </div>
             <div>
               <label class="form-label">Refund Method</label>
-              <input type="text" class="form-input" [(ngModel)]="refundMethod" placeholder="e.g. Bank transfer, Wallet">
+              <input
+                type="text"
+                class="form-input"
+                [(ngModel)]="refundMethod"
+                placeholder="e.g. Bank transfer, Wallet"
+              />
             </div>
           </div>
         }
 
         <div class="form-row">
           <label class="form-label">Admin Notes</label>
-          <textarea class="form-input" [(ngModel)]="adminNotes" rows="3"
-            placeholder="Internal notes about this resolution…"></textarea>
+          <textarea
+            class="form-input"
+            [(ngModel)]="adminNotes"
+            rows="3"
+            placeholder="Internal notes about this resolution…"
+          ></textarea>
         </div>
 
-        <button class="save-btn" (click)="saveResolution()" [disabled]="saving()">
-          @if (saving()) { <span class="btn-spinner"></span> }
+        <button
+          class="save-btn"
+          (click)="saveResolution()"
+          [disabled]="saving()"
+        >
+          @if (saving()) {
+            <span class="btn-spinner"></span>
+          }
           Save Resolution
         </button>
       </div>

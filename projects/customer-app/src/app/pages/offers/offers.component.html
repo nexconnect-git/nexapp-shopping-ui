@@ -1,66 +1,48 @@
-<section class="offers-page">
-  <div class="offers-hero">
-    <button class="icon-btn" (click)="goBack()"><span class="material-icons-outlined">arrow_back</span></button>
+﻿<main class="fd-content">
+  <fd-breadcrumbs [items]="[{ label: 'Offers' }]" />
+  <div class="fd-page-header">
     <div>
-      <span class="page-kicker">Savings hub</span>
-      <h1>Offers and coupon drops</h1>
-      <p>
-        @if (!loading()) {
-          {{ coupons().length }} active code{{ coupons().length !== 1 ? 's' : '' }} ready for checkout
-        } @else {
-          Unlock discounts, free delivery and fixed-order promos
-        }
-      </p>
+      <h1 class="fd-title">{{ content.offers().title }}</h1>
+      <p class="fd-subtitle">{{ content.offers().subtitle }}</p>
     </div>
   </div>
-
-  @if (loading()) {
-    <div class="offer-grid">
-      @for (n of [1,2,3]; track n) {
-        <div class="offer-skel shimmer"></div>
-      }
-    </div>
-  } @else if (coupons().length === 0) {
-    <div class="empty-panel">
-      <span class="material-icons-outlined">confirmation_number</span>
-      <h2>No live offers right now.</h2>
-      <p>Fresh promo drops and store-specific savings will appear here as they go live.</p>
-      <div class="empty-actions">
-        <button class="ghost-btn" (click)="browseStores()">Browse nearby stores</button>
-        <button class="solid-btn" (click)="browseProducts()">Keep shopping</button>
+  @if (heroOffer(); as hero) {
+    <section class="hero">
+      <div>
+        <span>LIVE OFFER</span>
+        <h2>{{ hero.title }}</h2>
+        <p>{{ hero.description }}</p>
+        <button type="button" class="fd-btn primary" (click)="apply(hero.code)">
+          Apply {{ hero.code }}
+        </button>
       </div>
-    </div>
+      <b>%</b>
+    </section>
   } @else {
-    <div class="offer-grid">
-      @for (coupon of coupons(); track coupon.id) {
-        <article class="offer-card">
-          <div class="offer-head">
-            <div class="offer-icon" [style.background]="colorFor(coupon).bg">
-              <span class="material-icons-outlined" [style.color]="colorFor(coupon).color">{{ iconFor(coupon) }}</span>
-            </div>
-            <span class="offer-badge" [style.background]="colorFor(coupon).bg" [style.color]="colorFor(coupon).color">{{ discountLabel(coupon) }}</span>
-          </div>
-
-          <h2>{{ coupon.title }}</h2>
-          @if (coupon.description) {
-            <p>{{ coupon.description }}</p>
-          }
-
-          <div class="offer-meta">
-            <span>Min order {{ coupon.min_order_amount }}</span>
-            @if (coupon.valid_until) {
-              <span>Expires {{ coupon.valid_until | date:'mediumDate' }}</span>
-            }
-          </div>
-
-          <div class="code-row">
-            <strong>{{ coupon.code }}</strong>
-            <button (click)="copyCode(coupon.code)">
-              @if (copiedCode() === coupon.code) { Copied } @else { Copy code }
-            </button>
-          </div>
-        </article>
-      }
-    </div>
+    <section class="empty-offers fd-card">
+      <span class="material-symbols-rounded" aria-hidden="true">redeem</span>
+      <h2>{{ content.offers().emptyTitle }}</h2>
+      <p>{{ content.offers().emptyDescription }}</p>
+      <a routerLink="/stores" class="fd-btn outline">{{
+        content.offers().emptyCta
+      }}</a>
+    </section>
   }
-</section>
+  <section class="offer-grid">
+    @for (offer of offers(); track offer.code) {
+      <article class="fd-card" [class]="offer.tone">
+        <span>{{ offer.code }}</span>
+        <h3>{{ offer.title }}</h3>
+        <p>{{ offer.description }}</p>
+        <small>{{ offer.valid }} · T&C Apply</small>
+        <button
+          type="button"
+          class="fd-btn outline"
+          (click)="apply(offer.code)"
+        >
+          Copy & Apply
+        </button>
+      </article>
+    }
+  </section>
+</main>

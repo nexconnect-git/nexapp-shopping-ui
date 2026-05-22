@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService, AppCurrencyPipe, ToastService } from '@shared/public-api';
 import { forkJoin } from 'rxjs';
@@ -9,12 +9,12 @@ import { FormsModule } from '@angular/forms';
   standalone: true,
   imports: [CommonModule, AppCurrencyPipe, FormsModule],
   templateUrl: './earnings.component.html',
-  styleUrls: ['./earnings.component.scss']
+  styleUrls: ['./earnings.component.scss'],
 })
 export class EarningsComponent implements OnInit {
   private api = inject(ApiService);
   private toast = inject(ToastService);
-  
+
   earnings = signal<any[]>([]);
   payouts = signal<any[]>([]);
   loading = signal(true);
@@ -36,25 +36,35 @@ export class EarningsComponent implements OnInit {
     this.loading.set(true);
     forkJoin({
       earnings: this.api.getDeliveryEarnings(),
-      payouts: this.api.getDeliveryPartnerPayouts()
+      payouts: this.api.getDeliveryPartnerPayouts(),
     }).subscribe({
       next: (res: any) => {
         const eList = res.earnings.results || res.earnings;
         this.earnings.set(eList);
-        this.totalEarnings.set(eList.reduce((s: number, e: any) => s + parseFloat(e.amount || 0), 0));
-        
+        this.totalEarnings.set(
+          eList.reduce((s: number, e: any) => s + parseFloat(e.amount || 0), 0),
+        );
+
         const now = new Date();
         const monthList = eList.filter((e: any) => {
           const d = new Date(e.created_at);
-          return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+          return (
+            d.getMonth() === now.getMonth() &&
+            d.getFullYear() === now.getFullYear()
+          );
         });
-        this.monthEarnings.set(monthList.reduce((s: number, e: any) => s + parseFloat(e.amount || 0), 0));
+        this.monthEarnings.set(
+          monthList.reduce(
+            (s: number, e: any) => s + parseFloat(e.amount || 0),
+            0,
+          ),
+        );
 
         this.payouts.set(res.payouts.results || res.payouts);
 
         this.loading.set(false);
       },
-      error: () => this.loading.set(false)
+      error: () => this.loading.set(false),
     });
   }
 
@@ -66,7 +76,8 @@ export class EarningsComponent implements OnInit {
         this.toast.show('Payout approved.', 'success');
         this.loadData();
       },
-      error: (e: any) => this.toast.show(e.error?.error || 'Failed to approve payout.', 'error')
+      error: (e: any) =>
+        this.toast.show(e.error?.error || 'Failed to approve payout.', 'error'),
     });
   }
 
@@ -91,7 +102,8 @@ export class EarningsComponent implements OnInit {
         this.closeDeclineModal();
         this.loadData();
       },
-      error: (e: any) => this.toast.show(e.error?.error || 'Failed to decline payout.', 'error')
+      error: (e: any) =>
+        this.toast.show(e.error?.error || 'Failed to decline payout.', 'error'),
     });
   }
 
@@ -101,22 +113,20 @@ export class EarningsComponent implements OnInit {
         this.toast.show('Credit verified successfully!', 'success');
         this.loadData();
       },
-      error: (e: any) => this.toast.show(e.error?.error || 'Failed to verify credit.', 'error')
+      error: (e: any) =>
+        this.toast.show(e.error?.error || 'Failed to verify credit.', 'error'),
     });
   }
 
   statusLabel(status: string): string {
     const map: Record<string, string> = {
       pending_approval: 'Pending Approval',
-      approved:         'Approved',
-      scheduled:        'Scheduled',
-      paid:             'Verify Credit',
-      verified:         'Verified ✓',
-      failed:           'Failed'
+      approved: 'Approved',
+      scheduled: 'Scheduled',
+      paid: 'Verify Credit',
+      verified: 'Verified ✓',
+      failed: 'Failed',
     };
     return map[status] || status;
   }
 }
-
-
-

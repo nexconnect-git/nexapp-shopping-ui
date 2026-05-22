@@ -1,0 +1,83 @@
+@if (ui.editModal()) {
+  <div class="overlay" (click)="ui.closeEdit()"></div>
+  <form class="edit-modal fd-card animate-scale" (submit)="save($event)">
+    <header>
+      <h2>{{ title() }}</h2>
+      <button type="button" aria-label="Close editor" (click)="ui.closeEdit()">
+        <span class="material-symbols-rounded">close</span>
+      </button>
+    </header>
+
+    @if (ui.editModal() === "profile") {
+      <label>Name</label
+      ><input
+        class="fd-input"
+        [(ngModel)]="name"
+        name="name"
+        placeholder="Full name"
+      />
+      <label>Email</label
+      ><input
+        class="fd-input"
+        [(ngModel)]="email"
+        name="email"
+        placeholder="Email address"
+      />
+      <label>Phone</label
+      ><input
+        class="fd-input"
+        [(ngModel)]="phone"
+        name="phone"
+        placeholder="Mobile number"
+      />
+    }
+
+    @if (ui.editModal() === "address") {
+      <label>Address Label</label
+      ><input
+        class="fd-input"
+        [(ngModel)]="addressLabel"
+        name="addressLabel"
+        placeholder="Home, Office, Parents Home"
+      />
+      <label>Full Address</label
+      ><textarea
+        class="fd-input"
+        [(ngModel)]="addressLine"
+        name="addressLine"
+        placeholder="House number, building, street, landmark"
+      ></textarea>
+      <label>Contact Number</label
+      ><input
+        class="fd-input"
+        [(ngModel)]="phone"
+        name="addressPhone"
+        placeholder="Receiver phone number"
+      />
+    }
+
+    @if (ui.editModal() === "payment") {
+      <label>Card / UPI Name</label
+      ><input
+        class="fd-input"
+        [(ngModel)]="paymentName"
+        name="paymentName"
+        placeholder="Payment method name"
+      />
+      <label>Payment ID</label
+      ><input
+        class="fd-input"
+        [(ngModel)]="paymentId"
+        name="paymentId"
+        placeholder="UPI ID or payment reference"
+      />
+    }
+
+    <footer>
+      <button type="button" class="fd-btn outline" (click)="ui.closeEdit()">
+        Cancel
+      </button>
+      <button class="fd-btn primary">Save Changes</button>
+    </footer>
+  </form>
+}

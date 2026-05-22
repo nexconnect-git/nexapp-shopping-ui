@@ -1,10 +1,22 @@
 <div class="product-form-page fade-in">
   <section class="page-hero">
     <div class="page-hero-copy">
-      <span class="eyebrow">{{ editMode() ? 'Catalog editor' : 'New products' }}</span>
-      <h1>{{ editMode() ? (editProduct()?.name || 'Edit Product') : 'Add Catalog Variants' }}</h1>
+      <span class="eyebrow">{{
+        editMode() ? "Catalog editor" : "New products"
+      }}</span>
+      <h1>
+        {{
+          editMode()
+            ? editProduct()?.name || "Edit Product"
+            : "Add Catalog Variants"
+        }}
+      </h1>
       <p>
-        {{ editMode() ? 'Update live selling fields anytime. Customer-facing changes go back to admin review.' : 'Select base catalog items, customize vendor variants, validate, and submit for approval.' }}
+        {{
+          editMode()
+            ? "Update live selling fields anytime. Customer-facing changes go back to admin review."
+            : "Select base catalog items, customize vendor variants, validate, and submit for approval."
+        }}
       </p>
     </div>
     <div class="page-hero-actions">
@@ -23,10 +35,13 @@
   }
 
   @if (editMode()) {
-    @if (editProduct()?.approval_status === 'rejected') {
+    @if (editProduct()?.approval_status === "rejected") {
       <div class="growth-alert">
         <span class="material-icons-outlined">report</span>
-        <span>{{ editProduct()?.rejection_reason || 'Admin rejected this product. Fix it and save to resubmit.' }}</span>
+        <span>{{
+          editProduct()?.rejection_reason ||
+            "Admin rejected this product. Fix it and save to resubmit."
+        }}</span>
       </div>
     }
     @if (reviewWarning()) {
@@ -41,57 +56,144 @@
         <div class="form-row cols-3">
           <div class="form-group">
             <label class="form-label">Price *</label>
-            <input class="form-input" type="number" min="0.01" [ngModel]="editForm().price" (ngModelChange)="updateEditField('price', +$event)">
+            <input
+              class="form-input"
+              type="number"
+              min="0.01"
+              placeholder="e.g. 120"
+              [ngModel]="editForm().price"
+              (ngModelChange)="updateEditField('price', +$event)"
+            />
+            <small class="form-hint"
+              >Selling price customers will pay before coupons or delivery
+              charges.</small
+            >
           </div>
           <div class="form-group">
             <label class="form-label">Stock *</label>
-            <input class="form-input" type="number" min="0" [ngModel]="editForm().stock" (ngModelChange)="updateEditField('stock', +$event)">
+            <input
+              class="form-input"
+              type="number"
+              min="0"
+              placeholder="e.g. 25"
+              [ngModel]="editForm().stock"
+              (ngModelChange)="updateEditField('stock', +$event)"
+            />
+            <small class="form-hint"
+              >Available units customers can order right now.</small
+            >
           </div>
           <div class="form-group">
             <label class="form-label">Low Stock Threshold</label>
-            <input class="form-input" type="number" min="0" [ngModel]="editForm().low_stock_threshold" (ngModelChange)="updateEditField('low_stock_threshold', +$event)">
+            <input
+              class="form-input"
+              type="number"
+              min="0"
+              placeholder="e.g. 5"
+              [ngModel]="editForm().low_stock_threshold"
+              (ngModelChange)="updateEditField('low_stock_threshold', +$event)"
+            />
+            <small class="form-hint"
+              >Alert level where the app should warn you to restock.</small
+            >
           </div>
         </div>
         <div class="form-row cols-3">
           <div class="form-group">
             <label class="form-label">Compare Price</label>
-            <input class="form-input" type="number" min="0" [ngModel]="editForm().compare_price" (ngModelChange)="updateEditField('compare_price', $event === '' ? null : +$event)">
+            <input
+              class="form-input"
+              type="number"
+              min="0"
+              placeholder="e.g. 150"
+              [ngModel]="editForm().compare_price"
+              (ngModelChange)="
+                updateEditField('compare_price', $event === '' ? null : +$event)
+              "
+            />
+            <small class="form-hint"
+              >Optional old price used to show a discount comparison.</small
+            >
           </div>
           <div class="form-group">
             <label class="form-label">Min Order Quantity *</label>
-            <input class="form-input" type="number" min="1" [ngModel]="editForm().min_order_quantity" (ngModelChange)="updateEditField('min_order_quantity', +$event)">
+            <input
+              class="form-input"
+              type="number"
+              min="1"
+              placeholder="e.g. 1"
+              [ngModel]="editForm().min_order_quantity"
+              (ngModelChange)="updateEditField('min_order_quantity', +$event)"
+            />
+            <small class="form-hint"
+              >Smallest quantity a customer must add to cart.</small
+            >
           </div>
           <div class="form-group">
             <label class="form-label">Prep Time Minutes</label>
-            <input class="form-input" type="number" min="0" [ngModel]="editForm().prep_time_minutes" (ngModelChange)="updateEditField('prep_time_minutes', +$event)">
+            <input
+              class="form-input"
+              type="number"
+              min="0"
+              placeholder="e.g. 15"
+              [ngModel]="editForm().prep_time_minutes"
+              (ngModelChange)="updateEditField('prep_time_minutes', +$event)"
+            />
+            <small class="form-hint"
+              >Estimated minutes needed before the item is ready for
+              pickup.</small
+            >
           </div>
         </div>
         <div class="form-row cols-3">
           <div class="form-group">
             <label class="form-label">Status</label>
-            <select class="form-input" [ngModel]="editForm().status" (ngModelChange)="updateEditField('status', $event)">
+            <select
+              class="form-input"
+              [ngModel]="editForm().status"
+              (ngModelChange)="updateEditField('status', $event)"
+            >
               <option value="active">Active</option>
               <option value="draft">Draft</option>
               <option value="sold_out">Sold Out</option>
               <option value="coming_soon">Coming Soon</option>
               <option value="archived">Archived</option>
             </select>
+            <small class="form-hint"
+              >Controls whether customers can see or buy this product.</small
+            >
           </div>
           <div class="form-group">
             <label class="toggle-card full">
-              <input type="checkbox" [ngModel]="editForm().is_available" (ngModelChange)="updateEditField('is_available', !!$event)">
+              <input
+                type="checkbox"
+                [ngModel]="editForm().is_available"
+                (ngModelChange)="updateEditField('is_available', !!$event)"
+              />
               <span>Available for sale</span>
             </label>
           </div>
           <div class="form-group">
             <label class="toggle-card full">
-              <input type="checkbox" [ngModel]="editForm().is_instant_delivery" (ngModelChange)="updateEditField('is_instant_delivery', !!$event)">
+              <input
+                type="checkbox"
+                [ngModel]="editForm().is_instant_delivery"
+                (ngModelChange)="
+                  updateEditField('is_instant_delivery', !!$event)
+                "
+              />
               <span>Instant delivery</span>
             </label>
           </div>
           <div class="form-group">
             <label class="toggle-card full">
-              <input type="checkbox" [ngModel]="editForm().is_scheduled_delivery" (ngModelChange)="updateEditField('is_scheduled_delivery', !!$event)">
+              <input
+                type="checkbox"
+                [ngModel]="editForm().is_scheduled_delivery"
+                (ngModelChange)="
+                  updateEditField('is_scheduled_delivery', !!$event)
+                "
+              />
               <span>Scheduled delivery</span>
             </label>
           </div>
@@ -105,76 +207,226 @@
         <div class="form-row cols-3">
           <div class="form-group">
             <label class="form-label">Product Name *</label>
-            <input class="form-input" [ngModel]="editForm().name" (ngModelChange)="updateEditField('name', $event)">
+            <input
+              class="form-input"
+              placeholder="e.g. Whole wheat bread"
+              [ngModel]="editForm().name"
+              (ngModelChange)="updateEditField('name', $event)"
+            />
+            <small class="form-hint"
+              >Use the exact customer-facing product name.</small
+            >
           </div>
           <div class="form-group">
             <label class="form-label">Brand</label>
-            <input class="form-input" [ngModel]="editForm().brand" (ngModelChange)="updateEditField('brand', $event)">
+            <input
+              class="form-input"
+              placeholder="e.g. Britannia or House Brand"
+              [ngModel]="editForm().brand"
+              (ngModelChange)="updateEditField('brand', $event)"
+            />
+            <small class="form-hint"
+              >Manufacturer, maker, or your own store brand.</small
+            >
           </div>
           <div class="form-group">
             <label class="form-label">SKU</label>
-            <input class="form-input" [ngModel]="editForm().sku" (ngModelChange)="updateEditField('sku', $event)">
+            <input
+              class="form-input"
+              placeholder="e.g. BREAD-WHT-500"
+              [ngModel]="editForm().sku"
+              (ngModelChange)="updateEditField('sku', $event)"
+            />
+            <small class="form-hint"
+              >Optional internal code for your stock records.</small
+            >
           </div>
         </div>
         <div class="form-row cols-3">
           <div class="form-group">
             <label class="form-label">Quantity / Pack Size</label>
-            <input class="form-input" [ngModel]="editForm().weight" (ngModelChange)="updateEditField('weight', $event)">
+            <input
+              class="form-input"
+              placeholder="e.g. 500g, 1 loaf, 6 pcs"
+              [ngModel]="editForm().weight"
+              (ngModelChange)="updateEditField('weight', $event)"
+            />
+            <small class="form-hint"
+              >Visible pack size customers use to compare items.</small
+            >
           </div>
           <div class="form-group">
             <label class="form-label">Unit</label>
-            <input class="form-input" [ngModel]="editForm().unit" (ngModelChange)="updateEditField('unit', $event)">
+            <select
+              class="form-input form-select"
+              [ngModel]="editForm().unit"
+              (ngModelChange)="updateEditField('unit', $event)"
+            >
+              @for (unit of unitOptions; track unit.value) {
+                <option [value]="unit.value">{{ unit.label }}</option>
+              }
+            </select>
+            <small class="form-hint"
+              >Measurement unit for this product or pack.</small
+            >
           </div>
           <div class="form-group">
             <label class="form-label">Barcode</label>
-            <input class="form-input" [ngModel]="editForm().barcode" (ngModelChange)="updateEditField('barcode', $event)">
+            <input
+              class="form-input"
+              placeholder="e.g. 8901234567890"
+              [ngModel]="editForm().barcode"
+              (ngModelChange)="updateEditField('barcode', $event)"
+            />
+            <small class="form-hint"
+              >Optional barcode from the product package.</small
+            >
           </div>
         </div>
         <div class="form-group">
           <label class="form-label">Description</label>
-          <textarea class="form-input" rows="3" [ngModel]="editForm().description" (ngModelChange)="updateEditField('description', $event)"></textarea>
+          <textarea
+            class="form-input"
+            rows="3"
+            placeholder="Describe quality, size, flavor, or usage notes customers should know."
+            [ngModel]="editForm().description"
+            (ngModelChange)="updateEditField('description', $event)"
+          ></textarea>
+          <small class="form-hint"
+            >Short customer-facing details that help shoppers choose
+            confidently.</small
+          >
         </div>
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Ingredients</label>
-            <textarea class="form-input" rows="3" [ngModel]="editForm().ingredients" (ngModelChange)="updateEditField('ingredients', $event)"></textarea>
+            <textarea
+              class="form-input"
+              rows="3"
+              placeholder="e.g. Wheat flour, yeast, salt, sugar"
+              [ngModel]="editForm().ingredients"
+              (ngModelChange)="updateEditField('ingredients', $event)"
+            ></textarea>
+            <small class="form-hint"
+              >List ingredients when relevant for food, grocery, or packaged
+              items.</small
+            >
           </div>
           <div class="form-group">
             <label class="form-label">Compliance Notes</label>
-            <textarea class="form-input" rows="3" [ngModel]="editForm().compliance_notes" (ngModelChange)="updateEditField('compliance_notes', $event)"></textarea>
+            <textarea
+              class="form-input"
+              rows="3"
+              placeholder="e.g. FSSAI license, storage rule, expiry proof"
+              [ngModel]="editForm().compliance_notes"
+              (ngModelChange)="updateEditField('compliance_notes', $event)"
+            ></textarea>
+            <small class="form-hint"
+              >Admin review notes such as licenses, sourcing, or safety
+              information.</small
+            >
           </div>
         </div>
         <div class="form-row cols-3">
           <div class="form-group">
             <label class="form-label">Allergens</label>
-            <input class="form-input" [ngModel]="editForm().allergens" (ngModelChange)="updateEditField('allergens', $event)">
+            <input
+              class="form-input"
+              placeholder="e.g. Milk, nuts, gluten"
+              [ngModel]="editForm().allergens"
+              (ngModelChange)="updateEditField('allergens', $event)"
+            />
+            <small class="form-hint"
+              >Mention ingredients that may cause allergies.</small
+            >
           </div>
           <div class="form-group">
             <label class="form-label">Shelf Life</label>
-            <input class="form-input" [ngModel]="editForm().shelf_life" (ngModelChange)="updateEditField('shelf_life', $event)">
+            <input
+              class="form-input"
+              placeholder="e.g. 3 days refrigerated"
+              [ngModel]="editForm().shelf_life"
+              (ngModelChange)="updateEditField('shelf_life', $event)"
+            />
+            <small class="form-hint"
+              >How long the item stays usable after purchase or
+              preparation.</small
+            >
           </div>
           <div class="form-group">
             <label class="form-label">Packaging Instructions</label>
-            <input class="form-input" [ngModel]="editForm().packaging_instructions" (ngModelChange)="updateEditField('packaging_instructions', $event)">
+            <input
+              class="form-input"
+              placeholder="e.g. Seal in paper bag, keep upright"
+              [ngModel]="editForm().packaging_instructions"
+              (ngModelChange)="
+                updateEditField('packaging_instructions', $event)
+              "
+            />
+            <small class="form-hint"
+              >Instructions your team should follow before handoff.</small
+            >
           </div>
         </div>
         <div class="toggle-grid">
-          <label class="toggle-card"><input type="checkbox" [ngModel]="editForm().is_perishable" (ngModelChange)="updateEditField('is_perishable', !!$event)"><span>Perishable</span></label>
-          <label class="toggle-card"><input type="checkbox" [ngModel]="editForm().requires_cold_storage" (ngModelChange)="updateEditField('requires_cold_storage', !!$event)"><span>Cold storage</span></label>
-          <label class="toggle-card"><input type="checkbox" [ngModel]="editForm().is_fragile" (ngModelChange)="updateEditField('is_fragile', !!$event)"><span>Fragile</span></label>
-          <label class="toggle-card"><input type="checkbox" [ngModel]="editForm().is_age_restricted" (ngModelChange)="updateEditField('is_age_restricted', !!$event)"><span>Age restricted</span></label>
-          <label class="toggle-card"><input type="checkbox" [ngModel]="editForm().is_returnable" (ngModelChange)="updateEditField('is_returnable', !!$event)"><span>Returnable</span></label>
+          <label class="toggle-card"
+            ><input
+              type="checkbox"
+              [ngModel]="editForm().is_perishable"
+              (ngModelChange)="updateEditField('is_perishable', !!$event)"
+            /><span>Perishable</span></label
+          >
+          <label class="toggle-card"
+            ><input
+              type="checkbox"
+              [ngModel]="editForm().requires_cold_storage"
+              (ngModelChange)="
+                updateEditField('requires_cold_storage', !!$event)
+              "
+            /><span>Cold storage</span></label
+          >
+          <label class="toggle-card"
+            ><input
+              type="checkbox"
+              [ngModel]="editForm().is_fragile"
+              (ngModelChange)="updateEditField('is_fragile', !!$event)"
+            /><span>Fragile</span></label
+          >
+          <label class="toggle-card"
+            ><input
+              type="checkbox"
+              [ngModel]="editForm().is_age_restricted"
+              (ngModelChange)="updateEditField('is_age_restricted', !!$event)"
+            /><span>Age restricted</span></label
+          >
+          <label class="toggle-card"
+            ><input
+              type="checkbox"
+              [ngModel]="editForm().is_returnable"
+              (ngModelChange)="updateEditField('is_returnable', !!$event)"
+            /><span>Returnable</span></label
+          >
         </div>
       </div>
     </div>
     <div class="form-row">
-      <button class="btn-primary" type="button" (click)="saveEditProduct()" [disabled]="submitting()">
-        {{ submitting() ? 'Saving...' : 'Save Changes' }}
+      <button
+        class="btn-primary"
+        type="button"
+        (click)="saveEditProduct()"
+        [disabled]="submitting()"
+      >
+        {{ submitting() ? "Saving..." : "Save Changes" }}
       </button>
       @if (canSubmitEditForApproval()) {
-        <button class="btn-outline approval-action" type="button" (click)="submitEditProductForApproval()" [disabled]="submitting()">
+        <button
+          class="btn-outline approval-action"
+          type="button"
+          (click)="submitEditProductForApproval()"
+          [disabled]="submitting()"
+        >
           <span class="material-icons-outlined">approval</span>
-          {{ submitting() ? 'Submitting...' : 'Submit For Approval' }}
+          {{ submitting() ? "Submitting..." : "Submit For Approval" }}
         </button>
       }
     </div>
@@ -185,7 +437,10 @@
           <div class="wizard-hero-copy">
             <span class="eyebrow">Catalog inheritance workflow</span>
             <h2>Build vendor-ready variants from approved catalog items.</h2>
-            <p>Pick base products first, then customize one variant at a time before final validation and approval.</p>
+            <p>
+              Pick base products first, then customize one variant at a time
+              before final validation and approval.
+            </p>
           </div>
           <div class="wizard-summary">
             <div class="summary-stat">
@@ -225,7 +480,29 @@
           <div class="card-header"><h3>Catalog Select</h3></div>
           <div class="card-body">
             <div class="selection-toolbar">
-              <input class="form-input" type="search" [ngModel]="catalogSearch()" (ngModelChange)="catalogSearch.set($event)" placeholder="Search catalog items">
+              <div class="catalog-search-wrap">
+                <input
+                  class="form-input"
+                  type="search"
+                  [ngModel]="catalogSearch()"
+                  (ngModelChange)="onCatalogSearch($event)"
+                  placeholder="Search by product, brand, barcode, or category"
+                />
+                @if (catalogSearch()) {
+                  <button
+                    type="button"
+                    class="catalog-search-clear"
+                    (click)="clearCatalogSearch()"
+                    aria-label="Clear catalog search"
+                  >
+                    <span class="material-icons-outlined">close</span>
+                  </button>
+                }
+                <small class="form-hint"
+                  >Find approved catalog items first, then create your
+                  store-specific variant.</small
+                >
+              </div>
               <div class="selection-count">
                 <strong>{{ selectedCatalogIds().length }}</strong>
                 <span>selected</span>
@@ -235,7 +512,11 @@
             @if (selectedCatalogProducts().length) {
               <div class="selected-catalog-list">
                 @for (item of selectedCatalogProducts(); track item.id) {
-                  <button type="button" class="selected-catalog-chip" (click)="toggleCatalogSelection(item.id, false)">
+                  <button
+                    type="button"
+                    class="selected-catalog-chip"
+                    (click)="toggleCatalogSelection(item.id, false)"
+                  >
                     <span>{{ item.name }}</span>
                     <span class="material-icons-outlined">close</span>
                   </button>
@@ -245,14 +526,39 @@
 
             <div class="catalog-multiselect">
               @if (catalogLoading()) {
-                <div class="catalog-option muted">Loading approved items...</div>
+                <div class="catalog-option muted">
+                  Loading approved items...
+                </div>
+              } @else if (filteredCatalogProducts().length === 0) {
+                <div class="catalog-option muted">
+                  {{
+                    catalogSearch()
+                      ? "No master catalog items match your search."
+                      : "No master catalog items are available yet."
+                  }}
+                </div>
               } @else {
                 @for (item of filteredCatalogProducts(); track item.id) {
-                  <label class="catalog-option" [class.selected]="isCatalogSelected(item.id)">
-                    <input type="checkbox" [checked]="isCatalogSelected(item.id)" (change)="toggleCatalogSelection(item.id, $any($event.target).checked)">
+                  <label
+                    class="catalog-option"
+                    [class.selected]="isCatalogSelected(item.id)"
+                  >
+                    <input
+                      type="checkbox"
+                      [checked]="isCatalogSelected(item.id)"
+                      (change)="
+                        toggleCatalogSelection(
+                          item.id,
+                          $any($event.target).checked
+                        )
+                      "
+                    />
                     <span class="catalog-option-main">
                       <strong>{{ item.name }}</strong>
-                      <small>{{ item.brand || 'No brand' }} | {{ item.category?.name || 'No category' }}</small>
+                      <small
+                        >{{ item.brand || "No brand" }} |
+                        {{ item.category?.name || "No category" }}</small
+                      >
                     </span>
                   </label>
                 }
@@ -261,8 +567,13 @@
 
             <div class="wizard-actions top-only">
               <a class="btn-outline" routerLink="/products">Cancel</a>
-              <button class="btn-primary" type="button" (click)="startStepper()" [disabled]="!canStartStepper()">
-                {{ creatingDrafts() ? 'Preparing...' : 'Create Variant Steps' }}
+              <button
+                class="btn-primary"
+                type="button"
+                (click)="startStepper()"
+                [disabled]="!canStartStepper()"
+              >
+                {{ creatingDrafts() ? "Preparing..." : "Create Variant Steps" }}
               </button>
             </div>
           </div>
@@ -271,49 +582,151 @@
 
       @if (currentVariant()) {
         <div class="card">
-          <div class="card-header"><h3>{{ currentVariant()!.catalog_product?.name || currentVariant()!.name }}</h3></div>
+          <div class="card-header">
+            <h3>
+              {{
+                currentVariant()!.catalog_product?.name ||
+                  currentVariant()!.name
+              }}
+            </h3>
+          </div>
           <div class="card-body">
             <div class="variant-intro">
-              <p>Customize this vendor-specific variant without changing the master catalog item.</p>
+              <p>
+                Customize this vendor-specific variant without changing the
+                master catalog item.
+              </p>
               <div class="variant-intro-actions">
-                <button class="btn-outline compact" type="button" (click)="duplicateVariant(currentVariant()!)">Duplicate This Item</button>
+                <button
+                  class="btn-outline compact"
+                  type="button"
+                  (click)="duplicateVariant(currentVariant()!)"
+                >
+                  Duplicate This Item
+                </button>
                 <button
                   class="btn-outline compact danger-action"
                   type="button"
                   (click)="removeVariant(currentVariant()!)"
                   [disabled]="deletingVariantId() === currentVariant()!.id"
                 >
-                  {{ deletingVariantId() === currentVariant()!.id ? 'Removing...' : 'Remove This Variant' }}
+                  {{
+                    deletingVariantId() === currentVariant()!.id
+                      ? "Removing..."
+                      : "Remove This Variant"
+                  }}
                 </button>
               </div>
             </div>
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label">Brand</label>
-                <input class="form-input" [ngModel]="currentVariant()!.brand" (ngModelChange)="updateVariantField(currentVariant()!, 'brand', $event)">
+                <input
+                  class="form-input"
+                  placeholder="e.g. Amul, Local bakery, House Brand"
+                  [ngModel]="currentVariant()!.brand"
+                  (ngModelChange)="
+                    updateVariantField(currentVariant()!, 'brand', $event)
+                  "
+                />
+                <small class="form-hint"
+                  >Use the brand customers will recognize for this
+                  variant.</small
+                >
               </div>
               <div class="form-group">
                 <label class="form-label">Unit</label>
-                <input class="form-input" [ngModel]="currentVariant()!.unit" (ngModelChange)="updateVariantField(currentVariant()!, 'unit', $event)">
+                <select
+                  class="form-input form-select"
+                  [ngModel]="currentVariant()!.unit"
+                  (ngModelChange)="
+                    updateVariantField(currentVariant()!, 'unit', $event)
+                  "
+                >
+                  @for (unit of unitOptions; track unit.value) {
+                    <option [value]="unit.value">{{ unit.label }}</option>
+                  }
+                </select>
+                <small class="form-hint"
+                  >Measurement unit used with price and stock.</small
+                >
               </div>
             </div>
             <div class="form-row cols-3">
               <div class="form-group">
                 <label class="form-label">Quantity / Pack Size</label>
-                <input class="form-input" [ngModel]="currentVariant()!.weight" (ngModelChange)="updateVariantField(currentVariant()!, 'weight', $event)">
+                <input
+                  class="form-input"
+                  placeholder="e.g. 500g, 1 loaf, 6 pcs"
+                  [ngModel]="currentVariant()!.weight"
+                  (ngModelChange)="
+                    updateVariantField(currentVariant()!, 'weight', $event)
+                  "
+                />
+                <small class="form-hint"
+                  >Pack size customers see before buying.</small
+                >
               </div>
               <div class="form-group">
                 <label class="form-label">Price</label>
-                <input class="form-input" type="number" min="0" [ngModel]="currentVariant()!.price" (ngModelChange)="updateVariantField(currentVariant()!, 'price', $event)">
+                <input
+                  class="form-input"
+                  type="number"
+                  min="0"
+                  placeholder="e.g. 120"
+                  [ngModel]="currentVariant()!.price"
+                  (ngModelChange)="
+                    updateVariantField(currentVariant()!, 'price', $event)
+                  "
+                />
+                <small class="form-hint"
+                  >Your selling price for this exact variant.</small
+                >
               </div>
               <div class="form-group">
                 <label class="form-label">Stock</label>
-                <input class="form-input" type="number" min="0" [ngModel]="currentVariant()!.stock" (ngModelChange)="updateVariantField(currentVariant()!, 'stock', $event)">
+                <input
+                  class="form-input"
+                  type="number"
+                  min="0"
+                  placeholder="e.g. 25"
+                  [ngModel]="currentVariant()!.stock"
+                  (ngModelChange)="
+                    updateVariantField(currentVariant()!, 'stock', $event)
+                  "
+                />
+                <small class="form-hint"
+                  >How many units are ready to sell now.</small
+                >
               </div>
             </div>
             <div class="wizard-actions">
-              <button class="btn-outline" type="button" (click)="prevStep()">Back</button>
-              <button class="btn-primary" type="button" (click)="nextStep()">Next Variant</button>
+              @if (fieldError(currentVariant()!.id, "name")) {
+                <div class="field-error full">
+                  {{ fieldError(currentVariant()!.id, "name") }}
+                </div>
+              }
+              @if (fieldError(currentVariant()!.id, "price")) {
+                <div class="field-error full">
+                  {{ fieldError(currentVariant()!.id, "price") }}
+                </div>
+              }
+              @if (fieldError(currentVariant()!.id, "stock")) {
+                <div class="field-error full">
+                  {{ fieldError(currentVariant()!.id, "stock") }}
+                </div>
+              }
+              <button class="btn-outline" type="button" (click)="prevStep()">
+                Back
+              </button>
+              <button
+                class="btn-primary"
+                type="button"
+                (click)="nextStep()"
+                [disabled]="hasPendingSaves()"
+              >
+                {{ hasPendingSaves() ? "Saving..." : "Next Variant" }}
+              </button>
             </div>
           </div>
         </div>
@@ -327,25 +740,54 @@
               <div class="review-row">
                 <div>
                   <strong>{{ variant.catalog_product?.name }}</strong>
-                  <span>Brand: {{ variant.brand || '-' }} | Qty: {{ variant.weight || '-' }} | Price: {{ variant.price }} | Stock: {{ variant.stock }}</span>
+                  <span
+                    >Brand: {{ variant.brand || "-" }} | Qty:
+                    {{ variant.weight || "-" }} | Price: {{ variant.price }} |
+                    Stock: {{ variant.stock }}</span
+                  >
                 </div>
                 <div class="review-actions">
-                  <button class="btn-outline compact" type="button" (click)="goToStep($index + 1)">Edit</button>
+                  <button
+                    class="btn-outline compact"
+                    type="button"
+                    (click)="goToStep($index + 1)"
+                  >
+                    Edit
+                  </button>
                   <button
                     class="btn-outline compact danger-action"
                     type="button"
                     (click)="removeVariant(variant)"
                     [disabled]="deletingVariantId() === variant.id"
                   >
-                    {{ deletingVariantId() === variant.id ? 'Removing...' : 'Remove' }}
+                    {{
+                      deletingVariantId() === variant.id
+                        ? "Removing..."
+                        : "Remove"
+                    }}
                   </button>
                 </div>
               </div>
             }
             <div class="wizard-actions">
-              <button class="btn-outline" type="button" (click)="prevStep()">Back</button>
-              <button class="btn-primary" type="button" (click)="submitVariants()" [disabled]="saving()">
-                {{ saving() ? 'Submitting...' : 'Submit For Approval' }}
+              <button class="btn-outline" type="button" (click)="prevStep()">
+                Back
+              </button>
+              <button
+                class="btn-outline danger-action"
+                type="button"
+                (click)="discardDrafts()"
+                [disabled]="saving()"
+              >
+                Discard Drafts
+              </button>
+              <button
+                class="btn-primary"
+                type="button"
+                (click)="submitVariants()"
+                [disabled]="saving()"
+              >
+                {{ saving() ? "Submitting..." : "Submit For Approval" }}
               </button>
             </div>
           </div>

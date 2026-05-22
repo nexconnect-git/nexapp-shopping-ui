@@ -1,24 +1,43 @@
-<div class="admin-workspace delivery-partners-workspace">
+<div class="saas-page admin-workspace delivery-partners-workspace">
   <section class="admin-page-hero">
     <div class="admin-page-copy">
       <span class="eyebrow">Dispatch fleet</span>
       <h1 class="page-title">Delivery Partners</h1>
-      <p>{{ total() }} partners registered across approval, availability, and delivery capacity.</p>
+      <p>
+        {{ total() }} partners registered across approval, availability, and
+        delivery capacity.
+      </p>
     </div>
     <div class="admin-page-actions">
       <div class="reload-bar">
-      @if (lastRefreshed()) {
-        <span class="reload-timestamp">Updated {{ lastRefreshed() | date:'HH:mm:ss' }}</span>
-      }
-      <button class="btn btn-ghost btn-sm" (click)="manualReload()" [disabled]="loading()" title="Reload">
-        <span class="material-icons-outlined" [class.spin]="loading()">refresh</span>
-      </button>
-      <button class="btn btn-sm" [class.btn-ghost]="!autoReload()" [class.btn-primary-soft]="autoReload()"
-              (click)="toggleAutoReload()" title="Toggle auto-reload every 15 s">
-        <span class="material-icons-outlined">{{ autoReload() ? 'pause_circle' : 'play_circle' }}</span>
-        {{ autoReload() ? 'Auto' : 'Paused' }}
-      </button>
-    </div>
+        @if (lastRefreshed()) {
+          <span class="reload-timestamp"
+            >Updated {{ lastRefreshed() | date: "HH:mm:ss" }}</span
+          >
+        }
+        <button
+          class="btn btn-ghost btn-sm"
+          (click)="manualReload()"
+          [disabled]="loading()"
+          title="Reload"
+        >
+          <span class="material-icons-outlined" [class.spin]="loading()"
+            >refresh</span
+          >
+        </button>
+        <button
+          class="btn btn-sm"
+          [class.btn-ghost]="!autoReload()"
+          [class.btn-primary-soft]="autoReload()"
+          (click)="toggleAutoReload()"
+          title="Toggle auto-reload every 15 s"
+        >
+          <span class="material-icons-outlined">{{
+            autoReload() ? "pause_circle" : "play_circle"
+          }}</span>
+          {{ autoReload() ? "Auto" : "Paused" }}
+        </button>
+      </div>
       <a class="btn btn-primary" routerLink="/delivery-partners/onboard">
         <span class="material-icons-outlined">person_add</span>
         Onboard Partner
@@ -27,28 +46,37 @@
   </section>
 
   <section class="admin-toolbar">
-      <label class="toolbar-search">
-        <span class="material-icons-outlined">search</span>
-        <input class="filter-input" type="search" [(ngModel)]="search"
-          (input)="onSearch()" placeholder="Search by name, email...">
-      </label>
-      <label class="toolbar-field">
-        <span>Approval</span>
-        <select class="filter-input" [(ngModel)]="approvedFilter" (change)="load()">
-          <option value="">All</option>
-          <option value="true">Approved</option>
-          <option value="false">Pending Approval</option>
-        </select>
-      </label>
-      <label class="toolbar-field">
-        <span>Status</span>
-        <select class="filter-input" [(ngModel)]="statusFilter" (change)="load()">
-          <option value="">All Status</option>
-          <option value="offline">Offline</option>
-          <option value="available">Available</option>
-          <option value="on_delivery">On Delivery</option>
-        </select>
-      </label>
+    <label class="toolbar-search">
+      <span class="material-icons-outlined">search</span>
+      <input
+        class="filter-input"
+        type="search"
+        [(ngModel)]="search"
+        (input)="onSearch()"
+        placeholder="Search by name, email..."
+      />
+    </label>
+    <label class="toolbar-field">
+      <span>Approval</span>
+      <select
+        class="filter-input"
+        [(ngModel)]="approvedFilter"
+        (change)="load()"
+      >
+        <option value="">All</option>
+        <option value="true">Approved</option>
+        <option value="false">Pending Approval</option>
+      </select>
+    </label>
+    <label class="toolbar-field">
+      <span>Status</span>
+      <select class="filter-input" [(ngModel)]="statusFilter" (change)="load()">
+        <option value="">All Status</option>
+        <option value="offline">Offline</option>
+        <option value="available">Available</option>
+        <option value="on_delivery">On Delivery</option>
+      </select>
+    </label>
   </section>
 
   <app-dynamic-table
@@ -68,9 +96,13 @@
     <!-- Custom partner column -->
     <ng-template tableCell="partner" let-p>
       <div class="partner-cell">
-        <div class="partner-thumb">{{ (p.user?.first_name || p.user?.username || '?')[0].toUpperCase() }}</div>
+        <div class="partner-thumb">
+          {{ (p.user?.first_name || p.user?.username || "?")[0].toUpperCase() }}
+        </div>
         <div>
-          <p class="partner-name">{{ p.user?.first_name }} {{ p.user?.last_name }}</p>
+          <p class="partner-name">
+            {{ p.user?.first_name }} {{ p.user?.last_name }}
+          </p>
           <p class="partner-user text-muted text-sm">{{ p.user?.username }}</p>
         </div>
       </div>
@@ -98,7 +130,12 @@
 
     <!-- Custom approved column -->
     <ng-template tableCell="approved" let-p>
-      <span class="badge" [class.badge-approved]="p.is_approved" [class.badge-pending]="!p.is_approved">{{ p.is_approved ? 'Approved' : 'Pending' }}</span>
+      <span
+        class="badge"
+        [class.badge-approved]="p.is_approved"
+        [class.badge-pending]="!p.is_approved"
+        >{{ p.is_approved ? "Approved" : "Pending" }}</span
+      >
     </ng-template>
 
     <!-- Custom actions column -->
@@ -108,15 +145,29 @@
           <span class="material-icons-outlined">edit</span>
         </button>
         @if (!p.is_approved) {
-          <button class="action-btn approve" [disabled]="actionId() === p.id" (click)="approve(p)" title="Approve">
+          <button
+            class="action-btn approve"
+            [disabled]="actionId() === p.id"
+            (click)="approve(p)"
+            title="Approve"
+          >
             <span class="material-icons-outlined">check_circle</span>
           </button>
         } @else {
-          <button class="action-btn reject" [disabled]="actionId() === p.id" (click)="reject(p)" title="Revoke">
+          <button
+            class="action-btn reject"
+            [disabled]="actionId() === p.id"
+            (click)="reject(p)"
+            title="Revoke"
+          >
             <span class="material-icons-outlined">cancel</span>
           </button>
         }
-        <button class="action-btn danger" (click)="deletePartner(p)" title="Delete">
+        <button
+          class="action-btn danger"
+          (click)="deletePartner(p)"
+          title="Delete"
+        >
           <span class="material-icons-outlined">delete_outline</span>
         </button>
       </div>
@@ -135,7 +186,10 @@
           <div class="form-row">
             <div class="form-group">
               <label class="input-label">Vehicle Type</label>
-              <select class="input-field" [(ngModel)]="editModel().vehicle_type">
+              <select
+                class="input-field"
+                [(ngModel)]="editModel().vehicle_type"
+              >
                 <option value="bicycle">Bicycle</option>
                 <option value="motorcycle">Motorcycle</option>
                 <option value="car">Car</option>
@@ -154,24 +208,38 @@
           <div class="form-row">
             <div class="form-group">
               <label class="input-label">Vehicle Number</label>
-              <input class="input-field" type="text" [(ngModel)]="editModel().vehicle_number">
+              <input
+                class="input-field"
+                type="text"
+                [(ngModel)]="editModel().vehicle_number"
+              />
             </div>
             <div class="form-group">
               <label class="input-label">License Number</label>
-              <input class="input-field" type="text" [(ngModel)]="editModel().license_number">
+              <input
+                class="input-field"
+                type="text"
+                [(ngModel)]="editModel().license_number"
+              />
             </div>
           </div>
           <div class="form-group">
-            <label class="checkbox-label" style="margin-top: 0.5rem;">
-              <input type="checkbox" [(ngModel)]="editModel().is_approved">
+            <label class="checkbox-label" style="margin-top: 0.5rem">
+              <input type="checkbox" [(ngModel)]="editModel().is_approved" />
               Approved
             </label>
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-secondary" (click)="closeModal()">Cancel</button>
-          <button class="btn btn-primary" [disabled]="saving()" (click)="savePartner()">
-            {{ saving() ? 'Saving...' : 'Save Changes' }}
+          <button class="btn btn-secondary" (click)="closeModal()">
+            Cancel
+          </button>
+          <button
+            class="btn btn-primary"
+            [disabled]="saving()"
+            (click)="savePartner()"
+          >
+            {{ saving() ? "Saving..." : "Save Changes" }}
           </button>
         </div>
       </div>
@@ -184,7 +252,9 @@
       <div class="modal-content" (click)="$event.stopPropagation()">
         <div class="modal-header">
           <h2>Onboard Delivery Partner</h2>
-          <button class="close-btn" (click)="closeCreateModal()">&times;</button>
+          <button class="close-btn" (click)="closeCreateModal()">
+            &times;
+          </button>
         </div>
         <div class="modal-body">
           @if (createError()) {
@@ -193,34 +263,72 @@
           <div class="form-row">
             <div class="form-group">
               <label class="input-label">First Name</label>
-              <input class="input-field" type="text" [(ngModel)]="createForm.first_name" placeholder="First name">
+              <input
+                class="input-field"
+                type="text"
+                [(ngModel)]="createForm.first_name"
+                placeholder="First name"
+              />
             </div>
             <div class="form-group">
               <label class="input-label">Last Name</label>
-              <input class="input-field" type="text" [(ngModel)]="createForm.last_name" placeholder="Last name">
+              <input
+                class="input-field"
+                type="text"
+                [(ngModel)]="createForm.last_name"
+                placeholder="Last name"
+              />
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label class="input-label">Username <span class="required">*</span></label>
-              <input class="input-field" type="text" [(ngModel)]="createForm.username" placeholder="username">
+              <label class="input-label"
+                >Username <span class="required">*</span></label
+              >
+              <input
+                class="input-field"
+                type="text"
+                [(ngModel)]="createForm.username"
+                placeholder="username"
+              />
             </div>
             <div class="form-group">
               <label class="input-label">Phone</label>
-              <input class="input-field" type="tel" [(ngModel)]="createForm.phone" placeholder="+1234567890">
+              <input
+                class="input-field"
+                type="tel"
+                [(ngModel)]="createForm.phone"
+                placeholder="+1234567890"
+              />
             </div>
           </div>
           <div class="form-group">
-            <label class="input-label">Email <span class="required">*</span></label>
-            <input class="input-field" type="email" [(ngModel)]="createForm.email" placeholder="email@example.com">
+            <label class="input-label"
+              >Email <span class="required">*</span></label
+            >
+            <input
+              class="input-field"
+              type="email"
+              [(ngModel)]="createForm.email"
+              placeholder="email@example.com"
+            />
           </div>
           <div class="form-group">
-            <label class="input-label">Temporary Password <span class="required">*</span></label>
-            <input class="input-field" type="password" [(ngModel)]="createForm.password" placeholder="Min 8 characters">
+            <label class="input-label"
+              >Temporary Password <span class="required">*</span></label
+            >
+            <input
+              class="input-field"
+              type="password"
+              [(ngModel)]="createForm.password"
+              placeholder="Min 8 characters"
+            />
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label class="input-label">Vehicle Type <span class="required">*</span></label>
+              <label class="input-label"
+                >Vehicle Type <span class="required">*</span></label
+              >
               <select class="input-field" [(ngModel)]="createForm.vehicle_type">
                 <option value="">Select type</option>
                 <option value="bicycle">Bicycle</option>
@@ -231,18 +339,36 @@
             </div>
             <div class="form-group">
               <label class="input-label">Vehicle Number</label>
-              <input class="input-field" type="text" [(ngModel)]="createForm.vehicle_number" placeholder="Plate number">
+              <input
+                class="input-field"
+                type="text"
+                [(ngModel)]="createForm.vehicle_number"
+                placeholder="Plate number"
+              />
             </div>
           </div>
           <div class="form-group">
-            <label class="input-label">License Number <span class="required">*</span></label>
-            <input class="input-field" type="text" [(ngModel)]="createForm.license_number" placeholder="Driver's license">
+            <label class="input-label"
+              >License Number <span class="required">*</span></label
+            >
+            <input
+              class="input-field"
+              type="text"
+              [(ngModel)]="createForm.license_number"
+              placeholder="Driver's license"
+            />
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-secondary" (click)="closeCreateModal()">Cancel</button>
-          <button class="btn btn-primary" [disabled]="creating()" (click)="onCreatePartner()">
-            {{ creating() ? 'Creating...' : 'Create Partner' }}
+          <button class="btn btn-secondary" (click)="closeCreateModal()">
+            Cancel
+          </button>
+          <button
+            class="btn btn-primary"
+            [disabled]="creating()"
+            (click)="onCreatePartner()"
+          >
+            {{ creating() ? "Creating..." : "Create Partner" }}
           </button>
         </div>
       </div>

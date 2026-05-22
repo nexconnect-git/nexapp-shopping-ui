@@ -1,202 +1,30 @@
-<section class="referral-page">
-  <div class="referral-shell">
-    <div class="referral-intro">
-      <button class="ref-back" (click)="goBack()">
-        <span class="material-icons-outlined">arrow_back</span>
-      </button>
+<main class="fd-content">
+  <section class="referral">
+    <div class="hero">
       <div>
-        <span class="ref-kicker">Growth circle</span>
-        <h1>Invite friends. Earn delivery points. Keep the next order lighter.</h1>
-        <p>Share your code with friends nearby and get rewarded once they complete their first qualifying order.</p>
+        <h1>{{ content.referral().title }} {{ 100 | appCurrency }}</h1>
+        <p>{{ content.referral().subtitle }}</p>
+        <button type="button" class="fd-btn primary" (click)="copy()">
+          {{ content.referral().ctaLabel }}
+        </button>
       </div>
+      <span class="material-symbols-rounded">redeem</span>
     </div>
-
-    @if (loading()) {
-      <div class="ref-loading-grid">
-        @for (n of [1,2,3,4]; track n) {
-          <div class="ref-skel shimmer"></div>
-        }
-      </div>
-    } @else {
-      <div class="referral-grid">
-        <section class="referral-main-card">
-          <div class="hero-badge">
-            <span class="material-icons-outlined">bolt</span>
-            Referral rewards
-          </div>
-
-          <div class="hero-head">
-            <div>
-              <h2>Earn {{ bonusPerReferral() }} points for every successful referral</h2>
-              <p>Friends sign up, apply your code, and place an eligible first order. You get rewarded automatically.</p>
-            </div>
-            <div class="hero-stat-orb">
-              <strong>+{{ bonusPerReferral() }}</strong>
-              <span>pts each</span>
-            </div>
-          </div>
-
-          <div class="hero-metrics">
-            <article>
-              <strong>{{ totalReferrals() }}</strong>
-              <span>Friends invited</span>
-            </article>
-            <article>
-              <strong>{{ pointsEarned() }}</strong>
-              <span>Total points earned</span>
-            </article>
-            <article>
-              <strong>{{ referrals().length }}</strong>
-              <span>Tracked referrals</span>
-            </article>
-          </div>
-
-          <div class="referral-code-panel">
-            <div>
-              <span class="panel-label">Your referral code</span>
-              <div class="ref-code">{{ referralCode() }}</div>
-              <p>Send this to friends so they can apply it during signup or from their referral page.</p>
-            </div>
-            <div class="ref-code-actions">
-              <button class="ref-btn ref-btn--soft" [class.copied]="copied()" (click)="copyCode()">
-                <span class="material-icons-outlined">{{ copied() ? 'check' : 'content_copy' }}</span>
-                {{ copied() ? 'Copied' : 'Copy code' }}
-              </button>
-              <button class="ref-btn ref-btn--solid" (click)="shareCode()">
-                <span class="material-icons-outlined">share</span>
-                Share invite
-              </button>
-            </div>
-          </div>
-        </section>
-
-        <aside class="referral-side">
-          <section class="side-card">
-            <span class="panel-label">Have a friend's code?</span>
-            <h3>Apply a referral invite</h3>
-            <p>Use a valid code before your first qualifying order to unlock the shared referral benefit.</p>
-
-            @if (alreadyApplied()) {
-              <div class="ref-apply-success">
-                <span class="material-icons-outlined">check_circle</span>
-                {{ applySuccess() || 'Code applied successfully!' }}
-              </div>
-            } @else {
-              @if (applyError()) {
-                <div class="ref-apply-error">{{ applyError() }}</div>
-              }
-              <div class="ref-apply-stack">
-                <input
-                  class="ref-apply-input"
-                  type="text"
-                  placeholder="Enter referral code"
-                  [(ngModel)]="applyCode"
-                  (keyup.enter)="submitApply()"
-                  [disabled]="applying()"
-                >
-                <button class="ref-apply-btn" [disabled]="!applyCode.trim() || applying()" (click)="submitApply()">
-                  @if (applying()) { <span class="ref-spinner"></span> } @else { Apply code }
-                </button>
-              </div>
-            }
-          </section>
-
-          <section class="side-card">
-            <span class="panel-label">How it works</span>
-            <div class="steps-list">
-              <article class="step-card">
-                <span>1</span>
-                <div>
-                  <strong>Share your invite</strong>
-                  <p>Copy or share your code with friends in your area.</p>
-                </div>
-              </article>
-              <article class="step-card">
-                <span>2</span>
-                <div>
-                  <strong>They sign up and apply it</strong>
-                  <p>Your friend registers and adds your code before their first eligible order.</p>
-                </div>
-              </article>
-              <article class="step-card">
-                <span>3</span>
-                <div>
-                  <strong>Rewards land automatically</strong>
-                  <p>Points are added after the first qualifying order is completed.</p>
-                </div>
-              </article>
-            </div>
-          </section>
-        </aside>
-
-        <section class="history-card">
-          <div class="history-head">
-            <div>
-              <span class="panel-label">Referral activity</span>
-              <h3>Your invited friends</h3>
-            </div>
-            <div class="history-chip">
-              {{ totalReferrals() }} total
-            </div>
-          </div>
-
-          @if (referrals().length > 0) {
-            <div class="ref-list">
-              @for (r of referrals(); track r.joined_at) {
-                <article class="ref-item">
-                  <div class="ref-item-avatar">
-                    <span class="material-icons-outlined">person</span>
-                  </div>
-                  <div class="ref-item-info">
-                    <strong>{{ r.name }}</strong>
-                    <span>Joined {{ r.joined_at | date:'mediumDate' }}</span>
-                  </div>
-                  <div class="ref-item-badge" [class.awarded]="r.bonus_awarded">
-                    @if (r.bonus_awarded) {
-                      <span class="material-icons-outlined">stars</span>
-                      +{{ bonusPerReferral() }} pts
-                    } @else {
-                      <span class="material-icons-outlined">schedule</span>
-                      Pending
-                    }
-                  </div>
-                </article>
-              }
-            </div>
-          } @else {
-            <div class="ref-empty">
-              <span class="material-icons-outlined">groups</span>
-              <h3>No referrals yet</h3>
-              <p>Share your code with friends and your successful invites will start showing up here.</p>
-              <button class="ref-btn ref-btn--solid" (click)="shareCode()">
-                <span class="material-icons-outlined">share</span>
-                Share my code
-              </button>
-            </div>
-          }
-        </section>
-
-        <section class="trust-card">
-          <span class="panel-label">Good to know</span>
-          <div class="trust-grid">
-            <article>
-              <span class="material-icons-outlined">verified</span>
-              <strong>Qualifying orders only</strong>
-              <p>Points are added after your friend’s first eligible order is completed successfully.</p>
-            </article>
-            <article>
-              <span class="material-icons-outlined">schedule</span>
-              <strong>Pending referrals stay visible</strong>
-              <p>You can track invites before rewards are awarded, so nothing feels lost in the process.</p>
-            </article>
-            <article>
-              <span class="material-icons-outlined">redeem</span>
-              <strong>Built for repeat ordering</strong>
-              <p>Referral rewards help bring the next grocery, pharmacy, or meal order a little closer.</p>
-            </article>
-          </div>
-        </section>
-      </div>
-    }
-  </div>
-</section>
+    <section class="fd-card code">
+      <small>{{ content.referral().codeTitle }}</small>
+      <h2>{{ code() || "Not available" }}</h2>
+      <button type="button" (click)="copy()">Tap to copy</button>
+    </section>
+    <section class="share-grid">
+      <button type="button" (click)="share('WhatsApp')">WhatsApp</button
+      ><button type="button" (click)="share('Telegram')">Telegram</button
+      ><button type="button" (click)="share('Share')">Share</button
+      ><button type="button" (click)="share('More')">More</button>
+    </section>
+    <section class="fd-card rewards">
+      <small>{{ content.referral().rewardsTitle }}</small>
+      <h2>{{ rewardAmount() | appCurrency }}</h2>
+      <p>{{ content.referral().rewardsSubtitle }}</p>
+    </section>
+  </section>
+</main>

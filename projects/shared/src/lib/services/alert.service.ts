@@ -54,7 +54,9 @@ export class AlertService {
   }
 
   dismissBanner(id: number) {
-    this.banners.update((current) => current.filter((banner) => banner.id !== id));
+    this.banners.update((current) =>
+      current.filter((banner) => banner.id !== id),
+    );
   }
 
   openModal(config: AlertModalConfig) {

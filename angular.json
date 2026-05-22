@@ -54,7 +54,8 @@
               }
             ],
             "styles": [
-              "src/styles.scss"
+              "src/styles.scss",
+              "projects/shared/src/styles/nexconnect-platform.css"
             ],
             "scripts": []
           },
@@ -111,6 +112,7 @@
               "zone.js/testing"
             ],
             "tsConfig": "tsconfig.spec.json",
+            "karmaConfig": "karma.conf.js",
             "inlineStyleLanguage": "scss",
             "assets": [
               {
@@ -119,9 +121,21 @@
               }
             ],
             "styles": [
-              "src/styles.scss"
+              "src/styles.scss",
+              "projects/shared/src/styles/nexconnect-platform.css"
             ],
             "scripts": []
+          }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "src/**/*.ts",
+              "src/**/*.html",
+              "projects/shared/src/**/*.ts",
+              "projects/shared/src/**/*.html"
+            ]
           }
         }
       }
@@ -174,10 +188,16 @@
               {
                 "glob": "**/*",
                 "input": "projects/customer-app/public"
+              },
+              {
+                "glob": "**/*",
+                "input": "projects/customer-app/src/assets",
+                "output": "/assets/"
               }
             ],
             "styles": [
-              "projects/customer-app/src/styles.scss"
+              "projects/customer-app/src/styles.scss",
+              "projects/shared/src/styles/nexconnect-platform.css"
             ],
             "scripts": [],
             "stylePreprocessorOptions": {
@@ -202,8 +222,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1MB"
+                  "maximumWarning": "650kB",
+                  "maximumError": "1.2MB"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -256,7 +276,7 @@
           },
           "defaultConfiguration": "development",
           "options": {
-            "proxyConfig": "proxy.conf.json"
+            "proxyConfig": "proxy.conf.js"
           }
         },
         "extract-i18n": {
@@ -270,17 +290,33 @@
               "zone.js/testing"
             ],
             "tsConfig": "projects/customer-app/tsconfig.spec.json",
+            "karmaConfig": "projects/customer-app/karma.conf.js",
             "inlineStyleLanguage": "scss",
             "assets": [
               {
                 "glob": "**/*",
                 "input": "projects/customer-app/public"
+              },
+              {
+                "glob": "**/*",
+                "input": "projects/customer-app/src/assets",
+                "output": "/assets/"
               }
             ],
             "styles": [
-              "projects/customer-app/src/styles.scss"
+              "projects/customer-app/src/styles.scss",
+              "projects/shared/src/styles/nexconnect-platform.css"
             ],
             "scripts": []
+          }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "projects/customer-app/src/**/*.ts",
+              "projects/customer-app/src/**/*.html"
+            ]
           }
         }
       }
@@ -336,7 +372,8 @@
               }
             ],
             "styles": [
-              "projects/vendor-app/src/styles.scss"
+              "projects/vendor-app/src/styles.scss",
+              "projects/shared/src/styles/nexconnect-platform.css"
             ],
             "scripts": [],
             "stylePreprocessorOptions": {
@@ -357,7 +394,7 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
+                  "maximumWarning": "550kB",
                   "maximumError": "1MB"
                 },
                 {
@@ -389,7 +426,7 @@
           },
           "defaultConfiguration": "development",
           "options": {
-            "proxyConfig": "proxy.conf.json"
+            "proxyConfig": "proxy.conf.js"
           }
         },
         "extract-i18n": {
@@ -412,7 +449,8 @@
               }
             ],
             "styles": [
-              "projects/vendor-app/src/styles.scss"
+              "projects/vendor-app/src/styles.scss",
+              "projects/shared/src/styles/nexconnect-platform.css"
             ],
             "scripts": [],
             "stylePreprocessorOptions": {
@@ -420,6 +458,15 @@
                 "projects/shared/src/styles"
               ]
             }
+          }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "projects/vendor-app/src/**/*.ts",
+              "projects/vendor-app/src/**/*.html"
+            ]
           }
         }
       }
@@ -475,7 +522,8 @@
               }
             ],
             "styles": [
-              "projects/delivery-app/src/styles.scss"
+              "projects/delivery-app/src/styles.scss",
+              "projects/shared/src/styles/nexconnect-platform.css"
             ],
             "scripts": [],
             "stylePreprocessorOptions": {
@@ -544,7 +592,7 @@
           },
           "defaultConfiguration": "development",
           "options": {
-            "proxyConfig": "proxy.conf.json"
+            "proxyConfig": "proxy.conf.js"
           }
         },
         "extract-i18n": {
@@ -558,6 +606,7 @@
               "zone.js/testing"
             ],
             "tsConfig": "projects/delivery-app/tsconfig.spec.json",
+            "karmaConfig": "projects/delivery-app/karma.conf.js",
             "inlineStyleLanguage": "scss",
             "assets": [
               {
@@ -566,9 +615,24 @@
               }
             ],
             "styles": [
-              "projects/delivery-app/src/styles.scss"
+              "projects/delivery-app/src/styles.scss",
+              "projects/shared/src/styles/nexconnect-platform.css"
             ],
-            "scripts": []
+            "scripts": [],
+            "stylePreprocessorOptions": {
+              "includePaths": [
+                "projects/shared/src/styles"
+              ]
+            }
+          }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "projects/delivery-app/src/**/*.ts",
+              "projects/delivery-app/src/**/*.html"
+            ]
           }
         }
       }
@@ -624,7 +688,8 @@
               }
             ],
             "styles": [
-              "projects/admin-panel/src/styles.scss"
+              "projects/admin-panel/src/styles.scss",
+              "projects/shared/src/styles/nexconnect-platform.css"
             ],
             "scripts": [],
             "stylePreprocessorOptions": {
@@ -645,7 +710,7 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
+                  "maximumWarning": "550kB",
                   "maximumError": "1MB"
                 },
                 {
@@ -677,7 +742,7 @@
           },
           "defaultConfiguration": "development",
           "options": {
-            "proxyConfig": "proxy.conf.json"
+            "proxyConfig": "proxy.conf.js"
           }
         },
         "extract-i18n": {
@@ -700,7 +765,8 @@
               }
             ],
             "styles": [
-              "projects/admin-panel/src/styles.scss"
+              "projects/admin-panel/src/styles.scss",
+              "projects/shared/src/styles/nexconnect-platform.css"
             ],
             "scripts": [],
             "stylePreprocessorOptions": {
@@ -708,6 +774,15 @@
                 "projects/shared/src/styles"
               ]
             }
+          }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "projects/admin-panel/src/**/*.ts",
+              "projects/admin-panel/src/**/*.html"
+            ]
           }
         }
       }

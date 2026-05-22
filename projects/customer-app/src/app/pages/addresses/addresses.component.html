@@ -1,164 +1,120 @@
-<section class="addresses-page">
-  <div class="addresses-hero">
+<main class="fd-content">
+  <fd-breadcrumbs [items]="[{ label: 'Addresses' }]" />
+  <div class="fd-page-header">
     <div>
-      <span class="page-kicker">Delivery setup</span>
-      <h1>Saved addresses</h1>
-      <p>Choose the address NexConnect should use for nearby stores, delivery estimates and checkout.</p>
+      <h1 class="fd-title">Saved Addresses</h1>
+      <p class="fd-subtitle">Manage your delivery locations</p>
     </div>
-    <button class="primary-btn" (click)="openForm()">Add address</button>
+    <button type="button" class="fd-btn primary" (click)="openModal()">
+      <span class="material-symbols-rounded">add</span> Add Address
+    </button>
   </div>
-
-  @if (loading()) {
-    <div class="addresses-loading"><div class="spinner"></div></div>
-  } @else {
-    @if (pageMessage()) {
-      <div class="notice-row success" role="status">
-        <span class="material-icons-outlined">check_circle</span>
-        <span>{{ pageMessage() }}</span>
-      </div>
-    }
-    @if (pageError()) {
-      <div class="notice-row error" role="alert">
-        <span class="material-icons-outlined">error_outline</span>
-        <span>{{ pageError() }}</span>
-      </div>
-    }
-
-    @if (addresses().length === 0 && !showForm()) {
-      <div class="empty-panel">
-        <span class="material-icons-outlined">location_off</span>
-        <h2>No delivery points saved yet.</h2>
-        <p>Add your first address so nearby stores can estimate distance and delivery fees correctly.</p>
-        <button class="primary-btn" (click)="openForm()">Add first address</button>
-      </div>
-    }
-
-    <div class="address-grid">
-      @for (addr of addresses(); track addr.id) {
-        <article
-          class="address-card"
-          [class.default]="addr.is_default"
-          tabindex="0"
-          role="button"
-          [attr.aria-pressed]="addr.is_default"
-          [attr.aria-label]="'Deliver to ' + addressSummary(addr)"
-          (click)="selectAddress(addr)"
-          (keydown)="onCardKeydown($event, addr)">
-          <div class="address-head">
-            <div>
-              <span class="label-chip">{{ displayLabel(addr) }}</span>
-              @if (addr.is_default) {
-                <span class="default-chip">Default</span>
-              }
-            </div>
-            <div class="card-actions">
-              <button type="button" (click)="editAddress(addr, $event)" aria-label="Edit address"><span class="material-icons-outlined">edit</span></button>
-              <button type="button" class="danger" (click)="deleteAddress(addr.id, $event)" aria-label="Delete address"><span class="material-icons-outlined">delete_outline</span></button>
-            </div>
-          </div>
-          <h2>{{ addr.full_name }}</h2>
-          <p>{{ addr.address_line1 }}@if (addr.address_line2) {, {{ addr.address_line2 }}}</p>
-          <p>{{ addr.city }}, {{ addr.state }} {{ addr.postal_code }}</p>
-          @if (addr.phone) {
-            <small>{{ addr.phone }}</small>
+  <section class="address-grid">
+    @for (address of addresses(); track address.id) {
+      <article class="fd-card">
+        <div class="top">
+          <span>{{ address.label }}</span>
+          @if (address.isDefault) {
+            <b>Default</b>
           }
-          <div class="address-card-foot">
-            @if (canUseForDelivery(addr)) {
-              <span><span class="material-icons-outlined">near_me</span>Ready for delivery estimates</span>
-            } @else {
-              <span class="warning"><span class="material-icons-outlined">location_searching</span>Pin this address on the map for accurate stores</span>
-            }
-            <button type="button" class="select-btn" [disabled]="selecting() === addr.id || addr.is_default">
-              @if (selecting() === addr.id) {
-                Selecting...
-              } @else if (addr.is_default) {
-                Selected
-              } @else {
-                Deliver here
-              }
-            </button>
-          </div>
-        </article>
-      }
-    </div>
-
-    @if (showForm()) {
-      <div class="dialog-backdrop" (click)="cancelForm()">
-        <div class="dialog-card" (click)="$event.stopPropagation()">
-          <div class="dialog-head">
-            <div>
-              <span class="page-kicker">{{ editing() ? 'Edit address' : 'New address' }}</span>
-              <h2>{{ editing() ? 'Update this delivery point' : 'Create a delivery point' }}</h2>
-            </div>
-            <button class="close-btn" (click)="cancelForm()"><span class="material-icons-outlined">close</span></button>
-          </div>
-
-          @if (formError()) {
-            <div class="error-row">{{ formError() }}</div>
-          }
-
-          <form class="address-form" (ngSubmit)="saveAddress()">
-            <div class="field-grid two">
-              <label>
-                <span>Label</span>
-                <select [(ngModel)]="form.label" name="label">
-                  <option value="home">Home</option>
-                  <option value="work">Work</option>
-                  <option value="other">Other</option>
-                </select>
-              </label>
-              <label>
-                <span>Default address</span>
-                <select [(ngModel)]="form.is_default" name="is_default">
-                  <option [ngValue]="false">No</option>
-                  <option [ngValue]="true">Yes</option>
-                </select>
-              </label>
-            </div>
-
-            @if (form.label === 'other') {
-              <label>
-                <span>Address name</span>
-                <input [(ngModel)]="form.landmark" name="landmark" placeholder="Eg: Mom's house, Hostel, Front gate" required>
-              </label>
-            }
-
-            <div class="field-grid two">
-              <label><span>Full name</span><input [(ngModel)]="form.full_name" name="full_name" required></label>
-              <label><span>Phone</span><input [(ngModel)]="form.phone" name="phone" type="tel"></label>
-            </div>
-
-            <div class="map-block">
-              <div class="map-head">
-                <span>Pin location on map</span>
-                <button type="button" class="ghost-btn" (click)="showMap.set(!showMap())">{{ showMap() ? 'Hide map' : 'Open map' }}</button>
-              </div>
-              @if (showMap()) {
-                <app-map-picker
-                  [height]="'240px'"
-                  [initialLat]="form.latitude || 6.5244"
-                  [initialLng]="form.longitude || 3.3792"
-                  (locationPicked)="onMapLocation($event)">
-                </app-map-picker>
-              }
-            </div>
-
-            <label><span>Address line 1</span><input [(ngModel)]="form.address_line1" name="address_line1" required></label>
-            <label><span>Address line 2</span><input [(ngModel)]="form.address_line2" name="address_line2"></label>
-
-            <div class="field-grid three">
-              <label><span>City</span><input [(ngModel)]="form.city" name="city" required></label>
-              <label><span>State</span><input [(ngModel)]="form.state" name="state"></label>
-              <label><span>Postal code</span><input [(ngModel)]="form.postal_code" name="postal_code"></label>
-            </div>
-
-            <div class="form-actions">
-              <button type="button" class="ghost-btn" (click)="cancelForm()">Cancel</button>
-              <button type="submit" class="primary-btn" [disabled]="saving()">{{ saving() ? 'Saving...' : (editing() ? 'Update address' : 'Save address') }}</button>
-            </div>
-          </form>
         </div>
-      </div>
+        <h3>{{ address.name }}</h3>
+        <p>{{ address.line }}</p>
+        <small>{{ address.phone }}</small>
+        <div class="actions">
+          <button type="button" (click)="edit(address)">Edit</button
+          ><button type="button" (click)="remove(address.id)">Remove</button
+          ><button type="button" (click)="makeDefault(address.id)">
+            Make Default
+          </button>
+        </div>
+      </article>
+    } @empty {
+      <section class="fd-card">
+        <h2>No addresses yet</h2>
+        <p>Add a delivery address to checkout faster.</p>
+      </section>
     }
+  </section>
+
+  @if (showModal()) {
+    <div class="modal">
+      <form class="fd-card" (submit)="save($event)">
+        <header class="modal-head">
+          <div>
+            <h2>{{ editing() ? "Edit Address" : "Add Address" }}</h2>
+            <p>
+              Pin the delivery location and complete the required address
+              details.
+            </p>
+          </div>
+          <button
+            type="button"
+            class="modal-close"
+            aria-label="Close address form"
+            (click)="showModal.set(false)"
+          >
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </header>
+        <input
+          class="fd-input"
+          placeholder="Address label, e.g. Home or Office"
+          [value]="form.label"
+          (input)="form.label = $any($event.target).value"
+        />
+        <input
+          class="fd-input"
+          placeholder="Receiver name"
+          [value]="form.name"
+          (input)="form.name = $any($event.target).value"
+        />
+        <app-map-picker
+          [initialLat]="form.latitude || 28.6139"
+          [initialLng]="form.longitude || 77.209"
+          height="220px"
+          (locationPicked)="onMapLocationPicked($event)"
+        />
+        <textarea
+          class="fd-input"
+          placeholder="House number, building, street, landmark"
+          [value]="form.line"
+          (input)="form.line = $any($event.target).value"
+        ></textarea>
+        <input
+          class="fd-input"
+          placeholder="City"
+          [value]="form.city || ''"
+          (input)="form.city = $any($event.target).value"
+        />
+        <input
+          class="fd-input"
+          placeholder="State"
+          [value]="form.state || ''"
+          (input)="form.state = $any($event.target).value"
+        />
+        <input
+          class="fd-input"
+          placeholder="PIN code"
+          [value]="form.pincode || ''"
+          (input)="form.pincode = $any($event.target).value"
+        />
+        <input
+          class="fd-input"
+          placeholder="Receiver phone number"
+          [value]="form.phone"
+          (input)="form.phone = $any($event.target).value"
+        />
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="fd-btn outline"
+            (click)="showModal.set(false)"
+          >
+            Cancel</button
+          ><button type="submit" class="fd-btn primary">Save</button>
+        </div>
+      </form>
+    </div>
   }
-</section>
+</main>

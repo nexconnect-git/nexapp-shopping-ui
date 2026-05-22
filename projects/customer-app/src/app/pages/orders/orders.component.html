@@ -1,63 +1,99 @@
-<section class="orders-page">
-  <div class="orders-hero">
+<main class="fd-content">
+  <fd-breadcrumbs [items]="[{ label: 'Orders' }]" />
+  <header class="history-head">
     <div>
-      <span class="orders-kicker">Post-purchase hub</span>
-      <h1>Your orders</h1>
-      <p>
-        @if (filteredOrders().length > 0) {
-          {{ filteredOrders().length }} order{{ filteredOrders().length !== 1 ? 's' : '' }} ready to manage
-        } @else {
-          Track every past and active delivery here
+      <h1 class="fd-title">Orders History</h1>
+      <p class="fd-subtitle">Track, view and reorder your past purchases</p>
+      <div class="status-tabs">
+        @for (tab of tabs; track tab) {
+          <button
+            type="button"
+            [class.active]="activeTab() === tab"
+            (click)="activeTab.set(tab)"
+          >
+            {{ tab }} <span>{{ count(tab) }}</span>
+          </button>
         }
-      </p>
+      </div>
     </div>
-    <a routerLink="/shops">Browse stores</a>
-  </div>
+    <div class="stats">
+      <section class="fd-card">
+        <small>Total Orders</small><b>{{ orders.orders().length }}</b
+        ><span class="material-symbols-rounded">shopping_bag</span>
+      </section>
+      <section class="fd-card">
+        <small>Total Spent</small><b>{{ totalSpent() | appCurrency }}</b
+        ><span class="material-symbols-rounded">account_balance_wallet</span>
+      </section>
+      <section class="fd-card">
+        <small>You Saved</small><b>{{ 0 | appCurrency }}</b
+        ><span class="material-symbols-rounded">local_offer</span>
+      </section>
+    </div>
+  </header>
 
-  <div class="status-row">
-    @for (tab of statusTabs; track tab.value) {
-      <button class="status-chip" type="button" [class.active]="activeStatus() === tab.value" (click)="setStatus(tab.value)">
-        {{ tab.label }}
+  <section class="orders-table fd-card">
+    <div class="toolbar">
+      <input class="fd-input" placeholder="Search by Order ID or items..." />
+      <button type="button" class="fd-btn outline" (click)="chooseDateRange()">
+        Recent orders
+        <span class="material-symbols-rounded">keyboard_arrow_down</span>
       </button>
+      <button type="button" class="fd-btn outline" (click)="ui.openFilter()">
+        <span class="material-symbols-rounded">tune</span> Filters
+      </button>
+    </div>
+    <div class="thead">
+      <span>Order Details</span><span>Date & Time</span><span>Amount</span
+      ><span>Status</span><span>Actions</span>
+    </div>
+    @for (order of filteredOrders(); track order.id) {
+      <div class="tr">
+        <div class="order-info">
+          <img [src]="order.items[0].image" alt="" />
+          <div>
+            <b>Order #{{ order | displayOrderId }}</b
+            ><small>Placed on {{ order.date }}<br />{{ order.time }}</small>
+          </div>
+        </div>
+        <div class="thumbs">
+          @for (item of order.items.slice(0, 3); track item.id) {
+            <img [src]="item.image" alt="" />
+          }
+          <span>+{{ Math.max(0, order.items.length - 3) }}</span>
+          <b>{{ order.items.length }} Items</b>
+        </div>
+        <div>
+          <b>{{ order.amount | appCurrency }}</b
+          ><small>{{ order.payment }}</small>
+        </div>
+        <span
+          class="fd-badge"
+          [class.green]="order.status === 'Delivered'"
+          [class.red]="order.status === 'Cancelled'"
+          [class.purple]="order.status === 'Active'"
+          >{{ order.status }}</span
+        >
+        <div class="actions">
+          <a
+            [routerLink]="
+              order.status === 'Delivered'
+                ? ['/order-finished', order.id]
+                : ['/tracking', order.id]
+            "
+            class="fd-btn outline"
+            ><span class="material-symbols-rounded">visibility</span> View
+            Details</a
+          >
+          <button
+            type="button"
+            class="fd-btn primary"
+            (click)="orders.reorder(order)"
+          >
+            <span class="material-symbols-rounded">replay</span> Reorder
+          </button>
+        </div>
+      </div>
     }
-  </div>
-
-  @if (loading()) {
-    <div class="orders-loading"><div class="orders-spinner"></div></div>
-  } @else if (filteredOrders().length === 0) {
-    <div class="orders-empty">
-      <span class="material-icons-outlined">receipt_long</span>
-      <h2>No orders in this view yet.</h2>
-      <p>Once you place a delivery, status updates and details will show up here.</p>
-      <a routerLink="/shops">Start a new order</a>
-    </div>
-  } @else {
-    <div class="orders-grid">
-      @for (order of filteredOrders(); track order.id) {
-        <a [routerLink]="['/order', order.id]" class="order-card">
-          <div class="order-head">
-            <div>
-              <strong>{{ order.vendor_name }}</strong>
-              <span>#{{ order.order_number }}</span>
-            </div>
-            <span class="status-pill status-{{ order.status }}">{{ order.status | titlecase }}</span>
-          </div>
-
-          <div class="order-items">
-            @for (item of order.items.slice(0, 3); track item.id) {
-              <span>{{ item.product_name }}</span>
-            }
-            @if (order.items.length > 3) {
-              <span>+{{ order.items.length - 3 }} more</span>
-            }
-          </div>
-
-          <div class="order-meta">
-            <span>{{ order.placed_at | date:'MMM d, y' }}</span>
-            <strong>{{ order.total | appCurrency }}</strong>
-          </div>
-        </a>
-      }
-    </div>
-  }
-</section>
+  </section>
+</main>

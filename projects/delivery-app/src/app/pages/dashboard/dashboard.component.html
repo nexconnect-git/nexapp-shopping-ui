@@ -1,35 +1,49 @@
 <div class="dashboard fade-in">
-
   <!-- Elegant Welcome Card -->
   <div class="welcome-card card">
     <div class="welcome-left">
-      <p class="welcome-greeting">Hello, {{ auth.user()?.first_name || auth.user()?.username }}</p>
+      <p class="welcome-greeting">
+        Hello, {{ auth.user()?.first_name || auth.user()?.username }}
+      </p>
       <p class="welcome-sub">Your delivery dashboard is ready.</p>
 
       <!-- Soft Pill Availability Toggle -->
-      <label class="stylish-availability-toggle" [class.available]="isAvailable()">
-        <input type="checkbox" [checked]="isAvailable()" (change)="toggleAvailability()">
+      <label
+        class="stylish-availability-toggle"
+        [class.available]="isAvailable()"
+      >
+        <input
+          type="checkbox"
+          [checked]="isAvailable()"
+          (change)="toggleAvailability()"
+        />
         <span class="s-toggle-track">
           <span class="s-toggle-thumb"></span>
         </span>
-        <span class="s-toggle-text">{{ isAvailable() ? 'Taking Orders' : 'Offline' }}</span>
+        <span class="s-toggle-text">{{
+          isAvailable() ? "Taking Orders" : "Offline"
+        }}</span>
       </label>
 
       <!-- Live location status indicator -->
       @if (isAvailable()) {
-        @if (locationStatus() === 'watching') {
+        @if (locationStatus() === "watching") {
           <div class="location-status watching">
             <span class="loc-dot"></span>
             <span>Live location on</span>
           </div>
-        } @else if (locationStatus() === 'denied') {
+        } @else if (locationStatus() === "denied") {
           <div class="location-status denied">
-            <span class="material-icons-outlined" style="font-size:14px;">location_off</span>
+            <span class="material-icons-outlined" style="font-size: 14px"
+              >location_off</span
+            >
             <span>Location permission denied</span>
           </div>
-        } @else if (locationStatus() === 'error') {
+        } @else if (locationStatus() === "error") {
           <div class="location-status error">
-            <span class="material-icons-outlined" style="font-size:14px;">gps_off</span>
+            <span class="material-icons-outlined" style="font-size: 14px"
+              >gps_off</span
+            >
             <span>GPS unavailable</span>
           </div>
         }
@@ -37,7 +51,9 @@
     </div>
 
     <div class="welcome-icon-wrap">
-      <span class="material-icons-outlined welcome-icon pulse">local_shipping</span>
+      <span class="material-icons-outlined welcome-icon pulse"
+        >local_shipping</span
+      >
     </div>
   </div>
 
@@ -47,7 +63,6 @@
       <p>Syncing latest deliveries...</p>
     </div>
   } @else if (stats()) {
-
     <!-- Soft Metrics Grid -->
     <div class="stats-grid">
       <div class="stat-card">
@@ -73,7 +88,9 @@
           <span class="material-icons-outlined">star</span>
         </div>
         <div class="stat-details">
-          <p class="stat-value">{{ stats()!.average_rating | number:'1.1-1' }}</p>
+          <p class="stat-value">
+            {{ stats()!.average_rating | number: "1.1-1" }}
+          </p>
           <p class="stat-label">Avg. Rating</p>
         </div>
       </div>
@@ -82,7 +99,9 @@
           <span class="material-icons-outlined">delivery_dining</span>
         </div>
         <div class="stat-details">
-          <p class="stat-value text-white">{{ stats()!.active_orders.length }}</p>
+          <p class="stat-value text-white">
+            {{ stats()!.active_orders.length }}
+          </p>
           <p class="stat-label text-light">Active Orders</p>
         </div>
       </div>
@@ -110,14 +129,20 @@
                 </div>
                 <span class="route-line"></span>
                 <div class="route-point">
-                  <span class="material-icons-outlined text-primary">location_on</span>
+                  <span class="material-icons-outlined text-primary"
+                    >location_on</span
+                  >
                   <span>{{ order.delivery_address.city }}</span>
                 </div>
               </div>
             </div>
             <div class="order-status">
-              <span class="badge badge-{{ order.status }}">{{ order.status | titlecase }}</span>
-              <span class="material-icons-outlined text-muted arrow">chevron_right</span>
+              <span class="badge badge-{{ order.status }}">{{
+                order.status | titlecase
+              }}</span>
+              <span class="material-icons-outlined text-muted arrow"
+                >chevron_right</span
+              >
             </div>
           </a>
         }
@@ -130,27 +155,33 @@
     </div>
     <div class="quick-actions-grid">
       <a routerLink="/available" class="action-card primary">
-        <div class="action-icon"><span class="material-icons-outlined">radar</span></div>
+        <div class="action-icon">
+          <span class="material-icons-outlined">radar</span>
+        </div>
         <span>Find Orders</span>
       </a>
       <a routerLink="/history" class="action-card">
-        <div class="action-icon"><span class="material-icons-outlined">history</span></div>
+        <div class="action-icon">
+          <span class="material-icons-outlined">history</span>
+        </div>
         <span>History</span>
       </a>
       <a routerLink="/earnings" class="action-card">
-        <div class="action-icon"><span class="material-icons-outlined">account_balance_wallet</span></div>
+        <div class="action-icon">
+          <span class="material-icons-outlined">account_balance_wallet</span>
+        </div>
         <span>Wallet</span>
       </a>
     </div>
-
   } @else {
     <div class="empty-state card text-center p-4">
-      <span class="material-icons-outlined text-muted" style="font-size: 48px">signal_wifi_off</span>
+      <span class="material-icons-outlined text-muted" style="font-size: 48px"
+        >signal_wifi_off</span
+      >
       <h3>Connection Lost</h3>
       <p>Working offline or server unreachable.</p>
     </div>
   }
-
 </div>
 
 <!-- aria-label -->

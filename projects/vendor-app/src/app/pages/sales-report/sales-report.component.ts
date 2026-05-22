@@ -1,7 +1,12 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService, AppCurrencyPipe, ToastService, VendorAnalytics } from '@shared/public-api';
+import {
+  ApiService,
+  AppCurrencyPipe,
+  ToastService,
+  VendorAnalytics,
+} from '@shared/public-api';
 import { forkJoin } from 'rxjs';
 
 @Component({
@@ -9,7 +14,7 @@ import { forkJoin } from 'rxjs';
   standalone: true,
   imports: [CommonModule, FormsModule, AppCurrencyPipe],
   templateUrl: './sales-report.component.html',
-  styleUrl: './sales-report.component.scss'
+  styleUrl: './sales-report.component.scss',
 })
 export class SalesReportComponent implements OnInit {
   private api = inject(ApiService);
@@ -17,7 +22,6 @@ export class SalesReportComponent implements OnInit {
 
   loading = signal(true);
 
-  
   stats = signal<VendorAnalytics | null>(null);
   dateRange = signal('30'); // days
 
@@ -34,11 +38,11 @@ export class SalesReportComponent implements OnInit {
     this.loading.set(true);
     forkJoin({
       stats: this.api.getVendorAnalytics({ days: this.dateRange() }),
-      payouts: this.api.getVendorPayouts()
+      payouts: this.api.getVendorPayouts(),
     }).subscribe({
       next: (res: any) => {
         this.stats.set(res.stats);
-        
+
         let settled = 0;
         let pending = 0;
         let failed = 0;
@@ -65,7 +69,7 @@ export class SalesReportComponent implements OnInit {
       error: () => {
         this.toast.show('Failed to load sales report.', 'error');
         this.loading.set(false);
-      }
+      },
     });
   }
 
@@ -93,9 +97,15 @@ export class SalesReportComponent implements OnInit {
       ['Low stock products', stats.low_stock_impact?.low_stock_count || 0],
       [],
       ['Top product', 'Units sold', 'Revenue'],
-      ...stats.top_products.map(p => [p.name, p.total_sold, p.revenue]),
+      ...stats.top_products.map((p) => [p.name, p.total_sold, p.revenue]),
     ];
-    const csv = rows.map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+    const csv = rows
+      .map((row) =>
+        row
+          .map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`)
+          .join(','),
+      )
+      .join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

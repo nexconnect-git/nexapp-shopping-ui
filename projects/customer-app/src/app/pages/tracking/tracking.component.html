@@ -1,1 +1,191 @@
-<p>tracking works!</p>
+<main class="fd-content">
+  <section class="tracking-layout">
+    <div>
+      <header class="track-title">
+        <a routerLink="/orders" class="back-link"
+          ><span class="material-symbols-rounded">arrow_back</span> Back</a
+        >
+        <div>
+          <h1 class="fd-title">Order Tracking</h1>
+          <p class="fd-subtitle">Live updates on your order</p>
+        </div>
+      </header>
+
+      <section class="status-card fd-card">
+        <div>
+          <small>ORDER ID</small>
+          <h2>#{{ order() | displayOrderId }}</h2>
+          <p>Placed on<br />{{ order().date }}, {{ order().time }}</p>
+          <a [routerLink]="['/orders']" class="fd-btn outline">View Orders</a
+          ><a
+            [routerLink]="['/order-finished', order().id]"
+            class="fd-btn outline"
+            >Receipt</a
+          >
+        </div>
+        <div>
+          <small>Estimated Arrival</small>
+          <h2>{{ order().raw?.estimated_delivery_time || "Soon" }}</h2>
+          <p>Today</p>
+          <span>{{ order().status }}</span>
+        </div>
+        <div class="progress" [class.compact]="steps().length <= 2">
+          @for (step of steps(); track step.name; let i = $index) {
+            <div>
+              <b
+                [class.done]="
+                  i < steps().length - 1 || order().status === 'Delivered'
+                "
+                ><span class="material-symbols-rounded">{{
+                  step.icon
+                }}</span></b
+              ><span>{{ step.name }}</span
+              ><small>{{ step.time }}</small>
+            </div>
+          }
+        </div>
+      </section>
+
+      <section class="map-block fd-card">
+        <div class="map">
+          <div
+            #trackingMap
+            class="google-map"
+            [class.hidden]="mapUnavailable()"
+          ></div>
+          @if (mapUnavailable()) {
+            <div class="map-fallback">
+              <span class="material-symbols-rounded">my_location</span>
+              <b>Tracking map unavailable</b>
+              <small>Google Maps could not be loaded right now.</small>
+            </div>
+          }
+          <button
+            type="button"
+            aria-label="Open map"
+            (click)="mapAction('zoom-in')"
+          >
+            <span class="material-symbols-rounded">open_in_new</span>
+          </button>
+          @if (directionsUrl()) {
+            <a
+              class="map-open"
+              [href]="directionsUrl()"
+              target="_blank"
+              rel="noopener"
+              ><span class="material-symbols-rounded">route</span> Open route</a
+            >
+          }
+        </div>
+        <aside class="partner-panel">
+          <h3>Delivery Partner</h3>
+          @if (partner()) {
+            <div class="partner">
+              @if (partnerImage()) {
+                <img [src]="partnerImage()" alt="" />
+              } @else {
+                <span class="partner-icon material-symbols-rounded"
+                  >two_wheeler</span
+                >
+              }
+              <div>
+                <b>{{ partner()?.name || "Delivery partner" }}</b
+                ><span>{{ partner()?.average_rating || "New" }} rating</span
+                ><small>{{
+                  partner()?.vehicle_type || "FlashDrop Express"
+                }}</small>
+              </div>
+            </div>
+            <button
+              type="button"
+              class="fd-btn outline"
+              (click)="callPartner()"
+            >
+              <span class="material-symbols-rounded">call</span> Call Partner
+            </button>
+            <p>
+              <b>Vehicle Number</b><br />{{
+                partner()?.vehicle_number || "Assigned soon"
+              }}
+            </p>
+          } @else {
+            <section class="partner-pending">
+              <span class="material-symbols-rounded">schedule</span>
+              <b>Partner assignment pending</b>
+              <small
+                >Delivery partner details will appear here once a partner
+                accepts this order.</small
+              >
+            </section>
+          }
+          <section class="help">
+            Need help with your order?<button
+              type="button"
+              [routerLink]="['/order', order().id, 'help']"
+            >
+              Chat with us
+            </button>
+          </section>
+        </aside>
+      </section>
+
+      <div class="promo-row">
+        <section>
+          <b>Enjoying fast deliveries?</b
+          ><span>View wallet and membership details</span
+          ><button type="button" (click)="joinOne()">Open Wallet</button>
+        </section>
+        <section>
+          <b>Refer friends and get rewards</b
+          ><span>Invite your friends and earn rewards</span
+          ><button type="button" routerLink="/referral">Refer Now</button>
+        </section>
+      </div>
+    </div>
+
+    <aside class="summary fd-card">
+      <div class="head">
+        <h2>Order Summary</h2>
+        <button type="button" (click)="downloadInvoice()">
+          Download Invoice
+        </button>
+      </div>
+      @for (item of order().items.slice(0, 5); track item.id) {
+        <div class="item">
+          <img [src]="item.image" alt="" />
+          <div>
+            <b>{{ item.name }}</b
+            ><small>{{ item.unit }}</small
+            ><strong>{{ item.price | appCurrency }}</strong>
+          </div>
+          <span>{{ item.unit }}</span>
+        </div>
+      }
+      <button type="button" (click)="downloadInvoice()">
+        View all items ({{ order().items.length }})
+      </button>
+      <hr />
+      <p>
+        <span>Item Total</span><b>{{ order().amount | appCurrency }}</b>
+      </p>
+      <p>
+        <span>Delivery Fee</span
+        ><b class="green">{{ order().raw?.delivery_fee || 0 | appCurrency }}</b>
+      </p>
+      <p>
+        <span>{{ order().payment }}</span
+        ><b class="green">{{ order().amount | appCurrency }}</b>
+      </p>
+      <p class="total">
+        <span>Total Paid</span><b>{{ order().amount | appCurrency }}</b>
+      </p>
+      <section class="issue">
+        <h3>Facing an issue?</h3>
+        <a [routerLink]="['/order', order().id, 'issue']">Order delayed</a
+        ><a [routerLink]="['/order', order().id, 'issue']"
+          >Wrong or missing item</a
+        ><a [routerLink]="['/order', order().id, 'issue']">Cancel Order</a>
+      </section>
+    </aside>
+  </section>
+</main>

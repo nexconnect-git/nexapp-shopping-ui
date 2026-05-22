@@ -1,10 +1,13 @@
-<app-dynamic-stepper 
-  [config]="stepperConfig" 
-  [loading]="saving()" 
-  [serverErrors]="errors()"
-  [success]="success()"
-  successMessage="Vendor Onboarded Successfully!"
-  successSubmessage="Redirecting to vendors list..."
-  (submitForm)="onSubmit($event)"
-  (cancel)="onCancel()">
-</app-dynamic-stepper>
+<div class="saas-page onboarding-page vendor-onboard-page">
+  <app-dynamic-stepper
+    [config]="stepperConfig"
+    [loading]="saving()"
+    [serverErrors]="errors()"
+    [success]="success()"
+    successMessage="Vendor Onboarded Successfully!"
+    successSubmessage="Redirecting to vendors list..."
+    (submitForm)="onSubmit($event)"
+    (stepperCancel)="onCancel()"
+  >
+  </app-dynamic-stepper>
+</div>

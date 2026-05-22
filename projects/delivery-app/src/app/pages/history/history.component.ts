@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService, AppCurrencyPipe, Order } from '@shared/public-api';
 
@@ -7,7 +7,7 @@ import { ApiService, AppCurrencyPipe, Order } from '@shared/public-api';
   standalone: true,
   imports: [CommonModule, AppCurrencyPipe],
   templateUrl: './history.component.html',
-  styleUrls: ['./history.component.scss']
+  styleUrls: ['./history.component.scss'],
 })
 export class HistoryComponent implements OnInit {
   private api = inject(ApiService);
@@ -16,8 +16,11 @@ export class HistoryComponent implements OnInit {
 
   ngOnInit() {
     this.api.getDeliveryHistory().subscribe({
-      next: (r) => { this.orders.set(r.results || r); this.loading.set(false); },
-      error: () => this.loading.set(false)
+      next: (r) => {
+        this.orders.set(r.results || r);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
     });
   }
 }

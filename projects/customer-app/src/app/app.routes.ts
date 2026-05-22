@@ -1,172 +1,231 @@
-import { Routes } from '@angular/router';
-import { authGuard, unauthGuard, roleGuard, portalUnauthGuard } from '@shared/public-api';
-
-const customerGuard = [authGuard, roleGuard('customer')];
+import { type Routes } from '@angular/router';
+import { pageFeatureGuard } from '@shared/public-api';
+import { customerAuthGuard } from './services/customer-auth.guard';
 
 export const routes: Routes = [
   {
-    path: 'login',
-    loadComponent: () => import('./pages/login/login.component').then(m => m.LoginComponent),
-    canActivate: [portalUnauthGuard('customer')],
-    data: { breadcrumb: 'Sign in' },
-  },
-  {
-    path: 'register',
-    loadComponent: () => import('./pages/register/register.component').then(m => m.RegisterComponent),
-    canActivate: [unauthGuard],
-    data: { breadcrumb: 'Create account' },
-  },
-  {
-    path: 'set-location',
-    loadComponent: () => import('./pages/set-location/set-location.component').then(m => m.SetLocationComponent),
-    data: { breadcrumb: 'Set location' },
-  },
-  {
-    path: 'forgot-password',
-    redirectTo: '/login',
-    pathMatch: 'full'
-  },
-  {
-    path: 'reset-password',
-    redirectTo: '/login',
-    pathMatch: 'full'
+    path: 'feature-unavailable',
+    loadComponent: () =>
+      import('@shared/public-api').then(
+        (m) => m.PageFeatureUnavailableComponent,
+      ),
   },
   {
     path: '',
-    loadComponent: () => import('./pages/home/home.component').then(m => m.HomeComponent),
-    data: { breadcrumb: 'Home' },
+    loadComponent: () =>
+      import('./pages/home/home.component').then((m) => m.HomeComponent),
+    canActivate: [pageFeatureGuard('customer-app', 'customer-home')],
   },
   {
-    path: 'search',
-    loadComponent: () => import('./pages/search/search.component').then(m => m.SearchComponent),
-    data: { breadcrumb: 'Search' },
+    path: 'new-home',
+    loadComponent: () =>
+      import('./pages/home/home.component').then((m) => m.HomeComponent),
+    canActivate: [pageFeatureGuard('customer-app', 'customer-home')],
   },
   {
-    path: 'shops',
-    loadComponent: () => import('./pages/shops/shops.component').then(m => m.ShopsComponent),
-    data: { breadcrumb: 'Browse stores' },
+    path: 'stores',
+    loadComponent: () =>
+      import('./pages/stores/stores.component').then((m) => m.StoresComponent),
+    canActivate: [pageFeatureGuard('customer-app', 'customer-stores')],
   },
   {
-    path: 'shop/:id',
-    loadComponent: () => import('./pages/shop-detail/shop-detail.component').then(m => m.ShopDetailComponent),
-    data: { breadcrumb: 'Store' },
+    path: 'category/:id',
+    loadComponent: () =>
+      import('./pages/category/category.component').then(
+        (m) => m.CategoryComponent,
+      ),
+    canActivate: [pageFeatureGuard('customer-app', 'customer-category')],
   },
   {
-    path: 'products',
-    redirectTo: '/search',
-    pathMatch: 'full'
+    path: 'store/:id',
+    loadComponent: () =>
+      import('./pages/store-detail/store-detail.component').then(
+        (m) => m.StoreDetailComponent,
+      ),
+    canActivate: [pageFeatureGuard('customer-app', 'customer-store-detail')],
   },
   {
     path: 'product/:id',
-    loadComponent: () => import('./pages/product-detail/product-detail.component').then(m => m.ProductDetailComponent),
-    data: { breadcrumb: 'Product' },
+    loadComponent: () =>
+      import('./pages/product-detail/product-detail.component').then(
+        (m) => m.ProductDetailComponent,
+      ),
+    canActivate: [pageFeatureGuard('customer-app', 'customer-product-detail')],
+  },
+  {
+    path: 'search',
+    loadComponent: () =>
+      import('./pages/search/search.component').then((m) => m.SearchComponent),
+    canActivate: [pageFeatureGuard('customer-app', 'customer-search')],
   },
   {
     path: 'cart',
-    loadComponent: () => import('./pages/cart/cart.component').then(m => m.CartComponent),
-    canActivate: customerGuard,
-    data: { breadcrumb: 'Cart' },
-  },
-  {
-    path: 'order/:id',
-    loadComponent: () => import('./pages/order-detail/order-detail.component').then(m => m.OrderDetailComponent),
-    canActivate: customerGuard,
-    data: { breadcrumb: 'Order details' },
-  },
-  {
-    path: 'order/:id/tracking',
-    loadComponent: () => import('./pages/order-tracking/order-tracking.component').then(m => m.OrderTrackingComponent),
-    canActivate: customerGuard,
-    data: { breadcrumb: 'Live tracking' },
-  },
-  {
-    path: 'order/:id/help',
-    loadComponent: () => import('./pages/order-help/order-help.component').then(m => m.OrderHelpComponent),
-    canActivate: customerGuard,
-    data: { breadcrumb: 'Order help' },
-  },
-  {
-    path: 'order/:id/rate',
-    loadComponent: () => import('./pages/order-rating/order-rating.component').then(m => m.OrderRatingComponent),
-    canActivate: customerGuard,
-    data: { breadcrumb: 'Rate order' },
-  },
-  {
-    path: 'order/:id/issue',
-    loadComponent: () => import('./pages/order-issue/order-issue.component').then(m => m.OrderIssueComponent),
-    canActivate: customerGuard,
-    data: { breadcrumb: 'Report issue' },
-  },
-  {
-    path: 'issue/:issueId',
-    loadComponent: () => import('./pages/order-issue/order-issue.component').then(m => m.OrderIssueComponent),
-    canActivate: customerGuard,
-    data: { breadcrumb: 'Support thread' },
-  },
-  {
-    path: 'my-issues',
-    loadComponent: () => import('./pages/my-issues/my-issues.component').then(m => m.MyIssuesComponent),
-    canActivate: customerGuard,
-    data: { breadcrumb: 'My issues' },
-  },
-  {
-    path: 'orders',
-    loadComponent: () => import('./pages/orders/orders.component').then(m => m.OrdersComponent),
-    canActivate: customerGuard,
-    data: { breadcrumb: 'Orders' },
-  },
-  {
-    path: 'profile',
-    canActivate: customerGuard,
-    data: { breadcrumb: 'Profile' },
-    children: [
-      { path: '', loadComponent: () => import('./pages/profile/profile.component').then(m => m.ProfileComponent) },
-      { path: 'orders', redirectTo: '/orders', pathMatch: 'full' }
-    ]
+    canActivate: [
+      customerAuthGuard,
+      pageFeatureGuard('customer-app', 'customer-cart'),
+    ],
+    loadComponent: () =>
+      import('./pages/cart/cart.component').then((m) => m.CartComponent),
   },
   {
     path: 'checkout',
-    loadComponent: () => import('./pages/checkout/checkout.component').then(m => m.CheckoutComponent),
-    canActivate: customerGuard,
-    data: { breadcrumb: 'Checkout' },
+    canActivate: [
+      customerAuthGuard,
+      pageFeatureGuard('customer-app', 'customer-checkout'),
+    ],
+    loadComponent: () =>
+      import('./pages/checkout/checkout.component').then(
+        (m) => m.CheckoutComponent,
+      ),
   },
   {
-    path: 'offers',
-    loadComponent: () => import('./pages/offers/offers.component').then(m => m.OffersComponent),
-    canActivate: customerGuard,
-    data: { breadcrumb: 'Deals' },
+    path: 'orders',
+    canActivate: [
+      customerAuthGuard,
+      pageFeatureGuard('customer-app', 'customer-orders'),
+    ],
+    loadComponent: () =>
+      import('./pages/orders/orders.component').then((m) => m.OrdersComponent),
+  },
+  {
+    path: 'tracking/:id',
+    canActivate: [
+      customerAuthGuard,
+      pageFeatureGuard('customer-app', 'customer-tracking'),
+    ],
+    loadComponent: () =>
+      import('./pages/tracking/tracking.component').then(
+        (m) => m.TrackingComponent,
+      ),
+  },
+  {
+    path: 'order-finished/:id',
+    canActivate: [
+      customerAuthGuard,
+      pageFeatureGuard('customer-app', 'customer-order-finished'),
+    ],
+    loadComponent: () =>
+      import('./pages/order-finished/order-finished.component').then(
+        (m) => m.OrderFinishedComponent,
+      ),
+  },
+  { path: 'order/:id', redirectTo: 'tracking/:id' },
+  { path: 'order/:id/tracking', redirectTo: 'tracking/:id' },
+  {
+    path: 'order/:id/help',
+    canActivate: [
+      customerAuthGuard,
+      pageFeatureGuard('customer-app', 'customer-help'),
+    ],
+    loadComponent: () =>
+      import('./pages/help/help.component').then((m) => m.HelpComponent),
+  },
+  {
+    path: 'order/:id/issue',
+    canActivate: [
+      customerAuthGuard,
+      pageFeatureGuard('customer-app', 'customer-help'),
+    ],
+    loadComponent: () =>
+      import('./pages/help/help.component').then((m) => m.HelpComponent),
+  },
+  {
+    path: 'order/:id/rating',
+    canActivate: [
+      customerAuthGuard,
+      pageFeatureGuard('customer-app', 'customer-order-finished'),
+    ],
+    loadComponent: () =>
+      import('./pages/order-finished/order-finished.component').then(
+        (m) => m.OrderFinishedComponent,
+      ),
+  },
+  {
+    path: 'profile',
+    canActivate: [
+      customerAuthGuard,
+      pageFeatureGuard('customer-app', 'customer-profile'),
+    ],
+    loadComponent: () =>
+      import('./pages/profile/profile.component').then(
+        (m) => m.ProfileComponent,
+      ),
   },
   {
     path: 'addresses',
-    loadComponent: () => import('./pages/addresses/addresses.component').then(m => m.AddressesComponent),
-    canActivate: customerGuard,
-    data: { breadcrumb: 'Addresses' },
+    canActivate: [
+      customerAuthGuard,
+      pageFeatureGuard('customer-app', 'customer-addresses'),
+    ],
+    loadComponent: () =>
+      import('./pages/addresses/addresses.component').then(
+        (m) => m.AddressesComponent,
+      ),
+  },
+  {
+    path: 'offers',
+    loadComponent: () =>
+      import('./pages/offers/offers.component').then((m) => m.OffersComponent),
+    canActivate: [pageFeatureGuard('customer-app', 'customer-offers')],
   },
   {
     path: 'wallet',
-    loadComponent: () => import('./pages/wallet/wallet.component').then(m => m.WalletComponent),
-    canActivate: customerGuard,
-    data: { breadcrumb: 'Wallet' },
+    canActivate: [
+      customerAuthGuard,
+      pageFeatureGuard('customer-app', 'customer-wallet'),
+    ],
+    loadComponent: () =>
+      import('./pages/wallet/wallet.component').then((m) => m.WalletComponent),
   },
   {
     path: 'wishlist',
-    loadComponent: () => import('./pages/wishlist/wishlist.component').then(m => m.WishlistComponent),
-    canActivate: customerGuard,
-    data: { breadcrumb: 'Wishlist' },
+    canActivate: [
+      customerAuthGuard,
+      pageFeatureGuard('customer-app', 'customer-wishlist'),
+    ],
+    loadComponent: () =>
+      import('./pages/wishlist/wishlist.component').then(
+        (m) => m.WishlistComponent,
+      ),
   },
   {
     path: 'referral',
-    loadComponent: () => import('./pages/referral/referral.component').then(m => m.ReferralComponent),
-    canActivate: customerGuard,
-    data: { breadcrumb: 'Refer and earn' },
+    canActivate: [
+      customerAuthGuard,
+      pageFeatureGuard('customer-app', 'customer-referral'),
+    ],
+    loadComponent: () =>
+      import('./pages/referral/referral.component').then(
+        (m) => m.ReferralComponent,
+      ),
   },
   {
-    path: 'showcase',
-    loadComponent: () => import('./pages/showcase/showcase.component').then(m => m.ShowcaseComponent),
-    data: { breadcrumb: 'Showcase' },
+    path: 'issues',
+    canActivate: [
+      customerAuthGuard,
+      pageFeatureGuard('customer-app', 'customer-issues'),
+    ],
+    loadComponent: () =>
+      import('./pages/issues/issues.component').then((m) => m.IssuesComponent),
   },
   {
-    path: '**',
-    redirectTo: ''
-  }
+    path: 'help',
+    canActivate: [pageFeatureGuard('customer-app', 'customer-help')],
+    loadComponent: () =>
+      import('./pages/help/help.component').then((m) => m.HelpComponent),
+  },
+  {
+    path: 'issue/:issueId',
+    canActivate: [
+      customerAuthGuard,
+      pageFeatureGuard('customer-app', 'customer-help'),
+    ],
+    loadComponent: () =>
+      import('./pages/help/help.component').then((m) => m.HelpComponent),
+  },
+  { path: 'my-issues', redirectTo: 'issues' },
+  { path: 'favorites', redirectTo: 'wishlist' },
+  { path: 'payments', redirectTo: 'wallet' },
+  { path: 'login', redirectTo: '' },
+  { path: '**', redirectTo: '' },
 ];

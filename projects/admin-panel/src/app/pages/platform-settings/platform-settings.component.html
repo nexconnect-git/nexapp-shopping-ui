@@ -1,90 +1,150 @@
-<div class="page-header">
-  <div>
-    <h1 class="page-title">Platform Settings</h1>
-    <p class="page-subtitle">Control delivery fees, cancellation windows, and platform payment defaults.</p>
+<div class="saas-page settings-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Platform Settings</h1>
+      <p class="page-subtitle">
+        Control delivery fees, cancellation windows, and platform payment
+        defaults.
+      </p>
+    </div>
+    <button
+      class="btn btn-primary"
+      (click)="save()"
+      [disabled]="loading() || saving()"
+    >
+      <span class="material-icons-outlined">save</span>
+      {{ saving() ? "Saving..." : "Save settings" }}
+    </button>
   </div>
-  <button class="btn btn-primary" (click)="save()" [disabled]="loading() || saving()">
-    <span class="material-icons-outlined">save</span>
-    {{ saving() ? 'Saving...' : 'Save settings' }}
-  </button>
+
+  @if (loading()) {
+    <div class="settings-loading">
+      <div class="spinner"></div>
+      <span>Loading settings...</span>
+    </div>
+  } @else {
+    <form class="settings-grid" (ngSubmit)="save()">
+      <section class="settings-card">
+        <div class="card-title">
+          <span class="material-icons-outlined">payments</span>
+          <div>
+            <h2>Payment Defaults</h2>
+            <p>UPI destination used for operational payment workflows.</p>
+          </div>
+        </div>
+
+        <label>
+          UPI ID
+          <input
+            class="form-input"
+            [(ngModel)]="form.upi_id"
+            name="upi_id"
+            placeholder="payments@nexconnect"
+          />
+        </label>
+
+        <div class="method-list">
+          @for (method of paymentMethods; track method.key) {
+            <button
+              type="button"
+              class="method-toggle"
+              [class.enabled]="isPaymentMethodEnabled(method.key)"
+              (click)="togglePaymentMethod(method.key)"
+            >
+              <span class="material-icons-outlined">{{
+                isPaymentMethodEnabled(method.key)
+                  ? "check_circle"
+                  : "radio_button_unchecked"
+              }}</span>
+              <span>
+                <strong>{{ method.label }}</strong>
+                <small>{{ method.description }}</small>
+              </span>
+            </button>
+          }
+        </div>
+      </section>
+
+      <section class="settings-card">
+        <div class="card-title">
+          <span class="material-icons-outlined">local_shipping</span>
+          <div>
+            <h2>Delivery Economics</h2>
+            <p>Fees used by checkout and customer delivery previews.</p>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <label>
+            Base delivery fee
+            <input
+              class="form-input"
+              type="number"
+              min="0"
+              step="0.01"
+              [(ngModel)]="form.delivery_base_fee"
+              name="delivery_base_fee"
+            />
+          </label>
+          <label>
+            Per km fee
+            <input
+              class="form-input"
+              type="number"
+              min="0"
+              step="0.01"
+              [(ngModel)]="form.delivery_per_km_fee"
+              name="delivery_per_km_fee"
+            />
+          </label>
+        </div>
+
+        <label>
+          Free delivery above
+          <input
+            class="form-input"
+            type="number"
+            min="0"
+            step="0.01"
+            [(ngModel)]="form.free_delivery_above"
+            name="free_delivery_above"
+          />
+        </label>
+      </section>
+
+      <section class="settings-card">
+        <div class="card-title">
+          <span class="material-icons-outlined">rule</span>
+          <div>
+            <h2>Cancellation Policy</h2>
+            <p>Customer cancellation controls for high-speed fulfillment.</p>
+          </div>
+        </div>
+
+        <label>
+          Cancellation window in minutes
+          <input
+            class="form-input"
+            type="number"
+            min="0"
+            [(ngModel)]="form.cancellation_window_minutes"
+            name="cancellation_window_minutes"
+          />
+        </label>
+
+        <label>
+          Allowed statuses
+          <input
+            class="form-input"
+            [(ngModel)]="form.cancellation_allowed_statuses"
+            name="cancellation_allowed_statuses"
+            placeholder="placed,confirmed"
+          />
+          <small
+            >Comma-separated order statuses that customers can cancel.</small
+          >
+        </label>
+      </section>
+    </form>
+  }
 </div>
-
-@if (loading()) {
-  <div class="settings-loading"><div class="spinner"></div><span>Loading settings...</span></div>
-} @else {
-  <form class="settings-grid" (ngSubmit)="save()">
-    <section class="settings-card">
-      <div class="card-title">
-        <span class="material-icons-outlined">payments</span>
-        <div>
-          <h2>Payment Defaults</h2>
-          <p>UPI destination used for operational payment workflows.</p>
-        </div>
-      </div>
-
-      <label>
-        UPI ID
-        <input class="form-input" [(ngModel)]="form.upi_id" name="upi_id" placeholder="payments@nexconnect">
-      </label>
-
-      <div class="method-list">
-        @for (method of paymentMethods; track method.key) {
-          <button type="button" class="method-toggle" [class.enabled]="isPaymentMethodEnabled(method.key)" (click)="togglePaymentMethod(method.key)">
-            <span class="material-icons-outlined">{{ isPaymentMethodEnabled(method.key) ? 'check_circle' : 'radio_button_unchecked' }}</span>
-            <span>
-              <strong>{{ method.label }}</strong>
-              <small>{{ method.description }}</small>
-            </span>
-          </button>
-        }
-      </div>
-    </section>
-
-    <section class="settings-card">
-      <div class="card-title">
-        <span class="material-icons-outlined">local_shipping</span>
-        <div>
-          <h2>Delivery Economics</h2>
-          <p>Fees used by checkout and customer delivery previews.</p>
-        </div>
-      </div>
-
-      <div class="two-col">
-        <label>
-          Base delivery fee
-          <input class="form-input" type="number" min="0" step="0.01" [(ngModel)]="form.delivery_base_fee" name="delivery_base_fee">
-        </label>
-        <label>
-          Per km fee
-          <input class="form-input" type="number" min="0" step="0.01" [(ngModel)]="form.delivery_per_km_fee" name="delivery_per_km_fee">
-        </label>
-      </div>
-
-      <label>
-        Free delivery above
-        <input class="form-input" type="number" min="0" step="0.01" [(ngModel)]="form.free_delivery_above" name="free_delivery_above">
-      </label>
-    </section>
-
-    <section class="settings-card">
-      <div class="card-title">
-        <span class="material-icons-outlined">rule</span>
-        <div>
-          <h2>Cancellation Policy</h2>
-          <p>Customer cancellation controls for high-speed fulfillment.</p>
-        </div>
-      </div>
-
-      <label>
-        Cancellation window in minutes
-        <input class="form-input" type="number" min="0" [(ngModel)]="form.cancellation_window_minutes" name="cancellation_window_minutes">
-      </label>
-
-      <label>
-        Allowed statuses
-        <input class="form-input" [(ngModel)]="form.cancellation_allowed_statuses" name="cancellation_allowed_statuses" placeholder="placed,confirmed">
-        <small>Comma-separated order statuses that customers can cancel.</small>
-      </label>
-    </section>
-  </form>
-}

@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '@shared/public-api';
@@ -19,7 +19,7 @@ interface AdminNotification {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './notifications.component.html',
-  styleUrl: './notifications.component.scss'
+  styleUrl: './notifications.component.scss',
 })
 export class NotificationsComponent implements OnInit {
   private api = inject(ApiService);
@@ -44,13 +44,15 @@ export class NotificationsComponent implements OnInit {
     title: '',
     message: '',
     notification_type: 'info',
-    audience: 'all',   // 'all' | 'customer' | 'vendor' | 'delivery' | 'user'
+    audience: 'all', // 'all' | 'customer' | 'vendor' | 'delivery' | 'user'
     user_id: '',
   };
 
   private timer: any;
 
-  ngOnInit() { this.load(); }
+  ngOnInit() {
+    this.load();
+  }
 
   load() {
     this.loading.set(true);
@@ -64,27 +66,41 @@ export class NotificationsComponent implements OnInit {
         this.totalPages.set(Math.ceil((r.count || 0) / this.itemsPerPage) || 1);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false)
+      error: () => this.loading.set(false),
     });
   }
 
   onSearch() {
     clearTimeout(this.timer);
-    this.timer = setTimeout(() => { this.page.set(1); this.load(); }, 400);
+    this.timer = setTimeout(() => {
+      this.page.set(1);
+      this.load();
+    }, 400);
   }
 
   setPage(p: number) {
-    if (p >= 1 && p <= this.totalPages()) { this.page.set(p); this.load(); }
+    if (p >= 1 && p <= this.totalPages()) {
+      this.page.set(p);
+      this.load();
+    }
   }
 
   openSendModal() {
-    this.form = { title: '', message: '', notification_type: 'info', audience: 'all', user_id: '' };
+    this.form = {
+      title: '',
+      message: '',
+      notification_type: 'info',
+      audience: 'all',
+      user_id: '',
+    };
     this.sendSuccess.set('');
     this.sendError.set('');
     this.showModal.set(true);
   }
 
-  closeModal() { this.showModal.set(false); }
+  closeModal() {
+    this.showModal.set(false);
+  }
 
   sendNotification() {
     if (!this.form.title.trim() || !this.form.message.trim()) return;
@@ -119,7 +135,7 @@ export class NotificationsComponent implements OnInit {
       error: (err: any) => {
         this.sendError.set(err.error?.error || 'Failed to send notification.');
         this.sending.set(false);
-      }
+      },
     });
   }
 
@@ -130,8 +146,11 @@ export class NotificationsComponent implements OnInit {
 
   audienceLabel(): string {
     const map: Record<string, string> = {
-      all: 'All Users', customer: 'All Customers',
-      vendor: 'All Vendors', delivery: 'All Delivery Partners', user: 'Specific User'
+      all: 'All Users',
+      customer: 'All Customers',
+      vendor: 'All Vendors',
+      delivery: 'All Delivery Partners',
+      user: 'Specific User',
     };
     return map[this.form.audience] || this.form.audience;
   }

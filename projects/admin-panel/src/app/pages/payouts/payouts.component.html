@@ -1,9 +1,12 @@
-<div class="payouts-page fade-in">
+<div class="saas-page payouts-page fade-in">
   <section class="admin-page-hero">
     <div class="admin-page-copy">
       <span class="eyebrow">Finance operations</span>
       <h1 class="page-title">Payout Analysis &amp; Processing</h1>
-      <p>Manage settlements for vendors and delivery partners, including approvals, invoices, and transfer status.</p>
+      <p>
+        Manage settlements for vendors and delivery partners, including
+        approvals, invoices, and transfer status.
+      </p>
     </div>
     <div class="admin-page-actions">
       <button class="new-payout-btn" (click)="openModal()">
@@ -15,11 +18,19 @@
 
   <!-- Tabs -->
   <div class="admin-tabs tabs-nav" role="tablist" aria-label="Payout type">
-    <button class="tab-btn" [class.active]="activeTab() === 'vendors'" (click)="setTab('vendors')">
+    <button
+      class="tab-btn"
+      [class.active]="activeTab() === 'vendors'"
+      (click)="setTab('vendors')"
+    >
       <span class="material-icons-outlined">storefront</span>
       Vendor Payouts
     </button>
-    <button class="tab-btn" [class.active]="activeTab() === 'delivery'" (click)="setTab('delivery')">
+    <button
+      class="tab-btn"
+      [class.active]="activeTab() === 'delivery'"
+      (click)="setTab('delivery')"
+    >
       <span class="material-icons-outlined">two_wheeler</span>
       Delivery Payouts
     </button>
@@ -29,11 +40,22 @@
   <div class="payout-list-card">
     <div class="section-header">
       <span class="material-icons-outlined section-icon">
-        {{ activeTab() === 'vendors' ? 'storefront' : 'two_wheeler' }}
+        {{ activeTab() === "vendors" ? "storefront" : "two_wheeler" }}
       </span>
       <div>
-        <h3 class="section-title">{{ activeTab() === 'vendors' ? 'Vendor Settlements' : 'Delivery Partner Earnings' }}</h3>
-        <p class="section-sub">{{ payouts().length }} record{{ payouts().length !== 1 ? 's' : '' }} found</p>
+        <h3 class="section-title">
+          {{
+            activeTab() === "vendors"
+              ? "Vendor Settlements"
+              : "Delivery Partner Earnings"
+          }}
+        </h3>
+        <p class="section-sub">
+          {{ payouts().length }} record{{
+            payouts().length !== 1 ? "s" : ""
+          }}
+          found
+        </p>
       </div>
     </div>
 
@@ -43,7 +65,10 @@
         <p>Loading payouts…</p>
       </div>
     } @else {
-      <div class="table-wrap" style="padding: 0; background: transparent; box-shadow: none;">
+      <div
+        class="table-wrap"
+        style="padding: 0; background: transparent; box-shadow: none"
+      >
         <app-dynamic-table
           [columns]="tableColumns"
           [data]="payouts()"
@@ -54,83 +79,124 @@
           emptyMessage="No payouts found"
           emptySubMessage="Click New Payout to create a settlement record."
           emptyIcon="payments"
-          (pageChange)="onPageChange($event)">
-
+          (pageChange)="onPageChange($event)"
+        >
           <ng-template tableCell="id" let-row="row">
-            <span class="id-cell">{{ row.id.split('-')[0] }}</span>
+            <span class="id-cell">{{ row.id.split("-")[0] }}</span>
           </ng-template>
 
           <ng-template tableCell="entity" let-row="row">
-            <span class="entity-cell">{{ activeTab() === 'vendors' ? row.vendor_name : row.partner_name }}</span>
+            <span class="entity-cell">{{
+              activeTab() === "vendors" ? row.vendor_name : row.partner_name
+            }}</span>
           </ng-template>
 
           <ng-template tableCell="period" let-row="row">
             <span class="period-range period-cell">
-              {{ row.period_start | date:'MMM d' }} → {{ row.period_end | date:'MMM d, y' }}
+              {{ row.period_start | date: "MMM d" }} →
+              {{ row.period_end | date: "MMM d, y" }}
             </span>
           </ng-template>
 
           <ng-template tableCell="gross" let-row="row">
-            <span class="amount-cell muted">{{ row.gross_sales | appCurrency }}</span>
+            <span class="amount-cell muted">{{
+              row.gross_sales | appCurrency
+            }}</span>
           </ng-template>
 
           <ng-template tableCell="commission" let-row="row">
             <div class="commission-cell">
-              <span class="commission-badge">{{ row.platform_commission | appCurrency }}</span>
+              <span class="commission-badge">{{
+                row.platform_commission | appCurrency
+              }}</span>
             </div>
           </ng-template>
 
           <ng-template tableCell="net" let-row="row">
             <span class="amount-cell">
-              {{ (activeTab() === 'vendors' ? row.net_payout : row.total_earnings) | appCurrency }}
+              {{
+                (activeTab() === "vendors"
+                  ? row.net_payout
+                  : row.total_earnings
+                ) | appCurrency
+              }}
             </span>
           </ng-template>
 
           <ng-template tableCell="status" let-row="row">
-            <span class="badge" [class]="'badge-' + row.status">{{ row.status | uppercase }}</span>
+            <span class="badge" [class]="'badge-' + row.status">{{
+              row.status | uppercase
+            }}</span>
           </ng-template>
 
           <ng-template tableCell="actions" let-row="row">
             <div class="actions-cell">
-              @if (activeTab() === 'vendors') {
-                <button class="action-icon-btn" title="View Invoice" (click)="viewInvoice(row)">
+              @if (activeTab() === "vendors") {
+                <button
+                  class="action-icon-btn"
+                  title="View Invoice"
+                  (click)="viewInvoice(row)"
+                >
                   <span class="material-icons-outlined">receipt_long</span>
                 </button>
               }
               <!-- Edit (only on non-final statuses) -->
-              @if (!['verified','paid','failed'].includes(row.status)) {
-                <button class="action-icon-btn" title="Edit Payout" (click)="editPayout(row)">
+              @if (!["verified", "paid", "failed"].includes(row.status)) {
+                <button
+                  class="action-icon-btn"
+                  title="Edit Payout"
+                  (click)="editPayout(row)"
+                >
                   <span class="material-icons-outlined">edit</span>
                 </button>
               }
               <!-- Lifecycle actions -->
               @switch (getPayoutAction(row)) {
-                @case ('schedule') {
-                  <button class="lifecycle-btn schedule-btn" (click)="schedulePayout(row)">
+                @case ("schedule") {
+                  <button
+                    class="lifecycle-btn schedule-btn"
+                    (click)="schedulePayout(row)"
+                  >
                     <span class="material-icons-outlined">event_available</span>
                     Schedule
                   </button>
                 }
-                @case ('send-payment') {
-                  <button class="lifecycle-btn send-btn" (click)="openSendPaymentModal(row)">
+                @case ("send-payment") {
+                  <button
+                    class="lifecycle-btn send-btn"
+                    (click)="openSendPaymentModal(row)"
+                  >
                     <span class="material-icons-outlined">send_money</span>
                     Send Payment
                   </button>
                 }
-                @case ('awaiting') {
-                  <span class="awaiting-chip" [title]="'Override unlocks ' + (overrideAvailableAt(row) | date:'MMM d, HH:mm')">
+                @case ("awaiting") {
+                  <span
+                    class="awaiting-chip"
+                    [title]="
+                      'Override unlocks ' +
+                      (overrideAvailableAt(row) | date: 'MMM d, HH:mm')
+                    "
+                  >
                     <span class="material-icons-outlined">hourglass_top</span>
-                    Awaiting Vendor · <em>Override: {{ overrideAvailableAt(row) | date:'MMM d' }}</em>
+                    Awaiting Vendor ·
+                    <em
+                      >Override:
+                      {{ overrideAvailableAt(row) | date: "MMM d" }}</em
+                    >
                   </span>
                 }
-                @case ('force-paid') {
-                  <button class="lifecycle-btn force-btn" (click)="openForcePaidModal(row)">
+                @case ("force-paid") {
+                  <button
+                    class="lifecycle-btn force-btn"
+                    (click)="openForcePaidModal(row)"
+                  >
                     <span class="material-icons-outlined">warning</span>
                     Force Mark Paid
                   </button>
                 }
-                @case ('none') {
-                  @if (row.status === 'verified') {
+                @case ("none") {
+                  @if (row.status === "verified") {
                     <span class="paid-check">
                       <span class="material-icons-outlined">check_circle</span>
                       Verified
@@ -140,7 +206,6 @@
               }
             </div>
           </ng-template>
-
         </app-dynamic-table>
       </div>
     }
@@ -168,21 +233,38 @@
       <div class="modal-body">
         <div class="create-form">
           <p class="send-note">
-            You are confirming that <strong>
-              {{ activeTab() === 'vendors'
-                ? (sendingPaymentPayout()?.net_payout | appCurrency)
-                : (sendingPaymentPayout()?.total_earnings | appCurrency) }}
-            </strong> has been transferred to the vendor's/partner's bank account.
-            They will have <strong>2 days</strong> to verify the credit.
+            You are confirming that
+            <strong>
+              {{
+                activeTab() === "vendors"
+                  ? (sendingPaymentPayout()?.net_payout | appCurrency)
+                  : (sendingPaymentPayout()?.total_earnings | appCurrency)
+              }}
+            </strong>
+            has been transferred to the vendor's/partner's bank account. They
+            will have <strong>2 days</strong> to verify the credit.
           </p>
           <div class="field-group">
-            <label class="field-label">Transaction Reference <span class="muted">(optional)</span></label>
-            <input type="text" class="field-input" [(ngModel)]="transactionRefInput"
-                   placeholder="Bank UTR / ref no.">
+            <label class="field-label"
+              >Transaction Reference
+              <span class="muted">(optional)</span></label
+            >
+            <input
+              type="text"
+              class="field-input"
+              [(ngModel)]="transactionRefInput"
+              placeholder="Bank UTR / ref no."
+            />
           </div>
           <div class="modal-actions">
-            <button type="button" class="cancel-btn" (click)="closeSendModal()">Cancel</button>
-            <button class="create-btn send-confirm-btn" [disabled]="sendingPayment()" (click)="confirmSendPayment()">
+            <button type="button" class="cancel-btn" (click)="closeSendModal()">
+              Cancel
+            </button>
+            <button
+              class="create-btn send-confirm-btn"
+              [disabled]="sendingPayment()"
+              (click)="confirmSendPayment()"
+            >
               @if (sendingPayment()) {
                 <span class="spinner-btn"></span> Sending…
               } @else {
@@ -208,7 +290,9 @@
         </div>
         <div>
           <h2 class="modal-title">Force Mark as Verified</h2>
-          <p class="modal-sub">Override vendor confirmation and close this payout</p>
+          <p class="modal-sub">
+            Override vendor confirmation and close this payout
+          </p>
         </div>
         <button class="modal-close-btn" (click)="closeForcePaidModal()">
           <span class="material-icons-outlined">close</span>
@@ -220,43 +304,60 @@
             <span class="material-icons-outlined force-warning-icon">info</span>
             <p>
               The vendor did not confirm receipt within the 2-day window.
-              Marking it as <strong>Verified</strong> will close the payout and notify the vendor.
-              This action cannot be undone.
+              Marking it as <strong>Verified</strong> will close the payout and
+              notify the vendor. This action cannot be undone.
             </p>
           </div>
           <div class="force-payout-summary">
             <div class="force-summary-row">
               <span class="force-summary-label">Amount</span>
               <span class="force-summary-value">
-                {{ activeTab() === 'vendors'
-                  ? (forcePaidPayout()?.net_payout | appCurrency)
-                  : (forcePaidPayout()?.total_earnings | appCurrency) }}
+                {{
+                  activeTab() === "vendors"
+                    ? (forcePaidPayout()?.net_payout | appCurrency)
+                    : (forcePaidPayout()?.total_earnings | appCurrency)
+                }}
               </span>
             </div>
             <div class="force-summary-row">
               <span class="force-summary-label">
-                {{ activeTab() === 'vendors' ? 'Vendor' : 'Partner' }}
+                {{ activeTab() === "vendors" ? "Vendor" : "Partner" }}
               </span>
               <span class="force-summary-value">
-                {{ activeTab() === 'vendors'
-                  ? forcePaidPayout()?.vendor_name
-                  : forcePaidPayout()?.partner_name }}
+                {{
+                  activeTab() === "vendors"
+                    ? forcePaidPayout()?.vendor_name
+                    : forcePaidPayout()?.partner_name
+                }}
               </span>
             </div>
             <div class="force-summary-row">
               <span class="force-summary-label">Payment Sent</span>
               <span class="force-summary-value">
-                {{ forcePaidPayout()?.payment_sent_at | date:'MMM d, y, HH:mm' }}
+                {{
+                  forcePaidPayout()?.payment_sent_at | date: "MMM d, y, HH:mm"
+                }}
               </span>
             </div>
           </div>
           <div class="modal-actions">
-            <button type="button" class="cancel-btn" (click)="closeForcePaidModal()">Cancel</button>
-            <button class="create-btn force-confirm-btn" [disabled]="forcingPaid()" (click)="confirmForcePaid()">
+            <button
+              type="button"
+              class="cancel-btn"
+              (click)="closeForcePaidModal()"
+            >
+              Cancel
+            </button>
+            <button
+              class="create-btn force-confirm-btn"
+              [disabled]="forcingPaid()"
+              (click)="confirmForcePaid()"
+            >
               @if (forcingPaid()) {
                 <span class="spinner-btn"></span> Processing…
               } @else {
-                <span class="material-icons-outlined">check_circle</span> Confirm & Mark Verified
+                <span class="material-icons-outlined">check_circle</span>
+                Confirm & Mark Verified
               }
             </button>
           </div>
@@ -272,15 +373,22 @@
 @if (showModal()) {
   <div class="modal-backdrop" (click)="closeModal()">
     <div class="modal-panel" (click)="$event.stopPropagation()">
-
       <!-- Modal Header -->
       <div class="modal-header">
         <div class="modal-header-icon">
           <span class="material-icons-outlined">add_card</span>
         </div>
         <div>
-          <h2 class="modal-title">{{ isEditMode() ? 'Edit Payout' : 'Create New Payout' }}</h2>
-          <p class="modal-sub">{{ isEditMode() ? 'Modify settlement details' : 'Manually record a settlement' }}</p>
+          <h2 class="modal-title">
+            {{ isEditMode() ? "Edit Payout" : "Create New Payout" }}
+          </h2>
+          <p class="modal-sub">
+            {{
+              isEditMode()
+                ? "Modify settlement details"
+                : "Manually record a settlement"
+            }}
+          </p>
         </div>
         <button class="modal-close-btn" (click)="closeModal()">
           <span class="material-icons-outlined">close</span>
@@ -289,28 +397,39 @@
 
       <!-- Modal Body -->
       <div class="modal-body">
-        <form class="create-form" (ngSubmit)="submitPayout()" #payoutForm="ngForm">
-
+        <form
+          class="create-form"
+          (ngSubmit)="submitPayout()"
+          #payoutForm="ngForm"
+        >
           <!-- Vendor / Delivery Partner Selector -->
-          @if (activeTab() === 'vendors') {
+          @if (activeTab() === "vendors") {
             <div class="field-group">
-              <label class="field-label">Vendor <span class="required">*</span></label>
+              <label class="field-label"
+                >Vendor <span class="required">*</span></label
+              >
               <div class="select-wrap">
-                <select class="field-input field-select"
-                        [(ngModel)]="createFormObj.vendor_id"
-                        name="vendor_id"
-                        required
-                        [disabled]="isEditMode()"
-                        (change)="onVendorChange($event)">
+                <select
+                  class="field-input field-select"
+                  [(ngModel)]="createFormObj.vendor_id"
+                  name="vendor_id"
+                  required
+                  [disabled]="isEditMode()"
+                  (change)="onVendorChange($event)"
+                >
                   <option value="" disabled>— Select a vendor —</option>
                   @if (vendorsLoading()) {
                     <option disabled>Loading vendors…</option>
                   }
                   @for (v of vendors(); track v.id) {
-                    <option [value]="v.id">{{ v.store_name }} · {{ v.city || 'No city' }}</option>
+                    <option [value]="v.id">
+                      {{ v.store_name }} · {{ v.city || "No city" }}
+                    </option>
                   }
                 </select>
-                <span class="select-icon material-icons-outlined">storefront</span>
+                <span class="select-icon material-icons-outlined"
+                  >storefront</span
+                >
               </div>
             </div>
 
@@ -321,7 +440,10 @@
                   <span class="material-icons-outlined vi-icon">store</span>
                   <div>
                     <p class="vi-name">{{ selectedVendor()!.store_name }}</p>
-                    <p class="vi-meta">{{ selectedVendor()!.city }}, {{ selectedVendor()!.state }}</p>
+                    <p class="vi-meta">
+                      {{ selectedVendor()!.city }},
+                      {{ selectedVendor()!.state }}
+                    </p>
                   </div>
                   @if (bankLoading()) {
                     <div class="mini-spinner"></div>
@@ -335,8 +457,10 @@
                 @if (vendorBank()) {
                   <div class="vi-bank-row">
                     <span class="vi-bank-item">
-                      <span class="material-icons-outlined">account_balance</span>
-                      {{ vendorBank()!.bank_name || 'No bank' }}
+                      <span class="material-icons-outlined"
+                        >account_balance</span
+                      >
+                      {{ vendorBank()!.bank_name || "No bank" }}
                     </span>
                     <span class="vi-bank-item">
                       <span class="material-icons-outlined">sync</span>
@@ -344,7 +468,7 @@
                     </span>
                     <span class="vi-bank-item">
                       <span class="material-icons-outlined">payment</span>
-                      {{ vendorBank()!.upi_id || 'No UPI' }}
+                      {{ vendorBank()!.upi_id || "No UPI" }}
                     </span>
                   </div>
                 }
@@ -352,18 +476,32 @@
             }
           } @else {
             <div class="field-group">
-              <label class="field-label">Delivery Partner <span class="required">*</span></label>
+              <label class="field-label"
+                >Delivery Partner <span class="required">*</span></label
+              >
               <div class="select-wrap">
-                <select class="field-input field-select" [(ngModel)]="createFormObj.delivery_partner_id" name="delivery_partner_id" [disabled]="isEditMode()" required (change)="recalculate()">
+                <select
+                  class="field-input field-select"
+                  [(ngModel)]="createFormObj.delivery_partner_id"
+                  name="delivery_partner_id"
+                  [disabled]="isEditMode()"
+                  required
+                  (change)="recalculate()"
+                >
                   <option value="" disabled>— Select a partner —</option>
                   @if (partnersLoading()) {
                     <option disabled>Loading partners…</option>
                   }
                   @for (p of partners(); track p.id) {
-                    <option [value]="p.id">{{ p.user?.first_name || p.user?.username }} {{ p.user?.last_name }} · {{ p.vehicle_type }}</option>
+                    <option [value]="p.id">
+                      {{ p.user?.first_name || p.user?.username }}
+                      {{ p.user?.last_name }} · {{ p.vehicle_type }}
+                    </option>
                   }
                 </select>
-                <span class="select-icon material-icons-outlined">two_wheeler</span>
+                <span class="select-icon material-icons-outlined"
+                  >two_wheeler</span
+                >
               </div>
             </div>
           }
@@ -371,19 +509,35 @@
           <!-- Date Range -->
           <div class="field-row">
             <div class="field-group">
-              <label class="field-label">Start Date <span class="required">*</span></label>
-              <input type="date" class="field-input" [(ngModel)]="createFormObj.period_start" name="period_start" required
-                     (change)="recalculate()">
+              <label class="field-label"
+                >Start Date <span class="required">*</span></label
+              >
+              <input
+                type="date"
+                class="field-input"
+                [(ngModel)]="createFormObj.period_start"
+                name="period_start"
+                required
+                (change)="recalculate()"
+              />
             </div>
             <div class="field-group">
-              <label class="field-label">End Date <span class="required">*</span></label>
-              <input type="date" class="field-input" [(ngModel)]="createFormObj.period_end" name="period_end" required
-                     (change)="recalculate()">
+              <label class="field-label"
+                >End Date <span class="required">*</span></label
+              >
+              <input
+                type="date"
+                class="field-input"
+                [(ngModel)]="createFormObj.period_end"
+                name="period_end"
+                required
+                (change)="recalculate()"
+              />
             </div>
           </div>
 
           <!-- Vendor Sales Summary Card (auto-fetched) -->
-          @if (activeTab() === 'vendors') {
+          @if (activeTab() === "vendors") {
             @if (loadingSales()) {
               <div class="sales-summary-loading">
                 <div class="mini-spinner"></div>
@@ -393,33 +547,46 @@
               <div class="sales-summary-card">
                 <div class="sales-summary-title">
                   <span class="material-icons-outlined">bar_chart</span>
-                  Sales Summary · {{ createFormObj.period_start | date:'MMM d' }} – {{ createFormObj.period_end | date:'MMM d, y' }}
+                  Sales Summary ·
+                  {{ createFormObj.period_start | date: "MMM d" }} –
+                  {{ createFormObj.period_end | date: "MMM d, y" }}
                 </div>
                 <div class="sales-summary-grid">
                   <div class="sales-stat">
                     <span class="sales-stat-label">Gross Revenue</span>
-                    <span class="sales-stat-value green">{{ vendorSalesSummary()!.total_revenue | appCurrency }}</span>
+                    <span class="sales-stat-value green">{{
+                      vendorSalesSummary()!.total_revenue | appCurrency
+                    }}</span>
                   </div>
                   <div class="sales-stat">
                     <span class="sales-stat-label">Total Orders</span>
-                    <span class="sales-stat-value">{{ vendorSalesSummary()!.total_orders }}</span>
+                    <span class="sales-stat-value">{{
+                      vendorSalesSummary()!.total_orders
+                    }}</span>
                   </div>
                   <div class="sales-stat">
                     <span class="sales-stat-label">Delivered</span>
-                    <span class="sales-stat-value">{{ vendorSalesSummary()!.delivered_orders }}</span>
+                    <span class="sales-stat-value">{{
+                      vendorSalesSummary()!.delivered_orders
+                    }}</span>
                   </div>
                   <div class="sales-stat">
                     <span class="sales-stat-label">Cancelled</span>
-                    <span class="sales-stat-value red">{{ vendorSalesSummary()!.cancelled_orders }}</span>
+                    <span class="sales-stat-value red">{{
+                      vendorSalesSummary()!.cancelled_orders
+                    }}</span>
                   </div>
                   <div class="sales-stat">
                     <span class="sales-stat-label">Avg. Order Value</span>
-                    <span class="sales-stat-value">{{ vendorSalesSummary()!.average_order_value | appCurrency }}</span>
+                    <span class="sales-stat-value">{{
+                      vendorSalesSummary()!.average_order_value | appCurrency
+                    }}</span>
                   </div>
                 </div>
                 <p class="sales-summary-hint">
                   <span class="material-icons-outlined">check_circle</span>
-                  Gross sales pre-filled from delivered order revenue. Adjust if needed.
+                  Gross sales pre-filled from delivered order revenue. Adjust if
+                  needed.
                 </p>
               </div>
             }
@@ -428,25 +595,40 @@
           <!-- Amount Input -->
           <div class="field-group">
             <label class="field-label flex-label">
-              <span>@if (activeTab() === 'vendors') { GROSS SALES AMOUNT } @else { TOTAL DELIVERY EARNINGS } <span class="required">*</span></span>
+              <span>
+                @if (activeTab() === "vendors") {
+                  GROSS SALES AMOUNT
+                } @else {
+                  TOTAL DELIVERY EARNINGS
+                }
+                <span class="required">*</span></span
+              >
               @if (calculatingDeliveryEarnings() || loadingSales()) {
                 <span class="mini-spinner ml-2"></span>
               }
             </label>
             <div class="amount-input-wrap">
-              <span class="amount-prefix">₹</span>
-              <input type="number" class="field-input amount-input"
-                     [(ngModel)]="createFormObj.amount"
-                     name="amount"
-                     placeholder="0.00"
-                     required step="0.01" min="0"
-                     (input)="recalculate()">
+              <span class="amount-prefix">{{ 0 | appCurrency: true }}</span>
+              <input
+                type="number"
+                class="field-input amount-input"
+                [(ngModel)]="createFormObj.amount"
+                name="amount"
+                placeholder="0.00"
+                required
+                step="0.01"
+                min="0"
+                (input)="recalculate()"
+              />
             </div>
           </div>
 
-
           <!-- Commission Breakdown (vendor tab only) -->
-          @if (activeTab() === 'vendors' && createFormObj.amount && createFormObj.amount > 0) {
+          @if (
+            activeTab() === "vendors" &&
+            createFormObj.amount &&
+            createFormObj.amount > 0
+          ) {
             <div class="breakdown-card">
               <div class="breakdown-title">
                 <span class="material-icons-outlined">calculate</span>
@@ -455,15 +637,21 @@
               <div class="breakdown-rows">
                 <div class="breakdown-row">
                   <span>Gross Sales</span>
-                  <span class="breakdown-val">₹ {{ createFormObj.amount | number:'1.2-2' }}</span>
+                  <span class="breakdown-val">{{
+                    createFormObj.amount | appCurrency
+                  }}</span>
                 </div>
                 <div class="breakdown-row deduction">
                   <span>Platform Commission ({{ commissionPct() }}%)</span>
-                  <span class="breakdown-val red">− ₹ {{ commissionAmt() | number:'1.2-2' }}</span>
+                  <span class="breakdown-val red"
+                    >− {{ commissionAmt() | appCurrency }}</span
+                  >
                 </div>
                 <div class="breakdown-row total">
                   <span>Net Payout to Vendor</span>
-                  <span class="breakdown-val green">₹ {{ netPayout() | number:'1.2-2' }}</span>
+                  <span class="breakdown-val green">{{
+                    netPayout() | appCurrency
+                  }}</span>
                 </div>
               </div>
             </div>
@@ -471,7 +659,9 @@
 
           <!-- Actions -->
           <div class="modal-actions">
-            <button type="button" class="cancel-btn" (click)="closeModal()">Cancel</button>
+            <button type="button" class="cancel-btn" (click)="closeModal()">
+              Cancel
+            </button>
             <button type="submit" class="create-btn" [disabled]="creating()">
               @if (creating()) {
                 <span class="spinner-btn"></span>
@@ -494,7 +684,6 @@
 @if (invoicePayout()) {
   <div class="modal-backdrop" (click)="closeInvoice()">
     <div class="invoice-panel" (click)="$event.stopPropagation()">
-
       <!-- Invoice toolbar -->
       <div class="invoice-toolbar no-print">
         <span class="material-icons-outlined">receipt_long</span>
@@ -512,7 +701,6 @@
 
       <!-- Invoice Document -->
       <div class="invoice-doc" id="invoice-print-area">
-
         <!-- Invoice Header -->
         <div class="inv-header">
           <div class="inv-brand">
@@ -524,8 +712,12 @@
           </div>
           <div class="inv-meta">
             <div class="inv-title">TAX INVOICE</div>
-            <div class="inv-number"># INV-{{ invoicePayout()!.id.split('-')[0].toUpperCase() }}</div>
-            <div class="inv-date">Issued: {{ invoicePayout()!.created_at | date:'dd MMM yyyy' }}</div>
+            <div class="inv-number">
+              # INV-{{ invoicePayout()!.id.split("-")[0].toUpperCase() }}
+            </div>
+            <div class="inv-date">
+              Issued: {{ invoicePayout()!.created_at | date: "dd MMM yyyy" }}
+            </div>
           </div>
         </div>
 
@@ -542,11 +734,20 @@
             <div class="inv-party-label">VENDOR / PAYEE</div>
             <div class="inv-party-name">{{ invoicePayout()!.vendor_name }}</div>
             @if (invoiceBank()) {
-              <div class="inv-party-detail">{{ invoiceBank()!.bank_name }} · {{ invoiceBank()!.account_type | titlecase }}</div>
-              <div class="inv-party-detail">IFSC: {{ invoiceBank()!.ifsc_code }}</div>
-              <div class="inv-party-detail">A/C: {{ invoiceBank()!.masked_account }}</div>
+              <div class="inv-party-detail">
+                {{ invoiceBank()!.bank_name }} ·
+                {{ invoiceBank()!.account_type | titlecase }}
+              </div>
+              <div class="inv-party-detail">
+                IFSC: {{ invoiceBank()!.ifsc_code }}
+              </div>
+              <div class="inv-party-detail">
+                A/C: {{ invoiceBank()!.masked_account }}
+              </div>
               @if (invoiceBank()!.upi_id) {
-                <div class="inv-party-detail">UPI: {{ invoiceBank()!.upi_id }}</div>
+                <div class="inv-party-detail">
+                  UPI: {{ invoiceBank()!.upi_id }}
+                </div>
               }
             }
           </div>
@@ -555,7 +756,14 @@
         <!-- Period Banner -->
         <div class="inv-period-banner">
           <span class="material-icons-outlined">date_range</span>
-          Settlement Period: <strong>{{ invoicePayout()!.period_start | date:'dd MMM yyyy' }}</strong> to <strong>{{ invoicePayout()!.period_end | date:'dd MMM yyyy' }}</strong>
+          Settlement Period:
+          <strong>{{
+            invoicePayout()!.period_start | date: "dd MMM yyyy"
+          }}</strong>
+          to
+          <strong>{{
+            invoicePayout()!.period_end | date: "dd MMM yyyy"
+          }}</strong>
         </div>
 
         <!-- Line Items Table -->
@@ -564,30 +772,43 @@
             <tr>
               <th>#</th>
               <th>Description</th>
-              <th class="inv-th-r">Amount (₹)</th>
+              <th class="inv-th-r">Amount ({{ 0 | appCurrency: true }})</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td>1</td>
-              <td>Gross Sales Revenue ({{ invoicePayout()!.period_start | date:'MMM d' }} – {{ invoicePayout()!.period_end | date:'MMM d, yyyy' }})</td>
-              <td class="inv-td-r">{{ invoicePayout()!.gross_sales | number:'1.2-2' }}</td>
+              <td>
+                Gross Sales Revenue ({{
+                  invoicePayout()!.period_start | date: "MMM d"
+                }}
+                – {{ invoicePayout()!.period_end | date: "MMM d, yyyy" }})
+              </td>
+              <td class="inv-td-r">
+                {{ invoicePayout()!.gross_sales | number: "1.2-2" }}
+              </td>
             </tr>
             <tr class="inv-row-deduction">
               <td>2</td>
               <td>
                 Platform Commission Deduction
                 @if (invoiceBank()) {
-                  <span class="inv-rate-badge">({{ invoiceBank()!.commission_percentage }}%)</span>
+                  <span class="inv-rate-badge"
+                    >({{ invoiceBank()!.commission_percentage }}%)</span
+                  >
                 }
               </td>
-              <td class="inv-td-r red">− {{ invoicePayout()!.platform_commission | number:'1.2-2' }}</td>
+              <td class="inv-td-r red">
+                − {{ invoicePayout()!.platform_commission | number: "1.2-2" }}
+              </td>
             </tr>
           </tbody>
           <tfoot>
             <tr class="inv-total-row">
               <td colspan="2">NET PAYOUT AMOUNT</td>
-              <td class="inv-td-r inv-total-amt">₹ {{ invoicePayout()!.net_payout | number:'1.2-2' }}</td>
+              <td class="inv-td-r inv-total-amt">
+                {{ invoicePayout()!.net_payout | appCurrency }}
+              </td>
             </tr>
           </tfoot>
         </table>
@@ -596,22 +817,30 @@
         <div class="inv-status-row">
           <div class="inv-status-item">
             <div class="inv-status-label">Payment Status</div>
-            <span class="badge" [class]="'badge-' + invoicePayout()!.status">{{ invoicePayout()!.status | uppercase }}</span>
+            <span class="badge" [class]="'badge-' + invoicePayout()!.status">{{
+              invoicePayout()!.status | uppercase
+            }}</span>
           </div>
           @if (invoicePayout()!.paid_at) {
             <div class="inv-status-item">
               <div class="inv-status-label">Paid On</div>
-              <div class="inv-status-value">{{ invoicePayout()!.paid_at | date:'dd MMM yyyy, hh:mm a' }}</div>
+              <div class="inv-status-value">
+                {{ invoicePayout()!.paid_at | date: "dd MMM yyyy, hh:mm a" }}
+              </div>
             </div>
           }
           @if (invoiceBank()) {
             <div class="inv-status-item">
               <div class="inv-status-label">Settlement Cycle</div>
-              <div class="inv-status-value">{{ invoiceBank()!.settlement_cycle }}</div>
+              <div class="inv-status-value">
+                {{ invoiceBank()!.settlement_cycle }}
+              </div>
             </div>
             <div class="inv-status-item">
               <div class="inv-status-label">Account Holder</div>
-              <div class="inv-status-value">{{ invoiceBank()!.account_holder_name || '—' }}</div>
+              <div class="inv-status-value">
+                {{ invoiceBank()!.account_holder_name || "—" }}
+              </div>
             </div>
           }
         </div>
@@ -619,11 +848,13 @@
         <!-- Footer -->
         <div class="inv-footer">
           <div class="inv-footer-note">
-            This is a system-generated settlement invoice. For disputes, contact <strong>support&#64;nexconnect.com</strong>
+            This is a system-generated settlement invoice. For disputes, contact
+            <strong>support&#64;nexconnect.com</strong>
           </div>
-          <div class="inv-footer-generated">Generated: {{ today | date:'dd MMM yyyy, hh:mm a' }}</div>
+          <div class="inv-footer-generated">
+            Generated: {{ today | date: "dd MMM yyyy, hh:mm a" }}
+          </div>
         </div>
-
       </div>
     </div>
   </div>

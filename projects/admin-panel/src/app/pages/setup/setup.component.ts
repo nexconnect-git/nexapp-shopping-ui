@@ -1,6 +1,11 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiService, AuthService } from '@shared/public-api';
 
@@ -9,7 +14,7 @@ import { ApiService, AuthService } from '@shared/public-api';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './setup.component.html',
-  styleUrls: ['./setup.component.scss']
+  styleUrls: ['./setup.component.scss'],
 })
 export class SetupComponent implements OnInit {
   setupForm: FormGroup;
@@ -24,12 +29,9 @@ export class SetupComponent implements OnInit {
 
   constructor() {
     this.setupForm = this.fb.group({
-      setup_token: ['', Validators.required],
-      first_name: ['', Validators.required],
-      last_name: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
       username: ['', Validators.required],
-      password: ['', [Validators.required, Validators.minLength(8)]]
+      password: ['', [Validators.required, Validators.minLength(8)]],
     });
   }
 
@@ -45,7 +47,7 @@ export class SetupComponent implements OnInit {
       error: () => {
         this.errorMsg = 'Could not verify system status.';
         this.isLoading = false;
-      }
+      },
     });
   }
 
@@ -59,11 +61,9 @@ export class SetupComponent implements OnInit {
     this.errorMsg = '';
 
     const payload = this.setupForm.getRawValue();
-    const setupToken = payload.setup_token;
 
-    this.api.setupSuperuser(payload, setupToken).subscribe({
+    this.api.setupSuperuser(payload).subscribe({
       next: () => {
-        // Successfully created! Now login with the same credentials
         this.auth.login(payload.username, payload.password).subscribe({
           next: (res) => {
             this.auth.handleAuthResponse(res);
@@ -71,19 +71,19 @@ export class SetupComponent implements OnInit {
           },
           error: () => {
             this.router.navigate(['/login']);
-          }
+          },
         });
       },
       error: (err) => {
-        let msg = 'Failed to create Initial Superuser.';
+        let msg = 'Failed to create initial superuser.';
         if (err.error && typeof err.error === 'object') {
-          msg = Object.values(err.error).map((e: any) => Array.isArray(e) ? e[0] : e).join(', ');
+          msg = Object.values(err.error)
+            .map((e: any) => (Array.isArray(e) ? e[0] : e))
+            .join(', ');
         }
         this.errorMsg = msg;
         this.isSubmitting = false;
-      }
+      },
     });
   }
 }
-
-

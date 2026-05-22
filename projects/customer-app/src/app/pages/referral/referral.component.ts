@@ -1,80 +1,62 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { AlertService, ApiService } from '@shared/public-api';
+import { Component, computed, signal } from '@angular/core';
+import { ApiService, AppCurrencyPipe } from '@shared/public-api';
+import { AppStateService } from '../../services/app-state.service';
+import { CustomerContentConfigService } from '../../services/customer-content-config.service';
 
 @Component({
-  selector: 'app-referral',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [AppCurrencyPipe],
   templateUrl: './referral.component.html',
-  styleUrl: './referral.component.scss'
+  styleUrls: ['./referral.component.scss'],
 })
-export class ReferralComponent implements OnInit {
-  private api = inject(ApiService);
-  private alerts = inject(AlertService);
+export class ReferralComponent {
+  code = signal('');
+  referral = signal<any>(null);
+  rewardAmount = computed(() =>
+    Number(
+      this.referral()?.total_earned ||
+        this.referral()?.reward_balance ||
+        this.referral()?.rewards ||
+        0,
+    ),
+  );
 
-  loading = signal(true);
-  referralCode = signal('');
-  totalReferrals = signal(0);
-  bonusPerReferral = signal(0);
-  referrals = signal<any[]>([]);
-  copied = signal(false);
-
-  applyCode = '';
-  applying = signal(false);
-  applyError = signal('');
-  applySuccess = signal('');
-  alreadyApplied = signal(false);
-
-  ngOnInit() {
+  constructor(
+    private api: ApiService,
+    private state: AppStateService,
+    public content: CustomerContentConfigService,
+  ) {
     this.api.getReferral().subscribe({
-      next: (data) => {
-        this.referralCode.set(data.code);
-        this.totalReferrals.set(data.total_referrals);
-        this.bonusPerReferral.set(data.bonus_per_referral);
-        this.referrals.set(data.referrals || []);
-        this.loading.set(false);
+      next: (response) => {
+        this.referral.set(response);
+        this.code.set(response.code || response.referral_code || '');
       },
-      error: () => this.loading.set(false),
+      error: () => {},
     });
   }
 
-  copyCode() {
-    navigator.clipboard.writeText(this.referralCode()).then(() => {
-      this.copied.set(true);
-      setTimeout(() => this.copied.set(false), 2000);
-    }).catch(() => {});
-  }
-
-  shareCode() {
-    const msg = `Use my NexConnect referral code ${this.referralCode()} to get started! Download & order from local vendors near you.`;
-    if (navigator.share) {
-      navigator.share({ title: 'NexConnect Referral', text: msg }).catch(() => {});
-    } else {
-      navigator.clipboard.writeText(msg).then(() => this.alerts.success('Referral message copied!')).catch(() => {});
+  copy(): void {
+    if (!this.code()) {
+      this.state.showToast(this.content.referral().unavailableCode);
+      return;
     }
+    navigator.clipboard?.writeText(this.code());
+    this.state.showToast(this.content.referral().copiedMessage);
   }
 
-  submitApply() {
-    const code = this.applyCode.trim().toUpperCase();
-    if (!code) return;
-    this.applying.set(true);
-    this.applyError.set('');
-    this.applySuccess.set('');
-    this.api.applyReferralCode(code).subscribe({
-      next: (res) => {
-        this.applying.set(false);
-        this.applySuccess.set(res.message || 'Referral code applied!');
-        this.alreadyApplied.set(true);
-      },
-      error: (err) => {
-        this.applying.set(false);
-        this.applyError.set(err.error?.error || 'Could not apply code.');
-      },
-    });
+  share(channel: string): void {
+    if (!this.code()) {
+      this.state.showToast(this.content.referral().unavailableCode);
+      return;
+    }
+    const message = `Use my FlashDrop referral code ${this.code()}`;
+    if (channel === 'Share' && navigator.share) {
+      navigator
+        .share({ title: 'FlashDrop referral', text: message })
+        .catch(() => {});
+      return;
+    }
+    navigator.clipboard?.writeText(message);
+    this.state.showToast(`${channel} invite copied`);
   }
-
-  goBack() { window.history.back(); }
-  pointsEarned() { return this.totalReferrals() * this.bonusPerReferral(); }
 }

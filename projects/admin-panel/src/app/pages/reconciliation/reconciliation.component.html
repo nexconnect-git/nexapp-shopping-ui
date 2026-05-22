@@ -1,75 +1,106 @@
-<div class="page-header">
-  <div>
-    <h1 class="page-title">Reconciliation</h1>
-    <p class="page-subtitle">Cross-check payment collection, vendor payouts, delivery payouts, and exception queues.</p>
-  </div>
-  <button class="btn btn-primary" (click)="load()" [disabled]="loading()">
-    <span class="material-icons-outlined" [class.spin]="loading()">refresh</span>
-    Refresh
-  </button>
-</div>
-
-@if (loading()) {
-  <div class="recon-loading"><div class="spinner"></div><span>Reconciling money movement...</span></div>
-} @else {
-  @if (errors().length) {
-    <div class="recon-alert">
-      @for (e of errors(); track e) { <span>{{ e }}</span> }
+<div class="saas-page reconciliation-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Reconciliation</h1>
+      <p class="page-subtitle">
+        Cross-check payment collection, vendor payouts, delivery payouts, and
+        exception queues.
+      </p>
     </div>
-  }
+    <button class="btn btn-primary" (click)="load()" [disabled]="loading()">
+      <span class="material-icons-outlined" [class.spin]="loading()"
+        >refresh</span
+      >
+      Refresh
+    </button>
+  </div>
 
-  <section class="recon-kpis">
-    <a routerLink="/payments" class="recon-kpi">
-      <span>Collected revenue</span>
-      <strong>{{ collectedRevenue | appCurrency }}</strong>
-      <small>{{ payments().length }} recent payment records</small>
-    </a>
-    <a routerLink="/payments" class="recon-kpi danger">
-      <span>Payment exceptions</span>
-      <strong>{{ pendingPayments }}</strong>
-      <small>Unverified online payments</small>
-    </a>
-    <a routerLink="/payouts" class="recon-kpi">
-      <span>Vendor payable</span>
-      <strong>{{ vendorPayable | appCurrency }}</strong>
-      <small>Pending, approved, or scheduled</small>
-    </a>
-    <a routerLink="/payouts" class="recon-kpi">
-      <span>Delivery payable</span>
-      <strong>{{ deliveryPayable | appCurrency }}</strong>
-      <small>Pending rider settlements</small>
-    </a>
-  </section>
-
-  <section class="recon-grid">
-    <article class="recon-card">
-      <header>
-        <h2>Exception Queue</h2>
-        <a routerLink="/payments">Payments</a>
-      </header>
-      @if (exceptions.length === 0) {
-        <div class="empty">No reconciliation exceptions in the recent window.</div>
-      } @else {
-        @for (item of exceptions; track item.type + item.label) {
-          <a class="exception-row" [routerLink]="item.route">
-            <span>{{ item.type }}</span>
-            <strong>{{ item.label }}</strong>
-            <em>{{ item.status }}</em>
-          </a>
+  @if (loading()) {
+    <div class="recon-loading">
+      <div class="spinner"></div>
+      <span>Reconciling money movement...</span>
+    </div>
+  } @else {
+    @if (errors().length) {
+      <div class="recon-alert">
+        @for (e of errors(); track e) {
+          <span>{{ e }}</span>
         }
-      }
-    </article>
-
-    <article class="recon-card">
-      <header>
-        <h2>Production Controls Needed</h2>
-        <a routerLink="/production-readiness">Readiness</a>
-      </header>
-      <div class="control-list">
-        <div><span class="material-icons-outlined">history</span><strong>Immutable audit log</strong><small>Record every payout/payment/admin mutation.</small></div>
-        <div><span class="material-icons-outlined">request_quote</span><strong>Refund ledger</strong><small>Link order issues, wallet refunds, and payment gateway refunds.</small></div>
-        <div><span class="material-icons-outlined">file_download</span><strong>Export packs</strong><small>CSV/PDF reconciliation exports for finance operations.</small></div>
       </div>
-    </article>
-  </section>
-}
+    }
+
+    <section class="recon-kpis">
+      <a routerLink="/payments" class="recon-kpi">
+        <span>Collected revenue</span>
+        <strong>{{ collectedRevenue | appCurrency }}</strong>
+        <small>{{ payments().length }} recent payment records</small>
+      </a>
+      <a routerLink="/payments" class="recon-kpi danger">
+        <span>Payment exceptions</span>
+        <strong>{{ pendingPayments }}</strong>
+        <small>Unverified online payments</small>
+      </a>
+      <a routerLink="/payouts" class="recon-kpi">
+        <span>Vendor payable</span>
+        <strong>{{ vendorPayable | appCurrency }}</strong>
+        <small>Pending, approved, or scheduled</small>
+      </a>
+      <a routerLink="/payouts" class="recon-kpi">
+        <span>Delivery payable</span>
+        <strong>{{ deliveryPayable | appCurrency }}</strong>
+        <small>Pending rider settlements</small>
+      </a>
+    </section>
+
+    <section class="recon-grid">
+      <article class="recon-card">
+        <header>
+          <h2>Exception Queue</h2>
+          <a routerLink="/payments">Payments</a>
+        </header>
+        @if (exceptions.length === 0) {
+          <div class="empty">
+            No reconciliation exceptions in the recent window.
+          </div>
+        } @else {
+          @for (item of exceptions; track item.type + item.label) {
+            <a class="exception-row" [routerLink]="item.route">
+              <span>{{ item.type }}</span>
+              <strong>{{ item.label }}</strong>
+              <em>{{ item.status }}</em>
+            </a>
+          }
+        }
+      </article>
+
+      <article class="recon-card">
+        <header>
+          <h2>Production Controls Needed</h2>
+          <a routerLink="/production-readiness">Readiness</a>
+        </header>
+        <div class="control-list">
+          <div>
+            <span class="material-icons-outlined">history</span
+            ><strong>Immutable audit log</strong
+            ><small>Record every payout/payment/admin mutation.</small>
+          </div>
+          <div>
+            <span class="material-icons-outlined">request_quote</span
+            ><strong>Refund ledger</strong
+            ><small
+              >Link order issues, wallet refunds, and payment gateway
+              refunds.</small
+            >
+          </div>
+          <div>
+            <span class="material-icons-outlined">file_download</span
+            ><strong>Export packs</strong
+            ><small
+              >CSV/PDF reconciliation exports for finance operations.</small
+            >
+          </div>
+        </div>
+      </article>
+    </section>
+  }
+</div>

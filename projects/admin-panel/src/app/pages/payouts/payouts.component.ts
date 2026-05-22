@@ -1,6 +1,18 @@
-import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  OnDestroy,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { Subscription, timer } from 'rxjs';
-import { CommonModule, DecimalPipe, TitleCasePipe, DatePipe } from '@angular/common';
+import {
+  CommonModule,
+  DatePipe,
+  DecimalPipe,
+  TitleCasePipe,
+} from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService, AppCurrencyPipe, ToastService } from '@shared/public-api';
 import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
@@ -8,9 +20,18 @@ import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
 @Component({
   selector: 'app-payouts',
   standalone: true,
-  imports: [CommonModule, FormsModule, AppCurrencyPipe, DecimalPipe, TitleCasePipe, DatePipe, DynamicTableComponent, TableCellDirective],
+  imports: [
+    CommonModule,
+    FormsModule,
+    AppCurrencyPipe,
+    DecimalPipe,
+    TitleCasePipe,
+    DatePipe,
+    DynamicTableComponent,
+    TableCellDirective,
+  ],
   templateUrl: './payouts.component.html',
-  styleUrl: './payouts.component.scss'
+  styleUrl: './payouts.component.scss',
 })
 export class PayoutsComponent implements OnInit, OnDestroy {
   private api = inject(ApiService);
@@ -33,7 +54,7 @@ export class PayoutsComponent implements OnInit, OnDestroy {
         { key: 'commission', label: 'Commission', flex: '1fr' },
         { key: 'net', label: 'Net Payout', flex: '1fr' },
         { key: 'status', label: 'Status', flex: '1fr' },
-        { key: 'actions', label: 'Actions', flex: '1.5fr' }
+        { key: 'actions', label: 'Actions', flex: '1.5fr' },
       ];
     } else {
       return [
@@ -42,7 +63,7 @@ export class PayoutsComponent implements OnInit, OnDestroy {
         { key: 'period', label: 'Period', flex: '1.5fr' },
         { key: 'net', label: 'Net Payout', flex: '1fr' },
         { key: 'status', label: 'Status', flex: '1fr' },
-        { key: 'actions', label: 'Actions', flex: '1.5fr' }
+        { key: 'actions', label: 'Actions', flex: '1.5fr' },
       ];
     }
   }
@@ -63,7 +84,7 @@ export class PayoutsComponent implements OnInit, OnDestroy {
     delivery_partner_id: '',
     amount: null as number | null,
     period_start: '',
-    period_end: ''
+    period_end: '',
   };
 
   // ── Selected vendor & bank details ───────────────────────────
@@ -119,16 +140,27 @@ export class PayoutsComponent implements OnInit, OnDestroy {
     this.loadVendors();
     this.loadPartners();
     this.reloadSub = timer(0, 15000).subscribe(() => {
-      if (this.autoReload() && !this.showModal() && !this.showSendModal() && !this.showForcePaidModal()) {
+      if (
+        this.autoReload() &&
+        !this.showModal() &&
+        !this.showSendModal() &&
+        !this.showForcePaidModal()
+      ) {
         this.loadPayouts();
       }
     });
   }
 
-  ngOnDestroy() { this.reloadSub?.unsubscribe(); }
+  ngOnDestroy() {
+    this.reloadSub?.unsubscribe();
+  }
 
-  manualReload() { this.loadPayouts(); }
-  toggleAutoReload() { this.autoReload.update(v => !v); }
+  manualReload() {
+    this.loadPayouts();
+  }
+  toggleAutoReload() {
+    this.autoReload.update((v) => !v);
+  }
 
   // ── Tab switching ─────────────────────────────────────────────
   setTab(tab: 'vendors' | 'delivery') {
@@ -147,31 +179,38 @@ export class PayoutsComponent implements OnInit, OnDestroy {
   loadVendors() {
     this.vendorsLoading.set(true);
     this.api.getAdminVendors({ page_size: 200 }).subscribe({
-      next: (res: any) => { this.vendors.set(res.results || res); this.vendorsLoading.set(false); },
-      error: () => this.vendorsLoading.set(false)
+      next: (res: any) => {
+        this.vendors.set(res.results || res);
+        this.vendorsLoading.set(false);
+      },
+      error: () => this.vendorsLoading.set(false),
     });
   }
 
   loadPartners() {
     this.partnersLoading.set(true);
     this.api.getAdminDeliveryPartners({ page_size: 200 }).subscribe({
-      next: (res: any) => { this.partners.set(res.results || res); this.partnersLoading.set(false); },
-      error: () => this.partnersLoading.set(false)
+      next: (res: any) => {
+        this.partners.set(res.results || res);
+        this.partnersLoading.set(false);
+      },
+      error: () => this.partnersLoading.set(false),
     });
   }
 
   loadPayouts() {
     this.loading.set(true);
-    const req = this.activeTab() === 'vendors'
-      ? this.api.getAdminVendorPayouts({ page: this.page() })
-      : this.api.getAdminDeliveryPayouts({ page: this.page() });
+    const req =
+      this.activeTab() === 'vendors'
+        ? this.api.getAdminVendorPayouts({ page: this.page() })
+        : this.api.getAdminDeliveryPayouts({ page: this.page() });
 
     req.subscribe({
       next: (res: any) => {
         const list = (res.results || res).map((p: any) => ({
           ...p,
           vendor_name: p.vendor_name || p.vendor || '—',
-          partner_name: p.partner_name || p.delivery_partner || '—'
+          partner_name: p.partner_name || p.delivery_partner || '—',
         }));
         this.payouts.set(list);
         this.totalItems.set(res.count ?? list.length);
@@ -181,7 +220,7 @@ export class PayoutsComponent implements OnInit, OnDestroy {
       error: () => {
         this.toast.show(`Failed to load ${this.activeTab()} payouts.`, 'error');
         this.loading.set(false);
-      }
+      },
     });
   }
 
@@ -195,8 +234,13 @@ export class PayoutsComponent implements OnInit, OnDestroy {
 
     this.bankLoading.set(true);
     this.api.getVendorBankDetails(vendorId).subscribe({
-      next: (bank: any) => { this.vendorBank.set(bank); this.bankLoading.set(false); },
-      error: () => { this.bankLoading.set(false); }
+      next: (bank: any) => {
+        this.vendorBank.set(bank);
+        this.bankLoading.set(false);
+      },
+      error: () => {
+        this.bankLoading.set(false);
+      },
     });
 
     // Auto-calculate if dates are already filled
@@ -231,7 +275,7 @@ export class PayoutsComponent implements OnInit, OnDestroy {
       error: () => {
         this.toast.show('Failed to fetch sales data for this period.', 'error');
         this.loadingSales.set(false);
-      }
+      },
     });
   }
 
@@ -251,7 +295,7 @@ export class PayoutsComponent implements OnInit, OnDestroy {
       error: () => {
         this.toast.show('Failed to calculate delivery earnings.', 'error');
         this.calculatingDeliveryEarnings.set(false);
-      }
+      },
     });
   }
 
@@ -267,24 +311,30 @@ export class PayoutsComponent implements OnInit, OnDestroy {
     this.editingId.set(payout.id);
 
     const pStart = payout.period_start ? payout.period_start.split('T')[0] : '';
-    const pEnd   = payout.period_end   ? payout.period_end.split('T')[0]   : '';
+    const pEnd = payout.period_end ? payout.period_end.split('T')[0] : '';
 
     if (this.activeTab() === 'vendors') {
       this.createFormObj.vendor_id = payout.vendor;
-      this.createFormObj.amount    = payout.gross_sales;
+      this.createFormObj.amount = payout.gross_sales;
     } else {
-      const partnerObj = this.partners().find((p: any) =>
-        p.user?.id === payout.delivery_partner || p.id === payout.delivery_partner
+      const partnerObj = this.partners().find(
+        (p: any) =>
+          p.user?.id === payout.delivery_partner ||
+          p.id === payout.delivery_partner,
       );
-      this.createFormObj.delivery_partner_id = partnerObj ? partnerObj.id : payout.delivery_partner;
-      this.createFormObj.amount              = payout.total_earnings;
+      this.createFormObj.delivery_partner_id = partnerObj
+        ? partnerObj.id
+        : payout.delivery_partner;
+      this.createFormObj.amount = payout.total_earnings;
       this.deliveryDeliveriesCount.set(payout.total_deliveries || 0);
     }
     this.createFormObj.period_start = pStart;
-    this.createFormObj.period_end   = pEnd;
+    this.createFormObj.period_end = pEnd;
 
     if (this.activeTab() === 'vendors' && this.createFormObj.vendor_id) {
-      this.onVendorChange({ target: { value: this.createFormObj.vendor_id } } as any);
+      this.onVendorChange({
+        target: { value: this.createFormObj.vendor_id },
+      } as any);
     }
     this.showModal.set(true);
   }
@@ -295,7 +345,13 @@ export class PayoutsComponent implements OnInit, OnDestroy {
   }
 
   resetForm() {
-    this.createFormObj = { vendor_id: '', delivery_partner_id: '', amount: null, period_start: '', period_end: '' };
+    this.createFormObj = {
+      vendor_id: '',
+      delivery_partner_id: '',
+      amount: null,
+      period_start: '',
+      period_end: '',
+    };
     this.selectedVendor.set(null);
     this.vendorBank.set(null);
     this.vendorSalesSummary.set(null);
@@ -307,35 +363,46 @@ export class PayoutsComponent implements OnInit, OnDestroy {
   submitPayout() {
     const isVendor = this.activeTab() === 'vendors';
     if (isVendor && !this.createFormObj.vendor_id) {
-      this.toast.show('Please select a vendor.', 'error'); return;
+      this.toast.show('Please select a vendor.', 'error');
+      return;
     }
     if (!isVendor && !this.createFormObj.delivery_partner_id) {
-      this.toast.show('Please select a delivery partner.', 'error'); return;
+      this.toast.show('Please select a delivery partner.', 'error');
+      return;
     }
-    if (!this.createFormObj.amount || !this.createFormObj.period_start || !this.createFormObj.period_end) {
-      this.toast.show('Please fill in all required fields.', 'error'); return;
+    if (
+      !this.createFormObj.amount ||
+      !this.createFormObj.period_start ||
+      !this.createFormObj.period_end
+    ) {
+      this.toast.show('Please fill in all required fields.', 'error');
+      return;
     }
 
     this.creating.set(true);
     const payload: any = {
       period_start: this.createFormObj.period_start,
-      period_end:   this.createFormObj.period_end,
-      status: 'pending_approval'
+      period_end: this.createFormObj.period_end,
+      status: 'pending_approval',
     };
 
     if (isVendor) {
-      const gross      = this.createFormObj.amount!;
+      const gross = this.createFormObj.amount!;
       const commission = this.commissionAmt();
-      const net        = this.netPayout();
-      payload.vendor              = this.createFormObj.vendor_id;
-      payload.gross_sales         = gross;
+      const net = this.netPayout();
+      payload.vendor = this.createFormObj.vendor_id;
+      payload.gross_sales = gross;
       payload.platform_commission = parseFloat(commission.toFixed(2));
-      payload.net_payout          = parseFloat(net.toFixed(2));
+      payload.net_payout = parseFloat(net.toFixed(2));
     } else {
-      const selected = this.partners().find((p: any) => p.id === this.createFormObj.delivery_partner_id);
-      payload.delivery_partner = selected?.user?.id || this.createFormObj.delivery_partner_id;
-      payload.total_deliveries = this.deliveryDeliveriesCount() > 0 ? this.deliveryDeliveriesCount() : 1;
-      payload.total_earnings   = this.createFormObj.amount;
+      const selected = this.partners().find(
+        (p: any) => p.id === this.createFormObj.delivery_partner_id,
+      );
+      payload.delivery_partner =
+        selected?.user?.id || this.createFormObj.delivery_partner_id;
+      payload.total_deliveries =
+        this.deliveryDeliveriesCount() > 0 ? this.deliveryDeliveriesCount() : 1;
+      payload.total_earnings = this.createFormObj.amount;
     }
 
     let req;
@@ -358,41 +425,50 @@ export class PayoutsComponent implements OnInit, OnDestroy {
             : isVendor
               ? 'Payout created — vendor notified for approval.'
               : 'Payout created — partner notified.',
-          'success'
+          'success',
         );
         this.creating.set(false);
         this.closeModal();
         this.loadPayouts();
       },
       error: (err: any) => {
-        const msg = err.error && typeof err.error === 'object'
-          ? Object.values(err.error).flat().join(' ')
-          : this.isEditMode() ? 'Failed to update payout.' : 'Failed to create payout.';
+        const msg =
+          err.error && typeof err.error === 'object'
+            ? Object.values(err.error).flat().join(' ')
+            : this.isEditMode()
+              ? 'Failed to update payout.'
+              : 'Failed to create payout.';
         this.toast.show(msg, 'error');
         this.creating.set(false);
-      }
+      },
     });
   }
 
   // ── Lifecycle action helpers ──────────────────────────────────
 
-  getPayoutAction(payout: any): 'schedule' | 'send-payment' | 'awaiting' | 'force-paid' | 'none' {
+  getPayoutAction(
+    payout: any,
+  ): 'schedule' | 'send-payment' | 'awaiting' | 'force-paid' | 'none' {
     const isDelivery = this.activeTab() === 'delivery';
     switch (payout.status) {
-      case 'pending_approval': return isDelivery ? 'schedule' : 'none';
-      case 'approved':         return 'schedule';
-      case 'scheduled':        return 'send-payment';
-      case 'paid':             return this.canForceVerify(payout) ? 'force-paid' : 'awaiting';
-      default:                 return 'none';
+      case 'pending_approval':
+        return isDelivery ? 'schedule' : 'none';
+      case 'approved':
+        return 'schedule';
+      case 'scheduled':
+        return 'send-payment';
+      case 'paid':
+        return this.canForceVerify(payout) ? 'force-paid' : 'awaiting';
+      default:
+        return 'none';
     }
   }
 
   canForceVerify(payout: any): boolean {
     if (payout.status !== 'paid' || !payout.payment_sent_at) return false;
     const sentAt = new Date(payout.payment_sent_at).getTime();
-    return (Date.now() - sentAt) >= 2 * 24 * 60 * 60 * 1000;
+    return Date.now() - sentAt >= 2 * 24 * 60 * 60 * 1000;
   }
-
 
   overrideAvailableAt(payout: any): Date | null {
     if (!payout.payment_sent_at) return null;
@@ -407,8 +483,12 @@ export class PayoutsComponent implements OnInit, OnDestroy {
       ? this.api.scheduleAdminVendorPayout(payout.id)
       : this.api.scheduleAdminDeliveryPayout(payout.id);
     req.subscribe({
-      next: () => { this.toast.show('Payout scheduled.', 'success'); this.loadPayouts(); },
-      error: (e: any) => this.toast.show(e.error?.error || 'Failed to schedule.', 'error')
+      next: () => {
+        this.toast.show('Payout scheduled.', 'success');
+        this.loadPayouts();
+      },
+      error: (e: any) =>
+        this.toast.show(e.error?.error || 'Failed to schedule.', 'error'),
     });
   }
 
@@ -434,7 +514,10 @@ export class PayoutsComponent implements OnInit, OnDestroy {
       : this.api.sendAdminDeliveryPayment(payout.id, this.transactionRefInput);
     req.subscribe({
       next: () => {
-        this.toast.show('Payment dispatched — vendor/partner notified to verify.', 'success');
+        this.toast.show(
+          'Payment dispatched — vendor/partner notified to verify.',
+          'success',
+        );
         this.sendingPayment.set(false);
         this.closeSendModal();
         this.loadPayouts();
@@ -442,7 +525,7 @@ export class PayoutsComponent implements OnInit, OnDestroy {
       error: (e: any) => {
         this.toast.show(e.error?.error || 'Failed to send payment.', 'error');
         this.sendingPayment.set(false);
-      }
+      },
     });
   }
 
@@ -474,7 +557,7 @@ export class PayoutsComponent implements OnInit, OnDestroy {
       error: (e: any) => {
         this.toast.show(e.error?.error || 'Override failed.', 'error');
         this.forcingPaid.set(false);
-      }
+      },
     });
   }
 
@@ -487,7 +570,7 @@ export class PayoutsComponent implements OnInit, OnDestroy {
     if (vendorId) {
       this.api.getVendorBankDetails(vendorId).subscribe({
         next: (bank: any) => this.invoiceBank.set(bank),
-        error: () => {}
+        error: () => {},
       });
     }
   }
@@ -501,5 +584,3 @@ export class PayoutsComponent implements OnInit, OnDestroy {
     window.print();
   }
 }
-
-

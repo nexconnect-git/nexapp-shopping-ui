@@ -1,4 +1,6 @@
-:host { display: block; }
+:host {
+  display: block;
+}
 
 .readiness-summary {
   display: grid;
@@ -13,9 +15,20 @@
     background: #fff;
   }
 
-  strong, span { display: block; }
-  strong { font-size: 2rem; line-height: 1; font-weight: 950; }
-  span { margin-top: 0.45rem; color: var(--text-muted); font-weight: 750; }
+  strong,
+  span {
+    display: block;
+  }
+  strong {
+    font-size: 2rem;
+    line-height: 1;
+    font-weight: 950;
+  }
+  span {
+    margin-top: 0.45rem;
+    color: var(--text-muted);
+    font-weight: 750;
+  }
 }
 
 .readiness-grid {
@@ -34,13 +47,33 @@
   flex-direction: column;
   gap: 0.8rem;
 
-  &.done { box-shadow: inset 4px 0 0 #16a34a; }
-  &.partial { box-shadow: inset 4px 0 0 #f59e0b; }
-  &.missing { box-shadow: inset 4px 0 0 #e94560; }
+  &.done {
+    box-shadow: inset 4px 0 0 #22c55e;
+  }
+  &.partial {
+    box-shadow: inset 4px 0 0 #ef4444;
+  }
+  &.missing {
+    box-shadow: inset 4px 0 0 #ef4444;
+  }
 
-  h2 { margin: 0; font-size: 1.05rem; font-weight: 950; }
-  p { margin: 0; color: var(--text-muted); line-height: 1.48; font-weight: 650; }
-  a { margin-top: auto; color: var(--primary); text-decoration: none; font-weight: 900; }
+  h2 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 950;
+  }
+  p {
+    margin: 0;
+    color: var(--text-muted);
+    line-height: 1.48;
+    font-weight: 650;
+  }
+  a {
+    margin-top: auto;
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 900;
+  }
 }
 
 .status-row {
@@ -49,13 +82,16 @@
   justify-content: space-between;
   gap: 1rem;
 
-  span, em {
+  span,
+  em {
     font-size: 0.72rem;
     font-weight: 900;
     text-transform: uppercase;
   }
 
-  span { color: var(--text-muted); }
+  span {
+    color: var(--text-muted);
+  }
   em {
     padding: 0.24rem 0.5rem;
     border-radius: 999px;
@@ -66,9 +102,14 @@
 }
 
 @media (max-width: 1100px) {
-  .readiness-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .readiness-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 720px) {
-  .readiness-summary, .readiness-grid { grid-template-columns: 1fr; }
+  .readiness-summary,
+  .readiness-grid {
+    grid-template-columns: 1fr;
+  }
 }

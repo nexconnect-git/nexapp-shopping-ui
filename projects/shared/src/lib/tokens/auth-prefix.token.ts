@@ -11,5 +11,5 @@ import { InjectionToken } from '@angular/core';
  *   { provide: AUTH_PREFIX, useValue: 'vendor' } → 'vendor_access_token'
  */
 export const AUTH_PREFIX = new InjectionToken<string>('AUTH_PREFIX', {
-  factory: () => 'app' // safe fallback
+  factory: () => 'app', // safe fallback
 });

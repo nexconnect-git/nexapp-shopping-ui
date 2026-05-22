@@ -1,5 +1,10 @@
 import { Component } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import {
+  type ComponentFixture,
+  fakeAsync,
+  TestBed,
+  tick,
+} from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { ApiService, AuthService } from '@shared/public-api';
@@ -21,16 +26,20 @@ describe('LoginComponent', () => {
       username: 'vendor',
       role: 'vendor',
       force_password_change: false,
-      ...overrides
+      ...overrides,
     },
     access: 'access-token',
-    refresh: 'refresh-token'
+    refresh: 'refresh-token',
   });
 
   beforeEach(async () => {
-    auth = jasmine.createSpyObj<AuthService>('AuthService', ['login', 'handleAuthResponse'], {
-      vendorKey: 'vendor_status'
-    });
+    auth = jasmine.createSpyObj<AuthService>(
+      'AuthService',
+      ['login', 'handleAuthResponse'],
+      {
+        vendorKey: 'vendor_status',
+      },
+    );
     api = jasmine.createSpyObj<ApiService>('ApiService', ['getVendorProfile']);
 
     await TestBed.configureTestingModule({
@@ -40,11 +49,11 @@ describe('LoginComponent', () => {
           { path: 'register', component: BlankComponent },
           { path: 'change-password', component: BlankComponent },
           { path: 'pending-approval', component: BlankComponent },
-          { path: '', component: BlankComponent }
+          { path: '', component: BlankComponent },
         ]),
         { provide: AuthService, useValue: auth },
-        { provide: ApiService, useValue: api }
-      ]
+        { provide: ApiService, useValue: api },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(LoginComponent);
@@ -57,17 +66,31 @@ describe('LoginComponent', () => {
 
   it('creates the login page with accessible username and password controls', () => {
     expect(component).toBeTruthy();
-    expect(fixture.nativeElement.querySelector('#username')?.getAttribute('autocomplete')).toBe('username');
-    expect(fixture.nativeElement.querySelector('#password')?.getAttribute('autocomplete')).toBe('current-password');
-    expect(fixture.nativeElement.querySelector('button[type="submit"]')?.textContent).toContain('Sign In');
+    expect(
+      fixture.nativeElement
+        .querySelector('#username')
+        ?.getAttribute('autocomplete'),
+    ).toBe('username');
+    expect(
+      fixture.nativeElement
+        .querySelector('#password')
+        ?.getAttribute('autocomplete'),
+    ).toBe('current-password');
+    expect(
+      fixture.nativeElement.querySelector('button[type="submit"]')?.textContent,
+    ).toContain('Sign In');
   });
 
   it('validates required credentials before calling the API', () => {
-    fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit'));
+    fixture.nativeElement
+      .querySelector('form')
+      .dispatchEvent(new Event('submit'));
     fixture.detectChanges();
 
     expect(auth.login).not.toHaveBeenCalled();
-    expect(fixture.nativeElement.querySelector('.error-msg')?.textContent).toContain('Please enter both username and password.');
+    expect(
+      fixture.nativeElement.querySelector('.error-msg')?.textContent,
+    ).toContain('Please enter both username and password.');
   });
 
   it('submits entered credentials and routes approved vendors to the dashboard', fakeAsync(() => {
@@ -76,7 +99,9 @@ describe('LoginComponent', () => {
     setInput('#username', 'merchant');
     setInput('#password', 'secret');
 
-    fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit'));
+    fixture.nativeElement
+      .querySelector('form')
+      .dispatchEvent(new Event('submit'));
     tick();
 
     expect(auth.login).toHaveBeenCalledWith('merchant', 'secret');
@@ -87,7 +112,9 @@ describe('LoginComponent', () => {
   }));
 
   it('routes approved vendors with forced password reset to change-password', fakeAsync(() => {
-    auth.login.and.returnValue(of(vendorResponse({ force_password_change: true }) as any));
+    auth.login.and.returnValue(
+      of(vendorResponse({ force_password_change: true }) as any),
+    );
     api.getVendorProfile.and.returnValue(of({ status: 'approved' } as any));
     component.username = 'merchant';
     component.password = 'secret';
@@ -123,12 +150,16 @@ describe('LoginComponent', () => {
     expect(auth.handleAuthResponse).not.toHaveBeenCalled();
     expect(api.getVendorProfile).not.toHaveBeenCalled();
     expect(component.loading()).toBeFalse();
-    expect(fixture.nativeElement.querySelector('.error-msg')?.textContent).toContain('strictly for vendors');
+    expect(
+      fixture.nativeElement.querySelector('.error-msg')?.textContent,
+    ).toContain('strictly for vendors');
   }));
 
   it('falls back to pending approval if profile lookup fails after a vendor login', fakeAsync(() => {
     auth.login.and.returnValue(of(vendorResponse() as any));
-    api.getVendorProfile.and.returnValue(throwError(() => new Error('profile unavailable')));
+    api.getVendorProfile.and.returnValue(
+      throwError(() => new Error('profile unavailable')),
+    );
     component.username = 'merchant';
     component.password = 'secret';
 
@@ -140,7 +171,9 @@ describe('LoginComponent', () => {
   }));
 
   it('shows API error detail and re-enables the submit button on login failure', fakeAsync(() => {
-    auth.login.and.returnValue(throwError(() => ({ error: { detail: 'Invalid password' } })));
+    auth.login.and.returnValue(
+      throwError(() => ({ error: { detail: 'Invalid password' } })),
+    );
     component.username = 'merchant';
     component.password = 'bad';
 
@@ -148,12 +181,18 @@ describe('LoginComponent', () => {
     tick();
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('.error-msg')?.textContent).toContain('Invalid password');
-    expect(fixture.nativeElement.querySelector('button[type="submit"]').disabled).toBeFalse();
+    expect(
+      fixture.nativeElement.querySelector('.error-msg')?.textContent,
+    ).toContain('Invalid password');
+    expect(
+      fixture.nativeElement.querySelector('button[type="submit"]').disabled,
+    ).toBeFalse();
   }));
 
   it('falls back through supported login error shapes', fakeAsync(() => {
-    auth.login.and.returnValue(throwError(() => ({ error: { error: 'Account disabled' } })));
+    auth.login.and.returnValue(
+      throwError(() => ({ error: { error: 'Account disabled' } })),
+    );
     component.username = 'merchant';
     component.password = 'bad';
 
@@ -175,13 +214,17 @@ describe('LoginComponent', () => {
     component.loading.set(true);
     fixture.detectChanges();
 
-    const button = fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement;
+    const button = fixture.nativeElement.querySelector(
+      'button[type="submit"]',
+    ) as HTMLButtonElement;
     expect(button.disabled).toBeTrue();
     expect(button.textContent).toContain('Signing in');
   }));
 
   function setInput(selector: string, value: string) {
-    const input = fixture.nativeElement.querySelector(selector) as HTMLInputElement;
+    const input = fixture.nativeElement.querySelector(
+      selector,
+    ) as HTMLInputElement;
     input.value = value;
     input.dispatchEvent(new Event('input'));
   }

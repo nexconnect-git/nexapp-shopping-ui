@@ -6,10 +6,7 @@
     </div>
   </div>
 
-
-
   <div class="stock-layout">
-    
     <!-- Left Column: Product List -->
     <div class="card all-products-card">
       <div class="card-header">
@@ -19,7 +16,9 @@
         @if (loading()) {
           <div class="p-4 text-center text-muted">Loading inventory...</div>
         } @else if (products().length === 0) {
-          <div class="p-4 text-center text-muted">No products found. Add products to manage stock.</div>
+          <div class="p-4 text-center text-muted">
+            No products found. Add products to manage stock.
+          </div>
         } @else {
           <table class="table">
             <thead>
@@ -36,28 +35,49 @@
               @for (prod of products(); track prod.id) {
                 <tr>
                   <td>
-                    <div style="font-weight: 500;">{{ prod.name }}</div>
+                    <div style="font-weight: 500">{{ prod.name }}</div>
                   </td>
                   <td>{{ prod.price | appCurrency }}</td>
-                  
+
                   <!-- Stock Column -->
                   <td>
                     @if (prod._editing) {
-                      <input type="number" class="form-input stock-input" [(ngModel)]="prod._newStock" min="0" aria-label="input">
+                      <input
+                        type="number"
+                        class="form-input stock-input"
+                        [(ngModel)]="prod._newStock"
+                        min="0"
+                        placeholder="e.g. 25"
+                        aria-label="Stock quantity"
+                      />
+                      <small class="field-hint"
+                        >Units customers can order now.</small
+                      >
                     } @else {
                       <strong>{{ prod.stock }}</strong>
                     }
                   </td>
-                  
+
                   <!-- Threshold Column -->
                   <td>
                     @if (prod._editing) {
-                      <input type="number" class="form-input stock-input" [(ngModel)]="prod._newThreshold" min="0">
+                      <input
+                        type="number"
+                        class="form-input stock-input"
+                        [(ngModel)]="prod._newThreshold"
+                        min="0"
+                        placeholder="e.g. 5"
+                      />
+                      <small class="field-hint"
+                        >Show a low-stock warning at this level.</small
+                      >
                     } @else {
-                      <span class="text-muted">{{ prod.low_stock_threshold }}</span>
+                      <span class="text-muted">{{
+                        prod.low_stock_threshold
+                      }}</span>
                     }
                   </td>
-                  
+
                   <!-- Status Column -->
                   <td>
                     @if (prod.stock === 0) {
@@ -68,14 +88,29 @@
                       <span class="badge badge-success">IN STOCK</span>
                     }
                   </td>
-                  
+
                   <!-- Actions Column -->
                   <td>
                     @if (prod._editing) {
-                      <button class="btn-sm btn-success mr-2" (click)="saveStock(prod)">Save</button>
-                      <button class="btn-sm btn-secondary" (click)="toggleEdit(prod)">Cancel</button>
+                      <button
+                        class="btn-sm btn-success mr-2"
+                        (click)="saveStock(prod)"
+                      >
+                        Save
+                      </button>
+                      <button
+                        class="btn-sm btn-secondary"
+                        (click)="toggleEdit(prod)"
+                      >
+                        Cancel
+                      </button>
                     } @else {
-                      <button class="btn-sm btn-primary" (click)="toggleEdit(prod)">Edit</button>
+                      <button
+                        class="btn-sm btn-primary"
+                        (click)="toggleEdit(prod)"
+                      >
+                        Edit
+                      </button>
                     }
                   </td>
                 </tr>
@@ -98,7 +133,11 @@
           <div class="p-4 text-center text-muted">Checking alerts...</div>
         } @else if (lowStockAlerts().length === 0) {
           <div class="p-4 text-center text-muted">
-            <span class="material-icons-outlined text-success" style="font-size:32px;display:block;margin-bottom:8px">check_circle</span>
+            <span
+              class="material-icons-outlined text-success"
+              style="font-size: 32px; display: block; margin-bottom: 8px"
+              >check_circle</span
+            >
             All products are sufficiently stocked.
           </div>
         } @else {
@@ -108,7 +147,9 @@
                 <div class="alert-info">
                   <strong>{{ alert.name }}</strong>
                   <div class="alert-meta">
-                    Current: <span class="text-danger">{{ alert.stock }}</span> | Threshold: {{ alert.low_stock_threshold }}
+                    Current:
+                    <span class="text-danger">{{ alert.stock }}</span> |
+                    Threshold: {{ alert.low_stock_threshold }}
                   </div>
                 </div>
               </div>
@@ -117,6 +158,5 @@
         }
       </div>
     </div>
-    
   </div>
 </div>

@@ -1,19 +1,24 @@
-<div class="dashboard">
+<div class="saas-page dashboard">
   <section class="command-hero">
     <div>
       <span class="eyebrow">Instant delivery command center</span>
       <h1>Today's marketplace operations</h1>
-      <p>Live order pressure, fleet readiness, marketplace health, and money movement in one control room.</p>
+      <p>
+        Live order pressure, fleet readiness, marketplace health, and money
+        movement in one control room.
+      </p>
     </div>
     <div class="hero-actions">
-      <a routerLink="/orders" class="hero-button primary">
-        <span class="material-icons-outlined">receipt_long</span>
-        Live orders
-      </a>
-      <a routerLink="/delivery-partners" class="hero-button">
-        <span class="material-icons-outlined">two_wheeler</span>
-        Dispatch fleet
-      </a>
+      @for (action of heroActions; track action.route) {
+        <a
+          [routerLink]="action.route"
+          class="hero-button"
+          [class.primary]="action.primary"
+        >
+          <span class="material-icons-outlined">{{ action.icon }}</span>
+          {{ action.label }}
+        </a>
+      }
     </div>
   </section>
 
@@ -31,35 +36,50 @@
       </a>
 
       <a routerLink="/orders" class="kpi-card">
-        <span class="kpi-icon danger"><span class="material-icons-outlined">timer</span></span>
+        <span class="kpi-icon danger"
+          ><span class="material-icons-outlined">timer</span></span
+        >
         <span class="kpi-label">Open orders</span>
-        <strong>{{ (stats()?.pending_orders || 0) + (stats()?.confirmed_orders || 0) + (stats()?.preparing_orders || 0) + (stats()?.ready_orders || 0) }}</strong>
+        <strong>{{ openOrderCount() }}</strong>
         <span class="kpi-note">Needs store or dispatch attention</span>
       </a>
 
       <a routerLink="/delivery-partners" class="kpi-card">
-        <span class="kpi-icon teal"><span class="material-icons-outlined">delivery_dining</span></span>
+        <span class="kpi-icon teal"
+          ><span class="material-icons-outlined">delivery_dining</span></span
+        >
         <span class="kpi-label">Fleet partners</span>
         <strong>{{ stats()?.delivery_partners ?? 0 }}</strong>
-        <span class="kpi-note">{{ stats()?.pending_delivery_partners || 0 }} pending verification</span>
+        <span class="kpi-note"
+          >{{ stats()?.pending_delivery_partners || 0 }} pending
+          verification</span
+        >
       </a>
 
       <a routerLink="/vendors" class="kpi-card">
-        <span class="kpi-icon green"><span class="material-icons-outlined">storefront</span></span>
+        <span class="kpi-icon green"
+          ><span class="material-icons-outlined">storefront</span></span
+        >
         <span class="kpi-label">Active stores</span>
         <strong>{{ stats()?.vendors ?? 0 }}</strong>
-        <span class="kpi-note">{{ stats()?.pending_vendors || 0 }} onboarding reviews</span>
+        <span class="kpi-note"
+          >{{ stats()?.pending_vendors || 0 }} onboarding reviews</span
+        >
       </a>
 
       <a routerLink="/products" class="kpi-card">
-        <span class="kpi-icon amber"><span class="material-icons-outlined">inventory_2</span></span>
+        <span class="kpi-icon accent"
+          ><span class="material-icons-outlined">inventory_2</span></span
+        >
         <span class="kpi-label">Catalog SKUs</span>
         <strong>{{ stats()?.products ?? 0 }}</strong>
         <span class="kpi-note">Across all vendor storefronts</span>
       </a>
 
       <a routerLink="/customers" class="kpi-card">
-        <span class="kpi-icon violet"><span class="material-icons-outlined">groups</span></span>
+        <span class="kpi-icon violet"
+          ><span class="material-icons-outlined">groups</span></span
+        >
         <span class="kpi-label">Customers</span>
         <strong>{{ stats()?.customers ?? 0 }}</strong>
         <span class="kpi-note">Registered buyer accounts</span>
@@ -77,21 +97,19 @@
         </div>
 
         <div class="flow-list">
-          @for (item of [
-            { label: 'Placed', value: stats()?.pending_orders || 0, className: 'warn' },
-            { label: 'Preparing', value: stats()?.preparing_orders || 0, className: 'info' },
-            { label: 'Completed', value: stats()?.completed_orders || 0, className: 'good' },
-            { label: 'Cancelled', value: stats()?.cancelled_orders || 0, className: 'bad' }
-          ]; track item.label) {
+          @for (item of orderFlowItems; track item.label) {
             <div class="flow-row">
               <div class="flow-meta">
                 <span class="flow-dot" [class]="item.className"></span>
                 <span>{{ item.label }}</span>
               </div>
               <div class="flow-track">
-                <span [class]="item.className" [style.width.%]="(item.value / (stats()?.total_orders || 1)) * 100"></span>
+                <span
+                  [class]="item.className"
+                  [style.width.%]="flowPercent(statNumber(item.key))"
+                ></span>
               </div>
-              <strong>{{ item.value }}</strong>
+              <strong>{{ statNumber(item.key) }}</strong>
             </div>
           }
         </div>
@@ -104,27 +122,19 @@
             <p>Items that can block an instant-delivery marketplace</p>
           </div>
         </div>
-        <a routerLink="/vendors" class="queue-item">
-          <span class="material-icons-outlined">how_to_reg</span>
-          <div>
-            <strong>{{ stats()?.pending_vendors || 0 }} vendor reviews</strong>
-            <small>KYC, store profile, and operational readiness</small>
-          </div>
-        </a>
-        <a routerLink="/delivery-partners" class="queue-item">
-          <span class="material-icons-outlined">badge</span>
-          <div>
-            <strong>{{ stats()?.pending_delivery_partners || 0 }} partner approvals</strong>
-            <small>Identity, vehicle, assets, and city coverage</small>
-          </div>
-        </a>
-        <a routerLink="/issues" class="queue-item">
-          <span class="material-icons-outlined">report_problem</span>
-          <div>
-            <strong>Customer exceptions</strong>
-            <small>Refunds, damaged goods, missing items, and delivery disputes</small>
-          </div>
-        </a>
+        @for (item of actionQueueItems; track item.route) {
+          <a [routerLink]="item.route" class="queue-item">
+            <span class="material-icons-outlined">{{ item.icon }}</span>
+            <div>
+              <strong>{{
+                item.statKey
+                  ? statNumber(item.statKey) + " " + item.title
+                  : item.title
+              }}</strong>
+              <small>{{ item.description }}</small>
+            </div>
+          </a>
+        }
       </div>
     </section>
   }
@@ -149,11 +159,16 @@
             <a class="order-row" [routerLink]="['/orders', o.id]">
               <div>
                 <strong>#{{ o.order_number }}</strong>
-                <span>{{ o.customer_name }} · {{ o.vendor_name || 'Vendor' }}</span>
+                <span
+                  >{{ o.customer_name }} &middot;
+                  {{ o.vendor_name || "Vendor" }}</span
+                >
               </div>
               <div class="order-value">
                 <strong>{{ o.total | appCurrency }}</strong>
-                <span class="status-pill" [class]="o.status">{{ o.status }}</span>
+                <span class="status-pill" [class]="o.status">{{
+                  o.status
+                }}</span>
               </div>
             </a>
           }
@@ -180,12 +195,12 @@
         <div class="store-list">
           @for (v of topVendors(); track v.id) {
             <a class="store-row" [routerLink]="['/vendors', v.id]">
-              <span class="store-avatar">{{ v.store_name?.[0] || 'S' }}</span>
+              <span class="store-avatar">{{ v.store_name?.[0] || "S" }}</span>
               <div>
                 <strong>{{ v.store_name }}</strong>
-                <span>{{ v.city || 'Coverage city pending' }}</span>
+                <span>{{ v.city || "Coverage city pending" }}</span>
               </div>
-              <em>{{ v.average_rating | number:'1.1-1' }}</em>
+              <em>{{ v.average_rating | number: "1.1-1" }}</em>
             </a>
           }
         </div>

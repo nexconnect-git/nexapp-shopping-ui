@@ -1,22 +1,19 @@
-<div class="onboarding-page">
-
-  <!-- Page Header -->
-  <div class="page-header">
+<div class="saas-page onboarding-page">
+  <section class="onboarding-hero">
     <div>
+      <span class="page-eyebrow">Admin Panel</span>
       <h1 class="page-title">{{ pageTitle }}</h1>
       <p class="page-subtitle">{{ pageSubtitle }}</p>
     </div>
-  </div>
+  </section>
 
-  <!-- Loading -->
   @if (loading()) {
     <div class="loading-state">
       <div class="spinner"></div>
-      <p>Loading data…</p>
+      <p>Loading data...</p>
     </div>
   }
 
-  <!-- Temp Password Success -->
   @if (success() && tempPassword()) {
     <div class="temp-password-card">
       <div class="temp-password-icon">
@@ -24,7 +21,8 @@
       </div>
       <h2 class="temp-password-title">Account Created Successfully</h2>
       <p class="temp-password-desc">
-        A temporary password has been generated. Share it securely with the user — they will be required to set a new password on first login.
+        A temporary password has been generated. Share it securely with the
+        user. They will be required to set a new password on first login.
       </p>
       <div class="temp-password-box">
         <span class="temp-password-label">Temporary Password</span>
@@ -41,13 +39,12 @@
         This password will not be shown again after you leave this page.
       </div>
       <button class="proceed-btn" (click)="proceedAfterPassword()">
-        Done — Go to List
+        Done
         <span class="material-icons-outlined">arrow_forward</span>
       </button>
     </div>
   }
 
-  <!-- Stepper -->
   @if (!loading() && !tempPassword()) {
     <app-dynamic-stepper
       [config]="stepperConfig"
@@ -56,12 +53,15 @@
       [success]="success()"
       [prefillData]="prefillData()"
       [isEditMode]="mode === 'vendor-edit'"
+      [uniqueChecker]="uniqueChecker"
       successMessage="Done!"
-      [successSubmessage]="mode === 'vendor-edit' ? 'Returning to vendor profile…' : 'Redirecting…'"
+      [successSubmessage]="
+        mode === 'vendor-edit'
+          ? 'Returning to vendor profile...'
+          : 'Redirecting...'
+      "
       (submitForm)="onSubmit($event)"
-      (cancel)="onCancel()"
+      (stepperCancel)="onCancel()"
     />
   }
 </div>
-
-<!-- aria-label -->

@@ -10,6 +10,6 @@ export const superuserGuard = () => {
     return true;
   }
 
-  router.navigate(['/dashboard']);
+  router.navigate(['/']);
   return false;
 };

@@ -1,30 +1,176 @@
-.ops-page { display: flex; flex-direction: column; gap: 1.25rem; }
-.page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
-.page-title { margin: 0; font-size: 2rem; font-weight: 900; color: var(--text-primary); }
-.page-subtitle { margin: .35rem 0 0; color: var(--text-muted); }
-.header-actions { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
-.live-pill { display: inline-flex; align-items: center; gap: .35rem; padding: .55rem .8rem; border-radius: 999px; color: #057a55; background: #def7ec; font-weight: 800; font-size: .8rem; }
-.live-pill.offline { color: #92400e; background: #fef3c7; }
-.btn { border: 1px solid var(--border-color); background: white; border-radius: 8px; padding: .65rem .9rem; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: .4rem; }
-.kanban { display: grid; grid-template-columns: repeat(9, minmax(260px, 1fr)); gap: 1rem; overflow-x: auto; padding-bottom: .75rem; }
-.kanban-column { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; min-height: 520px; padding: .75rem; }
-.kanban-column header { display: flex; align-items: center; gap: .55rem; margin-bottom: .75rem; color: var(--text-primary); }
-.kanban-column header em { margin-left: auto; font-style: normal; background: white; border: 1px solid var(--border-color); border-radius: 999px; padding: .1rem .5rem; }
-.empty-column, .state-card { border: 1px dashed var(--border-color); background: white; border-radius: 8px; padding: 1rem; color: var(--text-muted); text-align: center; }
-.order-card { background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: .9rem; margin-bottom: .75rem; box-shadow: var(--shadow-sm); }
-.order-top, .meta, .actions { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
-.order-top { justify-content: space-between; font-weight: 900; }
-.order-top a { color: var(--primary); text-decoration: none; }
-.customer { margin-top: .45rem; color: var(--text-secondary); font-weight: 700; }
-.amount { margin-top: .35rem; font-size: 1.15rem; font-weight: 900; color: var(--text-primary); }
-.meta span { background: var(--surface-hover); border-radius: 999px; padding: .2rem .5rem; font-size: .72rem; font-weight: 800; color: var(--text-muted); }
-.note { margin: .55rem 0 0; padding: .5rem; border-left: 3px solid var(--warning); background: #fffbeb; color: #92400e; border-radius: 4px; font-size: .82rem; }
-.actions { margin-top: .75rem; }
-.actions button, .actions a { border: 1px solid var(--border-color); background: white; border-radius: 7px; padding: .45rem .6rem; color: var(--text-primary); text-decoration: none; font-weight: 800; cursor: pointer; font-size: .78rem; }
-.actions .accept { background: #ecfdf5; border-color: #a7f3d0; color: #047857; }
-.actions .reject { background: #fef2f2; border-color: #fecaca; color: #b91c1c; }
-@media (max-width: 768px) {
-  .page-header { flex-direction: column; }
-  .kanban { grid-template-columns: repeat(9, 82vw); }
+.ops-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
-
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.page-title {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--text-primary);
+}
+.page-subtitle {
+  margin: 0.35rem 0 0;
+  color: var(--text-muted);
+}
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.55rem 0.8rem;
+  border-radius: 999px;
+  color: var(--nc-success);
+  background: var(--nc-success-soft);
+  font-weight: 800;
+  font-size: 0.8rem;
+}
+.live-pill.offline {
+  color: var(--nc-primary-hover);
+  background: var(--nc-warning-soft);
+}
+.btn {
+  border: 1px solid var(--border-color);
+  background: var(--nc-white);
+  border-radius: 8px;
+  padding: 0.65rem 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.kanban {
+  display: grid;
+  grid-template-columns: repeat(9, minmax(260px, 1fr));
+  gap: 1rem;
+  overflow-x: auto;
+  padding-bottom: 0.75rem;
+}
+.kanban-column {
+  background: var(--nc-surface-alt);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  min-height: 520px;
+  padding: 0.75rem;
+}
+.kanban-column header {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 0.75rem;
+  color: var(--text-primary);
+}
+.kanban-column header em {
+  margin-left: auto;
+  font-style: normal;
+  background: var(--nc-white);
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
+}
+.empty-column,
+.state-card {
+  border: 1px dashed var(--border-color);
+  background: var(--nc-white);
+  border-radius: 8px;
+  padding: 1rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+.order-card {
+  background: var(--nc-white);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.9rem;
+  margin-bottom: 0.75rem;
+  box-shadow: var(--shadow-sm);
+}
+.order-top,
+.meta,
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.order-top {
+  justify-content: space-between;
+  font-weight: 900;
+}
+.order-top a {
+  color: var(--primary);
+  text-decoration: none;
+}
+.customer {
+  margin-top: 0.45rem;
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+.amount {
+  margin-top: 0.35rem;
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: var(--text-primary);
+}
+.meta span {
+  background: var(--surface-hover);
+  border-radius: 999px;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--text-muted);
+}
+.note {
+  margin: 0.55rem 0 0;
+  padding: 0.5rem;
+  border-left: 3px solid var(--warning);
+  background: var(--nc-primary-soft);
+  color: var(--nc-primary-hover);
+  border-radius: 4px;
+  font-size: 0.82rem;
+}
+.actions {
+  margin-top: 0.75rem;
+}
+.actions button,
+.actions a {
+  border: 1px solid var(--border-color);
+  background: var(--nc-white);
+  border-radius: 7px;
+  padding: 0.45rem 0.6rem;
+  color: var(--text-primary);
+  text-decoration: none;
+  font-weight: 800;
+  cursor: pointer;
+  font-size: 0.78rem;
+}
+.actions .accept {
+  background: var(--nc-success-soft);
+  border-color: color-mix(in srgb, var(--nc-success) 24%, transparent);
+  color: var(--nc-success);
+}
+.actions .reject {
+  background: var(--nc-danger-soft);
+  border-color: color-mix(in srgb, var(--nc-danger) 24%, transparent);
+  color: var(--nc-danger);
+}
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+  }
+  .kanban {
+    grid-template-columns: repeat(9, 82vw);
+  }
+}

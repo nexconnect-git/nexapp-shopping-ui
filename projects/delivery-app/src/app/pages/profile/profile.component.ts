@@ -1,14 +1,20 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService, AuthService, MapPickerComponent, MapLocation, ToastService } from '@shared/public-api';
+import {
+  ApiService,
+  AuthService,
+  MapLocation,
+  MapPickerComponent,
+  ToastService,
+} from '@shared/public-api';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
   imports: [CommonModule, FormsModule, DecimalPipe, MapPickerComponent],
   templateUrl: './profile.component.html',
-  styleUrls: ['./profile.component.scss']
+  styleUrls: ['./profile.component.scss'],
 })
 export class ProfileComponent implements OnInit {
   private api = inject(ApiService);
@@ -24,11 +30,13 @@ export class ProfileComponent implements OnInit {
   pickedLng = signal<number | null>(null);
   locationSaved = signal(false);
 
-
   ngOnInit() {
     this.api.getProfile().subscribe({
-      next: (u) => { this.profile = { ...u }; this.loading.set(false); },
-      error: () => this.loading.set(false)
+      next: (u) => {
+        this.profile = { ...u };
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
     });
   }
 
@@ -42,9 +50,14 @@ export class ProfileComponent implements OnInit {
       },
       error: (err) => {
         const e = err.error;
-        this.toast.show(typeof e === 'object' ? Object.values(e).flat().join(' ') : 'Update failed.', 'error');
+        this.toast.show(
+          typeof e === 'object'
+            ? Object.values(e).flat().join(' ')
+            : 'Update failed.',
+          'error',
+        );
         this.saving.set(false);
-      }
+      },
     });
   }
 
@@ -66,12 +79,16 @@ export class ProfileComponent implements OnInit {
         this.showMapPicker.set(false);
         this.toast.show('Base location updated!', 'success');
       },
-      error: () => this.savingLocation.set(false)
+      error: () => this.savingLocation.set(false),
     });
   }
 
   initials() {
     const u = this.profile;
-    return ((u.first_name?.[0] || '') + (u.last_name?.[0] || '')).toUpperCase() || u.username?.[0]?.toUpperCase() || '?';
+    return (
+      ((u.first_name?.[0] || '') + (u.last_name?.[0] || '')).toUpperCase() ||
+      u.username?.[0]?.toUpperCase() ||
+      '?'
+    );
   }
 }

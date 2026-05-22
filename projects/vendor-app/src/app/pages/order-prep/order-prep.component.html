@@ -10,7 +10,10 @@
     <section class="prep-header">
       <div>
         <h1>Prep #{{ order()!.order_number }}</h1>
-        <p>{{ order()!.customer_name }} - {{ elapsedMinutes() }} minutes since order placed</p>
+        <p>
+          {{ order()!.customer_name }} - {{ elapsedMinutes() }} minutes since
+          order placed
+        </p>
       </div>
       <span class="status">{{ order()!.status | titlecase }}</span>
     </section>
@@ -42,10 +45,17 @@
         <div class="progress"><span [style.width.%]="progress()"></span></div>
         @for (item of order()!.items; track item.id) {
           <label class="check-row">
-            <input type="checkbox" [checked]="checkedItems()[item.id]" (change)="toggleItem(item.id, $any($event.target).checked)" />
+            <input
+              type="checkbox"
+              [checked]="checkedItems()[item.id]"
+              (change)="toggleItem(item.id, $any($event.target).checked)"
+            />
             <span>
               <strong>{{ item.product_name }}</strong>
-              <em>{{ item.quantity }} x {{ item.product_price | appCurrency }}</em>
+              <em
+                >{{ item.quantity }} x
+                {{ item.product_price | appCurrency }}</em
+              >
             </span>
             <b>{{ item.subtotal | appCurrency }}</b>
           </label>
@@ -55,38 +65,78 @@
       <section class="panel">
         <h2>Prep Controls</h2>
         <div class="control-list">
-          @if (order()!.status === 'placed') {
+          @if (order()!.status === "placed") {
             <button [disabled]="busy()" (click)="accept()">Accept Order</button>
           }
-          @if (order()!.status === 'confirmed') {
-            <button [disabled]="busy()" (click)="startPreparing()">Start Preparing</button>
+          @if (order()!.status === "confirmed") {
+            <button [disabled]="busy()" (click)="startPreparing()">
+              Start Preparing
+            </button>
           }
-          @if (order()!.status === 'preparing') {
-            <button [disabled]="busy() || progress() < 100" (click)="markReady()">Mark Ready</button>
+          @if (order()!.status === "preparing") {
+            <button
+              [disabled]="busy() || progress() < 100"
+              (click)="markReady()"
+            >
+              Mark Ready
+            </button>
           }
-          @if (order()!.status === 'ready' && !order()!.delivery_partner && !['searching', 'notified'].includes(order()!.assignment_status || '')) {
-            <button [disabled]="busy()" (click)="findDriver()">Find Driver</button>
+          @if (
+            order()!.status === "ready" &&
+            !order()!.delivery_partner &&
+            !["searching", "notified"].includes(
+              order()!.assignment_status || ""
+            )
+          ) {
+            <button [disabled]="busy()" (click)="findDriver()">
+              Find Driver
+            </button>
           }
-          @if (['searching', 'notified'].includes(order()!.assignment_status || '')) {
-            <button class="secondary" [disabled]="busy()" (click)="cancelSearch()">Cancel Driver Search</button>
+          @if (
+            ["searching", "notified"].includes(order()!.assignment_status || "")
+          ) {
+            <button
+              class="secondary"
+              [disabled]="busy()"
+              (click)="cancelSearch()"
+            >
+              Cancel Driver Search
+            </button>
           }
         </div>
 
         <div class="otp-box">
           <h3>Pickup OTP</h3>
           <p>Verify handoff when the delivery partner arrives.</p>
-          <input type="text" inputmode="numeric" maxlength="6" [(ngModel)]="otp" placeholder="Enter OTP" />
-          @if (otpError()) { <div class="error">{{ otpError() }}</div> }
-          <button [disabled]="busy() || !otp.trim()" (click)="verifyOtp()">Verify Pickup</button>
+          <input
+            type="text"
+            inputmode="numeric"
+            maxlength="6"
+            [(ngModel)]="otp"
+            placeholder="e.g. 123456"
+          />
+          <small class="field-hint"
+            >Ask the delivery partner for the 6-digit pickup code before giving
+            the order.</small
+          >
+          @if (otpError()) {
+            <div class="error">{{ otpError() }}</div>
+          }
+          <button [disabled]="busy() || !otp.trim()" (click)="verifyOtp()">
+            Verify Pickup
+          </button>
         </div>
       </section>
 
       <section class="panel">
         <h2>Customer Notes</h2>
-        <p class="notes">{{ order()!.notes || 'No customer notes.' }}</p>
+        <p class="notes">{{ order()!.notes || "No customer notes." }}</p>
         <h2>Delivery</h2>
         <p>{{ order()!.delivery_address.address_line1 }}</p>
-        <p>{{ order()!.delivery_address.city }} {{ order()!.delivery_address.postal_code }}</p>
+        <p>
+          {{ order()!.delivery_address.city }}
+          {{ order()!.delivery_address.postal_code }}
+        </p>
       </section>
 
       <section class="panel">

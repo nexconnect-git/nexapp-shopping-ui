@@ -1,19 +1,41 @@
-import { Component, inject, signal, HostListener, OnInit } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
+import { Component, HostListener, inject, OnInit, signal } from '@angular/core';
+import {
+  Router,
+  RouterLink,
+  RouterLinkActive,
+  RouterOutlet,
+} from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { AuthService, ApiService, ToastComponent, NotificationPollingService } from '@shared/public-api';
+import {
+  ApiService,
+  AuthService,
+  GlobalLoadingComponent,
+  NotificationPollingService,
+  PageFeatureAccessService,
+  PageFeatureLoadingComponent,
+  ToastComponent,
+} from '@shared/public-api';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, ToastComponent],
+  imports: [
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    CommonModule,
+    ToastComponent,
+    GlobalLoadingComponent,
+    PageFeatureLoadingComponent,
+  ],
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss']
+  styleUrls: ['./app.component.scss'],
 })
 export class AppComponent implements OnInit {
   auth = inject(AuthService);
   api = inject(ApiService);
   private router = inject(Router);
   private notifPolling = inject(NotificationPollingService);
+  private featureAccess = inject(PageFeatureAccessService);
   profileOpen = signal(false);
   notifOpen = signal(false);
   notifications = signal<any[]>([]);
@@ -21,9 +43,11 @@ export class AppComponent implements OnInit {
   unreadCount = signal(0);
 
   ngOnInit() {
+    this.featureAccess.startPolling('delivery-app');
     if (this.auth.isLoggedIn()) {
       this.notifPolling.start((n) => {
-        if (n.notification_type === 'order') return { label: 'View', url: '/orders' };
+        if (n.notification_type === 'order')
+          return { label: 'View', url: '/orders' };
         return null;
       });
     }
@@ -33,7 +57,7 @@ export class AppComponent implements OnInit {
 
   toggleProfile(event?: Event) {
     event?.stopPropagation();
-    this.profileOpen.update(v => !v);
+    this.profileOpen.update((v) => !v);
     this.notifOpen.set(false);
   }
 
@@ -48,8 +72,11 @@ export class AppComponent implements OnInit {
   fetchNotifications() {
     this.notifLoading.set(true);
     this.api.getNotifications().subscribe({
-      next: (r) => { this.notifications.set((r.results || r).slice(0, 8)); this.notifLoading.set(false); },
-      error: () => this.notifLoading.set(false)
+      next: (r) => {
+        this.notifications.set((r.results || r).slice(0, 8));
+        this.notifLoading.set(false);
+      },
+      error: () => this.notifLoading.set(false),
     });
   }
 
@@ -57,24 +84,33 @@ export class AppComponent implements OnInit {
     this.api.markAllNotificationsRead().subscribe({
       next: () => {
         this.unreadCount.set(0);
-        this.notifications.update(list => list.map((n: any) => ({ ...n, is_read: true })));
+        this.notifications.update((list) =>
+          list.map((n: any) => ({ ...n, is_read: true })),
+        );
       },
-      error: () => {}
+      error: () => {},
     });
   }
 
   @HostListener('document:click')
-  closeDropdowns() { this.profileOpen.set(false); this.notifOpen.set(false); }
+  closeDropdowns() {
+    this.profileOpen.set(false);
+    this.notifOpen.set(false);
+  }
 
-  closeProfile() { this.profileOpen.set(false); }
+  closeProfile() {
+    this.profileOpen.set(false);
+  }
 
   handleNotificationClick(n: any) {
     if (!n.is_read) {
       this.api.markNotificationRead(n.id).subscribe({
         next: () => {
-          this.unreadCount.update(c => Math.max(0, c - 1));
-          this.notifications.update(list =>
-            list.map(item => item.id === n.id ? { ...item, is_read: true } : item)
+          this.unreadCount.update((c) => Math.max(0, c - 1));
+          this.notifications.update((list) =>
+            list.map((item) =>
+              item.id === n.id ? { ...item, is_read: true } : item,
+            ),
           );
         },
       });
@@ -91,6 +127,8 @@ export class AppComponent implements OnInit {
     const url = this.router.url;
     return url.includes('/login') || url.includes('/change-password');
   }
+
+  canUseRoute(route: string): boolean {
+    return this.featureAccess.isRouteEnabled('delivery-app', route);
+  }
 }
-
-

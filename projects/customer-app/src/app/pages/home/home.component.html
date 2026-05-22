@@ -1,407 +1,222 @@
-<section class="home-page">
-  <section class="instant-hero">
-    <div class="hero-copy">
-      <span class="hero-kicker">Local commerce command center</span>
-      <h1>Everything you need in one fast local storefront.</h1>
-      <p>
-        Groceries, takeout, pharmacy and daily essentials from nearby stores, delivered in minutes with live tracking.
-      </p>
+<nc-flashdrop-home class="mobile-flashdrop-home" />
 
-      <div class="hero-actions">
-        <a routerLink="/search" class="hero-search-cta">
-          <span class="material-icons-outlined">search</span>
-          Search for stores, meals or essentials
-        </a>
-        <button class="hero-location-cta" type="button" (click)="detectLocation(true)">
-          <span class="material-icons-outlined">my_location</span>
-          Refresh my area
-        </button>
-        @if (!currentLocation()) {
-          <a routerLink="/set-location" class="hero-location-cta">
-            <span class="material-icons-outlined">map</span>
-            Set delivery area manually
+<main class="fd-content home-content desktop-home">
+  <fd-breadcrumbs [items]="[{ label: 'Instant Delivery' }]" />
+  <section class="home-layout">
+    <div class="main-area">
+      <section
+        class="insta-hero animate-in"
+        [style.background]="heroBackground()"
+      >
+        <div class="hero-copy">
+          <div class="speed-line">
+            <span class="material-symbols-rounded">campaign</span>
+            {{ heroBadge() }}
+          </div>
+          <h1>{{ heroTitle() }}</h1>
+          <p class="hero-subtitle">{{ heroSubtitle() }}</p>
+          @if (heroStore(); as store) {
+            <div class="hero-offer">
+              <b>{{ store.name }}</b>
+              <span>{{ store.category }}</span>
+            </div>
+          }
+          <a [routerLink]="heroCtaUrl()" class="shop-btn"
+            >{{ heroCtaLabel() }}
+            <span class="material-symbols-rounded">arrow_forward</span></a
+          >
+        </div>
+
+        <div class="hero-visual">
+          <img [src]="heroImage()" alt="Featured store" />
+          <div class="clock">
+            <span class="material-symbols-rounded">schedule</span>
+          </div>
+          <div class="time-chip">{{ heroBadge() }}</div>
+          <div class="speed-lines one"></div>
+          <div class="speed-lines two"></div>
+        </div>
+      </section>
+
+      <section class="promo-strip stagger">
+        @for (coupon of promoCoupons(); track coupon.id) {
+          <a routerLink="/offers" class="mini-banner red">
+            <span class="material-symbols-rounded">{{
+              coupon.iconName || "local_offer"
+            }}</span>
+            <div>
+              <b>{{ coupon.badgeText || coupon.title }}</b
+              ><small>{{ coupon.description }}</small>
+            </div>
           </a>
         }
-      </div>
-
-      <div class="hero-metrics">
-        <div>
-          <strong>10 min</strong>
-          <span>quick-buy aisles</span>
-        </div>
-        <div>
-          <strong>Live</strong>
-          <span>order tracking</span>
-        </div>
-        <div>
-          <strong>Top rated</strong>
-          <span>local stores</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="hero-stage">
-      <div class="hero-board">
-        <div class="hero-board-head">
-          <span>Right now near you</span>
-          <strong>{{ locationDisplay() }}</strong>
-        </div>
-        <div class="hero-delivery-card" aria-label="Express basket status">
-          <div class="hero-delivery-icon"><span class="material-icons-outlined">shopping_bag</span></div>
-          <div>
-            <strong>Express basket</strong>
-            <span>Fresh picks, pantry refills and meals in one tap</span>
-          </div>
-          <span class="hero-live-pill">Live</span>
-        </div>
-        <div class="hero-chip-row">
-          @for (cat of visibleCategories().slice(1, 6); track cat.id) {
-            <button class="hero-chip" type="button" (click)="selectCategory(cat.id)">
-              <span class="material-icons-outlined" [style.color]="cat.color">{{ cat.icon }}</span>
-              {{ cat.name }}
-            </button>
-          }
-        </div>
-        <div class="hero-status-list">
-          <div>
-            <span class="material-icons-outlined">inventory_2</span>
-            <strong>{{ filteredVendors().length || allVendors().length }}</strong>
-            <small>stores in view</small>
-          </div>
-          <div>
-            <span class="material-icons-outlined">verified</span>
-            <strong>Verified</strong>
-            <small>local partners</small>
-          </div>
-        </div>
-        <div class="hero-mini-grid">
-          <div class="hero-mini-card">
-            <span class="material-icons-outlined">schedule</span>
-            <strong>Average arrival</strong>
-            <span>18-32 minutes</span>
-          </div>
-          <div class="hero-mini-card">
-            <span class="material-icons-outlined">local_offer</span>
-            <strong>Daily drops</strong>
-            <span>Rotating store deals</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="service-strip">
-    <article>
-      <span class="material-icons-outlined">electric_bolt</span>
-      <div>
-        <strong>Fast lanes</strong>
-        <span>Priority-ready stores highlighted first</span>
-      </div>
-    </article>
-    <article>
-      <span class="material-icons-outlined">verified</span>
-      <div>
-        <strong>Trusted vendors</strong>
-        <span>Ratings, delivery time and minimum order in one view</span>
-      </div>
-    </article>
-    <article>
-      <span class="material-icons-outlined">payments</span>
-      <div>
-        <strong>Flexible checkout</strong>
-        <span>COD, wallet, loyalty and online payment support</span>
-      </div>
-    </article>
-  </section>
-
-  @if (banners().length > 0) {
-    <section class="promo-belt">
-      <div class="promo-track" [style.transform]="'translateX(-' + activeBannerIdx() * 100 + '%)'">
-        @for (b of banners(); track b.id) {
+        @for (category of promoCategories(); track category.id) {
           <a
-            [routerLink]="b.cta_url"
-            class="promo-slide"
-            [style.background]="b.image ? 'linear-gradient(135deg, rgba(35,22,15,0.4), rgba(35,22,15,0.1)), url(' + b.image + ') center/cover no-repeat' : b.bg_gradient">
-            <span class="promo-badge">{{ b.badge_text || 'Hot drop' }}</span>
-            <h2>{{ b.title }}</h2>
-            @if (b.subtitle) {
-              <p>{{ b.subtitle }}</p>
-            }
-            <span class="promo-link">{{ b.cta_label || 'Shop now' }}</span>
+            [routerLink]="['/category', category.id]"
+            class="mini-banner purple"
+          >
+            <span
+              class="category-emoji material-symbols-rounded"
+              aria-hidden="true"
+              >{{ categoryIcon(category) }}</span
+            >
+            <div>
+              <b>{{ category.label }}</b
+              ><small>{{ content.home().categoryPromoCopy }}</small>
+            </div>
           </a>
         }
+        @if (!promoCoupons().length && !promoCategories().length) {
+          <a routerLink="/stores" class="mini-banner purple">
+            <span class="material-symbols-rounded">storefront</span>
+            <div>
+              <b>{{ content.home().loadingCatalogTitle }}</b
+              ><small>{{ content.home().loadingCatalogSubtitle }}</small>
+            </div>
+          </a>
+        }
+      </section>
+
+      <section class="category-strip stagger">
+        @for (cat of catalog.categories().slice(1, 9); track cat.id) {
+          <a [routerLink]="['/category', cat.id]" class="insta-category">
+            <span [style.background]="cat.bg">
+              @if (cat.image) {
+                <img [src]="cat.image" alt="" />
+              } @else {
+                <b
+                  class="category-emoji material-symbols-rounded"
+                  aria-hidden="true"
+                  >{{ categoryIcon(cat) }}</b
+                >
+              }
+            </span>
+            <small>{{ cat.label }}</small>
+          </a>
+        }
+        <a routerLink="/stores" class="insta-category view-all">
+          <span class="material-symbols-rounded">apps</span>
+          <small>View All</small>
+        </a>
+      </section>
+
+      <section class="mobile-vibe-strip" aria-label="Shopping highlights">
+        <a routerLink="/offers"
+          ><span>🎁</span><b>Today’s deals</b><small>Fresh offers</small></a
+        >
+        <a routerLink="/stores"
+          ><span>🏪</span><b>Nearby shops</b><small>Live catalog</small></a
+        >
+        <a routerLink="/search?q=milk"
+          ><span>🥛</span><b>Daily basics</b><small>Quick basket</small></a
+        >
+      </section>
+
+      <div class="fd-section-title compact">
+        <h2>{{ content.home().sectionTitles.topStores }}</h2>
+        <a routerLink="/stores">See all</a>
       </div>
-      @if (banners().length > 1) {
-        <div class="promo-dots">
-          @for (b of banners(); track b.id; let i = $index) {
-            <button [class.active]="activeBannerIdx() === i" (click)="setActiveBanner(i)"></button>
+
+      <section class="top-store-row stagger">
+        @if (catalog.storesLoading()) {
+          <div
+            class="nc-skeleton-list grid"
+            role="status"
+            aria-live="polite"
+            aria-label="Loading top stores"
+          >
+            @for (item of [1, 2, 3]; track item) {
+              <div class="nc-skeleton-card">
+                <span class="nc-skeleton-media"></span>
+                <span class="nc-skeleton-copy">
+                  <span class="nc-skeleton-line medium"></span>
+                  <span class="nc-skeleton-line long"></span>
+                  <span class="nc-skeleton-line short"></span>
+                </span>
+              </div>
+            }
+          </div>
+        } @else {
+          @for (store of catalog.stores().slice(0, 5); track store.id) {
+            <fd-store-card [store]="store" />
           }
-        </div>
+        }
+        <a routerLink="/stores" class="row-next"
+          ><span class="material-symbols-rounded">chevron_right</span></a
+        >
+      </section>
+
+      <section class="ad-container" aria-label="Promotions">
+        @for (promo of homePromos(); track promo.id) {
+          <a
+            class="ad-card"
+            [class.red]="promo.tone === 'red'"
+            [class.green]="promo.tone === 'green'"
+            [class.orange]="promo.tone === 'orange'"
+            [class.blue]="promo.tone === 'blue'"
+            [class.purple]="!promo.tone || promo.tone === 'purple'"
+            [routerLink]="promo.ctaUrl || '/search'"
+          >
+            <span class="ad-icon material-symbols-rounded">{{
+              promo.icon || "local_offer"
+            }}</span>
+            <small>{{ promo.eyebrow }}</small>
+            <b>{{ promo.title }}</b>
+            <span>{{ promo.subtitle }}</span>
+            <em>{{ promo.ctaLabel }}</em>
+          </a>
+        }
+      </section>
+
+      @if (engagementBanner(); as banner) {
+        <a class="club-banner" [routerLink]="banner.ctaUrl">
+          <span class="material-symbols-rounded">{{
+            banner.icon || "workspace_premium"
+          }}</span>
+          <div>
+            <small>{{ banner.eyebrow }}</small>
+            <b>{{ banner.title }}</b>
+            <p>{{ banner.subtitle }}</p>
+          </div>
+          <em>{{ banner.ctaLabel }}</em>
+        </a>
       }
-    </section>
-  }
 
-  <section class="category-section">
-    <div class="section-head">
-      <div>
-        <span class="section-kicker">Explore by aisle</span>
-        <h2>Choose what you want delivered right now.</h2>
+      <div class="fd-section-title compact">
+        <h2>{{ content.home().sectionTitles.recommended }}</h2>
+        <a routerLink="/search">See all</a>
       </div>
-      <a routerLink="/shops">See all stores</a>
-    </div>
 
-    <div class="category-grid" aria-label="Customer categories">
-      @for (cat of visibleCategories(); track cat.id) {
-        <button class="category-card" type="button" [class.active]="selectedCategory() === cat.id" (click)="selectCategory(cat.id)">
-          <span class="category-icon" [style.background]="cat.bg">
-            <span class="material-icons-outlined" [style.color]="cat.color">{{ cat.icon }}</span>
-          </span>
-          <strong>{{ cat.name }}</strong>
-          <small>
-            @if (cat.id === 'all') {
-              All nearby merchants
-            } @else {
-              Browse {{ cat.name.toLowerCase() }}
+      <section class="recommended-row stagger">
+        @if (catalog.productsLoading()) {
+          <div
+            class="nc-skeleton-list grid"
+            role="status"
+            aria-live="polite"
+            aria-label="Loading recommended products"
+          >
+            @for (item of [1, 2, 3, 4]; track item) {
+              <div class="nc-skeleton-card">
+                <span class="nc-skeleton-media"></span>
+                <span class="nc-skeleton-copy">
+                  <span class="nc-skeleton-line medium"></span>
+                  <span class="nc-skeleton-line long"></span>
+                  <span class="nc-skeleton-line short"></span>
+                </span>
+              </div>
             }
-          </small>
-        </button>
-      }
+          </div>
+        } @else {
+          @for (product of catalog.products().slice(0, 6); track product.id) {
+            <fd-product-card [product]="product" />
+          }
+        }
+        <a routerLink="/search" class="row-next product-next"
+          ><span class="material-symbols-rounded">chevron_right</span></a
+        >
+      </section>
     </div>
 
-    @if (currentSubcategories().length > 0) {
-      <div class="subcat-row">
-        <button type="button" [class.active]="selectedSubCategory() === null" (click)="selectSubCategory(null)">
-          All {{ selectedCategoryObj?.name }}
-        </button>
-        @for (sub of currentSubcategories(); track sub.id) {
-          <button type="button" [class.active]="selectedSubCategory() === sub.id" (click)="selectSubCategory(sub.id)">
-            {{ sub.name }}
-          </button>
-        }
-      </div>
-    }
+    <fd-right-rail />
   </section>
-
-  @if (!loadingVendors() && topPicks().length > 0) {
-    <section class="featured-section">
-      <div class="section-head">
-        <div>
-          <span class="section-kicker">Fast favorites</span>
-          <h2>Top-rated stores customers keep reordering from.</h2>
-        </div>
-        <a routerLink="/shops">Browse all</a>
-      </div>
-
-      <div class="featured-row">
-        @for (v of topPicks(); track v.id) {
-          <a [routerLink]="['/shop', v.id]" class="featured-card">
-            <div class="featured-media">
-              @if (v.banner) {
-                <img [src]="v.banner" [alt]="v.store_name" loading="lazy">
-              } @else {
-                <div class="featured-placeholder"><span class="material-icons-outlined">storefront</span></div>
-              }
-              @if (v.is_featured) {
-                <span class="featured-tag">featured</span>
-              }
-              @if (!v.is_open) {
-                <span class="featured-closed">Closed now</span>
-              }
-            </div>
-            <div class="featured-body">
-              <h3>{{ v.store_name }}</h3>
-              <div class="featured-meta">
-                <span><span class="material-icons-outlined">star</span>{{ v.average_rating | number:'1.1-1' }}</span>
-                @if (v.estimated_delivery_minutes) {
-                  <span><span class="material-icons-outlined">schedule</span>{{ v.estimated_delivery_minutes }} min</span>
-                }
-                @if (v.distance_km) {
-                  <span><span class="material-icons-outlined">near_me</span>{{ v.distance_km }} km</span>
-                }
-              </div>
-            </div>
-          </a>
-        }
-      </div>
-    </section>
-  }
-
-  @if (auth.isLoggedIn() && recentOrders().length > 0) {
-    <section class="featured-section repeat-section">
-      <div class="section-head">
-        <div>
-          <span class="section-kicker">Buy again</span>
-          <h2>Fast-track a basket from your recent orders.</h2>
-        </div>
-        <a routerLink="/orders">Order history</a>
-      </div>
-
-      <div class="featured-row">
-        @for (order of recentOrders(); track order.id) {
-          <a [routerLink]="['/order', order.id]" class="featured-card repeat-card">
-            <div class="featured-body">
-              <div class="repeat-top">
-                <div>
-                  <h3>{{ order.vendor_name }}</h3>
-                  <p>{{ order.placed_at | date:'MMM d, y' }}</p>
-                </div>
-                <span class="repeat-status">{{ order.status | titlecase }}</span>
-              </div>
-
-              <div class="recent-tags">
-                @for (item of order.items.slice(0, 3); track item.id) {
-                  <span>{{ item.product_name }}</span>
-                }
-                @if (order.items.length > 3) {
-                  <span>+{{ order.items.length - 3 }} more</span>
-                }
-              </div>
-
-              <div class="repeat-footer">
-                <strong>{{ order.total | number:'1.2-2' }}</strong>
-                <button class="repeat-btn" type="button" (click)="reorder(order.id, $event)" [disabled]="reorderBusyId() === order.id">
-                  {{ reorderBusyId() === order.id ? 'Adding...' : 'Reorder basket' }}
-                </button>
-              </div>
-            </div>
-          </a>
-        }
-      </div>
-    </section>
-  }
-
-  <section class="workflow-strip">
-    <div class="section-head compact">
-      <div>
-        <span class="section-kicker">Built for instant commerce</span>
-        <h2>From discovery to doorstep in three clean steps.</h2>
-      </div>
-    </div>
-    <div class="workflow-grid">
-      <article>
-        <span class="material-icons-outlined">pin_drop</span>
-        <strong>Set your delivery point</strong>
-        <p>We personalize nearby inventory and delivery estimates for your area.</p>
-      </article>
-      <article>
-        <span class="material-icons-outlined">shopping_basket</span>
-        <strong>Build a quick basket</strong>
-        <p>Add items from a single store with clear pricing, deals and substitutions.</p>
-      </article>
-      <article>
-        <span class="material-icons-outlined">route</span>
-        <strong>Track the runner live</strong>
-        <p>Place your order, watch progress and get support without leaving the app.</p>
-      </article>
-    </div>
-  </section>
-
-  <section class="store-section stores-section">
-    <div class="section-head">
-      <div>
-        <span class="section-kicker">Nearby selection</span>
-        <h2>{{ sectionTitle }}</h2>
-        @if (!loadingVendors()) {
-          <p>{{ filteredVendors().length }} store{{ filteredVendors().length !== 1 ? 's' : '' }} available</p>
-        }
-      </div>
-    </div>
-
-    <div class="store-filters">
-      <label class="filter-pill" [class.active]="openOnly">
-        <input type="checkbox" [(ngModel)]="openOnly" (change)="toggleOpenFilter()" hidden>
-        <span class="material-icons-outlined">schedule</span>
-        Open now
-      </label>
-      @if (selectedSubCategory()) {
-        <button class="filter-pill active" type="button" (click)="selectSubCategory(null)">
-          <span class="material-icons-outlined">close</span>
-          {{ selectedSubCategoryName() }}
-        </button>
-      } @else if (selectedCategory() !== 'all') {
-        <button class="filter-pill active" type="button" (click)="selectCategory('all')">
-          <span class="material-icons-outlined">close</span>
-          {{ selectedCategoryObj?.name }}
-        </button>
-      }
-    </div>
-
-    @if (loadingVendors()) {
-      <div class="store-grid">
-        @for (i of [1,2,3,4,5,6]; track i) {
-          <div class="store-skeleton shimmer"></div>
-        }
-      </div>
-    } @else if (!currentLocation()) {
-      <div class="empty-panel empty-location-panel">
-        <span class="material-icons-outlined">location_searching</span>
-        <h3>Set your delivery area to start browsing nearby stores.</h3>
-        <p>Choose your neighborhood, landmark, or pincode first so we can show stores that actually deliver there.</p>
-        <div class="empty-actions">
-          <a routerLink="/set-location" class="empty-primary-link">Set delivery area</a>
-          <button type="button" (click)="detectLocation(true)">Use my current location</button>
-        </div>
-      </div>
-    } @else if (filteredVendors().length === 0) {
-      <div class="empty-panel">
-        <span class="material-icons-outlined">storefront</span>
-        <h3>No stores match this area yet.</h3>
-        <p>Try changing your category or refresh your location to widen the delivery radius.</p>
-        <button type="button" (click)="selectCategory('all')">See all nearby stores</button>
-      </div>
-    } @else {
-      <div class="store-grid">
-        @for (v of filteredVendors(); track v.id) {
-          <a [routerLink]="['/shop', v.id]" class="store-card">
-            <div class="store-media">
-              @if (v.banner) {
-                <img [src]="v.banner" [alt]="v.store_name" loading="lazy">
-              } @else {
-                <div class="store-placeholder"><span class="material-icons-outlined">storefront</span></div>
-              }
-              @if (v.is_featured) {
-                <span class="store-flag">free delivery on first order</span>
-              }
-              @if (!v.is_open) {
-                <div class="store-overlay">Currently closed</div>
-              }
-            </div>
-
-            <div class="store-body">
-              <div class="store-row">
-                <h3>{{ v.store_name }}</h3>
-                <span class="store-rating"><span class="material-icons-outlined">star</span>{{ v.average_rating | number:'1.1-1' }}</span>
-              </div>
-              <p>{{ v.description || 'Fast local store delivery.' }}</p>
-              <div class="store-meta">
-                @if (v.estimated_delivery_minutes) {
-                  <span><span class="material-icons-outlined">bolt</span>{{ v.estimated_delivery_minutes }} min</span>
-                }
-                @if (v.distance_km) {
-                  <span><span class="material-icons-outlined">near_me</span>{{ v.distance_km }} km</span>
-                }
-                @if (hasMinimumOrder(v)) {
-                  <span><span class="material-icons-outlined">payments</span>Min {{ v.min_order_amount | appCurrency }}</span>
-                }
-              </div>
-            </div>
-          </a>
-        }
-      </div>
-    }
-  </section>
-
-  @if (!auth.isLoggedIn()) {
-    <section class="guest-cta">
-      <div>
-        <span class="section-kicker light">Create your delivery profile</span>
-        <h2>Unlock offers, saved addresses, live order history and faster checkout.</h2>
-        <p>Join once and make every repeat order dramatically quicker.</p>
-      </div>
-      <div class="guest-actions">
-        <a routerLink="/register" class="hero-location-cta solid">Create account</a>
-        <a routerLink="/login" class="hero-location-cta">Sign in</a>
-      </div>
-    </section>
-  }
-</section>
+</main>

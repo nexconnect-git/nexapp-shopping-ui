@@ -1,10 +1,11 @@
 <div class="profile-page fade-in">
-
   <!-- Page Header -->
   <div class="page-header">
     <div>
       <h1>Profile & Store Settings</h1>
-      <p class="page-subtitle">Manage your account details and store configuration</p>
+      <p class="page-subtitle">
+        Manage your account details and store configuration
+      </p>
     </div>
   </div>
 
@@ -14,16 +15,17 @@
       <p>Loading profile...</p>
     </div>
   } @else {
-
-
-
     <!-- Store Header Card -->
     <div class="store-header-card">
-      <div class="store-avatar" (click)="logoInput.click()" [title]="logoUploading() ? 'Uploading...' : 'Click to update logo'">
+      <div
+        class="store-avatar"
+        (click)="logoInput.click()"
+        [title]="logoUploading() ? 'Uploading...' : 'Click to update logo'"
+      >
         @if (vendor.logo) {
-          <img [src]="vendor.logo" alt="store logo">
+          <img [src]="vendor.logo" alt="store logo" />
         } @else {
-          {{ (vendor.store_name || 'S')[0].toUpperCase() }}
+          {{ (vendor.store_name || "S")[0].toUpperCase() }}
         }
         <div class="store-avatar-overlay">
           @if (logoUploading()) {
@@ -33,20 +35,32 @@
           }
         </div>
       </div>
-      <input #logoInput type="file" accept="image/*" hidden (change)="onLogoChange($event)">
+      <input
+        #logoInput
+        type="file"
+        accept="image/*"
+        hidden
+        (change)="onLogoChange($event)"
+      />
       <div class="store-header-info">
         <div class="store-name-row">
-          <h2>{{ vendor.store_name || 'Your Store' }}</h2>
-          <span class="status-badge" [class]="'status-' + (vendor.status || 'pending')">
+          <h2>{{ vendor.store_name || "Your Store" }}</h2>
+          <span
+            class="status-badge"
+            [class]="'status-' + (vendor.status || 'pending')"
+          >
             <span class="status-dot"></span>
-            {{ vendor.status || 'pending' }}
+            {{ vendor.status || "pending" }}
           </span>
         </div>
-        <p class="store-meta">{{ profile.first_name }} {{ profile.last_name }} &bull; {{ vendor.city || 'Location not set' }}</p>
+        <p class="store-meta">
+          {{ profile.first_name }} {{ profile.last_name }} &bull;
+          {{ vendor.city || "Location not set" }}
+        </p>
         <div class="store-stats">
           <div class="stat-item">
             <span class="stat-icon material-icons-outlined">star</span>
-            <span class="stat-value">{{ vendor.average_rating || '0.0' }}</span>
+            <span class="stat-value">{{ vendor.average_rating || "0.0" }}</span>
             <span class="stat-label">Rating</span>
           </div>
           <div class="stat-divider"></div>
@@ -57,23 +71,27 @@
           </div>
           <div class="stat-divider"></div>
           <div class="stat-item">
-            <span class="stat-icon material-icons-outlined">local_shipping</span>
-            <span class="stat-value">{{ vendor.delivery_radius_km || 0 }} km</span>
+            <span class="stat-icon material-icons-outlined"
+              >local_shipping</span
+            >
+            <span class="stat-value"
+              >{{ vendor.delivery_radius_km || 0 }} km</span
+            >
             <span class="stat-label">Delivery Radius</span>
           </div>
         </div>
       </div>
       <div class="store-open-badge" [class.is-open]="vendor.is_open">
-        <span class="material-icons-outlined">{{ vendor.is_open ? 'store' : 'storefront' }}</span>
-        {{ vendor.is_open ? 'Open Now' : 'Closed' }}
+        <span class="material-icons-outlined">{{
+          vendor.is_open ? "store" : "storefront"
+        }}</span>
+        {{ vendor.is_open ? "Open Now" : "Closed" }}
       </div>
     </div>
 
     <div class="profile-layout">
-
       <!-- Left Column -->
       <div class="profile-main">
-
         <!-- Account Info -->
         <div class="card">
           <div class="card-header">
@@ -86,26 +104,67 @@
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label">First Name</label>
-                <input class="form-input" type="text" [(ngModel)]="profile.first_name" name="first_name" placeholder="First name">
+                <input
+                  class="form-input"
+                  type="text"
+                  [(ngModel)]="profile.first_name"
+                  name="first_name"
+                  placeholder="First name"
+                />
+                <small class="field-hint"
+                  >Your personal name for admin and support
+                  communication.</small
+                >
               </div>
               <div class="form-group">
                 <label class="form-label">Last Name</label>
-                <input class="form-input" type="text" [(ngModel)]="profile.last_name" name="last_name" placeholder="Last name">
+                <input
+                  class="form-input"
+                  type="text"
+                  [(ngModel)]="profile.last_name"
+                  name="last_name"
+                  placeholder="Last name"
+                />
+                <small class="field-hint"
+                  >Your family name for account records.</small
+                >
               </div>
             </div>
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label">Email Address</label>
-                <input class="form-input" type="email" [(ngModel)]="profile.email" name="email" placeholder="you@example.com">
+                <input
+                  class="form-input"
+                  type="email"
+                  [(ngModel)]="profile.email"
+                  name="email"
+                  placeholder="you@example.com"
+                />
+                <small class="field-hint"
+                  >Email used for account updates and security messages.</small
+                >
               </div>
               <div class="form-group">
                 <label class="form-label">Phone Number</label>
-                <input class="form-input" type="tel" [(ngModel)]="profile.phone" name="account_phone" placeholder="+234 800 0000 000">
+                <input
+                  class="form-input"
+                  type="tel"
+                  [(ngModel)]="profile.phone"
+                  name="account_phone"
+                  placeholder="+234 800 0000 000"
+                />
+                <small class="field-hint"
+                  >Primary number for your vendor account.</small
+                >
               </div>
             </div>
             <div class="form-group">
               <label class="form-label">Country</label>
-              <select class="form-input" [(ngModel)]="profile.country" name="country">
+              <select
+                class="form-input"
+                [(ngModel)]="profile.country"
+                name="country"
+              >
                 <option value="US">United States</option>
                 <option value="GB">United Kingdom</option>
                 <option value="CA">Canada</option>
@@ -136,6 +195,10 @@
                 <option value="ID">Indonesia</option>
                 <option value="TH">Thailand</option>
               </select>
+              <small class="field-hint"
+                >Country used for account defaults, address formatting, and
+                support context.</small
+              >
             </div>
           </div>
         </div>
@@ -151,20 +214,57 @@
           <div class="card-body">
             <div class="form-group">
               <label class="form-label">Store Name</label>
-              <input class="form-input" type="text" [(ngModel)]="vendor.store_name" name="store_name" placeholder="Your store name">
+              <input
+                class="form-input"
+                type="text"
+                [(ngModel)]="vendor.store_name"
+                name="store_name"
+                placeholder="Your store name"
+              />
+              <small class="field-hint"
+                >Customer-facing name shown in the marketplace.</small
+              >
             </div>
             <div class="form-group">
               <label class="form-label">Description</label>
-              <textarea class="form-input form-textarea" [(ngModel)]="vendor.description" name="description" rows="3" placeholder="Tell customers what makes your store special..."></textarea>
+              <textarea
+                class="form-input form-textarea"
+                [(ngModel)]="vendor.description"
+                name="description"
+                rows="3"
+                placeholder="Tell customers what makes your store special..."
+              ></textarea>
+              <small class="field-hint"
+                >Describe your products, strengths, and what customers can
+                expect.</small
+              >
             </div>
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label">Business Phone</label>
-                <input class="form-input" type="tel" [(ngModel)]="vendor.phone" name="phone" placeholder="+234 800 0000 000">
+                <input
+                  class="form-input"
+                  type="tel"
+                  [(ngModel)]="vendor.phone"
+                  name="phone"
+                  placeholder="+234 800 0000 000"
+                />
+                <small class="field-hint"
+                  >Store contact number for customer or admin follow-up.</small
+                >
               </div>
               <div class="form-group">
                 <label class="form-label">Business Email</label>
-                <input class="form-input" type="email" [(ngModel)]="vendor.email" name="vendor_email" placeholder="store@example.com">
+                <input
+                  class="form-input"
+                  type="email"
+                  [(ngModel)]="vendor.email"
+                  name="vendor_email"
+                  placeholder="store@example.com"
+                />
+                <small class="field-hint"
+                  >Public business email for store communication.</small
+                >
               </div>
             </div>
           </div>
@@ -177,9 +277,15 @@
               <span class="material-icons-outlined">location_on</span>
               Store Location
             </h3>
-            <button type="button" class="map-toggle-link" (click)="showLocationMap.set(!showLocationMap())">
-              <span class="material-icons-outlined">{{ showLocationMap() ? 'expand_less' : 'map' }}</span>
-              {{ showLocationMap() ? 'Hide Map' : 'Pick on Map' }}
+            <button
+              type="button"
+              class="map-toggle-link"
+              (click)="showLocationMap.set(!showLocationMap())"
+            >
+              <span class="material-icons-outlined">{{
+                showLocationMap() ? "expand_less" : "map"
+              }}</span>
+              {{ showLocationMap() ? "Hide Map" : "Pick on Map" }}
             </button>
           </div>
           <div class="card-body">
@@ -189,37 +295,75 @@
                   [height]="'260px'"
                   [initialLat]="vendor.latitude || 6.5244"
                   [initialLng]="vendor.longitude || 3.3792"
-                  (locationPicked)="onLocationPicked($event)">
+                  (locationPicked)="onLocationPicked($event)"
+                >
                 </app-map-picker>
-                <p class="map-autofill-hint">Address fields below auto-fill when you pick a location.</p>
+                <p class="map-autofill-hint">
+                  Address fields below auto-fill when you pick a location.
+                </p>
               </div>
             }
             <div class="form-group">
               <label class="form-label">Street Address</label>
-              <input class="form-input" type="text" [(ngModel)]="vendor.address" name="address" placeholder="123 Main Street">
+              <input
+                class="form-input"
+                type="text"
+                [(ngModel)]="vendor.address"
+                name="address"
+                placeholder="123 Main Street"
+              />
+              <small class="field-hint"
+                >Full pickup address where delivery partners collect
+                orders.</small
+              >
             </div>
             <div class="form-row cols-3">
               <div class="form-group">
                 <label class="form-label">City</label>
-                <input class="form-input" type="text" [(ngModel)]="vendor.city" name="city" placeholder="City">
+                <input
+                  class="form-input"
+                  type="text"
+                  [(ngModel)]="vendor.city"
+                  name="city"
+                  placeholder="City"
+                />
+                <small class="field-hint"
+                  >City where your store serves customers.</small
+                >
               </div>
               <div class="form-group">
                 <label class="form-label">State</label>
-                <input class="form-input" type="text" [(ngModel)]="vendor.state" name="state" placeholder="State">
+                <input
+                  class="form-input"
+                  type="text"
+                  [(ngModel)]="vendor.state"
+                  name="state"
+                  placeholder="State"
+                />
+                <small class="field-hint"
+                  >State or region for your pickup address.</small
+                >
               </div>
               <div class="form-group">
                 <label class="form-label">Postal Code</label>
-                <input class="form-input" type="text" [(ngModel)]="vendor.postal_code" name="postal_code" placeholder="10001">
+                <input
+                  class="form-input"
+                  type="text"
+                  [(ngModel)]="vendor.postal_code"
+                  name="postal_code"
+                  placeholder="10001"
+                />
+                <small class="field-hint"
+                  >Postal or ZIP code for your store location.</small
+                >
               </div>
             </div>
           </div>
         </div>
-
       </div>
 
       <!-- Right Sidebar -->
       <div class="profile-sidebar">
-
         <!-- Operating Hours -->
         <div class="card">
           <div class="card-header">
@@ -231,16 +375,38 @@
           <div class="card-body">
             <div class="form-group">
               <label class="form-label">Opening Time</label>
-              <input class="form-input" type="time" [(ngModel)]="vendor.opening_time" name="opening_time">
+              <input
+                class="form-input"
+                type="time"
+                [(ngModel)]="vendor.opening_time"
+                name="opening_time"
+              />
+              <small class="field-hint"
+                >Daily time customers can start ordering.</small
+              >
             </div>
             <div class="form-group">
               <label class="form-label">Closing Time</label>
-              <input class="form-input" type="time" [(ngModel)]="vendor.closing_time" name="closing_time">
+              <input
+                class="form-input"
+                type="time"
+                [(ngModel)]="vendor.closing_time"
+                name="closing_time"
+              />
+              <small class="field-hint"
+                >Daily cutoff time for accepting new orders.</small
+              >
             </div>
             <div class="store-open-toggle">
               <label for="is_open" class="toggle-label">Store is open</label>
               <div class="toggle-wrapper">
-                <input type="checkbox" id="is_open" class="toggle-input" [(ngModel)]="vendor.is_open" name="is_open">
+                <input
+                  type="checkbox"
+                  id="is_open"
+                  class="toggle-input"
+                  [(ngModel)]="vendor.is_open"
+                  name="is_open"
+                />
                 <label for="is_open" class="toggle-track">
                   <span class="toggle-thumb"></span>
                 </label>
@@ -259,12 +425,38 @@
           </div>
           <div class="card-body">
             <div class="form-group">
-              <label class="form-label">Minimum Order Amount ({{ 0 | appCurrency:true }})</label>
-              <input class="form-input" type="number" [(ngModel)]="vendor.min_order_amount" name="min_order_amount" min="0" step="50" placeholder="0">
+              <label class="form-label"
+                >Minimum Order Amount ({{ 0 | appCurrency: true }})</label
+              >
+              <input
+                class="form-input"
+                type="number"
+                [(ngModel)]="vendor.min_order_amount"
+                name="min_order_amount"
+                min="0"
+                step="50"
+                placeholder="0"
+              />
+              <small class="field-hint"
+                >Smallest cart value customers must reach before
+                checkout.</small
+              >
             </div>
             <div class="form-group">
               <label class="form-label">Delivery Radius (km)</label>
-              <input class="form-input" type="number" [(ngModel)]="vendor.delivery_radius_km" name="delivery_radius_km" min="0" step="0.5" placeholder="5">
+              <input
+                class="form-input"
+                type="number"
+                [(ngModel)]="vendor.delivery_radius_km"
+                name="delivery_radius_km"
+                min="0"
+                step="0.5"
+                placeholder="5"
+              />
+              <small class="field-hint"
+                >Maximum distance where your store should accept delivery
+                orders.</small
+              >
             </div>
           </div>
         </div>
@@ -273,16 +465,26 @@
         <div class="card status-card">
           <div class="card-body">
             <p class="status-card-label">Account Status</p>
-            <div class="status-badge-large" [class]="'status-' + (vendor.status || 'pending')">
+            <div
+              class="status-badge-large"
+              [class]="'status-' + (vendor.status || 'pending')"
+            >
               <span class="status-dot"></span>
-              {{ vendor.status || 'pending' }}
+              {{ vendor.status || "pending" }}
             </div>
-            @if (vendor.status === 'pending') {
-              <p class="status-note">Your store is awaiting admin approval. You'll be notified once reviewed.</p>
-            } @else if (vendor.status === 'approved') {
-              <p class="status-note success-note">Your store is live and accepting orders.</p>
-            } @else if (vendor.status === 'suspended') {
-              <p class="status-note danger-note">Your store has been suspended. Contact support.</p>
+            @if (vendor.status === "pending") {
+              <p class="status-note">
+                Your store is awaiting admin approval. You'll be notified once
+                reviewed.
+              </p>
+            } @else if (vendor.status === "approved") {
+              <p class="status-note success-note">
+                Your store is live and accepting orders.
+              </p>
+            } @else if (vendor.status === "suspended") {
+              <p class="status-note danger-note">
+                Your store has been suspended. Contact support.
+              </p>
             }
           </div>
         </div>
@@ -297,7 +499,6 @@
             Save Changes
           }
         </button>
-
       </div>
     </div>
   }

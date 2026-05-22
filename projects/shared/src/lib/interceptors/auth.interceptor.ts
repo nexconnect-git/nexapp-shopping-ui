@@ -1,7 +1,8 @@
-import { HttpInterceptorFn } from '@angular/common/http';
+import { type HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { catchError, switchMap, throwError, timeout } from 'rxjs';
+import { catchError, finalize, switchMap, throwError, timeout } from 'rxjs';
 import { AuthService } from '../services/auth.service';
+import { GlobalLoadingService } from '../services/global-loading.service';
 
 const REQUEST_TIMEOUT_MS = 15_000;
 const NON_REFRESHABLE_PATHS = [
@@ -14,6 +15,7 @@ const NON_REFRESHABLE_PATHS = [
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
+  const loading = inject(GlobalLoadingService);
   const token = auth.getToken();
 
   if (token) {
@@ -22,10 +24,14 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     });
   }
 
+  loading.start();
+
   return next(req).pipe(
     timeout(REQUEST_TIMEOUT_MS),
     catchError((err) => {
-      const canRefresh = err.status === 401 && !NON_REFRESHABLE_PATHS.some((path) => req.url.includes(path));
+      const canRefresh =
+        err.status === 401 &&
+        !NON_REFRESHABLE_PATHS.some((path) => req.url.includes(path));
       if (!canRefresh) {
         return throwError(() => err);
       }
@@ -55,5 +61,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         }),
       );
     }),
+    finalize(() => loading.stop()),
   );
 };

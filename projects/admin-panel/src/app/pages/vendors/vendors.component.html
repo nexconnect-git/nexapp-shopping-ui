@@ -1,24 +1,43 @@
-<div class="vendors-page">
+<div class="saas-page vendors-page">
   <section class="admin-page-hero">
     <div class="admin-page-copy">
       <span class="eyebrow">Marketplace</span>
       <h1 class="page-title">Vendors</h1>
-      <p>{{ total() }} vendor{{ total() !== 1 ? 's' : '' }} registered across onboarding, approvals, and store operations.</p>
+      <p>
+        {{ total() }} vendor{{ total() !== 1 ? "s" : "" }} registered across
+        onboarding, approvals, and store operations.
+      </p>
     </div>
     <div class="admin-page-actions">
       <div class="reload-bar">
-      @if (lastRefreshed()) {
-        <span class="reload-timestamp">Updated {{ lastRefreshed() | date:'HH:mm:ss' }}</span>
-      }
-      <button class="btn btn-ghost btn-sm" (click)="manualReload()" [disabled]="loading()" title="Reload">
-        <span class="material-icons-outlined" [class.spin]="loading()">refresh</span>
-      </button>
-      <button class="btn btn-sm" [class.btn-ghost]="!autoReload()" [class.btn-primary-soft]="autoReload()"
-              (click)="toggleAutoReload()" title="Toggle auto-reload every 15 s">
-        <span class="material-icons-outlined">{{ autoReload() ? 'pause_circle' : 'play_circle' }}</span>
-        {{ autoReload() ? 'Auto' : 'Paused' }}
-      </button>
-    </div>
+        @if (lastRefreshed()) {
+          <span class="reload-timestamp"
+            >Updated {{ lastRefreshed() | date: "HH:mm:ss" }}</span
+          >
+        }
+        <button
+          class="btn btn-ghost btn-sm"
+          (click)="manualReload()"
+          [disabled]="loading()"
+          title="Reload"
+        >
+          <span class="material-icons-outlined" [class.spin]="loading()"
+            >refresh</span
+          >
+        </button>
+        <button
+          class="btn btn-sm"
+          [class.btn-ghost]="!autoReload()"
+          [class.btn-primary-soft]="autoReload()"
+          (click)="toggleAutoReload()"
+          title="Toggle auto-reload every 15 s"
+        >
+          <span class="material-icons-outlined">{{
+            autoReload() ? "pause_circle" : "play_circle"
+          }}</span>
+          {{ autoReload() ? "Auto" : "Paused" }}
+        </button>
+      </div>
       <button class="btn-create" routerLink="/vendors/onboard">
         <span class="material-icons-outlined">person_add</span>
         Create Vendor
@@ -27,21 +46,26 @@
   </section>
 
   <section class="admin-toolbar">
-      <label class="toolbar-search">
-        <span class="material-icons-outlined">search</span>
-        <input class="filter-input" type="search" [(ngModel)]="search" (input)="onSearch()"
-          placeholder="Search vendors...">
-      </label>
-      <label class="toolbar-field">
-        <span>Status</span>
-        <select class="filter-input" [(ngModel)]="statusFilter" (change)="load()">
-          <option value="">All Status</option>
-          <option value="pending">Pending</option>
-          <option value="approved">Approved</option>
-          <option value="suspended">Suspended</option>
-          <option value="rejected">Rejected</option>
-        </select>
-      </label>
+    <label class="toolbar-search">
+      <span class="material-icons-outlined">search</span>
+      <input
+        class="filter-input"
+        type="search"
+        [(ngModel)]="search"
+        (input)="onSearch()"
+        placeholder="Search vendors..."
+      />
+    </label>
+    <label class="toolbar-field">
+      <span>Status</span>
+      <select class="filter-input" [(ngModel)]="statusFilter" (change)="load()">
+        <option value="">All Status</option>
+        <option value="pending">Pending</option>
+        <option value="approved">Approved</option>
+        <option value="suspended">Suspended</option>
+        <option value="rejected">Rejected</option>
+      </select>
+    </label>
   </section>
 
   <app-dynamic-table
@@ -59,7 +83,10 @@
     <!-- Custom vendor column -->
     <ng-template tableCell="vendor" let-v>
       <a class="vendor-cell" [routerLink]="['/vendors', v.id]">
-        <div class="vendor-thumb" [style.background]="vendorColor(v.store_name)">
+        <div
+          class="vendor-thumb"
+          [style.background]="vendorColor(v.store_name)"
+        >
           {{ v.store_name[0].toUpperCase() }}
         </div>
         <div>
@@ -76,9 +103,13 @@
 
     <!-- Custom status column -->
     <ng-template tableCell="status" let-v>
-      <span class="badge" [class.badge-approved]="v.status === 'approved'"
-        [class.badge-pending]="v.status === 'pending'" [class.badge-suspended]="v.status === 'suspended'"
-        [class.badge-rejected]="v.status === 'rejected'">
+      <span
+        class="badge"
+        [class.badge-approved]="v.status === 'approved'"
+        [class.badge-pending]="v.status === 'pending'"
+        [class.badge-suspended]="v.status === 'suspended'"
+        [class.badge-rejected]="v.status === 'rejected'"
+      >
         {{ v.status }}
       </span>
     </ng-template>
@@ -99,28 +130,56 @@
     <!-- Custom actions column -->
     <ng-template tableCell="actions" let-v>
       <div class="actions">
-        <a class="action-btn" [routerLink]="['/vendors', v.id, 'edit']" title="Edit">
+        <a
+          class="action-btn"
+          [routerLink]="['/vendors', v.id, 'edit']"
+          title="Edit"
+        >
           <span class="material-icons-outlined">edit</span>
         </a>
-        @if (v.status === 'pending') {
-          <button class="action-btn approve" [disabled]="actionId() === v.id" (click)="setStatus(v, 'approved')" title="Approve">
+        @if (v.status === "pending") {
+          <button
+            class="action-btn approve"
+            [disabled]="actionId() === v.id"
+            (click)="setStatus(v, 'approved')"
+            title="Approve"
+          >
             <span class="material-icons-outlined">check_circle</span>
           </button>
-          <button class="action-btn reject" [disabled]="actionId() === v.id" (click)="setStatus(v, 'rejected')" title="Reject">
+          <button
+            class="action-btn reject"
+            [disabled]="actionId() === v.id"
+            (click)="setStatus(v, 'rejected')"
+            title="Reject"
+          >
             <span class="material-icons-outlined">cancel</span>
           </button>
         }
-        @if (v.status === 'approved') {
-          <button class="action-btn suspend" [disabled]="actionId() === v.id" (click)="setStatus(v, 'suspended')" title="Suspend">
+        @if (v.status === "approved") {
+          <button
+            class="action-btn suspend"
+            [disabled]="actionId() === v.id"
+            (click)="setStatus(v, 'suspended')"
+            title="Suspend"
+          >
             <span class="material-icons-outlined">block</span>
           </button>
         }
-        @if (v.status === 'suspended' || v.status === 'rejected') {
-          <button class="action-btn approve" [disabled]="actionId() === v.id" (click)="setStatus(v, 'approved')" title="Restore">
+        @if (v.status === "suspended" || v.status === "rejected") {
+          <button
+            class="action-btn approve"
+            [disabled]="actionId() === v.id"
+            (click)="setStatus(v, 'approved')"
+            title="Restore"
+          >
             <span class="material-icons-outlined">restore</span>
           </button>
         }
-        <button class="action-btn danger" (click)="deleteVendor(v)" title="Delete">
+        <button
+          class="action-btn danger"
+          (click)="deleteVendor(v)"
+          title="Delete"
+        >
           <span class="material-icons-outlined">delete_outline</span>
         </button>
       </div>
@@ -129,143 +188,229 @@
 
   <!-- Create / Edit Modal -->
   @if (showModal()) {
-  <div class="modal-backdrop" (click)="closeModal()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-
-      <div class="modal-header">
-        <div class="modal-title-group">
-          <span class="material-icons-outlined modal-icon">{{ isCreating() ? 'store' : 'edit' }}</span>
-          <h2>{{ isCreating() ? 'Create New Vendor' : 'Edit Vendor' }}</h2>
-        </div>
-        <button class="close-btn" (click)="closeModal()">&times;</button>
-      </div>
-
-      <div class="modal-body">
-        @if (modalError()) {
-        <div class="modal-error">
-          <span class="material-icons-outlined">error_outline</span>
-          {{ modalError() }}
-        </div>
-        }
-
-        <!-- Create-only: Account credentials -->
-        @if (isCreating()) {
-        <div class="form-section-title">Account Credentials</div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="input-label required">Username</label>
-            <input class="input-field" type="text" [(ngModel)]="editModel().username" placeholder="vendor_username">
+    <div class="modal-backdrop" (click)="closeModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <span class="material-icons-outlined modal-icon">{{
+              isCreating() ? "store" : "edit"
+            }}</span>
+            <h2>{{ isCreating() ? "Create New Vendor" : "Edit Vendor" }}</h2>
           </div>
-          <div class="form-group">
-            <label class="input-label required">Password</label>
-            <input class="input-field" type="password" [(ngModel)]="editModel().password"
-              placeholder="Min 8 characters">
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="input-label">First Name</label>
-            <input class="input-field" type="text" [(ngModel)]="editModel().first_name" placeholder="First name">
-          </div>
-          <div class="form-group">
-            <label class="input-label">Last Name</label>
-            <input class="input-field" type="text" [(ngModel)]="editModel().last_name" placeholder="Last name">
-          </div>
-        </div>
-        <div class="form-divider"></div>
-        }
-
-        <!-- Store Info -->
-        <div class="form-section-title">Store Information</div>
-        <div class="form-group">
-          <label class="input-label required">Store Name</label>
-          <input class="input-field" type="text" [(ngModel)]="editModel().store_name" placeholder="My Awesome Store">
-        </div>
-        <div class="form-group">
-          <label class="input-label">Description</label>
-          <textarea class="input-field input-textarea" [(ngModel)]="editModel().description" rows="2"
-            placeholder="Tell customers about this store..."></textarea>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="input-label required">Email</label>
-            <input class="input-field" type="email" [(ngModel)]="editModel().email" placeholder="store@example.com">
-          </div>
-          <div class="form-group">
-            <label class="input-label">Phone</label>
-            <input class="input-field" type="tel" [(ngModel)]="editModel().phone" placeholder="+2348000000000">
-          </div>
+          <button class="close-btn" (click)="closeModal()">&times;</button>
         </div>
 
-        <!-- Location -->
-        <div class="form-divider"></div>
-        <div class="form-section-title">Location</div>
-        <div class="form-group">
-          <label class="input-label">Street Address</label>
-          <input class="input-field" type="text" [(ngModel)]="editModel().address" placeholder="123 Main Street">
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="input-label">City</label>
-            <input class="input-field" type="text" [(ngModel)]="editModel().city" placeholder="Lagos">
-          </div>
-          <div class="form-group">
-            <label class="input-label">State</label>
-            <input class="input-field" type="text" [(ngModel)]="editModel().state" placeholder="Lagos">
-          </div>
-          <div class="form-group">
-            <label class="input-label">Postal Code</label>
-            <input class="input-field" type="text" [(ngModel)]="editModel().postal_code" placeholder="10001">
-          </div>
-        </div>
-
-        <!-- Settings -->
-        <div class="form-divider"></div>
-        <div class="form-section-title">Settings</div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="input-label">Opening Time</label>
-            <input class="input-field" type="time" [(ngModel)]="editModel().opening_time">
-          </div>
-          <div class="form-group">
-            <label class="input-label">Closing Time</label>
-            <input class="input-field" type="time" [(ngModel)]="editModel().closing_time">
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="input-label">Min Order ({{ 0 | appCurrency:true }})</label>
-            <input class="input-field" type="number" [(ngModel)]="editModel().min_order_amount" min="0">
-          </div>
-          <div class="form-group">
-            <label class="input-label">Delivery Radius (km)</label>
-            <input class="input-field" type="number" [(ngModel)]="editModel().delivery_radius_km" min="0" step="0.5">
-          </div>
-        </div>
-        <div class="checkboxes-row">
-          <label class="checkbox-label">
-            <input type="checkbox" [(ngModel)]="editModel().is_open">
-            <span>Open for Business</span>
-          </label>
-          <label class="checkbox-label">
-            <input type="checkbox" [(ngModel)]="editModel().is_featured">
-            <span>Featured Vendor</span>
-          </label>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button class="btn btn-secondary" (click)="closeModal()">Cancel</button>
-        <button class="btn btn-primary" [disabled]="saving()" (click)="saveVendor()">
-          @if (saving()) {
-          <span class="btn-spinner"></span>
-          {{ isCreating() ? 'Creating...' : 'Saving...' }}
-          } @else {
-          {{ isCreating() ? 'Create Vendor' : 'Save Changes' }}
+        <div class="modal-body">
+          @if (modalError()) {
+            <div class="modal-error">
+              <span class="material-icons-outlined">error_outline</span>
+              {{ modalError() }}
+            </div>
           }
-        </button>
+
+          <!-- Create-only: Account credentials -->
+          @if (isCreating()) {
+            <div class="form-section-title">Account Credentials</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="input-label required">Username</label>
+                <input
+                  class="input-field"
+                  type="text"
+                  [(ngModel)]="editModel().username"
+                  placeholder="vendor_username"
+                />
+              </div>
+              <div class="form-group">
+                <label class="input-label required">Password</label>
+                <input
+                  class="input-field"
+                  type="password"
+                  [(ngModel)]="editModel().password"
+                  placeholder="Min 8 characters"
+                />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="input-label">First Name</label>
+                <input
+                  class="input-field"
+                  type="text"
+                  [(ngModel)]="editModel().first_name"
+                  placeholder="First name"
+                />
+              </div>
+              <div class="form-group">
+                <label class="input-label">Last Name</label>
+                <input
+                  class="input-field"
+                  type="text"
+                  [(ngModel)]="editModel().last_name"
+                  placeholder="Last name"
+                />
+              </div>
+            </div>
+            <div class="form-divider"></div>
+          }
+
+          <!-- Store Info -->
+          <div class="form-section-title">Store Information</div>
+          <div class="form-group">
+            <label class="input-label required">Store Name</label>
+            <input
+              class="input-field"
+              type="text"
+              [(ngModel)]="editModel().store_name"
+              placeholder="My Awesome Store"
+            />
+          </div>
+          <div class="form-group">
+            <label class="input-label">Description</label>
+            <textarea
+              class="input-field input-textarea"
+              [(ngModel)]="editModel().description"
+              rows="2"
+              placeholder="Tell customers about this store..."
+            ></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="input-label required">Email</label>
+              <input
+                class="input-field"
+                type="email"
+                [(ngModel)]="editModel().email"
+                placeholder="store@example.com"
+              />
+            </div>
+            <div class="form-group">
+              <label class="input-label">Phone</label>
+              <input
+                class="input-field"
+                type="tel"
+                [(ngModel)]="editModel().phone"
+                placeholder="+2348000000000"
+              />
+            </div>
+          </div>
+
+          <!-- Location -->
+          <div class="form-divider"></div>
+          <div class="form-section-title">Location</div>
+          <div class="form-group">
+            <label class="input-label">Street Address</label>
+            <input
+              class="input-field"
+              type="text"
+              [(ngModel)]="editModel().address"
+              placeholder="123 Main Street"
+            />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="input-label">City</label>
+              <input
+                class="input-field"
+                type="text"
+                [(ngModel)]="editModel().city"
+                placeholder="Lagos"
+              />
+            </div>
+            <div class="form-group">
+              <label class="input-label">State</label>
+              <input
+                class="input-field"
+                type="text"
+                [(ngModel)]="editModel().state"
+                placeholder="Lagos"
+              />
+            </div>
+            <div class="form-group">
+              <label class="input-label">Postal Code</label>
+              <input
+                class="input-field"
+                type="text"
+                [(ngModel)]="editModel().postal_code"
+                placeholder="10001"
+              />
+            </div>
+          </div>
+
+          <!-- Settings -->
+          <div class="form-divider"></div>
+          <div class="form-section-title">Settings</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="input-label">Opening Time</label>
+              <input
+                class="input-field"
+                type="time"
+                [(ngModel)]="editModel().opening_time"
+              />
+            </div>
+            <div class="form-group">
+              <label class="input-label">Closing Time</label>
+              <input
+                class="input-field"
+                type="time"
+                [(ngModel)]="editModel().closing_time"
+              />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="input-label"
+                >Min Order ({{ 0 | appCurrency: true }})</label
+              >
+              <input
+                class="input-field"
+                type="number"
+                [(ngModel)]="editModel().min_order_amount"
+                min="0"
+              />
+            </div>
+            <div class="form-group">
+              <label class="input-label">Delivery Radius (km)</label>
+              <input
+                class="input-field"
+                type="number"
+                [(ngModel)]="editModel().delivery_radius_km"
+                min="0"
+                step="0.5"
+              />
+            </div>
+          </div>
+          <div class="checkboxes-row">
+            <label class="checkbox-label">
+              <input type="checkbox" [(ngModel)]="editModel().is_open" />
+              <span>Open for Business</span>
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" [(ngModel)]="editModel().is_featured" />
+              <span>Featured Vendor</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="closeModal()">
+            Cancel
+          </button>
+          <button
+            class="btn btn-primary"
+            [disabled]="saving()"
+            (click)="saveVendor()"
+          >
+            @if (saving()) {
+              <span class="btn-spinner"></span>
+              {{ isCreating() ? "Creating..." : "Saving..." }}
+            } @else {
+              {{ isCreating() ? "Create Vendor" : "Save Changes" }}
+            }
+          </button>
+        </div>
       </div>
     </div>
-  </div>
   }
 </div>

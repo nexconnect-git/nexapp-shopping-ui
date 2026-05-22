@@ -1,5 +1,4 @@
-<div class="order-detail-page">
-
+<div class="saas-page order-detail-page">
   <!-- Loading -->
   @if (loading()) {
     <div class="loading-state">
@@ -9,17 +8,27 @@
   }
 
   @if (!loading() && order()) {
-
     <!-- ══ Header ══ -->
     <div class="page-header">
       <div>
         <div class="title-row">
           <h1 class="page-title">#{{ order()!.order_number }}</h1>
-          <span [class]="statusBadgeClass(order()!.status)">{{ order()!.status | titlecase }}</span>
+          <span [class]="statusBadgeClass(order()!.status)">{{
+            order()!.status | titlecase
+          }}</span>
         </div>
         <p class="page-subtitle">
-          <span class="material-icons-outlined" style="font-size:15px;vertical-align:middle;margin-right:4px;color:#767586;">calendar_today</span>
-          {{ order()!.placed_at | date:'MMMM d, y — h:mm a' }}
+          <span
+            class="material-icons-outlined"
+            style="
+              font-size: 15px;
+              vertical-align: middle;
+              margin-right: 4px;
+              color: #767586;
+            "
+            >calendar_today</span
+          >
+          {{ order()!.placed_at | date: "MMMM d, y — h:mm a" }}
         </p>
       </div>
 
@@ -28,7 +37,11 @@
         <div class="status-readonly-pill">
           <span class="material-icons-outlined">flag</span>
           <span class="status-readonly-label">Status</span>
-          <span [class]="statusBadgeClass(order()!.status)" style="font-size:0.75rem;">{{ order()!.status | titlecase }}</span>
+          <span
+            [class]="statusBadgeClass(order()!.status)"
+            style="font-size: 0.75rem"
+            >{{ order()!.status | titlecase }}</span
+          >
         </div>
       </div>
     </div>
@@ -41,9 +54,15 @@
             <span class="material-icons-outlined">radar</span>
             Live Delivery Tracking
           </div>
-          <button id="btn-toggle-map" class="btn-map-toggle" (click)="toggleMap()">
-            <span class="material-icons-outlined">{{ showMap() ? 'visibility_off' : 'map' }}</span>
-            {{ showMap() ? 'Hide Map' : 'Show Live Map' }}
+          <button
+            id="btn-toggle-map"
+            class="btn-map-toggle"
+            (click)="toggleMap()"
+          >
+            <span class="material-icons-outlined">{{
+              showMap() ? "visibility_off" : "map"
+            }}</span>
+            {{ showMap() ? "Hide Map" : "Show Live Map" }}
           </button>
         </div>
 
@@ -51,15 +70,26 @@
           <div class="map-container">
             <div id="admin-order-map" class="map-el"></div>
             <div class="map-legend">
-              <span class="leg-item"><span class="leg-dot" style="background:#FF6B35;"></span>Vendor</span>
-              <span class="leg-item"><span class="leg-dot" style="background:#6366F1;"></span>Partner</span>
-              <span class="leg-item"><span class="leg-dot" style="background:#10B981;"></span>Customer</span>
+              <span class="leg-item"
+                ><span class="leg-dot" style="background: #ef4444"></span
+                >Vendor</span
+              >
+              <span class="leg-item"
+                ><span class="leg-dot" style="background: #6366f1"></span
+                >Partner</span
+              >
+              <span class="leg-item"
+                ><span class="leg-dot" style="background: #22c55e"></span
+                >Customer</span
+              >
             </div>
           </div>
           @if (order()!.delivery_partner_info) {
             <div class="partner-strip">
               <span class="material-icons-outlined">delivery_dining</span>
-              <span class="partner-name">{{ order()!.delivery_partner_info!.name }}</span>
+              <span class="partner-name">{{
+                order()!.delivery_partner_info!.name
+              }}</span>
               <span class="partner-meta">
                 {{ order()!.delivery_partner_info!.vehicle_type | titlecase }}
                 @if (order()!.delivery_partner_info!.vehicle_number) {
@@ -78,10 +108,8 @@
 
     <!-- ══ Main 2-Column Grid ══ -->
     <div class="detail-grid">
-
       <!-- LEFT column -->
       <div class="detail-col">
-
         <!-- Order Items -->
         <div class="card">
           <div class="card-header">
@@ -94,16 +122,22 @@
                 <th>Product</th>
                 <th>Unit Price</th>
                 <th>Qty</th>
-                <th style="text-align:right;">Subtotal</th>
+                <th style="text-align: right">Subtotal</th>
               </tr>
             </thead>
             <tbody>
               @for (item of order()!.items; track item.id) {
                 <tr>
                   <td class="item-name-cell">{{ item.product_name }}</td>
-                  <td class="text-muted">{{ item.product_price | appCurrency }}</td>
-                  <td><span class="qty-badge">×{{ item.quantity }}</span></td>
-                  <td class="text-right"><strong>{{ item.subtotal | appCurrency }}</strong></td>
+                  <td class="text-muted">
+                    {{ item.product_price | appCurrency }}
+                  </td>
+                  <td>
+                    <span class="qty-badge">×{{ item.quantity }}</span>
+                  </td>
+                  <td class="text-right">
+                    <strong>{{ item.subtotal | appCurrency }}</strong>
+                  </td>
                 </tr>
               }
             </tbody>
@@ -142,12 +176,10 @@
             <p class="notes-text">"{{ order()!.notes }}"</p>
           </div>
         }
-
       </div>
 
       <!-- RIGHT column -->
       <div class="detail-col">
-
         <!-- Customer -->
         <div class="card">
           <div class="card-header">
@@ -160,7 +192,12 @@
           @if (order()!.delivery_address) {
             <p class="info-row">
               <strong>Address</strong>
-              <span>{{ order()!.delivery_address.address_line1 }}, {{ order()!.delivery_address.city }}, {{ order()!.delivery_address.state }} {{ order()!.delivery_address.postal_code }}</span>
+              <span
+                >{{ order()!.delivery_address.address_line1 }},
+                {{ order()!.delivery_address.city }},
+                {{ order()!.delivery_address.state }}
+                {{ order()!.delivery_address.postal_code }}</span
+              >
             </p>
             <p class="info-row">
               <strong>Phone</strong>
@@ -172,7 +209,9 @@
         <!-- Vendor -->
         <div class="card">
           <div class="card-header">
-            <h3><span class="material-icons-outlined">storefront</span>Vendor</h3>
+            <h3>
+              <span class="material-icons-outlined">storefront</span>Vendor
+            </h3>
           </div>
           <p class="info-row">
             <strong>Name</strong>
@@ -196,7 +235,10 @@
         @if (order()!.delivery_partner_info) {
           <div class="card">
             <div class="card-header">
-              <h3><span class="material-icons-outlined">delivery_dining</span>Delivery Partner</h3>
+              <h3>
+                <span class="material-icons-outlined">delivery_dining</span
+                >Delivery Partner
+              </h3>
             </div>
             <p class="info-row">
               <strong>Name</strong>
@@ -204,7 +246,8 @@
             </p>
             <p class="info-row">
               <strong>Vehicle</strong>
-              <span>{{ order()!.delivery_partner_info!.vehicle_type | titlecase }}
+              <span
+                >{{ order()!.delivery_partner_info!.vehicle_type | titlecase }}
                 @if (order()!.delivery_partner_info!.vehicle_number) {
                   · {{ order()!.delivery_partner_info!.vehicle_number }}
                 }
@@ -224,27 +267,34 @@
         @if (order()!.tracking && order()!.tracking.length > 0) {
           <div class="card">
             <div class="card-header">
-              <h3><span class="material-icons-outlined">timeline</span>Tracking History</h3>
+              <h3>
+                <span class="material-icons-outlined">timeline</span>Tracking
+                History
+              </h3>
             </div>
             <div class="tracking-list">
               @for (t of order()!.tracking; track t.id; let last = $last) {
                 <div class="tracking-item">
                   <div class="t-dot" [class.active]="last"></div>
                   <div class="t-body">
-                    <span [class]="statusBadgeClass(t.status)" style="font-size:0.65rem;align-self:flex-start;">{{ t.status | titlecase }}</span>
+                    <span
+                      [class]="statusBadgeClass(t.status)"
+                      style="font-size: 0.65rem; align-self: flex-start"
+                      >{{ t.status | titlecase }}</span
+                    >
                     @if (t.description) {
                       <p class="t-desc">{{ t.description }}</p>
                     }
-                    <span class="t-time">{{ t.timestamp | date:'MMM d, y — h:mm a' }}</span>
+                    <span class="t-time">{{
+                      t.timestamp | date: "MMM d, y — h:mm a"
+                    }}</span>
                   </div>
                 </div>
               }
             </div>
           </div>
         }
-
       </div>
     </div>
   }
-
 </div>

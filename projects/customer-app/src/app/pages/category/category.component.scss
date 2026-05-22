@@ -1,0 +1,122 @@
+.crumb {
+  color: var(--muted);
+  font-size: 13px;
+}
+.category-head {
+  display: grid;
+  grid-template-columns: auto 1fr 300px;
+  gap: 18px;
+  align-items: center;
+  margin-bottom: 22px;
+}
+.category-head > span {
+  font-size: 50px;
+}
+.delivery-box {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 18px;
+}
+.delivery-box small,
+.delivery-box span {
+  display: block;
+  color: var(--muted);
+  margin-top: 5px;
+}
+.filters {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.filters select {
+  margin-left: auto;
+}
+.banner {
+  height: 92px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #5030e8, #be84ff);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  margin-bottom: 22px;
+  overflow: hidden;
+}
+.banner b {
+  font-size: 22px;
+}
+.banner p {
+  margin: 6px 0 0;
+}
+.banner span {
+  font-size: 58px;
+}
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  gap: 18px;
+}
+@media (max-width: 1000px) {
+  .category-head {
+    grid-template-columns: 1fr;
+  }
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 560px) {
+  .category-head {
+    grid-template-columns: 38px minmax(0, 1fr);
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .category-head > span {
+    font-size: 32px;
+  }
+  .category-head h1 {
+    font-size: 22px;
+    margin: 0;
+  }
+  .category-head p {
+    font-size: 13px;
+    line-height: 1.35;
+    margin: 4px 0;
+  }
+  .delivery-box {
+    grid-column: 1/-1;
+    padding: 10px;
+    border-radius: 12px;
+  }
+  .banner {
+    min-height: 58px;
+    height: auto;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    border-radius: 14px;
+  }
+  .banner b {
+    font-size: 16px;
+  }
+  .banner p {
+    display: none;
+  }
+  .banner span {
+    font-size: 32px;
+  }
+  .filters {
+    gap: 8px;
+    margin-bottom: 10px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+  .filters > * {
+    flex: 0 0 auto;
+  }
+  .product-grid {
+    gap: 8px;
+  }
+}

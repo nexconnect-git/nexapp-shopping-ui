@@ -1,0 +1,19 @@
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--muted);
+  font-size: 13px;
+  margin: 0 0 18px;
+}
+.breadcrumbs a {
+  color: var(--primary);
+  font-weight: 800;
+}
+.breadcrumbs b {
+  color: #555b72;
+  font-weight: 700;
+}
+.breadcrumbs span {
+  color: #a1a5b8;
+}

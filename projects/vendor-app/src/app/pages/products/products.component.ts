@@ -1,16 +1,31 @@
-import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { ApiService, AppCurrencyPipe, DynamicTableColumn, DynamicTableComponent, Product, TableCellDirective, ToastService } from '@shared/public-api';
+import {
+  ApiService,
+  AppCurrencyPipe,
+  DynamicTableColumn,
+  DynamicTableComponent,
+  Product,
+  TableCellDirective,
+  ToastService,
+} from '@shared/public-api';
 import { Subscription, timer } from 'rxjs';
 
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, AppCurrencyPipe, DynamicTableComponent, TableCellDirective],
+  imports: [
+    CommonModule,
+    RouterLink,
+    FormsModule,
+    AppCurrencyPipe,
+    DynamicTableComponent,
+    TableCellDirective,
+  ],
   templateUrl: './products.component.html',
-  styleUrl: './products.component.scss'
+  styleUrl: './products.component.scss',
 })
 export class ProductsComponent implements OnInit, OnDestroy {
   private api = inject(ApiService);
@@ -52,10 +67,17 @@ export class ProductsComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnDestroy() { this.reloadSub?.unsubscribe(); }
+  ngOnDestroy() {
+    this.reloadSub?.unsubscribe();
+  }
 
-  manualReload() { this.page.set(1); this.load(); }
-  toggleAutoReload() { this.autoReload.update(v => !v); }
+  manualReload() {
+    this.page.set(1);
+    this.load();
+  }
+  toggleAutoReload() {
+    this.autoReload.update((v) => !v);
+  }
 
   load() {
     this.loading.set(true);
@@ -65,17 +87,25 @@ export class ProductsComponent implements OnInit, OnDestroy {
       next: (r) => {
         this.products.set(r.results || r);
         this.total.set(r.count || (r.results || r).length);
-        this.totalPages.set(Math.ceil((r.count || (r.results || r).length) / this.pageSize) || 1);
+        this.totalPages.set(
+          Math.ceil((r.count || (r.results || r).length) / this.pageSize) || 1,
+        );
         this.loading.set(false);
         this.lastRefreshed.set(new Date());
       },
-      error: () => { this.loading.set(false); this.toast.show('Failed to load products.', 'error'); }
+      error: () => {
+        this.loading.set(false);
+        this.toast.show('Failed to load products.', 'error');
+      },
     });
   }
 
   onSearch() {
     clearTimeout(this.searchTimer);
-    this.searchTimer = setTimeout(() => { this.page.set(1); this.load(); }, 400);
+    this.searchTimer = setTimeout(() => {
+      this.page.set(1);
+      this.load();
+    }, 400);
   }
 
   setPage(p: number) {
@@ -89,16 +119,23 @@ export class ProductsComponent implements OnInit, OnDestroy {
     const total = this.totalPages();
     const cur = this.page();
     const range: number[] = [];
-    for (let i = Math.max(1, cur - 2); i <= Math.min(total, cur + 2); i++) range.push(i);
+    for (let i = Math.max(1, cur - 2); i <= Math.min(total, cur + 2); i++)
+      range.push(i);
     return range;
   }
 
   isLowStock(product: Product): boolean {
-    return product.low_stock_threshold > 0 && product.stock <= product.low_stock_threshold;
+    return (
+      product.low_stock_threshold > 0 &&
+      product.stock <= product.low_stock_threshold
+    );
   }
 
   needsAttention(product: Product): boolean {
-    return product.visibility_status === 'needs_attention' || !!product.visibility_blockers?.length;
+    return (
+      product.visibility_status === 'needs_attention' ||
+      !!product.visibility_blockers?.length
+    );
   }
 
   productHealthLabel(product: Product): string {
@@ -120,8 +157,10 @@ export class ProductsComponent implements OnInit, OnDestroy {
   }
 
   categoryVisibilityLabel(product: Product): string {
-    if (product.category_visibility === 'customer_visible') return 'Customer visible';
-    if (product.category_visibility === 'pending_review') return 'Category pending';
+    if (product.category_visibility === 'customer_visible')
+      return 'Customer visible';
+    if (product.category_visibility === 'pending_review')
+      return 'Category pending';
     return 'No category';
   }
 
@@ -130,19 +169,30 @@ export class ProductsComponent implements OnInit, OnDestroy {
   }
 
   approvalText(product: Product): string {
-    return product.approval_status_label || (product.approval_status || 'Draft').replace('_', ' ');
+    return (
+      product.approval_status_label ||
+      (product.approval_status || 'Draft').replace('_', ' ')
+    );
   }
 
   approvalReason(product: Product): string {
-    if (product.approval_status === 'pending_approval') return 'Hidden until admin approval.';
-    if (product.approval_status === 'rejected') return product.rejection_reason || 'Rejected by admin.';
-    if (product.approval_status === 'draft') return 'Draft products are not customer visible.';
-    return product.is_available && product.status === 'active' ? 'Customer visible' : 'Approved but offline.';
+    if (product.approval_status === 'pending_approval')
+      return 'Hidden until admin approval.';
+    if (product.approval_status === 'rejected')
+      return product.rejection_reason || 'Rejected by admin.';
+    if (product.approval_status === 'draft')
+      return 'Draft products are not customer visible.';
+    return product.is_available && product.status === 'active'
+      ? 'Customer visible'
+      : 'Approved but offline.';
   }
 
   canSubmitForApproval(product: Product | null): boolean {
     if (!product) return false;
-    return product.approval_status === 'draft' || product.approval_status === 'rejected';
+    return (
+      product.approval_status === 'draft' ||
+      product.approval_status === 'rejected'
+    );
   }
 
   submitForApproval(product: Product | null) {
@@ -150,22 +200,38 @@ export class ProductsComponent implements OnInit, OnDestroy {
     this.submittingApproval.set(product.id);
     this.api.submitInheritedProducts([product.id]).subscribe({
       next: (res) => {
-        const submitted = (res?.variants || []).find((item: Product) => item.id === product.id);
-        this.products.update(items => items.map(item => item.id === product.id ? {
-          ...item,
-          ...(submitted || {}),
-          approval_status: submitted?.approval_status || 'pending_approval',
-          approval_status_label: submitted?.approval_status_label || 'Pending Approval',
-          rejection_reason: submitted?.rejection_reason || '',
-        } : item));
+        const submitted = (res?.variants || []).find(
+          (item: Product) => item.id === product.id,
+        );
+        this.products.update((items) =>
+          items.map((item) =>
+            item.id === product.id
+              ? {
+                  ...item,
+                  ...(submitted || {}),
+                  approval_status:
+                    submitted?.approval_status || 'pending_approval',
+                  approval_status_label:
+                    submitted?.approval_status_label || 'Pending Approval',
+                  rejection_reason: submitted?.rejection_reason || '',
+                }
+              : item,
+          ),
+        );
         if (this.fixesTarget()?.id === product.id) {
-          this.fixesTarget.update(current => current ? {
-            ...current,
-            ...(submitted || {}),
-            approval_status: submitted?.approval_status || 'pending_approval',
-            approval_status_label: submitted?.approval_status_label || 'Pending Approval',
-            rejection_reason: submitted?.rejection_reason || '',
-          } : current);
+          this.fixesTarget.update((current) =>
+            current
+              ? {
+                  ...current,
+                  ...(submitted || {}),
+                  approval_status:
+                    submitted?.approval_status || 'pending_approval',
+                  approval_status_label:
+                    submitted?.approval_status_label || 'Pending Approval',
+                  rejection_reason: submitted?.rejection_reason || '',
+                }
+              : current,
+          );
         }
         this.submittingApproval.set(null);
         this.toast.show('Product submitted for admin approval.', 'success');
@@ -173,16 +239,21 @@ export class ProductsComponent implements OnInit, OnDestroy {
       error: (err) => {
         this.submittingApproval.set(null);
         const raw = err?.error?.error;
-        const message = typeof raw === 'string'
-          ? raw
-          : 'Fix product validation errors before submitting for approval.';
+        const message =
+          typeof raw === 'string'
+            ? raw
+            : 'Fix product validation errors before submitting for approval.';
         this.toast.show(message, 'error');
-      }
+      },
     });
   }
 
-  confirmDelete(product: Product) { this.deleteTarget.set(product); }
-  cancelDelete() { this.deleteTarget.set(null); }
+  confirmDelete(product: Product) {
+    this.deleteTarget.set(product);
+  }
+  cancelDelete() {
+    this.deleteTarget.set(null);
+  }
 
   doDelete() {
     const p = this.deleteTarget();
@@ -198,7 +269,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
       error: () => {
         this.deleting.set(false);
         this.toast.show('Failed to delete product.', 'error');
-      }
+      },
     });
   }
 }

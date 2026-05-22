@@ -2,7 +2,12 @@
   <app-toast></app-toast>
   <div class="app-shell" [class.sidebar-open]="!sidebarCollapsed()">
     @if (!isPendingRoute()) {
-      <button class="mobile-scrim" type="button" aria-label="Close navigation" (click)="closeMobileSidebar()"></button>
+      <button
+        class="mobile-scrim"
+        type="button"
+        aria-label="Close navigation"
+        (click)="closeMobileSidebar()"
+      ></button>
 
       <aside class="sidebar" aria-label="Vendor navigation">
         <div class="sidebar-brand">
@@ -24,7 +29,7 @@
         </div>
 
         <nav class="sidebar-nav">
-          @for (group of navGroups; track group.label) {
+          @for (group of visibleNavGroups(); track group.label) {
             <section class="nav-group">
               <p class="nav-section-label">{{ group.label }}</p>
               @for (item of group.items; track item.route) {
@@ -33,7 +38,8 @@
                   routerLinkActive="active"
                   [routerLinkActiveOptions]="{ exact: item.exact === true }"
                   (click)="closeMobileSidebar()"
-                  class="menu-item">
+                  class="menu-item"
+                >
                   <span class="material-icons-outlined">{{ item.icon }}</span>
                   <span class="nav-label">{{ item.label }}</span>
                 </a>
@@ -62,7 +68,12 @@
       <header class="topbar">
         <div class="topbar-left">
           @if (!isPendingRoute()) {
-            <button class="mobile-menu-btn" type="button" aria-label="Open navigation" (click)="toggleSidebar()">
+            <button
+              class="mobile-menu-btn"
+              type="button"
+              aria-label="Open navigation"
+              (click)="toggleSidebar()"
+            >
               <span class="material-icons-outlined">menu</span>
             </button>
             <div class="page-context">
@@ -74,7 +85,9 @@
                     <span>{{ crumb.label }}</span>
                   }
                   @if ($index < breadcrumbs().length - 1) {
-                    <span class="material-icons-outlined crumb-separator">chevron_right</span>
+                    <span class="material-icons-outlined crumb-separator"
+                      >chevron_right</span
+                    >
                   }
                 }
               </nav>
@@ -86,21 +99,32 @@
         <div class="topbar-right">
           @if (!isPendingRoute()) {
             <div class="quick-actions" aria-label="Quick actions">
-              <a routerLink="/products/new" title="Add product">
-                <span class="material-icons-outlined">add</span>
-                <span>Product</span>
-              </a>
-              <a routerLink="/live-orders" title="Open live orders">
-                <span class="material-icons-outlined">view_kanban</span>
-                <span>Orders</span>
-              </a>
+              @if (canUseRoute("/products/new")) {
+                <a routerLink="/products/new" title="Add product">
+                  <span class="material-icons-outlined">add</span>
+                  <span>Product</span>
+                </a>
+              }
+              @if (canUseRoute("/live-orders")) {
+                <a routerLink="/live-orders" title="Open live orders">
+                  <span class="material-icons-outlined">view_kanban</span>
+                  <span>Orders</span>
+                </a>
+              }
             </div>
 
             <div class="notif-wrapper" (click)="$event.stopPropagation()">
-              <button class="topbar-icon-btn notif-btn" type="button" (click)="toggleNotif($event)" title="Notifications">
+              <button
+                class="topbar-icon-btn notif-btn"
+                type="button"
+                (click)="toggleNotif($event)"
+                title="Notifications"
+              >
                 <span class="material-icons-outlined">notifications_none</span>
                 @if (unreadCount() > 0) {
-                  <span class="notif-badge">{{ unreadCount() > 9 ? '9+' : unreadCount() }}</span>
+                  <span class="notif-badge">{{
+                    unreadCount() > 9 ? "9+" : unreadCount()
+                  }}</span>
                 }
               </button>
               @if (notifOpen()) {
@@ -108,25 +132,46 @@
                   <div class="notif-header">
                     <div>
                       <span class="notif-title">Notifications</span>
-                      <small>{{ unreadCount() }} unread update{{ unreadCount() === 1 ? '' : 's' }}</small>
+                      <small
+                        >{{ unreadCount() }} unread update{{
+                          unreadCount() === 1 ? "" : "s"
+                        }}</small
+                      >
                     </div>
                     @if (unreadCount() > 0) {
-                      <button class="notif-mark-read" type="button" (click)="markAllRead()">Mark all read</button>
+                      <button
+                        class="notif-mark-read"
+                        type="button"
+                        (click)="markAllRead()"
+                      >
+                        Mark all read
+                      </button>
                     }
                   </div>
                   @if (notifLoading()) {
-                    <div class="notif-loading"><div class="notif-spinner"></div></div>
+                    <div class="notif-loading">
+                      <div class="notif-spinner"></div>
+                    </div>
                   } @else if (notifications().length === 0) {
                     <div class="notif-empty">
-                      <span class="material-icons-outlined">notifications_none</span>
+                      <span class="material-icons-outlined"
+                        >notifications_none</span
+                      >
                       <strong>No notifications</strong>
                       <span>Your order and store alerts will appear here.</span>
                     </div>
                   } @else {
                     <div class="notif-list">
                       @for (n of notifications(); track n.id) {
-                        <button class="notif-item" type="button" [class.unread]="!n.is_read" (click)="handleNotificationClick(n)">
-                          <span class="material-icons-outlined notif-icon">receipt_long</span>
+                        <button
+                          class="notif-item"
+                          type="button"
+                          [class.unread]="!n.is_read"
+                          (click)="handleNotificationClick(n)"
+                        >
+                          <span class="material-icons-outlined notif-icon"
+                            >receipt_long</span
+                          >
                           <span class="notif-body">
                             <span class="notif-msg">{{ n.title }}</span>
                             <span class="notif-sub">{{ n.message }}</span>
@@ -141,21 +186,42 @@
           }
 
           <div class="profile-menu-wrapper" (click)="toggleProfile($event)">
-            <button class="topbar-avatar" type="button" aria-label="Open profile menu">{{ userInitials() }}</button>
+            <button
+              class="topbar-avatar"
+              type="button"
+              aria-label="Open profile menu"
+            >
+              @if (userInitials() && userInitials() !== "?") {
+                <span class="avatar-initials">{{ userInitials() }}</span>
+              } @else {
+                <span class="material-icons-outlined">person</span>
+              }
+            </button>
             @if (profileOpen()) {
               <div class="profile-dropdown" (click)="$event.stopPropagation()">
                 <div class="pd-header">
                   <div class="pd-avatar-lg">{{ userInitials() }}</div>
                   <div>
-                    <p class="pd-name">{{ auth.user()?.first_name || auth.user()?.username }} {{ auth.user()?.last_name }}</p>
+                    <p class="pd-name">
+                      {{ auth.user()?.first_name || auth.user()?.username }}
+                      {{ auth.user()?.last_name }}
+                    </p>
                     <p class="pd-email">{{ auth.user()?.email }}</p>
                   </div>
                 </div>
-                <a routerLink="/store-settings" class="pd-item" (click)="closeProfile()">
+                <a
+                  routerLink="/store-settings"
+                  class="pd-item"
+                  (click)="closeProfile()"
+                >
                   <span class="material-icons-outlined">manage_accounts</span>
                   Store Profile
                 </a>
-                <button class="pd-item danger" type="button" (click)="logout(); closeProfile()">
+                <button
+                  class="pd-item danger"
+                  type="button"
+                  (click)="logout(); closeProfile()"
+                >
                   <span class="material-icons-outlined">logout</span>
                   Sign Out
                 </button>
@@ -171,8 +237,12 @@
 
       @if (!isPendingRoute()) {
         <nav class="mobile-bottom-nav" aria-label="Primary mobile navigation">
-          @for (item of mobileNavItems; track item.route) {
-            <a [routerLink]="item.route" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: item.exact === true }">
+          @for (item of visibleMobileNavItems(); track item.route) {
+            <a
+              [routerLink]="item.route"
+              routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: item.exact === true }"
+            >
               <span class="material-icons-outlined">{{ item.icon }}</span>
               <small>{{ item.label }}</small>
             </a>
@@ -185,3 +255,6 @@
   <app-toast></app-toast>
   <router-outlet />
 }
+
+<app-global-loading />
+<app-page-feature-loading />

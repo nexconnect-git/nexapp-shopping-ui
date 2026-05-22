@@ -1,0 +1,344 @@
+/* ==========================================================================
+   FlashDrop Motion System
+   Smooth transitions, page-load states, loader and micro-interactions.
+   ========================================================================== */
+
+:root {
+  --fd-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --fd-ease-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --fd-duration-fast: 160ms;
+  --fd-duration-base: 260ms;
+  --fd-duration-slow: 520ms;
+}
+
+/* Global motion safety */
+* {
+  scroll-behavior: smooth;
+}
+
+body {
+  transition:
+    background-color var(--fd-duration-base) var(--fd-ease-soft),
+    color var(--fd-duration-base) var(--fd-ease-soft);
+}
+
+/* Page transition shell */
+.route-shell {
+  display: block;
+  animation: fdPageEnter var(--fd-duration-slow) var(--fd-ease-out) both;
+}
+
+@keyframes fdPageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.992);
+    filter: saturate(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: saturate(1);
+  }
+}
+
+@keyframes fdFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fdFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fdSlideRight {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fdSlideLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fdScaleIn {
+  from {
+    opacity: 0;
+    scale: 0.96;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+@keyframes fdSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fdPulseGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(91, 44, 255, 0.22);
+  }
+  50% {
+    box-shadow: 0 0 0 9px rgba(91, 44, 255, 0);
+  }
+}
+
+@keyframes fdSkeleton {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* Micro interactions */
+.fd-card,
+.nx-card,
+.product-card,
+.store-card,
+.category,
+.insta-category,
+.mini-store,
+.offer-card,
+.address-card,
+.order-card,
+.issue-card,
+.payment-card,
+.delivery-card {
+  transition:
+    transform var(--fd-duration-base) var(--fd-ease-out),
+    box-shadow var(--fd-duration-base) var(--fd-ease-out),
+    border-color var(--fd-duration-base) var(--fd-ease-out),
+    background-color var(--fd-duration-base) var(--fd-ease-soft);
+}
+
+.fd-card:hover,
+.nx-card:hover,
+.product-card:hover,
+.store-card:hover,
+.category:hover,
+.insta-category:hover,
+.mini-store:hover {
+  transform: translateY(-2px);
+}
+
+.fd-btn,
+.nx-btn,
+button,
+a,
+input,
+select,
+textarea {
+  transition:
+    transform var(--fd-duration-fast) var(--fd-ease-out),
+    box-shadow var(--fd-duration-fast) var(--fd-ease-out),
+    background-color var(--fd-duration-fast) var(--fd-ease-soft),
+    border-color var(--fd-duration-fast) var(--fd-ease-soft),
+    color var(--fd-duration-fast) var(--fd-ease-soft),
+    opacity var(--fd-duration-fast) var(--fd-ease-soft);
+}
+
+.fd-btn:active,
+.nx-btn:active,
+button:active,
+a:active {
+  transform: scale(0.985);
+}
+
+input:focus,
+textarea:focus,
+select:focus,
+.fd-input:focus {
+  transition:
+    box-shadow var(--fd-duration-base) var(--fd-ease-out),
+    border-color var(--fd-duration-base) var(--fd-ease-out);
+}
+
+/* Modal / drawer animation helpers */
+.animate-up {
+  animation: fdFadeUp var(--fd-duration-base) var(--fd-ease-out) both;
+}
+
+.animate-slide {
+  animation: fdSlideRight var(--fd-duration-base) var(--fd-ease-out) both;
+}
+
+.animate-left {
+  animation: fdSlideLeft var(--fd-duration-base) var(--fd-ease-out) both;
+}
+
+.animate-scale {
+  animation: fdScaleIn var(--fd-duration-base) var(--fd-ease-out) both;
+}
+
+.animate-fade {
+  animation: fdFadeIn var(--fd-duration-base) var(--fd-ease-out) both;
+}
+
+/* Stagger children when a section loads */
+.fd-content > *,
+.page-frame > *,
+.product-grid > *,
+.store-list > *,
+.category-strip > *,
+.recommended-row > *,
+.top-store-row > * {
+  animation: fdFadeUp 420ms var(--fd-ease-out) both;
+}
+
+.product-grid > *:nth-child(2),
+.store-list > *:nth-child(2),
+.category-strip > *:nth-child(2),
+.recommended-row > *:nth-child(2),
+.top-store-row > *:nth-child(2) {
+  animation-delay: 35ms;
+}
+
+.product-grid > *:nth-child(3),
+.store-list > *:nth-child(3),
+.category-strip > *:nth-child(3),
+.recommended-row > *:nth-child(3),
+.top-store-row > *:nth-child(3) {
+  animation-delay: 70ms;
+}
+
+.product-grid > *:nth-child(4),
+.store-list > *:nth-child(4),
+.category-strip > *:nth-child(4),
+.recommended-row > *:nth-child(4),
+.top-store-row > *:nth-child(4) {
+  animation-delay: 105ms;
+}
+
+.product-grid > *:nth-child(5),
+.store-list > *:nth-child(5),
+.category-strip > *:nth-child(5),
+.recommended-row > *:nth-child(5),
+.top-store-row > *:nth-child(5) {
+  animation-delay: 140ms;
+}
+
+.product-grid > *:nth-child(n + 6),
+.store-list > *:nth-child(n + 6),
+.category-strip > *:nth-child(n + 6),
+.recommended-row > *:nth-child(n + 6),
+.top-store-row > *:nth-child(n + 6) {
+  animation-delay: 175ms;
+}
+
+/* Loader */
+.fd-app-loader-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(
+      circle at 30% 20%,
+      rgba(255, 255, 255, 0.62),
+      transparent 32%
+    ),
+    linear-gradient(135deg, #f7f3ff, #ffffff 42%, #fff6ed);
+  animation: fdFadeIn 160ms var(--fd-ease-soft) both;
+}
+
+.fd-app-loader {
+  width: min(360px, calc(100vw - 42px));
+  border-radius: 28px;
+  padding: 34px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(226, 226, 241, 0.9);
+  box-shadow: 0 30px 90px rgba(23, 18, 61, 0.16);
+  display: grid;
+  place-items: center;
+  text-align: center;
+  gap: 18px;
+  backdrop-filter: blur(14px);
+}
+
+.fd-loader-logo {
+  width: 72px;
+  height: 72px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #ff3576, #5b2cff);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 32px;
+  animation: fdPulseGlow 1.4s infinite;
+}
+
+.fd-loader-ring {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #eee9ff;
+  border-top-color: var(--primary, #5b2cff);
+  border-radius: 50%;
+  animation: fdSpin 0.85s linear infinite;
+}
+
+.fd-loader-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  color: #101426;
+}
+
+.fd-loader-subtitle {
+  margin: -8px 0 0;
+  color: #697089;
+  line-height: 1.5;
+}
+
+.fd-loading-skeleton {
+  background: linear-gradient(90deg, #f1f1f7, #fafafe, #f1f1f7);
+  background-size: 200% 100%;
+  animation: fdSkeleton 1.25s infinite;
+  border-radius: 14px;
+}
+
+/* Page-level busy state */
+.fd-page-busy {
+  pointer-events: none;
+  opacity: 0.72;
+  filter: saturate(0.92);
+}
+
+/* Reduced motion accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
+  }
+}

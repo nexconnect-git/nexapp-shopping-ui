@@ -1,0 +1,13 @@
+.nx-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.nx-card.hover {
+  transition: 0.18s;
+}
+.nx-card.hover:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}

@@ -1,0 +1,52 @@
+@if (ui.confirmDialog(); as dialog) {
+  <div class="confirm-overlay" (click)="ui.resolveConfirm(false)"></div>
+  <section
+    class="confirm-dialog animate-scale"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="dialog.title"
+  >
+    <button
+      class="icon-close"
+      type="button"
+      aria-label="Close dialog"
+      (click)="ui.resolveConfirm(false)"
+    >
+      <span class="material-symbols-rounded">close</span>
+    </button>
+    <div
+      class="dialog-icon"
+      [class.warning]="dialog.tone === 'warning'"
+      [class.danger]="dialog.tone === 'danger'"
+    >
+      <span class="material-symbols-rounded">
+        {{
+          dialog.tone === "danger"
+            ? "priority_high"
+            : dialog.tone === "warning"
+              ? "warning"
+              : "help"
+        }}
+      </span>
+    </div>
+    <h2>{{ dialog.title }}</h2>
+    <p>{{ dialog.message }}</p>
+    <div class="actions">
+      <button
+        class="secondary"
+        type="button"
+        (click)="ui.resolveConfirm(false)"
+      >
+        {{ dialog.cancelText }}
+      </button>
+      <button
+        class="primary"
+        type="button"
+        [class.danger]="dialog.tone === 'danger'"
+        (click)="ui.resolveConfirm(true)"
+      >
+        {{ dialog.confirmText }}
+      </button>
+    </div>
+  </section>
+}

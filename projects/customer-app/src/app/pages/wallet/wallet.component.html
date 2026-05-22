@@ -1,98 +1,60 @@
-<section class="wallet-page">
-  <div class="wallet-hero">
-    <a routerLink="/profile" class="back-pill"><span class="material-icons-outlined">arrow_back</span>Profile</a>
+<main class="fd-content">
+  <fd-breadcrumbs [items]="[{ label: 'Wallet' }]" />
+  <section class="wallet-layout">
     <div>
-      <span class="page-kicker">Stored value</span>
-      <h1>Your wallet</h1>
-      <p>Use stored balance during checkout, top up instantly, and review every wallet movement.</p>
-    </div>
-  </div>
-
-  @if (loading()) {
-    <div class="wallet-loading"><div class="spinner"></div></div>
-  } @else {
-    <div class="wallet-balance">
-      <span class="page-kicker light">Available balance</span>
-      <strong>{{ balance() }}</strong>
-      <button class="primary-btn" (click)="openTopUp()">Add money</button>
-    </div>
-
-    <div class="wallet-trust-grid">
-      <article class="trust-card">
-        <span class="material-icons-outlined">verified_user</span>
+      <div class="wallet-hero">
         <div>
-          <strong>Top-ups stay visible</strong>
-          <span>Every credit, refund and order deduction lands in your ledger below.</span>
+          <h1>FlashDrop Wallet</h1>
+          <p>Total Balance</p>
+          <h2>{{ balance() | appCurrency }}</h2>
+          <button
+            type="button"
+            class="fd-btn primary"
+            [disabled]="topUpLoading()"
+            (click)="addMoney()"
+          >
+            {{ topUpLoading() ? "Starting..." : "+ Add Money" }}
+          </button>
         </div>
-      </article>
-      <article class="trust-card">
-        <span class="material-icons-outlined">bolt</span>
-        <div>
-          <strong>Wallet speeds up checkout</strong>
-          <span>Use balance first, then combine with COD or online payment when needed.</span>
-        </div>
-      </article>
-    </div>
-
-    @if (showTopUpForm()) {
-      <div class="topup-card">
-        <div class="topup-head">
+        <span class="material-symbols-rounded">account_balance_wallet</span>
+      </div>
+      <div class="fd-section-title">
+        <h2>Recent Transactions</h2>
+        <button type="button" (click)="viewAllTransactions()">View all</button>
+      </div>
+      <section class="transactions fd-card">
+        @for (txn of transactions(); track txn.title) {
           <div>
-            <span class="page-kicker">Wallet top-up</span>
-            <h2>Fund your next orders faster</h2>
+            <span>{{ txn.icon }}</span
+            ><b
+              >{{ txn.title }}<small>{{ txn.date }}</small></b
+            ><em [class.green]="txn.amount > 0">{{
+              txn.amount | appCurrency
+            }}</em>
           </div>
-          <button class="ghost-btn" (click)="cancelTopUp()">Close</button>
-        </div>
-        <div class="quick-row">
-          @for (a of [100, 200, 500, 1000]; track a) {
-            <button class="quick-btn" (click)="topUpAmount.set(a)">{{ a }}</button>
-          }
-        </div>
-        <div class="topup-input">
-          <span>Amount</span>
-          <input type="number" [ngModel]="topUpAmount()" (ngModelChange)="topUpAmount.set($event)" min="1" placeholder="Enter amount">
-        </div>
-        <div class="topup-note">
-          <span class="material-icons-outlined">info</span>
-          <span>You will be redirected to Razorpay to complete this wallet top-up securely.</span>
-        </div>
-        <button class="primary-btn" (click)="initiateTopUp()" [disabled]="topUpLoading()">
-          @if (topUpLoading()) { Processing... } @else { Continue with Razorpay }
+        } @empty {
+          <p>No wallet transactions yet.</p>
+        }
+      </section>
+    </div>
+    <aside>
+      <section class="fd-card one">
+        <h2>Membership</h2>
+        <p>Account benefits update from the server.</p>
+        <button
+          type="button"
+          class="fd-btn outline"
+          (click)="manageMembership()"
+        >
+          Manage Membership
         </button>
-      </div>
-    }
-
-    <section class="wallet-transactions">
-      <div class="section-head">
-        <div>
-          <span class="page-kicker">Ledger</span>
-          <h2>Transaction history</h2>
-        </div>
-      </div>
-      @if (!hasTransactions()) {
-        <div class="empty-inline">
-          <span class="material-icons-outlined">receipt_long</span>
-          <div>
-            <p>No wallet transactions yet.</p>
-            <small>Your top-ups, refunds and checkout deductions will appear here once you start using wallet balance.</small>
-          </div>
-        </div>
-      } @else {
-        <div class="tx-list">
-          @for (tx of transactions(); track tx.id) {
-            <div class="tx-row">
-              <div class="tx-icon {{ tx.transaction_type }}">
-                <span class="material-icons-outlined">{{ txIcon(tx.source) }}</span>
-              </div>
-              <div class="tx-copy">
-                <strong>{{ tx.description || tx.source }}</strong>
-                <span>{{ formatDate(tx.created_at) }}</span>
-              </div>
-              <div class="tx-amount {{ txClass(tx.transaction_type) }}">{{ txSign(tx.transaction_type) }}{{ tx.amount }}</div>
-            </div>
-          }
-        </div>
-      }
-    </section>
-  }
-</section>
+      </section>
+      <section class="fd-card">
+        <h3>Wallet Benefits</h3>
+        <p>Faster checkout</p>
+        <p>Secure payments</p>
+        <p>Instant refunds</p>
+      </section>
+    </aside>
+  </section>
+</main>

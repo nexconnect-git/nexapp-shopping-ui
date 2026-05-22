@@ -1,4 +1,4 @@
-<div class="login-page">
+<div class="auth-saas-page login-page">
   <div class="login-left">
     <div class="left-content">
       <div class="brand-icon-wrap">
@@ -6,28 +6,40 @@
       </div>
 
       <h1 class="left-heading">NexConnect Admin</h1>
-      <p class="left-subtitle">Run stores, riders, payments, exceptions, and customer operations from a single admin workspace.</p>
+      <p class="left-subtitle">
+        Run stores, riders, payments, exceptions, and customer operations from a
+        single admin workspace.
+      </p>
 
       <ul class="feature-list">
         <li class="feature-item">
           <span class="feature-icon material-icons-outlined">receipt_long</span>
           <div>
             <strong>Live order operations</strong>
-            <span>Track placed, preparing, ready, picked up, and delivered orders</span>
+            <span
+              >Track placed, preparing, ready, picked up, and delivered
+              orders</span
+            >
           </div>
         </li>
         <li class="feature-item">
           <span class="feature-icon material-icons-outlined">two_wheeler</span>
           <div>
             <strong>Fleet and dispatch oversight</strong>
-            <span>Approve partners, monitor assignment readiness, and review assets</span>
+            <span
+              >Approve partners, monitor assignment readiness, and review
+              assets</span
+            >
           </div>
         </li>
         <li class="feature-item">
           <span class="feature-icon material-icons-outlined">storefront</span>
           <div>
             <strong>Marketplace governance</strong>
-            <span>Manage stores, catalog quality, coupons, payouts, and support issues</span>
+            <span
+              >Manage stores, catalog quality, coupons, payouts, and support
+              issues</span
+            >
           </div>
         </li>
       </ul>
@@ -58,17 +70,37 @@
           <div class="form-group">
             <label class="form-label" for="username">Username</label>
             <div class="input-icon-wrapper">
-              <span class="material-icons-outlined input-icon">person_outline</span>
-              <input id="username" class="form-input" type="text" [(ngModel)]="username"
-                name="username" placeholder="Enter your username" required autocomplete="username">
+              <span class="material-icons-outlined input-icon"
+                >person_outline</span
+              >
+              <input
+                id="username"
+                class="form-input"
+                type="text"
+                [(ngModel)]="username"
+                name="username"
+                placeholder="Enter your username"
+                required
+                autocomplete="username"
+              />
             </div>
           </div>
           <div class="form-group">
             <label class="form-label" for="password">Password</label>
             <div class="input-icon-wrapper">
-              <span class="material-icons-outlined input-icon">lock_outline</span>
-              <input id="password" class="form-input" type="password" [(ngModel)]="password"
-                name="password" placeholder="Enter your password" required autocomplete="current-password">
+              <span class="material-icons-outlined input-icon"
+                >lock_outline</span
+              >
+              <input
+                id="password"
+                class="form-input"
+                type="password"
+                [(ngModel)]="password"
+                name="password"
+                placeholder="Enter your password"
+                required
+                autocomplete="current-password"
+              />
             </div>
           </div>
           <button type="submit" class="signin-btn" [disabled]="loading()">
@@ -85,7 +117,8 @@
 
       <p class="admin-note">
         <span class="material-icons-outlined">info</span>
-        Administrator access only. Activity in this console affects production operations.
+        Administrator access only. Activity in this console affects production
+        operations.
       </p>
     </div>
   </div>

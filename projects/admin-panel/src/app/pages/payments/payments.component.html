@@ -1,10 +1,12 @@
-<div class="page-wrap">
-
+<div class="saas-page page-wrap payments-page">
   <section class="admin-page-hero">
     <div class="admin-page-copy">
       <span class="eyebrow">Payments</span>
       <h1 class="page-title">Payments</h1>
-      <p>All orders with payment method, Razorpay collection, verification, and settlement context.</p>
+      <p>
+        All orders with payment method, Razorpay collection, verification, and
+        settlement context.
+      </p>
     </div>
   </section>
 
@@ -16,7 +18,9 @@
     </div>
     <div class="summary-card">
       <span class="summary-label">Razorpay Collected</span>
-      <span class="summary-value accent">{{ razorpayRevenue | appCurrency }}</span>
+      <span class="summary-value accent">{{
+        razorpayRevenue | appCurrency
+      }}</span>
     </div>
     <div class="summary-card">
       <span class="summary-label">Pending Payments</span>
@@ -30,16 +34,29 @@
 
   <!-- Filters -->
   <div class="admin-toolbar filters-row">
-    <input class="filter-input" type="text" placeholder="Search order number…"
-      [(ngModel)]="search" (input)="onSearch()">
+    <input
+      class="filter-input"
+      type="text"
+      placeholder="Search order number…"
+      [(ngModel)]="search"
+      (input)="onSearch()"
+    />
 
-    <select class="filter-select" [(ngModel)]="methodFilter" (change)="applyFilters()">
+    <select
+      class="filter-select"
+      [(ngModel)]="methodFilter"
+      (change)="applyFilters()"
+    >
       <option value="">All Methods</option>
       <option value="razorpay">Razorpay</option>
       <option value="cod">Cash on Delivery</option>
     </select>
 
-    <select class="filter-select" [(ngModel)]="verifiedFilter" (change)="applyFilters()">
+    <select
+      class="filter-select"
+      [(ngModel)]="verifiedFilter"
+      (change)="applyFilters()"
+    >
       <option value="">All Status</option>
       <option value="1">Paid</option>
       <option value="0">Pending Payment</option>
@@ -68,30 +85,41 @@
           @for (p of payments(); track p.id) {
             <tr>
               <td>
-                <a [routerLink]="['/orders', p.id]" class="order-link">#{{ p.order_number }}</a>
+                <a [routerLink]="['/orders', p.id]" class="order-link"
+                  >#{{ p.order_number }}</a
+                >
               </td>
-              <td>{{ p.customer_name || '—' }}</td>
-              <td>{{ p.vendor_name || '—' }}</td>
+              <td>{{ p.customer_name || "—" }}</td>
+              <td>{{ p.vendor_name || "—" }}</td>
               <td>
-                <span class="method-badge" [class.method-razorpay]="p.payment_method === 'razorpay'">
+                <span
+                  class="method-badge"
+                  [class.method-razorpay]="p.payment_method === 'razorpay'"
+                >
                   {{ paymentMethodLabel(p.payment_method) }}
                 </span>
               </td>
               <td class="mono">
                 @if (p.razorpay_payment_id) {
-                  <span class="rz-id" title="{{ p.razorpay_payment_id }}">{{ p.razorpay_payment_id | slice:0:16 }}…</span>
+                  <span class="rz-id" title="{{ p.razorpay_payment_id }}"
+                    >{{ p.razorpay_payment_id | slice: 0 : 16 }}…</span
+                  >
                 } @else {
                   <span class="text-muted">—</span>
                 }
               </td>
               <td class="amount-cell">{{ p.total | appCurrency }}</td>
               <td>
-                <span class="badge" [class]="statusClass(p)">{{ statusLabel(p) }}</span>
+                <span class="badge" [class]="statusClass(p)">{{
+                  statusLabel(p)
+                }}</span>
               </td>
-              <td class="text-muted">{{ p.placed_at | date:'MMM d, y' }}</td>
+              <td class="text-muted">{{ p.placed_at | date: "MMM d, y" }}</td>
             </tr>
           } @empty {
-            <tr><td colspan="8" class="empty-cell">No payments found.</td></tr>
+            <tr>
+              <td colspan="8" class="empty-cell">No payments found.</td>
+            </tr>
           }
         </tbody>
       </table>
@@ -100,11 +128,22 @@
     <!-- Pagination -->
     @if (totalPages() > 1) {
       <div class="pagination">
-        <button class="page-btn" [disabled]="page() === 1" (click)="setPage(page() - 1)">‹ Prev</button>
+        <button
+          class="page-btn"
+          [disabled]="page() === 1"
+          (click)="setPage(page() - 1)"
+        >
+          ‹ Prev
+        </button>
         <span class="page-info">Page {{ page() }} of {{ totalPages() }}</span>
-        <button class="page-btn" [disabled]="page() === totalPages()" (click)="setPage(page() + 1)">Next ›</button>
+        <button
+          class="page-btn"
+          [disabled]="page() === totalPages()"
+          (click)="setPage(page() + 1)"
+        >
+          Next ›
+        </button>
       </div>
     }
   }
-
 </div>

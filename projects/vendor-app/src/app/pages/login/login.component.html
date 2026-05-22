@@ -1,5 +1,4 @@
 <div class="login-page">
-
   <!-- Left Panel — Brand / Hero -->
   <div class="login-left">
     <div class="left-content">
@@ -8,7 +7,9 @@
       </div>
 
       <h1 class="left-heading">NexConnect Vendor</h1>
-      <p class="left-subtitle">Your all-in-one portal to manage your store, products and orders.</p>
+      <p class="left-subtitle">
+        Your all-in-one portal to manage your store, products and orders.
+      </p>
 
       <ul class="feature-list">
         <li class="feature-item">
@@ -55,18 +56,43 @@
         <div class="form-group">
           <label class="form-label" for="username">Username</label>
           <div class="input-icon-wrapper">
-            <span class="material-icons-outlined input-icon">person_outline</span>
-            <input id="username" class="form-input" type="text" [(ngModel)]="username"
-              name="username" placeholder="Enter your username" required autocomplete="username">
+            <span class="material-icons-outlined input-icon"
+              >person_outline</span
+            >
+            <input
+              id="username"
+              class="form-input"
+              type="text"
+              [(ngModel)]="username"
+              name="username"
+              placeholder="Enter your username"
+              required
+              autocomplete="username"
+            />
           </div>
+          <small class="field-hint"
+            >Use the vendor username created during registration or by
+            admin.</small
+          >
         </div>
         <div class="form-group">
           <label class="form-label" for="password">Password</label>
           <div class="input-icon-wrapper">
             <span class="material-icons-outlined input-icon">lock_outline</span>
-            <input id="password" class="form-input" type="password" [(ngModel)]="password"
-              name="password" placeholder="Enter your password" required autocomplete="current-password">
+            <input
+              id="password"
+              class="form-input"
+              type="password"
+              [(ngModel)]="password"
+              name="password"
+              placeholder="Enter your password"
+              required
+              autocomplete="current-password"
+            />
           </div>
+          <small class="field-hint"
+            >Enter the password for this vendor account.</small
+          >
         </div>
         <button type="submit" class="signin-btn" [disabled]="loading()">
           @if (loading()) {
@@ -80,7 +106,10 @@
       </form>
 
       <div class="form-footer">
-        <p>Don't have an account? <a routerLink="/register">Register your store</a></p>
+        <p>
+          Don't have an account?
+          <a routerLink="/register">Register your store</a>
+        </p>
       </div>
     </div>
   </div>

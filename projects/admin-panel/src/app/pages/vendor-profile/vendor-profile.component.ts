@@ -1,10 +1,18 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, ActivatedRoute, RouterLink } from '@angular/router';
-import { ApiService, ToastService, AppCurrencyPipe } from '@shared/public-api';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ApiService, AppCurrencyPipe, ToastService } from '@shared/public-api';
 import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
-import { AdminProfileShellComponent, AdminProfileBadge, AdminProfileMetric, AdminProfileTab } from '../../shared/components/admin-profile-shell/admin-profile-shell.component';
+import {
+  AdminProfileBadge,
+  AdminProfileMetric,
+  AdminProfileShellComponent,
+  AdminProfileTab,
+} from '../../shared/components/admin-profile-shell/admin-profile-shell.component';
+import { DynamicProfilePageComponent } from '../../shared/dynamic-profile/dynamic-profile-page.component';
+import { EntityProfileAdapterService } from '../../shared/dynamic-profile/entity-profile-adapter.service';
+import { ProfileHeroAction } from '../../shared/dynamic-profile/dynamic-profile.models';
 
 type Tab = 'overview' | 'products' | 'orders' | 'report';
 type Period = '30d' | '90d' | '12m';
@@ -12,15 +20,16 @@ type Period = '30d' | '90d' | '12m';
 @Component({
   selector: 'app-vendor-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, DynamicTableComponent, TableCellDirective, DecimalPipe, AppCurrencyPipe, AdminProfileShellComponent],
+  imports: [DynamicProfilePageComponent],
   templateUrl: './vendor-profile.component.html',
-  styleUrl: './vendor-profile.component.scss'
+  styleUrl: './vendor-profile.component.scss',
 })
 export class VendorProfileComponent implements OnInit {
-  private api   = inject(ApiService);
+  private api = inject(ApiService);
   private toast = inject(ToastService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private adapter = inject(EntityProfileAdapterService);
 
   vendorId = '';
   vendor = signal<any>(null);
@@ -72,6 +81,12 @@ export class VendorProfileComponent implements OnInit {
 
   Math = Math;
 
+  dynamicProfileConfig = computed(() =>
+    this.vendor()
+      ? this.adapter.buildProfileConfig('vendor', this.vendor())
+      : null,
+  );
+
   profileTabs: AdminProfileTab[] = [
     { id: 'overview', label: 'Overview', icon: 'info' },
     { id: 'products', label: 'Products', icon: 'inventory_2' },
@@ -80,7 +95,7 @@ export class VendorProfileComponent implements OnInit {
   ];
 
   toggleTempPassword() {
-    this.showTempPassword.update(v => !v);
+    this.showTempPassword.update((v) => !v);
   }
 
   copyTempPassword() {
@@ -100,8 +115,14 @@ export class VendorProfileComponent implements OnInit {
   loadVendor() {
     this.loading.set(true);
     this.api.getAdminVendor(this.vendorId).subscribe({
-      next: (v) => { this.vendor.set(v); this.loading.set(false); },
-      error: () => { this.loading.set(false); this.router.navigate(['/vendors']); }
+      next: (v) => {
+        this.vendor.set(v);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loading.set(false);
+        this.router.navigate(['/vendors']);
+      },
     });
   }
 
@@ -118,15 +139,17 @@ export class VendorProfileComponent implements OnInit {
 
   loadProducts() {
     this.productsLoading.set(true);
-    this.api.getAdminProducts({ vendor: this.vendorId, page: this.productsPage() }).subscribe({
-      next: (r) => {
-        this.products.set(r.results || r);
-        this.productsTotal.set(r.count || (r.results || r).length);
-        this.productsLoading.set(false);
-        this.productsLoaded = true;
-      },
-      error: () => this.productsLoading.set(false)
-    });
+    this.api
+      .getAdminProducts({ vendor: this.vendorId, page: this.productsPage() })
+      .subscribe({
+        next: (r) => {
+          this.products.set(r.results || r);
+          this.productsTotal.set(r.count || (r.results || r).length);
+          this.productsLoading.set(false);
+          this.productsLoaded = true;
+        },
+        error: () => this.productsLoading.set(false),
+      });
   }
 
   loadOrders() {
@@ -140,7 +163,7 @@ export class VendorProfileComponent implements OnInit {
         this.ordersLoading.set(false);
         this.ordersLoaded = true;
       },
-      error: () => this.ordersLoading.set(false)
+      error: () => this.ordersLoading.set(false),
     });
   }
 
@@ -151,14 +174,16 @@ export class VendorProfileComponent implements OnInit {
 
   loadReport() {
     this.reportLoading.set(true);
-    this.api.getAdminVendorSalesReport(this.vendorId, { period: this.reportPeriod() }).subscribe({
-      next: (r) => {
-        this.report.set(r);
-        this.reportLoading.set(false);
-        this.reportLoaded = true;
-      },
-      error: () => this.reportLoading.set(false)
-    });
+    this.api
+      .getAdminVendorSalesReport(this.vendorId, { period: this.reportPeriod() })
+      .subscribe({
+        next: (r) => {
+          this.report.set(r);
+          this.reportLoading.set(false);
+          this.reportLoaded = true;
+        },
+        error: () => this.reportLoading.set(false),
+      });
   }
 
   setPeriod(p: Period) {
@@ -172,7 +197,7 @@ export class VendorProfileComponent implements OnInit {
     if (newStatus === this.vendor().status) return;
     if (!confirm(`Set vendor status to "${newStatus}"?`)) {
       // Reset select visually — re-trigger change detection
-      this.vendor.update(v => ({ ...v }));
+      this.vendor.update((v) => ({ ...v }));
       return;
     }
     this.setStatus(newStatus);
@@ -186,23 +211,65 @@ export class VendorProfileComponent implements OnInit {
         this.actionLoading.set(false);
         this.loadVendor();
       },
-      error: () => { this.toast.show('Failed to update status.', 'error'); this.actionLoading.set(false); }
+      error: () => {
+        this.toast.show('Failed to update status.', 'error');
+        this.actionLoading.set(false);
+      },
     });
   }
 
   toggleRequireStockCheck() {
     const current = this.vendor()?.require_stock_check;
-    this.api.adminUpdateVendor(this.vendorId, { require_stock_check: !current }).subscribe({
-      next: () => this.vendor.update(v => ({ ...v, require_stock_check: !current })),
-      error: () => {}
-    });
+    this.api
+      .adminUpdateVendor(this.vendorId, { require_stock_check: !current })
+      .subscribe({
+        next: () =>
+          this.vendor.update((v) => ({ ...v, require_stock_check: !current })),
+        error: () => {},
+      });
   }
 
   vendorColor(name: string): string {
-    const colors = ['#3B82F6','#8B5CF6','#EC4899','#F59E0B','#10B981','#EF4444','#06B6D4'];
+    const colors = [
+      '#6C2BFF',
+      '#6C2BFF',
+      '#EF4444',
+      '#EF4444',
+      '#22C55E',
+      '#EF4444',
+      '#6C2BFF',
+    ];
     let hash = 0;
-    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    for (let i = 0; i < name.length; i++)
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
     return colors[Math.abs(hash) % colors.length];
+  }
+
+  handleDynamicAction(action: ProfileHeroAction) {
+    if (action.id === 'edit') {
+      this.router.navigate(['/vendors', this.vendorId, 'edit']);
+      return;
+    }
+    if (action.id === 'review') {
+      this.router.navigate(['/vendors', this.vendorId, 'review']);
+      return;
+    }
+    if (action.id === 'approve') {
+      this.setStatus('approved');
+      return;
+    }
+    if (action.id === 'resetPassword') {
+      this.toast.show(
+        'Password reset flow is available from auth support tools.',
+        'info',
+      );
+    }
+  }
+
+  editDynamicSection(stepId: string) {
+    this.router.navigate(['/vendors', this.vendorId, 'edit'], {
+      queryParams: { step: stepId },
+    });
   }
 
   vendorBadges(): AdminProfileBadge[] {
@@ -211,7 +278,10 @@ export class VendorProfileComponent implements OnInit {
     return [
       { label: v.status, className: this.statusBadge(v.status) },
       v.vendor_tier ? { label: v.vendor_tier, className: 'tier-badge' } : null,
-      { label: v.is_open ? 'Open Now' : 'Closed', className: v.is_open ? 'hero-open-badge open' : 'hero-open-badge' }
+      {
+        label: v.is_open ? 'Open Now' : 'Closed',
+        className: v.is_open ? 'hero-open-badge open' : 'hero-open-badge',
+      },
     ].filter(Boolean) as AdminProfileBadge[];
   }
 
@@ -219,20 +289,57 @@ export class VendorProfileComponent implements OnInit {
     const v = this.vendor();
     if (!v) return [];
     return [
-      { label: 'Store State', value: v.is_open ? 'Open' : 'Closed', subtext: `${v.status} account`, icon: 'storefront', priority: true },
-      { label: 'Orders', value: v.total_orders || this.ordersTotal() || 0, subtext: 'Operational volume', icon: 'receipt_long', tone: 'green' },
-      { label: 'Catalog', value: v.total_products || this.productsTotal() || 0, subtext: 'Listed products', icon: 'inventory_2', tone: 'warm' },
-      { label: 'Coverage', value: `${v.delivery_radius_km || 0} km`, subtext: v.city || 'City not set', icon: 'route', tone: 'slate' },
+      {
+        label: 'Store State',
+        value: v.is_open ? 'Open' : 'Closed',
+        subtext: `${v.status} account`,
+        icon: 'storefront',
+        priority: true,
+      },
+      {
+        label: 'Orders',
+        value: v.total_orders || this.ordersTotal() || 0,
+        subtext: 'Operational volume',
+        icon: 'receipt_long',
+        tone: 'green',
+      },
+      {
+        label: 'Catalog',
+        value: v.total_products || this.productsTotal() || 0,
+        subtext: 'Listed products',
+        icon: 'inventory_2',
+        tone: 'warm',
+      },
+      {
+        label: 'Coverage',
+        value: `${v.delivery_radius_km || 0} km`,
+        subtext: v.city || 'City not set',
+        icon: 'route',
+        tone: 'slate',
+      },
     ];
   }
 
   statusBadge(s: string): string {
-    const map: Record<string, string> = { approved: 'badge-approved', pending: 'badge-pending', suspended: 'badge-suspended', rejected: 'badge-rejected' };
+    const map: Record<string, string> = {
+      approved: 'badge-approved',
+      pending: 'badge-pending',
+      suspended: 'badge-suspended',
+      rejected: 'badge-rejected',
+    };
     return map[s] || '';
   }
 
   orderStatusBadge(s: string): string {
-    const map: Record<string, string> = { delivered: 'badge-approved', placed: 'badge-pending', cancelled: 'badge-rejected', preparing: 'badge-warning', confirmed: 'badge-info', on_the_way: 'badge-info', picked_up: 'badge-info' };
+    const map: Record<string, string> = {
+      delivered: 'badge-approved',
+      placed: 'badge-pending',
+      cancelled: 'badge-rejected',
+      preparing: 'badge-warning',
+      confirmed: 'badge-info',
+      on_the_way: 'badge-info',
+      picked_up: 'badge-info',
+    };
     return map[s] || '';
   }
 
@@ -246,8 +353,11 @@ export class VendorProfileComponent implements OnInit {
     if (!file) return;
     this.logoUploading.set(true);
     this.api.uploadVendorLogo(this.vendorId, file).subscribe({
-      next: (v) => { this.vendor.set({ ...this.vendor(), logo: v.logo }); this.logoUploading.set(false); },
-      error: () => this.logoUploading.set(false)
+      next: (v) => {
+        this.vendor.set({ ...this.vendor(), logo: v.logo });
+        this.logoUploading.set(false);
+      },
+      error: () => this.logoUploading.set(false),
     });
   }
 
@@ -261,5 +371,3 @@ export class VendorProfileComponent implements OnInit {
     this.loadOrders();
   }
 }
-
-

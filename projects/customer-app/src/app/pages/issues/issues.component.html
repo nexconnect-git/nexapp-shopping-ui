@@ -1,0 +1,39 @@
+<main class="fd-content">
+  <div class="fd-page-header">
+    <div>
+      <h1 class="fd-title">My Issues</h1>
+      <p class="fd-subtitle">Track help requests and order issues.</p>
+    </div>
+    <a routerLink="/help" class="fd-btn primary">Raise New Issue</a>
+  </div>
+  <div class="tabs">
+    @for (tab of tabs; track tab) {
+      <button
+        class="fd-pill"
+        [class.active]="active() === tab"
+        (click)="active.set(tab)"
+      >
+        {{ tab }}
+      </button>
+    }
+  </div>
+  <section class="issue-list">
+    @for (issue of filtered(); track issue.id) {
+      <article class="fd-card">
+        <div>
+          <b>{{ issue.title }}</b>
+          <p>{{ issue.order }}</p>
+          <small>{{ issue.date }}</small>
+        </div>
+        <span
+          class="fd-badge"
+          [class.green]="issue.status === 'Resolved'"
+          [class.orange]="issue.status === 'Open'"
+          [class.red]="issue.status === 'Closed'"
+          >{{ issue.status }}</span
+        >
+        <a [routerLink]="['/issue', issue.id]">View ›</a>
+      </article>
+    }
+  </section>
+</main>

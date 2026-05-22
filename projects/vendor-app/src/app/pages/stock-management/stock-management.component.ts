@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService, AppCurrencyPipe, ToastService } from '@shared/public-api';
@@ -8,7 +8,7 @@ import { ApiService, AppCurrencyPipe, ToastService } from '@shared/public-api';
   standalone: true,
   imports: [CommonModule, FormsModule, AppCurrencyPipe],
   templateUrl: './stock-management.component.html',
-  styleUrl: './stock-management.component.scss'
+  styleUrl: './stock-management.component.scss',
 })
 export class StockManagementComponent implements OnInit {
   private api = inject(ApiService);
@@ -16,7 +16,6 @@ export class StockManagementComponent implements OnInit {
 
   loading = signal(true);
 
-  
   products = signal<any[]>([]);
   lowStockAlerts = signal<any[]>([]);
 
@@ -26,7 +25,7 @@ export class StockManagementComponent implements OnInit {
 
   loadData() {
     this.loading.set(true);
-    
+
     // Load all products to manage stock
     this.api.getVendorProducts().subscribe({
       next: (res) => {
@@ -34,17 +33,20 @@ export class StockManagementComponent implements OnInit {
           ...p,
           _editing: false,
           _newStock: p.stock,
-          _newThreshold: p.low_stock_threshold
+          _newThreshold: p.low_stock_threshold,
         }));
         this.products.set(prods);
-        
+
         // After loading all, also load low stock alerts specifically
         this.loadLowStock();
       },
       error: () => {
-        this.toast.show('Failed to load products for stock management.', 'error');
+        this.toast.show(
+          'Failed to load products for stock management.',
+          'error',
+        );
         this.loading.set(false);
-      }
+      },
     });
   }
 
@@ -56,7 +58,7 @@ export class StockManagementComponent implements OnInit {
       },
       error: () => {
         this.loading.set(false);
-      }
+      },
     });
   }
 
@@ -71,19 +73,19 @@ export class StockManagementComponent implements OnInit {
   saveStock(prod: any) {
     const payload = {
       stock: prod._newStock,
-      low_stock_threshold: prod._newThreshold
+      low_stock_threshold: prod._newThreshold,
     };
-    
+
     this.api.updateProductStock(prod.id, payload).subscribe({
       next: (updatedProd) => {
         prod.stock = updatedProd.stock;
         prod.low_stock_threshold = updatedProd.low_stock_threshold;
         prod._editing = false;
-        
+
         // Refresh low stock alerts
         this.loadLowStock();
       },
-      error: () => this.toast.show('Failed to update stock.', 'error')
+      error: () => this.toast.show('Failed to update stock.', 'error'),
     });
   }
 }

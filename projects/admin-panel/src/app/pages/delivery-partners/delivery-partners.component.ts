@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { Subscription, timer } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -9,9 +9,15 @@ import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
 @Component({
   selector: 'app-delivery-partners',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, DynamicTableComponent, TableCellDirective],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterLink,
+    DynamicTableComponent,
+    TableCellDirective,
+  ],
   templateUrl: './delivery-partners.component.html',
-  styleUrl: './delivery-partners.component.scss'
+  styleUrl: './delivery-partners.component.scss',
 })
 export class DeliveryPartnersComponent implements OnInit, OnDestroy {
   private api = inject(ApiService);
@@ -33,7 +39,7 @@ export class DeliveryPartnersComponent implements OnInit, OnDestroy {
     { key: 'deliveries', label: 'Deliveries', flex: '1fr' },
     { key: 'rating', label: 'Rating', flex: '1fr' },
     { key: 'approved', label: 'Approved', flex: '1fr' },
-    { key: 'actions', label: 'Actions', flex: '1.2fr' }
+    { key: 'actions', label: 'Actions', flex: '1.2fr' },
   ];
 
   showModal = signal(false);
@@ -52,7 +58,8 @@ export class DeliveryPartnersComponent implements OnInit, OnDestroy {
     phone: '',
     vehicle_type: '',
     vehicle_number: '',
-    license_number: '' };
+    license_number: '',
+  };
 
   private timer: any;
   lastRefreshed = signal<Date | null>(null);
@@ -61,16 +68,26 @@ export class DeliveryPartnersComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.reloadSub = timer(0, 15000).subscribe(() => {
-      if (this.autoReload() && !this.showModal() && !this.showCreateModal()) this.load();
+      if (this.autoReload() && !this.showModal() && !this.showCreateModal())
+        this.load();
     });
   }
 
-  ngOnDestroy() { this.reloadSub?.unsubscribe(); }
+  ngOnDestroy() {
+    this.reloadSub?.unsubscribe();
+  }
 
-  goToProfile(p: any) { this.router.navigate(['/delivery-partners', p.id]); }
+  goToProfile(p: any) {
+    this.router.navigate(['/delivery-partners', p.id]);
+  }
 
-  manualReload() { this.page.set(1); this.load(); }
-  toggleAutoReload() { this.autoReload.update(v => !v); }
+  manualReload() {
+    this.page.set(1);
+    this.load();
+  }
+  toggleAutoReload() {
+    this.autoReload.update((v) => !v);
+  }
 
   load() {
     this.loading.set(true);
@@ -90,23 +107,51 @@ export class DeliveryPartnersComponent implements OnInit, OnDestroy {
     });
   }
 
-  onSearch() { clearTimeout(this.timer); this.timer = setTimeout(() => { this.page.set(1); this.load(); }, 400); }
-  setPage(p: number) { this.page.set(p); this.load(); }
+  onSearch() {
+    clearTimeout(this.timer);
+    this.timer = setTimeout(() => {
+      this.page.set(1);
+      this.load();
+    }, 400);
+  }
+  setPage(p: number) {
+    this.page.set(p);
+    this.load();
+  }
 
   approve(p: any) {
     this.actionId.set(p.id);
-    this.api.approveDeliveryPartner(p.id, 'approve').subscribe({ next: () => { this.actionId.set(null); this.load(); }, error: () => this.actionId.set(null) });
+    this.api.approveDeliveryPartner(p.id, 'approve').subscribe({
+      next: () => {
+        this.actionId.set(null);
+        this.load();
+      },
+      error: () => this.actionId.set(null),
+    });
   }
 
   reject(p: any) {
     if (!confirm(`Revoke approval for ${p.user?.username}?`)) return;
     this.actionId.set(p.id);
-    this.api.approveDeliveryPartner(p.id, 'reject').subscribe({ next: () => { this.actionId.set(null); this.load(); }, error: () => this.actionId.set(null) });
+    this.api.approveDeliveryPartner(p.id, 'reject').subscribe({
+      next: () => {
+        this.actionId.set(null);
+        this.load();
+      },
+      error: () => this.actionId.set(null),
+    });
   }
 
   deletePartner(p: any) {
-    if (!confirm(`Delete delivery partner "${p.user?.username}"? This is permanent.`)) return;
-    this.api.deleteAdminDeliveryPartner(p.id).subscribe({ next: () => this.load() });
+    if (
+      !confirm(
+        `Delete delivery partner "${p.user?.username}"? This is permanent.`,
+      )
+    )
+      return;
+    this.api
+      .deleteAdminDeliveryPartner(p.id)
+      .subscribe({ next: () => this.load() });
   }
 
   openEdit(p: any) {
@@ -122,18 +167,30 @@ export class DeliveryPartnersComponent implements OnInit, OnDestroy {
   savePartner() {
     if (!this.editModel() || this.saving()) return;
     this.saving.set(true);
-    this.api.updateAdminDeliveryPartner(this.editModel().id, this.editModel()).subscribe({
-      next: () => {
-        this.saving.set(false);
-        this.closeModal();
-        this.load();
-      },
-      error: () => this.saving.set(false)
-    });
+    this.api
+      .updateAdminDeliveryPartner(this.editModel().id, this.editModel())
+      .subscribe({
+        next: () => {
+          this.saving.set(false);
+          this.closeModal();
+          this.load();
+        },
+        error: () => this.saving.set(false),
+      });
   }
 
   openCreateModal() {
-    this.createForm = { username: '', email: '', password: '', first_name: '', last_name: '', phone: '', vehicle_type: '', vehicle_number: '', license_number: '' };
+    this.createForm = {
+      username: '',
+      email: '',
+      password: '',
+      first_name: '',
+      last_name: '',
+      phone: '',
+      vehicle_type: '',
+      vehicle_number: '',
+      license_number: '',
+    };
     this.createError.set('');
     this.showCreateModal.set(true);
   }
@@ -143,28 +200,57 @@ export class DeliveryPartnersComponent implements OnInit, OnDestroy {
   }
 
   onCreatePartner() {
-    if (!this.createForm.username || !this.createForm.email || !this.createForm.password || !this.createForm.vehicle_type || !this.createForm.license_number) {
+    if (
+      !this.createForm.username ||
+      !this.createForm.email ||
+      !this.createForm.password ||
+      !this.createForm.vehicle_type ||
+      !this.createForm.license_number
+    ) {
       this.createError.set('Please fill in all required fields.');
       return;
     }
     this.creating.set(true);
     this.createError.set('');
-    this.api.createAdminDeliveryPartner(this.createForm).subscribe({
+    const payload = {
+      ...this.createForm,
+      username: this.createForm.username.trim(),
+      email: this.createForm.email.trim(),
+      first_name: this.createForm.first_name.trim(),
+      last_name: this.createForm.last_name.trim(),
+      phone: this.createForm.phone.trim(),
+      vehicle_number: this.createForm.vehicle_number.trim(),
+      license_number: this.createForm.license_number.trim(),
+    };
+    this.api.createAdminDeliveryPartner(payload).subscribe({
       next: () => {
         this.creating.set(false);
         this.closeCreateModal();
         this.load();
       },
       error: (err) => {
-        const e = err.error;
-        const msg = e?.username?.[0] || e?.email?.[0] || e?.license_number?.[0] || e?.vehicle_type?.[0] || e?.detail || 'Failed to create partner.';
-        this.createError.set(msg);
+        this.createError.set(this.createPartnerErrorMessage(err.error));
         this.creating.set(false);
-      }
+      },
     });
   }
 
-  starsFor(r: number) { const f = Math.round(r); return '★'.repeat(f) + '☆'.repeat(5 - f); }
+  starsFor(r: number) {
+    const f = Math.round(r);
+    return '★'.repeat(f) + '☆'.repeat(5 - f);
+  }
+
+  private createPartnerErrorMessage(error: any): string {
+    return (
+      error?.username?.[0] ||
+      error?.email?.[0] ||
+      error?.phone?.[0] ||
+      error?.license_number?.[0] ||
+      error?.vehicle_type?.[0] ||
+      error?.non_field_errors?.[0] ||
+      error?.detail ||
+      error?.error ||
+      'Failed to create partner.'
+    );
+  }
 }
-
-

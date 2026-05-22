@@ -1,0 +1,7 @@
+@if (profileConfig()) {
+  <nc-dynamic-profile-page
+    [config]="profileConfig()!"
+    (action)="handleAction($event)"
+    (editSection)="editSection($event)"
+  />
+}

@@ -1,5 +1,10 @@
 import { Component } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import {
+  type ComponentFixture,
+  fakeAsync,
+  TestBed,
+  tick,
+} from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { of, Subject, throwError } from 'rxjs';
 import { ApiService, AuthService } from '@shared/public-api';
@@ -18,12 +23,15 @@ describe('Admin LoginComponent', () => {
   const authResponse = (role = 'admin', force_password_change = false) => ({
     user: { id: 'admin-1', username: 'admin', role, force_password_change },
     access: 'access',
-    refresh: 'refresh'
+    refresh: 'refresh',
   });
 
   beforeEach(async () => {
     api = jasmine.createSpyObj<ApiService>('ApiService', ['checkSetup']);
-    auth = jasmine.createSpyObj<AuthService>('AuthService', ['login', 'handleAuthResponse']);
+    auth = jasmine.createSpyObj<AuthService>('AuthService', [
+      'login',
+      'handleAuthResponse',
+    ]);
     api.checkSetup.and.returnValue(of({ needs_setup: false } as any));
 
     await TestBed.configureTestingModule({
@@ -32,11 +40,11 @@ describe('Admin LoginComponent', () => {
         provideRouter([
           { path: 'setup', component: BlankComponent },
           { path: 'change-password', component: BlankComponent },
-          { path: '', component: BlankComponent }
+          { path: '', component: BlankComponent },
         ]),
         { provide: ApiService, useValue: api },
-        { provide: AuthService, useValue: auth }
-      ]
+        { provide: AuthService, useValue: auth },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(LoginComponent);
@@ -50,7 +58,9 @@ describe('Admin LoginComponent', () => {
     api.checkSetup.and.returnValue(setup.asObservable());
 
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.checking-setup')?.textContent).toContain('Checking system status');
+    expect(
+      fixture.nativeElement.querySelector('.checking-setup')?.textContent,
+    ).toContain('Checking system status');
     expect(fixture.nativeElement.querySelector('form')).toBeNull();
 
     setup.next({ needs_setup: false });
@@ -59,8 +69,16 @@ describe('Admin LoginComponent', () => {
     fixture.detectChanges();
 
     expect(component.checkingSetup()).toBeFalse();
-    expect(fixture.nativeElement.querySelector('#username')?.getAttribute('autocomplete')).toBe('username');
-    expect(fixture.nativeElement.querySelector('#password')?.getAttribute('autocomplete')).toBe('current-password');
+    expect(
+      fixture.nativeElement
+        .querySelector('#username')
+        ?.getAttribute('autocomplete'),
+    ).toBe('username');
+    expect(
+      fixture.nativeElement
+        .querySelector('#password')
+        ?.getAttribute('autocomplete'),
+    ).toBe('current-password');
   }));
 
   it('routes to setup when the backend reports an unconfigured system', fakeAsync(() => {
@@ -84,11 +102,15 @@ describe('Admin LoginComponent', () => {
     tick();
     fixture.detectChanges();
 
-    fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit'));
+    fixture.nativeElement
+      .querySelector('form')
+      .dispatchEvent(new Event('submit'));
     fixture.detectChanges();
 
     expect(auth.login).not.toHaveBeenCalled();
-    expect(fixture.nativeElement.querySelector('.error-msg')?.textContent).toContain('Please fill in all fields.');
+    expect(
+      fixture.nativeElement.querySelector('.error-msg')?.textContent,
+    ).toContain('Please fill in all fields.');
   }));
 
   it('logs in admins and navigates to the command center', fakeAsync(() => {
@@ -98,7 +120,9 @@ describe('Admin LoginComponent', () => {
     setInput('#username', 'admin');
     setInput('#password', 'secret');
 
-    fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit'));
+    fixture.nativeElement
+      .querySelector('form')
+      .dispatchEvent(new Event('submit'));
     tick();
 
     expect(auth.login).toHaveBeenCalledWith('admin', 'secret');
@@ -134,7 +158,9 @@ describe('Admin LoginComponent', () => {
 
     expect(auth.handleAuthResponse).not.toHaveBeenCalled();
     expect(component.loading()).toBeFalse();
-    expect(fixture.nativeElement.querySelector('.error-msg')?.textContent).toContain('Administrator privileges required');
+    expect(
+      fixture.nativeElement.querySelector('.error-msg')?.textContent,
+    ).toContain('Administrator privileges required');
   }));
 
   it('shows backend and fallback login errors while re-enabling the button', fakeAsync(() => {
@@ -142,7 +168,9 @@ describe('Admin LoginComponent', () => {
     tick();
     component.username = 'admin';
     component.password = 'bad';
-    auth.login.and.returnValue(throwError(() => ({ error: { detail: 'Locked account' } })));
+    auth.login.and.returnValue(
+      throwError(() => ({ error: { detail: 'Locked account' } })),
+    );
 
     component.onLogin();
     tick();
@@ -161,13 +189,17 @@ describe('Admin LoginComponent', () => {
     component.loading.set(true);
     fixture.detectChanges();
 
-    const button = fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement;
+    const button = fixture.nativeElement.querySelector(
+      'button[type="submit"]',
+    ) as HTMLButtonElement;
     expect(button.disabled).toBeTrue();
     expect(button.textContent).toContain('Signing in');
   }));
 
   function setInput(selector: string, value: string) {
-    const input = fixture.nativeElement.querySelector(selector) as HTMLInputElement;
+    const input = fixture.nativeElement.querySelector(
+      selector,
+    ) as HTMLInputElement;
     input.value = value;
     input.dispatchEvent(new Event('input'));
   }

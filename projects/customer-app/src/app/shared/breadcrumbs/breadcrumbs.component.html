@@ -1,0 +1,11 @@
+﻿<nav class="breadcrumbs" aria-label="Breadcrumb">
+  <a routerLink="/">Home</a>
+  @for (item of items; track item.label; let last = $last) {
+    <span>&rsaquo;</span>
+    @if (!last && item.link) {
+      <a [routerLink]="item.link">{{ item.label }}</a>
+    } @else {
+      <b>{{ item.label }}</b>
+    }
+  }
+</nav>

@@ -1,0 +1,18 @@
+@if (state.itemCount() > 0) {
+  <aside class="mobile-sticky-cart" aria-label="Cart summary">
+    <div class="cart-copy">
+      <b
+        >{{ state.itemCount() }}
+        {{ state.itemCount() === 1 ? "item" : "items" }}</b
+      >
+      <span>{{ state.total() | appCurrency }}</span>
+      @if (savings() > 0) {
+        <small>You saved {{ savings() | appCurrency }}</small>
+      }
+    </div>
+    <a routerLink="/cart" class="cart-cta">
+      View Cart
+      <span class="material-symbols-rounded">arrow_forward</span>
+    </a>
+  </aside>
+}

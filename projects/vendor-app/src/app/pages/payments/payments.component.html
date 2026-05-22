@@ -3,7 +3,10 @@
     <div class="page-hero-copy">
       <span class="eyebrow">Finance</span>
       <h1>Payments &amp; Settlements</h1>
-      <p>Track your revenue payouts, settlement periods, approvals, and credit verification.</p>
+      <p>
+        Track your revenue payouts, settlement periods, approvals, and credit
+        verification.
+      </p>
     </div>
   </section>
 
@@ -31,13 +34,54 @@
     </div>
   </section>
 
+  <section class="payout-setup-card">
+    <div class="setup-copy">
+      <span class="material-icons-outlined">account_balance</span>
+      <div>
+        <h2>Payout readiness</h2>
+        <p>
+          Complete payout setup before your first settlement is due. Bank/KYC
+          collection is not connected in this workspace yet, so use this page to
+          review approvals, schedules, paid transfers, failures, and your
+          ledger.
+        </p>
+      </div>
+    </div>
+    <div class="setup-actions">
+      <button type="button" class="setup-cta" disabled>
+        <span class="material-icons-outlined">lock_clock</span>
+        Complete payout setup
+      </button>
+      <small>Bank setup API pending</small>
+    </div>
+    <div class="setup-checklist">
+      @for (item of payoutSetupItems; track item.title) {
+        <div class="setup-item">
+          <strong>{{ item.title }}</strong>
+          <p>{{ item.description }}</p>
+          <span>{{ item.status }}</span>
+        </div>
+      }
+    </div>
+  </section>
+
   <!-- ── Approval Banner ─────────────────────────────────────────── -->
   @if (pendingApproval().length > 0) {
     <div class="action-banner approval-banner">
-      <span class="banner-icon material-icons-outlined">notifications_active</span>
+      <span class="banner-icon material-icons-outlined"
+        >notifications_active</span
+      >
       <div class="banner-body">
-        <p class="banner-title">{{ pendingApproval().length }} Payout{{ pendingApproval().length > 1 ? 's' : '' }} Require Your Approval</p>
-        <p class="banner-sub">Review and approve payouts initiated by the platform before they are scheduled for processing.</p>
+        <p class="banner-title">
+          {{ pendingApproval().length }} Payout{{
+            pendingApproval().length > 1 ? "s" : ""
+          }}
+          Require Your Approval
+        </p>
+        <p class="banner-sub">
+          Review and approve payouts initiated by the platform before they are
+          scheduled for processing.
+        </p>
       </div>
     </div>
   }
@@ -47,8 +91,16 @@
     <div class="action-banner verify-banner">
       <span class="banner-icon material-icons-outlined">account_balance</span>
       <div class="banner-body">
-        <p class="banner-title">{{ pendingVerify().length }} Payout{{ pendingVerify().length > 1 ? 's' : '' }} Awaiting Credit Verification</p>
-        <p class="banner-sub">The platform has sent your payout. Please verify that you received the credit in your bank account.</p>
+        <p class="banner-title">
+          {{ pendingVerify().length }} Payout{{
+            pendingVerify().length > 1 ? "s" : ""
+          }}
+          Awaiting Credit Verification
+        </p>
+        <p class="banner-sub">
+          The platform has sent your payout. Please verify that you received the
+          credit in your bank account.
+        </p>
       </div>
     </div>
   }
@@ -58,23 +110,33 @@
     <div class="card-header">
       <div>
         <h3>Payout Workspace</h3>
-        <p>Approve, verify, download invoices, and review settlement periods.</p>
+        <p>{{ activeTabDescription() }}</p>
       </div>
     </div>
     <div class="payout-tabs">
       @for (tab of payoutTabs; track tab.key) {
-        <button [class.active]="activeTab() === tab.key" (click)="activeTab.set(tab.key)">
+        <button
+          [class.active]="activeTab() === tab.key"
+          (click)="activeTab.set(tab.key)"
+        >
           {{ tab.label }}
         </button>
       }
     </div>
     <div class="card-body p-0">
       @if (loading()) {
-        <div class="p-4 text-center text-muted">Loading settlement records...</div>
+        <div class="p-4 text-center text-muted">
+          Loading settlement records...
+        </div>
       } @else if (filteredPayouts().length === 0) {
         <div class="p-4 text-center text-muted">
-          <span class="material-icons-outlined" style="font-size:32px;display:block;margin-bottom:8px">account_balance_wallet</span>
-          No payouts in this view.
+          <span
+            class="material-icons-outlined"
+            style="font-size: 32px; display: block; margin-bottom: 8px"
+            >account_balance_wallet</span
+          >
+          <strong>No payouts in this view</strong>
+          <p>{{ emptyStateMessage() }}</p>
         </div>
       } @else {
         <div class="table-responsive">
@@ -93,43 +155,84 @@
             </thead>
             <tbody>
               @for (payout of filteredPayouts(); track payout.id) {
-                <tr [class.highlight-row]="payout.status === 'pending_approval' || payout.status === 'paid'">
-                  <td class="text-muted"><small>{{ payout.id.split('-')[0] }}</small></td>
-                  <td>{{ payout.period_start | date:'MMM d, y' }} – {{ payout.period_end | date:'MMM d, y' }}</td>
-                  <td>{{ payout.gross_sales | appCurrency }}</td>
-                  <td class="text-danger">−{{ payout.platform_commission | appCurrency }}</td>
-                  <td><strong>{{ payout.net_payout | appCurrency }}</strong></td>
+                <tr
+                  [class.highlight-row]="
+                    payout.status === 'pending_approval' ||
+                    payout.status === 'paid'
+                  "
+                >
+                  <td class="text-muted">
+                    <small>{{ payout.id.split("-")[0] }}</small>
+                  </td>
                   <td>
-                    <span class="badge" [class]="'badge-' + payout.status">{{ statusLabel(payout.status) }}</span>
+                    {{ payout.period_start | date: "MMM d, y" }} –
+                    {{ payout.period_end | date: "MMM d, y" }}
+                  </td>
+                  <td>{{ payout.gross_sales | appCurrency }}</td>
+                  <td class="text-danger">
+                    −{{ payout.platform_commission | appCurrency }}
+                  </td>
+                  <td>
+                    <strong>{{ payout.net_payout | appCurrency }}</strong>
+                  </td>
+                  <td>
+                    <span class="badge" [class]="'badge-' + payout.status">{{
+                      statusLabel(payout.status)
+                    }}</span>
                   </td>
                   <td>
                     @if (payout.paid_at) {
-                      <span class="text-muted">{{ payout.paid_at | date:'mediumDate' }}</span>
+                      <span class="text-muted">{{
+                        payout.paid_at | date: "mediumDate"
+                      }}</span>
                     } @else {
                       <span class="text-muted">—</span>
                     }
                   </td>
                   <td class="actions-cell">
                     <!-- Download Invoice (all statuses) -->
-                    <button class="btn-icon" title="Download Invoice" (click)="downloadInvoice(payout)">
-                      <span class="material-icons-outlined">download</span>
+                    <button
+                      class="btn-icon"
+                      title="Download Invoice"
+                      [disabled]="downloadingId() === payout.id"
+                      (click)="downloadInvoice(payout)"
+                    >
+                      <span class="material-icons-outlined">{{
+                        downloadingId() === payout.id
+                          ? "hourglass_top"
+                          : "download"
+                      }}</span>
                     </button>
 
                     <!-- Approval actions -->
-                    @if (payout.status === 'pending_approval') {
-                      <button class="payout-action-btn approve-btn" (click)="approvePayout(payout)">
-                        <span class="material-icons-outlined">check_circle</span>
+                    @if (payout.status === "pending_approval") {
+                      <button
+                        class="payout-action-btn approve-btn"
+                        [disabled]="actionId() === payout.id"
+                        (click)="approvePayout(payout)"
+                      >
+                        <span class="material-icons-outlined"
+                          >check_circle</span
+                        >
                         Approve
                       </button>
-                      <button class="payout-action-btn decline-btn" (click)="openDeclineModal(payout)">
+                      <button
+                        class="payout-action-btn decline-btn"
+                        [disabled]="actionId() === payout.id"
+                        (click)="openDeclineModal(payout)"
+                      >
                         <span class="material-icons-outlined">cancel</span>
                         Decline
                       </button>
                     }
 
                     <!-- Verify credit -->
-                    @if (payout.status === 'paid') {
-                      <button class="payout-action-btn verify-btn" (click)="verifyCredit(payout)">
+                    @if (payout.status === "paid") {
+                      <button
+                        class="payout-action-btn verify-btn"
+                        [disabled]="actionId() === payout.id"
+                        (click)="verifyCredit(payout)"
+                      >
                         <span class="material-icons-outlined">verified</span>
                         Verify Credit
                       </button>
@@ -163,15 +266,37 @@
       </div>
       <div class="modal-body">
         <div class="field-group">
-          <label class="field-label">Reason <span class="text-muted">(optional)</span></label>
-          <textarea class="field-input" rows="3" [(ngModel)]="declineReason"
-                    placeholder="e.g. Amount looks incorrect, wrong period…"></textarea>
+          <label class="field-label">Reason</label>
+          <textarea
+            class="field-input"
+            rows="3"
+            [(ngModel)]="declineReason"
+            placeholder="e.g. Amount looks incorrect, wrong period..."
+          ></textarea>
+          <small class="field-hint"
+            >Explain what looks wrong so admin can correct the payout
+            quickly.</small
+          >
         </div>
         <div class="modal-actions">
-          <button type="button" class="cancel-btn" (click)="closeDeclineModal()">Cancel</button>
-          <button class="payout-action-btn decline-btn" (click)="confirmDecline()">
+          <button
+            type="button"
+            class="cancel-btn"
+            (click)="closeDeclineModal()"
+          >
+            Cancel
+          </button>
+          <button
+            class="payout-action-btn decline-btn"
+            [disabled]="actionId() === decliningPayout()?.id"
+            (click)="confirmDecline()"
+          >
             <span class="material-icons-outlined">cancel</span>
-            Confirm Decline
+            {{
+              actionId() === decliningPayout()?.id
+                ? "Declining..."
+                : "Confirm Decline"
+            }}
           </button>
         </div>
       </div>

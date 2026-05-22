@@ -1,5 +1,4 @@
-<div class="coupons-page">
-
+<div class="saas-page coupons-page">
   <!-- ── Page Header ─────────────────────────────────────── -->
   <div class="page-header">
     <div>
@@ -22,7 +21,10 @@
   }
 
   <!-- ── Table Card ──────────────────────────────────────── -->
-  <div class="table-card" style="padding: 0; background: transparent; box-shadow: none;">
+  <div
+    class="table-card"
+    style="padding: 0; background: transparent; box-shadow: none"
+  >
     <app-dynamic-table
       [columns]="tableColumns"
       [data]="coupons()"
@@ -33,8 +35,8 @@
       emptyMessage="No coupons yet"
       emptySubMessage="Create your first coupon to get started."
       emptyIcon="confirmation_number"
-      (pageChange)="onPageChange($event)">
-
+      (pageChange)="onPageChange($event)"
+    >
       <ng-template tableCell="code" let-row="row">
         <span class="code-badge">{{ row.code }}</span>
       </ng-template>
@@ -47,36 +49,49 @@
       </ng-template>
 
       <ng-template tableCell="discount" let-row="row">
-        <span class="discount-badge" [class]="row.discount_type">{{ discountLabel(row) }}</span>
+        <span class="discount-badge" [class]="row.discount_type">{{
+          discountLabel(row)
+        }}</span>
       </ng-template>
 
       <ng-template tableCell="placement" let-row="row">
         <div class="placement-cell">
-          <span class="material-icons-outlined">{{ row.icon_name || 'local_offer' }}</span>
+          <span class="material-icons-outlined">{{
+            row.icon_name || "local_offer"
+          }}</span>
           <div>
-            <span class="placement-title">{{ row.display_section === 'hero' ? 'Featured hero' : 'More offers' }}</span>
-            <span class="placement-meta">Order {{ row.display_order || 0 }}</span>
+            <span class="placement-title">{{
+              row.display_section === "hero" ? "Featured hero" : "More offers"
+            }}</span>
+            <span class="placement-meta"
+              >Order {{ row.display_order || 0 }}</span
+            >
           </div>
         </div>
       </ng-template>
 
       <ng-template tableCell="scope" let-row="row">
-        <span class="scope-badge" [class.platform]="!row.vendor" [class.vendor]="row.vendor">
+        <span
+          class="scope-badge"
+          [class.platform]="!row.vendor"
+          [class.vendor]="row.vendor"
+        >
           {{ scopeLabel(row) }}
         </span>
       </ng-template>
 
       <ng-template tableCell="limits" let-row="row">
         <span class="text-muted">
-          {{ row.used_count }}{{ row.usage_limit ? ' / ' + row.usage_limit : '' }}
+          {{ row.used_count
+          }}{{ row.usage_limit ? " / " + row.usage_limit : "" }}
         </span>
       </ng-template>
 
       <ng-template tableCell="status" let-row="row">
         <div>
-          <div class="text-muted" style="margin-bottom: 4px; font-size: 0.8rem;">
+          <div class="text-muted" style="margin-bottom: 4px; font-size: 0.8rem">
             @if (row.valid_until) {
-              Until {{ row.valid_until | date:'mediumDate' }}
+              Until {{ row.valid_until | date: "mediumDate" }}
             } @else {
               <span class="no-expiry">No expiry</span>
             }
@@ -92,13 +107,16 @@
       </ng-template>
 
       <ng-template tableCell="actions" let-row="row">
-        <div class="actions" style="justify-content: flex-end;">
+        <div class="actions" style="justify-content: flex-end">
           <button class="action-btn" title="Edit" (click)="openEdit(row)">
             <span class="material-icons-outlined">edit</span>
           </button>
-          <button class="action-btn danger" title="Delete"
+          <button
+            class="action-btn danger"
+            title="Delete"
             [disabled]="deleting() === row.id"
-            (click)="delete(row.id)">
+            (click)="delete(row.id)"
+          >
             @if (deleting() === row.id) {
               <span class="spinner-sm"></span>
             } @else {
@@ -107,7 +125,6 @@
           </button>
         </div>
       </ng-template>
-
     </app-dynamic-table>
   </div>
 
@@ -117,8 +134,10 @@
       <div class="modal" (click)="$event.stopPropagation()">
         <div class="modal-header">
           <div class="modal-title-group">
-            <span class="material-icons-outlined modal-icon">confirmation_number</span>
-            <h2>{{ editingId() ? 'Edit Coupon' : 'New Coupon' }}</h2>
+            <span class="material-icons-outlined modal-icon"
+              >confirmation_number</span
+            >
+            <h2>{{ editingId() ? "Edit Coupon" : "New Coupon" }}</h2>
           </div>
           <button class="modal-close" (click)="showForm.set(false)">✕</button>
         </div>
@@ -126,14 +145,20 @@
         <div class="modal-body">
           @if (error()) {
             <div class="alert-error">
-              <span class="material-icons-outlined">error_outline</span>{{ error() }}
+              <span class="material-icons-outlined">error_outline</span
+              >{{ error() }}
             </div>
           }
 
           <div class="form-row two">
             <div class="form-group">
               <label class="form-label">Coupon Code *</label>
-              <input class="form-input" [(ngModel)]="form.code" placeholder="e.g. SAVE20" style="text-transform:uppercase">
+              <input
+                class="form-input"
+                [(ngModel)]="form.code"
+                placeholder="e.g. SAVE20"
+                style="text-transform: uppercase"
+              />
             </div>
             <div class="form-group">
               <label class="form-label">Discount Type *</label>
@@ -147,12 +172,21 @@
 
           <div class="form-group">
             <label class="form-label">Title *</label>
-            <input class="form-input" [(ngModel)]="form.title" placeholder="e.g. 20% off your order">
+            <input
+              class="form-input"
+              [(ngModel)]="form.title"
+              placeholder="e.g. 20% off your order"
+            />
           </div>
 
           <div class="form-group">
             <label class="form-label">Description</label>
-            <textarea class="form-input" [(ngModel)]="form.description" rows="2" placeholder="Optional details for customers"></textarea>
+            <textarea
+              class="form-input"
+              [(ngModel)]="form.description"
+              rows="2"
+              placeholder="Optional details for customers"
+            ></textarea>
           </div>
 
           <div class="form-row two">
@@ -166,7 +200,13 @@
             </div>
             <div class="form-group">
               <label class="form-label">Display Order</label>
-              <input type="number" class="form-input" [(ngModel)]="form.display_order" min="0" placeholder="0">
+              <input
+                type="number"
+                class="form-input"
+                [(ngModel)]="form.display_order"
+                min="0"
+                placeholder="0"
+              />
             </div>
           </div>
 
@@ -181,60 +221,109 @@
             </div>
             <div class="form-group">
               <label class="form-label">Badge Text</label>
-              <input class="form-input" [(ngModel)]="form.badge_text" placeholder="e.g. Limited time">
+              <input
+                class="form-input"
+                [(ngModel)]="form.badge_text"
+                placeholder="e.g. Limited time"
+              />
             </div>
           </div>
 
           <div class="form-group">
             <label class="form-label">Accent Color</label>
-            <input class="form-input" [(ngModel)]="form.accent_color" placeholder="#ff4b1f">
+            <input
+              class="form-input"
+              [(ngModel)]="form.accent_color"
+              placeholder="#ff4b1f"
+            />
           </div>
 
           <div class="form-row two">
-            @if (form.discount_type !== 'free_delivery') {
+            @if (form.discount_type !== "free_delivery") {
               <div class="form-group">
                 <label class="form-label">Discount Value *</label>
-                <input type="number" class="form-input" [(ngModel)]="form.discount_value" min="0"
-                  [placeholder]="form.discount_type === 'percentage' ? 'e.g. 20' : 'e.g. 500'">
+                <input
+                  type="number"
+                  class="form-input"
+                  [(ngModel)]="form.discount_value"
+                  min="0"
+                  [placeholder]="
+                    form.discount_type === 'percentage' ? 'e.g. 20' : 'e.g. 500'
+                  "
+                />
               </div>
               <div class="form-group">
-                <label class="form-label">Max Discount (₦)</label>
-                <input type="number" class="form-input" [(ngModel)]="form.max_discount_amount" min="0" placeholder="Blank = unlimited">
+                <label class="form-label"
+                  >Max Discount ({{ 0 | appCurrency: true }})</label
+                >
+                <input
+                  type="number"
+                  class="form-input"
+                  [(ngModel)]="form.max_discount_amount"
+                  min="0"
+                  placeholder="Blank = unlimited"
+                />
               </div>
             }
           </div>
 
           <div class="form-row two">
             <div class="form-group">
-              <label class="form-label">Min Order Amount (₦)</label>
-              <input type="number" class="form-input" [(ngModel)]="form.min_order_amount" min="0">
+              <label class="form-label"
+                >Min Order Amount ({{ 0 | appCurrency: true }})</label
+              >
+              <input
+                type="number"
+                class="form-input"
+                [(ngModel)]="form.min_order_amount"
+                min="0"
+              />
             </div>
             <div class="form-group">
               <label class="form-label">Per-User Limit</label>
-              <input type="number" class="form-input" [(ngModel)]="form.per_user_limit" min="1">
+              <input
+                type="number"
+                class="form-input"
+                [(ngModel)]="form.per_user_limit"
+                min="1"
+              />
             </div>
           </div>
 
           <div class="form-row two">
             <div class="form-group">
               <label class="form-label">Valid From *</label>
-              <input type="datetime-local" class="form-input" [(ngModel)]="form.valid_from">
+              <input
+                type="datetime-local"
+                class="form-input"
+                [(ngModel)]="form.valid_from"
+              />
             </div>
             <div class="form-group">
               <label class="form-label">Valid Until</label>
-              <input type="datetime-local" class="form-input" [(ngModel)]="form.valid_until">
+              <input
+                type="datetime-local"
+                class="form-input"
+                [(ngModel)]="form.valid_until"
+              />
             </div>
           </div>
 
           <div class="form-row two">
             <div class="form-group">
               <label class="form-label">Total Usage Limit</label>
-              <input type="number" class="form-input" [(ngModel)]="form.usage_limit" min="1" placeholder="Blank = unlimited">
+              <input
+                type="number"
+                class="form-input"
+                [(ngModel)]="form.usage_limit"
+                min="1"
+                placeholder="Blank = unlimited"
+              />
             </div>
             <div class="form-group toggle-field">
               <label class="form-label">Active</label>
               <label class="toggle">
-                <input type="checkbox" [(ngModel)]="form.is_active">
+                <input type="checkbox" [(ngModel)]="form.is_active" />
                 <span class="toggle-slider"></span>
               </label>
             </div>
@@ -242,14 +331,17 @@
         </div>
 
         <div class="modal-footer">
-          <button class="btn-secondary" (click)="showForm.set(false)">Cancel</button>
+          <button class="btn-secondary" (click)="showForm.set(false)">
+            Cancel
+          </button>
           <button class="btn-primary" (click)="save()" [disabled]="saving()">
-            @if (saving()) { <span class="spinner-sm white"></span> }
-            {{ editingId() ? 'Save Changes' : 'Create Coupon' }}
+            @if (saving()) {
+              <span class="spinner-sm white"></span>
+            }
+            {{ editingId() ? "Save Changes" : "Create Coupon" }}
           </button>
         </div>
       </div>
     </div>
   }
-
 </div>

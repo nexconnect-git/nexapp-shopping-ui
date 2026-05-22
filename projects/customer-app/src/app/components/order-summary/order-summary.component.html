@@ -1,0 +1,55 @@
+@if (state.itemCount()) {
+  <aside class="summary fd-card">
+    <div class="head">
+      <h2>Order Summary</h2>
+      <span>{{ state.itemCount() }} items</span>
+    </div>
+    @for (item of state.cart(); track item.id) {
+      <div class="item">
+        <img [src]="item.image" [alt]="item.name" />
+        <div>
+          <b>{{ item.name }}</b
+          ><small
+            >{{ item.unit }}
+            <span class="material-symbols-rounded">inventory_2</span> Qty:
+            {{ item.quantity }}</small
+          >
+        </div>
+        <strong>{{ item.price * item.quantity | appCurrency }}</strong>
+      </div>
+    }
+    <div class="rows">
+      <p>
+        <span>MRP Total</span><b>{{ state.mrpTotal() | appCurrency }}</b>
+      </p>
+      <p>
+        <span>Item Discount</span
+        ><b class="green"
+          >-{{ state.mrpTotal() - state.subtotal() | appCurrency }}</b
+        >
+      </p>
+      @if (state.coupon()) {
+        <p class="coupon">
+          <span
+            ><span class="material-symbols-rounded">local_offer</span>
+            {{ state.coupon() }} Applied</span
+          ><b>-{{ state.couponDiscount() | appCurrency }}</b>
+        </p>
+      }
+      <p>
+        <span>Delivery Fee</span
+        ><b class="green">{{ state.deliveryFeeLabel() }}</b>
+      </p>
+      <p class="total">
+        <span>To Pay</span><b>{{ state.total() | appCurrency }}</b>
+      </p>
+    </div>
+    @if (showButton) {
+      <a routerLink="/checkout" class="fd-btn primary">Proceed to Checkout</a>
+    }
+    <small class="secure"
+      ><span class="material-symbols-rounded">lock</span> Secure Payments. Easy
+      Returns.</small
+    >
+  </aside>
+}

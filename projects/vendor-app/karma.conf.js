@@ -1,37 +1,53 @@
+const path = require("path");
+
 module.exports = function (config) {
   config.set({
-    basePath: '../..',
-    frameworks: ['jasmine', '@angular-devkit/build-angular'],
+    basePath: "../..",
+    frameworks: ["jasmine", "@angular-devkit/build-angular"],
     plugins: [
-      require('karma-jasmine'),
-      require('karma-chrome-launcher'),
-      require('karma-jasmine-html-reporter'),
-      require('karma-coverage'),
-      require('@angular-devkit/build-angular/plugins/karma')
+      require("karma-jasmine"),
+      require("karma-chrome-launcher"),
+      require("karma-jasmine-html-reporter"),
+      require("karma-coverage"),
+      require("@angular-devkit/build-angular/plugins/karma"),
     ],
     client: {
       jasmine: {},
-      clearContext: false
+      clearContext: false,
     },
     jasmineHtmlReporter: {
-      suppressAll: true
+      suppressAll: true,
     },
     coverageReporter: {
-      dir: require('path').join(__dirname, '../../coverage/vendor-app'),
-      subdir: '.',
+      dir: path.join(__dirname, "../../coverage/vendor-app"),
+      subdir: ".",
       reporters: [
-        { type: 'html' },
-        { type: 'text-summary' }
-      ]
+        { type: "html" },
+        { type: "lcovonly" },
+        { type: "text-summary" },
+      ],
+      check: {
+        global: {
+          statements: 80,
+          branches: 75,
+          functions: 80,
+          lines: 80,
+        },
+      },
     },
-    reporters: ['progress', 'kjhtml'],
-    browsers: ['ChromeHeadlessNoSandbox'],
+    reporters: ["progress", "kjhtml"],
+    browsers: ["ChromeHeadlessNoSandbox"],
     customLaunchers: {
       ChromeHeadlessNoSandbox: {
-        base: 'ChromeHeadless',
-        flags: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--disable-software-rasterizer']
-      }
+        base: "ChromeHeadless",
+        flags: [
+          "--no-sandbox",
+          "--disable-gpu",
+          "--disable-dev-shm-usage",
+          "--disable-software-rasterizer",
+        ],
+      },
     },
-    restartOnFileChange: true
+    restartOnFileChange: true,
   });
 };

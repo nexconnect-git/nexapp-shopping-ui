@@ -1,8 +1,16 @@
 <div class="register-page">
   <div class="register-header">
     <a routerLink="/login" class="back-btn">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/>
+      <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <path d="M19 12H5" />
+        <polyline points="12 19 5 12 12 5" />
       </svg>
     </a>
     <h1>Join as Delivery Partner</h1>
@@ -19,28 +27,48 @@
       <div class="form-row">
         <div class="form-group">
           <label>First Name</label>
-          <input type="text" [(ngModel)]="form.first_name" placeholder="First name">
+          <input
+            type="text"
+            [(ngModel)]="form.first_name"
+            placeholder="First name"
+          />
         </div>
         <div class="form-group">
           <label>Last Name</label>
-          <input type="text" [(ngModel)]="form.last_name" placeholder="Last name">
+          <input
+            type="text"
+            [(ngModel)]="form.last_name"
+            placeholder="Last name"
+          />
         </div>
       </div>
       <div class="form-group">
         <label>Username</label>
-        <input type="text" [(ngModel)]="form.username" placeholder="Choose a username">
+        <input
+          type="text"
+          [(ngModel)]="form.username"
+          placeholder="Choose a username"
+        />
       </div>
       <div class="form-group">
         <label>Email</label>
-        <input type="email" [(ngModel)]="form.email" placeholder="your@email.com">
+        <input
+          type="email"
+          [(ngModel)]="form.email"
+          placeholder="your@email.com"
+        />
       </div>
       <div class="form-group">
         <label>Phone</label>
-        <input type="tel" [(ngModel)]="form.phone" placeholder="Phone number">
+        <input type="tel" [(ngModel)]="form.phone" placeholder="Phone number" />
       </div>
       <div class="form-group">
         <label>Password</label>
-        <input type="password" [(ngModel)]="form.password" placeholder="Create password">
+        <input
+          type="password"
+          [(ngModel)]="form.password"
+          placeholder="Create password"
+        />
       </div>
       <button class="btn-primary" (click)="nextStep()">Continue</button>
     }
@@ -59,16 +87,28 @@
       </div>
       <div class="form-group">
         <label>Vehicle Number</label>
-        <input type="text" [(ngModel)]="vehicle.vehicle_number" placeholder="e.g. ABC-1234">
+        <input
+          type="text"
+          [(ngModel)]="vehicle.vehicle_number"
+          placeholder="e.g. ABC-1234"
+        />
       </div>
       <div class="form-group">
         <label>License Number</label>
-        <input type="text" [(ngModel)]="vehicle.license_number" placeholder="Driver's license number">
+        <input
+          type="text"
+          [(ngModel)]="vehicle.license_number"
+          placeholder="Driver's license number"
+        />
       </div>
 
       <div class="btn-row">
         <button class="btn-secondary" (click)="step.set(1)">Back</button>
-        <button class="btn-primary" (click)="onRegister()" [disabled]="loading()">
+        <button
+          class="btn-primary"
+          (click)="onRegister()"
+          [disabled]="loading()"
+        >
           @if (loading()) {
             Registering...
           } @else {

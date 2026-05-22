@@ -159,7 +159,7 @@
 
   &.active {
     .step-circle {
-      background: var(--primary-gradient);
+      background: var(--primary);
       border-color: transparent;
       color: white;
       box-shadow: 0 4px 12px rgba(82, 113, 255, 0.3);
@@ -207,7 +207,7 @@
 
 .progress-fill {
   height: 100%;
-  background: var(--primary-gradient);
+  background: var(--primary);
   transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -411,7 +411,7 @@
     right: 0;
     bottom: 0;
     background-color: var(--border-color);
-    transition: .3s;
+    transition: 0.3s;
     border-radius: 24px;
 
     &::before {
@@ -422,17 +422,17 @@
       left: 3px;
       bottom: 3px;
       background-color: white;
-      transition: .3s;
+      transition: 0.3s;
       border-radius: 50%;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
   }
 
-  input:checked+label {
+  input:checked + label {
     background-color: var(--success);
   }
 
-  input:checked+label::before {
+  input:checked + label::before {
     transform: translateX(20px);
   }
 }
@@ -614,7 +614,7 @@
 }
 
 .btn-next {
-  background: var(--primary-gradient);
+  background: var(--primary);
   box-shadow: 0 4px 12px rgba(82, 113, 255, 0.25);
 
   &:hover {

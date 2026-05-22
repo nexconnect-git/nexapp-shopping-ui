@@ -1,8 +1,7 @@
-<div class="dynamic-stepper-container">
-
+<div class="dynamic-stepper-container saas-wizard-shell">
   @if (success) {
     <div class="banner banner-success">
-      <span class="banner-icon">✓</span>
+      <span class="material-icons-outlined">check_circle</span>
       <div>
         <strong>{{ successMessage }}</strong>
         <p>{{ successSubmessage }}</p>
@@ -10,176 +9,289 @@
     </div>
   }
 
-
-
-  <div class="wizard-layout">
-    
-    <!-- Sidebar -->
-    <div class="step-sidebar">
-      @for (s of config.steps; track $index) {
-        <div class="step-item" 
-             [class.active]="step() === $index + 1" 
-             [class.done]="step() > $index + 1" 
-             (click)="goTo($index + 1)">
-          <div class="step-circle">
-            @if (step() > $index + 1) { <span class="material-icons-outlined">check</span> } 
-            @else { <span>{{ $index + 1 }}</span> }
-          </div>
-          <span class="step-label">{{ s.label }}</span>
-        </div>
-      }
-      
-      <!-- Review Step -->
-      <div class="step-item" 
-           [class.active]="step() === totalSteps" 
-           [class.done]="false" 
-           (click)="goTo(totalSteps)">
-        <div class="step-circle">
-          <span>{{ totalSteps }}</span>
-        </div>
-        <span class="step-label">Review & Submit</span>
+  @if (serverErrorEntries().length) {
+    <div class="banner banner-error">
+      <span class="material-icons-outlined">error_outline</span>
+      <div>
+        <strong>Some details need attention</strong>
+        <p>Fix the highlighted fields and submit again.</p>
+        <ul>
+          @for (item of serverErrorEntries(); track item.key) {
+            <li>{{ item.key }}: {{ item.message }}</li>
+          }
+        </ul>
       </div>
     </div>
+  }
 
-    <!-- Body -->
+  <section class="wizard-shell" aria-label="Onboarding steps">
+    <nav class="step-rail" aria-label="Progress">
+      @for (item of stepItems; track item.number) {
+        <button
+          type="button"
+          class="step-rail-item"
+          [class.active]="step() === item.number"
+          [class.done]="step() > item.number"
+          [class.review]="item.review"
+          (click)="goTo(item.number)"
+        >
+          <span class="step-marker">
+            @if (step() > item.number) {
+              <span class="material-icons-outlined">check</span>
+            } @else {
+              {{ item.number }}
+            }
+          </span>
+          <span class="step-label">{{ item.label }}</span>
+        </button>
+      }
+    </nav>
+
     <div class="wizard-body">
-      
-      <!-- Standard Steps -->
-      @for (s of config.steps; track $index) {
-        @if (step() === $index + 1) {
-          <div class="step-card">
-            
-            <div class="step-heading">
-              <div class="step-num">{{ $index + 1 }}</div>
-              <div>
-                <h2>{{ s.title }}</h2>
-                <p>{{ s.subtitle }}</p>
-              </div>
+      @if (currentStepConfig; as current) {
+        <article class="step-panel">
+          <header class="step-heading">
+            <div class="step-num">{{ currentStepIndex }}</div>
+            <div>
+              <h2>{{ current.title }}</h2>
+              <p>{{ current.subtitle }}</p>
             </div>
+          </header>
 
-            @for (section of s.sections; track section.title) {
-              
-              @if (section.title) {
-                <div class="section-divider">{{ section.title }}</div>
-              }
-              @if (section.description) {
-                <p class="section-desc">{{ section.description }}</p>
-              }
+          @for (section of current.sections; track $index) {
+            @if (section.title || section.description) {
+              <div class="section-heading">
+                @if (section.title) {
+                  <h3>{{ section.title }}</h3>
+                }
+                @if (section.description) {
+                  <p>{{ section.description }}</p>
+                }
+              </div>
+            }
 
-              <!-- Section Fields -->
-              @if (section.fields) {
-                <div class="form-grid">
-                  @for (f of section.fields; track f.key) {
-                    
-                    @if (f.type !== 'checkbox') {
-                      <div class="form-group" [class.full]="f.fullWidth || f.type === 'textarea'">
-                        <label>
-                          {{ f.label }} 
-                          @if (f.required) { <span class="req">*</span> }
-                          @if (f.optional) { <span class="opt">(optional)</span> }
-                        </label>
-                        
-                        @if (f.type === 'textarea') {
-                          <textarea [(ngModel)]="model[f.key]" [placeholder]="f.placeholder || ''" [class.has-error]="errors()[f.key]" rows="3"></textarea>
-                        } @else if (f.type === 'select' && f.options) {
-                          <select [(ngModel)]="model[f.key]" [class.has-error]="errors()[f.key]">
-                            @for (opt of f.options; track opt.value) {
-                              <option [value]="opt.value">{{ opt.label }}</option>
-                            }
-                          </select>
-                        } @else {
-                          <input [type]="f.type" [(ngModel)]="model[f.key]" [placeholder]="f.placeholder || ''" [class.has-error]="errors()[f.key]">
+            @if (section.fields) {
+              <div class="form-grid">
+                @for (f of section.fields; track f.key) {
+                  @if (f.type !== "checkbox") {
+                    <div
+                      class="form-group"
+                      [class.full]="f.fullWidth || f.type === 'textarea'"
+                    >
+                      <label [for]="'field-' + f.key">
+                        {{ f.label }}
+                        @if (f.required) {
+                          <span class="req">*</span>
                         }
-
-                        @if (errors()[f.key]) { <span class="field-error">{{ errors()[f.key] }}</span> }
-                      </div>
-                    }
-
-                  }
-
-                  <!-- Grouped Checkboxes -->
-                  @if (hasCheckboxes(section.fields)) {
-                    <div class="form-group full checkboxes-row">
-                      @for (f of section.fields; track f.key) {
-                        @if (f.type === 'checkbox') {
-                          <label class="checkbox-label">
-                            <input type="checkbox" [(ngModel)]="model[f.key]">
-                            {{ f.label }}
-                          </label>
+                        @if (f.optional) {
+                          <span class="opt">(optional)</span>
                         }
-                      }
-                    </div>
-                  }
-                </div>
-              }
+                      </label>
 
-              <!-- Dynamic List -->
-              @if (section.list) {
-                <div class="dynamic-list">
-                  @if (model[section.list.key]?.length) {
-                    <div class="list-items">
-                      @for (item of model[section.list.key]; track $index) {
-                        <div class="list-item">
-                          <div class="list-item-info">
-                            <strong>{{ item[section.list.itemTitleKey] }}</strong>
-                            <span>{{ formatListItemSubtitle(item, section.list.itemSubtitleKeys) }}</span>
-                          </div>
-                          <button class="icon-btn danger" (click)="removeListItem(section.list.key, $index)">
-                            <span class="material-icons-outlined">close</span>
-                          </button>
-                        </div>
-                      }
-                    </div>
-                  }
-
-                  <div class="add-row form-grid inline">
-                    @for (f of section.list.fields; track f.key) {
-                      <div class="form-group">
-                        <input *ngIf="f.type !== 'select'" [type]="f.type" [(ngModel)]="listStates[section.list.key][f.key]" [placeholder]="f.placeholder || f.label">
-                        <select *ngIf="f.type === 'select' && f.options" [(ngModel)]="listStates[section.list.key][f.key]">
+                      @if (f.type === "textarea") {
+                        <textarea
+                          [id]="'field-' + f.key"
+                          [(ngModel)]="model[f.key]"
+                          [placeholder]="f.placeholder || ''"
+                          [class.has-error]="fieldError(f.key)"
+                          (input)="onFieldInput(f)"
+                          (blur)="normalizeField(f)"
+                          rows="3"
+                        ></textarea>
+                      } @else if (f.type === "select" && f.options) {
+                        <select
+                          [id]="'field-' + f.key"
+                          [(ngModel)]="model[f.key]"
+                          [class.has-error]="fieldError(f.key)"
+                          (change)="clearFieldError(f.key)"
+                        >
                           @for (opt of f.options; track opt.value) {
                             <option [value]="opt.value">{{ opt.label }}</option>
                           }
                         </select>
-                      </div>
-                    }
-                    <button class="btn btn-outline" (click)="addListItem(section.list)">
-                      + {{ section.list.addLabel }}
-                    </button>
-                  </div>
-                </div>
-              }
+                      } @else {
+                        <input
+                          [id]="'field-' + f.key"
+                          [type]="f.type"
+                          [(ngModel)]="model[f.key]"
+                          [placeholder]="f.placeholder || ''"
+                          [class.has-error]="fieldError(f.key)"
+                          [attr.min]="f.min ?? null"
+                          [attr.max]="f.max ?? null"
+                          [attr.minlength]="f.minLength ?? null"
+                          [attr.maxlength]="f.maxLength ?? null"
+                          [attr.inputmode]="f.inputMode ?? null"
+                          (input)="onFieldInput(f)"
+                          (blur)="normalizeField(f)"
+                        />
+                      }
 
+                      @if (f.hint && !fieldError(f.key)) {
+                        <span class="field-hint">{{ f.hint }}</span>
+                      }
+                      @if (uniqueState(f.key); as state) {
+                        @if (state.checking) {
+                          <span class="field-checking"
+                            >Checking availability...</span
+                          >
+                        }
+                        @if (state.unique === true && !fieldError(f.key)) {
+                          <span class="field-success">Available</span>
+                        }
+                        @if (
+                          state.unique === false && state.suggestions.length
+                        ) {
+                          <div class="field-suggestions">
+                            <span>Try one of these:</span>
+                            @for (
+                              suggestion of state.suggestions;
+                              track suggestion
+                            ) {
+                              <button
+                                type="button"
+                                class="suggestion-chip"
+                                (click)="selectUniqueSuggestion(f, suggestion)"
+                              >
+                                {{ suggestion }}
+                              </button>
+                            }
+                          </div>
+                        }
+                      }
+                      @if (fieldError(f.key)) {
+                        <span class="field-error">{{ fieldError(f.key) }}</span>
+                      }
+                    </div>
+                  }
+                }
+
+                @if (hasCheckboxes(section.fields)) {
+                  <div class="form-group full checkboxes-row">
+                    @for (f of section.fields; track f.key) {
+                      @if (f.type === "checkbox") {
+                        <label class="checkbox-label">
+                          <input type="checkbox" [(ngModel)]="model[f.key]" />
+                          <span>{{ f.label }}</span>
+                        </label>
+                      }
+                    }
+                  </div>
+                }
+              </div>
             }
 
-          </div>
-        }
-      }
+            @if (section.list) {
+              <div class="dynamic-list">
+                @if (model[section.list.key]?.length) {
+                  <div class="list-items">
+                    @for (item of model[section.list.key]; track $index) {
+                      <div class="list-item">
+                        <div class="list-item-info">
+                          <strong>{{ item[section.list.itemTitleKey] }}</strong>
+                          <span>{{
+                            formatListItemSubtitle(
+                              item,
+                              section.list.itemSubtitleKeys
+                            )
+                          }}</span>
+                        </div>
+                        <button
+                          type="button"
+                          class="icon-btn danger"
+                          (click)="removeListItem(section.list.key, $index)"
+                          title="Remove"
+                        >
+                          <span class="material-icons-outlined">close</span>
+                        </button>
+                      </div>
+                    }
+                  </div>
+                }
 
-      <!-- Final Review Step -->
-      @if (step() === totalSteps) {
-        <div class="step-card">
-          <div class="step-heading">
+                <div class="add-row form-grid inline">
+                  @for (f of section.list.fields; track f.key) {
+                    <div class="form-group">
+                      @if (f.type === "select" && f.options) {
+                        <select
+                          [(ngModel)]="listStates[section.list.key][f.key]"
+                        >
+                          @for (opt of f.options; track opt.value) {
+                            <option [value]="opt.value">{{ opt.label }}</option>
+                          }
+                        </select>
+                      } @else {
+                        <input
+                          [type]="f.type"
+                          [(ngModel)]="listStates[section.list.key][f.key]"
+                          [placeholder]="f.placeholder || f.label"
+                          [class.has-error]="
+                            fieldError(listFieldKey(section.list.key, f.key))
+                          "
+                          [attr.inputmode]="f.inputMode ?? null"
+                          [attr.maxlength]="f.maxLength ?? null"
+                          (input)="
+                            clearFieldError(
+                              listFieldKey(section.list.key, f.key)
+                            )
+                          "
+                          (blur)="normalizeListField(section.list.key, f)"
+                        />
+                      }
+                      @if (fieldError(listFieldKey(section.list.key, f.key))) {
+                        <span class="field-error">{{
+                          fieldError(listFieldKey(section.list.key, f.key))
+                        }}</span>
+                      }
+                    </div>
+                  }
+                  <button
+                    type="button"
+                    class="btn btn-outline"
+                    (click)="addListItem(section.list)"
+                  >
+                    <span class="material-icons-outlined">add</span>
+                    {{ section.list.addLabel }}
+                  </button>
+                </div>
+                @if (listError(section.list.key)) {
+                  <div class="list-error">
+                    {{ listError(section.list.key) }}
+                  </div>
+                }
+              </div>
+            }
+          }
+        </article>
+      } @else {
+        <article class="step-panel">
+          <header class="step-heading">
             <div class="step-num">{{ totalSteps }}</div>
             <div>
               <h2>Review & Submit</h2>
               <p>Confirm the details below before submitting.</p>
             </div>
-          </div>
+          </header>
 
           @for (s of config.steps; track s.title) {
-            <div class="review-section">
+            <section class="review-section">
               <h3>{{ s.label }}</h3>
               <div class="review-grid">
-                @for (sec of s.sections; track sec.title) {
+                @for (sec of s.sections; track $index) {
                   @if (sec.fields) {
                     @for (f of sec.fields; track f.key) {
-                      <div class="review-item" [class.full]="f.type === 'textarea'">
+                      <div
+                        class="review-item"
+                        [class.full]="f.type === 'textarea'"
+                      >
                         <span>{{ f.label }}</span>
                         <strong>
-                          @if (f.type === 'password') { ******** }
-                          @else if (f.type === 'checkbox') { {{ model[f.key] ? 'Yes' : 'No' }} }
-                          @else { {{ model[f.key] || '—' }} }
+                          @if (f.type === "password") {
+                            ********
+                          } @else if (f.type === "checkbox") {
+                            {{ model[f.key] ? "Yes" : "No" }}
+                          } @else {
+                            {{ model[f.key] || "-" }}
+                          }
                         </strong>
                       </div>
                     }
@@ -187,33 +299,56 @@
                   @if (sec.list) {
                     <div class="review-item full">
                       <span>{{ sec.list.title }}</span>
-                      <strong>{{ model[sec.list.key]?.length || 0 }} items added</strong>
+                      <strong
+                        >{{ model[sec.list.key]?.length || 0 }} items
+                        added</strong
+                      >
                     </div>
                   }
                 }
               </div>
-            </div>
+            </section>
           }
-        </div>
+        </article>
       }
-
     </div>
 
-    <!-- Actions -->
-    <div class="wizard-actions">
+    <footer class="wizard-actions">
+      <button
+        type="button"
+        class="btn btn-secondary"
+        (click)="stepperCancel.emit()"
+      >
+        Cancel
+      </button>
       <div class="flex-spacer"></div>
       @if (step() > 1) {
-        <button class="btn btn-secondary" (click)="prev()">← Previous</button>
-      }
-      @if (step() < totalSteps) {
-        <button class="btn btn-primary" (click)="next()">Continue →</button>
-      } @else {
-        <button class="btn btn-success" [disabled]="loading" (click)="onSubmitClick()">
-          @if (loading) { <span class="spinner-small"></span> Submitting... }
-          @else { ✓ {{ config.submitLabel }} }
+        <button type="button" class="btn btn-secondary" (click)="prev()">
+          <span class="material-icons-outlined">arrow_back</span>
+          Previous
         </button>
       }
-    </div>
-
-  </div>
+      @if (step() < totalSteps) {
+        <button type="button" class="btn btn-primary" (click)="next()">
+          Continue
+          <span class="material-icons-outlined">arrow_forward</span>
+        </button>
+      } @else {
+        <button
+          type="button"
+          class="btn btn-success"
+          [disabled]="loading"
+          (click)="onSubmitClick()"
+        >
+          @if (loading) {
+            <span class="spinner-small"></span>
+            Submitting...
+          } @else {
+            <span class="material-icons-outlined">check_circle</span>
+            {{ config.submitLabel }}
+          }
+        </button>
+      }
+    </footer>
+  </section>
 </div>

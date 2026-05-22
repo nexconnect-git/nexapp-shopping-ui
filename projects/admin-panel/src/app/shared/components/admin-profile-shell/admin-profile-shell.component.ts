@@ -26,7 +26,7 @@ export interface AdminProfileTab {
   standalone: true,
   imports: [CommonModule],
   templateUrl: './admin-profile-shell.component.html',
-  styleUrl: './admin-profile-shell.component.scss'
+  styleUrl: './admin-profile-shell.component.scss',
 })
 export class AdminProfileShellComponent {
   @Input() loading = false;
@@ -35,7 +35,7 @@ export class AdminProfileShellComponent {
   @Input() subtitle = '';
   @Input() avatarText = '';
   @Input() avatarImage = '';
-  @Input() avatarBg = '#06b6d4';
+  @Input() avatarBg = '#6C2BFF';
   @Input() badges: AdminProfileBadge[] = [];
   @Input() metrics: AdminProfileMetric[] = [];
   @Input() tabs: AdminProfileTab[] = [];

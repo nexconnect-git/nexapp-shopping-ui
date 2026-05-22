@@ -1,0 +1,136 @@
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 180;
+  background: rgba(12, 16, 31, 0.38);
+  backdrop-filter: blur(3px);
+  animation: fadeIn 0.18s ease both;
+}
+
+.confirm-dialog {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  z-index: 190;
+  width: min(440px, calc(100vw - 32px));
+  translate: -50% -50%;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 28px 90px rgba(20, 16, 60, 0.28);
+  padding: 28px;
+  display: grid;
+  gap: 14px;
+}
+
+.icon-close {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 999px;
+  background: #f4f1ff;
+  color: var(--primary);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.dialog-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  color: var(--primary);
+  background: #f1ecff;
+}
+
+.dialog-icon.warning {
+  color: #b45309;
+  background: #fff7ed;
+}
+
+.dialog-icon.danger {
+  color: #dc2626;
+  background: #fef2f2;
+}
+
+h2 {
+  margin: 0;
+  padding-right: 44px;
+  font-size: 24px;
+  line-height: 1.1;
+  color: var(--text);
+}
+
+p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+  white-space: pre-line;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 8px;
+}
+
+button.primary,
+button.secondary {
+  min-height: 44px;
+  border-radius: 14px;
+  padding: 0 20px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+button.secondary {
+  border: 1px solid #d7ccff;
+  background: #fff;
+  color: var(--primary);
+}
+
+button.primary {
+  border: 0;
+  background: linear-gradient(135deg, #6427ff, #8c52ff);
+  color: #fff;
+  box-shadow: 0 14px 28px rgba(108, 99, 255, 0.24);
+}
+
+button.primary.danger {
+  background: linear-gradient(135deg, #dc2626, #f97316);
+  box-shadow: 0 14px 28px rgba(220, 38, 38, 0.2);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 560px) {
+  .confirm-dialog {
+    width: calc(100vw - 28px);
+    max-height: min(82vh, 560px);
+    overflow: auto;
+    padding: 22px;
+    border-radius: 20px;
+  }
+
+  .actions {
+    flex-direction: column-reverse;
+  }
+
+  button.primary,
+  button.secondary {
+    width: 100%;
+  }
+}

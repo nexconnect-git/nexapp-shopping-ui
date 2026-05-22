@@ -1,5 +1,4 @@
 <div class="wl-wrap">
-
   <!-- Top bar -->
   <div class="wl-topbar">
     <div>
@@ -14,7 +13,7 @@
 
   @if (loading()) {
     <div class="wl-loading">
-      @for (n of [1,2,3,4,5]; track n) {
+      @for (n of [1, 2, 3, 4, 5]; track n) {
         <div class="wl-skel shimmer"></div>
       }
     </div>
@@ -22,7 +21,10 @@
     <div class="wl-empty">
       <span class="material-icons-outlined">account_balance_wallet</span>
       <p>No transactions yet</p>
-      <span>Your earnings and payouts will appear here once orders are completed.</span>
+      <span
+        >Your earnings and payouts will appear here once orders are
+        completed.</span
+      >
     </div>
   } @else {
     <div class="wl-table-card">
@@ -38,28 +40,42 @@
       @for (txn of transactions(); track txn.id) {
         <div class="wl-row">
           <div class="wl-date">
-            <span class="wl-date-main">{{ txn.created_at | date:'MMM d, y' }}</span>
-            <span class="wl-date-time">{{ txn.created_at | date:'shortTime' }}</span>
+            <span class="wl-date-main">{{
+              txn.created_at | date: "MMM d, y"
+            }}</span>
+            <span class="wl-date-time">{{
+              txn.created_at | date: "shortTime"
+            }}</span>
           </div>
           <div class="wl-desc">
-            <span class="wl-desc-main">{{ txn.description || (txn.source | titlecase) }}</span>
+            <span class="wl-desc-main">{{
+              txn.description || (txn.source | titlecase)
+            }}</span>
             @if (txn.reference_id) {
               <span class="wl-desc-ref">Ref: {{ txn.reference_id }}</span>
             }
           </div>
           <div>
-            <span class="wl-badge" [class.wl-badge-credit]="txn.transaction_type === 'credit'"
-              [class.wl-badge-debit]="txn.transaction_type !== 'credit'">
+            <span
+              class="wl-badge"
+              [class.wl-badge-credit]="txn.transaction_type === 'credit'"
+              [class.wl-badge-debit]="txn.transaction_type !== 'credit'"
+            >
               {{ formatTransactionType(txn.transaction_type) }}
             </span>
           </div>
-          <div class="align-right wl-amount" [class.wl-amount-credit]="txn.transaction_type === 'credit'">
-            {{ txn.transaction_type === 'credit' ? '+' : '-' }}{{ txn.amount | appCurrency }}
+          <div
+            class="align-right wl-amount"
+            [class.wl-amount-credit]="txn.transaction_type === 'credit'"
+          >
+            {{ txn.transaction_type === "credit" ? "+" : "-"
+            }}{{ txn.amount | appCurrency }}
           </div>
-          <div class="align-right wl-balance-after">{{ txn.balance_after | appCurrency }}</div>
+          <div class="align-right wl-balance-after">
+            {{ txn.balance_after | appCurrency }}
+          </div>
         </div>
       }
     </div>
   }
-
 </div>

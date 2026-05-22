@@ -1,10 +1,12 @@
-<div class="tasks-page fade-in">
-
+<div class="saas-page tasks-page scheduled-tasks-page fade-in">
   <!-- Page Header -->
   <div class="page-header">
     <div>
       <h1 class="page-title">Scheduled Tasks</h1>
-      <p class="page-subtitle">Schedule and manage background jobs — payouts, reports, notifications, and more.</p>
+      <p class="page-subtitle">
+        Schedule and manage background jobs — payouts, reports, notifications,
+        and more.
+      </p>
     </div>
     <div class="header-meta">
       <span class="auto-refresh-badge">
@@ -24,12 +26,9 @@
       <p>Loading task registry…</p>
     </div>
   } @else {
-
     <div class="tasks-layout">
-
       <!-- ── LEFT: Task Catalog + Form ── -->
       <div class="left-panel">
-
         <!-- Task Type Cards -->
         @if (!selectedTask()) {
           <div class="catalog-header">
@@ -37,26 +36,36 @@
               <span class="material-icons-outlined">apps</span>
               Select a Task Type
             </h2>
-            <p class="section-sub">Choose what to schedule from the catalog below.</p>
+            <p class="section-sub">
+              Choose what to schedule from the catalog below.
+            </p>
           </div>
 
           @for (cat of categories; track cat) {
             <div class="catalog-section">
               <div class="catalog-cat-label">
-                <span class="material-icons-outlined">{{ categoryIcon(cat) }}</span>
+                <span class="material-icons-outlined">{{
+                  categoryIcon(cat)
+                }}</span>
                 {{ categoryLabel(cat) }}
               </div>
               <div class="task-cards">
                 @for (task of tasksByCategory(cat); track task.key) {
                   <button class="task-card" (click)="selectTask(task)">
-                    <div class="task-card-icon task-card-icon--{{ task.category }}">
-                      <span class="material-icons-outlined">{{ task.icon }}</span>
+                    <div
+                      class="task-card-icon task-card-icon--{{ task.category }}"
+                    >
+                      <span class="material-icons-outlined">{{
+                        task.icon
+                      }}</span>
                     </div>
                     <div class="task-card-body">
                       <span class="task-card-title">{{ task.label }}</span>
                       <span class="task-card-desc">{{ task.description }}</span>
                     </div>
-                    <span class="material-icons-outlined task-card-arrow">arrow_forward_ios</span>
+                    <span class="material-icons-outlined task-card-arrow"
+                      >arrow_forward_ios</span
+                    >
                   </button>
                 }
               </div>
@@ -71,7 +80,9 @@
               <button class="back-btn" (click)="clearSelection()">
                 <span class="material-icons-outlined">arrow_back</span>
               </button>
-              <div class="form-header-icon form-header-icon--{{ task.category }}">
+              <div
+                class="form-header-icon form-header-icon--{{ task.category }}"
+              >
                 <span class="material-icons-outlined">{{ task.icon }}</span>
               </div>
               <div>
@@ -88,95 +99,174 @@
                   Task Parameters
                 </h3>
 
-                @if (task.params.includes('vendor_id')) {
+                @if (task.params.includes("vendor_id")) {
                   <div class="field-group">
-                    <label class="field-label">Vendor <span class="req">*</span></label>
+                    <label class="field-label"
+                      >Vendor <span class="req">*</span></label
+                    >
                     <div class="select-wrap">
-                      <select class="field-input field-select" [(ngModel)]="form.kwargs['vendor_id']" name="vendor_id">
+                      <select
+                        class="field-input field-select"
+                        [(ngModel)]="form.kwargs['vendor_id']"
+                        name="vendor_id"
+                      >
                         <option value="" disabled>— Select a vendor —</option>
                         @for (v of vendors(); track v.id) {
-                          <option [value]="v.id">{{ v.store_name }} · {{ v.city || 'No city' }}</option>
+                          <option [value]="v.id">
+                            {{ v.store_name }} · {{ v.city || "No city" }}
+                          </option>
                         }
                       </select>
-                      <span class="select-icon material-icons-outlined">storefront</span>
+                      <span class="select-icon material-icons-outlined"
+                        >storefront</span
+                      >
                     </div>
                   </div>
                 }
 
-                @if (task.params.includes('partner_id')) {
+                @if (task.params.includes("partner_id")) {
                   <div class="field-group">
-                    <label class="field-label">Delivery Partner <span class="req">*</span></label>
+                    <label class="field-label"
+                      >Delivery Partner <span class="req">*</span></label
+                    >
                     <div class="select-wrap">
-                      <select class="field-input field-select" [(ngModel)]="form.kwargs['partner_id']" name="partner_id">
+                      <select
+                        class="field-input field-select"
+                        [(ngModel)]="form.kwargs['partner_id']"
+                        name="partner_id"
+                      >
                         <option value="" disabled>— Select a partner —</option>
                         @for (p of partners(); track p.id) {
-                          <option [value]="p.id">{{ p.user?.first_name || p.user?.username }} {{ p.user?.last_name }} · {{ p.vehicle_type }}</option>
+                          <option [value]="p.id">
+                            {{ p.user?.first_name || p.user?.username }}
+                            {{ p.user?.last_name }} · {{ p.vehicle_type }}
+                          </option>
                         }
                       </select>
-                      <span class="select-icon material-icons-outlined">two_wheeler</span>
+                      <span class="select-icon material-icons-outlined"
+                        >two_wheeler</span
+                      >
                     </div>
                   </div>
                 }
 
-                @if (task.params.includes('period_start')) {
+                @if (task.params.includes("period_start")) {
                   <div class="field-row">
                     <div class="field-group">
-                      <label class="field-label">Period Start <span class="req">*</span></label>
-                      <input type="date" class="field-input" [(ngModel)]="form.kwargs['period_start']" name="period_start">
+                      <label class="field-label"
+                        >Period Start <span class="req">*</span></label
+                      >
+                      <input
+                        type="date"
+                        class="field-input"
+                        [(ngModel)]="form.kwargs['period_start']"
+                        name="period_start"
+                      />
                     </div>
                     <div class="field-group">
-                      <label class="field-label">Period End <span class="req">*</span></label>
-                      <input type="date" class="field-input" [(ngModel)]="form.kwargs['period_end']" name="period_end">
+                      <label class="field-label"
+                        >Period End <span class="req">*</span></label
+                      >
+                      <input
+                        type="date"
+                        class="field-input"
+                        [(ngModel)]="form.kwargs['period_end']"
+                        name="period_end"
+                      />
                     </div>
                   </div>
                 }
 
-                @if (task.params.includes('payout_id')) {
+                @if (task.params.includes("payout_id")) {
                   <div class="field-group">
-                    <label class="field-label">Pending Payout <span class="req">*</span></label>
+                    <label class="field-label"
+                      >Pending Payout <span class="req">*</span></label
+                    >
                     <div class="select-wrap">
-                      <select class="field-input field-select" [(ngModel)]="form.kwargs['payout_id']" name="payout_id">
-                        <option value="" disabled>— Select a pending payout —</option>
-                        @if (task.key === 'generate_vendor_payouts') {
+                      <select
+                        class="field-input field-select"
+                        [(ngModel)]="form.kwargs['payout_id']"
+                        name="payout_id"
+                      >
+                        <option value="" disabled>
+                          — Select a pending payout —
+                        </option>
+                        @if (task.key === "generate_vendor_payouts") {
                           @for (p of pendingVendorPayouts(); track p.id) {
-                            <option [value]="p.id">{{ p.vendor_name }} ({{ p.period_start | date:'MMM d' }} → {{ p.period_end | date:'MMM d, y' }}) - {{ p.net_payout | currency }}</option>
+                            <option [value]="p.id">
+                              {{ p.vendor_name }} ({{
+                                p.period_start | date: "MMM d"
+                              }}
+                              → {{ p.period_end | date: "MMM d, y" }}) -
+                              {{ p.net_payout | appCurrency }}
+                            </option>
                           }
-                        } @else if (task.key === 'generate_delivery_payouts') {
+                        } @else if (task.key === "generate_delivery_payouts") {
                           @for (p of pendingDeliveryPayouts(); track p.id) {
-                            <option [value]="p.id">{{ p.partner_name }} ({{ p.period_start | date:'MMM d' }} → {{ p.period_end | date:'MMM d, y' }}) - {{ p.total_earnings | currency }}</option>
+                            <option [value]="p.id">
+                              {{ p.partner_name }} ({{
+                                p.period_start | date: "MMM d"
+                              }}
+                              → {{ p.period_end | date: "MMM d, y" }}) -
+                              {{ p.total_earnings | appCurrency }}
+                            </option>
                           }
                         }
                       </select>
-                      <span class="select-icon material-icons-outlined">receipt_long</span>
+                      <span class="select-icon material-icons-outlined"
+                        >receipt_long</span
+                      >
                     </div>
                   </div>
                 }
 
-                @if (task.params.includes('title')) {
+                @if (task.params.includes("title")) {
                   <div class="field-group">
-                    <label class="field-label">Notification Title <span class="req">*</span></label>
-                    <input type="text" class="field-input" [(ngModel)]="form.kwargs['title']" name="notif_title" placeholder="e.g. New Feature Available">
+                    <label class="field-label"
+                      >Notification Title <span class="req">*</span></label
+                    >
+                    <input
+                      type="text"
+                      class="field-input"
+                      [(ngModel)]="form.kwargs['title']"
+                      name="notif_title"
+                      placeholder="e.g. New Feature Available"
+                    />
                   </div>
                 }
 
-                @if (task.params.includes('message')) {
+                @if (task.params.includes("message")) {
                   <div class="field-group">
-                    <label class="field-label">Message <span class="req">*</span></label>
-                    <textarea class="field-input field-textarea" [(ngModel)]="form.kwargs['message']" name="message" rows="3" placeholder="Notification body text…"></textarea>
+                    <label class="field-label"
+                      >Message <span class="req">*</span></label
+                    >
+                    <textarea
+                      class="field-input field-textarea"
+                      [(ngModel)]="form.kwargs['message']"
+                      name="message"
+                      rows="3"
+                      placeholder="Notification body text…"
+                    ></textarea>
                   </div>
                 }
 
-                @if (task.params.includes('target')) {
+                @if (task.params.includes("target")) {
                   <div class="field-group">
                     <label class="field-label">Target Audience</label>
                     <div class="select-wrap">
-                      <select class="field-input field-select" [(ngModel)]="form.kwargs['target']" name="target">
+                      <select
+                        class="field-input field-select"
+                        [(ngModel)]="form.kwargs['target']"
+                        name="target"
+                      >
                         <option value="all">Everyone</option>
                         <option value="vendors">Vendors only</option>
                         <option value="customers">Customers only</option>
                         <option value="delivery">Delivery partners only</option>
                       </select>
-                      <span class="select-icon material-icons-outlined">groups</span>
+                      <span class="select-icon material-icons-outlined"
+                        >groups</span
+                      >
                     </div>
                   </div>
                 }
@@ -191,41 +281,95 @@
               </h3>
 
               <div class="timing-options">
-                <label class="timing-option" [class.selected]="form.schedule_mode === 'now'">
-                  <input type="radio" [(ngModel)]="form.schedule_mode" name="schedule_mode" value="now">
+                <label
+                  class="timing-option"
+                  [class.selected]="form.schedule_mode === 'now'"
+                >
+                  <input
+                    type="radio"
+                    [(ngModel)]="form.schedule_mode"
+                    name="schedule_mode"
+                    value="now"
+                  />
                   <span class="timing-icon material-icons-outlined">bolt</span>
                   <div>
                     <span class="timing-label">Run Immediately</span>
-                    <span class="timing-desc">Enqueue in the background worker right now</span>
+                    <span class="timing-desc"
+                      >Enqueue in the background worker right now</span
+                    >
                   </div>
                 </label>
-                <label class="timing-option" [class.selected]="form.schedule_mode === 'later'">
-                  <input type="radio" [(ngModel)]="form.schedule_mode" name="schedule_mode" value="later">
+                <label
+                  class="timing-option"
+                  [class.selected]="form.schedule_mode === 'later'"
+                >
+                  <input
+                    type="radio"
+                    [(ngModel)]="form.schedule_mode"
+                    name="schedule_mode"
+                    value="later"
+                  />
                   <span class="timing-icon material-icons-outlined">event</span>
                   <div>
                     <span class="timing-label">Schedule for Later</span>
-                    <span class="timing-desc">Choose a specific date and time</span>
+                    <span class="timing-desc"
+                      >Choose a specific date and time</span
+                    >
                   </div>
                 </label>
               </div>
 
-              @if (form.schedule_mode === 'later') {
+              @if (form.schedule_mode === "later") {
                 <div class="later-fields">
                   <div class="field-group">
-                    <label class="field-label">Scheduled Date & Time <span class="req">*</span></label>
-                    <input type="datetime-local" class="field-input" [(ngModel)]="form.scheduled_time" name="scheduled_time">
+                    <label class="field-label"
+                      >Scheduled Date & Time <span class="req">*</span></label
+                    >
+                    <input
+                      type="datetime-local"
+                      class="field-input"
+                      [(ngModel)]="form.scheduled_time"
+                      name="scheduled_time"
+                    />
                   </div>
                   <div class="field-group">
                     <label class="field-label">Repeat</label>
                     <div class="repeat-options">
-                      <label class="repeat-chip" [class.active]="form.repeat_mode === 'once'">
-                        <input type="radio" [(ngModel)]="form.repeat_mode" name="repeat_mode" value="once"> Once
+                      <label
+                        class="repeat-chip"
+                        [class.active]="form.repeat_mode === 'once'"
+                      >
+                        <input
+                          type="radio"
+                          [(ngModel)]="form.repeat_mode"
+                          name="repeat_mode"
+                          value="once"
+                        />
+                        Once
                       </label>
-                      <label class="repeat-chip" [class.active]="form.repeat_mode === 'daily'">
-                        <input type="radio" [(ngModel)]="form.repeat_mode" name="repeat_mode" value="daily"> Daily
+                      <label
+                        class="repeat-chip"
+                        [class.active]="form.repeat_mode === 'daily'"
+                      >
+                        <input
+                          type="radio"
+                          [(ngModel)]="form.repeat_mode"
+                          name="repeat_mode"
+                          value="daily"
+                        />
+                        Daily
                       </label>
-                      <label class="repeat-chip" [class.active]="form.repeat_mode === 'weekly'">
-                        <input type="radio" [(ngModel)]="form.repeat_mode" name="repeat_mode" value="weekly"> Weekly
+                      <label
+                        class="repeat-chip"
+                        [class.active]="form.repeat_mode === 'weekly'"
+                      >
+                        <input
+                          type="radio"
+                          [(ngModel)]="form.repeat_mode"
+                          name="repeat_mode"
+                          value="weekly"
+                        />
+                        Weekly
                       </label>
                     </div>
                   </div>
@@ -234,13 +378,19 @@
             </div>
 
             <!-- Submit -->
-            <button class="submit-btn" (click)="submit()" [disabled]="submitting()">
+            <button
+              class="submit-btn"
+              (click)="submit()"
+              [disabled]="submitting()"
+            >
               @if (submitting()) {
                 <span class="spinner-btn"></span>
                 Scheduling…
               } @else {
-                <span class="material-icons-outlined">{{ form.schedule_mode === 'now' ? 'bolt' : 'schedule_send' }}</span>
-                {{ form.schedule_mode === 'now' ? 'Run Now' : 'Schedule Task' }}
+                <span class="material-icons-outlined">{{
+                  form.schedule_mode === "now" ? "bolt" : "schedule_send"
+                }}</span>
+                {{ form.schedule_mode === "now" ? "Run Now" : "Schedule Task" }}
               }
             </button>
           </div>
@@ -256,7 +406,12 @@
             </div>
             <div>
               <h2 class="jobs-title">All Tasks & Jobs</h2>
-              <p class="jobs-sub">{{ jobs().length }} job{{ jobs().length !== 1 ? 's' : '' }} total</p>
+              <p class="jobs-sub">
+                {{ jobs().length }} job{{
+                  jobs().length !== 1 ? "s" : ""
+                }}
+                total
+              </p>
             </div>
           </div>
 
@@ -269,28 +424,69 @@
             emptyIcon="check_circle_outline"
           >
             <ng-template tableCell="task" let-job>
-              <div class="job-info" style="display:flex; align-items:center; gap:0.75rem;">
-                <div class="job-icon job-icon--{{ job.category }}" style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                  <span class="material-icons-outlined" style="font-size: 16px;">{{ job.icon }}</span>
+              <div
+                class="job-info"
+                style="display: flex; align-items: center; gap: 0.75rem"
+              >
+                <div
+                  class="job-icon job-icon--{{ job.category }}"
+                  style="
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 8px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    flex-shrink: 0;
+                  "
+                >
+                  <span
+                    class="material-icons-outlined"
+                    style="font-size: 16px"
+                    >{{ job.icon }}</span
+                  >
                 </div>
-                <span class="job-label" style="font-weight: 600; font-size: 0.875rem; color: var(--text-primary);">{{ job.label }}</span>
+                <span
+                  class="job-label"
+                  style="
+                    font-weight: 600;
+                    font-size: 0.875rem;
+                    color: var(--text-primary);
+                  "
+                  >{{ job.label }}</span
+                >
               </div>
             </ng-template>
 
             <ng-template tableCell="category" let-job>
-              <span class="text-muted text-sm" style="text-transform: capitalize;">{{ job.category }}</span>
+              <span
+                class="text-muted text-sm"
+                style="text-transform: capitalize"
+                >{{ job.category }}</span
+              >
             </ng-template>
 
             <ng-template tableCell="parameters" let-job>
-              <span class="job-params" style="font-family: monospace; font-size: 0.8125rem; color: var(--text-secondary);">{{ formatKwargs(job.kwargs) }}</span>
+              <span
+                class="job-params"
+                style="
+                  font-family: monospace;
+                  font-size: 0.8125rem;
+                  color: var(--text-secondary);
+                "
+                >{{ formatKwargs(job.kwargs) }}</span
+              >
             </ng-template>
 
             <ng-template tableCell="time" let-job>
-              <span class="job-time text-sm" style="color: var(--text-muted); font-weight: 500;">
+              <span
+                class="job-time text-sm"
+                style="color: var(--text-muted); font-weight: 500"
+              >
                 @if (job.scheduled_at) {
-                  {{ job.scheduled_at | date:'MMM d, HH:mm' }}
+                  {{ job.scheduled_at | date: "MMM d, HH:mm" }}
                 } @else if (job.enqueued_at) {
-                  {{ job.enqueued_at | date:'MMM d, HH:mm' }}
+                  {{ job.enqueued_at | date: "MMM d, HH:mm" }}
                 } @else {
                   —
                 }
@@ -298,13 +494,32 @@
             </ng-template>
 
             <ng-template tableCell="status" let-job>
-              <span class="status-chip {{ statusClass(job.status) }}">{{ job.status }}</span>
+              <span class="status-chip {{ statusClass(job.status) }}">{{
+                job.status
+              }}</span>
             </ng-template>
 
             <ng-template tableCell="actions" let-job>
-              <div style="display: flex; justify-content: flex-end;">
-                @if (job.status === 'scheduled' || job.status === 'queued') {
-                  <button class="cancel-btn" (click)="cancel(job.id)" [disabled]="cancellingId() === job.id" title="Cancel job" style="background: none; border: none; cursor: pointer; color: var(--text-muted); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 4px;">
+              <div style="display: flex; justify-content: flex-end">
+                @if (job.status === "scheduled" || job.status === "queued") {
+                  <button
+                    class="cancel-btn"
+                    (click)="cancel(job.id)"
+                    [disabled]="cancellingId() === job.id"
+                    title="Cancel job"
+                    style="
+                      background: none;
+                      border: none;
+                      cursor: pointer;
+                      color: var(--text-muted);
+                      width: 32px;
+                      height: 32px;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      border-radius: 4px;
+                    "
+                  >
                     @if (cancellingId() === job.id) {
                       <span class="spinner-sm"></span>
                     } @else {
@@ -312,11 +527,30 @@
                     }
                   </button>
                 } @else {
-                  <button class="cancel-btn delete-btn" (click)="cancel(job.id)" [disabled]="cancellingId() === job.id" title="Delete job from history" style="background: none; border: none; cursor: pointer; color: var(--danger); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 4px;">
+                  <button
+                    class="cancel-btn delete-btn"
+                    (click)="cancel(job.id)"
+                    [disabled]="cancellingId() === job.id"
+                    title="Delete job from history"
+                    style="
+                      background: none;
+                      border: none;
+                      cursor: pointer;
+                      color: var(--danger);
+                      width: 32px;
+                      height: 32px;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      border-radius: 4px;
+                    "
+                  >
                     @if (cancellingId() === job.id) {
                       <span class="spinner-sm"></span>
                     } @else {
-                      <span class="material-icons-outlined">delete_outline</span>
+                      <span class="material-icons-outlined"
+                        >delete_outline</span
+                      >
                     }
                   </button>
                 }
@@ -343,7 +577,6 @@
           </div>
         </div>
       </div>
-
     </div>
   }
 </div>
