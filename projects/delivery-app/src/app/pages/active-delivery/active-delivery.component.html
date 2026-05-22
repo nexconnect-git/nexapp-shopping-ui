@@ -124,6 +124,12 @@
           <!-- ════════ ROUTE MAP (picked_up / on_the_way) ════════ -->
           @if (["picked_up", "on_the_way"].includes(order.status)) {
             <div [id]="'delivery-map-' + order.id" class="route-map"></div>
+            @if (mapError(order.id)) {
+              <div class="route-map-error">
+                <span class="material-icons-outlined">map</span>
+                {{ mapError(order.id) }}
+              </div>
+            }
           }
 
           <!-- ════════ PICKED UP: Navigate to customer ════════ -->

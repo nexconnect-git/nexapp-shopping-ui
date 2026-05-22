@@ -9,17 +9,11 @@ import {
   OnDestroy,
   Output,
   PLATFORM_ID,
-  computed,
   signal,
   ViewChild,
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DomSanitizer } from '@angular/platform-browser';
-import {
-  buildOsmEmbedUrl,
-  fallbackMapUnavailableMessage,
-} from '@nexconnect/customer-location';
 import { GoogleMapsService } from '../../services/google-maps.service';
 import {
   autocompleteGooglePlaces,
@@ -57,7 +51,6 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
 
   private platformId = inject(PLATFORM_ID);
   private ngZone = inject(NgZone);
-  private sanitizer = inject(DomSanitizer);
   private googleMaps = inject(GoogleMapsService);
   private map: any = null;
   private marker: any = null;
@@ -72,20 +65,12 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
   locating = signal(false);
   mapReady = signal(false);
   mapUnavailable = signal(false);
-  fallbackMapReady = signal(false);
   currentLat = signal(this.initialLat);
   currentLng = signal(this.initialLng);
   searchQuery = signal('');
   placeSuggestions = signal<GooglePlaceSuggestion[]>([]);
   searchingPlaces = signal(false);
   placesError = signal('');
-  fallbackMapUrl = computed(() => {
-    const lat = Number(this.currentLat());
-    const lng = Number(this.currentLng());
-    return this.sanitizer.bypassSecurityTrustResourceUrl(
-      buildOsmEmbedUrl({ latitude: lat, longitude: lng }),
-    );
-  });
 
   private get resolvedApiKey() {
     return this.googleMaps.apiKey(this.apiKey);
@@ -110,29 +95,21 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
   private loadGoogleMaps() {
     const apiKey = this.resolvedApiKey;
     if (!apiKey) {
-      this.enableFallbackMap();
+      this.setMapUnavailable('Google Maps API key is not configured.');
       return;
     }
 
     this.googleMaps
       .loadJavaScriptApi(apiKey)
       .then(() => this.ngZone.run(() => this.initMap()))
-      .catch(() =>
-        this.ngZone.run(() => {
-          this.mapUnavailable.set(true);
-          this.placesError.set('Google Maps could not be loaded.');
-        }),
-      );
+      .catch(() => this.ngZone.run(() => this.setMapUnavailable()));
   }
 
   private initMap() {
     const container = this.mapContainerRef?.nativeElement;
     if (!container || this.map) return;
 
-    this.createMap(container).catch(() => {
-      this.mapUnavailable.set(true);
-      this.placesError.set('Google Maps could not be loaded.');
-    });
+    this.createMap(container).catch(() => this.setMapUnavailable());
   }
 
   private async createMap(container: HTMLElement) {
@@ -426,7 +403,6 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
             this.setMarkerPosition({ lat, lng });
             this.reverseGeocode(lat, lng);
           } else {
-            this.fallbackMapReady.set(true);
             this.pickedAddress.set(
               `Pinned location: ${lat.toFixed(6)}, ${lng.toFixed(6)}`,
             );
@@ -446,11 +422,10 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
     );
   }
 
-  private enableFallbackMap() {
+  private setMapUnavailable(message = 'Google Maps could not be loaded.') {
     this.currentLat.set(+this.initialLat);
     this.currentLng.set(+this.initialLng);
-    this.fallbackMapReady.set(true);
-    this.mapUnavailable.set(false);
-    this.placesError.set(fallbackMapUnavailableMessage(false));
+    this.mapUnavailable.set(true);
+    this.placesError.set(message);
   }
 }

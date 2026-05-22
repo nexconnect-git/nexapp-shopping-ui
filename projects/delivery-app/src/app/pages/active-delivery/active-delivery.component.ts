@@ -10,6 +10,7 @@ import { CommonModule } from '@angular/common';
 import {
   ApiService,
   AppCurrencyPipe,
+  GoogleMapsService,
   openAuthenticatedWebSocket,
   Order,
   PaymentQR,
@@ -17,7 +18,14 @@ import {
 import { Subscription, timer } from 'rxjs';
 import { AuthService } from '@shared/public-api';
 
-declare const L: any;
+declare const google: any;
+
+interface RouteMapState {
+  map: any;
+  markers: any[];
+  partnerMarker: any | null;
+  routePolyline: any | null;
+}
 
 @Component({
   selector: 'app-active-delivery',
@@ -31,18 +39,20 @@ export class ActiveDeliveryComponent
 {
   private api = inject(ApiService);
   private auth = inject(AuthService);
+  private googleMaps = inject(GoogleMapsService);
 
   orders = signal<Order[]>([]);
   loading = signal(true);
+  mapErrors = signal<Record<string, string>>({});
   private sub?: Subscription;
 
   // Geotracking State
   private watchId?: number;
   private wsConns: Map<string, WebSocket> = new Map();
 
-  // Leaflet route maps — keyed by order.id
-  private leafletMaps: Map<string, any> = new Map();
-  private partnerMarkers: Map<string, any> = new Map();
+  // Google route maps keyed by order.id
+  private routeMaps: Map<string, RouteMapState> = new Map();
+  private initializingMaps: Set<string> = new Set();
   private currentLat = 0;
   private currentLng = 0;
 
@@ -69,9 +79,9 @@ export class ActiveDeliveryComponent
   ngOnDestroy() {
     this.sub?.unsubscribe();
     this.stopLocationTracking();
-    this.leafletMaps.forEach((m) => m.remove());
-    this.leafletMaps.clear();
-    this.partnerMarkers.clear();
+    this.routeMaps.forEach((state) => this.clearRouteMapState(state));
+    this.routeMaps.clear();
+    this.initializingMaps.clear();
   }
 
   // --- Tracking Broadcast ---
@@ -117,109 +127,203 @@ export class ActiveDeliveryComponent
             }),
           );
         }
-        // Update partner marker on the Leaflet map
-        const marker = this.partnerMarkers.get(order.id);
-        if (marker) marker.setLatLng([lat, lng]);
+        const routeMap = this.routeMaps.get(order.id);
+        if (routeMap?.partnerMarker) {
+          routeMap.partnerMarker.setPosition({ lat, lng });
+          this.refreshRoutePolyline(order, routeMap);
+        }
       }
     });
   }
 
   private initMapsForOrders() {
-    if (typeof L === 'undefined') return;
+    const activeOrderIds = new Set<string>();
+
     this.orders().forEach((order) => {
+      if (!this.isRouteMapStatus(order.status)) return;
+
+      activeOrderIds.add(order.id);
       if (
-        ['picked_up', 'on_the_way'].includes(order.status) &&
-        !this.leafletMaps.has(order.id)
+        !this.routeMaps.has(order.id) &&
+        !this.initializingMaps.has(order.id)
       ) {
-        const el = document.getElementById(`delivery-map-${order.id}`);
-        if (!el) return;
-
-        const vLat = Number(order.vendor_info?.latitude || 0);
-        const vLng = Number(order.vendor_info?.longitude || 0);
-        const cLat = Number(order.delivery_latitude || 0);
-        const cLng = Number(order.delivery_longitude || 0);
-        const centerLat = this.currentLat || vLat;
-        const centerLng = this.currentLng || vLng;
-
-        const map = L.map(el, { zoomControl: true }).setView(
-          [centerLat, centerLng],
-          14,
-        );
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© OpenStreetMap contributors',
-        }).addTo(map);
-
-        // Vendor marker
-        if (vLat && vLng) {
-          L.marker([vLat, vLng], {
-            icon: L.divIcon({
-              className: 'map-icon-vendor',
-              html: '🏪',
-              iconSize: [24, 24],
-            }),
-          })
-            .addTo(map)
-            .bindPopup(
-              'Pickup: ' + (order.vendor_info?.store_name || 'Vendor'),
-            );
-        }
-
-        // Customer marker
-        if (cLat && cLng) {
-          L.marker([cLat, cLng], {
-            icon: L.divIcon({
-              className: 'map-icon-customer',
-              html: '📍',
-              iconSize: [24, 24],
-            }),
-          })
-            .addTo(map)
-            .bindPopup('Drop-off');
-        }
-
-        // Partner marker (own location)
-        if (this.currentLat && this.currentLng) {
-          const partnerMarker = L.marker([this.currentLat, this.currentLng], {
-            icon: L.divIcon({
-              className: 'map-icon-partner',
-              html: '🛵',
-              iconSize: [28, 28],
-            }),
-          })
-            .addTo(map)
-            .bindPopup('You');
-          this.partnerMarkers.set(order.id, partnerMarker);
-        }
-
-        // Polyline: partner → vendor → customer
-        const points: [number, number][] = [];
-        if (this.currentLat && this.currentLng)
-          points.push([this.currentLat, this.currentLng]);
-        if (vLat && vLng) points.push([vLat, vLng]);
-        if (cLat && cLng) points.push([cLat, cLng]);
-        if (points.length >= 2) {
-          L.polyline(points, {
-            color: '#22C55E',
-            weight: 3,
-            dashArray: '6,4',
-          }).addTo(map);
-        }
-
-        this.leafletMaps.set(order.id, map);
+        this.initGoogleMapForOrder(order);
+        return;
       }
 
-      // Remove map if order no longer needs it
-      if (
-        !['picked_up', 'on_the_way'].includes(order.status) &&
-        this.leafletMaps.has(order.id)
-      ) {
-        this.leafletMaps.get(order.id).remove();
-        this.leafletMaps.delete(order.id);
-        this.partnerMarkers.delete(order.id);
-      }
+      const routeMap = this.routeMaps.get(order.id);
+      if (routeMap) this.refreshRoutePolyline(order, routeMap);
+    });
+
+    this.routeMaps.forEach((state, orderId) => {
+      if (activeOrderIds.has(orderId)) return;
+      this.clearRouteMapState(state);
+      this.routeMaps.delete(orderId);
+      this.clearMapError(orderId);
     });
   }
 
+  private async initGoogleMapForOrder(order: Order) {
+    const el = document.getElementById(`delivery-map-${order.id}`);
+    if (!el) return;
+
+    if (!this.googleMaps.hasApiKey()) {
+      this.setMapError(order.id, 'Google Maps API key is not configured.');
+      return;
+    }
+
+    this.initializingMaps.add(order.id);
+    try {
+      await this.googleMaps.loadJavaScriptApi();
+      if (!this.isRouteMapStatus(order.status) || this.routeMaps.has(order.id))
+        return;
+
+      const center = this.routeCenter(order);
+      const map = new google.maps.Map(el, {
+        center,
+        zoom: 14,
+        mapTypeControl: false,
+        fullscreenControl: false,
+        streetViewControl: false,
+        gestureHandling: 'greedy',
+      });
+      const bounds = new google.maps.LatLngBounds();
+      const state: RouteMapState = {
+        map,
+        markers: [],
+        partnerMarker: null,
+        routePolyline: null,
+      };
+
+      const addMarker = (
+        position: { lat: number; lng: number },
+        title: string,
+        label: string,
+      ) => {
+        const marker = new google.maps.Marker({
+          map,
+          position,
+          title,
+          label,
+        });
+        state.markers.push(marker);
+        bounds.extend(position);
+        return marker;
+      };
+
+      const vendorPoint = this.vendorPoint(order);
+      if (vendorPoint) {
+        addMarker(
+          vendorPoint,
+          `Pickup: ${order.vendor_info?.store_name || 'Vendor'}`,
+          'P',
+        );
+      }
+
+      const customerPoint = this.customerPoint(order);
+      if (customerPoint) addMarker(customerPoint, 'Drop-off', 'D');
+
+      const partnerPoint = this.partnerPoint();
+      if (partnerPoint) {
+        state.partnerMarker = addMarker(partnerPoint, 'You', 'Y');
+      }
+
+      this.refreshRoutePolyline(order, state);
+      if (!bounds.isEmpty()) map.fitBounds(bounds, 48);
+
+      this.routeMaps.set(order.id, state);
+      this.clearMapError(order.id);
+    } catch (error) {
+      console.warn('[Delivery map] Google Maps unavailable:', error);
+      this.setMapError(order.id, 'Google Maps could not be loaded.');
+    } finally {
+      this.initializingMaps.delete(order.id);
+    }
+  }
+
+  private refreshRoutePolyline(order: Order, state: RouteMapState) {
+    const path = this.routePoints(order);
+    if (path.length < 2) return;
+
+    if (!state.routePolyline) {
+      state.routePolyline = new google.maps.Polyline({
+        map: state.map,
+        path,
+        strokeColor: '#22C55E',
+        strokeOpacity: 1,
+        strokeWeight: 4,
+      });
+      return;
+    }
+
+    state.routePolyline.setPath(path);
+  }
+
+  private clearRouteMapState(state: RouteMapState) {
+    state.markers.forEach((marker) => marker.setMap(null));
+    state.routePolyline?.setMap(null);
+  }
+
+  private routePoints(order: Order): Array<{ lat: number; lng: number }> {
+    return [
+      this.partnerPoint(),
+      this.vendorPoint(order),
+      this.customerPoint(order),
+    ].filter(Boolean) as Array<{ lat: number; lng: number }>;
+  }
+
+  private routeCenter(order: Order): { lat: number; lng: number } {
+    return (
+      this.partnerPoint() ||
+      this.vendorPoint(order) ||
+      this.customerPoint(order) || { lat: 12.9716, lng: 77.5946 }
+    );
+  }
+
+  private vendorPoint(order: Order): { lat: number; lng: number } | null {
+    return this.pointFrom(
+      order.vendor_info?.latitude,
+      order.vendor_info?.longitude,
+    );
+  }
+
+  private customerPoint(order: Order): { lat: number; lng: number } | null {
+    return this.pointFrom(order.delivery_latitude, order.delivery_longitude);
+  }
+
+  private partnerPoint(): { lat: number; lng: number } | null {
+    return this.pointFrom(this.currentLat, this.currentLng);
+  }
+
+  private pointFrom(
+    lat: unknown,
+    lng: unknown,
+  ): { lat: number; lng: number } | null {
+    const parsedLat = Number(lat || 0);
+    const parsedLng = Number(lng || 0);
+    if (!parsedLat || !parsedLng) return null;
+    return { lat: parsedLat, lng: parsedLng };
+  }
+
+  private isRouteMapStatus(status: string): boolean {
+    return ['picked_up', 'on_the_way'].includes(status);
+  }
+
+  mapError(orderId: string): string {
+    return this.mapErrors()[orderId] || '';
+  }
+
+  private setMapError(orderId: string, message: string) {
+    this.mapErrors.update((errors) => ({ ...errors, [orderId]: message }));
+  }
+
+  private clearMapError(orderId: string) {
+    this.mapErrors.update((errors) => {
+      const next = { ...errors };
+      delete next[orderId];
+      return next;
+    });
+  }
   private connectTrackerSocket(orderId: string): WebSocket {
     const ws = openAuthenticatedWebSocket(
       `/sa/ws/delivery/${orderId}/tracking/`,

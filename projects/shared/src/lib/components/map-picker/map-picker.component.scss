@@ -163,46 +163,6 @@
   display: none;
 }
 
-.fallback-map {
-  width: 100%;
-  min-height: 220px;
-  border: 0;
-  display: block;
-  background: #eef2f7;
-}
-
-.fallback-pin-card {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 0.875rem;
-  border-top: 1px solid var(--border-color, #e5e7eb);
-  background: white;
-}
-
-.fallback-pin-card .material-symbols-rounded {
-  width: 34px;
-  height: 34px;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  flex: 0 0 auto;
-  background: rgba(108, 43, 255, 0.1);
-  color: var(--primary, #6c2bff);
-  font-size: 20px;
-}
-
-.fallback-pin-card b,
-.fallback-pin-card small {
-  display: block;
-}
-
-.fallback-pin-card small {
-  margin-top: 2px;
-  color: var(--text-muted, #6b7280);
-  line-height: 1.35;
-}
-
 .map-unavailable {
   display: grid;
   place-items: center;

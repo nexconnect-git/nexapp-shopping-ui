@@ -52,7 +52,7 @@
         Detecting address...
       </span>
     }
-    @if (fallbackMapReady() && placesError()) {
+    @if (mapUnavailable() && placesError()) {
       <span class="map-geocoding">{{ placesError() }}</span>
     }
   </div>
@@ -61,39 +61,16 @@
     #mapContainer
     class="map-container"
     [style.height]="height"
-    [class.hidden]="mapUnavailable() || (fallbackMapReady() && !mapReady())"
+    [class.hidden]="mapUnavailable()"
   ></div>
-
-  @if (fallbackMapReady() && !mapReady()) {
-    <iframe
-      class="fallback-map"
-      title="Approximate selected location map"
-      [src]="fallbackMapUrl()"
-      [style.height]="height"
-      loading="lazy"
-    >
-    </iframe>
-    <div class="fallback-pin-card">
-      <span class="material-symbols-rounded" aria-hidden="true"
-        >location_on</span
-      >
-      <div>
-        <b>Approximate map</b>
-        <small
-          >Use your current location to pin coordinates, or enter address fields
-          manually.</small
-        >
-      </div>
-    </div>
-  }
 
   @if (mapUnavailable()) {
     <div class="map-unavailable" [style.min-height]="height">
       <span class="material-symbols-rounded" aria-hidden="true">map</span>
-      <strong>Map is unavailable</strong>
+      <strong>Google Maps is unavailable</strong>
       <p>
-        Add a Google Maps API key in environment configuration, or enter the
-        address fields manually.
+        Check the Google Maps API key, enabled APIs, billing, and allowed
+        website referrers for this domain.
       </p>
     </div>
   }
