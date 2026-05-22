@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { CURRENCY_SELECT_OPTIONS } from '@shared/public-api';
 import {
   DynamicEditConfig,
   DynamicProfileConfig,
@@ -132,6 +133,8 @@ export class EntityProfileAdapterService {
         'last_name',
         'email',
         'phone',
+        'country',
+        'currency',
         'store_name',
         'vendor_type',
         'vendor_tier',
@@ -194,6 +197,7 @@ export class EntityProfileAdapterService {
         'email',
         'phone',
         'country',
+        'currency',
         'is_verified',
         'is_active',
       ]);
@@ -206,6 +210,8 @@ export class EntityProfileAdapterService {
         'last_name',
         'email',
         'phone',
+        'country',
+        'currency',
         'vehicle_type',
         'vehicle_number',
         'license_number',
@@ -254,6 +260,7 @@ export class EntityProfileAdapterService {
       email: user['email'] ?? dto['email'] ?? '',
       phone: user['phone'] ?? dto['phone'] ?? '',
       country: user['country'] ?? dto['country'] ?? '',
+      currency: user['currency'] ?? dto['currency'] ?? 'INR',
       user_is_active: user['is_active'] ?? dto['is_active'] ?? true,
       business_addresses: this.collectionText(dto['business_addresses']),
       serviceable_pincodes: this.collectionText(dto['serviceable_pincodes']),
@@ -472,6 +479,8 @@ export class EntityProfileAdapterService {
               this.formField('last_name', 'Last Name', 'text', false),
               this.formField('email', 'Business Email', 'email', true),
               this.formField('phone', 'Phone Number', 'tel', true),
+              this.formField('country', 'Country', 'text', false),
+              this.currencyField(),
             ]),
           ],
           '👤',
@@ -831,6 +840,7 @@ export class EntityProfileAdapterService {
       this.field('Email', user['email']),
       this.field('Phone', user['phone']),
       this.field('Country', user['country']),
+      this.field('Currency', user['currency'] || 'INR'),
       this.field('Role', user['role']),
       this.field(
         'Active',
@@ -1188,6 +1198,7 @@ export class EntityProfileAdapterService {
       this.formField('email', 'Email', 'email', false),
       this.formField('phone', 'Phone', 'tel', false),
       this.formField('country', 'Country', 'text', false),
+      this.currencyField(),
       this.formField('is_verified', 'Verified', 'toggle', false),
       this.formField('is_active', 'Active', 'toggle', false),
     ]);
@@ -1242,6 +1253,16 @@ export class EntityProfileAdapterService {
       label,
       type: 'select',
       options: options.map((value) => ({ label: this.title(value), value })),
+    };
+  }
+
+  private currencyField(): ProfileFormField {
+    return {
+      key: 'currency',
+      label: 'Currency',
+      type: 'select',
+      options: CURRENCY_SELECT_OPTIONS,
+      hint: 'Defaults to INR when no override is set.',
     };
   }
 

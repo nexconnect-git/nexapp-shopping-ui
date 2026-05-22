@@ -6,6 +6,7 @@ export interface CurrencyConfig {
 }
 
 const DEFAULT_COUNTRY = 'IN';
+const DEFAULT_CURRENCY_CODE = 'INR';
 
 export const COUNTRY_CURRENCY: Record<string, CurrencyConfig> = {
   US: { code: 'USD', locale: 'en-US' },
@@ -60,6 +61,61 @@ export const COUNTRY_CURRENCY: Record<string, CurrencyConfig> = {
   HU: { code: 'HUF', locale: 'hu-HU' },
   IL: { code: 'ILS', locale: 'he-IL' },
 };
+
+export const CURRENCY_CODE_CONFIG: Record<string, CurrencyConfig> = {
+  INR: { code: 'INR', locale: 'en-IN' },
+  USD: { code: 'USD', locale: 'en-US' },
+  EUR: { code: 'EUR', locale: 'en-IE' },
+  GBP: { code: 'GBP', locale: 'en-GB' },
+  AUD: { code: 'AUD', locale: 'en-AU' },
+  CAD: { code: 'CAD', locale: 'en-CA' },
+  SGD: { code: 'SGD', locale: 'en-SG' },
+  AED: { code: 'AED', locale: 'en-AE' },
+  SAR: { code: 'SAR', locale: 'ar-SA' },
+  QAR: { code: 'QAR', locale: 'ar-QA' },
+  KWD: { code: 'KWD', locale: 'ar-KW' },
+  BHD: { code: 'BHD', locale: 'ar-BH' },
+  OMR: { code: 'OMR', locale: 'ar-OM' },
+  JPY: { code: 'JPY', locale: 'ja-JP' },
+  CNY: { code: 'CNY', locale: 'zh-CN' },
+  HKD: { code: 'HKD', locale: 'zh-HK' },
+  CHF: { code: 'CHF', locale: 'de-CH' },
+  SEK: { code: 'SEK', locale: 'sv-SE' },
+  NOK: { code: 'NOK', locale: 'nb-NO' },
+  DKK: { code: 'DKK', locale: 'da-DK' },
+  NZD: { code: 'NZD', locale: 'en-NZ' },
+  ZAR: { code: 'ZAR', locale: 'en-ZA' },
+  BRL: { code: 'BRL', locale: 'pt-BR' },
+  MXN: { code: 'MXN', locale: 'es-MX' },
+  KRW: { code: 'KRW', locale: 'ko-KR' },
+  THB: { code: 'THB', locale: 'th-TH' },
+  MYR: { code: 'MYR', locale: 'ms-MY' },
+  IDR: { code: 'IDR', locale: 'id-ID' },
+  PHP: { code: 'PHP', locale: 'en-PH' },
+  PKR: { code: 'PKR', locale: 'en-PK' },
+  BDT: { code: 'BDT', locale: 'bn-BD' },
+  LKR: { code: 'LKR', locale: 'en-LK' },
+  NGN: { code: 'NGN', locale: 'en-NG' },
+  EGP: { code: 'EGP', locale: 'ar-EG' },
+  TRY: { code: 'TRY', locale: 'tr-TR' },
+  RUB: { code: 'RUB', locale: 'ru-RU' },
+  PLN: { code: 'PLN', locale: 'pl-PL' },
+  CZK: { code: 'CZK', locale: 'cs-CZ' },
+  HUF: { code: 'HUF', locale: 'hu-HU' },
+  ILS: { code: 'ILS', locale: 'he-IL' },
+};
+
+export const CURRENCY_SELECT_OPTIONS = Object.keys(CURRENCY_CODE_CONFIG).map(
+  (code) => ({ label: `${code} - ${currencyDisplayName(code)}`, value: code }),
+);
+
+function currencyDisplayName(code: string): string {
+  try {
+    return new Intl.DisplayNames(['en'], { type: 'currency' }).of(code) || code;
+  } catch {
+    return code;
+  }
+}
 
 const COUNTRY_NAME_ALIASES: Record<string, string> = {
   'UNITED STATES': 'US',
@@ -150,6 +206,12 @@ function normalizeCountry(value: unknown): string | null {
     COUNTRY_NAME_ALIASES[country.replace(/\s+/g, '_')];
   if (alias && COUNTRY_CURRENCY[alias]) return alias;
   return COUNTRY_CURRENCY[country] ? country : null;
+}
+
+function normalizeCurrencyCode(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const code = value.trim().toUpperCase();
+  return CURRENCY_CODE_CONFIG[code] ? code : null;
 }
 
 function readJson(key: string): any | null {
@@ -265,9 +327,24 @@ function getStoredCountry(): string {
   return DEFAULT_COUNTRY;
 }
 
-function persistCountry(country: string, location?: any): void {
+function getStoredCurrencyCode(): string {
+  if (typeof localStorage === 'undefined') return DEFAULT_CURRENCY_CODE;
+
+  for (const user of storedUserCandidates()) {
+    const currency = normalizeCurrencyCode(
+      user?.currency || user?.currency_code || user?.preferred_currency,
+    );
+    if (currency) return currency;
+  }
+
+  return DEFAULT_CURRENCY_CODE;
+}
+
+function persistCurrency(country: string, currencyCode: string, location?: any): void {
   if (typeof localStorage === 'undefined') return;
-  const config = COUNTRY_CURRENCY[country] || COUNTRY_CURRENCY[DEFAULT_COUNTRY];
+  const config =
+    CURRENCY_CODE_CONFIG[currencyCode] ||
+    CURRENCY_CODE_CONFIG[DEFAULT_CURRENCY_CODE];
   localStorage.setItem('app_country', country);
   localStorage.setItem('app_currency_code', config.code);
   if (location !== undefined) {
@@ -283,13 +360,17 @@ function persistCountry(country: string, location?: any): void {
 }
 
 export function getCurrencyConfig(
-  country = getStoredCountry(),
+  currencyOrCountry = getStoredCurrencyCode(),
 ): CurrencyConfig {
-  return COUNTRY_CURRENCY[country] || COUNTRY_CURRENCY[DEFAULT_COUNTRY];
+  const currencyCode = normalizeCurrencyCode(currencyOrCountry);
+  if (currencyCode) return CURRENCY_CODE_CONFIG[currencyCode];
+  const country = normalizeCountry(currencyOrCountry);
+  if (country) return COUNTRY_CURRENCY[country];
+  return CURRENCY_CODE_CONFIG[DEFAULT_CURRENCY_CODE];
 }
 
-export function getCurrencySymbol(country = getStoredCountry()): string {
-  const { code, locale } = getCurrencyConfig(country);
+export function getCurrencySymbol(currencyOrCountry = getStoredCurrencyCode()): string {
+  const { code, locale } = getCurrencyConfig(currencyOrCountry);
   const parts = new Intl.NumberFormat(locale, {
     style: 'currency',
     currency: code,
@@ -299,9 +380,9 @@ export function getCurrencySymbol(country = getStoredCountry()): string {
 
 export function formatCurrency(
   value: number | string | null,
-  country = getStoredCountry(),
+  currencyOrCountry = getStoredCurrencyCode(),
 ): string {
-  const { code, locale } = getCurrencyConfig(country);
+  const { code, locale } = getCurrencyConfig(currencyOrCountry);
   const num = typeof value === 'string' ? parseFloat(value) : (value ?? 0);
   const amount = Number.isFinite(num) ? num : 0;
   return new Intl.NumberFormat(locale, {
@@ -314,46 +395,73 @@ export function formatCurrency(
 
 export function setAppCountryFromLocation(location: any): string {
   const country = inferCountryFromLocation(location) || getStoredCountry();
-  persistCountry(country, location);
+  const currency = normalizeCurrencyCode(
+    location?.currency || location?.currency_code || location?.preferred_currency,
+  ) || getStoredCurrencyCode();
+  persistCurrency(country, currency, location);
   return country;
 }
 
 @Injectable({ providedIn: 'root' })
 export class CurrencyService {
   private readonly currentCountry = signal(getStoredCountry());
+  private readonly currentCurrencyCode = signal(getStoredCurrencyCode());
   readonly country = this.currentCountry.asReadonly();
-  readonly config = computed(() => getCurrencyConfig(this.currentCountry()));
-  readonly symbol = computed(() => getCurrencySymbol(this.currentCountry()));
+  readonly currencyCode = this.currentCurrencyCode.asReadonly();
+  readonly config = computed(() => getCurrencyConfig(this.currentCurrencyCode()));
+  readonly symbol = computed(() => getCurrencySymbol(this.currentCurrencyCode()));
 
   constructor() {
     if (typeof window === 'undefined') return;
     window.addEventListener('app-currency-changed', () =>
-      this.currentCountry.set(getStoredCountry()),
+      this.syncFromStorage(),
     );
     window.addEventListener('storage', (event) => {
       if (
         event.key === 'app_country' ||
+        event.key === 'app_currency_code' ||
         event.key === 'app_location' ||
         event.key === 'vendor_location' ||
         event.key === 'customer_guest_location'
       ) {
-        this.currentCountry.set(getStoredCountry());
+        this.syncFromStorage();
       }
     });
   }
 
   configureFromLocation(location: any): string {
     const country = inferCountryFromLocation(location) || this.currentCountry();
-    persistCountry(country, location);
+    const currency =
+      normalizeCurrencyCode(
+        location?.currency ||
+          location?.currency_code ||
+          location?.preferred_currency,
+      ) || getStoredCurrencyCode();
+    persistCurrency(country, currency, location);
     this.currentCountry.set(country);
+    this.currentCurrencyCode.set(currency);
     return country;
   }
 
   format(value: number | string | null): string {
-    return formatCurrency(value, this.currentCountry());
+    return formatCurrency(value, this.currentCurrencyCode());
   }
 
   getSymbol(): string {
-    return getCurrencySymbol(this.currentCountry());
+    return getCurrencySymbol(this.currentCurrencyCode());
+  }
+
+  resetToDefault(): void {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('app_country', DEFAULT_COUNTRY);
+      localStorage.setItem('app_currency_code', DEFAULT_CURRENCY_CODE);
+    }
+    this.currentCountry.set(DEFAULT_COUNTRY);
+    this.currentCurrencyCode.set(DEFAULT_CURRENCY_CODE);
+  }
+
+  private syncFromStorage(): void {
+    this.currentCountry.set(getStoredCountry());
+    this.currentCurrencyCode.set(getStoredCurrencyCode());
   }
 }

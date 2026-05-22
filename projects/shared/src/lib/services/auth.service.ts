@@ -175,6 +175,7 @@ export class AuthService {
     localStorage.removeItem(this.vendorKey);
     this.accessToken.set(null);
     this.currentUser.set(null);
+    this.currency.resetToDefault();
   }
 
   logout(redirectToLogin = true) {
