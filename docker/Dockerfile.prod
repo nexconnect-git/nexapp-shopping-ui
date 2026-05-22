@@ -39,6 +39,8 @@ COPY --from=build /app/dist/customer-app/browser /usr/share/nginx/html/sa
 COPY --from=build /app/dist/admin-panel/browser /usr/share/nginx/html/sa/admin
 COPY --from=build /app/dist/vendor-app/browser /usr/share/nginx/html/sa/vendor
 COPY --from=build /app/dist/delivery-app/browser /usr/share/nginx/html/sa/delivery
+COPY frontend/docker/runtime-config-entrypoint.sh /docker-entrypoint-runtime-config.sh
+RUN chmod +x /docker-entrypoint-runtime-config.sh
 
 EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["/docker-entrypoint-runtime-config.sh"]
