@@ -698,4 +698,18 @@
       white-space: nowrap;
     }
   }
+
+  .notif-dropdown,
+  .profile-dropdown {
+    position: fixed;
+    top: calc(64px + env(safe-area-inset-top, 0px));
+    right: 0.75rem;
+    left: 0.75rem;
+    width: auto;
+    max-height: calc(100dvh - 88px);
+  }
+
+  .notif-list {
+    max-height: calc(100dvh - 220px);
+  }
 }

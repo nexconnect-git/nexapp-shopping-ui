@@ -131,8 +131,9 @@ export class RegisterComponent {
           this.auth.vendorKey,
           res.vendor_status || 'pending',
         );
-        this.router.navigate(['/pending-approval']);
-        this.loading.set(false);
+        void this.router
+          .navigate(['/pending-approval'])
+          .finally(() => this.loading.set(false));
       },
       error: (err) => {
         const msg = this.registrationErrorMessage(err.error);
@@ -143,11 +144,26 @@ export class RegisterComponent {
   }
 
   private registrationErrorMessage(error: any): string {
+    const fieldLabels: Record<string, string> = {
+      username: 'Username',
+      email: 'Email',
+      phone: 'Phone',
+      password: 'Password',
+      store_name: 'Store name',
+      vendor_email: 'Public contact email',
+      address: 'Street address',
+      city: 'City',
+      state: 'State',
+      postal_code: 'Postal code',
+      latitude: 'Latitude',
+      longitude: 'Longitude',
+      location: 'Location',
+    };
+    for (const [field, label] of Object.entries(fieldLabels)) {
+      const message = error?.[field]?.[0] || error?.[field];
+      if (message) return `${label}: ${message}`;
+    }
     return (
-      error?.username?.[0] ||
-      error?.email?.[0] ||
-      error?.phone?.[0] ||
-      error?.store_name?.[0] ||
       error?.non_field_errors?.[0] ||
       error?.detail ||
       error?.error ||
@@ -212,6 +228,7 @@ export class RegisterComponent {
     if (step === 3) {
       this.validateRequired('address', 'Street address', errors);
       this.validateRequired('city', 'City', errors);
+      this.validateRequired('state', 'State', errors);
       if (
         this.form.postal_code &&
         !PINCODE_PATTERN.test(this.form.postal_code.trim())
@@ -241,7 +258,7 @@ export class RegisterComponent {
   private stepFieldKeys(step: number): string[] {
     if (step === 1) return ['username', 'email', 'phone', 'password'];
     if (step === 2) return ['store_name', 'vendor_email'];
-    return ['address', 'city', 'postal_code', 'location'];
+    return ['address', 'city', 'state', 'postal_code', 'location'];
   }
 
   clearFieldError(field: string) {

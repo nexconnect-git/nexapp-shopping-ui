@@ -31,7 +31,7 @@ app-root,
 }
 
 body .app-shell .sidebar {
-  width: var(--sidebar-width);
+  width: var(--sidebar-width, var(--shell-sidebar, 280px));
   background: var(--nc-white);
 }
 
@@ -1653,6 +1653,19 @@ body .rev-back:hover {
   body .workspace-toolbar,
   body .segmented-filters {
     width: 100%;
+  }
+
+  body .workspace-toolbar.workspace-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  body .toolbar-search.toolbar-search,
+  body .toolbar-field.toolbar-field,
+  body .workspace-toolbar .field-hint {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
   }
 }
 /* Final canvas guard: var(--nc-white) page backgrounds, palette only on components. */

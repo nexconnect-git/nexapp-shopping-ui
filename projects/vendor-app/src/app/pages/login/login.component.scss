@@ -8,7 +8,7 @@
 }
 
 :host .login-page {
-  min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   grid-template-columns: minmax(0, 1.04fr) minmax(440px, 0.96fr);
   padding: clamp(1rem, 2.5vw, 2rem);
@@ -344,5 +344,63 @@
 
   :host .login-form-card {
     box-shadow: none;
+  }
+}
+
+@media (max-width: 560px) {
+  :host .login-left {
+    padding: 1.4rem 1.25rem 1.5rem;
+  }
+
+  :host .brand-icon-wrap {
+    width: 56px;
+    height: 56px;
+    margin-bottom: 1.2rem;
+
+    .material-icons-outlined {
+      font-size: 30px;
+    }
+  }
+
+  :host .left-heading {
+    font-size: clamp(2rem, 10vw, 2.55rem);
+  }
+
+  :host .left-subtitle {
+    margin-top: 0.8rem;
+    font-size: 0.96rem;
+    line-height: 1.5;
+  }
+
+  :host .login-right {
+    padding: 1rem;
+  }
+
+  :host .login-form-card {
+    padding: 1.4rem;
+  }
+
+  :host .form-card-header {
+    margin-bottom: 1.4rem;
+
+    h2 {
+      font-size: 1.65rem;
+    }
+  }
+
+  :host .form-group {
+    margin-bottom: 1rem;
+  }
+
+  :host .form-input {
+    min-height: 46px;
+  }
+
+  :host .signin-btn {
+    min-height: 48px;
+  }
+
+  :host .form-footer {
+    margin-top: 1.2rem;
   }
 }
