@@ -18,6 +18,35 @@ const IFSC_PATTERN = /^[A-Z]{4}0[A-Z0-9]{6}$/;
 const UPI_PATTERN = /^[a-zA-Z0-9._-]{2,256}@[a-zA-Z][a-zA-Z0-9._-]{2,64}$/;
 const VEHICLE_NUMBER_PATTERN = /^[A-Z]{2}[0-9]{1,2}[A-Z]{1,3}[0-9]{4}$/;
 
+const VENDOR_STORE_TYPE_OPTIONS = [
+  { value: 'wholesale_store', label: 'Wholesale Store' },
+  { value: 'retail_store', label: 'Retail Store' },
+  { value: 'kirana_store', label: 'Kirana Store' },
+  { value: 'supermarket', label: 'Supermarket' },
+  { value: 'hypermarket', label: 'Hypermarket' },
+  { value: 'department_store', label: 'Department Store' },
+  { value: 'specialty_store', label: 'Specialty Store' },
+  { value: 'convenience_store', label: 'Convenience Store' },
+  { value: 'discount_store', label: 'Discount Store' },
+  { value: 'franchise_store', label: 'Franchise Store' },
+  { value: 'chain_store', label: 'Chain Store' },
+  { value: 'online_store', label: 'Online Store / E-commerce' },
+  { value: 'street_vendor', label: 'Street Vendor / Hawker' },
+  { value: 'mandi_market_yard', label: 'Mandi / Market Yard' },
+  { value: 'b2b_store', label: 'B2B Store' },
+];
+
+function normalizeVendorStoreType(value: unknown): string {
+  const raw = String(value || '').trim();
+  if (VENDOR_STORE_TYPE_OPTIONS.some((option) => option.value === raw)) {
+    return raw;
+  }
+  if (['individual', 'company', 'partnership'].includes(raw)) {
+    return 'retail_store';
+  }
+  return 'retail_store';
+}
+
 @Component({
   selector: 'app-onboarding-form',
   standalone: true,
@@ -118,13 +147,11 @@ export class OnboardingFormComponent implements OnInit {
               },
               {
                 key: 'vendor_type',
-                label: 'Vendor Type',
+                label: 'Shop Type',
                 type: 'select',
-                options: [
-                  { value: 'individual', label: 'Individual' },
-                  { value: 'company', label: 'Company' },
-                  { value: 'partnership', label: 'Partnership' },
-                ],
+                options: VENDOR_STORE_TYPE_OPTIONS,
+                defaultValue: 'retail_store',
+                hint: 'Used to unlock shop-specific features such as B2B and wholesale flows.',
               },
               {
                 key: 'email',
@@ -151,6 +178,20 @@ export class OnboardingFormComponent implements OnInit {
                 label: 'Description',
                 type: 'textarea',
                 placeholder: 'Brief description…',
+              },
+              {
+                key: 'logo',
+                label: 'Profile Image',
+                type: 'file',
+                accept: 'image/*',
+                hint: 'Square store logo or profile image shown on storefront cards.',
+              },
+              {
+                key: 'banner',
+                label: 'Cover Image',
+                type: 'file',
+                accept: 'image/*',
+                hint: 'Wide cover image for the vendor profile header.',
               },
               {
                 key: 'address',
@@ -182,22 +223,11 @@ export class OnboardingFormComponent implements OnInit {
                 maxLength: 6,
               },
               {
-                key: 'latitude',
-                label: 'Latitude',
-                type: 'number',
-                placeholder: '19.076090',
-                min: -90,
-                max: 90,
-                inputMode: 'decimal',
-              },
-              {
-                key: 'longitude',
-                label: 'Longitude',
-                type: 'number',
-                placeholder: '72.877426',
-                min: -180,
-                max: 180,
-                inputMode: 'decimal',
+                key: 'location',
+                label: 'Store Location',
+                type: 'map',
+                fullWidth: true,
+                hint: 'Pick the exact store location. Address, city, state, pincode and country update automatically.',
               },
               {
                 key: 'gst_registered',
@@ -401,6 +431,7 @@ export class OnboardingFormComponent implements OnInit {
                 key: 'account_type',
                 label: 'Account Type',
                 type: 'select',
+                defaultValue: 'current',
                 options: [
                   { value: 'savings', label: 'Savings' },
                   { value: 'current', label: 'Current' },
@@ -419,6 +450,7 @@ export class OnboardingFormComponent implements OnInit {
                 key: 'settlement_cycle',
                 label: 'Settlement Cycle',
                 type: 'select',
+                defaultValue: 'T+7',
                 options: [
                   { value: 'T+1', label: 'T+1 (Next Day)' },
                   { value: 'T+7', label: 'T+7 (Weekly)' },
@@ -524,12 +556,23 @@ export class OnboardingFormComponent implements OnInit {
         sections: [
           {
             fields: [
-              { key: 'opening_time', label: 'Opening Time', type: 'time' },
-              { key: 'closing_time', label: 'Closing Time', type: 'time' },
+              {
+                key: 'opening_time',
+                label: 'Opening Time',
+                type: 'time',
+                defaultValue: '09:00',
+              },
+              {
+                key: 'closing_time',
+                label: 'Closing Time',
+                type: 'time',
+                defaultValue: '22:00',
+              },
               {
                 key: 'min_order_amount',
                 label: 'Min Order Amount',
                 type: 'number',
+                defaultValue: 0,
                 placeholder: '0',
                 min: 0,
                 max: 100000,
@@ -539,6 +582,7 @@ export class OnboardingFormComponent implements OnInit {
                 key: 'delivery_radius_km',
                 label: 'Delivery Radius (km)',
                 type: 'number',
+                defaultValue: 5,
                 placeholder: '5',
                 min: 0,
                 max: 100,
@@ -561,7 +605,12 @@ export class OnboardingFormComponent implements OnInit {
                 type: 'textarea',
                 placeholder: 'Describe cancellation policy…',
               },
-              { key: 'is_open', label: 'Open for Business', type: 'checkbox' },
+              {
+                key: 'is_open',
+                label: 'Open for Business',
+                type: 'checkbox',
+                defaultValue: true,
+              },
               {
                 key: 'auto_order_acceptance',
                 label: 'Auto-Accept Orders',
@@ -770,7 +819,7 @@ export class OnboardingFormComponent implements OnInit {
 
           // Store Info
           store_name: vendor.store_name || '',
-          vendor_type: vendor.vendor_type || 'individual',
+          vendor_type: normalizeVendorStoreType(vendor.vendor_type),
           email: vendor.email || '',
           phone: vendor.phone || '',
           description: vendor.description || '',
@@ -780,6 +829,7 @@ export class OnboardingFormComponent implements OnInit {
           postal_code: vendor.postal_code || '',
           latitude: vendor.latitude || null,
           longitude: vendor.longitude || null,
+          country: vendor.user_info?.country || vendor.country || 'IN',
 
           // Logistics
           fulfillment_type: vendor.fulfillment_type || 'vendor',
@@ -895,6 +945,13 @@ export class OnboardingFormComponent implements OnInit {
       if (payload[key])
         payload[key] = String(payload[key]).trim().toUpperCase();
     }
+    payload.vendor_type = normalizeVendorStoreType(payload.vendor_type);
+    payload.country = payload.country || 'IN';
+    for (const imageKey of ['logo', 'banner']) {
+      if (typeof File === 'undefined' || !(payload[imageKey] instanceof File)) {
+        delete payload[imageKey];
+      }
+    }
 
     return payload;
   }
@@ -907,14 +964,14 @@ export class OnboardingFormComponent implements OnInit {
         nextErrors['gstin'] =
           'GSTIN is required when the vendor is marked as GST registered.';
       }
+      const latitude = Number(payload.latitude);
+      const longitude = Number(payload.longitude);
       if (
-        (payload.latitude && !payload.longitude) ||
-        (!payload.latitude && payload.longitude)
+        !Number.isFinite(latitude) ||
+        !Number.isFinite(longitude) ||
+        (latitude === 0 && longitude === 0)
       ) {
-        nextErrors['latitude'] =
-          'Enter both latitude and longitude, or leave both blank.';
-        nextErrors['longitude'] =
-          'Enter both latitude and longitude, or leave both blank.';
+        nextErrors['location'] = 'Pick the store location on the map.';
       }
       if (
         payload.opening_time &&

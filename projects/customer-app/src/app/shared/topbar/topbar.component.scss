@@ -351,7 +351,7 @@ nav a:hover,
 }
 @media (max-width: 1100px) {
   .topbar {
-    height: var(--customer-header-mobile-height);
+    height: var(--customer-header-tablet-height);
     grid-template-columns: 46px minmax(0, 1fr) 46px 46px;
     grid-template-rows: 54px 56px;
     gap: 6px 10px;
@@ -379,7 +379,7 @@ nav a:hover,
   }
   .search-backdrop,
   .menu-backdrop {
-    inset: var(--customer-header-mobile-height) 0 0;
+    inset: var(--customer-header-tablet-height) 0 0;
   }
   .mobile-discovery {
     grid-column: 1/-1;
@@ -444,10 +444,24 @@ nav a:hover,
 }
 @media (max-width: 760px) {
   .topbar {
+    background:
+      radial-gradient(
+        circle at 84% 16%,
+        rgba(255, 255, 255, 0.22),
+        transparent 24%
+      ),
+      linear-gradient(135deg, #3814c8 0%, #5a1dff 48%, #7b35ff 100%);
+    border-bottom: 0;
+    box-shadow: none;
     grid-template-columns: 1fr;
-    grid-template-rows: 46px 50px;
-    gap: 6px;
-    padding: 8px 12px 8px;
+    grid-template-rows: 42px auto;
+    gap: 10px;
+    height: calc(
+      var(--customer-header-mobile-height) + env(safe-area-inset-top, 0px)
+    );
+    padding: calc(12px + env(safe-area-inset-top, 0px)) 14px 18px;
+    color: #fff;
+    align-content: start;
   }
   .mobile-menu,
   .topbar > .cart,
@@ -457,18 +471,64 @@ nav a:hover,
   .brand {
     grid-column: 1;
     justify-content: flex-start;
+    color: #fff;
+    min-width: 0;
+  }
+  .logo {
+    width: 34px;
+    height: 38px;
+    clip-path: none;
+    background: transparent;
+    color: #ffb44d;
+    font-size: 33px;
+    border-radius: 0;
   }
   .brand b {
-    font-size: 20px;
+    color: #fff;
+    font-size: 22px;
+    letter-spacing: 0;
   }
   .mobile-discovery {
     grid-column: 1;
-    grid-template-columns: minmax(116px, 0.72fr) minmax(0, 1.28fr);
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
   }
   .mobile-location,
   .mobile-search {
-    height: 44px;
-    border-radius: 13px;
+    min-height: 52px;
+    height: auto;
+    border-radius: 16px;
+    padding: 0 12px;
+  }
+  .mobile-location {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.28);
+    color: #fff;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  }
+  .mobile-location small {
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 11px;
+  }
+  .mobile-location b {
+    color: #fff;
+    font-size: 15px;
+    font-weight: 900;
+  }
+  .mobile-location > .material-symbols-rounded:first-child {
+    color: #ff5474;
+  }
+  .mobile-search {
+    border-color: transparent;
+    background: #fff;
+    box-shadow: 0 16px 34px rgba(29, 13, 95, 0.12);
+  }
+  .mobile-search input {
+    color: #101426;
+    font-weight: 850;
+  }
+  .mobile-search input::placeholder {
+    color: #8c94a8;
   }
   .search-backdrop,
   .menu-backdrop {
@@ -479,22 +539,23 @@ nav a:hover,
   .topbar {
     padding-left: 10px;
     padding-right: 10px;
-    gap: 5px 8px;
+    gap: 10px;
   }
   .brand b {
-    font-size: 18px;
+    font-size: 20px;
   }
   .mobile-discovery {
-    grid-template-columns: 116px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
   }
   .mobile-location,
   .mobile-search {
-    padding: 0 8px;
+    min-height: 50px;
+    padding: 0 11px;
   }
   .mobile-location b {
-    font-size: 12px;
+    font-size: 15px;
   }
   .mobile-search input {
-    font-size: 13px;
+    font-size: 14px;
   }
 }

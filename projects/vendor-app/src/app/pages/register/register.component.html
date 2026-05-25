@@ -291,6 +291,22 @@
               }
             </div>
             <div class="form-group">
+              <label>Shop Type</label>
+              <select
+                [(ngModel)]="form.vendor_type"
+                name="vendor_type"
+                class="form-input"
+              >
+                @for (option of storeTypeOptions; track option.value) {
+                  <option [value]="option.value">{{ option.label }}</option>
+                }
+              </select>
+              <small class="field-hint"
+                >Used to enable shop-specific flows such as B2B and
+                wholesale.</small
+              >
+            </div>
+            <div class="form-group">
               <label>Description (Optional)</label>
               <textarea
                 [(ngModel)]="form.description"
@@ -303,6 +319,69 @@
                 >Mention your specialties, product range, or what makes the
                 store trustworthy.</small
               >
+            </div>
+            <div class="upload-grid">
+              <div class="image-upload">
+                <label>Profile Image (Optional)</label>
+                <button
+                  type="button"
+                  class="image-picker logo-picker"
+                  (click)="logoInput.click()"
+                >
+                  @if (logoPreview()) {
+                    <img [src]="logoPreview()" alt="Store profile preview" />
+                  } @else {
+                    <span class="material-icons-outlined">storefront</span>
+                    <strong>Choose profile image</strong>
+                  }
+                </button>
+                <input
+                  #logoInput
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  (change)="onImageSelected('logo', $event)"
+                />
+                <small class="field-hint"
+                  >Square logo or storefront image shown on store cards.</small
+                >
+                @if (logoFile()) {
+                  <button type="button" class="link-button" (click)="clearImage('logo'); logoInput.value = ''">
+                    Remove image
+                  </button>
+                }
+              </div>
+
+              <div class="image-upload">
+                <label>Cover Image (Optional)</label>
+                <button
+                  type="button"
+                  class="image-picker banner-picker"
+                  (click)="bannerInput.click()"
+                >
+                  @if (bannerPreview()) {
+                    <img [src]="bannerPreview()" alt="Store cover preview" />
+                  } @else {
+                    <span class="material-icons-outlined">panorama</span>
+                    <strong>Choose cover image</strong>
+                  }
+                </button>
+                <input
+                  #bannerInput
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  (change)="onImageSelected('banner', $event)"
+                />
+                <small class="field-hint"
+                  >Wide image used as the store profile cover.</small
+                >
+                @if (bannerFile()) {
+                  <button type="button" class="link-button" (click)="clearImage('banner'); bannerInput.value = ''">
+                    Remove image
+                  </button>
+                }
+              </div>
             </div>
             <div class="form-group">
               <label>Public Contact Email (Optional)</label>

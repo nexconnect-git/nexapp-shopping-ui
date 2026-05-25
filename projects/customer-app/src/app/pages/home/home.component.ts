@@ -9,7 +9,6 @@ import { UiService } from '../../services/ui.service';
 import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
 import { categoryIconFor } from '../../shared/category-icons';
 import { CustomerContentConfigService } from '../../services/customer-content-config.service';
-import { FlashdropHomeComponent } from '../../shared/flashdrop-home/flashdrop-home.component';
 
 @Component({
   standalone: true,
@@ -19,7 +18,6 @@ import { FlashdropHomeComponent } from '../../shared/flashdrop-home/flashdrop-ho
     StoreCardComponent,
     RightRailComponent,
     BreadcrumbsComponent,
-    FlashdropHomeComponent,
   ],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss'],

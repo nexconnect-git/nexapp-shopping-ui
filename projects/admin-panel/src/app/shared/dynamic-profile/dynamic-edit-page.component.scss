@@ -225,9 +225,13 @@ textarea {
   border: 1px solid #e2e5ef;
   background: #fff;
   border-radius: 10px;
-  min-height: 40px;
+  box-sizing: border-box;
+  height: 44px;
+  min-height: 44px;
   padding: 0 13px;
   outline: none;
+  font: inherit;
+  font-size: 14px;
 
   &:focus {
     border-color: #5b2cff;
@@ -235,9 +239,64 @@ textarea {
   }
 }
 
+select {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, #697089 50%),
+    linear-gradient(135deg, #697089 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) 18px,
+    calc(100% - 13px) 18px;
+  background-repeat: no-repeat;
+  background-size:
+    5px 5px,
+    5px 5px;
+  line-height: 1.2;
+  padding-right: 38px;
+}
+
 textarea {
+  height: auto;
   padding: 13px;
   resize: vertical;
+}
+
+.upload {
+  display: grid;
+  gap: 7px;
+  padding: 12px;
+  border: 1px dashed #d8cffd;
+  border-radius: 10px;
+  background: #fbfaff;
+
+  input[type='file'] {
+    height: auto;
+    min-height: 44px;
+    padding: 9px 13px;
+  }
+
+  span {
+    color: #697089;
+    font-size: 13px;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+  }
+
+  button {
+    width: fit-content;
+    height: 34px;
+    border: 1px solid #d8cffd;
+    border-radius: 8px;
+    background: #fff;
+    color: #5b2cff;
+    font-weight: 900;
+    cursor: pointer;
+    padding: 0 12px;
+  }
+
+  small {
+    color: #697089;
+    line-height: 1.4;
+  }
 }
 
 .toggle {
@@ -311,6 +370,13 @@ textarea {
   small {
     color: #697089;
   }
+}
+
+.map-control {
+  overflow: hidden;
+  border: 1px solid #e2e5ef;
+  border-radius: 10px;
+  background: #fff;
 }
 
 .form-actions {

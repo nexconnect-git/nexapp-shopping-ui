@@ -909,11 +909,66 @@ button {
   }
 
   .delivery-banner {
-    grid-template-columns: 1fr;
+    display: block;
+    min-height: 238px;
+    padding: 18px 14px;
+  }
+
+  .banner-copy {
+    max-width: 70%;
+  }
+
+  .delivery-banner h1 {
+    margin: 12px 0 8px;
+    font-size: 20px;
+  }
+
+  .delivery-banner p {
+    margin-bottom: 12px;
+    font-size: 13px;
+  }
+
+  .delivery-banner button {
+    height: 40px;
+    padding-inline: 18px;
+  }
+
+  .eta-badge {
+    padding: 7px 10px;
+    font-size: 13px;
   }
 
   .banner-art {
-    min-height: 130px;
+    position: absolute;
+    right: 14px;
+    bottom: 16px;
+    width: 112px;
+    min-height: 118px;
+  }
+
+  .bag {
+    right: 0;
+    bottom: 12px;
+    width: 82px;
+    height: 94px;
+    font-size: 40px;
+
+    &::before {
+      top: -14px;
+      width: 42px;
+      height: 26px;
+      border-width: 6px;
+    }
+  }
+
+  .timer {
+    width: 66px;
+    height: 66px;
+    border-width: 7px;
+
+    b {
+      font-size: 24px;
+    }
   }
 
   .quick-grid {

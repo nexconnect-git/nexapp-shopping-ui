@@ -313,7 +313,12 @@
               "projects/customer-app/src/styles.scss",
               "projects/shared/src/styles/nexconnect-platform.css"
             ],
-            "scripts": []
+            "scripts": [],
+            "stylePreprocessorOptions": {
+              "includePaths": [
+                "projects/shared/src/styles"
+              ]
+            }
           }
         },
         "lint": {

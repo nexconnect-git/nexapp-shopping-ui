@@ -58,6 +58,14 @@ export const routes: Routes = [
     data: { entityType: 'admin-user' },
   },
   {
+    path: 'files/upload-test',
+    loadComponent: () =>
+      import('./pages/file-upload-test/file-upload-test.component').then(
+        (m) => m.FileUploadTestComponent,
+      ),
+    canActivate: adminGuard,
+  },
+  {
     path: '',
     pathMatch: 'full',
     loadComponent: () =>

@@ -9,7 +9,8 @@ export type ProfileFieldType =
   | 'time'
   | 'toggle'
   | 'file'
-  | 'currency';
+  | 'currency'
+  | 'map';
 
 export type ProfileStatusTone =
   | 'success'

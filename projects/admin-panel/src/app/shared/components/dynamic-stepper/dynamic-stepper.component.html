@@ -76,7 +76,9 @@
                   @if (f.type !== "checkbox") {
                     <div
                       class="form-group"
-                      [class.full]="f.fullWidth || f.type === 'textarea'"
+                      [class.full]="
+                        f.fullWidth || f.type === 'textarea' || f.type === 'map'
+                      "
                     >
                       <label [for]="'field-' + f.key">
                         {{ f.label }}
@@ -88,7 +90,16 @@
                         }
                       </label>
 
-                      @if (f.type === "textarea") {
+                      @if (f.type === "map") {
+                        <div class="map-control">
+                          <app-map-picker
+                            [initialLat]="numberValue('latitude', 12.9716)"
+                            [initialLng]="numberValue('longitude', 77.5946)"
+                            height="320px"
+                            (locationPicked)="setLocationFromMap($event)"
+                          ></app-map-picker>
+                        </div>
+                      } @else if (f.type === "textarea") {
                         <textarea
                           [id]="'field-' + f.key"
                           [(ngModel)]="model[f.key]"
@@ -109,6 +120,28 @@
                             <option [value]="opt.value">{{ opt.label }}</option>
                           }
                         </select>
+                      } @else if (f.type === "file") {
+                        <div class="file-field">
+                          <input
+                            #fileInput
+                            [id]="'field-' + f.key"
+                            type="file"
+                            [accept]="f.accept || null"
+                            [class.has-error]="fieldError(f.key)"
+                            (change)="onFileSelected(f, $event)"
+                          />
+                          <span>{{ fileName(f.key) || "No file selected" }}</span>
+                          @if (fileName(f.key)) {
+                            <button
+                              type="button"
+                              class="icon-btn"
+                              (click)="clearFile(f, fileInput)"
+                              title="Remove file"
+                            >
+                              <span class="material-icons-outlined">close</span>
+                            </button>
+                          }
+                        </div>
                       } @else {
                         <input
                           [id]="'field-' + f.key"
@@ -279,21 +312,17 @@
                 @for (sec of s.sections; track $index) {
                   @if (sec.fields) {
                     @for (f of sec.fields; track f.key) {
-                      <div
-                        class="review-item"
-                        [class.full]="f.type === 'textarea'"
-                      >
-                        <span>{{ f.label }}</span>
-                        <strong>
-                          @if (f.type === "password") {
-                            ********
-                          } @else if (f.type === "checkbox") {
-                            {{ model[f.key] ? "Yes" : "No" }}
-                          } @else {
-                            {{ model[f.key] || "-" }}
-                          }
-                        </strong>
-                      </div>
+                      @if (f.type !== "map") {
+                        <div
+                          class="review-item"
+                          [class.full]="f.type === 'textarea'"
+                        >
+                          <span>{{ f.label }}</span>
+                          <strong>
+                            {{ reviewValue(f) }}
+                          </strong>
+                        </div>
+                      }
                     }
                   }
                   @if (sec.list) {

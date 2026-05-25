@@ -2,6 +2,7 @@ import { inject, Injectable, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, shareReplay } from 'rxjs';
 import { API_BASE_URL } from '../tokens/api-url.token';
+import { UploadedFile } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -17,6 +18,30 @@ export class ApiService {
   private readonly _STATS_TTL_MS = 30_000;
 
   constructor(private http: HttpClient) {}
+
+  private hasFileValue(data: any): boolean {
+    if (!data || typeof File === 'undefined') return false;
+    return Object.values(data).some((value) => value instanceof File);
+  }
+
+  private toFormData(data: Record<string, any>): FormData {
+    const fd = new FormData();
+    Object.entries(data || {}).forEach(([key, value]) => {
+      if (value === undefined || value === null) return;
+      if (value instanceof File) {
+        fd.append(key, value);
+      } else if (Array.isArray(value) || typeof value === 'object') {
+        fd.append(key, JSON.stringify(value));
+      } else {
+        fd.append(key, String(value));
+      }
+    });
+    return fd;
+  }
+
+  private bodyWithFiles(data: any): any {
+    return this.hasFileValue(data) ? this.toFormData(data) : data;
+  }
 
   refreshCartCount() {
     this.getCart().subscribe({
@@ -152,6 +177,26 @@ export class ApiService {
     return this.http.patch(`${this.baseUrl}/vendors/profile/`, fd);
   }
 
+  uploadFile(
+    file: File,
+    useOfImage = 'general_upload',
+    clientUploadId = '',
+  ): Observable<UploadedFile> {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('use_of_image', useOfImage);
+    if (clientUploadId) fd.append('client_upload_id', clientUploadId);
+    return this.http.post<UploadedFile>(`${this.baseUrl}/files/upload/`, fd);
+  }
+
+  getUploadedFiles(): Observable<UploadedFile[]> {
+    return this.http.get<UploadedFile[]>(`${this.baseUrl}/files/`);
+  }
+
+  getUploadedFile(id: string): Observable<UploadedFile> {
+    return this.http.get<UploadedFile>(`${this.baseUrl}/files/${id}/`);
+  }
+
   // Addresses
   getAddresses(): Observable<any> {
     return this.http.get(`${this.baseUrl}/auth/addresses/`);
@@ -272,7 +317,10 @@ export class ApiService {
   }
 
   registerVendor(data: any): Observable<any> {
-    return this.http.post(`${this.baseUrl}/vendors/register/`, data);
+    return this.http.post(
+      `${this.baseUrl}/vendors/register/`,
+      this.bodyWithFiles(data),
+    );
   }
 
   checkVendorIdentityAvailability(data: {
@@ -1171,7 +1219,10 @@ export class ApiService {
   }
 
   adminUpdateVendor(id: string, data: any): Observable<any> {
-    return this.http.patch(`${this.baseUrl}/admin/vendors/${id}/`, data);
+    return this.http.patch(
+      `${this.baseUrl}/admin/vendors/${id}/`,
+      this.bodyWithFiles(data),
+    );
   }
 
   getAdminCustomers(params?: any): Observable<any> {
@@ -1281,7 +1332,10 @@ export class ApiService {
   }
 
   updateAdminVendor(id: string, data: any): Observable<any> {
-    return this.http.patch(`${this.baseUrl}/admin/vendors/${id}/`, data);
+    return this.http.patch(
+      `${this.baseUrl}/admin/vendors/${id}/`,
+      this.bodyWithFiles(data),
+    );
   }
 
   deleteAdminVendor(id: string): Observable<any> {
@@ -1290,7 +1344,10 @@ export class ApiService {
 
   // Vendor Onboarding
   onboardVendor(data: any): Observable<any> {
-    return this.http.post(`${this.baseUrl}/admin/vendors/onboard/`, data);
+    return this.http.post(
+      `${this.baseUrl}/admin/vendors/onboard/`,
+      this.bodyWithFiles(data),
+    );
   }
 
   getVendorOnboarding(vendorId: string): Observable<any> {

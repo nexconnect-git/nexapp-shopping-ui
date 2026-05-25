@@ -53,11 +53,6 @@ import { CustomerContentConfigService } from './services/customer-content-config
 })
 export class AppComponent implements OnInit {
   loading = signal(false);
-  currentUrl = signal('/');
-  readonly isFlashHome = () => {
-    const url = this.currentUrl().split('?')[0].split('#')[0];
-    return url === '/' || url === '/new-home';
-  };
 
   constructor(
     public state: AppStateService,
@@ -67,11 +62,9 @@ export class AppComponent implements OnInit {
     private features: PageFeatureAccessService,
     private content: CustomerContentConfigService,
   ) {
-    this.currentUrl.set(router.url || '/');
     router.events.subscribe((event) => {
       if (event instanceof NavigationStart) this.loading.set(true);
       if (event instanceof NavigationEnd) {
-        this.currentUrl.set(event.urlAfterRedirects || event.url || '/');
         this.loading.set(false);
       }
       if (event instanceof NavigationCancel || event instanceof NavigationError)

@@ -11,7 +11,12 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Observable, Subscription } from 'rxjs';
-import { ToastService } from '@shared/public-api';
+import {
+  inferCountryFromLocation,
+  MapLocation,
+  MapPickerComponent,
+  ToastService,
+} from '@shared/public-api';
 
 export interface StepperField {
   key: string;
@@ -25,14 +30,17 @@ export interface StepperField {
     | 'select'
     | 'textarea'
     | 'checkbox'
+    | 'file'
     | 'time'
-    | 'date';
+    | 'date'
+    | 'map';
   placeholder?: string;
   hint?: string;
   options?: { value: any; label: string }[];
   fullWidth?: boolean;
   optional?: boolean;
   required?: boolean;
+  defaultValue?: any;
   pattern?: RegExp;
   patternMessage?: string;
   minLength?: number;
@@ -42,6 +50,7 @@ export interface StepperField {
   uppercase?: boolean;
   inputMode?: 'text' | 'email' | 'tel' | 'numeric' | 'decimal';
   unique?: boolean;
+  accept?: string;
 }
 
 export interface UniqueValidationResult {
@@ -97,7 +106,7 @@ export interface UniqueFieldState {
 @Component({
   selector: 'app-dynamic-stepper',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MapPickerComponent],
   templateUrl: './dynamic-stepper.component.html',
   styleUrl: './dynamic-stepper.component.scss',
 })
@@ -168,9 +177,16 @@ export class DynamicStepperComponent implements OnChanges {
         if (section.fields) {
           for (const f of section.fields) {
             this.model[f.key] =
-              f.type === 'checkbox' ? false : f.type === 'number' ? null : '';
+              f.type === 'checkbox'
+                ? false
+                : f.type === 'number' || f.type === 'file'
+                  ? null
+                  : '';
             if (f.type === 'select' && f.options?.length) {
               this.model[f.key] = f.options[0].value;
+            }
+            if (f.defaultValue !== undefined) {
+              this.model[f.key] = f.defaultValue;
             }
           }
         }
@@ -188,7 +204,13 @@ export class DynamicStepperComponent implements OnChanges {
     const item: any = {};
     for (const f of fields) {
       item[f.key] =
-        f.type === 'checkbox' ? false : f.type === 'number' ? null : '';
+        f.defaultValue !== undefined
+          ? f.defaultValue
+          : f.type === 'checkbox'
+            ? false
+            : f.type === 'number'
+              ? null
+              : '';
     }
     return item;
   }
@@ -412,6 +434,52 @@ export class DynamicStepperComponent implements OnChanges {
     if (field.unique) {
       this.scheduleUniqueCheck(field, 0);
     }
+  }
+
+  numberValue(key: string, fallback: number): number {
+    const value = Number(this.model[key]);
+    return Number.isFinite(value) ? value : fallback;
+  }
+
+  setLocationFromMap(location: MapLocation) {
+    this.model = {
+      ...this.model,
+      latitude: location.lat,
+      longitude: location.lng,
+      address: location.address || this.model.address || '',
+      city: location.city || this.model.city || '',
+      state: location.state || this.model.state || '',
+      postal_code: location.postal_code || this.model.postal_code || '',
+      country: inferCountryFromLocation(location) || 'IN',
+    };
+    this.clearFieldError('latitude');
+    this.clearFieldError('longitude');
+    this.clearFieldError('location');
+  }
+
+  onFileSelected(field: StepperField, event: Event) {
+    const input = event.target as HTMLInputElement;
+    this.model[field.key] = input.files?.[0] || null;
+    this.clearFieldError(field.key);
+  }
+
+  clearFile(field: StepperField, input: HTMLInputElement) {
+    input.value = '';
+    this.model[field.key] = null;
+    this.clearFieldError(field.key);
+  }
+
+  fileName(key: string): string {
+    const value = this.model[key];
+    return value instanceof File ? value.name : '';
+  }
+
+  reviewValue(field: StepperField): string {
+    const value = this.model[field.key];
+    if (field.type === 'password') return '********';
+    if (field.type === 'checkbox') return value ? 'Yes' : 'No';
+    if (field.type === 'file') return value instanceof File ? value.name : '-';
+    return value || '-';
   }
 
   normalizeListField(listKey: string, field: StepperField) {

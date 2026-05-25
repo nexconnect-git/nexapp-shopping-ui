@@ -115,7 +115,7 @@ small {
   .sidebar {
     display: block;
     left: 0;
-    top: var(--customer-header-mobile-height);
+    top: var(--customer-header-tablet-height);
     width: min(86vw, 320px);
     z-index: 520;
     transform: translateX(-112%);
@@ -129,7 +129,7 @@ small {
   .sidebar-backdrop {
     display: block;
     position: fixed;
-    inset: var(--customer-header-mobile-height) 0 0;
+    inset: var(--customer-header-tablet-height) 0 0;
     background: rgba(16, 20, 38, 0.22);
     z-index: 510;
     backdrop-filter: none;

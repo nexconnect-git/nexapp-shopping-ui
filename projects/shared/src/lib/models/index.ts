@@ -30,6 +30,18 @@ export interface MobileOtpRequestResponse {
   dev_otp?: string;
 }
 
+export interface UploadedFile {
+  id: string;
+  client_upload_id: string | null;
+  original_filename: string;
+  use_of_image: string;
+  file_name: string;
+  file_url: string;
+  content_type: string;
+  size: number;
+  created_at: string;
+}
+
 export interface Address {
   id: string;
   label: 'home' | 'work' | 'other';

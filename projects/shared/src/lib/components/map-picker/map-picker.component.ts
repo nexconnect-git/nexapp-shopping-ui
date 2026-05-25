@@ -28,6 +28,8 @@ export interface MapLocation {
   city: string;
   state: string;
   postal_code: string;
+  country?: string;
+  country_code?: string;
 }
 
 declare const google: any;
@@ -310,6 +312,12 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
           const city = get('locality') || get('administrative_area_level_2');
           const state = get('administrative_area_level_1');
           const postal_code = get('postal_code');
+          const country =
+            place.addressComponents.find((c) => c.types?.includes('country'))
+              ?.longText || '';
+          const country_code =
+            place.addressComponents.find((c) => c.types?.includes('country'))
+              ?.shortText || '';
 
           this.pickedAddress.set(place.formattedAddress || address);
           this.searchQuery.set('');
@@ -321,6 +329,8 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
             city,
             state,
             postal_code,
+            country,
+            country_code,
           });
         });
       })
@@ -362,6 +372,10 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
             const city = get('locality') || get('administrative_area_level_2');
             const state = get('administrative_area_level_1');
             const postal_code = get('postal_code');
+            const country = get('country');
+            const country_code =
+              components.find((c) => c.types.includes('country'))
+                ?.short_name || '';
 
             this.pickedAddress.set(result.formatted_address || '');
             this.locationPicked.emit({
@@ -371,6 +385,8 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
               city,
               state,
               postal_code,
+              country,
+              country_code,
             });
           } else {
             this.locationPicked.emit({

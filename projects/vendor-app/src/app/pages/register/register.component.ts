@@ -23,6 +23,24 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_PATTERN = /^\+?[0-9][0-9\s-]{8,18}$/;
 const PINCODE_PATTERN = /^[1-9][0-9]{5}$/;
 
+const VENDOR_STORE_TYPE_OPTIONS = [
+  { value: 'wholesale_store', label: 'Wholesale Store' },
+  { value: 'retail_store', label: 'Retail Store' },
+  { value: 'kirana_store', label: 'Kirana Store' },
+  { value: 'supermarket', label: 'Supermarket' },
+  { value: 'hypermarket', label: 'Hypermarket' },
+  { value: 'department_store', label: 'Department Store' },
+  { value: 'specialty_store', label: 'Specialty Store' },
+  { value: 'convenience_store', label: 'Convenience Store' },
+  { value: 'discount_store', label: 'Discount Store' },
+  { value: 'franchise_store', label: 'Franchise Store' },
+  { value: 'chain_store', label: 'Chain Store' },
+  { value: 'online_store', label: 'Online Store / E-commerce' },
+  { value: 'street_vendor', label: 'Street Vendor / Hawker' },
+  { value: 'mandi_market_yard', label: 'Mandi / Market Yard' },
+  { value: 'b2b_store', label: 'B2B Store' },
+];
+
 @Component({
   selector: 'app-register',
   standalone: true,
@@ -34,6 +52,7 @@ export class RegisterComponent {
   private api = inject(ApiService);
   private auth = inject(AuthService);
   private router = inject(Router);
+  readonly storeTypeOptions = VENDOR_STORE_TYPE_OPTIONS;
 
   step = signal(1);
   loading = signal(false);
@@ -51,6 +70,7 @@ export class RegisterComponent {
     password: '',
     phone: '',
     store_name: '',
+    vendor_type: 'retail_store',
     description: '',
     address: '',
     city: '',
@@ -60,6 +80,10 @@ export class RegisterComponent {
     latitude: null,
     longitude: null,
   };
+  logoFile = signal<File | null>(null);
+  bannerFile = signal<File | null>(null);
+  logoPreview = signal('');
+  bannerPreview = signal('');
 
   nextStep() {
     this.error.set('');
@@ -80,6 +104,31 @@ export class RegisterComponent {
     if (loc.state && !this.form.state) this.form.state = loc.state;
     if (loc.postal_code && !this.form.postal_code)
       this.form.postal_code = loc.postal_code;
+  }
+
+  onImageSelected(kind: 'logo' | 'banner', event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] || null;
+    const fileSignal = kind === 'logo' ? this.logoFile : this.bannerFile;
+    const previewSignal = kind === 'logo' ? this.logoPreview : this.bannerPreview;
+
+    fileSignal.set(file);
+    previewSignal.set('');
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => previewSignal.set(String(reader.result || ''));
+    reader.readAsDataURL(file);
+  }
+
+  clearImage(kind: 'logo' | 'banner') {
+    if (kind === 'logo') {
+      this.logoFile.set(null);
+      this.logoPreview.set('');
+    } else {
+      this.bannerFile.set(null);
+      this.bannerPreview.set('');
+    }
   }
 
   onIdentityInput(field: 'username' | 'email' | 'phone') {
@@ -114,6 +163,7 @@ export class RegisterComponent {
       password: this.form.password,
       phone: this.form.phone.trim(),
       store_name: this.form.store_name.trim(),
+      vendor_type: this.form.vendor_type || 'retail_store',
       description: this.form.description.trim(),
       vendor_email: (this.form.vendor_email || this.form.email).trim(),
       address: this.form.address.trim(),
@@ -122,6 +172,8 @@ export class RegisterComponent {
       postal_code: this.form.postal_code.trim(),
       latitude: this.form.latitude,
       longitude: this.form.longitude,
+      ...(this.logoFile() ? { logo: this.logoFile() } : {}),
+      ...(this.bannerFile() ? { banner: this.bannerFile() } : {}),
     };
 
     this.api.registerVendor(payload).subscribe({

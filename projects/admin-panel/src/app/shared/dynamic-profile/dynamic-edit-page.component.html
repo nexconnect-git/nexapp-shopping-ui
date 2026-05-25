@@ -51,7 +51,8 @@
             [class.full]="
               field.colSpan === 2 ||
               field.type === 'textarea' ||
-              field.type === 'file'
+              field.type === 'file' ||
+              field.type === 'map'
             "
             [attr.for]="fieldId(field)"
           >
@@ -94,6 +95,14 @@
                 [ngModel]="formValue[field.key]"
                 (ngModelChange)="setValue(field.key, $event)"
               />
+              <div *ngSwitchCase="'map'" class="map-control">
+                <app-map-picker
+                  [initialLat]="numberValue('latitude', 12.9716)"
+                  [initialLng]="numberValue('longitude', 77.5946)"
+                  height="320px"
+                  (locationPicked)="setLocationFromMap($event)"
+                ></app-map-picker>
+              </div>
               <input
                 *ngSwitchCase="'date'"
                 [id]="fieldId(field)"
@@ -143,8 +152,21 @@
               </button>
 
               <div *ngSwitchCase="'file'" class="upload">
-                <span>{{ field.label }}</span>
-                <button type="button">Upload</button>
+                <input
+                  #fileInput
+                  [id]="fieldId(field)"
+                  type="file"
+                  accept="image/*"
+                  (change)="setFile(field, $event)"
+                />
+                <span>{{ fileName(field) || "No file selected" }}</span>
+                <button
+                  *ngIf="fileName(field)"
+                  type="button"
+                  (click)="clearFile(field, fileInput)"
+                >
+                  Remove
+                </button>
                 <small>{{ field.hint }}</small>
               </div>
             </ng-container>

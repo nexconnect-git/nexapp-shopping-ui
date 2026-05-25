@@ -8,6 +8,7 @@ import {
   API_BASE_URL,
   AUTH_PREFIX,
   authInterceptor,
+  cacheInterceptor,
   DYNAMIC_TABLE_DEFAULTS,
 } from '@shared/public-api';
 import { routes } from './app.routes';
@@ -17,7 +18,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
-    provideHttpClient(withInterceptors([authInterceptor])),
+    provideHttpClient(withInterceptors([authInterceptor, cacheInterceptor])),
     { provide: API_BASE_URL, useValue: environment.apiBaseUrl },
     { provide: AUTH_PREFIX, useValue: 'admin' },
     {

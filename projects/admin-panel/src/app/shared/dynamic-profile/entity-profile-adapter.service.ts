@@ -27,6 +27,95 @@ type EntityType =
   | 'product'
   | 'catalog-product';
 
+const VENDOR_STORE_TYPE_OPTIONS = [
+  {
+    value: 'wholesale_store',
+    label: 'Wholesale Store',
+    description: 'Bulk sales for retailers, resellers, restaurants, or businesses.',
+  },
+  {
+    value: 'retail_store',
+    label: 'Retail Store',
+    description: 'Direct-to-customer store for personal-use purchases.',
+  },
+  {
+    value: 'kirana_store',
+    label: 'Kirana Store',
+    description: 'Neighborhood grocery/general store for daily essentials.',
+  },
+  {
+    value: 'supermarket',
+    label: 'Supermarket',
+    description: 'Self-service grocery and household retail store.',
+  },
+  {
+    value: 'hypermarket',
+    label: 'Hypermarket',
+    description: 'Large retail format across grocery and non-grocery items.',
+  },
+  {
+    value: 'department_store',
+    label: 'Department Store',
+    description: 'Multi-section retail store for categories like clothing and home.',
+  },
+  {
+    value: 'specialty_store',
+    label: 'Specialty Store',
+    description: 'Focused store for one category such as pharmacy or electronics.',
+  },
+  {
+    value: 'convenience_store',
+    label: 'Convenience Store',
+    description: 'Small quick-purchase store in high-footfall areas.',
+  },
+  {
+    value: 'discount_store',
+    label: 'Discount Store',
+    description: 'Retailer focused on low prices, deals, and offers.',
+  },
+  {
+    value: 'franchise_store',
+    label: 'Franchise Store',
+    description: 'Local outlet operated under a larger brand system.',
+  },
+  {
+    value: 'chain_store',
+    label: 'Chain Store',
+    description: 'Part of a company-operated network across locations.',
+  },
+  {
+    value: 'online_store',
+    label: 'Online Store / E-commerce',
+    description: 'Sells through websites or mobile apps.',
+  },
+  {
+    value: 'street_vendor',
+    label: 'Street Vendor / Hawker',
+    description: 'Seller operating on streets, carts, stalls, or local markets.',
+  },
+  {
+    value: 'mandi_market_yard',
+    label: 'Mandi / Market Yard',
+    description: 'Agricultural market, often for bulk goods.',
+  },
+  {
+    value: 'b2b_store',
+    label: 'B2B Store',
+    description: 'Sells to businesses, retailers, offices, or resellers.',
+  },
+];
+
+function normalizeVendorStoreType(value: unknown): string {
+  const raw = String(value || '').trim();
+  if (VENDOR_STORE_TYPE_OPTIONS.some((option) => option.value === raw)) {
+    return raw;
+  }
+  if (['individual', 'company', 'partnership'].includes(raw)) {
+    return 'retail_store';
+  }
+  return 'retail_store';
+}
+
 @Injectable({ providedIn: 'root' })
 export class EntityProfileAdapterService {
   buildProfileConfig(
@@ -139,6 +228,8 @@ export class EntityProfileAdapterService {
         'vendor_type',
         'vendor_tier',
         'description',
+        'logo',
+        'banner',
         'gst_registered',
         'address',
         'city',
@@ -261,6 +352,7 @@ export class EntityProfileAdapterService {
       phone: user['phone'] ?? dto['phone'] ?? '',
       country: user['country'] ?? dto['country'] ?? '',
       currency: user['currency'] ?? dto['currency'] ?? 'INR',
+      vendor_type: normalizeVendorStoreType(dto['vendor_type']),
       user_is_active: user['is_active'] ?? dto['is_active'] ?? true,
       business_addresses: this.collectionText(dto['business_addresses']),
       serviceable_pincodes: this.collectionText(dto['serviceable_pincodes']),
@@ -278,7 +370,7 @@ export class EntityProfileAdapterService {
         this.section('store', 'Store Details', '🏪', 'store', [
           this.field('Store ID', dto['id']),
           this.field('Store Name', dto['store_name']),
-          this.field('Type', dto['vendor_type']),
+          this.field('Type', this.storeTypeLabel(dto['vendor_type'])),
           this.field('Tier', dto['vendor_tier']),
           this.field('Description', dto['description']),
           this.field('Status', dto['status'], this.statusTone(dto['status'])),
@@ -479,7 +571,6 @@ export class EntityProfileAdapterService {
               this.formField('last_name', 'Last Name', 'text', false),
               this.formField('email', 'Business Email', 'email', true),
               this.formField('phone', 'Phone Number', 'tel', true),
-              this.formField('country', 'Country', 'text', false),
               this.currencyField(),
             ]),
           ],
@@ -496,11 +587,7 @@ export class EntityProfileAdapterService {
                 'text',
                 true,
               ),
-              this.selectField('vendor_type', 'Vendor Type', [
-                'individual',
-                'company',
-                'partnership',
-              ]),
+              this.storeTypeField(),
               this.formField(
                 'description',
                 'Description',
@@ -508,12 +595,34 @@ export class EntityProfileAdapterService {
                 false,
                 2,
               ),
+              this.formField(
+                'logo',
+                'Profile Image',
+                'file',
+                false,
+                1,
+                'Square store logo or profile image shown on storefront cards.',
+              ),
+              this.formField(
+                'banner',
+                'Cover Image',
+                'file',
+                false,
+                1,
+                'Wide cover image for the vendor profile header.',
+              ),
               this.formField('address', 'Address', 'text', false, 2),
               this.formField('city', 'City', 'text', false),
               this.formField('state', 'State', 'text', false),
               this.formField('postal_code', 'Postal Code', 'text', false),
-              this.formField('latitude', 'Latitude', 'number', false),
-              this.formField('longitude', 'Longitude', 'number', false),
+              this.formField(
+                'location',
+                'Store Location',
+                'map',
+                false,
+                2,
+                'Pick the store location on the map. Address, city, state, pincode and country update automatically.',
+              ),
               this.formField(
                 'gst_registered',
                 'Registered for GST',
@@ -1266,6 +1375,27 @@ export class EntityProfileAdapterService {
     };
   }
 
+  private storeTypeField(): ProfileFormField {
+    return {
+      key: 'vendor_type',
+      label: 'Shop Type',
+      type: 'select',
+      options: VENDOR_STORE_TYPE_OPTIONS.map(({ value, label }) => ({
+        value,
+        label,
+      })),
+      hint: 'Used to unlock shop-specific features such as B2B and wholesale flows.',
+    };
+  }
+
+  private storeTypeLabel(value: unknown): string {
+    const normalized = normalizeVendorStoreType(value);
+    return (
+      VENDOR_STORE_TYPE_OPTIONS.find((option) => option.value === normalized)
+        ?.label || 'Retail Store'
+    );
+  }
+
   private field(
     label: string,
     value: unknown,
@@ -1343,7 +1473,7 @@ export class EntityProfileAdapterService {
     user: Record<string, unknown>,
   ): string {
     if (type === 'vendor' || type === 'store')
-      return `${this.title(this.str(dto['vendor_type']) || 'store')} - ${this.str(dto['city']) || 'City not set'}`;
+      return `${this.storeTypeLabel(dto['vendor_type'])} - ${this.str(dto['city']) || 'City not set'}`;
     if (type === 'product' || type === 'catalog-product')
       return `${this.str(dto['brand']) || 'Brand not set'} - ${this.str(dto['sku']) || 'No SKU'}`;
     return `@${this.str(user['username']) || 'user'} - ${this.str(user['role']) || this.entityTypeLabel(type)}`;
@@ -1471,6 +1601,14 @@ export class EntityProfileAdapterService {
     for (const key of Object.keys(value)) {
       if (typeof value[key] === 'string')
         value[key] = String(value[key]).trim();
+    }
+    if ('vendor_type' in value) {
+      value['vendor_type'] = normalizeVendorStoreType(value['vendor_type']);
+    }
+    for (const imageKey of ['logo', 'banner']) {
+      if (typeof File === 'undefined' || !(value[imageKey] instanceof File)) {
+        delete value[imageKey];
+      }
     }
     for (const key of [
       'pan_number',

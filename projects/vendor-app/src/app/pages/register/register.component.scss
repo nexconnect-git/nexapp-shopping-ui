@@ -273,6 +273,7 @@ label {
 .form-input {
   width: 100%;
   box-sizing: border-box;
+  min-height: 48px;
   padding: 0.875rem 1rem;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
@@ -292,10 +293,108 @@ label {
     font-weight: 500;
   }
 }
+select.form-input {
+  appearance: none;
+  height: 48px;
+  line-height: 1.2;
+  padding-right: 2.5rem;
+  background-image: linear-gradient(45deg, transparent 50%, var(--text-secondary) 50%),
+    linear-gradient(135deg, var(--text-secondary) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) 20px,
+    calc(100% - 13px) 20px;
+  background-repeat: no-repeat;
+  background-size:
+    5px 5px,
+    5px 5px;
+}
 textarea.form-input {
+  height: auto;
   resize: vertical;
   min-height: 100px;
 }
+
+.upload-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+.image-upload {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.image-picker {
+  display: grid;
+  place-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  height: 170px;
+  border: 1px dashed var(--border-color);
+  border-radius: 8px;
+  background: var(--surface-hover);
+  color: var(--text-secondary);
+  cursor: pointer;
+  overflow: hidden;
+  padding: 0.9rem;
+  text-align: center;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s,
+    background 0.2s;
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--primary);
+    background: var(--nc-white);
+    box-shadow: 0 0 0 4px var(--primary-light);
+    outline: none;
+  }
+
+  .material-icons-outlined {
+    color: var(--primary);
+    font-size: 1.7rem;
+  }
+
+  strong {
+    font-size: 0.84rem;
+    font-weight: 900;
+  }
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.logo-picker {
+  min-height: 170px;
+}
+
+.banner-picker {
+  min-height: 170px;
+}
+
+.link-button {
+  width: fit-content;
+  border: 0;
+  background: transparent;
+  color: var(--danger);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 900;
+  padding: 0;
+}
+
+.link-button:hover {
+  text-decoration: underline;
+}
+
 .form-input.has-error {
   border-color: var(--danger);
   background: var(--danger-light);
@@ -533,7 +632,8 @@ textarea.form-input {
   }
 
   .form-actions,
-  .location-fields {
+  .location-fields,
+  .upload-grid {
     grid-template-columns: 1fr;
   }
 

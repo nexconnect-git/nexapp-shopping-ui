@@ -139,6 +139,7 @@ export const DEFAULT_CUSTOMER_CONTENT_CONFIG: CustomerContentConfig = {
     bottomNav: [
       { label: 'Home', icon: 'home', route: '/', exact: true },
       { label: 'Search', icon: 'search', route: '/search' },
+      { label: 'Categories', icon: 'more_horiz', route: '/stores' },
       { label: 'Cart', icon: 'shopping_cart', route: '/cart', badge: 'cart' },
       { label: 'Orders', icon: 'receipt_long', route: '/orders' },
       { label: 'Account', icon: 'person', route: '/profile' },
@@ -399,6 +400,20 @@ function mergeConfig<T>(base: T, incoming: Partial<T> | null | undefined): T {
   return result as T;
 }
 
+function normalizeBottomNav(items: CustomerNavItem[]): CustomerNavItem[] {
+  const nav = [...items];
+  if (!nav.some((item) => item.label.toLowerCase() === 'categories')) {
+    const cartIndex = nav.findIndex((item) => item.route === '/cart');
+    const insertAt = cartIndex >= 0 ? cartIndex : Math.min(2, nav.length);
+    nav.splice(insertAt, 0, {
+      label: 'Categories',
+      icon: 'more_horiz',
+      route: '/stores',
+    });
+  }
+  return nav;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CustomerContentConfigService {
   private readonly http = inject(HttpClient);
@@ -408,7 +423,9 @@ export class CustomerContentConfigService {
   );
 
   readonly config = this._config.asReadonly();
-  readonly bottomNav = computed(() => this._config().navigation.bottomNav);
+  readonly bottomNav = computed(() =>
+    normalizeBottomNav(this._config().navigation.bottomNav),
+  );
   readonly footerGroups = computed(
     () => this._config().navigation.footerGroups,
   );

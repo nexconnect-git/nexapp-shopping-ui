@@ -307,27 +307,25 @@
   }
   .mobile-trust-grid {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
-    overflow-x: auto;
-    padding-bottom: 2px;
-    scrollbar-width: none;
-  }
-  .mobile-trust-grid::-webkit-scrollbar {
-    display: none;
+    overflow: visible;
   }
   .mobile-trust-grid span {
-    flex: 0 0 auto;
+    flex: 1 1 102px;
     min-height: 34px;
     border: 1px solid #eee7ff;
     border-radius: 999px;
     background: #fff;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     padding: 0 10px;
     color: #374151;
     font-size: 12px;
     font-weight: 900;
     box-shadow: 0 8px 18px rgba(17, 24, 39, 0.04);
+    white-space: nowrap;
   }
   .intro {
     display: none;

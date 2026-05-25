@@ -1,0 +1,69 @@
+<section class="upload-page">
+  <header class="page-header">
+    <div>
+      <small>STORAGE TEST</small>
+      <h1>File Upload</h1>
+      <p>Upload a file through Angular and store it with the Django storage backend.</p>
+    </div>
+  </header>
+
+  <article class="upload-panel">
+    <div class="file-control">
+      <label for="use-of-image">Usage</label>
+      <select id="use-of-image" [(ngModel)]="useOfImage">
+        <option *ngFor="let option of useOfImageOptions" [value]="option.value">
+          {{ option.label }}
+        </option>
+      </select>
+    </div>
+
+    <div class="file-control">
+      <label for="file-input">Choose file</label>
+      <input id="file-input" type="file" (change)="onFileSelected($event)" />
+      <span>{{ selectedFile()?.name || "No file selected" }}</span>
+    </div>
+
+    <button type="button" class="primary" [disabled]="!selectedFile() || uploading()" (click)="upload()">
+      {{ uploading() ? "Queueing..." : "Upload File" }}
+    </button>
+
+    <p *ngIf="success()" class="message success">{{ success() }}</p>
+    <p *ngIf="error()" class="message error">{{ error() }}</p>
+
+    <div *ngIf="uploaded()" class="result">
+      <span>Returned URL</span>
+      <a [href]="uploaded()?.file_url" target="_blank" rel="noopener">
+        {{ uploaded()?.file_url }}
+      </a>
+    </div>
+  </article>
+
+  <section class="files-list" *ngIf="tasks().length">
+    <h2>Upload queue</h2>
+    <article *ngFor="let task of tasks()" class="task-row" [class.failed]="task.status === 'failed'">
+      <div>
+        <strong>{{ task.fileName }}</strong>
+        <span>{{ task.useOfImage }} - {{ task.fileSize | number }} bytes - {{ task.status }}</span>
+        <small *ngIf="task.error">{{ task.error }}</small>
+      </div>
+      <div class="task-actions">
+        <button *ngIf="task.status === 'failed'" type="button" (click)="retry(task)">Retry</button>
+        <button type="button" (click)="remove(task)">
+          {{ task.status === "completed" ? "Clear" : "Cancel" }}
+        </button>
+      </div>
+    </article>
+  </section>
+
+  <section class="files-list">
+    <h2>Recent uploads</h2>
+    <div *ngIf="!files().length" class="empty">No uploads yet.</div>
+    <a *ngFor="let file of files()" [href]="file.file_url" target="_blank" rel="noopener" class="file-row">
+      <div>
+        <strong>{{ file.original_filename }}</strong>
+        <span>{{ file.use_of_image }} - {{ file.content_type }} - {{ file.size | number }} bytes</span>
+      </div>
+      <small>{{ file.created_at | date: "medium" }}</small>
+    </a>
+  </section>
+</section>
