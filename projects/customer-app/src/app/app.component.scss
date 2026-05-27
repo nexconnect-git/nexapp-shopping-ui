@@ -1,1 +1,4 @@
-/* App shell styles are managed by shared shell components and global styles. */
+:host {
+  display: block;
+  min-width: 0;
+}

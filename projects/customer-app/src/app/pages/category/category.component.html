@@ -1,3 +1,4 @@
+<div class="desktop-customer-view">
 <main class="fd-content">
   <fd-breadcrumbs [items]="[{ label: title() }]" />
   <section class="fd-two-col">
@@ -81,3 +82,71 @@
     <fd-right-rail />
   </section>
 </main>
+</div>
+
+<div class="mobile-customer-view">
+<main class="mobile-page category-page">
+  <header class="page-head">
+    <a routerLink="/" aria-label="Back home">
+      <span class="material-symbols-rounded">arrow_back</span>
+    </a>
+    <div>
+      <small>{{ storeCount() }} nearby stores</small>
+      <h1>{{ title() }}</h1>
+    </div>
+    <label class="sort-button" aria-label="Sort products">
+      <span class="material-symbols-rounded">tune</span>
+      <select [ngModel]="sortBy()" (ngModelChange)="sortBy.set($event)">
+        <option>Popularity</option>
+        <option>Price Low to High</option>
+        <option>Rating</option>
+      </select>
+    </label>
+  </header>
+
+  <section class="category-hero">
+    <span class="material-symbols-rounded">{{ headerIcon() }}</span>
+    <div>
+      <b>Fresh picks in {{ title() }}</b>
+      <small>Fast delivery from stores close to you.</small>
+    </div>
+  </section>
+
+  <section class="mobile-section">
+    <div class="mobile-chip-row">
+      @for (filter of categoryFilters(); track filter) {
+        <button type="button" class="mobile-chip" [class.active]="activeFilter() === filter" (click)="activeFilter.set(filter)">
+          <span class="material-symbols-rounded">{{ filterIcon(filter) }}</span>{{ filter }}
+        </button>
+      }
+    </div>
+  </section>
+
+  <section class="mobile-section">
+    <div class="mobile-section-head">
+      <h2>Best selling</h2>
+      <span>{{ visibleProducts().length }} items</span>
+    </div>
+    <div class="mobile-grid-2">
+      @for (product of visibleProducts().slice(0, 4); track product.id) {
+        <fd-product-card [product]="product" />
+      }
+    </div>
+  </section>
+
+  <section class="mobile-section">
+    <div class="mobile-section-head"><h2>All items</h2></div>
+    <div class="mobile-grid-2">
+      @for (product of visibleProducts(); track product.id) {
+        <fd-product-card [product]="product" />
+      } @empty {
+        <section class="empty-panel">
+          <span class="material-symbols-rounded">inventory_2</span>
+          <b>No products right now</b>
+          <small>Try another category or update your location.</small>
+        </section>
+      }
+    </div>
+  </section>
+</main>
+</div>

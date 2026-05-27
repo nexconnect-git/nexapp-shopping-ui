@@ -1,5 +1,10 @@
 @if (ui.loginSliderOpen()) {
-  <div class="overlay" (click)="ui.closeLogin()"></div>
+  <button
+    type="button"
+    class="overlay"
+    aria-label="Close login"
+    (click)="ui.closeLogin()"
+  ></button>
   <aside class="login-slider animate-slide">
     <button
       type="button"
@@ -10,11 +15,11 @@
       <span class="material-symbols-rounded">close</span>
     </button>
 
-    <section class="mobile-auth-hero" aria-label="FlashDrop mobile login">
+    <section class="mobile-auth-hero" aria-label="Nextou mobile login">
       <div class="mobile-brand-row">
-        <span class="mobile-logo">⚡</span>
+        <span class="mobile-logo" aria-hidden="true">N</span>
         <div>
-          <small>FlashDrop</small>
+          <small>Nextou</small>
           <b>{{
             auth.otpRequested() ? "Enter your secure OTP" : "Welcome back"
           }}</b>
@@ -35,8 +40,8 @@
     </section>
 
     <section class="intro">
-      <span class="spark">FD</span>
-      <small>FlashDrop Secure Login</small>
+      <span class="spark">NT</span>
+      <small>Nextou Secure Login</small>
       <h2>Continue with OTP</h2>
       <p>Sign in with your mobile number and receive the OTP on your email.</p>
     </section>

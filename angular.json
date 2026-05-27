@@ -47,15 +47,10 @@
             ],
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
-            "assets": [
-              {
-                "glob": "**/*",
-                "input": "public"
-              }
-            ],
+            "assets": [],
             "styles": [
               "src/styles.scss",
-              "projects/shared/src/styles/nexconnect-platform.css"
+              "projects/shared/src/styles/nextou-platform.css"
             ],
             "scripts": []
           },
@@ -103,29 +98,6 @@
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n"
-        },
-        "test": {
-          "builder": "@angular-devkit/build-angular:karma",
-          "options": {
-            "polyfills": [
-              "zone.js",
-              "zone.js/testing"
-            ],
-            "tsConfig": "tsconfig.spec.json",
-            "karmaConfig": "karma.conf.js",
-            "inlineStyleLanguage": "scss",
-            "assets": [
-              {
-                "glob": "**/*",
-                "input": "public"
-              }
-            ],
-            "styles": [
-              "src/styles.scss",
-              "projects/shared/src/styles/nexconnect-platform.css"
-            ],
-            "scripts": []
-          }
         },
         "lint": {
           "builder": "@angular-eslint/builder:lint",
@@ -184,20 +156,10 @@
             ],
             "tsConfig": "projects/customer-app/tsconfig.app.json",
             "inlineStyleLanguage": "scss",
-            "assets": [
-              {
-                "glob": "**/*",
-                "input": "projects/customer-app/public"
-              },
-              {
-                "glob": "**/*",
-                "input": "projects/customer-app/src/assets",
-                "output": "/assets/"
-              }
-            ],
+            "assets": [],
             "styles": [
               "projects/customer-app/src/styles.scss",
-              "projects/shared/src/styles/nexconnect-platform.css"
+              "projects/shared/src/styles/nextou-platform.css"
             ],
             "scripts": [],
             "stylePreprocessorOptions": {
@@ -288,39 +250,6 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n"
         },
-        "test": {
-          "builder": "@angular-devkit/build-angular:karma",
-          "options": {
-            "polyfills": [
-              "zone.js",
-              "zone.js/testing"
-            ],
-            "tsConfig": "projects/customer-app/tsconfig.spec.json",
-            "karmaConfig": "projects/customer-app/karma.conf.js",
-            "inlineStyleLanguage": "scss",
-            "assets": [
-              {
-                "glob": "**/*",
-                "input": "projects/customer-app/public"
-              },
-              {
-                "glob": "**/*",
-                "input": "projects/customer-app/src/assets",
-                "output": "/assets/"
-              }
-            ],
-            "styles": [
-              "projects/customer-app/src/styles.scss",
-              "projects/shared/src/styles/nexconnect-platform.css"
-            ],
-            "scripts": [],
-            "stylePreprocessorOptions": {
-              "includePaths": [
-                "projects/shared/src/styles"
-              ]
-            }
-          }
-        },
         "lint": {
           "builder": "@angular-eslint/builder:lint",
           "options": {
@@ -376,15 +305,10 @@
             ],
             "tsConfig": "projects/vendor-app/tsconfig.app.json",
             "inlineStyleLanguage": "scss",
-            "assets": [
-              {
-                "glob": "**/*",
-                "input": "projects/vendor-app/public"
-              }
-            ],
+            "assets": [],
             "styles": [
               "projects/vendor-app/src/styles.scss",
-              "projects/shared/src/styles/nexconnect-platform.css"
+              "projects/shared/src/styles/nextou-platform.css"
             ],
             "scripts": [],
             "stylePreprocessorOptions": {
@@ -443,34 +367,6 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n"
         },
-        "test": {
-          "builder": "@angular-devkit/build-angular:karma",
-          "options": {
-            "polyfills": [
-              "zone.js",
-              "zone.js/testing"
-            ],
-            "tsConfig": "projects/vendor-app/tsconfig.spec.json",
-            "karmaConfig": "projects/vendor-app/karma.conf.js",
-            "inlineStyleLanguage": "scss",
-            "assets": [
-              {
-                "glob": "**/*",
-                "input": "projects/vendor-app/public"
-              }
-            ],
-            "styles": [
-              "projects/vendor-app/src/styles.scss",
-              "projects/shared/src/styles/nexconnect-platform.css"
-            ],
-            "scripts": [],
-            "stylePreprocessorOptions": {
-              "includePaths": [
-                "projects/shared/src/styles"
-              ]
-            }
-          }
-        },
         "lint": {
           "builder": "@angular-eslint/builder:lint",
           "options": {
@@ -526,15 +422,10 @@
             ],
             "tsConfig": "projects/delivery-app/tsconfig.app.json",
             "inlineStyleLanguage": "scss",
-            "assets": [
-              {
-                "glob": "**/*",
-                "input": "projects/delivery-app/public"
-              }
-            ],
+            "assets": [],
             "styles": [
               "projects/delivery-app/src/styles.scss",
-              "projects/shared/src/styles/nexconnect-platform.css"
+              "projects/shared/src/styles/nextou-platform.css"
             ],
             "scripts": [],
             "stylePreprocessorOptions": {
@@ -615,34 +506,6 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n"
         },
-        "test": {
-          "builder": "@angular-devkit/build-angular:karma",
-          "options": {
-            "polyfills": [
-              "zone.js",
-              "zone.js/testing"
-            ],
-            "tsConfig": "projects/delivery-app/tsconfig.spec.json",
-            "karmaConfig": "projects/delivery-app/karma.conf.js",
-            "inlineStyleLanguage": "scss",
-            "assets": [
-              {
-                "glob": "**/*",
-                "input": "projects/delivery-app/public"
-              }
-            ],
-            "styles": [
-              "projects/delivery-app/src/styles.scss",
-              "projects/shared/src/styles/nexconnect-platform.css"
-            ],
-            "scripts": [],
-            "stylePreprocessorOptions": {
-              "includePaths": [
-                "projects/shared/src/styles"
-              ]
-            }
-          }
-        },
         "lint": {
           "builder": "@angular-eslint/builder:lint",
           "options": {
@@ -698,15 +561,10 @@
             ],
             "tsConfig": "projects/admin-panel/tsconfig.app.json",
             "inlineStyleLanguage": "scss",
-            "assets": [
-              {
-                "glob": "**/*",
-                "input": "projects/admin-panel/public"
-              }
-            ],
+            "assets": [],
             "styles": [
               "projects/admin-panel/src/styles.scss",
-              "projects/shared/src/styles/nexconnect-platform.css"
+              "projects/shared/src/styles/nextou-platform.css"
             ],
             "scripts": [],
             "stylePreprocessorOptions": {
@@ -764,34 +622,6 @@
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n"
-        },
-        "test": {
-          "builder": "@angular-devkit/build-angular:karma",
-          "options": {
-            "polyfills": [
-              "zone.js",
-              "zone.js/testing"
-            ],
-            "tsConfig": "projects/admin-panel/tsconfig.spec.json",
-            "karmaConfig": "projects/admin-panel/karma.conf.js",
-            "inlineStyleLanguage": "scss",
-            "assets": [
-              {
-                "glob": "**/*",
-                "input": "projects/admin-panel/public"
-              }
-            ],
-            "styles": [
-              "projects/admin-panel/src/styles.scss",
-              "projects/shared/src/styles/nexconnect-platform.css"
-            ],
-            "scripts": [],
-            "stylePreprocessorOptions": {
-              "includePaths": [
-                "projects/shared/src/styles"
-              ]
-            }
-          }
         },
         "lint": {
           "builder": "@angular-eslint/builder:lint",

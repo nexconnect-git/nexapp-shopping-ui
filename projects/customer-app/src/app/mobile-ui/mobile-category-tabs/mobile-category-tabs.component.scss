@@ -1,0 +1,53 @@
+.mobile-category-tabs {
+  display: flex;
+  gap: 9px;
+  overflow-x: auto;
+  padding: 2px 0 8px;
+  scrollbar-width: none;
+}
+
+.mobile-category-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+button {
+  flex: 0 0 auto;
+  min-width: 76px;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 10px 9px;
+  border: 1px solid rgba(91, 44, 255, 0.1);
+  border-radius: 18px;
+  color: #17122e;
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(33, 22, 82, 0.06);
+}
+
+span {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  color: #5b2cff;
+  background: #f1ecff;
+}
+
+b {
+  max-width: 76px;
+  overflow: hidden;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+button.active {
+  color: #fff;
+  background: linear-gradient(135deg, #5b2cff, #7a4dff);
+}
+
+button.active span {
+  color: #5b2cff;
+  background: #fff;
+}

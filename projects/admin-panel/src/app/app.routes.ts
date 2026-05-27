@@ -58,14 +58,6 @@ export const routes: Routes = [
     data: { entityType: 'admin-user' },
   },
   {
-    path: 'files/upload-test',
-    loadComponent: () =>
-      import('./pages/file-upload-test/file-upload-test.component').then(
-        (m) => m.FileUploadTestComponent,
-      ),
-    canActivate: adminGuard,
-  },
-  {
     path: '',
     pathMatch: 'full',
     loadComponent: () =>
@@ -297,8 +289,10 @@ export const routes: Routes = [
   {
     path: 'settings/page-feature-management',
     loadComponent: () =>
-      import('./pages/page-feature-management-demo/page-feature-management-demo.component').then(
-        (m) => m.PageFeatureManagementDemoComponent,
+      import(
+        './shared/page-feature-management/page-feature-management.component'
+      ).then(
+        (m) => m.PageFeatureManagementComponent,
       ),
     canActivate: adminGuard,
   },
@@ -345,6 +339,14 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/banners/banners.component').then(
         (m) => m.BannersComponent,
+      ),
+    canActivate: adminGuard,
+  },
+  {
+    path: 'customer-content',
+    loadComponent: () =>
+      import('./pages/customer-content/customer-content.component').then(
+        (m) => m.CustomerContentComponent,
       ),
     canActivate: adminGuard,
   },

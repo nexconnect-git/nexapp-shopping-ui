@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
 export class CustomerVisualService {
-  initialsFor(value: string | null | undefined, fallback = 'FD') {
+  initialsFor(value: string | null | undefined, fallback = 'NT') {
     const normalized = String(value || fallback)
       .replace(/[_-]+/g, ' ')
       .split(/\s+/)

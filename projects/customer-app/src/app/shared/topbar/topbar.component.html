@@ -1,4 +1,4 @@
-﻿<header class="topbar">
+<header class="topbar">
   <button
     type="button"
     class="mobile-menu"
@@ -11,10 +11,10 @@
     routerLink="/"
     class="brand"
     (click)="ui.closeMenus()"
-    aria-label="FlashDrop home"
+    aria-label="Nextou home"
   >
-    <span class="logo material-symbols-rounded">bolt</span>
-    <b>FlashDrop</b>
+    <span class="logo" aria-hidden="true">N</span>
+    <b>Nextou</b>
   </a>
 
   <button type="button" class="location" (click)="openLocation()">
@@ -167,7 +167,7 @@
 
   <div class="menu-wrap user-wrap">
     <button type="button" class="avatar" (click)="ui.toggleUserMenu()">
-      {{ (auth.currentUser()?.name || "FD").slice(0, 2).toUpperCase() }}
+      {{ (auth.currentUser()?.name || "NT").slice(0, 2).toUpperCase() }}
     </button>
     @if (ui.userMenuOpen()) {
       <section class="dropdown user-menu animate-scale">

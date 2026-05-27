@@ -1,7 +1,7 @@
 // Mobile (Capacitor) environment.
 // Replace BACKEND_URL with your server's IP/domain before running cap sync.
 // Example: 'http://192.168.1.100:8000/api' for local dev,
-//          'https://api.nexconnect.app/api' for production.
+//          'https://api.nextou.app/api' for production.
 export const environment = {
   production: true,
   apiBaseUrl: 'https://nex-connect.in/sa/api',

@@ -1,0 +1,16 @@
+.mobile-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--mobile-bottom-nav-height) + 26px + env(safe-area-inset-bottom, 0px));
+  z-index: 200;
+  width: max-content;
+  max-width: min(390px, calc(100vw - 28px));
+  transform: translateX(-50%);
+  padding: 13px 16px;
+  border-radius: 16px;
+  color: #fff;
+  background: #17122e;
+  box-shadow: 0 16px 44px rgba(18, 13, 43, 0.24);
+  font-size: 13px;
+  font-weight: 900;
+}

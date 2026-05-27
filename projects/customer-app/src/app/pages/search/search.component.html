@@ -1,4 +1,5 @@
-﻿<main class="fd-content">
+<div class="desktop-customer-view">
+<main class="fd-content">
   <fd-breadcrumbs [items]="[{ label: 'Search Results' }]" />
   <section class="fd-two-col">
     <div>
@@ -227,3 +228,119 @@
     <fd-right-rail />
   </section>
 </main>
+</div>
+
+<div class="mobile-customer-view">
+<main class="mobile-page search-page">
+  <header class="search-head">
+    <button type="button" aria-label="Back" (click)="clearSearch()">
+      <span class="material-symbols-rounded">arrow_back</span>
+    </button>
+    <form class="search-input" (submit)="submitSearch($event)">
+      <span class="material-symbols-rounded">search</span>
+      <input
+        name="q"
+        type="search"
+        placeholder="Search stores or products"
+        [ngModel]="query()"
+        (ngModelChange)="updateQuery($event)"
+      />
+      @if (query()) {
+        <button type="button" aria-label="Clear" (click)="clearSearch()">
+          <span class="material-symbols-rounded">close</span>
+        </button>
+      }
+    </form>
+  </header>
+
+  @if (!query()) {
+    <section class="mobile-section">
+      <div class="mobile-section-head"><h2>Popular searches</h2></div>
+      <div class="mobile-chip-row">
+        @for (category of catalog.categories().slice(0, 8); track category.id) {
+          <button type="button" class="mobile-chip" (click)="updateQuery(category.label); submitSearch($event)">
+            <span class="material-symbols-rounded">search</span>{{ category.label }}
+          </button>
+        }
+      </div>
+    </section>
+
+    <section class="mobile-section">
+      <div class="mobile-section-head"><h2>Browse categories</h2></div>
+      <div class="browse-grid">
+        @for (category of catalog.categories().slice(0, 8); track category.id) {
+          <a [routerLink]="['/category', category.id]">
+            <span class="material-symbols-rounded">{{ category.icon || 'category' }}</span>
+            <b>{{ category.label }}</b>
+          </a>
+        }
+      </div>
+    </section>
+  }
+
+  @if (searchPromo()) {
+    <button type="button" class="search-promo" (click)="handleSearchPromo(searchPromo()!)">
+      <span class="material-symbols-rounded">{{ searchPromo()!.icon || 'local_offer' }}</span>
+      <b>{{ searchPromo()!.title }}</b>
+      <small>{{ searchPromo()!.subtitle }}</small>
+    </button>
+  }
+
+  <section class="mobile-section">
+    <div class="mobile-chip-row">
+      @for (tab of tabs(); track tab) {
+        <button type="button" class="mobile-chip" [class.active]="activeTab() === tab" (click)="activeTab.set(tab)">
+          {{ tab }} <small>{{ count(tab) }}</small>
+        </button>
+      }
+    </div>
+    @if (activeFilters().length) {
+      <button type="button" class="clear-filters" (click)="clearFilters()">Clear filters</button>
+    }
+  </section>
+
+  @if (activeTab() === 'All' || activeTab() === 'Stores') {
+    <section class="mobile-section">
+      <div class="mobile-section-head"><h2>Stores</h2></div>
+      <div class="mobile-list">
+        @for (store of results().stores; track store.id) {
+          <fd-store-card [store]="store" />
+        }
+      </div>
+    </section>
+  }
+
+  @if (activeTab() === 'All' || activeTab() === 'Products') {
+    <section class="mobile-section">
+      <div class="mobile-section-head"><h2>Products</h2></div>
+      <div class="mobile-grid-2">
+        @for (product of results().products; track product.id) {
+          <fd-product-card [product]="product" />
+        }
+      </div>
+    </section>
+  }
+
+  @if (activeTab() === 'All' || activeTab() === 'Categories') {
+    <section class="mobile-section">
+      <div class="mobile-section-head"><h2>Categories</h2></div>
+      <div class="browse-grid">
+        @for (category of results().categories; track category.id) {
+          <a [routerLink]="['/category', category.id]">
+            <span class="material-symbols-rounded">{{ category.icon || 'category' }}</span>
+            <b>{{ category.label }}</b>
+          </a>
+        }
+      </div>
+    </section>
+  }
+
+  @if (noVisibleResults()) {
+    <section class="empty-state">
+      <span class="material-symbols-rounded">search_off</span>
+      <h2>No matches found</h2>
+      <p>Try a product, store, or category nearby.</p>
+    </section>
+  }
+</main>
+</div>

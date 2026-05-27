@@ -1,0 +1,242 @@
+<div class="saas-page content-page">
+  <header class="page-header">
+    <div>
+      <span class="eyebrow">Customer app CMS</span>
+      <h1 class="page-title">Design templates</h1>
+      <p class="page-subtitle">
+        Create the home promo cards, club banners, and contextual shopping
+        cards shown in the customer app.
+      </p>
+    </div>
+    <button class="btn-primary" type="button" (click)="openCreate()">
+      <span class="material-icons-outlined">add</span>
+      New template
+    </button>
+  </header>
+
+  <section class="template-library" aria-label="Template starters">
+    <button type="button" class="starter soft" (click)="openCreate('soft_card', 'home_ad')">
+      <span class="material-icons-outlined">shopping_basket</span>
+      <b>Soft promo card</b>
+      <small>Best for Today Only and Store Promos blocks.</small>
+    </button>
+    <button
+      type="button"
+      class="starter club"
+      (click)="openCreate('club_banner', 'home_engagement')"
+    >
+      <span class="material-icons-outlined">workspace_premium</span>
+      <b>Club banner</b>
+      <small>Wide loyalty or rewards CTA for the home feed.</small>
+    </button>
+    <button type="button" class="starter image" (click)="openCreate('image_card', 'offers_shop')">
+      <span class="material-icons-outlined">image</span>
+      <b>Image card</b>
+      <small>Use artwork or a campaign asset with concise copy.</small>
+    </button>
+  </section>
+
+  <nav class="placement-tabs" aria-label="Content placement filter">
+    @for (placement of placements; track placement.value) {
+      <button
+        type="button"
+        [class.active]="activePlacement() === placement.value"
+        (click)="activePlacement.set(placement.value)"
+      >
+        {{ placement.label }}
+      </button>
+    }
+  </nav>
+
+  @if (loading()) {
+    <div class="state-card">Loading templates...</div>
+  } @else if (!filteredBlocks().length) {
+    <div class="state-card">
+      No templates in this placement yet. Create one to publish dynamic customer
+      app content.
+    </div>
+  } @else {
+    <section class="content-grid">
+      @for (block of filteredBlocks(); track block.id) {
+        <article class="content-card">
+          <div
+            class="preview"
+            [class.club]="block.template === 'club_banner'"
+            [class.image]="block.template === 'image_card'"
+            [attr.data-tone]="block.tone"
+          >
+            @if (block.image) {
+              <img [src]="block.image" [alt]="block.title" />
+            }
+            <span class="preview-icon material-icons-outlined">{{
+              block.icon || "local_offer"
+            }}</span>
+            <small>{{ block.eyebrow || placementLabel(block.placement) }}</small>
+            <b>{{ block.title }}</b>
+            <p>{{ block.subtitle }}</p>
+            <em>{{ block.cta_label }}</em>
+          </div>
+
+          <div class="content-meta">
+            <div>
+              <h2>{{ block.title }}</h2>
+              <p>{{ block.placement_label || placementLabel(block.placement) }}</p>
+            </div>
+            <button
+              type="button"
+              class="status-pill"
+              [class.active]="block.is_active"
+              (click)="toggleActive(block)"
+            >
+              <span class="material-icons-outlined">{{
+                block.is_active ? "visibility" : "visibility_off"
+              }}</span>
+              {{ block.is_active ? "Active" : "Hidden" }}
+            </button>
+          </div>
+
+          <div class="details">
+            <span>{{ block.template_label || block.template }}</span>
+            <span>Order {{ block.display_order }}</span>
+            <span>{{ block.cta_url }}</span>
+          </div>
+
+          <div class="actions">
+            <button type="button" class="action-btn" (click)="openEdit(block)">
+              <span class="material-icons-outlined">edit</span>
+            </button>
+            <button type="button" class="action-btn" (click)="duplicate(block)">
+              <span class="material-icons-outlined">content_copy</span>
+            </button>
+            <button type="button" class="action-btn danger" (click)="delete(block)">
+              <span class="material-icons-outlined">delete_outline</span>
+            </button>
+          </div>
+        </article>
+      }
+    </section>
+  }
+</div>
+
+@if (showModal()) {
+  <button
+    type="button"
+    class="modal-backdrop"
+    aria-label="Close template editor"
+    (click)="closeModal()"
+  ></button>
+  <section class="modal" role="dialog" aria-modal="true" aria-labelledby="content-modal-title">
+    <header class="modal-header">
+      <h2 id="content-modal-title">
+        {{ editTarget() ? "Edit template" : "New template" }}
+      </h2>
+      <button type="button" class="modal-close" (click)="closeModal()">
+        <span class="material-icons-outlined">close</span>
+      </button>
+    </header>
+
+    <div class="modal-body">
+      @if (error()) {
+        <div class="alert-error">{{ error() }}</div>
+      }
+
+      <div class="form-grid">
+        <label>
+          <span>Placement</span>
+          <select class="form-input" [(ngModel)]="form.placement">
+            @for (placement of placements.slice(1); track placement.value) {
+              <option [ngValue]="placement.value">{{ placement.label }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          <span>Template</span>
+          <select class="form-input" [(ngModel)]="form.template">
+            @for (template of templateOptions; track template.value) {
+              <option [ngValue]="template.value">{{ template.label }}</option>
+            }
+          </select>
+        </label>
+      </div>
+
+      <div class="form-grid">
+        <label>
+          <span>Eyebrow</span>
+          <input class="form-input" [(ngModel)]="form.eyebrow" maxlength="40" />
+        </label>
+        <label>
+          <span>Material icon</span>
+          <input
+            class="form-input"
+            [(ngModel)]="form.icon"
+            placeholder="shopping_basket"
+          />
+        </label>
+      </div>
+
+      <label>
+        <span>Title *</span>
+        <input class="form-input" [(ngModel)]="form.title" maxlength="100" />
+      </label>
+
+      <label>
+        <span>Subtitle</span>
+        <textarea class="form-input" rows="3" [(ngModel)]="form.subtitle"></textarea>
+      </label>
+
+      <div class="form-grid">
+        <label>
+          <span>CTA label</span>
+          <input class="form-input" [(ngModel)]="form.cta_label" maxlength="40" />
+        </label>
+        <label>
+          <span>CTA route</span>
+          <input class="form-input" [(ngModel)]="form.cta_url" placeholder="/stores" />
+        </label>
+      </div>
+
+      <label>
+        <span>Image URL</span>
+        <input class="form-input" [(ngModel)]="form.image" placeholder="https://..." />
+      </label>
+
+      <div class="form-grid compact">
+        <label>
+          <span>Tone</span>
+          <select class="form-input" [(ngModel)]="form.tone">
+            @for (tone of toneOptions; track tone) {
+              <option [ngValue]="tone">{{ tone }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          <span>Display order</span>
+          <input class="form-input" type="number" [(ngModel)]="form.display_order" />
+        </label>
+      </div>
+
+      <div class="form-grid compact">
+        <label>
+          <span>Starts at</span>
+          <input class="form-input" type="datetime-local" [(ngModel)]="form.starts_at" />
+        </label>
+        <label>
+          <span>Ends at</span>
+          <input class="form-input" type="datetime-local" [(ngModel)]="form.ends_at" />
+        </label>
+      </div>
+
+      <label class="check-row">
+        <input type="checkbox" [(ngModel)]="form.is_active" />
+        Active in customer app
+      </label>
+    </div>
+
+    <footer class="modal-footer">
+      <button type="button" class="btn-secondary" (click)="closeModal()">Cancel</button>
+      <button type="button" class="btn-primary" [disabled]="saving()" (click)="save()">
+        {{ saving() ? "Saving..." : "Save template" }}
+      </button>
+    </footer>
+  </section>
+}

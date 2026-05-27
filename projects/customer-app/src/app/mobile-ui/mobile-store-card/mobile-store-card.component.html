@@ -1,0 +1,15 @@
+<a [routerLink]="['/store', store.id]" class="mobile-store-card" [class.compact]="compact">
+  <img [src]="store.image || store.hero" [alt]="store.name" loading="lazy" />
+  <span class="info">
+    <b>{{ store.name }}</b>
+    <small>{{ store.category || 'Nextou store' }}</small>
+    <em>
+      <span class="material-symbols-rounded">star</span>{{ store.rating || 'New' }}
+      <span class="dot"></span>
+      {{ store.eta || 'Fast delivery' }}
+    </em>
+    @if (store.offer) {
+      <strong>{{ store.offer }}</strong>
+    }
+  </span>
+</a>

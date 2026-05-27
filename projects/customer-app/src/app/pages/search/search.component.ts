@@ -1,14 +1,15 @@
-import { Component, OnDestroy, computed, effect, signal } from '@angular/core';
+import { Component, computed, effect, OnDestroy, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { buildStoreSelectionTarget } from '@nexconnect/customer-search';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
+import { AppCurrencyPipe } from '@shared/public-api';
 import { CatalogService } from '../../services/catalog.service';
 import { UiService } from '../../services/ui.service';
 import { ProductCardComponent } from '../../components/product-card/product-card.component';
-import { RightRailComponent } from '../../components/right-rail/right-rail.component';
+import { StoreCardComponent } from '../../components/store-card/store-card.component';
 import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
-import { AppCurrencyPipe } from '@shared/public-api';
+import { RightRailComponent } from '../../components/right-rail/right-rail.component';
 import {
   CustomerContentConfigService,
   CustomerPromoCard,
@@ -20,9 +21,10 @@ import {
   imports: [
     FormsModule,
     RouterLink,
-    ProductCardComponent,
-    RightRailComponent,
     BreadcrumbsComponent,
+    ProductCardComponent,
+    StoreCardComponent,
+    RightRailComponent,
     AppCurrencyPipe,
   ],
   templateUrl: './search.component.html',

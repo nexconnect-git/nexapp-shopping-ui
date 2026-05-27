@@ -2,11 +2,10 @@ import { Component, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AppCurrencyPipe } from '@shared/public-api';
 import { OrderService } from '../../services/order.service';
-import { Order } from '../../models';
-import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
 import { UiService } from '../../services/ui.service';
 import { AppStateService } from '../../services/app-state.service';
 import { DisplayOrderIdPipe } from '../../shared/display-order-id.pipe';
+import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
 
 @Component({
   standalone: true,

@@ -10,7 +10,6 @@ import {
   PageSettingsForm,
   PageStatus,
 } from './page-feature-management.models';
-import { PAGE_FEATURE_APPS } from './page-feature-management.seed';
 
 export interface PageActionModal {
   type: 'features' | 'settings' | 'disable' | 'clone' | null;
@@ -42,6 +41,7 @@ export class PageFeatureManagementService {
     featureAccessRequests: true,
     bulkActionAlerts: false,
   };
+  private readonly defaultApplications: ManagedApplication[] = [];
   private readonly initialState = this.loadPersistedState();
 
   readonly apps = signal<ManagedApplication[]>(this.initialState.apps);
@@ -334,7 +334,7 @@ export class PageFeatureManagementService {
   }
 
   resetDefaults(): void {
-    this.apps.set(this.clone(PAGE_FEATURE_APPS));
+    this.apps.set(this.clone(this.defaultApplications));
     this.applyGlobalSettings(this.defaultGlobalSettings);
     this.persistState();
     this.showToast('Defaults restored');
@@ -403,7 +403,7 @@ export class PageFeatureManagementService {
   private loadPersistedState(): PersistedPageFeatureState {
     if (typeof localStorage === 'undefined') {
       return {
-        apps: this.clone(PAGE_FEATURE_APPS),
+        apps: this.clone(this.defaultApplications),
         globalSettings: { ...this.defaultGlobalSettings },
       };
     }
@@ -412,7 +412,7 @@ export class PageFeatureManagementService {
       const raw = localStorage.getItem(this.storageKey);
       if (!raw) {
         return {
-          apps: this.clone(PAGE_FEATURE_APPS),
+          apps: this.clone(this.defaultApplications),
           globalSettings: { ...this.defaultGlobalSettings },
         };
       }
@@ -421,7 +421,7 @@ export class PageFeatureManagementService {
       return {
         apps: Array.isArray(parsed.apps)
           ? parsed.apps
-          : this.clone(PAGE_FEATURE_APPS),
+          : this.clone(this.defaultApplications),
         globalSettings: {
           ...this.defaultGlobalSettings,
           ...(parsed.globalSettings ?? {}),
@@ -429,7 +429,7 @@ export class PageFeatureManagementService {
       };
     } catch {
       return {
-        apps: this.clone(PAGE_FEATURE_APPS),
+        apps: this.clone(this.defaultApplications),
         globalSettings: { ...this.defaultGlobalSettings },
       };
     }
@@ -489,7 +489,7 @@ export class PageFeatureManagementService {
         const applications =
           Array.isArray(response?.applications) && response.applications.length
             ? response.applications
-            : this.clone(PAGE_FEATURE_APPS);
+            : this.clone(this.defaultApplications);
         this.apps.set(applications);
         this.applyGlobalSettings(this.remoteGlobalSettings(response));
         if (

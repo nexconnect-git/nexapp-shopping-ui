@@ -1,0 +1,48 @@
+.mobile-stepper {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scrollbar-width: none;
+}
+
+.mobile-stepper::-webkit-scrollbar {
+  display: none;
+}
+
+span {
+  flex: 1 0 118px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 16px;
+  color: #77708d;
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(33, 22, 82, 0.06);
+}
+
+b {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  color: #5b2cff;
+  background: #f1ecff;
+}
+
+em {
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 900;
+}
+
+span.active {
+  color: #fff;
+  background: linear-gradient(135deg, #5b2cff, #7a4dff);
+}
+
+span.active b {
+  background: #fff;
+}

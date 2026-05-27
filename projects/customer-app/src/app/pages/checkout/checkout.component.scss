@@ -628,3 +628,185 @@
     padding-inline: 10px;
   }
 }
+
+.mobile-customer-view {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .desktop-customer-view {
+    display: none;
+  }
+
+  .mobile-customer-view {
+    display: block;
+  }
+
+  .checkout-head {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
+  }
+  
+  .checkout-head a {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 16px;
+    color: #5b2cff;
+    background: #fff;
+    box-shadow: 0 10px 24px rgba(33, 22, 82, 0.06);
+  }
+  
+  .checkout-head small {
+    color: #77708d;
+    font-size: 12px;
+    font-weight: 900;
+  }
+  
+  .checkout-head h1 {
+    margin: 2px 0 0;
+    font-size: 23px;
+  }
+  
+  .checkout-card {
+    display: grid;
+    gap: 12px;
+    padding: 15px;
+    border-radius: 22px;
+    background: #fff;
+    box-shadow: 0 12px 30px rgba(33, 22, 82, 0.07);
+  }
+  
+  .address-list,
+  .pay-list,
+  .review-items {
+    display: grid;
+    gap: 10px;
+  }
+  
+  .address-card,
+  .pay-list button,
+  .slot-grid button {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
+    padding: 12px;
+    border: 1px solid #eee9f8;
+    border-radius: 18px;
+    background: #fbfaff;
+    text-align: left;
+  }
+  
+  .address-card.active,
+  .pay-list button.active,
+  .slot-grid button.active {
+    border-color: rgba(91, 44, 255, 0.42);
+    background: #f1ecff;
+  }
+  
+  .address-card.disabled {
+    opacity: 0.56;
+  }
+  
+  .address-card .material-symbols-rounded,
+  .pay-list .material-symbols-rounded,
+  .slot-grid .material-symbols-rounded {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border-radius: 16px;
+    color: #5b2cff;
+    background: #fff;
+  }
+  
+  b,
+  small,
+  em {
+    display: block;
+  }
+  
+  small,
+  em {
+    color: #77708d;
+    font-size: 12px;
+    font-style: normal;
+    line-height: 1.35;
+  }
+  
+  .slot-grid,
+  .schedule-form {
+    display: grid;
+    gap: 10px;
+  }
+  
+  .schedule-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  
+  .schedule-form label {
+    display: grid;
+    gap: 6px;
+    color: #5d566e;
+    font-size: 12px;
+    font-weight: 900;
+  }
+  
+  .schedule-form input {
+    min-height: 46px;
+    border: 1px solid #eee9f8;
+    border-radius: 16px;
+    padding: 0 12px;
+  }
+  
+  .error {
+    margin: 0;
+    color: #e94560;
+    font-size: 12px;
+    font-weight: 900;
+  }
+  
+  .upi-apps {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  
+  .upi-apps button {
+    min-height: 40px;
+    border-radius: 14px;
+    color: #5b2cff;
+    background: #f1ecff;
+    font-weight: 950;
+  }
+  
+  .review-items div {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+  }
+  
+  .review-items img {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    object-fit: contain;
+    background: #fbfaff;
+  }
+  
+  .review-items span {
+    min-width: 0;
+  }
+  
+  .review-items b,
+  .review-items small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

@@ -524,3 +524,189 @@ fd-root {
     transition-duration: 0.01ms !important;
   }
 }
+
+
+/* Nextou responsive mobile-only layer. Desktop keeps the restored customer web app. */
+@media (min-width: 761px) {
+  .mobile-customer-view,
+  .mobile-shell-only,
+  fd-mobile-topbar,
+  fd-mobile-bottom-nav {
+    display: none !important;
+  }
+}
+
+@media (max-width: 760px) {
+  :root {
+    --mobile-shell-max: 430px;
+    --mobile-bottom-nav-height: 70px;
+    --mobile-bg: #fbfaff;
+    --mobile-page-x: 14px;
+  }
+
+  .desktop-shell-only,
+  fd-topbar.desktop-shell-only,
+  fd-sidebar.desktop-shell-only {
+    display: none !important;
+  }
+
+  .mobile-shell-only {
+    display: block !important;
+  }
+
+  .fd-page {
+    min-height: 100dvh;
+    padding-top: 0 !important;
+    background: #fbfaff;
+  }
+
+  .mobile-page {
+    min-width: 0;
+    display: grid;
+    gap: 16px;
+    padding: 16px var(--mobile-page-x) calc(96px + env(safe-area-inset-bottom, 0px));
+    background: var(--mobile-bg);
+  }
+
+  .mobile-section {
+    display: grid;
+    gap: 12px;
+  }
+
+  .mobile-section-head {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .mobile-section-head h2,
+  .mobile-section-head h3 {
+    margin: 0;
+    font-size: 18px;
+    line-height: 1.15;
+    font-weight: 950;
+  }
+
+  .mobile-section-head a,
+  .mobile-section-head button {
+    color: #5b2cff;
+    font-size: 13px;
+    font-weight: 950;
+  }
+
+  .mobile-chip-row,
+  .mobile-horizontal-row {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    scrollbar-width: none;
+  }
+
+  .mobile-chip-row::-webkit-scrollbar,
+  .mobile-horizontal-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mobile-chip {
+    flex: 0 0 auto;
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0 13px;
+    border: 1px solid rgba(91, 44, 255, 0.12);
+    border-radius: 999px;
+    color: #4a435f;
+    background: #fff;
+    font-size: 13px;
+    font-weight: 900;
+    white-space: nowrap;
+  }
+
+  .mobile-chip.active,
+  .mobile-chip.is-active {
+    border-color: #5b2cff;
+    color: #fff;
+    background: linear-gradient(135deg, #5b2cff, #7a4dff);
+  }
+
+  .mobile-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 11px;
+  }
+
+  .mobile-list {
+    display: grid;
+    gap: 11px;
+  }
+
+  .mobile-cta {
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 16px;
+    color: #fff;
+    background: linear-gradient(135deg, #5b2cff, #7a4dff);
+    box-shadow: 0 14px 30px rgba(91, 44, 255, 0.2);
+    font-weight: 950;
+  }
+
+  .mobile-cta.secondary {
+    color: #5b2cff;
+    background: #f1ecff;
+    box-shadow: none;
+  }
+
+  .mobile-sticky-cta {
+    position: sticky;
+    bottom: calc(var(--mobile-bottom-nav-height) + 16px + env(safe-area-inset-bottom, 0px));
+    z-index: 60;
+    display: grid;
+    gap: 8px;
+    padding: 10px;
+    border: 1px solid rgba(91, 44, 255, 0.1);
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 18px 46px rgba(35, 24, 84, 0.18);
+  }
+
+  .mobile-form {
+    display: grid;
+    gap: 12px;
+  }
+
+  .mobile-form label {
+    display: grid;
+    gap: 6px;
+    color: #5d566e;
+    font-size: 12px;
+    font-weight: 900;
+  }
+
+  .mobile-form input,
+  .mobile-form textarea,
+  .mobile-form select {
+    width: 100%;
+    min-width: 0;
+    min-height: 46px;
+    border: 1px solid #eee9f8;
+    border-radius: 16px;
+    outline: 0;
+    padding: 0 13px;
+    color: #17122e;
+    background: #fff;
+  }
+
+  .mobile-form textarea {
+    min-height: 108px;
+    padding-block: 12px;
+    resize: vertical;
+  }
+}

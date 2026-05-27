@@ -87,6 +87,7 @@ export class AppStateService {
   readonly checkoutSubmitting = signal(false);
   readonly lastCheckoutError = signal('');
   readonly deliveryFeePreview = signal<any>(null);
+  readonly checkoutPriceBreakup = signal<Record<string, any> | null>(null);
   readonly requiresFarDeliveryConfirmation = signal(false);
   readonly cartLoaded = signal(false);
 
@@ -126,14 +127,26 @@ export class AppStateService {
   readonly membershipEnabled = computed(() =>
     isMembershipFeatureEnabled({ membership_enabled: false }),
   );
-  readonly handlingFee = computed(() => handlingFeeForItems(this.cart()));
+  readonly platformFee = computed(() => this.priceBreakupAmount('platform_fee'));
+  readonly handlingFee = computed(
+    () =>
+      this.checkoutPriceBreakup()
+        ? this.priceBreakupAmount('packaging_fee')
+        : handlingFeeForItems(this.cart()),
+  );
+  readonly smallCartFee = computed(() =>
+    this.priceBreakupAmount('small_cart_fee'),
+  );
+  readonly taxAmount = computed(() => this.priceBreakupAmount('tax_amount'));
+  readonly surgeFee = computed(() => this.priceBreakupAmount('surge_fee'));
   readonly total = computed(() =>
-    checkoutTotal({
-      subtotal: this.subtotal(),
-      deliveryFee: this.deliveryFee(),
-      handlingFee: this.handlingFee(),
-      couponDiscount: this.couponDiscount(),
-    }),
+    this.priceBreakupAmount('final_payable') ||
+      checkoutTotal({
+        subtotal: this.subtotal(),
+        deliveryFee: this.deliveryFee(),
+        handlingFee: this.handlingFee(),
+        couponDiscount: this.couponDiscount(),
+      }),
   );
   constructor() {
     const loc = this.locationService.location();
@@ -164,6 +177,14 @@ export class AppStateService {
         this.selectedPaymentMethod.set('');
         this.issueOptions.set([]);
       }
+    });
+    effect(() => {
+      this.cart();
+      this.activeAddress();
+      this.coupon();
+      this.selectedPaymentMethod();
+      this.requiresFarDeliveryConfirmation();
+      this.refreshCheckoutPreview();
     });
   }
 
@@ -356,11 +377,13 @@ export class AppStateService {
         next: (coupon) => {
           this.coupon.set(coupon.code || normalized);
           this.couponDiscount.set(Number(coupon.discount || 0));
+          this.refreshCheckoutPreview();
           this.showToast(`${this.coupon()} applied`);
         },
         error: (error) => {
           this.coupon.set('');
           this.couponDiscount.set(0);
+          this.refreshCheckoutPreview();
           this.showToast(
             this.explainApiError(error, 'Coupon is not valid for this order'),
           );
@@ -658,6 +681,7 @@ export class AppStateService {
     this.paymentMethods.update((methods) =>
       methods.map((method) => ({ ...method, isDefault: method.id === id })),
     );
+    this.refreshCheckoutPreview();
   }
 
   placeOrder(
@@ -781,9 +805,11 @@ export class AppStateService {
         this.requiresFarDeliveryConfirmation.set(
           !!preview.requires_far_delivery_confirmation,
         );
+        this.refreshCheckoutPreview();
       },
       error: () => {
         this.deliveryFeePreview.set(null);
+        this.checkoutPriceBreakup.set(null);
         this.requiresFarDeliveryConfirmation.set(false);
       },
     });
@@ -801,12 +827,43 @@ export class AppStateService {
       );
     return this.cartApi.getCheckoutPreview({
       delivery_address_id: address.id,
-      payment_method: paymentMethodId || this.selectedPaymentMethod() || 'cod',
+      payment_method: checkoutPaymentMethodForBackend(
+        paymentMethodId || this.selectedPaymentMethod() || 'cod',
+      ),
       coupon_code: this.coupon(),
       confirm_far_delivery: this.requiresFarDeliveryConfirmation(),
       cod_upi_confirmed: codUpiConfirmed,
       scheduled_for: scheduledFor || null,
     });
+  }
+
+  private refreshCheckoutPreview(): void {
+    const address = this.activeAddress();
+    if (!this.auth.isLoggedIn() || !address?.id || !this.cart().length) {
+      this.checkoutPriceBreakup.set(null);
+      return;
+    }
+    this.cartApi
+      .getCheckoutPreview({
+        delivery_address_id: address.id,
+        payment_method: checkoutPaymentMethodForBackend(
+          this.selectedPaymentMethod() || 'cod',
+        ),
+        coupon_code: this.coupon(),
+        confirm_far_delivery: this.requiresFarDeliveryConfirmation(),
+        cod_upi_confirmed: true,
+      })
+      .subscribe({
+        next: (preview) => {
+          this.checkoutPriceBreakup.set(preview?.price_breakup || null);
+        },
+        error: () => this.checkoutPriceBreakup.set(null),
+      });
+  }
+
+  private priceBreakupAmount(key: string): number {
+    const value = Number(this.checkoutPriceBreakup()?.[key] ?? 0);
+    return Number.isFinite(value) ? value : 0;
   }
 
   private mapCartItem(item: ApiCartItem): CartItem {

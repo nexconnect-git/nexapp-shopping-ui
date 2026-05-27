@@ -8,7 +8,6 @@ import {
   DeliveryDashboard,
 } from '@shared/public-api';
 import { Subscription, timer } from 'rxjs';
-import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-dashboard',
@@ -29,6 +28,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private dashSub?: Subscription;
   private locationWatchId: number | null = null;
   private locationIntervalId: ReturnType<typeof setInterval> | null = null;
+  private locationRetryId: ReturnType<typeof setTimeout> | null = null;
+  private lastLocationPushAt = 0;
+  private locationRetryDelayMs = 5000;
   private initialized = false;
 
   ngOnInit() {
@@ -79,11 +81,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   private _startLocationTracking() {
-    if (environment.production) {
-      console.log('Live location tracking is disabled in production.');
-      this.locationStatus.set('idle');
-      return;
-    }
     if (!navigator.geolocation) {
       this.locationStatus.set('error');
       return;
@@ -118,18 +115,72 @@ export class DashboardComponent implements OnInit, OnDestroy {
       clearInterval(this.locationIntervalId);
       this.locationIntervalId = null;
     }
+    if (this.locationRetryId !== null) {
+      clearTimeout(this.locationRetryId);
+      this.locationRetryId = null;
+    }
     this.locationStatus.set('idle');
   }
 
   private _sendCurrentLocation() {
+    if (!this._shouldSendLocation()) {
+      return;
+    }
     navigator.geolocation.getCurrentPosition(
       (pos) => this._pushLocation(pos.coords.latitude, pos.coords.longitude),
-      () => {},
+      (err) => {
+        this.locationStatus.set(
+          err.code === err.PERMISSION_DENIED ? 'denied' : 'error',
+        );
+      },
       { enableHighAccuracy: true, timeout: 10000 },
     );
   }
 
   private _pushLocation(lat: number, lng: number) {
-    this.api.updateLocation(lat, lng).subscribe();
+    if (!this._shouldSendLocation()) {
+      return;
+    }
+    const now = Date.now();
+    if (now - this.lastLocationPushAt < 15000) {
+      return;
+    }
+    this.lastLocationPushAt = now;
+    this.api.updateLocation(lat, lng, this._activeTrackingOrderId()).subscribe({
+      next: () => {
+        this.locationStatus.set('watching');
+        this.locationRetryDelayMs = 5000;
+      },
+      error: () => {
+        this.locationStatus.set(navigator.onLine ? 'error' : 'idle');
+        this._scheduleLocationRetry();
+      },
+    });
+  }
+
+  private _shouldSendLocation() {
+    const status = this.stats()?.partner_status;
+    return (
+      this.isAvailable() &&
+      navigator.onLine &&
+      (status === 'available' || status === 'on_delivery')
+    );
+  }
+
+  private _activeTrackingOrderId(): string | undefined {
+    return this.stats()?.active_orders?.find((order) =>
+      ['ready', 'picked_up', 'on_the_way'].includes(order.status),
+    )?.id;
+  }
+
+  private _scheduleLocationRetry() {
+    if (this.locationRetryId || !this.isAvailable()) {
+      return;
+    }
+    this.locationRetryId = setTimeout(() => {
+      this.locationRetryId = null;
+      this._sendCurrentLocation();
+      this.locationRetryDelayMs = Math.min(this.locationRetryDelayMs * 2, 60000);
+    }, this.locationRetryDelayMs);
   }
 }

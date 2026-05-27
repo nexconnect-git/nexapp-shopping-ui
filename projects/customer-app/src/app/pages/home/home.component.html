@@ -1,3 +1,4 @@
+<div class="desktop-customer-view">
 <main class="fd-content home-content desktop-home">
   <fd-breadcrumbs [items]="[{ label: 'Instant Delivery' }]" />
   <section class="home-layout">
@@ -19,7 +20,10 @@
               <span>{{ store.category }}</span>
             </div>
           }
-          <a [routerLink]="heroCtaUrl()" class="shop-btn"
+          <a
+            [routerLink]="routePath(heroCtaUrl())"
+            [queryParams]="routeQuery(heroCtaUrl())"
+            class="shop-btn"
             >{{ heroCtaLabel() }}
             <span class="material-symbols-rounded">arrow_forward</span></a
           >
@@ -105,7 +109,7 @@
         <a routerLink="/stores"
           ><span>🏪</span><b>Nearby shops</b><small>Live catalog</small></a
         >
-        <a routerLink="/search?q=milk"
+        <a routerLink="/search" [queryParams]="{ q: 'milk' }"
           ><span>🥛</span><b>Daily basics</b><small>Quick basket</small></a
         >
       </section>
@@ -153,7 +157,8 @@
             [class.orange]="promo.tone === 'orange'"
             [class.blue]="promo.tone === 'blue'"
             [class.purple]="!promo.tone || promo.tone === 'purple'"
-            [routerLink]="promo.ctaUrl || '/search'"
+            [routerLink]="routePath(promo.ctaUrl || '/search')"
+            [queryParams]="routeQuery(promo.ctaUrl || '/search')"
           >
             <span class="ad-icon material-symbols-rounded">{{
               promo.icon || "local_offer"
@@ -167,7 +172,7 @@
       </section>
 
       @if (engagementBanner(); as banner) {
-        <a class="club-banner" [routerLink]="banner.ctaUrl">
+        <a class="club-banner" [routerLink]="routePath(banner.ctaUrl)" [queryParams]="routeQuery(banner.ctaUrl)">
           <span class="material-symbols-rounded">{{
             banner.icon || "workspace_premium"
           }}</span>
@@ -218,3 +223,88 @@
     <fd-right-rail />
   </section>
 </main>
+</div>
+
+<div class="mobile-customer-view">
+<main class="mobile-page home-page">
+  <section class="hero-card" [style.background]="heroBackground() || null">
+    <div>
+      <span>{{ heroBadge() }}</span>
+      <h1>{{ heroTitle() }}</h1>
+      <p>{{ heroSubtitle() }}</p>
+      <a [routerLink]="routePath(heroCtaUrl())" [queryParams]="routeQuery(heroCtaUrl())">{{ heroCtaLabel() }}</a>
+    </div>
+    <img [src]="heroImage()" [alt]="heroTitle()" />
+  </section>
+
+  <section class="mobile-section">
+    <div class="mobile-section-head">
+      <h2>Shop by need</h2>
+      <a routerLink="/stores">View all</a>
+    </div>
+    <div class="category-icons">
+      @for (category of mobileCategories(); track category.id) {
+        <a [routerLink]="['/category', category.id]">
+          <span class="material-symbols-rounded">{{ categoryIcon(category) }}</span>
+          <b>{{ category.label }}</b>
+        </a>
+      }
+    </div>
+  </section>
+
+  <section class="promo-row">
+    @for (promo of homePromos(); track promo.id) {
+      <a [routerLink]="routePath(promo.ctaUrl || '/offers')" [queryParams]="routeQuery(promo.ctaUrl || '/offers')" class="promo-card">
+        <span class="material-symbols-rounded">{{ promo.icon || 'local_offer' }}</span>
+        <b>{{ promo.title }}</b>
+        <small>{{ promo.subtitle }}</small>
+      </a>
+    } @empty {
+      @for (coupon of promoCoupons(); track coupon.id) {
+        <button type="button" class="promo-card" (click)="state.applyCoupon(coupon.code)">
+          <span class="material-symbols-rounded">local_offer</span>
+          <b>{{ coupon.title }}</b>
+          <small>{{ coupon.description }}</small>
+        </button>
+      }
+    }
+  </section>
+
+  <section class="mobile-section">
+    <div class="shortcut-row">
+      <a routerLink="/offers">Today's deals</a>
+      <a routerLink="/stores">Nearby shops</a>
+      <a routerLink="/category/all">Daily essentials</a>
+      <a routerLink="/search">Recommended</a>
+    </div>
+  </section>
+
+  <section class="mobile-section">
+    <div class="mobile-section-head">
+      <h2>Top stores</h2>
+      <a routerLink="/stores">See all</a>
+    </div>
+    <div class="store-scroller">
+      @for (store of catalog.featuredStores().slice(0, 8); track store.id) {
+        <fd-store-card [store]="store" />
+      } @empty {
+        @for (store of catalog.stores().slice(0, 8); track store.id) {
+          <fd-store-card [store]="store" />
+        }
+      }
+    </div>
+  </section>
+
+  <section class="mobile-section">
+    <div class="mobile-section-head">
+      <h2>Recommended</h2>
+      <a routerLink="/search">Search more</a>
+    </div>
+    <div class="mobile-grid-2">
+      @for (product of catalog.topProducts().slice(0, 8); track product.id) {
+        <fd-product-card [product]="product" />
+      }
+    </div>
+  </section>
+</main>
+</div>

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   FlashDrop Motion System
+   Nextou Motion System
    Smooth transitions, page-load states, loader and micro-interactions.
    ========================================================================== */
 
@@ -286,11 +286,8 @@ select:focus,
   width: 72px;
   height: 72px;
   border-radius: 22px;
-  background: linear-gradient(135deg, #ff3576, #5b2cff);
-  color: #fff;
-  display: grid;
-  place-items: center;
-  font-size: 32px;
+  display: block;
+  object-fit: contain;
   animation: fdPulseGlow 1.4s infinite;
 }
 
@@ -307,7 +304,7 @@ select:focus,
   margin: 0;
   font-size: 24px;
   font-weight: 900;
-  letter-spacing: -0.04em;
+  letter-spacing: 0;
   color: #101426;
 }
 

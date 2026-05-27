@@ -19,7 +19,7 @@ export class BrowserPaymentAdapter implements PaymentAdapter<
         key: payment['key_id'] || payment['razorpay_key_id'] || '',
         amount: payment['amount'],
         currency: payment['currency'],
-        name: 'FlashDrop',
+        name: 'Nextou',
         description,
         order_id: payment['razorpay_order_id'],
         handler: resolve,

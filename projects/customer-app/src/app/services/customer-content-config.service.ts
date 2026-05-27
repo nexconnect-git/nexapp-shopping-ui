@@ -31,6 +31,7 @@ export interface CustomerPromoCard {
   ctaUrl: string;
   icon?: string;
   tone?: 'purple' | 'green' | 'orange' | 'red' | 'blue';
+  template?: 'soft_card' | 'club_banner' | 'image_card';
   image?: string;
 }
 
@@ -139,7 +140,7 @@ export const DEFAULT_CUSTOMER_CONTENT_CONFIG: CustomerContentConfig = {
     bottomNav: [
       { label: 'Home', icon: 'home', route: '/', exact: true },
       { label: 'Search', icon: 'search', route: '/search' },
-      { label: 'Categories', icon: 'more_horiz', route: '/stores' },
+      { label: 'Stores', icon: 'storefront', route: '/stores' },
       { label: 'Cart', icon: 'shopping_cart', route: '/cart', badge: 'cart' },
       { label: 'Orders', icon: 'receipt_long', route: '/orders' },
       { label: 'Account', icon: 'person', route: '/profile' },
@@ -179,7 +180,7 @@ export const DEFAULT_CUSTOMER_CONTENT_CONFIG: CustomerContentConfig = {
         'Live catalog, prices, and availability update from the server.',
       ctaLabel: 'Shop now',
       ctaUrl: '/stores',
-      image: 'assets/placeholders/store.svg',
+      image: '',
     },
     sectionTitles: {
       topStores: 'Top Stores',
@@ -214,8 +215,8 @@ export const DEFAULT_CUSTOMER_CONTENT_CONFIG: CustomerContentConfig = {
     ],
     engagementBanners: [
       {
-        id: 'flashdrop-club',
-        eyebrow: 'FlashDrop Club',
+        id: 'nextou-club',
+        eyebrow: 'Nextou Club',
         title: 'Save more on repeat orders',
         subtitle:
           'Order again, collect offers, and keep your everyday essentials close.',
@@ -345,7 +346,7 @@ export const DEFAULT_CUSTOMER_CONTENT_CONFIG: CustomerContentConfig = {
   },
   referral: {
     title: 'Refer and Earn',
-    subtitle: 'For every friend who places their first FlashDrop order.',
+    subtitle: 'For every friend who places their first Nextou order.',
     ctaLabel: 'Copy referral link',
     codeTitle: 'Your Referral Code',
     rewardsTitle: 'Your Rewards',
@@ -401,13 +402,29 @@ function mergeConfig<T>(base: T, incoming: Partial<T> | null | undefined): T {
 }
 
 function normalizeBottomNav(items: CustomerNavItem[]): CustomerNavItem[] {
-  const nav = [...items];
-  if (!nav.some((item) => item.label.toLowerCase() === 'categories')) {
+  const seenRoutes = new Set<string>();
+  const nav = items
+    .map((item) =>
+      item.route === '/stores' || item.label.toLowerCase() === 'categories'
+        ? {
+            ...item,
+            label: 'Stores',
+            icon: item.icon === 'more_horiz' ? 'storefront' : item.icon,
+            route: '/stores',
+          }
+        : item,
+    )
+    .filter((item) => {
+      if (seenRoutes.has(item.route)) return false;
+      seenRoutes.add(item.route);
+      return true;
+    });
+  if (!nav.some((item) => item.route === '/stores')) {
     const cartIndex = nav.findIndex((item) => item.route === '/cart');
     const insertAt = cartIndex >= 0 ? cartIndex : Math.min(2, nav.length);
     nav.splice(insertAt, 0, {
-      label: 'Categories',
-      icon: 'more_horiz',
+      label: 'Stores',
+      icon: 'storefront',
       route: '/stores',
     });
   }

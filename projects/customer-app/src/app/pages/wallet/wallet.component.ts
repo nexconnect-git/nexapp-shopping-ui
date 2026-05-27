@@ -81,7 +81,7 @@ export class WalletComponent {
           key: order.key_id || order.razorpay_key_id || '',
           amount: order.amount,
           currency: order.currency,
-          name: 'FlashDrop',
+          name: 'Nextou',
           description: 'Wallet Top-up',
           order_id: order.razorpay_order_id,
           handler: (response: any) =>

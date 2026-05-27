@@ -1,0 +1,41 @@
+.mobile-price-summary {
+  display: grid;
+  gap: 10px;
+  padding: 15px;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgba(33, 22, 82, 0.07);
+}
+
+h2,
+p {
+  margin: 0;
+}
+
+h2 {
+  font-size: 18px;
+}
+
+p {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: #706a82;
+  font-size: 13px;
+}
+
+b {
+  color: #17122e;
+}
+
+.save b {
+  color: #159653;
+}
+
+.total {
+  padding-top: 11px;
+  border-top: 1px solid #eee9f8;
+  color: #17122e;
+  font-size: 17px;
+  font-weight: 950;
+}

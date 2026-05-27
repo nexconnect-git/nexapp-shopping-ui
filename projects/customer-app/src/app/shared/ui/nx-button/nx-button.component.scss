@@ -39,3 +39,16 @@
   opacity: 0.55;
   cursor: not-allowed;
 }
+
+@media (max-width: 760px) {
+  .nx-btn {
+    min-height: 44px;
+    height: auto;
+    border-radius: 14px;
+    padding: 0 14px;
+  }
+
+  .nx-btn:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+}

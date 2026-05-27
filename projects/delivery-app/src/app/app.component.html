@@ -1,7 +1,10 @@
 <!-- Mobile header (shown ≤768px, only when logged in) -->
 @if (auth.isLoggedIn() && !isAuthRoute()) {
   <header class="mobile-header">
-    <span class="mobile-brand">NexConnect <b>Delivery</b></span>
+    <span class="mobile-brand">
+      <span class="mobile-brand-logo" aria-hidden="true">N</span>
+      <span>Nextou <b>Delivery</b></span>
+    </span>
     <div class="header-actions">
       <!-- Notification Bell -->
       <div class="notif-wrapper" (click)="$event.stopPropagation()">
@@ -107,11 +110,9 @@
   <aside class="sidebar">
     <!-- Brand -->
     <div class="sidebar-brand">
-      <div class="sidebar-brand-icon">
-        <span class="material-icons-outlined">delivery_dining</span>
-      </div>
+      <span class="sidebar-brand-icon" aria-hidden="true">N</span>
       <div class="sidebar-brand-text">
-        <span class="sidebar-brand-name">NexConnect</span>
+        <span class="sidebar-brand-name">Nextou</span>
         <span class="sidebar-brand-sub">Delivery</span>
       </div>
     </div>

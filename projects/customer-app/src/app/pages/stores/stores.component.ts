@@ -11,18 +11,18 @@ import { CatalogService } from '../../services/catalog.service';
 import { UiService } from '../../services/ui.service';
 import { AppStateService } from '../../services/app-state.service';
 import { StoreCardComponent } from '../../components/store-card/store-card.component';
-import { RightRailComponent } from '../../components/right-rail/right-rail.component';
-import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
 import { CustomerContentConfigService } from '../../services/customer-content-config.service';
+import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
+import { RightRailComponent } from '../../components/right-rail/right-rail.component';
 
 @Component({
   standalone: true,
   imports: [
     FormsModule,
     RouterLink,
+    BreadcrumbsComponent,
     StoreCardComponent,
     RightRailComponent,
-    BreadcrumbsComponent,
   ],
   templateUrl: './stores.component.html',
   styleUrls: ['./stores.component.scss'],
@@ -65,6 +65,13 @@ export class StoresComponent {
     return list;
   });
   storePromos = computed(() => this.content.ads().storeListing);
+  storePromo = computed(
+    () =>
+      this.storePromos()[0] || {
+        title: 'Shop vendor deals near you',
+        subtitle: 'Offers are confirmed at checkout.',
+      },
+  );
 
   setFilter(filter: string): void {
     const category = this.categoryKeyFromLabel(filter);

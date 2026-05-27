@@ -42,10 +42,13 @@ yarn-error.log
 projects/*/public/runtime-config.js
 testem.log
 /typings
+*.md
 
 # Tests
 /test
 /tests
+/test-results
+/playwright-report
 **/test/
 **/tests/
 **/*.spec.ts
@@ -53,11 +56,31 @@ testem.log
 **/*.test.js
 **/*.test.jsx
 **/*.test.tsx
-!projects/vendor-app/src/**/*.spec.ts
-!projects/admin-panel/src/**/*.spec.ts
-!src/**/*.spec.ts
-!projects/customer-app/src/**/*.spec.ts
-!projects/delivery-app/src/**/*.spec.ts
+**/test-*/
+**/*-test/
+**/*seed*
+**/*fixture*
+
+# Static/media assets
+**/media/
+**/static/
+**/staticfiles/
+**/public/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.svg
+*.ico
+*.avif
+*.mp4
+*.mov
+*.webm
+*.woff
+*.woff2
+*.ttf
+*.otf
 
 # System files
 .DS_Store

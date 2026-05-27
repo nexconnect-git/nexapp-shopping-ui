@@ -90,6 +90,11 @@ export class AppComponent implements OnInit {
       items: [
         { route: '/coupons', icon: 'local_activity', label: 'Promotions' },
         { route: '/banners', icon: 'view_carousel', label: 'Home Banners' },
+        {
+          route: '/customer-content',
+          icon: 'dashboard_customize',
+          label: 'Customer Templates',
+        },
         { route: '/notifications', icon: 'campaign', label: 'Notifications' },
         { route: '/assets', icon: 'handyman', label: 'Assets' },
       ],
@@ -192,6 +197,7 @@ export class AppComponent implements OnInit {
       customers: 'Customers',
       coupons: 'Promotions',
       notifications: 'Notifications',
+      'customer-content': 'Customer Templates',
       assets: 'Assets',
       payments: 'Payments',
       payouts: 'Payouts',

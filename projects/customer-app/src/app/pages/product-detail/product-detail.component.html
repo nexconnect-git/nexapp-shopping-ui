@@ -1,3 +1,4 @@
+<div class="desktop-customer-view">
 <main class="fd-content">
   <section class="product-layout">
     <div class="media-col">
@@ -181,7 +182,7 @@
       } @else {
         <p>
           {{ product().rating || "New" }} rating. Reviews from verified
-          FlashDrop orders appear here.
+          Nextou orders appear here.
         </p>
       }
     </section>
@@ -196,3 +197,96 @@
     </section>
   </section>
 </main>
+</div>
+
+<div class="mobile-customer-view">
+<main class="mobile-page product-detail-page">
+  <section class="product-hero">
+    <div class="hero-actions">
+      <a [routerLink]="store()?.id ? ['/store', store()!.id] : ['/']" aria-label="Back">
+        <span class="material-symbols-rounded">arrow_back</span>
+      </a>
+      <button type="button" aria-label="Toggle wishlist" (click)="toggleWishlist()">
+        <span class="material-symbols-rounded">favorite</span>
+      </button>
+    </div>
+    <button type="button" class="image-button" (click)="zoomImage()">
+      <img [src]="product().image" [alt]="product().name" />
+    </button>
+  </section>
+
+  <section class="product-info">
+    @if (product().discount) {
+      <span class="discount">{{ product().discount }}</span>
+    }
+    <h1>{{ product().name }}</h1>
+    <p>{{ product().unit }} · {{ product().category }}</p>
+    <div class="price-row">
+      <b>{{ product().price | appCurrency }}</b>
+      @if (product().mrp > product().price) {
+        <del>{{ product().mrp | appCurrency }}</del>
+      }
+    </div>
+    <div class="benefits">
+      <span><i class="material-symbols-rounded">schedule</i>{{ deliveryLabel() }}</span>
+      <span><i class="material-symbols-rounded">storefront</i>{{ store()?.name || product().storeName || 'Partner store' }}</span>
+      <span><i class="material-symbols-rounded">verified</i>{{ deliveryMode() }}</span>
+    </div>
+  </section>
+
+  <section class="mobile-section">
+    <div class="mobile-section-head"><h2>Choose pack</h2></div>
+    <div class="mobile-chip-row">
+      @for (size of sizes(); track size.label) {
+        <button type="button" class="mobile-chip" [class.active]="selectedSize() === size.label || (!selectedSize() && $index === 0)" (click)="selectedSize.set(size.label)">
+          {{ size.label }} · {{ size.price | appCurrency }}
+        </button>
+      }
+    </div>
+  </section>
+
+  <section class="details-card">
+    <div class="mobile-chip-row">
+      @for (panel of detailPanels(); track panel.id) {
+        <button type="button" class="mobile-chip" [class.active]="activePanel() === panel.id" (click)="activePanel.set(panel.id)">
+          {{ panel.title }}
+        </button>
+      }
+    </div>
+    <p>{{ selectedPanel().intro }}</p>
+    @for (item of selectedPanel().items; track item.label) {
+      <dl>
+        <dt>{{ item.label }}</dt>
+        <dd>{{ item.value }}</dd>
+      </dl>
+    }
+  </section>
+
+  @if (store()?.id) {
+    <section class="mobile-section">
+      <div class="mobile-section-head">
+        <h2>More from {{ store()?.name }}</h2>
+      </div>
+      <div class="mobile-grid-2">
+        @for (item of catalog.productsByStore(store()!.id).slice(0, 4); track item.id) {
+          <fd-product-card [product]="item" />
+        }
+      </div>
+    </section>
+  }
+
+  <section class="mobile-sticky-cta detail-cta">
+    <div class="qty">
+      <button type="button" aria-label="Decrease quantity" (click)="qty.set(Math.max(1, qty() - 1))">
+        <span class="material-symbols-rounded">remove</span>
+      </button>
+      <b>{{ qty() }}</b>
+      <button type="button" aria-label="Increase quantity" (click)="qty.set(qty() + 1)">
+        <span class="material-symbols-rounded">add</span>
+      </button>
+    </div>
+    <button type="button" class="mobile-cta" (click)="state.addToCart(product(), qty())">Add to cart</button>
+    <button type="button" class="mobile-cta secondary" (click)="buyNow()">Buy now</button>
+  </section>
+</main>
+</div>

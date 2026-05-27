@@ -1,5 +1,10 @@
 @if (ui.filterSliderOpen()) {
-  <div class="overlay" (click)="ui.closeFilter()"></div>
+  <button
+    type="button"
+    class="overlay"
+    aria-label="Close filters"
+    (click)="ui.closeFilter()"
+  ></button>
   <aside class="filter-slider animate-slide">
     <header>
       <div>

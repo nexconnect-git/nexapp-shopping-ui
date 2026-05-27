@@ -59,7 +59,9 @@ export class ApiService {
 
   // Auth
   login(data: { username: string; password: string }): Observable<any> {
-    return this.http.post(`${this.baseUrl}/auth/login/`, data);
+    return this.http.post(`${this.baseUrl}/auth/login/`, data, {
+      withCredentials: true,
+    });
   }
 
   requestCustomerLoginOtp(data: {
@@ -80,11 +82,14 @@ export class ApiService {
     return this.http.post(
       `${this.baseUrl}/auth/mobile/verify-login-otp/`,
       data,
+      { withCredentials: true },
     );
   }
 
   register(data: any): Observable<any> {
-    return this.http.post(`${this.baseUrl}/auth/register/`, data);
+    return this.http.post(`${this.baseUrl}/auth/register/`, data, {
+      withCredentials: true,
+    });
   }
 
   requestCustomerRegisterOtp(data: {
@@ -107,18 +112,22 @@ export class ApiService {
     return this.http.post(
       `${this.baseUrl}/auth/mobile/verify-register-otp/`,
       data,
+      { withCredentials: true },
     );
   }
 
-  refreshToken(refresh?: string | null): Observable<any> {
+  refreshToken(): Observable<any> {
     return this.http.post(
       `${this.baseUrl}/auth/refresh/`,
-      refresh ? { refresh } : {},
+      {},
+      { withCredentials: true },
     );
   }
 
   logout(): Observable<any> {
-    return this.http.post(`${this.baseUrl}/auth/logout/`, {});
+    return this.http.post(`${this.baseUrl}/auth/logout/`, {}, {
+      withCredentials: true,
+    });
   }
 
   getProfile(): Observable<any> {
@@ -946,6 +955,26 @@ export class ApiService {
     return this.http.delete(`${this.baseUrl}/admin/banners/${id}/`);
   }
 
+  // Customer app content templates
+  getAdminCustomerContentBlocks(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/admin/customer-content-blocks/`);
+  }
+
+  createAdminCustomerContentBlock(data: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/admin/customer-content-blocks/`, data);
+  }
+
+  updateAdminCustomerContentBlock(id: string, data: any): Observable<any> {
+    return this.http.patch(
+      `${this.baseUrl}/admin/customer-content-blocks/${id}/`,
+      data,
+    );
+  }
+
+  deleteAdminCustomerContentBlock(id: string): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/admin/customer-content-blocks/${id}/`);
+  }
+
   // Coupons
   getCoupons(): Observable<any> {
     return this.http.get(`${this.baseUrl}/orders/coupons/`);
@@ -1052,10 +1081,15 @@ export class ApiService {
     return this.http.post(`${this.baseUrl}/delivery/confirm/${orderId}/`, fd);
   }
 
-  updateLocation(latitude: number, longitude: number): Observable<any> {
+  updateLocation(
+    latitude: number,
+    longitude: number,
+    orderId?: string,
+  ): Observable<any> {
     return this.http.post(`${this.baseUrl}/delivery/update-location/`, {
       latitude,
       longitude,
+      ...(orderId ? { order_id: orderId } : {}),
     });
   }
 

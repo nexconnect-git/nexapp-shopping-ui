@@ -1,5 +1,10 @@
 @if (open) {
-  <div class="overlay" (click)="closed.emit()"></div>
+  <button
+    type="button"
+    class="overlay"
+    aria-label="Close modal"
+    (click)="closed.emit()"
+  ></button>
   <section class="modal" [style.width]="width">
     <header>
       <div>

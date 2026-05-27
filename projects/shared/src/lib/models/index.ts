@@ -19,7 +19,7 @@ export interface AuthResponse {
   user: User;
   tokens: {
     access: string;
-    refresh: string;
+    refresh?: string;
   };
 }
 

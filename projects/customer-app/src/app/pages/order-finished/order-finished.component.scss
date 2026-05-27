@@ -321,3 +321,139 @@ textarea:focus {
     text-align: left;
   }
 }
+
+.mobile-customer-view {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .desktop-customer-view {
+    display: none;
+  }
+
+  .mobile-customer-view {
+    display: block;
+  }
+
+  .success-card,
+  .items-card,
+  .timeline-card,
+  .rating-card,
+  .coupon-card {
+    display: grid;
+    gap: 12px;
+    padding: 15px;
+    border-radius: 22px;
+    background: #fff;
+    box-shadow: 0 12px 30px rgba(33, 22, 82, 0.07);
+  }
+  
+  .success-card {
+    justify-items: center;
+    padding: 28px 18px;
+    color: #fff;
+    background: linear-gradient(135deg, #5b2cff, #7a4dff);
+    text-align: center;
+  }
+  
+  .success-card > span {
+    width: 66px;
+    height: 66px;
+    display: grid;
+    place-items: center;
+    border-radius: 26px;
+    color: #5b2cff;
+    background: #fff;
+    font-size: 36px;
+  }
+  
+  h1,
+  h2,
+  p {
+    margin: 0;
+  }
+  
+  .success-card h1 {
+    font-size: 25px;
+    line-height: 1.1;
+  }
+  
+  .success-card p,
+  .success-card small {
+    opacity: 0.86;
+  }
+  
+  .order-item,
+  .timeline-card article,
+  .coupon-card {
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+    align-items: center;
+  }
+  
+  .order-item {
+    display: grid;
+    gap: 10px;
+  }
+  
+  .order-item img {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    object-fit: contain;
+    background: #fbfaff;
+  }
+  
+  .order-item small,
+  .timeline-card small,
+  .coupon-card small,
+  .rating-card p {
+    color: #77708d;
+    font-size: 12px;
+  }
+  
+  .timeline-card article {
+    display: grid;
+    gap: 10px;
+  }
+  
+  .timeline-card article > span,
+  .coupon-card > span {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border-radius: 16px;
+    color: #5b2cff;
+    background: #f1ecff;
+  }
+  
+  .stars {
+    display: flex;
+    gap: 6px;
+  }
+  
+  .stars button {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border-radius: 16px;
+    color: #c7bedc;
+    background: #fbfaff;
+  }
+  
+  .stars button.active {
+    color: #f49b21;
+    background: #fff5e6;
+  }
+  
+  .coupon-card {
+    display: grid;
+    gap: 10px;
+  }
+  
+  .coupon-card button {
+    color: #5b2cff;
+    font-weight: 950;
+  }
+}

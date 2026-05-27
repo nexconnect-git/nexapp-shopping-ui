@@ -149,7 +149,7 @@ function ttlFor(url: string): number {
 
 function normalizedPath(url: string): string {
   try {
-    const parsed = new URL(url, globalThis.location?.origin || 'http://nexconnect.local');
+    const parsed = new URL(url, globalThis.location?.origin || 'http://nextou.local');
     return `${parsed.pathname}${parsed.search}`;
   } catch {
     return url;

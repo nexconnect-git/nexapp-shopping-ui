@@ -3,17 +3,19 @@ import { RouterLink } from '@angular/router';
 import { ApiService, AppCurrencyPipe } from '@shared/public-api';
 import { AppStateService } from '../../services/app-state.service';
 import { ProductCardComponent } from '../../components/product-card/product-card.component';
+import { OrderSummaryComponent } from '../../components/order-summary/order-summary.component';
 import { CatalogService } from '../../services/catalog.service';
 import { UiService } from '../../services/ui.service';
-import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
 import { CustomerContentConfigService } from '../../services/customer-content-config.service';
+import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
 
 @Component({
   standalone: true,
   imports: [
     RouterLink,
-    ProductCardComponent,
     BreadcrumbsComponent,
+    ProductCardComponent,
+    OrderSummaryComponent,
     AppCurrencyPipe,
   ],
   templateUrl: './cart.component.html',

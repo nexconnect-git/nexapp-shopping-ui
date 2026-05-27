@@ -1,25 +1,26 @@
 import { Component, computed, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CatalogService } from '../../services/catalog.service';
 import { ProductCardComponent } from '../../components/product-card/product-card.component';
-import { RightRailComponent } from '../../components/right-rail/right-rail.component';
 import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
+import { RightRailComponent } from '../../components/right-rail/right-rail.component';
 
 @Component({
   standalone: true,
   imports: [
     FormsModule,
+    RouterLink,
+    BreadcrumbsComponent,
     ProductCardComponent,
     RightRailComponent,
-    BreadcrumbsComponent,
   ],
   templateUrl: './category.component.html',
   styleUrls: ['./category.component.scss'],
 })
 export class CategoryComponent {
   activeFilter = signal('All');
-  sortBy = 'Popularity';
+  sortBy = signal('Popularity');
 
   constructor(
     private route: ActivatedRoute,
@@ -40,17 +41,29 @@ export class CategoryComponent {
       .filter(Boolean);
     return ['All', ...Array.from(new Set(labels)).slice(0, 8)];
   });
+  storeCount = computed(
+    () =>
+      new Set(
+        this.visibleProducts()
+          .map((product) => product.storeId || product.storeName)
+          .filter(Boolean),
+      ).size,
+  );
 
   visibleProducts = computed(() => {
     let list = [...this.allProducts()];
     if (this.activeFilter() !== 'All')
       list = list.filter((product) => product.category === this.activeFilter());
-    if (this.sortBy === 'Price Low to High')
+    if (this.sortBy() === 'Price Low to High')
       list = [...list].sort((a, b) => a.price - b.price);
-    if (this.sortBy === 'Rating')
+    if (this.sortBy() === 'Rating')
       list = [...list].sort((a, b) => b.rating - a.rating);
     return list;
   });
+
+  headerIcon(): string {
+    return this.filterIcon(this.title());
+  }
 
   filterIcon(filter: string): string {
     const key = filter.toLowerCase();

@@ -1,4 +1,5 @@
-﻿<main class="fd-content">
+<div class="desktop-customer-view">
+<main class="fd-content">
   <fd-breadcrumbs
     [items]="[{ label: 'Stores', link: '/stores' }, { label: store().name }]"
   />
@@ -184,3 +185,83 @@
     <fd-order-summary [showButton]="true" />
   </section>
 </main>
+</div>
+
+<div class="mobile-customer-view">
+<main class="mobile-page store-detail-page">
+  <section class="store-hero">
+    <img [src]="store().hero || store().image" [alt]="store().name" />
+    <div class="hero-actions">
+      <a routerLink="/stores" aria-label="Back to stores">
+        <span class="material-symbols-rounded">arrow_back</span>
+      </a>
+      <button type="button" aria-label="Share store" (click)="shareStore()">
+        <span class="material-symbols-rounded">ios_share</span>
+      </button>
+    </div>
+    <div class="hero-info">
+      <h1>{{ store().name }}</h1>
+      <p>{{ store().category }} · {{ store().distance || 'Nearby' }}</p>
+      <div>
+        <span><b>{{ store().rating || 'New' }}</b> rating</span>
+        <span>{{ store().eta || 'Fast' }}</span>
+        <span>{{ isOpen() ? 'Open now' : 'Availability varies' }}</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="store-offer">
+    <span class="material-symbols-rounded">{{ storeOfferPromo().icon }}</span>
+    <div>
+      <b>{{ storeOfferPromo().title }}</b>
+      <small>{{ storeOfferPromo().subtitle }}</small>
+    </div>
+  </section>
+
+  <section class="mobile-section">
+    <div class="store-search">
+      <span class="material-symbols-rounded">search</span>
+      <input
+        type="search"
+        placeholder="Search inside store"
+        [ngModel]="storeQuery()"
+        (ngModelChange)="setStoreQuery($event)"
+      />
+      @if (storeQuery()) {
+        <button type="button" aria-label="Clear search" (click)="clearStoreSearch()">
+          <span class="material-symbols-rounded">close</span>
+        </button>
+      }
+    </div>
+    <div class="mobile-chip-row">
+      @for (category of categories(); track category) {
+        <button type="button" class="mobile-chip" [class.active]="activeCategory() === category" (click)="setCategory(category)">
+          <span class="material-symbols-rounded">{{ icon(category) }}</span>{{ category }}
+        </button>
+      }
+    </div>
+  </section>
+
+  @for (group of groupedProducts(); track group.name) {
+    @if (activeCategory() === 'All' || activeCategory() === group.name) {
+      <section class="mobile-section product-group">
+        <div class="mobile-section-head">
+          <h2>{{ group.name }}</h2>
+          <button type="button" (click)="showAllInGroup(group.name)">View all</button>
+        </div>
+        <div class="mobile-grid-2">
+          @for (product of group.items; track product.id) {
+            <fd-product-card [product]="product" />
+          }
+        </div>
+      </section>
+    }
+  } @empty {
+    <section class="empty-panel">
+      <span class="material-symbols-rounded">inventory_2</span>
+      <b>No products available</b>
+      <small>Try another store or update your location.</small>
+    </section>
+  }
+</main>
+</div>

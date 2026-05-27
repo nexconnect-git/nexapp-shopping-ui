@@ -1,4 +1,5 @@
-﻿<main class="fd-content">
+<div class="desktop-customer-view">
+<main class="fd-content">
   <fd-breadcrumbs [items]="[{ label: 'Offers' }]" />
   <div class="fd-page-header">
     <div>
@@ -46,3 +47,38 @@
     }
   </section>
 </main>
+</div>
+
+<div class="mobile-customer-view">
+<main class="mobile-page offers-page">
+  <section class="offer-hero">
+    <small>Nextou offers</small>
+    <h1>{{ heroTitle() }}</h1>
+    <p>{{ heroDescription() }}</p>
+    @if (heroOffer()) {
+      <button type="button" (click)="apply(heroOffer()!.code)">Apply {{ heroOffer()!.code }}</button>
+    }
+  </section>
+
+  <section class="mobile-list">
+    @for (offer of offers(); track offer.code) {
+      <article class="offer-card">
+        <span class="material-symbols-rounded">local_offer</span>
+        <div>
+          <b>{{ offer.title }}</b>
+          <p>{{ offer.description }}</p>
+          <small>{{ offer.valid }}</small>
+        </div>
+        <button type="button" (click)="apply(offer.code)">{{ offer.code }}</button>
+      </article>
+    } @empty {
+      <section class="empty-panel">
+        <span class="material-symbols-rounded">sell</span>
+        <h2>{{ content.offers().emptyTitle }}</h2>
+        <p>{{ content.offers().emptyDescription }}</p>
+        <a routerLink="/stores" class="mobile-cta">{{ content.offers().emptyCta }}</a>
+      </section>
+    }
+  </section>
+</main>
+</div>

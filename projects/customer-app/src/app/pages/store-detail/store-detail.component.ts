@@ -1,22 +1,23 @@
 import { Component, computed, effect, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CatalogService } from '../../services/catalog.service';
 import { AppStateService } from '../../services/app-state.service';
 import { UiService } from '../../services/ui.service';
 import { ProductCardComponent } from '../../components/product-card/product-card.component';
-import { OrderSummaryComponent } from '../../components/order-summary/order-summary.component';
-import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
 import { categoryIconFor } from '../../shared/category-icons';
 import { CustomerContentConfigService } from '../../services/customer-content-config.service';
+import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
+import { OrderSummaryComponent } from '../../components/order-summary/order-summary.component';
 
 @Component({
   standalone: true,
   imports: [
     FormsModule,
+    RouterLink,
+    BreadcrumbsComponent,
     ProductCardComponent,
     OrderSummaryComponent,
-    BreadcrumbsComponent,
   ],
   templateUrl: './store-detail.component.html',
   styleUrls: ['./store-detail.component.scss'],
@@ -149,7 +150,7 @@ export class StoreDetailComponent {
       navigator
         .share({
           title: store.name,
-          text: `Shop ${store.name} on FlashDrop`,
+          text: `Shop ${store.name} on Nextou`,
           url,
         })
         .catch(() => {});

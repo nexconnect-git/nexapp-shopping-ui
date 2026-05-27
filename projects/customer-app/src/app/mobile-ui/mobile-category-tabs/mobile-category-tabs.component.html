@@ -1,0 +1,12 @@
+<div class="mobile-category-tabs">
+  @for (item of items; track item.id || item.label) {
+    <button
+      type="button"
+      [class.active]="active === item.label || active === item.id"
+      (click)="selected.emit(item.id || item.label)"
+    >
+      <span class="material-symbols-rounded">{{ item.icon || 'category' }}</span>
+      <b>{{ item.label }}</b>
+    </button>
+  }
+</div>

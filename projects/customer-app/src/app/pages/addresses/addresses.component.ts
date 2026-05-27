@@ -1,13 +1,20 @@
 import { Component, computed, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { MapLocation, MapPickerComponent } from '@shared/public-api';
 import { Address } from '../../models';
 import { AppStateService } from '../../services/app-state.service';
+import { MobileBottomSheetComponent } from '../../mobile-ui/mobile-bottom-sheet/mobile-bottom-sheet.component';
 import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
 
 @Component({
   standalone: true,
-  imports: [BreadcrumbsComponent, MapPickerComponent],
+  imports: [
+    FormsModule,
+    BreadcrumbsComponent,
+    MapPickerComponent,
+    MobileBottomSheetComponent,
+  ],
   templateUrl: './addresses.component.html',
   styleUrls: ['./addresses.component.scss'],
 })

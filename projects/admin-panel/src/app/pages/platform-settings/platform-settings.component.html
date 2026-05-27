@@ -39,9 +39,31 @@
             class="form-input"
             [(ngModel)]="form.upi_id"
             name="upi_id"
-            placeholder="payments@nexconnect"
+            placeholder="payments@nextou"
           />
         </label>
+
+        <label>
+          Pay-at-delivery QR
+          <input
+            class="form-input"
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            (change)="onQrUpload($event)"
+          />
+          <small
+            >Optional. If uploaded, delivery partners see this QR instead of the
+            generated UPI QR.</small
+          >
+        </label>
+        @if (form.cod_payment_qr) {
+          <div class="qr-preview">
+            <img [src]="form.cod_payment_qr" alt="Pay at delivery QR preview" />
+            <button type="button" class="btn btn-outline" (click)="clearQr()">
+              Remove QR
+            </button>
+          </div>
+        }
 
         <div class="method-list">
           @for (method of paymentMethods; track method.key) {
@@ -110,6 +132,91 @@
             name="free_delivery_above"
           />
         </label>
+      </section>
+
+      <section class="settings-card">
+        <div class="card-title">
+          <span class="material-icons-outlined">receipt_long</span>
+          <div>
+            <h2>Checkout Extras</h2>
+            <p>Admin-controlled fees and taxes shown in cart and checkout.</p>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <label>
+            Platform fee
+            <input
+              class="form-input"
+              type="number"
+              min="0"
+              step="0.01"
+              [(ngModel)]="form.platform_fee"
+              name="platform_fee"
+            />
+          </label>
+          <label>
+            Handling / packaging fee
+            <input
+              class="form-input"
+              type="number"
+              min="0"
+              step="0.01"
+              [(ngModel)]="form.packaging_fee"
+              name="packaging_fee"
+            />
+          </label>
+        </div>
+
+        <div class="two-col">
+          <label>
+            Small cart threshold
+            <input
+              class="form-input"
+              type="number"
+              min="0"
+              step="0.01"
+              [(ngModel)]="form.small_cart_threshold"
+              name="small_cart_threshold"
+            />
+          </label>
+          <label>
+            Small cart fee
+            <input
+              class="form-input"
+              type="number"
+              min="0"
+              step="0.01"
+              [(ngModel)]="form.small_cart_fee"
+              name="small_cart_fee"
+            />
+          </label>
+        </div>
+
+        <div class="two-col">
+          <label>
+            Tax percentage
+            <input
+              class="form-input"
+              type="number"
+              min="0"
+              step="0.01"
+              [(ngModel)]="form.tax_percentage"
+              name="tax_percentage"
+            />
+          </label>
+          <label>
+            Surge fee
+            <input
+              class="form-input"
+              type="number"
+              min="0"
+              step="0.01"
+              [(ngModel)]="form.surge_fee"
+              name="surge_fee"
+            />
+          </label>
+        </div>
       </section>
 
       <section class="settings-card">

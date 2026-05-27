@@ -1,6 +1,6 @@
 import { Component, OnDestroy, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import {
   ApiService,
   openAuthenticatedWebSocket,
@@ -12,7 +12,7 @@ import { displayOrderId } from '../../shared/display-order-id.pipe';
 
 @Component({
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule],
   templateUrl: './help.component.html',
   styleUrls: ['./help.component.scss'],
 })

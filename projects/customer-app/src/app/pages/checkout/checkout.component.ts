@@ -1,12 +1,11 @@
 import { Component, computed, effect, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import {
   buildDeliveryFeeChangeConfirmation,
   COD_UPI_CONFIRMATION_MESSAGE,
   DEFAULT_UPI_APPS,
-  defaultDeliverySlots,
   isUpiPaymentMethod,
-  mergeBackendDeliverySlots,
   paymentIconFor,
   paymentPanelTitle,
 } from '@nexconnect/customer-checkout';
@@ -17,31 +16,59 @@ import { OrderService } from '../../services/order.service';
 import { CustomerCartApiService } from '../../services/customer-cart-api.service';
 import { OrderSummaryComponent } from '../../components/order-summary/order-summary.component';
 import { ProductCardComponent } from '../../components/product-card/product-card.component';
-import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
 import { CatalogService } from '../../services/catalog.service';
 import { UiService } from '../../services/ui.service';
-import { CurrencyService } from '@shared/public-api';
+import { AppCurrencyPipe, CurrencyService } from '@shared/public-api';
+import { MobileStepperComponent } from '../../mobile-ui/mobile-stepper/mobile-stepper.component';
+import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
 
 @Component({
   standalone: true,
-  imports: [OrderSummaryComponent, ProductCardComponent, BreadcrumbsComponent],
+  imports: [
+    FormsModule,
+    RouterLink,
+    BreadcrumbsComponent,
+    OrderSummaryComponent,
+    ProductCardComponent,
+    AppCurrencyPipe,
+    MobileStepperComponent,
+  ],
   templateUrl: './checkout.component.html',
   styleUrls: ['./checkout.component.scss'],
 })
 export class CheckoutComponent {
   step = signal(1);
   selectedAddress = signal('');
-  selectedSlot = signal('10-15 mins');
+  deliveryMode = signal<'now' | 'scheduled'>('now');
+  scheduledDate = signal(this.defaultScheduleDate());
+  scheduledTime = signal(this.defaultScheduleTime());
   selectedPayment = signal('');
+  selectedSlot = signal('Express');
   addressPreviews = signal<
     Record<string, { loading?: boolean; preview?: any; error?: string }>
   >({});
   steps = [
     { id: 1, title: 'Address', sub: 'Choose delivery address' },
-    { id: 2, title: 'Delivery', sub: 'Select delivery slot' },
+    { id: 2, title: 'Delivery', sub: 'Schedule delivery' },
     { id: 3, title: 'Payment', sub: 'Choose payment method' },
   ];
-  slots = defaultDeliverySlots();
+  maxScheduleDate = this.offsetDateValue(7);
+  slots = [
+    {
+      name: 'Express',
+      type: 'ASAP delivery',
+      time: 'ASAP delivery',
+      fee: 'Current delivery fee',
+      price: 'Current fee',
+    },
+    {
+      name: 'Scheduled',
+      type: 'Pick a slot',
+      time: 'Pick a slot',
+      fee: 'Based on store hours',
+      price: 'Store hours',
+    },
+  ];
   readonly upiApps = [
     { name: 'Google Pay', logo: 'G', className: 'gpay' },
     { name: 'PhonePe', logo: 'पे', className: 'phonepe' },
@@ -59,6 +86,45 @@ export class CheckoutComponent {
       this.state.paymentMethods()[0] ||
       null
     );
+  });
+  vendorSchedule = computed(() => {
+    const vendor = this.state.cart()[0]?.raw?.vendor as any;
+    return {
+      name: vendor?.store_name || this.state.cart()[0]?.storeName || 'Store',
+      opening: vendor?.opening_time || '',
+      closing: vendor?.closing_time || '',
+      buffer: Number(vendor?.scheduled_buffer_min || vendor?.base_prep_time_min || 30),
+    };
+  });
+  scheduledFor = computed(() => {
+    if (this.deliveryMode() !== 'scheduled') return null;
+    const date = this.scheduledDate();
+    const time = this.scheduledTime();
+    if (!date || !time) return null;
+    const value = new Date(`${date}T${time}:00`);
+    return Number.isNaN(value.getTime()) ? null : value.toISOString();
+  });
+  scheduleError = computed(() => {
+    if (this.deliveryMode() !== 'scheduled') return '';
+    const date = this.scheduledDate();
+    const time = this.scheduledTime();
+    if (!date || !time) return 'Select a delivery date and time.';
+    const selected = new Date(`${date}T${time}:00`);
+    if (Number.isNaN(selected.getTime())) return 'Select a valid delivery time.';
+    const min = new Date(Date.now() + this.vendorSchedule().buffer * 60000);
+    if (selected <= min)
+      return `Pick a time at least ${this.vendorSchedule().buffer} minutes from now.`;
+    const { opening, closing } = this.vendorSchedule();
+    if (opening && closing) {
+      const selectedTime = this.timeToMinutes(time);
+      if (
+        selectedTime < this.timeToMinutes(opening) ||
+        selectedTime > this.timeToMinutes(closing)
+      ) {
+        return `Pick a time between ${this.formatClock(opening)} and ${this.formatClock(closing)}.`;
+      }
+    }
+    return '';
   });
   sameStoreSuggestions = computed(() => {
     const cart = this.state.cart();
@@ -102,7 +168,6 @@ export class CheckoutComponent {
     private ui: UiService,
     private currency: CurrencyService,
   ) {
-    this.loadAvailableSlots();
     effect(() => {
       if (this.state.cartLoaded() && !this.state.itemCount()) {
         this.state.showToast('Your cart is empty. Add items before checkout.');
@@ -119,7 +184,7 @@ export class CheckoutComponent {
     });
   }
 
-  selectAddress(id: string): void {
+  selectAddress(id: string, dropdown?: HTMLDetailsElement): void {
     const address = this.state.addresses().find((item) => item.id === id);
     if (!address) return;
     const reason = this.addressDisabledReason(address);
@@ -147,11 +212,11 @@ export class CheckoutComponent {
           }),
         )
         .then((confirmed) => {
-          if (confirmed) this.applyAddressSelection(id);
+          if (confirmed) this.applyAddressSelection(id, dropdown);
         });
       return;
     }
-    this.applyAddressSelection(id);
+    this.applyAddressSelection(id, dropdown);
   }
 
   selectPayment(id: string): void {
@@ -176,6 +241,10 @@ export class CheckoutComponent {
   }
 
   placeOrder(): void {
+    if (this.scheduleError()) {
+      this.state.showToast(this.scheduleError());
+      return;
+    }
     const selectedPayment =
       this.selectedPayment() || this.state.selectedPaymentMethod();
     if (selectedPayment === 'cod') {
@@ -196,13 +265,10 @@ export class CheckoutComponent {
   }
 
   private submitOrder(selectedPayment: string, codUpiConfirmed: boolean): void {
-    const selectedSlot = this.slots.find(
-      (slot) => slot.name === this.selectedSlot(),
-    );
     this.orders
       .placeOrder(selectedPayment, {
         codUpiConfirmed,
-        scheduledFor: selectedSlot?.scheduledFor || null,
+        scheduledFor: this.scheduledFor(),
       })
       .subscribe({
         next: (order) => this.router.navigate(['/tracking', order.id]),
@@ -232,6 +298,14 @@ export class CheckoutComponent {
       return;
     }
     this.step.set(2);
+  }
+
+  continueFromDelivery(): void {
+    if (this.scheduleError()) {
+      this.state.showToast(this.scheduleError());
+      return;
+    }
+    this.step.set(3);
   }
 
   addressDisabledReason(address: Address): string {
@@ -269,69 +343,10 @@ export class CheckoutComponent {
     return Number.isFinite(value) ? value : 0;
   }
 
-  private loadAvailableSlots(): void {
-    this.cartApi.getAvailableSlots({ days: 7 }).subscribe({
-      next: (response) => {
-        const slots = Array.isArray(response?.results) ? response.results : [];
-        if (!slots.length) return;
-        this.slots = mergeBackendDeliverySlots(slots);
-      },
-      error: () => {},
-    });
-  }
-
-  private buildDeliverySlots(): Array<{
-    name: string;
-    type: string;
-    price: string;
-    time?: string;
-    scheduledFor?: string;
-  }> {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const dayAfter = new Date();
-    dayAfter.setDate(dayAfter.getDate() + 2);
-    return [
-      {
-        name: 'Fastest available',
-        type: 'Express Delivery',
-        time: this.fastestWindowLabel(),
-        price: 'Calculated live',
-      },
-      {
-        name: 'Priority slot',
-        type: 'Next available window',
-        time: this.offsetWindowLabel(30, 60),
-        price: 'Calculated live',
-      },
-      {
-        name: 'Tomorrow',
-        type: 'Scheduled delivery',
-        time: '8 AM - 12 PM',
-        price: 'Calculated live',
-      },
-      {
-        name: 'Tomorrow afternoon',
-        type: 'Scheduled delivery',
-        time: '12 PM - 4 PM',
-        price: 'Calculated live',
-      },
-      {
-        name: dayAfter.toLocaleDateString(undefined, {
-          weekday: 'short',
-          day: 'numeric',
-          month: 'short',
-        }),
-        type: 'Scheduled delivery',
-        time: '9 AM - 1 PM',
-        price: 'Calculated live',
-      },
-    ];
-  }
-
-  private applyAddressSelection(id: string): void {
+  private applyAddressSelection(id: string, dropdown?: HTMLDetailsElement): void {
     this.selectedAddress.set(id);
     this.state.selectAddress(id);
+    if (dropdown) dropdown.open = false;
   }
 
   private addressTitle(address: Address | null | undefined): string {
@@ -341,35 +356,38 @@ export class CheckoutComponent {
       .join(', ');
   }
 
-  private fastestWindowLabel(): string {
-    const start = new Date();
-    const end = new Date(start.getTime() + 25 * 60000);
-    return `${start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  defaultScheduleDate(): string {
+    return this.offsetDateValue(0);
   }
 
-  private offsetWindowLabel(startMinutes: number, endMinutes: number): string {
-    const start = new Date(Date.now() + startMinutes * 60000);
-    const end = new Date(Date.now() + endMinutes * 60000);
-    return `${start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  private defaultScheduleTime(): string {
+    const value = new Date(Date.now() + 60 * 60000);
+    value.setMinutes(Math.ceil(value.getMinutes() / 15) * 15, 0, 0);
+    return value.toTimeString().slice(0, 5);
   }
 
-  private slotTimeLabel(start?: string, end?: string): string {
-    if (!start) return '';
-    const startDate = new Date(start);
-    const endDate = end ? new Date(end) : null;
-    if (Number.isNaN(startDate.getTime())) return '';
-    const startText = startDate.toLocaleString(undefined, {
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-    const endText =
-      endDate && !Number.isNaN(endDate.getTime())
-        ? endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        : '';
-    return endText ? `${startText} - ${endText}` : startText;
+  private offsetDateValue(days: number): string {
+    const value = new Date();
+    value.setDate(value.getDate() + days);
+    return value.toISOString().slice(0, 10);
+  }
+
+  private timeToMinutes(value: string): number {
+    const [hours, minutes] = String(value || '00:00')
+      .slice(0, 5)
+      .split(':')
+      .map((part) => Number(part));
+    return hours * 60 + minutes;
+  }
+
+  private formatClock(value: string): string {
+    const [hours, minutes] = String(value || '00:00')
+      .slice(0, 5)
+      .split(':')
+      .map((part) => Number(part));
+    const date = new Date();
+    date.setHours(hours || 0, minutes || 0, 0, 0);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
   private refreshAddressPreviews(): void {

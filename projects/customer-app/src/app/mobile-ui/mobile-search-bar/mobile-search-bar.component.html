@@ -1,0 +1,14 @@
+<form class="mobile-search-bar" (submit)="submit($event)">
+  <span class="material-symbols-rounded">search</span>
+  <input
+    type="search"
+    [placeholder]="placeholder"
+    [value]="value"
+    (input)="value = $any($event.target).value; valueChange.emit(value)"
+  />
+  @if (value) {
+    <button type="button" aria-label="Clear search" (click)="value = ''; valueChange.emit('')">
+      <span class="material-symbols-rounded">close</span>
+    </button>
+  }
+</form>

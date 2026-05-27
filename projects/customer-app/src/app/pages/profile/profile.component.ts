@@ -87,7 +87,7 @@ export class ProfileComponent {
   }
 
   manageMembership(): void {
-    this.state.showToast('FlashDrop One membership management is coming soon');
+    this.state.showToast('Nextou One membership management is coming soon');
   }
 
   viewActivity(): void {

@@ -1,5 +1,10 @@
 @if (ui.editModal()) {
-  <div class="overlay" (click)="ui.closeEdit()"></div>
+  <button
+    type="button"
+    class="overlay"
+    aria-label="Close editor"
+    (click)="ui.closeEdit()"
+  ></button>
   <form class="edit-modal fd-card animate-scale" (submit)="save($event)">
     <header>
       <h2>{{ title() }}</h2>
@@ -9,22 +14,25 @@
     </header>
 
     @if (ui.editModal() === "profile") {
-      <label>Name</label
+      <label for="edit-name">Name</label
       ><input
+        id="edit-name"
         class="fd-input"
         [(ngModel)]="name"
         name="name"
         placeholder="Full name"
       />
-      <label>Email</label
+      <label for="edit-email">Email</label
       ><input
+        id="edit-email"
         class="fd-input"
         [(ngModel)]="email"
         name="email"
         placeholder="Email address"
       />
-      <label>Phone</label
+      <label for="edit-phone">Phone</label
       ><input
+        id="edit-phone"
         class="fd-input"
         [(ngModel)]="phone"
         name="phone"
@@ -33,22 +41,25 @@
     }
 
     @if (ui.editModal() === "address") {
-      <label>Address Label</label
+      <label for="edit-address-label">Address Label</label
       ><input
+        id="edit-address-label"
         class="fd-input"
         [(ngModel)]="addressLabel"
         name="addressLabel"
         placeholder="Home, Office, Parents Home"
       />
-      <label>Full Address</label
+      <label for="edit-address-line">Full Address</label
       ><textarea
+        id="edit-address-line"
         class="fd-input"
         [(ngModel)]="addressLine"
         name="addressLine"
         placeholder="House number, building, street, landmark"
       ></textarea>
-      <label>Contact Number</label
+      <label for="edit-address-phone">Contact Number</label
       ><input
+        id="edit-address-phone"
         class="fd-input"
         [(ngModel)]="phone"
         name="addressPhone"
@@ -57,15 +68,17 @@
     }
 
     @if (ui.editModal() === "payment") {
-      <label>Card / UPI Name</label
+      <label for="edit-payment-name">Card / UPI Name</label
       ><input
+        id="edit-payment-name"
         class="fd-input"
         [(ngModel)]="paymentName"
         name="paymentName"
         placeholder="Payment method name"
       />
-      <label>Payment ID</label
+      <label for="edit-payment-id">Payment ID</label
       ><input
+        id="edit-payment-id"
         class="fd-input"
         [(ngModel)]="paymentId"
         name="paymentId"

@@ -1,0 +1,64 @@
+.mobile-promo-card {
+  min-height: 142px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 94px;
+  gap: 12px;
+  align-items: center;
+  overflow: hidden;
+  padding: 18px;
+  border-radius: 26px;
+  color: #fff;
+  background: linear-gradient(135deg, #5b2cff, #7a4dff 62%, #ff6b9a);
+  box-shadow: 0 18px 44px rgba(91, 44, 255, 0.22);
+}
+
+small,
+h2,
+p {
+  margin: 0;
+}
+
+small {
+  opacity: 0.84;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+h2 {
+  margin-top: 5px;
+  font-size: 22px;
+  line-height: 1.08;
+}
+
+p {
+  margin-top: 7px;
+  opacity: 0.86;
+  font-size: 13px;
+}
+
+a {
+  display: inline-flex;
+  margin-top: 11px;
+  padding: 9px 13px;
+  border-radius: 14px;
+  color: #5b2cff;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+img,
+.material-symbols-rounded {
+  width: 94px;
+  height: 94px;
+  border-radius: 26px;
+  object-fit: cover;
+}
+
+.material-symbols-rounded {
+  display: grid;
+  place-items: center;
+  color: #5b2cff;
+  background: rgba(255, 255, 255, 0.92);
+  font-size: 46px;
+}

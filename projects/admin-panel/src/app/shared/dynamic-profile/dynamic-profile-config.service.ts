@@ -701,7 +701,7 @@ export class DynamicProfileConfigService {
           editStepId: 'logistics',
           fields: [
             { label: 'Default Delivery Type', value: 'Standard' },
-            { label: 'Shipping Partner', value: 'NexConnect Logistics' },
+            { label: 'Shipping Partner', value: 'Nextou Logistics' },
             { label: 'Shipping Zones', value: '3 Zones' },
             { label: 'Return Window', value: '7 Days' },
             { label: 'COD Available', value: true, tone: 'success' },

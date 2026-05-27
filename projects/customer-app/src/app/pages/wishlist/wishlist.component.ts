@@ -1,4 +1,5 @@
 import { Component, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { ApiService } from '@shared/public-api';
 import { Product } from '../../models';
 import { ProductCardComponent } from '../../components/product-card/product-card.component';
@@ -8,7 +9,7 @@ import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.compo
 
 @Component({
   standalone: true,
-  imports: [ProductCardComponent, BreadcrumbsComponent],
+  imports: [RouterLink, BreadcrumbsComponent, ProductCardComponent],
   templateUrl: './wishlist.component.html',
   styleUrls: ['./wishlist.component.scss'],
 })

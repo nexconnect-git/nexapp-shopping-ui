@@ -27,6 +27,9 @@ export class AuthService {
   get userKey() {
     return `${this.prefix}_user`;
   }
+  get refreshSessionKey() {
+    return `${this.prefix}_refresh_session`;
+  }
   get vendorKey() {
     return `${this.prefix}_vendor_status`;
   }
@@ -41,7 +44,6 @@ export class AuthService {
 
   private loadSession() {
     const token = sessionStorage.getItem(this.tokenKey);
-    const refresh = localStorage.getItem(this.refreshTokenKey);
     const userData =
       localStorage.getItem(this.userKey) ||
       sessionStorage.getItem(this.userKey);
@@ -50,7 +52,7 @@ export class AuthService {
       this.accessToken.set(token);
     }
 
-    if (userData && (token || refresh)) {
+    if (userData && token) {
       try {
         const user = JSON.parse(userData);
         this.currentUser.set(user);
@@ -61,7 +63,9 @@ export class AuthService {
       }
     }
 
-    if (!token && refresh && userData) {
+    localStorage.removeItem(this.refreshTokenKey);
+
+    if (!token && (userData || localStorage.getItem(this.refreshSessionKey))) {
       this.refreshAccessToken().subscribe({ error: () => this.clearSession() });
     }
   }
@@ -80,7 +84,7 @@ export class AuthService {
   }
 
   getRefreshToken(): string | null {
-    return localStorage.getItem(this.refreshTokenKey);
+    return null;
   }
 
   async setTokens(tokens: {
@@ -89,9 +93,7 @@ export class AuthService {
   }): Promise<void> {
     if (tokens.access !== undefined) this.setAccessToken(tokens.access);
     if (tokens.refresh !== undefined) {
-      if (tokens.refresh)
-        localStorage.setItem(this.refreshTokenKey, tokens.refresh);
-      else localStorage.removeItem(this.refreshTokenKey);
+      localStorage.removeItem(this.refreshTokenKey);
     }
   }
 
@@ -127,8 +129,8 @@ export class AuthService {
 
   handleAuthResponse(response: AuthResponse) {
     this.setAccessToken(response.tokens.access);
-    localStorage.setItem(this.refreshTokenKey, response.tokens.refresh);
     localStorage.setItem(this.userKey, JSON.stringify(response.user));
+    localStorage.setItem(this.refreshSessionKey, '1');
     sessionStorage.setItem(this.userKey, JSON.stringify(response.user));
     this.currentUser.set(response.user);
     this.currency.configureFromLocation(response.user);
@@ -140,12 +142,18 @@ export class AuthService {
       return this.refreshRequest$;
     }
 
-    this.refreshRequest$ = this.api.refreshToken(this.getRefreshToken()).pipe(
+    this.refreshRequest$ = this.api.refreshToken().pipe(
       tap((response) => {
         const tokens = response.tokens || response;
         this.setAccessToken(tokens.access);
-        if (tokens.refresh)
-          localStorage.setItem(this.refreshTokenKey, tokens.refresh);
+        localStorage.removeItem(this.refreshTokenKey);
+        localStorage.setItem(this.refreshSessionKey, '1');
+        if (response.user) {
+          localStorage.setItem(this.userKey, JSON.stringify(response.user));
+          sessionStorage.setItem(this.userKey, JSON.stringify(response.user));
+          this.currentUser.set(response.user);
+          this.currency.configureFromLocation(response.user);
+        }
       }),
       map(() => true),
       catchError(() => {
@@ -171,6 +179,7 @@ export class AuthService {
     sessionStorage.removeItem(this.tokenKey);
     sessionStorage.removeItem(this.userKey);
     localStorage.removeItem(this.refreshTokenKey);
+    localStorage.removeItem(this.refreshSessionKey);
     localStorage.removeItem(this.userKey);
     localStorage.removeItem(this.vendorKey);
     this.accessToken.set(null);

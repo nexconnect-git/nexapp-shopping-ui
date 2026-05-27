@@ -67,10 +67,11 @@
   height: 40px;
   flex: 0 0 40px;
   border-radius: 8px;
-  background: var(--primary);
+  background: transparent;
   color: #fff;
   font-size: 0.78rem;
   font-weight: 950;
+  object-fit: contain;
 }
 
 .brand-copy,

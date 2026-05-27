@@ -38,23 +38,13 @@
   gap: 10px;
 }
 .logo {
-  width: 28px;
-  height: 42px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #ff3576, #5b2cff);
-  clip-path: polygon(
-    35% 0,
-    100% 0,
-    65% 45%,
-    100% 45%,
-    20% 100%,
-    38% 56%,
-    0 56%
-  );
-  display: grid;
-  place-items: center;
-  color: transparent;
-  font-size: 1px;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  display: block;
+  border-radius: 10px;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 16px rgba(44, 23, 110, 0.18));
 }
 .brand b {
   display: block;
@@ -475,13 +465,10 @@ nav a:hover,
     min-width: 0;
   }
   .logo {
-    width: 34px;
-    height: 38px;
-    clip-path: none;
-    background: transparent;
-    color: #ffb44d;
-    font-size: 33px;
-    border-radius: 0;
+    width: 36px;
+    height: 36px;
+    flex-basis: 36px;
+    border-radius: 10px;
   }
   .brand b {
     color: #fff;

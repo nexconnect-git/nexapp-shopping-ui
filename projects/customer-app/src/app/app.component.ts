@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, computed, OnInit, signal } from '@angular/core';
 import {
   NavigationCancel,
   NavigationEnd,
@@ -18,8 +18,11 @@ import { FilterSliderComponent } from './shared/filter-slider/filter-slider.comp
 import { AppLoaderComponent } from './shared/app-loader/app-loader.component';
 import { AppLoaderService } from './shared/app-loader/app-loader.service';
 import { ConfirmDialogComponent } from './shared/confirm-dialog/confirm-dialog.component';
-import { MobileBottomNavComponent } from './shared/mobile-bottom-nav/mobile-bottom-nav.component';
 import { MobileStickyCartBarComponent } from './shared/mobile-sticky-cart-bar/mobile-sticky-cart-bar.component';
+import { MobileTopbarComponent } from './mobile-ui/mobile-topbar/mobile-topbar.component';
+import { MobileBottomNavComponent } from './mobile-ui/mobile-bottom-nav/mobile-bottom-nav.component';
+import { MobileLoaderComponent } from './mobile-ui/mobile-loader/mobile-loader.component';
+import { MobileToastComponent } from './mobile-ui/mobile-toast/mobile-toast.component';
 import {
   GlobalLoadingComponent,
   PageFeatureAccessService,
@@ -35,6 +38,7 @@ import { CustomerContentConfigService } from './services/customer-content-config
     RouterOutlet,
     TopbarComponent,
     SidebarComponent,
+    MobileTopbarComponent,
     LoginSliderComponent,
     MiniCartComponent,
     EditModalComponent,
@@ -43,6 +47,8 @@ import { CustomerContentConfigService } from './services/customer-content-config
     AppLoaderComponent,
     ConfirmDialogComponent,
     MobileBottomNavComponent,
+    MobileLoaderComponent,
+    MobileToastComponent,
     MobileStickyCartBarComponent,
     GlobalLoadingComponent,
     PageFeatureLoadingComponent,
@@ -53,18 +59,36 @@ import { CustomerContentConfigService } from './services/customer-content-config
 })
 export class AppComponent implements OnInit {
   loading = signal(false);
+  private currentUrl = signal('/');
+  isHomeRoute = computed(() => {
+    const url = this.currentUrl().split('?')[0].split('#')[0];
+    return url === '/' || url === '/new-home';
+  });
+  showCartAssist = computed(() => {
+    const url = this.currentUrl().split('?')[0].split('#')[0];
+    return (
+      this.isHomeRoute() ||
+      url === '/stores' ||
+      url === '/search' ||
+      url.startsWith('/store/') ||
+      url.startsWith('/product/') ||
+      url.startsWith('/category/')
+    );
+  });
 
   constructor(
     public state: AppStateService,
     public ui: UiService,
-    router: Router,
+    private router: Router,
     private loader: AppLoaderService,
     private features: PageFeatureAccessService,
     private content: CustomerContentConfigService,
   ) {
-    router.events.subscribe((event) => {
+    this.currentUrl.set(this.router.url || '/');
+    this.router.events.subscribe((event) => {
       if (event instanceof NavigationStart) this.loading.set(true);
       if (event instanceof NavigationEnd) {
+        this.currentUrl.set(event.urlAfterRedirects || event.url || '/');
         this.loading.set(false);
       }
       if (event instanceof NavigationCancel || event instanceof NavigationError)

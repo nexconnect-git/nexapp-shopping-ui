@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "flashdrop-angular-instamart-style": {
+    "nextou-angular-instamart-style": {
       "projectType": "application",
       "root": "",
       "sourceRoot": "projects/customer-app/src",
@@ -12,13 +12,17 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/flashdrop-angular-instamart-style",
+            "outputPath": "dist/nextou-angular-instamart-style",
             "index": "src/index.html",
             "browser": "src/main.ts",
-            "polyfills": ["zone.js"],
+            "polyfills": [
+              "zone.js"
+            ],
             "tsConfig": "tsconfig.app.json",
-            "assets": ["src/favicon.ico", "src/assets"],
-            "styles": ["projects/customer-app/src/styles.scss"],
+            "assets": [],
+            "styles": [
+              "projects/customer-app/src/styles.scss"
+            ],
             "scripts": []
           },
           "configurations": {
@@ -49,10 +53,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "flashdrop-angular-instamart-style:build:production"
+              "buildTarget": "nextou-angular-instamart-style:build:production"
             },
             "development": {
-              "buildTarget": "flashdrop-angular-instamart-style:build:development"
+              "buildTarget": "nextou-angular-instamart-style:build:development"
             }
           },
           "defaultConfiguration": "development"

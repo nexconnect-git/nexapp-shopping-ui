@@ -9,6 +9,67 @@
   z-index: 210;
 }
 
+/* Mobile-only app shell override: this auth surface is always a bottom sheet. */
+.overlay {
+  inset: 0;
+  top: 0;
+  z-index: 300;
+  background: rgba(17, 24, 39, 0.36);
+  backdrop-filter: none;
+}
+
+.login-slider {
+  left: 50%;
+  right: auto;
+  top: auto;
+  bottom: 0;
+  z-index: 320;
+  width: 100%;
+  max-width: var(--mobile-shell-max, 430px);
+  max-height: min(84dvh, 700px);
+  transform: translateX(-50%);
+  padding: 0 14px calc(14px + env(safe-area-inset-bottom, 0px));
+  border: 0;
+  border-radius: 28px 28px 0 0;
+  box-shadow: 0 -26px 70px rgba(17, 24, 39, 0.24);
+}
+
+.overlay {
+  inset: 0;
+  top: 0;
+  z-index: 300;
+  background: rgba(17, 24, 39, 0.36);
+  backdrop-filter: none;
+}
+
+.login-slider {
+  left: 50%;
+  right: auto;
+  top: auto;
+  bottom: 0;
+  z-index: 320;
+  width: 100%;
+  max-width: var(--mobile-shell-max, 430px);
+  max-height: min(84dvh, 700px);
+  transform: translateX(-50%);
+  padding: 0 14px calc(14px + env(safe-area-inset-bottom, 0px));
+  border: 0;
+  border-radius: 28px 28px 0 0;
+  gap: 10px;
+  box-shadow: 0 -26px 70px rgba(17, 24, 39, 0.24);
+  background: linear-gradient(180deg, #fff, #fbfaff 62%, #fff);
+}
+
+.login-slider::before {
+  content: "";
+  width: 46px;
+  height: 5px;
+  border-radius: 999px;
+  background: #d8d4e8;
+  justify-self: center;
+  margin-top: 8px;
+}
+
 .login-slider {
   position: fixed;
   right: 18px;
@@ -225,16 +286,16 @@
     backdrop-filter: blur(3px);
   }
   .login-slider {
-    left: 8px;
-    right: 8px;
+    left: 6px;
+    right: 6px;
     top: auto;
     bottom: 0;
     z-index: 320;
     width: auto;
-    max-height: min(88dvh, 760px);
-    padding: 0 14px calc(16px + env(safe-area-inset-bottom));
-    border-radius: 28px 28px 0 0;
-    gap: 12px;
+    max-height: min(84dvh, 700px);
+    padding: 0 12px calc(12px + env(safe-area-inset-bottom));
+    border-radius: 24px 24px 0 0;
+    gap: 10px;
     grid-template-rows: auto auto auto;
     animation: none !important;
     background:
@@ -264,24 +325,21 @@
   }
   .mobile-auth-hero {
     display: grid;
-    gap: 12px;
-    padding: 16px 42px 2px 2px;
+    gap: 8px;
+    padding: 12px 42px 0 0;
   }
   .mobile-brand-row {
     display: grid;
-    grid-template-columns: 48px minmax(0, 1fr);
+    grid-template-columns: 42px minmax(0, 1fr);
     align-items: center;
     gap: 12px;
   }
   .mobile-logo {
-    width: 48px;
-    height: 48px;
-    border-radius: 17px;
-    background: linear-gradient(135deg, #6c2bff, #8b5cff);
-    display: grid;
-    place-items: center;
-    color: #fff;
-    font-size: 24px;
+    width: 42px;
+    height: 42px;
+    border-radius: 15px;
+    display: block;
+    object-fit: contain;
     box-shadow: 0 14px 32px rgba(108, 43, 255, 0.26);
   }
   .mobile-brand-row small {
@@ -295,7 +353,7 @@
   .mobile-brand-row b {
     display: block;
     margin-top: 2px;
-    font-size: 24px;
+    font-size: 22px;
     line-height: 1.05;
     letter-spacing: -0.035em;
   }
@@ -349,10 +407,10 @@
     line-height: 1.35;
   }
   .login-form {
-    gap: 10px;
-    padding: 12px;
+    gap: 9px;
+    padding: 10px;
     border: 1px solid #f0ebff;
-    border-radius: 22px;
+    border-radius: 18px;
     background: rgba(255, 255, 255, 0.86);
     box-shadow: 0 14px 36px rgba(17, 24, 39, 0.06);
   }
@@ -363,8 +421,8 @@
     font-size: 12px;
   }
   .input-shell {
-    min-height: 46px;
-    border-radius: 15px;
+    min-height: 44px;
+    border-radius: 14px;
     background: #fff;
     padding-inline: 12px;
   }
@@ -385,7 +443,7 @@
     grid-template-columns: 1fr 1fr;
   }
   .otp-actions button {
-    min-height: 40px;
+    min-height: 38px;
     border: 1px solid #e5dcff;
     border-radius: 13px;
     background: #fff;
@@ -393,4 +451,28 @@
   .benefits {
     display: none;
   }
+}
+
+.overlay {
+  inset: 0;
+  top: 0;
+  z-index: 300;
+  background: rgba(17, 24, 39, 0.36);
+  backdrop-filter: none;
+}
+
+.login-slider {
+  left: 50%;
+  right: auto;
+  top: auto;
+  bottom: 0;
+  z-index: 320;
+  width: 100%;
+  max-width: var(--mobile-shell-max, 430px);
+  max-height: min(84dvh, 700px);
+  transform: translateX(-50%);
+  padding: 0 14px calc(14px + env(safe-area-inset-bottom, 0px));
+  border: 0;
+  border-radius: 28px 28px 0 0;
+  box-shadow: 0 -26px 70px rgba(17, 24, 39, 0.24);
 }

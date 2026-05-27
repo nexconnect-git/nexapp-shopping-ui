@@ -1,0 +1,78 @@
+.mobile-store-card {
+  min-width: 176px;
+  display: grid;
+  overflow: hidden;
+  border: 1px solid rgba(91, 44, 255, 0.1);
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgba(33, 22, 82, 0.07);
+}
+
+.mobile-store-card.compact {
+  grid-template-columns: 96px minmax(0, 1fr);
+}
+
+img {
+  width: 100%;
+  height: 112px;
+  object-fit: cover;
+}
+
+.compact img {
+  height: 100%;
+}
+
+.info {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  padding: 11px;
+}
+
+b,
+small,
+strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+b {
+  color: #17122e;
+  font-size: 14px;
+}
+
+small,
+em {
+  color: #77708d;
+  font-size: 12px;
+  font-style: normal;
+}
+
+em {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+em span {
+  color: #15a35b;
+  font-size: 15px;
+}
+
+.dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #c8c1d9;
+}
+
+strong {
+  width: max-content;
+  max-width: 100%;
+  padding: 4px 8px;
+  border-radius: 99px;
+  color: #5b2cff;
+  background: #f1ecff;
+  font-size: 11px;
+}

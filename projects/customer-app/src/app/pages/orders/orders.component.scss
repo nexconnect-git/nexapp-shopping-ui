@@ -209,3 +209,130 @@
     width: 100%;
   }
 }
+
+.mobile-customer-view {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .desktop-customer-view {
+    display: none;
+  }
+
+  .mobile-customer-view {
+    display: block;
+  }
+
+  .orders-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .orders-head small {
+    color: #77708d;
+    font-size: 12px;
+    font-weight: 900;
+  }
+  
+  .orders-head h1 {
+    margin: 2px 0 0;
+    font-size: 24px;
+  }
+  
+  .orders-head button {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 16px;
+    color: #5b2cff;
+    background: #fff;
+    box-shadow: 0 10px 24px rgba(33, 22, 82, 0.06);
+  }
+  
+  .order-card,
+  .empty-panel {
+    display: grid;
+    gap: 12px;
+    padding: 15px;
+    border-radius: 22px;
+    background: #fff;
+    box-shadow: 0 12px 30px rgba(33, 22, 82, 0.07);
+  }
+  
+  .order-card header,
+  .order-card footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  
+  .status {
+    padding: 5px 9px;
+    border-radius: 999px;
+    color: #5b2cff;
+    background: #f1ecff;
+    font-size: 11px;
+    font-weight: 950;
+  }
+  
+  .status.done {
+    color: #159653;
+    background: #eafaf1;
+  }
+  
+  .status.cancelled {
+    color: #e94560;
+    background: #fff0f3;
+  }
+  
+  .order-items {
+    display: flex;
+    gap: 8px;
+  }
+  
+  .order-items img,
+  .order-items span {
+    width: 54px;
+    height: 54px;
+    border-radius: 16px;
+    object-fit: contain;
+    background: #fbfaff;
+  }
+  
+  .order-items span {
+    display: grid;
+    place-items: center;
+    color: #5b2cff;
+    font-weight: 950;
+  }
+  
+  .order-card p,
+  .empty-panel p {
+    margin: 0;
+    color: #77708d;
+    font-size: 13px;
+  }
+  
+  .order-card footer a {
+    flex: 1;
+    min-height: 44px;
+  }
+  
+  .empty-panel {
+    justify-items: center;
+    text-align: center;
+  }
+  
+  .empty-panel > span {
+    color: #5b2cff;
+    font-size: 34px;
+  }
+  
+  .empty-panel h2 {
+    margin: 0;
+  }
+}

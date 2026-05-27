@@ -23,3 +23,68 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+.mobile-customer-view {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .desktop-customer-view {
+    display: none;
+  }
+
+  .mobile-customer-view {
+    display: block;
+  }
+
+  .simple-head small {
+    color: #77708d;
+    font-size: 12px;
+    font-weight: 900;
+  }
+  
+  .simple-head h1 {
+    margin: 2px 0 0;
+    font-size: 24px;
+  }
+  
+  .wish-item {
+    min-width: 0;
+    display: grid;
+    gap: 8px;
+  }
+  
+  .wish-item button {
+    min-height: 40px;
+    border-radius: 14px;
+    color: #e94560;
+    background: #fff0f3;
+    font-weight: 950;
+  }
+  
+  .empty-panel {
+    grid-column: 1 / -1;
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+    padding: 28px 16px;
+    border-radius: 22px;
+    background: #fff;
+    box-shadow: 0 12px 30px rgba(33, 22, 82, 0.07);
+    text-align: center;
+  }
+  
+  .empty-panel > span {
+    color: #5b2cff;
+    font-size: 34px;
+  }
+  
+  .empty-panel h2,
+  .empty-panel p {
+    margin: 0;
+  }
+  
+  .empty-panel p {
+    color: #77708d;
+  }
+}

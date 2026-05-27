@@ -1,3 +1,4 @@
+<div class="desktop-customer-view">
 <main class="fd-content">
   <fd-breadcrumbs
     [items]="[
@@ -123,7 +124,7 @@
               }}
               rating</span
             >
-            <small>Delivered with FlashDrop Express</small>
+            <small>Delivered with Nextou Express</small>
           </div>
         </div>
         <p>Delivered safely by the assigned partner.</p>
@@ -168,7 +169,7 @@
           <small>NEXT ORDER OFFER</small>
           <h3>{{ couponTitle(coupon) }}</h3>
           <p>
-            Use <b>{{ couponCode(coupon) }}</b> on your next FlashDrop order.
+            Use <b>{{ couponCode(coupon) }}</b> on your next Nextou order.
           </p>
           <button type="button" class="fd-btn outline" (click)="copyCoupon()">
             Copy Coupon
@@ -178,3 +179,64 @@
     </aside>
   </section>
 </main>
+</div>
+
+<div class="mobile-customer-view">
+<main class="mobile-page finished-page">
+  <section class="success-card">
+    <span class="material-symbols-rounded">task_alt</span>
+    <small>Order #{{ order() | displayOrderId }}</small>
+    <h1>{{ order().status === 'Delivered' ? 'Delivered successfully' : 'Order update' }}</h1>
+    <p>{{ order().date }} · {{ order().time }} · {{ order().amount | appCurrency }}</p>
+  </section>
+
+  <section class="items-card">
+    <div class="mobile-section-head"><h2>Delivered items</h2></div>
+    @for (item of order().items; track item.id) {
+      <div class="order-item">
+        <img [src]="item.image" [alt]="item.name" />
+        <span><b>{{ item.name }}</b><small>{{ item.unit }}</small></span>
+      </div>
+    }
+  </section>
+
+  <section class="timeline-card">
+    <h2>Timeline</h2>
+    @for (step of steps(); track step.title) {
+      <article>
+        <span class="material-symbols-rounded">task_alt</span>
+        <div><b>{{ step.title }}</b><small>{{ step.time }}</small></div>
+      </article>
+    }
+  </section>
+
+  <section class="rating-card">
+    <h2>Rate your order</h2>
+    <div class="stars">
+      @for (star of [1, 2, 3, 4, 5]; track star) {
+        <button type="button" [class.active]="rating() >= star" (click)="rating.set(star)">
+          <span class="material-symbols-rounded">star</span>
+        </button>
+      }
+    </div>
+    <p>{{ ratingLabel() }}</p>
+    <button type="button" class="mobile-cta" (click)="submitRating()">Submit rating</button>
+  </section>
+
+  @if (nextCoupon()) {
+    <section class="coupon-card">
+      <span class="material-symbols-rounded">local_offer</span>
+      <div>
+        <b>{{ couponTitle(nextCoupon()) }}</b>
+        <small>{{ couponCode(nextCoupon()) }}</small>
+      </div>
+      <button type="button" (click)="copyCoupon()">Copy</button>
+    </section>
+  }
+
+  <section class="mobile-sticky-cta">
+    <button type="button" class="mobile-cta" (click)="reorder()">Reorder</button>
+    <button type="button" class="mobile-cta secondary" (click)="downloadInvoice()">Download invoice</button>
+  </section>
+</main>
+</div>

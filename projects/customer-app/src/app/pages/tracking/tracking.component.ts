@@ -5,19 +5,18 @@ import {
   effect,
   ElementRef,
   OnDestroy,
+  QueryList,
   signal,
-  ViewChild,
+  ViewChildren,
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import {
-  shouldShowDeliveryPartner,
-  trackingCurrentCoordinate,
-} from '@nexconnect/customer-checkout';
+import { shouldShowDeliveryPartner } from '@nexconnect/customer-checkout';
 import {
   ApiService,
   AppCurrencyPipe,
   GoogleMapsService,
 } from '@shared/public-api';
+import { Subscription } from 'rxjs';
 import { OrderService } from '../../services/order.service';
 import { AppStateService } from '../../services/app-state.service';
 import { DisplayOrderIdPipe } from '../../shared/display-order-id.pipe';
@@ -31,12 +30,14 @@ declare const google: any;
   styleUrls: ['./tracking.component.scss'],
 })
 export class TrackingComponent implements AfterViewInit, OnDestroy {
-  @ViewChild('trackingMap') trackingMap?: ElementRef<HTMLElement>;
+  @ViewChildren('trackingMap') trackingMaps?: QueryList<ElementRef<HTMLElement>>;
   tracking = signal<any[]>([]);
   mapReady = signal(false);
   mapUnavailable = signal(false);
   private map: any = null;
   private currentMarker: any = null;
+  private mapHost: HTMLElement | null = null;
+  private mapHostChanges?: Subscription;
   private mapInitialized = false;
 
   constructor(
@@ -56,12 +57,17 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    this.initGoogleMap();
+    this.mapHostChanges = this.trackingMaps?.changes.subscribe(() =>
+      this.initGoogleMap(),
+    );
+    window.setTimeout(() => this.initGoogleMap(), 0);
   }
 
   ngOnDestroy(): void {
+    this.mapHostChanges?.unsubscribe();
     this.currentMarker?.setMap?.(null);
     this.map = null;
+    this.mapHost = null;
   }
 
   order = computed(() =>
@@ -107,14 +113,35 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
       },
     ];
   });
-  currentCoordinate = computed(() =>
-    trackingCurrentCoordinate({
-      driver: this.driverCoordinate(),
-      destination: this.destinationCoordinate(),
-      vendor: this.vendorCoordinate(),
-    }),
+  hasPickedUp = computed(() => {
+    const status = String(this.order().raw?.status || this.order().status || '').toLowerCase();
+    const hasPickupTracking = this.tracking().some((entry) =>
+      String(entry?.status || '').toLowerCase().includes('pick'),
+    );
+    return (
+      hasPickupTracking ||
+      status.includes('pick') ||
+      status.includes('way') ||
+      status.includes('deliver')
+    );
+  });
+  mapStageLabel = computed(() =>
+    this.hasPickedUp()
+      ? 'Delivery route is active'
+      : 'Pickup is at the store',
   );
+  currentCoordinate = computed(() => {
+    if (!this.hasPickedUp()) {
+      return this.vendorCoordinate() || this.driverCoordinate();
+    }
+    return (
+      this.driverCoordinate() ||
+      this.destinationCoordinate() ||
+      this.vendorCoordinate()
+    );
+  });
   directionsUrl = computed(() => {
+    if (!this.hasPickedUp()) return '';
     const origin = this.currentCoordinate();
     const destination = this.destinationCoordinate();
     if (!origin || !destination) return '';
@@ -161,9 +188,16 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
           lat: 12.9716,
           lng: 77.5946,
         };
-        const element = this.trackingMap?.nativeElement;
-        if (!element || this.mapInitialized) return;
+        const element = this.visibleMapElement();
+        if (!element) return;
+        if (this.mapInitialized && this.mapHost === element) {
+          this.refreshMapMarker();
+          return;
+        }
+        this.currentMarker?.setMap?.(null);
+        this.map = null;
         this.mapInitialized = true;
+        this.mapHost = element;
         this.map = new google.maps.Map(element, {
           center: coordinate,
           zoom: 14,
@@ -174,9 +208,30 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
           styles: this.mapStyles(),
         });
         this.mapReady.set(true);
-        this.refreshMapMarker();
+        window.setTimeout(() => {
+          google.maps.event.trigger(this.map, 'resize');
+          this.refreshMapMarker();
+        }, 0);
       })
       .catch(() => this.mapUnavailable.set(true));
+  }
+
+  private visibleMapElement(): HTMLElement | null {
+    const maps = this.trackingMaps?.toArray() || [];
+    return (
+      maps
+        .map((item) => item.nativeElement)
+        .find((element) => {
+          const rect = element.getBoundingClientRect();
+          const style = getComputedStyle(element);
+          return (
+            rect.width > 0 &&
+            rect.height > 0 &&
+            style.display !== 'none' &&
+            style.visibility !== 'hidden'
+          );
+        }) || null
+    );
   }
 
   private refreshMapMarker(): void {
@@ -188,11 +243,11 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
     this.currentMarker = new google.maps.Marker({
       position: coordinate,
       map: this.map,
-      title: 'Current delivery location',
+      title: this.hasPickedUp() ? 'Current delivery location' : 'Store pickup location',
       icon: {
         path: google.maps.SymbolPath.CIRCLE,
         scale: 9,
-        fillColor: '#6d3bff',
+        fillColor: this.hasPickedUp() ? '#6d3bff' : '#0f9f5f',
         fillOpacity: 1,
         strokeColor: '#ffffff',
         strokeWeight: 4,

@@ -1,0 +1,9 @@
+<div class="mobile-quantity-stepper">
+  <button type="button" aria-label="Decrease quantity" (click)="decrement.emit()">
+    <span class="material-symbols-rounded">remove</span>
+  </button>
+  <b>{{ quantity }}</b>
+  <button type="button" aria-label="Increase quantity" (click)="increment.emit()">
+    <span class="material-symbols-rounded">add</span>
+  </button>
+</div>

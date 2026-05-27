@@ -236,3 +236,127 @@
     grid-template-columns: 1fr;
   }
 }
+
+.mobile-customer-view {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .desktop-customer-view {
+    display: none;
+  }
+
+  .mobile-customer-view {
+    display: block;
+  }
+
+  .search-head {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 9px;
+    align-items: center;
+  }
+  
+  .search-head > button,
+  .search-input button {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 16px;
+    color: #5b2cff;
+    background: #fff;
+    box-shadow: 0 10px 24px rgba(33, 22, 82, 0.06);
+  }
+  
+  .search-input {
+    height: 52px;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 10px 0 13px;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 10px 24px rgba(33, 22, 82, 0.06);
+  }
+  
+  .search-input input {
+    width: 100%;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    color: #17122e;
+    background: transparent;
+    font-weight: 800;
+  }
+  
+  .browse-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  
+  .browse-grid a {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
+    padding: 12px;
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 12px 30px rgba(33, 22, 82, 0.07);
+  }
+  
+  .browse-grid span {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border-radius: 16px;
+    color: #5b2cff;
+    background: #f1ecff;
+  }
+  
+  .browse-grid b {
+    overflow: hidden;
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .search-promo,
+  .empty-state {
+    display: grid;
+    gap: 7px;
+    justify-items: start;
+    padding: 15px;
+    border-radius: 22px;
+    background: #fff;
+    box-shadow: 0 12px 30px rgba(33, 22, 82, 0.07);
+    text-align: left;
+  }
+  
+  .search-promo span,
+  .empty-state span {
+    color: #5b2cff;
+  }
+  
+  .search-promo b,
+  .empty-state h2,
+  .empty-state p {
+    margin: 0;
+  }
+  
+  .search-promo small,
+  .empty-state p {
+    color: #77708d;
+    line-height: 1.35;
+  }
+  
+  .clear-filters {
+    justify-self: start;
+    color: #5b2cff;
+    font-weight: 950;
+  }
+}

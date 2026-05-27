@@ -1,4 +1,5 @@
-﻿<main class="fd-content">
+<div class="desktop-customer-view">
+<main class="fd-content">
   <fd-breadcrumbs [items]="[{ label: 'Cart' }]" />
   <section class="cart-layout">
     <div>
@@ -163,3 +164,87 @@
     }
   </section>
 </main>
+</div>
+
+<div class="mobile-customer-view">
+<main class="mobile-page cart-page">
+  <header class="cart-head">
+    <div>
+      <small>{{ state.itemCount() }} items</small>
+      <h1>Your cart</h1>
+    </div>
+    @if (state.itemCount()) {
+      <button type="button" (click)="state.clearCart()">Clear</button>
+    }
+  </header>
+
+  @if (state.itemCount()) {
+    @if (state.discount()) {
+      <section class="savings-banner">
+        <span class="material-symbols-rounded">savings</span>
+        <b>You saved {{ state.discount() | appCurrency }} on this cart</b>
+      </section>
+    }
+
+    <section class="mobile-list">
+      @for (item of state.cart(); track item.id) {
+        <article class="cart-item">
+          <img [src]="item.image" [alt]="item.name" />
+          <div>
+            <b>{{ item.name }}</b>
+            <small>{{ item.unit }} · {{ item.storeName }}</small>
+            <span>{{ item.price | appCurrency }}</span>
+          </div>
+          <div class="cart-actions">
+            <button type="button" aria-label="Save for later" (click)="saveForLater(item.apiId || item.id)">
+              <span class="material-symbols-rounded">favorite</span>
+            </button>
+            <button type="button" aria-label="Remove item" (click)="state.removeItem(item.id)">
+              <span class="material-symbols-rounded">delete</span>
+            </button>
+            <div class="qty">
+              <button type="button" (click)="state.updateQuantity(item.id, -1)">
+                <span class="material-symbols-rounded">remove</span>
+              </button>
+              <b>{{ item.quantity }}</b>
+              <button type="button" (click)="state.updateQuantity(item.id, 1)">
+                <span class="material-symbols-rounded">add</span>
+              </button>
+            </div>
+          </div>
+        </article>
+      }
+    </section>
+
+    <section class="coupon-card">
+      <span class="material-symbols-rounded">local_offer</span>
+      <input #couponCode type="text" placeholder="Enter coupon code" [value]="state.coupon()" />
+      <button type="button" (click)="applyCoupon(couponCode.value)">Apply</button>
+    </section>
+
+    <fd-order-summary [showButton]="false" />
+
+    <section class="mobile-section">
+      <div class="mobile-section-head"><h2>Add a little more</h2></div>
+      <div class="mobile-grid-2">
+        @for (product of catalog.topProducts().slice(0, 4); track product.id) {
+          <fd-product-card [product]="product" />
+        }
+      </div>
+    </section>
+
+    <section class="mobile-sticky-cta">
+      <a routerLink="/checkout" class="mobile-cta">
+        Checkout · {{ state.total() | appCurrency }}
+      </a>
+    </section>
+  } @else {
+    <section class="empty-cart">
+      <span class="material-symbols-rounded">shopping_bag</span>
+      <h2>{{ content.cart().emptyTitle }}</h2>
+      <p>{{ content.cart().emptyDescription }}</p>
+      <a routerLink="/stores" class="mobile-cta">{{ content.cart().emptyCta }}</a>
+    </section>
+  }
+</main>
+</div>

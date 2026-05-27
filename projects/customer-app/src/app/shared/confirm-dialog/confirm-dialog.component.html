@@ -1,5 +1,10 @@
 @if (ui.confirmDialog(); as dialog) {
-  <div class="confirm-overlay" (click)="ui.resolveConfirm(false)"></div>
+  <button
+    type="button"
+    class="confirm-overlay"
+    aria-label="Close dialog"
+    (click)="ui.resolveConfirm(false)"
+  ></button>
   <section
     class="confirm-dialog animate-scale"
     role="dialog"

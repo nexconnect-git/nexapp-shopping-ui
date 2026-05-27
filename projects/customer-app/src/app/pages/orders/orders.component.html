@@ -1,3 +1,4 @@
+<div class="desktop-customer-view">
 <main class="fd-content">
   <fd-breadcrumbs [items]="[{ label: 'Orders' }]" />
   <header class="history-head">
@@ -97,3 +98,63 @@
     }
   </section>
 </main>
+</div>
+
+<div class="mobile-customer-view">
+<main class="mobile-page orders-page">
+  <header class="orders-head">
+    <div>
+      <small>{{ orders.orders().length }} orders · {{ totalSpent() | appCurrency }}</small>
+      <h1>Your orders</h1>
+    </div>
+    <button type="button" (click)="chooseDateRange()">
+      <span class="material-symbols-rounded">calendar_month</span>
+    </button>
+  </header>
+
+  <section class="mobile-chip-row">
+    @for (tab of tabs; track tab) {
+      <button type="button" class="mobile-chip" [class.active]="activeTab() === tab" (click)="activeTab.set(tab)">
+        {{ tab === 'All Orders' ? 'All' : tab }} <small>{{ count(tab) }}</small>
+      </button>
+    }
+  </section>
+
+  <section class="mobile-list">
+    @for (order of filteredOrders(); track order.id) {
+      <article class="order-card">
+        <header>
+          <span class="status" [class.done]="order.status === 'Delivered'" [class.cancelled]="order.status === 'Cancelled'">{{ order.status }}</span>
+          <b>#{{ order | displayOrderId }}</b>
+        </header>
+        <div class="order-items">
+          @for (item of order.items.slice(0, 3); track item.id) {
+            <img [src]="item.image" [alt]="item.name" />
+          }
+          @if (order.items.length > 3) {
+            <span>+{{ order.items.length - 3 }}</span>
+          }
+        </div>
+        <p>{{ order.date }} · {{ order.time }} · {{ order.amount | appCurrency }}</p>
+        <footer>
+          @if (order.status === 'Active') {
+            <a [routerLink]="['/tracking', order.id]" class="mobile-cta">Track</a>
+          } @else if (order.status === 'Delivered') {
+            <a [routerLink]="['/order-finished', order.id]" class="mobile-cta">View details</a>
+          } @else {
+            <a routerLink="/help" class="mobile-cta secondary">Get help</a>
+          }
+          <a [routerLink]="['/order-finished', order.id]" class="mobile-cta secondary">Reorder</a>
+        </footer>
+      </article>
+    } @empty {
+      <section class="empty-panel">
+        <span class="material-symbols-rounded">receipt_long</span>
+        <h2>No orders yet</h2>
+        <p>Your Nextou orders will appear here.</p>
+        <a routerLink="/stores" class="mobile-cta">Start shopping</a>
+      </section>
+    }
+  </section>
+</main>
+</div>

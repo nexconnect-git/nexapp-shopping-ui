@@ -8,7 +8,6 @@ COPY packages /packages
 RUN npm install
 
 COPY frontend/ .
-RUN test -f /packages/README.md
 RUN npm run build:packages
 
 # runtime-config.js is intentionally gitignored because it can contain

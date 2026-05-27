@@ -18,10 +18,17 @@ export class PlatformSettingsComponent implements OnInit {
   saving = signal(false);
   form: any = {
     upi_id: '',
+    cod_payment_qr: '',
     enabled_payment_methods: [],
     delivery_base_fee: 0,
     delivery_per_km_fee: 0,
     free_delivery_above: 0,
+    platform_fee: 0,
+    packaging_fee: 0,
+    small_cart_threshold: 0,
+    small_cart_fee: 0,
+    tax_percentage: 0,
+    surge_fee: 0,
     cancellation_window_minutes: 0,
     cancellation_allowed_statuses: '',
   };
@@ -131,5 +138,20 @@ export class PlatformSettingsComponent implements OnInit {
     this.form.enabled_payment_methods = current.includes(key)
       ? current.filter((item: string) => item !== key)
       : [...current, key];
+  }
+
+  onQrUpload(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.form.cod_payment_qr = String(reader.result || '');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  clearQr() {
+    this.form.cod_payment_qr = '';
   }
 }

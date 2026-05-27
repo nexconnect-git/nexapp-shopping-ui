@@ -1,3 +1,4 @@
+<div class="desktop-customer-view">
 <main class="fd-content">
   <fd-breadcrumbs [items]="[{ label: 'Addresses' }]" />
   <div class="fd-page-header">
@@ -118,3 +119,52 @@
     </div>
   }
 </main>
+</div>
+
+<div class="mobile-customer-view">
+<main class="mobile-page addresses-page">
+  <header class="simple-head">
+    <div><small>Delivery locations</small><h1>Addresses</h1></div>
+    <button type="button" (click)="openModal()"><span class="material-symbols-rounded">add</span></button>
+  </header>
+
+  <section class="mobile-list">
+    @for (address of addresses(); track address.id) {
+      <article class="address-card">
+        <span class="material-symbols-rounded">home_pin</span>
+        <div>
+          <b>{{ address.label || address.name || 'Address' }}</b>
+          <p>{{ address.line }}, {{ address.city }} {{ address.pincode }}</p>
+          <small>{{ address.phone }}</small>
+        </div>
+        <footer>
+          <button type="button" (click)="makeDefault(address.id)">Default</button>
+          <button type="button" (click)="edit(address)">Edit</button>
+          <button type="button" class="danger" (click)="remove(address.id)">Delete</button>
+        </footer>
+      </article>
+    } @empty {
+      <section class="empty-panel">
+        <span class="material-symbols-rounded">location_off</span>
+        <h2>No addresses yet</h2>
+        <p>Add a delivery address to checkout faster.</p>
+        <button type="button" class="mobile-cta" (click)="openModal()">Add address</button>
+      </section>
+    }
+  </section>
+</main>
+
+<fd-mobile-bottom-sheet [open]="showModal()" [title]="editing() ? 'Edit address' : 'Add address'" (closed)="showModal.set(false)">
+  <form class="mobile-form" (submit)="save($event)">
+    <label>Label <input name="label" [(ngModel)]="form.label" placeholder="Home, Work" /></label>
+    <label>Name <input name="name" [(ngModel)]="form.name" placeholder="Receiver name" /></label>
+    <label>Phone <input name="phone" [(ngModel)]="form.phone" placeholder="Phone number" /></label>
+    <label>Address <textarea name="line" [(ngModel)]="form.line" placeholder="House, street, area"></textarea></label>
+    <label>City <input name="city" [(ngModel)]="form.city" /></label>
+    <label>State <input name="state" [(ngModel)]="form.state" /></label>
+    <label>Pincode <input name="pincode" [(ngModel)]="form.pincode" /></label>
+    <app-map-picker (locationPicked)="onMapLocationPicked($event)" />
+    <button type="submit" class="mobile-cta">Save address</button>
+  </form>
+</fd-mobile-bottom-sheet>
+</div>

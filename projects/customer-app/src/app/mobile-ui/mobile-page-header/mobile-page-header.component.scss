@@ -1,0 +1,40 @@
+:host {
+  display: block;
+}
+
+.mobile-page-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+button,
+.hero-icon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background: #fff;
+  color: #5b2cff;
+  box-shadow: 0 10px 24px rgba(32, 22, 78, 0.08);
+}
+
+small {
+  display: block;
+  color: #807991;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+h1 {
+  margin: 1px 0 0;
+  overflow: hidden;
+  color: #17122e;
+  font-size: 23px;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

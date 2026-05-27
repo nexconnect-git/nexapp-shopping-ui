@@ -1,0 +1,35 @@
+.mobile-empty-state {
+  display: grid;
+  justify-items: center;
+  gap: 9px;
+  padding: 28px 16px;
+  border: 1px dashed rgba(91, 44, 255, 0.2);
+  border-radius: 24px;
+  background: #fff;
+  text-align: center;
+}
+
+span {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  border-radius: 22px;
+  color: #5b2cff;
+  background: #f1ecff;
+  font-size: 30px;
+}
+
+h2,
+p {
+  margin: 0;
+}
+
+h2 {
+  font-size: 18px;
+}
+
+p {
+  color: #706a82;
+  font-size: 13px;
+}

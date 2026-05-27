@@ -1,11 +1,12 @@
-﻿<main class="fd-content">
+<div class="desktop-customer-view">
+<main class="fd-content">
   <fd-breadcrumbs [items]="[{ label: 'Profile' }]" />
   <section class="profile-layout">
     <div>
       <section class="profile-hero fd-card">
         <div class="avatar">
           <span class="avatar-initials">{{
-            (auth.currentUser()?.name || "FD").slice(0, 2).toUpperCase()
+            (auth.currentUser()?.name || "NT").slice(0, 2).toUpperCase()
           }}</span>
           <button
             type="button"
@@ -19,7 +20,7 @@
         </div>
         <div>
           <h1>
-            {{ auth.currentUser()?.name || "FlashDrop customer" }}
+            {{ auth.currentUser()?.name || "Nextou customer" }}
             @if (auth.currentUser()?.prime) {
               <span>Prime</span>
             }
@@ -130,14 +131,14 @@
 
     <aside class="right-profile">
       <section class="wallet-card fd-card">
-        <h3>FlashDrop Wallet</h3>
+        <h3>Nextou Wallet</h3>
         <p>Total Balance</p>
         <h2>{{ walletBalance() | appCurrency }}</h2>
         <a routerLink="/wallet" class="fd-btn primary">Add Money</a>
       </section>
       <section class="one-card fd-card">
         <h3>
-          FlashDrop One
+          Nextou One
           @if (auth.currentUser()?.prime) {
             <span>Active</span>
           }
@@ -170,3 +171,64 @@
     </aside>
   </section>
 </main>
+</div>
+
+<div class="mobile-customer-view">
+<main class="mobile-page profile-page">
+  <section class="profile-hero">
+    <div class="avatar">{{ (auth.currentUser()?.name || 'F')[0] }}</div>
+    <div>
+      <small>Nextou account</small>
+      <h1>{{ auth.currentUser()?.name || 'Welcome back' }}</h1>
+      <p>{{ auth.currentUser()?.email || auth.currentUser()?.phone || 'Manage your deliveries' }}</p>
+    </div>
+  </section>
+
+  <section class="preview-grid">
+    <a routerLink="/wallet">
+      <span class="material-symbols-rounded">account_balance_wallet</span>
+      <small>Wallet</small>
+      <b>{{ walletBalance() | appCurrency }}</b>
+    </a>
+    <a routerLink="/referral">
+      <span class="material-symbols-rounded">redeem</span>
+      <small>Rewards</small>
+      <b>{{ rewardAmount() | appCurrency }}</b>
+    </a>
+  </section>
+
+  <section class="mobile-list">
+    @for (link of quickLinks; track link.path) {
+      <a [routerLink]="link.path" class="profile-link">
+        <span class="material-symbols-rounded">{{ link.icon }}</span>
+        <span><b>{{ link.label }}</b><small>{{ link.sub }}</small></span>
+        <i class="material-symbols-rounded">chevron_right</i>
+      </a>
+    }
+    <a routerLink="/addresses" class="profile-link">
+      <span class="material-symbols-rounded">location_on</span>
+      <span><b>Addresses</b><small>Manage delivery locations</small></span>
+      <i class="material-symbols-rounded">chevron_right</i>
+    </a>
+  </section>
+
+  <section class="activity-card">
+    <div class="mobile-section-head">
+      <h2>Recent activity</h2>
+      <button type="button" (click)="viewActivity()">View</button>
+    </div>
+    @for (activity of activities(); track activity.title + activity.sub) {
+      <div>
+        <span class="material-symbols-rounded">{{ activity.icon }}</span>
+        <b>{{ activity.title }}</b>
+        <small>{{ activity.sub }}</small>
+        <strong>{{ activity.amount }}</strong>
+      </div>
+    } @empty {
+      <p>No recent account activity yet.</p>
+    }
+  </section>
+
+  <button type="button" class="logout" (click)="auth.logout()">Logout</button>
+</main>
+</div>

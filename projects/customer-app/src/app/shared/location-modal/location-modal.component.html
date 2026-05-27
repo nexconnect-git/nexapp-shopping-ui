@@ -1,5 +1,10 @@
 ﻿@if (ui.locationModalOpen()) {
-  <div class="overlay" (click)="ui.closeLocation()"></div>
+  <button
+    type="button"
+    class="overlay"
+    aria-label="Close location selector"
+    (click)="ui.closeLocation()"
+  ></button>
   <section class="location-modal animate-scale">
     <span class="sheet-handle" aria-hidden="true"></span>
     <header>

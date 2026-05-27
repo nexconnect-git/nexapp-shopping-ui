@@ -7,15 +7,15 @@ import {
 } from '@shared/public-api';
 import { OrderService } from '../../services/order.service';
 import { AppStateService } from '../../services/app-state.service';
-import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
 import { DisplayOrderIdPipe } from '../../shared/display-order-id.pipe';
+import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
 
 @Component({
   standalone: true,
   imports: [
+    AppCurrencyPipe,
     RouterLink,
     BreadcrumbsComponent,
-    AppCurrencyPipe,
     DisplayOrderIdPipe,
   ],
   templateUrl: './order-finished.component.html',

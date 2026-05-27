@@ -145,7 +145,9 @@ export class VendorProductEditService {
       {
         label: 'Catalog information added',
         completed: Boolean(
-          product.productName && product.brand && product.unit,
+          product.productName &&
+            product.brand &&
+            product.unit,
         ),
       },
       {

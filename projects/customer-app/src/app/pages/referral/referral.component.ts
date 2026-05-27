@@ -49,10 +49,10 @@ export class ReferralComponent {
       this.state.showToast(this.content.referral().unavailableCode);
       return;
     }
-    const message = `Use my FlashDrop referral code ${this.code()}`;
+    const message = `Use my Nextou referral code ${this.code()}`;
     if (channel === 'Share' && navigator.share) {
       navigator
-        .share({ title: 'FlashDrop referral', text: message })
+        .share({ title: 'Nextou referral', text: message })
         .catch(() => {});
       return;
     }

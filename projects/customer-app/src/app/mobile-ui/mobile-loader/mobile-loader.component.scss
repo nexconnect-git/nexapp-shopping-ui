@@ -1,0 +1,23 @@
+.mobile-loader {
+  height: 3px;
+  overflow: hidden;
+  background: rgba(91, 44, 255, 0.12);
+}
+
+i {
+  display: block;
+  width: 44%;
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #5b2cff, #ff6b9a);
+  animation: mobileLoader 0.9s ease-in-out infinite;
+}
+
+@keyframes mobileLoader {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(240%);
+  }
+}

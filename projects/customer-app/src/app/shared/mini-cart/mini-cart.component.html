@@ -1,5 +1,10 @@
 ﻿@if (state.miniCartOpen() || ui.miniCartOpen()) {
-  <div class="overlay" (click)="close()"></div>
+  <button
+    type="button"
+    class="overlay"
+    aria-label="Close cart"
+    (click)="close()"
+  ></button>
   <aside class="mini-cart" [class.enter]="state.miniCartOpen()">
     <header>
       <div>

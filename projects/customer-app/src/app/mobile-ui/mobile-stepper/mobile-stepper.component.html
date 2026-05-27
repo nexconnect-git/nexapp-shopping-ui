@@ -1,0 +1,8 @@
+<div class="mobile-stepper">
+  @for (step of steps; track step.id) {
+    <span [class.active]="step.id === active">
+      <b>{{ step.id }}</b>
+      <em>{{ step.title }}</em>
+    </span>
+  }
+</div>

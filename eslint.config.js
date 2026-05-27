@@ -12,7 +12,7 @@ module.exports = tseslint.config(
       "node_modules/**",
       "out-tsc/**",
       "customer-app-new-design-reference/**",
-      "flashdrop-angular-instamart-style-v11-angular-structure/**",
+      "nextou-angular-instamart-style-v11-angular-structure/**",
     ],
   },
   {
@@ -40,6 +40,7 @@ module.exports = tseslint.config(
           style: "camelCase",
         },
       ],
+      "@angular-eslint/prefer-inject": "warn",
       "@typescript-eslint/consistent-type-imports": "off",
       "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/no-unused-vars": [
@@ -73,6 +74,7 @@ module.exports = tseslint.config(
       "@angular-eslint/template/mouse-events-have-key-events": "warn",
       "@angular-eslint/template/no-autofocus": "warn",
       "@angular-eslint/template/no-distracting-elements": "warn",
+      "@angular-eslint/template/prefer-control-flow": "warn",
       "@angular-eslint/template/table-scope": "warn",
       "@angular-eslint/template/valid-aria": "warn",
     },

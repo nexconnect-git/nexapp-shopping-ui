@@ -1,0 +1,32 @@
+<article class="mobile-product-card" [class.row]="layout === 'row'">
+  <a [routerLink]="['/product', product.id]" class="media">
+    <img [src]="product.image" [alt]="product.name" loading="lazy" />
+    @if (product.discount) {
+      <i>{{ product.discount }}</i>
+    }
+  </a>
+  <div class="body">
+    <a [routerLink]="['/product', product.id]" class="name">{{ product.name }}</a>
+    @if (product.storeName) {
+      <small>{{ product.storeName }}</small>
+    }
+    <em>{{ product.unit }}</em>
+    <div class="foot">
+      <span>
+        <b>{{ product.price | appCurrency }}</b>
+        @if (product.mrp > product.price) {
+          <del>{{ product.mrp | appCurrency }}</del>
+        }
+      </span>
+      @if (quantity()) {
+        <fd-mobile-quantity-stepper
+          [quantity]="quantity()"
+          (decrement)="state.updateQuantity(product.id, -1)"
+          (increment)="state.updateQuantity(product.id, 1)"
+        />
+      } @else {
+        <button type="button" (click)="state.addToCart(product)">Add</button>
+      }
+    </div>
+  </div>
+</article>

@@ -30,8 +30,8 @@ import {
 } from '../models';
 import { CustomerCatalogApiService } from './customer-catalog-api.service';
 
-const FALLBACK_PRODUCT_IMAGE = 'assets/placeholders/product.svg';
-const FALLBACK_STORE_IMAGE = 'assets/placeholders/store.svg';
+const FALLBACK_PRODUCT_IMAGE = '';
+const FALLBACK_STORE_IMAGE = '';
 
 @Injectable({ providedIn: 'root' })
 export class CatalogService {
@@ -478,7 +478,7 @@ export class CatalogService {
     const next = response?.next;
     if (!next || typeof next !== 'string') return null;
     try {
-      const url = new URL(next, 'http://nexconnect.local');
+      const url = new URL(next, 'http://nextou.local');
       const page = Number(url.searchParams.get('page'));
       return Number.isFinite(page) && page > 0 ? page : null;
     } catch {

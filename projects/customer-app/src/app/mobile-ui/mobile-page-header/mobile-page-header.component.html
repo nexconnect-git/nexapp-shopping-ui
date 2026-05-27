@@ -1,0 +1,16 @@
+<header class="mobile-page-header">
+  @if (showBack) {
+    <button type="button" aria-label="Go back" (click)="back()">
+      <span class="material-symbols-rounded">arrow_back</span>
+    </button>
+  }
+  <div>
+    @if (subtitle) {
+      <small>{{ subtitle }}</small>
+    }
+    <h1>{{ title }}</h1>
+  </div>
+  @if (icon) {
+    <span class="material-symbols-rounded hero-icon">{{ icon }}</span>
+  }
+</header>

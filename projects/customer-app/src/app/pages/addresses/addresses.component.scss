@@ -162,3 +162,104 @@ app-map-picker {
     bottom: 0;
   }
 }
+
+.mobile-customer-view {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .desktop-customer-view {
+    display: none;
+  }
+
+  .mobile-customer-view {
+    display: block;
+  }
+
+  .simple-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  
+  .simple-head small {
+    color: #77708d;
+    font-size: 12px;
+    font-weight: 900;
+  }
+  
+  .simple-head h1 {
+    margin: 2px 0 0;
+    font-size: 24px;
+  }
+  
+  .simple-head button {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 16px;
+    color: #5b2cff;
+    background: #fff;
+    box-shadow: 0 10px 24px rgba(33, 22, 82, 0.06);
+  }
+  
+  .address-card,
+  .empty-panel {
+    display: grid;
+    gap: 10px;
+    padding: 15px;
+    border-radius: 22px;
+    background: #fff;
+    box-shadow: 0 12px 30px rgba(33, 22, 82, 0.07);
+  }
+  
+  .address-card {
+    grid-template-columns: 44px minmax(0, 1fr);
+  }
+  
+  .address-card > span {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 16px;
+    color: #5b2cff;
+    background: #f1ecff;
+  }
+  
+  .address-card p,
+  .address-card small,
+  .empty-panel p {
+    margin: 4px 0 0;
+    color: #77708d;
+    font-size: 12px;
+    line-height: 1.35;
+  }
+  
+  .address-card footer {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+  
+  .address-card footer button {
+    min-height: 38px;
+    border-radius: 14px;
+    color: #5b2cff;
+    background: #f1ecff;
+    font-weight: 950;
+  }
+  
+  .address-card footer .danger {
+    color: #e94560;
+    background: #fff0f3;
+  }
+  
+  .empty-panel {
+    justify-items: center;
+    text-align: center;
+  }
+}

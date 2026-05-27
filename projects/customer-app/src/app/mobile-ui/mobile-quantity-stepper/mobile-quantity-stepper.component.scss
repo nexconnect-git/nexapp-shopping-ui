@@ -1,0 +1,22 @@
+.mobile-quantity-stepper {
+  height: 38px;
+  min-width: 104px;
+  display: grid;
+  grid-template-columns: 34px 1fr 34px;
+  align-items: center;
+  border: 1px solid rgba(91, 44, 255, 0.28);
+  border-radius: 14px;
+  color: #5b2cff;
+  background: #fff;
+  font-weight: 950;
+}
+
+button {
+  height: 34px;
+  display: grid;
+  place-items: center;
+}
+
+b {
+  text-align: center;
+}

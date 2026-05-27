@@ -1,3 +1,4 @@
+<div class="desktop-customer-view">
 <main class="fd-content">
   <fd-breadcrumbs [items]="[{ label: 'Stores' }]" />
   <section class="fd-two-col">
@@ -125,3 +126,63 @@
     <fd-right-rail />
   </section>
 </main>
+</div>
+
+<div class="mobile-customer-view">
+<main class="mobile-page stores-page">
+  <header class="stores-head">
+    <div>
+      <small>Nearby shops</small>
+      <h1>Stores around you</h1>
+    </div>
+    <button type="button" aria-label="Map location" (click)="viewMap()">
+      <span class="material-symbols-rounded">my_location</span>
+    </button>
+  </header>
+
+  <section class="store-promo">
+    <span class="material-symbols-rounded">local_offer</span>
+    <div>
+      <b>{{ storePromo().title }}</b>
+      <small>{{ storePromo().subtitle }}</small>
+    </div>
+  </section>
+
+  <section class="mobile-section">
+    <div class="mobile-chip-row">
+      @for (filter of filters(); track filter) {
+        <button type="button" class="mobile-chip" [class.active]="active() === filter" (click)="setFilter(filter)">
+          <span class="material-symbols-rounded">{{ filterIcon(filter) }}</span>{{ filter }}
+        </button>
+      }
+    </div>
+    <label class="sort-row">
+      <span class="material-symbols-rounded">sort</span>
+      <select [ngModel]="sortBy()" (ngModelChange)="setSort($event)">
+        <option>Relevance</option>
+        <option>Rating</option>
+        <option>Delivery Time</option>
+      </select>
+    </label>
+  </section>
+
+  <section class="mobile-section">
+    <div class="mobile-section-head">
+      <h2>{{ active() }} stores</h2>
+      <span>{{ filteredStores().length }} open</span>
+    </div>
+    <div class="mobile-list">
+      @for (store of filteredStores(); track store.id) {
+        <fd-store-card [store]="store" />
+      } @empty {
+        <section class="empty-panel">
+          <span class="material-symbols-rounded">storefront</span>
+          <b>No stores found</b>
+          <small>Update your location or clear the category filter.</small>
+        </section>
+      }
+    </div>
+    <button type="button" class="mobile-cta secondary" (click)="loadMore()">Load more stores</button>
+  </section>
+</main>
+</div>

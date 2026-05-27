@@ -35,7 +35,8 @@
   place-items: center;
   border-radius: 8px;
   color: var(--nc-white);
-  background: var(--brand-accent);
+  background: transparent;
+  object-fit: contain;
   box-shadow: 0 16px 32px color-mix(in srgb, var(--nc-primary) 22%, transparent);
 }
 

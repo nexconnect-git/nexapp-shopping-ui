@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, Input, signal } from '@angular/core';
 import {
   NavigationEnd,
   Router,
@@ -21,6 +21,7 @@ import { AuthService } from '../../services/auth.service';
   styleUrls: ['./topbar.component.scss'],
 })
 export class TopbarComponent {
+  @Input() homeMode = false;
   query = signal('');
   searchOpen = signal(false);
 

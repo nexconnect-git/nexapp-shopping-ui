@@ -1,15 +1,22 @@
-<div class="fd-page">
+<div
+  class="fd-page"
+  [class.fd-page--home]="isHomeRoute()"
+  [class.fd-page--app]="!isHomeRoute()"
+>
   <fd-app-loader />
-  <fd-topbar />
-  @if (loading()) {
-    <div class="page-loader" role="progressbar" aria-label="Loading page"></div>
+  <fd-topbar class="desktop-shell-only" [homeMode]="isHomeRoute()" />
+  @if (isHomeRoute()) {
+    <fd-mobile-topbar class="mobile-shell-only" />
   }
-  <fd-sidebar />
+  @if (loading()) {
+    <fd-mobile-loader label="Loading page" />
+  }
+  <fd-sidebar class="desktop-shell-only" />
   <router-outlet />
   @defer (when ui.loginSliderOpen()) {
     <fd-login-slider />
   }
-  @defer (when state.miniCartOpen() || ui.miniCartOpen()) {
+  @defer (when showCartAssist() && (state.miniCartOpen() || ui.miniCartOpen())) {
     <fd-mini-cart />
   }
   @defer (when ui.filterSliderOpen()) {
@@ -24,11 +31,9 @@
   @defer (when ui.confirmDialog()) {
     <fd-confirm-dialog />
   }
-  <fd-mobile-sticky-cart-bar />
-  <fd-mobile-bottom-nav />
+  <fd-mobile-sticky-cart-bar [visible]="showCartAssist()" />
+  <fd-mobile-bottom-nav class="mobile-shell-only" />
   <app-global-loading />
   <app-page-feature-loading />
-  @if (state.toast()) {
-    <div class="toast animate-up">{{ state.toast() }}</div>
-  }
+  <fd-mobile-toast [message]="state.toast()" />
 </div>

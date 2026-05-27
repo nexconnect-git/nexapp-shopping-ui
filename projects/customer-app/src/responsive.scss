@@ -1,4 +1,4 @@
-/* FlashDrop customer responsive contract.
+/* Nextou customer responsive contract.
    Keep this file structural and scoped; page personality lives in components. */
 
 :root {
@@ -788,5 +788,26 @@ a {
   .fd-card,
   .success-card {
     box-shadow: none;
+  }
+}
+
+
+@media (max-width: 760px) {
+  .desktop-customer-view {
+    display: none !important;
+  }
+
+  .mobile-customer-view {
+    display: block !important;
+  }
+}
+
+@media (min-width: 761px) {
+  .desktop-customer-view {
+    display: block;
+  }
+
+  .mobile-customer-view {
+    display: none !important;
   }
 }

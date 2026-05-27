@@ -4,20 +4,23 @@ import { CatalogService } from '../../services/catalog.service';
 import { AppStateService } from '../../services/app-state.service';
 import { ProductCardComponent } from '../../components/product-card/product-card.component';
 import { StoreCardComponent } from '../../components/store-card/store-card.component';
-import { RightRailComponent } from '../../components/right-rail/right-rail.component';
 import { UiService } from '../../services/ui.service';
-import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
 import { categoryIconFor } from '../../shared/category-icons';
-import { CustomerContentConfigService } from '../../services/customer-content-config.service';
+import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
+import { RightRailComponent } from '../../components/right-rail/right-rail.component';
+import {
+  CustomerContentConfigService,
+  type CustomerPromoCard,
+} from '../../services/customer-content-config.service';
 
 @Component({
   standalone: true,
   imports: [
     RouterLink,
+    BreadcrumbsComponent,
     ProductCardComponent,
     StoreCardComponent,
     RightRailComponent,
-    BreadcrumbsComponent,
   ],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss'],
@@ -68,7 +71,17 @@ export class HomeComponent {
       .filter((category) => category.id !== 'all')
       .slice(0, 2),
   );
-  homePromos = computed(() => {
+  mobileCategories = computed(() =>
+    this.catalog
+      .categories()
+      .filter((category) => category.id !== 'all')
+      .slice(0, 6),
+  );
+  homePromos = computed<CustomerPromoCard[]>(() => {
+    const contentPromos = this.content.ads().home;
+    if (contentPromos.length) {
+      return contentPromos;
+    }
     const liveBanners = this.catalog
       .banners()
       .slice(1, 3)
@@ -81,9 +94,10 @@ export class HomeComponent {
         ctaUrl: banner.ctaUrl,
         icon: 'campaign',
         tone: 'purple' as const,
+        template: 'soft_card' as const,
         image: banner.image || undefined,
       }));
-    return liveBanners.length ? liveBanners : this.content.ads().home;
+    return liveBanners;
   });
   engagementBanner = computed(
     () => this.content.home().engagementBanners[0] || null,
@@ -98,5 +112,29 @@ export class HomeComponent {
 
   categoryIcon(category: unknown): string {
     return categoryIconFor(category as any);
+  }
+
+  routePath(url: string | null | undefined): string {
+    return this._splitUrl(url).path;
+  }
+
+  routeQuery(url: string | null | undefined): Record<string, string> | null {
+    return this._splitUrl(url).query;
+  }
+
+  private _splitUrl(url: string | null | undefined): {
+    path: string;
+    query: Record<string, string> | null;
+  } {
+    const safeUrl = (url || '/search').trim() || '/search';
+    const [path, queryString] = safeUrl.split('?', 2);
+    const query: Record<string, string> = {};
+    new URLSearchParams(queryString || '').forEach((value, key) => {
+      query[key] = value;
+    });
+    return {
+      path: path || '/search',
+      query: Object.keys(query).length ? query : null,
+    };
   }
 }

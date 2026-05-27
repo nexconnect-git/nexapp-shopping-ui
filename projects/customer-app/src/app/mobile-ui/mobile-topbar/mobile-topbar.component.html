@@ -1,0 +1,42 @@
+<header class="mobile-topbar">
+  <div class="brand-row">
+    <a routerLink="/" class="brand" aria-label="Nextou home">
+      <span class="brand-logo" aria-hidden="true">N</span>
+      <b>Nextou</b>
+    </a>
+    <div class="top-actions">
+      <a routerLink="/offers" aria-label="Offers">
+        <span class="material-symbols-rounded">local_offer</span>
+      </a>
+      <a routerLink="/issues" aria-label="Notifications and support">
+        <span class="material-symbols-rounded">notifications</span>
+      </a>
+      <button type="button" aria-label="Open cart" (click)="openCart()">
+        <span class="material-symbols-rounded">shopping_bag</span>
+        @if (state.itemCount()) {
+          <i>{{ state.itemCount() }}</i>
+        }
+      </button>
+    </div>
+  </div>
+
+  <button type="button" class="location-card" (click)="ui.openLocation()">
+    <span class="material-symbols-rounded">location_on</span>
+    <span>
+      <small>Delivering to</small>
+      <b>{{ state.location() || 'Select location' }}</b>
+    </span>
+    <span class="material-symbols-rounded">expand_more</span>
+  </button>
+
+  <form class="search-card" (submit)="search($event)">
+    <span class="material-symbols-rounded">search</span>
+    <input
+      type="search"
+      name="q"
+      placeholder="Search milk, bread, pharmacy..."
+      [value]="query()"
+      (input)="query.set($any($event.target).value)"
+    />
+  </form>
+</header>

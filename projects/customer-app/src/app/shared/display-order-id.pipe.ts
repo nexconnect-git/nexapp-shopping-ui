@@ -13,15 +13,15 @@ export function displayOrderId(orderOrId: unknown): string {
     raw?.id ||
     orderOrId;
   const text = String(value || '').trim();
-  if (!text) return 'FD-PENDING';
+  if (!text) return 'NT-PENDING';
   if (/^ORD[-_]/i.test(text)) return text.toUpperCase().replace(/_/g, '-');
-  if (/^[0-9]+$/.test(text)) return `FD-${text}`;
+  if (/^[0-9]+$/.test(text)) return `NT-${text}`;
   const uuid = text.match(
     /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-([0-9a-f]{12})/i,
   );
-  if (uuid) return `FD-${uuid[1].slice(0, 6).toUpperCase()}`;
+  if (uuid) return `NT-${uuid[1].slice(0, 6).toUpperCase()}`;
   return text.length > 14
-    ? `FD-${text
+    ? `NT-${text
         .replace(/[^a-z0-9]/gi, '')
         .slice(-6)
         .toUpperCase()}`

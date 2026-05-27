@@ -44,12 +44,13 @@
 .sidebar-brand-icon {
   width: 36px;
   height: 36px;
-  background: var(--primary);
+  background: transparent;
   color: white;
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
+  object-fit: contain;
   box-shadow: 0 4px 10px rgba(108, 99, 255, 0.3);
   .material-icons-outlined {
     font-size: 20px;
@@ -161,14 +162,24 @@
   z-index: 1000;
 
   .mobile-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
     font-size: 1.125rem;
     font-weight: 900;
     color: var(--text-primary);
-    letter-spacing: -0.02em;
+    letter-spacing: 0;
     b {
       color: var(--primary);
       font-weight: 900;
     }
+  }
+
+  .mobile-brand-logo {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    border-radius: 9px;
   }
 }
 

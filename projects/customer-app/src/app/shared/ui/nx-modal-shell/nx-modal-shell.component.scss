@@ -42,3 +42,55 @@ header button {
   color: var(--primary);
   font-size: 24px;
 }
+
+@media (max-width: 760px) {
+  .overlay {
+    z-index: 300;
+    background: rgba(17, 24, 39, 0.4);
+    backdrop-filter: blur(3px);
+  }
+
+  .modal {
+    left: 6px;
+    right: 6px;
+    top: auto;
+    bottom: 0;
+    width: auto;
+    max-height: min(84dvh, 680px);
+    overflow: auto;
+    transform: none;
+    z-index: 310;
+    padding: 14px 12px calc(12px + env(safe-area-inset-bottom, 0px));
+    border-radius: 22px 22px 0 0;
+  }
+
+  .modal::before {
+    content: "";
+    display: block;
+    width: 42px;
+    height: 4px;
+    border-radius: 999px;
+    background: #d8d4e8;
+    margin: 0 auto 10px;
+  }
+
+  header {
+    padding-bottom: 10px;
+    margin-bottom: 12px;
+  }
+
+  h2 {
+    font-size: 21px;
+    line-height: 1.12;
+  }
+
+  p {
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  header button {
+    width: 36px;
+    height: 36px;
+  }
+}

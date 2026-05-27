@@ -1,0 +1,19 @@
+<section class="mobile-price-summary">
+  <h2>Price details</h2>
+  <p><span>MRP total</span><b>{{ state.mrpTotal() | appCurrency }}</b></p>
+  <p><span>Item total</span><b>{{ state.subtotal() | appCurrency }}</b></p>
+  @if (state.discount()) {
+    <p class="save"><span>Savings</span><b>-{{ state.discount() | appCurrency }}</b></p>
+  }
+  @if (state.coupon()) {
+    <p class="save"><span>{{ state.coupon() }}</span><b>-{{ state.couponDiscount() | appCurrency }}</b></p>
+  }
+  <p><span>Delivery</span><b>{{ state.deliveryFeeLabel() }}</b></p>
+  @if (state.handlingFee() > 0) {
+    <p><span>Handling</span><b>{{ state.handlingFee() | appCurrency }}</b></p>
+  }
+  @if (state.platformFee() > 0) {
+    <p><span>Platform</span><b>{{ state.platformFee() | appCurrency }}</b></p>
+  }
+  <p class="total"><span>To pay</span><b>{{ state.total() | appCurrency }}</b></p>
+</section>

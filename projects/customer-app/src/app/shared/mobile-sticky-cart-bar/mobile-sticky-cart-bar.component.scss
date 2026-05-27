@@ -1,5 +1,15 @@
 :host {
-  display: none;
+  display: block;
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--mobile-bottom-nav-height) + 16px + env(safe-area-inset-bottom, 0px));
+  z-index: 88;
+  width: 100%;
+  max-width: var(--mobile-shell-max, 430px);
+  margin: 0 auto;
+  padding: 0 12px;
+  pointer-events: none;
+  transform: translateX(-50%);
 }
 
 .mobile-sticky-cart {
@@ -16,6 +26,7 @@
   transition:
     transform 0.18s ease,
     box-shadow 0.18s ease;
+  pointer-events: auto;
 }
 
 .cart-copy {
@@ -68,14 +79,7 @@
 
 @media (max-width: 760px) {
   :host {
-    display: block;
-    position: fixed;
-    left: 10px;
-    right: 10px;
-    bottom: calc(
-      var(--customer-bottom-nav-height) + 18px + env(safe-area-inset-bottom, 0px)
-    );
-    z-index: 91;
+    bottom: calc(var(--mobile-bottom-nav-height) + 16px + env(safe-area-inset-bottom, 0px));
   }
 }
 

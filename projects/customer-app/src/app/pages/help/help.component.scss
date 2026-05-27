@@ -92,3 +92,145 @@
     position: static;
   }
 }
+
+.mobile-customer-view {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .desktop-customer-view {
+    display: none;
+  }
+
+  .mobile-customer-view {
+    display: block;
+  }
+
+  .simple-head small {
+    color: #77708d;
+    font-size: 12px;
+    font-weight: 900;
+  }
+  
+  .simple-head h1 {
+    margin: 2px 0 0;
+    font-size: 24px;
+  }
+  
+  .help-categories {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  
+  .help-categories button,
+  .help-form,
+  .thread-card {
+    display: grid;
+    gap: 12px;
+    padding: 15px;
+    border-radius: 22px;
+    background: #fff;
+    box-shadow: 0 12px 30px rgba(33, 22, 82, 0.07);
+  }
+  
+  .help-categories button {
+    justify-items: start;
+    color: #5b2cff;
+    font-weight: 950;
+  }
+  
+  .help-form label {
+    display: grid;
+    gap: 6px;
+    color: #5d566e;
+    font-size: 12px;
+    font-weight: 900;
+  }
+  
+  .help-form select,
+  .help-form textarea,
+  .reply-row input {
+    width: 100%;
+    min-width: 0;
+    border: 1px solid #eee9f8;
+    border-radius: 16px;
+    outline: 0;
+    padding: 0 12px;
+    background: #fff;
+  }
+  
+  .help-form select,
+  .reply-row input {
+    min-height: 46px;
+  }
+  
+  .help-form textarea {
+    min-height: 130px;
+    padding-block: 12px;
+  }
+  
+  .photo-button {
+    min-height: 44px;
+    border-radius: 15px;
+    color: #5b2cff;
+    background: #f1ecff;
+    font-weight: 950;
+  }
+  
+  .issue-summary {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
+  }
+  
+  .issue-summary > span {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 16px;
+    color: #5b2cff;
+    background: #f1ecff;
+  }
+  
+  .messages {
+    display: grid;
+    gap: 8px;
+  }
+  
+  .message {
+    justify-self: start;
+    max-width: 86%;
+    padding: 10px 12px;
+    border-radius: 16px;
+    background: #f4f1fb;
+  }
+  
+  .message.customer {
+    justify-self: end;
+    color: #fff;
+    background: #5b2cff;
+  }
+  
+  .message p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.35;
+  }
+  
+  .reply-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 46px;
+    gap: 8px;
+  }
+  
+  .reply-row button {
+    display: grid;
+    place-items: center;
+    border-radius: 16px;
+    color: #fff;
+    background: #5b2cff;
+  }
+}
