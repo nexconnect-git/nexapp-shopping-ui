@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" role="img" aria-label="Store placeholder">
+  <rect width="320" height="200" rx="18" fill="#f5f2ff"/>
+  <rect x="66" y="82" width="188" height="76" rx="10" fill="#ffffff" stroke="#d7ccff" stroke-width="4"/>
+  <path d="M78 66h164l18 34H60l18-34z" fill="#6c2bff"/>
+  <path d="M86 66h36l-10 34H68l18-34zm58 0h36l-2 34h-44l10-34zm58 0h32l18 34h-46l-4-34z" fill="#ff6584" opacity=".9"/>
+  <rect x="100" y="118" width="42" height="40" rx="6" fill="#e9e3ff"/>
+  <rect x="166" y="118" width="54" height="40" rx="6" fill="#e9e3ff"/>
+  <circle cx="250" cy="54" r="18" fill="#ff6584" opacity=".18"/>
+</svg>

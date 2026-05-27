@@ -47,7 +47,18 @@
             ],
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
-            "assets": [],
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "projects/customer-app/public",
+                "output": "/"
+              },
+              {
+                "glob": "**/*",
+                "input": "projects/customer-app/src/assets",
+                "output": "/assets/"
+              }
+            ],
             "styles": [
               "src/styles.scss",
               "projects/shared/src/styles/nextou-platform.css"
@@ -156,7 +167,18 @@
             ],
             "tsConfig": "projects/customer-app/tsconfig.app.json",
             "inlineStyleLanguage": "scss",
-            "assets": [],
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "projects/customer-app/public",
+                "output": "/"
+              },
+              {
+                "glob": "**/*",
+                "input": "projects/customer-app/src/assets",
+                "output": "/assets/"
+              }
+            ],
             "styles": [
               "projects/customer-app/src/styles.scss",
               "projects/shared/src/styles/nextou-platform.css"
@@ -305,7 +327,18 @@
             ],
             "tsConfig": "projects/vendor-app/tsconfig.app.json",
             "inlineStyleLanguage": "scss",
-            "assets": [],
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "projects/vendor-app/public",
+                "output": "/"
+              },
+              {
+                "glob": "**/*",
+                "input": "projects/vendor-app/src/assets",
+                "output": "/assets/"
+              }
+            ],
             "styles": [
               "projects/vendor-app/src/styles.scss",
               "projects/shared/src/styles/nextou-platform.css"
@@ -422,7 +455,18 @@
             ],
             "tsConfig": "projects/delivery-app/tsconfig.app.json",
             "inlineStyleLanguage": "scss",
-            "assets": [],
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "projects/delivery-app/public",
+                "output": "/"
+              },
+              {
+                "glob": "**/*",
+                "input": "projects/delivery-app/src/assets",
+                "output": "/assets/"
+              }
+            ],
             "styles": [
               "projects/delivery-app/src/styles.scss",
               "projects/shared/src/styles/nextou-platform.css"
@@ -561,7 +605,18 @@
             ],
             "tsConfig": "projects/admin-panel/tsconfig.app.json",
             "inlineStyleLanguage": "scss",
-            "assets": [],
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "projects/admin-panel/public",
+                "output": "/"
+              },
+              {
+                "glob": "**/*",
+                "input": "projects/admin-panel/src/assets",
+                "output": "/assets/"
+              }
+            ],
             "styles": [
               "projects/admin-panel/src/styles.scss",
               "projects/shared/src/styles/nextou-platform.css"

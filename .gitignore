@@ -82,6 +82,18 @@ testem.log
 *.ttf
 *.otf
 
+# Required app shell assets served by Angular.
+!projects/*/public/
+!projects/*/public/fonts/
+!projects/*/public/fonts/material-icons-outlined.otf
+!projects/*/public/fonts/material-symbols-rounded.ttf
+!projects/*/public/nextou-logo.svg
+!projects/*/public/nextou-wordmark.svg
+!projects/*/public/favicon.ico
+!projects/customer-app/src/assets/
+!projects/customer-app/src/assets/placeholders/
+!projects/customer-app/src/assets/placeholders/store.svg
+
 # System files
 .DS_Store
 Thumbs.db

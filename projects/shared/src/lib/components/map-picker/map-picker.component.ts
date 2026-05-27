@@ -32,6 +32,13 @@ export interface MapLocation {
   country_code?: string;
 }
 
+interface FallbackMapTile {
+  key: string;
+  url: string;
+  left: number;
+  top: number;
+}
+
 declare const google: any;
 @Component({
   selector: 'app-map-picker',
@@ -41,8 +48,8 @@ declare const google: any;
   styleUrl: './map-picker.component.scss',
 })
 export class MapPickerComponent implements AfterViewInit, OnDestroy {
-  @Input() initialLat = 6.5244;
-  @Input() initialLng = 3.3792;
+  @Input() initialLat = 28.6139;
+  @Input() initialLng = 77.209;
   @Input() height = '300px';
   @Input() apiKey = '';
   @Input() mapId = '';
@@ -67,6 +74,9 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
   locating = signal(false);
   mapReady = signal(false);
   mapUnavailable = signal(false);
+  fallbackMapReady = signal(false);
+  fallbackNotice = signal('');
+  fallbackTiles = signal<FallbackMapTile[]>([]);
   currentLat = signal(this.initialLat);
   currentLng = signal(this.initialLng);
   searchQuery = signal('');
@@ -97,21 +107,27 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
   private loadGoogleMaps() {
     const apiKey = this.resolvedApiKey;
     if (!apiKey) {
-      this.setMapUnavailable('Google Maps API key is not configured.');
+      this.initFallbackMap('Using OpenStreetMap because Google Maps API key is not configured.');
       return;
     }
 
     this.googleMaps
       .loadJavaScriptApi(apiKey)
       .then(() => this.ngZone.run(() => this.initMap()))
-      .catch(() => this.ngZone.run(() => this.setMapUnavailable()));
+      .catch(() =>
+        this.ngZone.run(() =>
+          this.initFallbackMap('Using OpenStreetMap because Google Maps could not be loaded.'),
+        ),
+      );
   }
 
   private initMap() {
     const container = this.mapContainerRef?.nativeElement;
     if (!container || this.map) return;
 
-    this.createMap(container).catch(() => this.setMapUnavailable());
+    this.createMap(container).catch(() =>
+      this.initFallbackMap('Using OpenStreetMap because Google Maps could not initialize.'),
+    );
   }
 
   private async createMap(container: HTMLElement) {
@@ -162,7 +178,7 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
 
     const lat = +this.initialLat;
     const lng = +this.initialLng;
-    if (lat !== 6.5244 || lng !== 3.3792) {
+    if (lat !== 28.6139 || lng !== 77.209) {
       this.reverseGeocode(lat, lng);
     }
   }
@@ -413,7 +429,9 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
           this.locating.set(false);
           this.currentLat.set(Number(lat.toFixed(6)));
           this.currentLng.set(Number(lng.toFixed(6)));
-          if (this.map && this.marker) {
+          if (this.fallbackMapReady()) {
+            this.setFallbackPosition({ lat, lng }, true);
+          } else if (this.map && this.marker) {
             this.map.setCenter({ lat, lng });
             this.map.setZoom(16);
             this.setMarkerPosition({ lat, lng });
@@ -438,9 +456,133 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
     );
   }
 
+  onFallbackMapClick(event: MouseEvent) {
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('button')) return;
+
+    const host = event.currentTarget as HTMLElement;
+    const rect = host.getBoundingClientRect();
+    const center = this.latLngToWorldPoint(
+      this.currentLat(),
+      this.currentLng(),
+      this.fallbackZoom,
+    );
+    const worldX = center.x - rect.width / 2 + (event.clientX - rect.left);
+    const worldY = center.y - rect.height / 2 + (event.clientY - rect.top);
+    const position = this.worldPointToLatLng(worldX, worldY, this.fallbackZoom);
+    this.setFallbackPosition(position, true);
+  }
+
+  zoomFallbackMap(event: MouseEvent, delta: number) {
+    event.stopPropagation();
+    this.fallbackZoom = Math.min(18, Math.max(3, this.fallbackZoom + delta));
+    this.updateFallbackTiles();
+  }
+
+  private fallbackZoom = 15;
+  private readonly fallbackTileSize = 256;
+
+  private initFallbackMap(message: string) {
+    const lat = Number(this.initialLat) || 28.6139;
+    const lng = Number(this.initialLng) || 77.209;
+    this.mapReady.set(false);
+    this.mapUnavailable.set(false);
+    this.fallbackNotice.set(message);
+    this.fallbackMapReady.set(true);
+    this.currentLat.set(lat);
+    this.currentLng.set(lng);
+    this.updateFallbackTiles();
+    window.setTimeout(() => this.updateFallbackTiles(), 100);
+  }
+
+  private setFallbackPosition(
+    position: { lat: number; lng: number },
+    emitLocation: boolean,
+  ) {
+    const lat = Number(position.lat.toFixed(6));
+    const lng = Number(position.lng.toFixed(6));
+    this.currentLat.set(lat);
+    this.currentLng.set(lng);
+    this.pickedAddress.set(`Pinned location: ${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+    this.updateFallbackTiles();
+
+    if (emitLocation) {
+      this.locationPicked.emit({
+        lat,
+        lng,
+        address: '',
+        city: '',
+        state: '',
+        postal_code: '',
+      });
+    }
+  }
+
+  private updateFallbackTiles() {
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    const container = this.mapContainerRef?.nativeElement as HTMLElement | null;
+    const width = Math.max(container?.clientWidth || 360, 320);
+    const height = Math.max(this.parseHeight(this.height), 220);
+    const center = this.latLngToWorldPoint(
+      this.currentLat(),
+      this.currentLng(),
+      this.fallbackZoom,
+    );
+    const halfWidth = width / 2;
+    const halfHeight = height / 2;
+    const startTileX = Math.floor((center.x - halfWidth) / this.fallbackTileSize);
+    const endTileX = Math.floor((center.x + halfWidth) / this.fallbackTileSize);
+    const startTileY = Math.floor((center.y - halfHeight) / this.fallbackTileSize);
+    const endTileY = Math.floor((center.y + halfHeight) / this.fallbackTileSize);
+    const maxTile = 2 ** this.fallbackZoom;
+    const tiles: FallbackMapTile[] = [];
+
+    for (let x = startTileX; x <= endTileX; x += 1) {
+      for (let y = startTileY; y <= endTileY; y += 1) {
+        if (y < 0 || y >= maxTile) continue;
+        const wrappedX = ((x % maxTile) + maxTile) % maxTile;
+        tiles.push({
+          key: `${this.fallbackZoom}-${wrappedX}-${y}`,
+          url: `https://tile.openstreetmap.org/${this.fallbackZoom}/${wrappedX}/${y}.png`,
+          left: Math.round(x * this.fallbackTileSize - (center.x - halfWidth)),
+          top: Math.round(y * this.fallbackTileSize - (center.y - halfHeight)),
+        });
+      }
+    }
+
+    this.fallbackTiles.set(tiles);
+  }
+
+  private latLngToWorldPoint(lat: number, lng: number, zoom: number) {
+    const sinLat = Math.sin((Math.max(Math.min(lat, 85.05112878), -85.05112878) * Math.PI) / 180);
+    const scale = this.fallbackTileSize * 2 ** zoom;
+    return {
+      x: ((lng + 180) / 360) * scale,
+      y:
+        (0.5 - Math.log((1 + sinLat) / (1 - sinLat)) / (4 * Math.PI)) *
+        scale,
+    };
+  }
+
+  private worldPointToLatLng(x: number, y: number, zoom: number) {
+    const scale = this.fallbackTileSize * 2 ** zoom;
+    const lng = (x / scale) * 360 - 180;
+    const lat =
+      (Math.atan(Math.sinh(Math.PI * (1 - (2 * y) / scale))) * 180) /
+      Math.PI;
+    return { lat, lng };
+  }
+
+  private parseHeight(value: string): number {
+    const parsed = Number.parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : 300;
+  }
+
   private setMapUnavailable(message = 'Google Maps could not be loaded.') {
     this.currentLat.set(+this.initialLat);
     this.currentLng.set(+this.initialLng);
+    this.fallbackMapReady.set(false);
     this.mapUnavailable.set(true);
     this.placesError.set(message);
   }
