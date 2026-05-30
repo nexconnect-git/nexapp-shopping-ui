@@ -1,5 +1,10 @@
 <a [routerLink]="['/store', store.id]" class="mobile-store-card" [class.compact]="compact">
-  <img [src]="store.image || store.hero" [alt]="store.name" loading="lazy" />
+  <img
+    [src]="store.image || store.hero || placeholderImage"
+    [alt]="store.name"
+    loading="lazy"
+    (error)="onImageError($event)"
+  />
   <span class="info">
     <b>{{ store.name }}</b>
     <small>{{ store.category || 'Nextou store' }}</small>

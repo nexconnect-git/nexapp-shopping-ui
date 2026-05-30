@@ -39,7 +39,7 @@
 
   &.settings {
     background: #f5f2ff;
-    color: #8b5cff;
+    color: var(--fd-color-primary-hover);
   }
   &.status_change {
     background: #f5f2ff;

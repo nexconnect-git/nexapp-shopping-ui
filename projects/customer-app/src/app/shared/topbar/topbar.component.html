@@ -17,7 +17,12 @@
     <b>Nextou</b>
   </a>
 
-  <button type="button" class="location" (click)="openLocation()">
+  <button
+    type="button"
+    class="location"
+    aria-label="Choose delivery location"
+    (click)="openLocation()"
+  >
     <span class="material-symbols-rounded">location_on</span>
     <b>{{ state.location().split(",")[0] }}</b>
     <span class="material-symbols-rounded">keyboard_arrow_down</span>
@@ -72,7 +77,7 @@
                   <span
                     ><b>{{ store.name }}</b
                     ><small
-                      >{{ store.eta }} · {{ store.rating }} rating</small
+                      >{{ store.eta }} - {{ store.rating }} rating</small
                     ></span
                   >
                 </a>
@@ -94,7 +99,7 @@
                   <span
                     ><b>{{ product.name }}</b
                     ><small
-                      >{{ product.price | appCurrency }} ·
+                      >{{ product.price | appCurrency }} -
                       {{ product.unit }}</small
                     ></span
                   >
@@ -116,6 +121,7 @@
     @if (canUseRoute("/offers")) {
       <a
         routerLink="/offers"
+        class="tone-warning"
         routerLinkActive="active"
         [routerLinkActiveOptions]="{ exact: true }"
         (click)="ui.closeMenus()"
@@ -125,6 +131,7 @@
     @if (canUseRoute("/orders")) {
       <a
         routerLink="/orders"
+        class="tone-info"
         routerLinkActive="active"
         [routerLinkActiveOptions]="{ exact: true }"
         (click)="ui.closeMenus()"
@@ -135,6 +142,7 @@
       @if (canUseRoute("/wallet")) {
         <a
           routerLink="/wallet"
+          class="tone-success"
           routerLinkActive="active"
           [routerLinkActiveOptions]="{ exact: true }"
           (click)="ui.closeMenus()"
@@ -145,6 +153,7 @@
     @if (canUseRoute("/stores")) {
       <a
         routerLink="/stores"
+        class="tone-primary"
         routerLinkActive="active"
         [routerLinkActiveOptions]="{ exact: true }"
         (click)="ui.closeMenus()"
@@ -166,7 +175,12 @@
   </button>
 
   <div class="menu-wrap user-wrap">
-    <button type="button" class="avatar" (click)="ui.toggleUserMenu()">
+    <button
+      type="button"
+      class="avatar"
+      aria-label="Open account menu"
+      (click)="ui.toggleUserMenu()"
+    >
       {{ (auth.currentUser()?.name || "NT").slice(0, 2).toUpperCase() }}
     </button>
     @if (ui.userMenuOpen()) {
@@ -236,7 +250,12 @@
   </div>
 
   <section class="mobile-discovery" aria-label="Mobile search and location">
-    <button type="button" class="mobile-location" (click)="openLocation()">
+    <button
+      type="button"
+      class="mobile-location"
+      aria-label="Choose mobile delivery location"
+      (click)="openLocation()"
+    >
       <span class="material-symbols-rounded">location_on</span>
       <span
         ><small>Delivering to</small

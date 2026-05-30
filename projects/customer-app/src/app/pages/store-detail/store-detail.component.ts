@@ -1,5 +1,6 @@
+import { Location } from '@angular/common';
 import { Component, computed, effect, signal } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CatalogService } from '../../services/catalog.service';
 import { AppStateService } from '../../services/app-state.service';
@@ -8,16 +9,13 @@ import { ProductCardComponent } from '../../components/product-card/product-card
 import { categoryIconFor } from '../../shared/category-icons';
 import { CustomerContentConfigService } from '../../services/customer-content-config.service';
 import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
-import { OrderSummaryComponent } from '../../components/order-summary/order-summary.component';
 
 @Component({
   standalone: true,
   imports: [
     FormsModule,
-    RouterLink,
     BreadcrumbsComponent,
     ProductCardComponent,
-    OrderSummaryComponent,
   ],
   templateUrl: './store-detail.component.html',
   styleUrls: ['./store-detail.component.scss'],
@@ -29,6 +27,8 @@ export class StoreDetailComponent {
 
   constructor(
     private route: ActivatedRoute,
+    private location: Location,
+    private router: Router,
     public catalog: CatalogService,
     public state: AppStateService,
     public ui: UiService,
@@ -83,18 +83,23 @@ export class StoreDetailComponent {
     const serverCategories = ((this.store().raw as any)?.available_categories ||
       []) as Array<{ name?: string }>;
     if (serverCategories.length) {
-      return [
-        'All',
-        ...(serverCategories
-          .map((category) => category.name)
-          .filter(Boolean) as string[]),
-      ];
+      const unique = new Set<string>();
+      const labels = (serverCategories
+        .map((category) => category.name)
+        .filter(Boolean) as string[])
+        .map((label) => this.normalizeLabel(label))
+        .filter((label) => {
+          if (!label || unique.has(label.toLowerCase())) return false;
+          unique.add(label.toLowerCase());
+          return true;
+        });
+      return ['All', ...labels];
     }
-    const names = new Set(
-      this.availableStoreProducts()
-        .map((product) => product.category)
-        .filter(Boolean),
-    );
+    const names = new Set<string>();
+    this.availableStoreProducts()
+      .map((product) => this.normalizeLabel(product.category || ''))
+      .filter(Boolean)
+      .forEach((label) => names.add(label));
     return ['All', ...names];
   });
   isOpen = computed(
@@ -172,6 +177,14 @@ export class StoreDetailComponent {
     );
   }
 
+  goBack(): void {
+    if (history.length > 1) {
+      this.location.back();
+      return;
+    }
+    this.router.navigateByUrl('/stores');
+  }
+
   private isProductAvailable(product: any): boolean {
     const raw = product?.raw || product || {};
     if (raw.is_available === false || raw.in_stock === false) return false;
@@ -207,5 +220,11 @@ export class StoreDetailComponent {
       params['product_sort'] = 'price_asc';
     if (this.sortBy() === 'Sort: Rating') params['product_sort'] = 'rating';
     return params;
+  }
+
+  private normalizeLabel(value: string): string {
+    return String(value || '')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 }

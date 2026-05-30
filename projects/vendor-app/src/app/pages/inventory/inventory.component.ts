@@ -30,6 +30,7 @@ export class InventoryComponent implements OnInit {
   filter = signal<InventoryFilter>('all');
   stockDrafts = signal<Record<string, number>>({});
   rowErrors = signal<Record<string, string>>({});
+  readonly productPlaceholderImage = '/assets/placeholders/product.svg';
 
   filters: Array<{ key: InventoryFilter; label: string }> = [
     { key: 'all', label: 'All' },
@@ -210,6 +211,16 @@ export class InventoryComponent implements OnInit {
       product.low_stock_threshold > 0 &&
       product.stock <= product.low_stock_threshold
     );
+  }
+
+  productImage(product: Product): string {
+    return product.primary_image || this.productPlaceholderImage;
+  }
+
+  onImageError(event: Event): void {
+    const img = event.target as HTMLImageElement | null;
+    if (!img || img.src.includes(this.productPlaceholderImage)) return;
+    img.src = this.productPlaceholderImage;
   }
 
   healthLabel(product: Product): string {

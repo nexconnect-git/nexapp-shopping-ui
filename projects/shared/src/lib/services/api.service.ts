@@ -1338,6 +1338,13 @@ export class ApiService {
     );
   }
 
+  generateAdminDeliveryPartnerTemporaryPassword(id: string): Observable<any> {
+    return this.http.post(
+      `${this.baseUrl}/admin/delivery-partners/${id}/temporary-password/`,
+      {},
+    );
+  }
+
   deleteAdminDeliveryPartner(id: string): Observable<any> {
     return this.http.delete(`${this.baseUrl}/admin/delivery-partners/${id}/`);
   }

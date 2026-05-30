@@ -1,6 +1,7 @@
 .nx-btn {
   height: var(--button-height);
-  border-radius: var(--radius-md);
+  min-height: var(--fd-button-md);
+  border-radius: var(--fd-radius-md);
   padding: 0 20px;
   font-weight: 900;
   display: inline-flex;
@@ -11,30 +12,37 @@
   transition: 0.18s;
   background: #fff;
 }
+
 .nx-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 14px 30px rgba(28, 18, 75, 0.1);
+  box-shadow: var(--fd-shadow-md);
 }
+
 .nx-btn.primary {
-  background: linear-gradient(135deg, var(--primary), var(--primary-2));
+  background: var(--fd-color-primary);
   color: #fff;
 }
+
 .nx-btn.green {
-  background: linear-gradient(135deg, #10a64d, #0dc765);
+  background: var(--fd-color-success);
   color: #fff;
 }
+
 .nx-btn.outline {
-  border-color: #cfc3ff;
+  border-color: var(--fd-color-primary-border);
   color: var(--primary);
   background: #fff;
 }
+
 .nx-btn.soft {
-  background: var(--primary-soft);
+  background: var(--fd-color-primary-soft);
   color: var(--primary);
 }
+
 .nx-btn.full {
   width: 100%;
 }
+
 .nx-btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;

@@ -96,8 +96,17 @@
                             [initialLat]="numberValue('latitude', 12.9716)"
                             [initialLng]="numberValue('longitude', 77.5946)"
                             height="320px"
-                            (locationPicked)="setLocationFromMap($event)"
+                            (locationPicked)="setLocationFromMap($event, f)"
                           ></app-map-picker>
+                          @if (model[f.key]) {
+                            <input
+                              class="map-selected-value"
+                              type="text"
+                              [id]="'field-' + f.key"
+                              [value]="model[f.key]"
+                              readonly
+                            />
+                          }
                         </div>
                       } @else if (f.type === "textarea") {
                         <textarea
@@ -312,7 +321,7 @@
                 @for (sec of s.sections; track $index) {
                   @if (sec.fields) {
                     @for (f of sec.fields; track f.key) {
-                      @if (f.type !== "map") {
+                      @if (f.type !== "map" || model[f.key]) {
                         <div
                           class="review-item"
                           [class.full]="f.type === 'textarea'"

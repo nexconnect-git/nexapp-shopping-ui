@@ -1,18 +1,11 @@
 @if (visible && state.itemCount() > 0) {
-  <aside class="mobile-sticky-cart" aria-label="Cart summary">
-    <div class="cart-copy">
-      <b
+  <aside class="mobile-sticky-cart" aria-label="Checkout shortcut">
+    <a routerLink="/checkout" class="checkout-cta">
+      Checkout - {{ state.total() | appCurrency }}
+      <small
         >{{ state.itemCount() }}
-        {{ state.itemCount() === 1 ? "item" : "items" }}</b
+        {{ state.itemCount() === 1 ? "item" : "items" }}</small
       >
-      <span>{{ state.total() | appCurrency }}</span>
-      @if (savings() > 0) {
-        <small>You saved {{ savings() | appCurrency }}</small>
-      }
-    </div>
-    <a routerLink="/cart" class="cart-cta">
-      View Cart
-      <span class="material-symbols-rounded">arrow_forward</span>
     </a>
   </aside>
 }

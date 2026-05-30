@@ -15,7 +15,7 @@
 .mobile-bottom-nav {
   height: var(--mobile-bottom-nav-height);
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   overflow: hidden;
   border: 1px solid rgba(91, 44, 255, 0.12);
   border-radius: 24px;
@@ -27,6 +27,7 @@
 a {
   position: relative;
   min-width: 0;
+  min-height: 56px;
   display: grid;
   place-items: center;
   align-content: center;
@@ -65,6 +66,6 @@ i {
 }
 
 a.active {
-  color: #5b2cff;
+  color: var(--fd-color-primary);
   background: rgba(91, 44, 255, 0.08);
 }

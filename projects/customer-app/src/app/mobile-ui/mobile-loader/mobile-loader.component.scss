@@ -9,7 +9,7 @@ i {
   width: 44%;
   height: 100%;
   border-radius: 99px;
-  background: linear-gradient(90deg, #5b2cff, #ff6b9a);
+  background: linear-gradient(90deg, var(--fd-color-primary), var(--fd-color-orange));
   animation: mobileLoader 0.9s ease-in-out infinite;
 }
 

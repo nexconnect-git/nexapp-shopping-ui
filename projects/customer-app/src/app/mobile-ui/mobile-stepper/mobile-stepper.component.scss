@@ -28,7 +28,7 @@ b {
   display: grid;
   place-items: center;
   border-radius: 10px;
-  color: #5b2cff;
+  color: var(--fd-color-primary);
   background: #f1ecff;
 }
 
@@ -40,7 +40,7 @@ em {
 
 span.active {
   color: #fff;
-  background: linear-gradient(135deg, #5b2cff, #7a4dff);
+  background: linear-gradient(135deg, var(--fd-color-primary), var(--fd-color-primary-hover));
 }
 
 span.active b {

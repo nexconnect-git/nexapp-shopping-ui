@@ -1,27 +1,12 @@
 <div class="desktop-customer-view">
-<main class="fd-content">
-  <fd-breadcrumbs
-    [items]="[{ label: 'Cart', link: '/cart' }, { label: 'Checkout' }]"
-  />
-  <section class="checkout-layout">
-    <div>
-      <h1 class="fd-title">Checkout</h1>
-      <section class="stepper fd-card">
-        @for (s of steps; track s.id) {
-          <button
-            type="button"
-            [class.active]="step() === s.id"
-            (click)="step.set(s.id)"
-          >
-            <b>{{ s.id }}</b
-            ><span
-              >{{ s.title }}<small>{{ s.sub }}</small></span
-            >
-          </button>
-        }
-      </section>
+  <main class="fd-content">
+    <fd-breadcrumbs
+      [items]="[{ label: 'Cart', link: '/cart' }, { label: 'Checkout' }]"
+    />
+    <section class="checkout-layout">
+      <div class="checkout-main">
+        <h1 class="fd-title">Checkout</h1>
 
-      @if (step() === 1) {
         <section class="fd-card block">
           <h2>Delivery Address</h2>
           <details class="mobile-address-dropdown">
@@ -117,36 +102,64 @@
             + Add New Address
           </button>
         </section>
-      }
 
-      @if (step() === 2) {
         <section class="fd-card block">
           <h2>Delivery Slot</h2>
-          <div class="slots">
-            @for (slot of slots; track slot.name) {
-              <button
-                type="button"
-                [class.active]="selectedSlot() === slot.name"
-                (click)="selectedSlot.set(slot.name)"
-              >
-                <b>{{ slot.name }}</b
-                ><span>{{ slot.type }}</span>
-                @if (slot.time) {
-                  <small>{{ slot.time }}</small>
-                }
-                <em>{{ slot.price }}</em>
-              </button>
-            }
+          <div class="slot-grid">
+            <button
+              type="button"
+              [class.active]="deliveryMode() === 'now'"
+              (click)="deliveryMode.set('now')"
+            >
+              <span class="material-symbols-rounded">bolt</span>
+              <b>Deliver now</b>
+              <small>{{ vendorSchedule().buffer }} min prep estimate</small>
+            </button>
+            <button
+              type="button"
+              [class.active]="deliveryMode() === 'scheduled'"
+              (click)="deliveryMode.set('scheduled')"
+            >
+              <span class="material-symbols-rounded">event</span>
+              <b>Schedule</b>
+              <small>Pick a time today or later</small>
+            </button>
           </div>
-          @if (state.freeDeliveryUnlocked()) {
-            <p class="free-note">
-              Yay! You're getting FREE delivery on this order.
-            </p>
+          @if (deliveryMode() === 'scheduled') {
+            <div class="schedule-form">
+              <label
+                >Date
+                <input
+                  type="date"
+                  [max]="maxScheduleDate"
+                  [ngModel]="scheduledDate()"
+                  (ngModelChange)="scheduledDate.set($event)"
+                />
+              </label>
+              <label
+                >Time
+                <input
+                  type="time"
+                  [ngModel]="scheduledTime()"
+                  (ngModelChange)="scheduledTime.set($event)"
+                />
+              </label>
+            </div>
+            @if (scheduleError()) {
+              <p class="error">{{ scheduleError() }}</p>
+            }
+          }
+          @if (activeStoreAvailability(); as availability) {
+            @if (!availability.isOpen) {
+              <p class="store-availability closed">{{ availability.message }}</p>
+            } @else if (state.freeDeliveryUnlocked()) {
+              <p class="free-note">
+                Yay! You're getting FREE delivery on this order.
+              </p>
+            }
           }
         </section>
-      }
 
-      @if (step() === 3) {
         <section class="fd-card block payment">
           <h2>Payment Method</h2>
           <div class="pay-grid">
@@ -223,214 +236,297 @@
             }
           </div>
         </section>
-      }
 
-      @if (sameStoreSuggestions().length) {
-        <section class="fd-card block recommendation-block">
-          <h2>Add more from this store</h2>
-          <section class="checkout-products">
-            @for (product of sameStoreSuggestions(); track product.id) {
-              <fd-product-card [product]="product" />
-            }
+        @if (sameStoreSuggestions().length) {
+          <section class="fd-card block recommendation-block">
+            <h2>Add more from this store</h2>
+            <section class="checkout-products">
+              @for (product of sameStoreSuggestions(); track product.id) {
+                <fd-product-card [product]="product" />
+              }
+            </section>
           </section>
-        </section>
-      }
-
-      @if (otherStoreSuggestions().length) {
-        <section class="fd-card block recommendation-block">
-          <h2>Similar products from other stores</h2>
-          <p class="section-note">
-            Adding these may ask you to clear the current cart because one order
-            can use one store only.
-          </p>
-          <section class="checkout-products">
-            @for (product of otherStoreSuggestions(); track product.id) {
-              <fd-product-card [product]="product" />
-            }
-          </section>
-        </section>
-      }
-    </div>
-
-    <aside class="checkout-aside">
-      <fd-order-summary [showButton]="false" />
-      <div class="continue-row fd-card">
-        @if (step() > 1) {
-          <button
-            type="button"
-            class="fd-btn outline"
-            (click)="step.set(step() - 1)"
-          >
-            Back
-          </button>
         }
-        @if (step() < 3) {
-          <button
-            type="button"
-            class="fd-btn primary"
-            (click)="
-              step() === 1 ? continueFromAddress() : step.set(step() + 1)
-            "
-          >
-            Continue
-          </button>
-        } @else {
-          <button
-            type="button"
-            class="fd-btn primary"
-            [disabled]="
-              !state.paymentMethods().length || state.checkoutSubmitting()
-            "
-            (click)="placeOrder()"
-          >
-            Place Order
-          </button>
+
+        @if (otherStoreSuggestions().length) {
+          <section class="fd-card block recommendation-block">
+            <h2>Similar products from other stores</h2>
+            <p class="section-note">
+              Adding these may ask you to clear the current cart because one
+              order can use one store only.
+            </p>
+            <section class="checkout-products">
+              @for (product of otherStoreSuggestions(); track product.id) {
+                <fd-product-card [product]="product" />
+              }
+            </section>
+          </section>
         }
       </div>
-    </aside>
-  </section>
-</main>
+
+      <section class="checkout-summary">
+        <fd-order-summary [showButton]="false" />
+      </section>
+
+      <div class="continue-row fd-card">
+        <button
+          type="button"
+          class="fd-btn primary"
+          [disabled]="!canPlaceOrder()"
+          (click)="placeOrder()"
+        >
+          @if (state.checkoutSubmitting()) {
+            Placing order...
+          } @else {
+            Place Order
+          }
+        </button>
+      </div>
+    </section>
+  </main>
 </div>
 
 <div class="mobile-customer-view">
-<main class="mobile-page checkout-page">
-  <header class="checkout-head">
-    <a routerLink="/cart" aria-label="Back to cart">
-      <span class="material-symbols-rounded">arrow_back</span>
-    </a>
-    <div>
-      <small>Secure checkout</small>
-      <h1>Place your order</h1>
-    </div>
-  </header>
-
-  <fd-mobile-stepper [steps]="steps" [active]="step()" />
-
-  @if (step() === 1) {
-    <section class="checkout-card">
-      <div class="mobile-section-head">
-        <h2>Delivery address</h2>
-        <button type="button" (click)="goAddresses()">Manage</button>
+  <main class="mobile-page checkout-page">
+    <header class="checkout-head">
+      <a routerLink="/cart" aria-label="Back to cart">
+        <span class="material-symbols-rounded">arrow_back</span>
+      </a>
+      <div>
+        <small>Secure checkout</small>
+        <h1>Place your order</h1>
       </div>
-      <div class="address-list">
-        @for (address of state.addresses(); track address.id) {
-          <button
-            type="button"
-            class="address-card"
-            [class.active]="isActiveAddress(address.id)"
-            [class.disabled]="addressDisabledReason(address)"
-            (click)="selectAddress(address.id)"
-          >
-            <span class="material-symbols-rounded">home_pin</span>
-            <span>
-              <b>{{ address.label || address.name || 'Address' }}</b>
-              <small>{{ address.line }}, {{ address.city }} {{ address.pincode }}</small>
-              <em>{{ addressMessage(address) }}</em>
-            </span>
-          </button>
-        } @empty {
-          <a routerLink="/addresses?add=1" class="mobile-cta secondary">Add delivery address</a>
-        }
-      </div>
-    </section>
-  }
+    </header>
 
-  @if (step() === 2) {
-    <section class="checkout-card">
-      <div class="mobile-section-head"><h2>Delivery slot</h2></div>
-      <div class="slot-grid">
-        <button type="button" [class.active]="deliveryMode() === 'now'" (click)="deliveryMode.set('now')">
-          <span class="material-symbols-rounded">bolt</span>
-          <b>Deliver now</b>
-          <small>{{ vendorSchedule().buffer }} min prep estimate</small>
-        </button>
-        <button type="button" [class.active]="deliveryMode() === 'scheduled'" (click)="deliveryMode.set('scheduled')">
-          <span class="material-symbols-rounded">event</span>
-          <b>Schedule</b>
-          <small>Pick a time today or later</small>
-        </button>
-      </div>
-      @if (deliveryMode() === 'scheduled') {
-        <div class="schedule-form">
-          <label>Date <input type="date" [max]="maxScheduleDate" [ngModel]="scheduledDate()" (ngModelChange)="scheduledDate.set($event)" /></label>
-          <label>Time <input type="time" [ngModel]="scheduledTime()" (ngModelChange)="scheduledTime.set($event)" /></label>
-        </div>
-        @if (scheduleError()) {
-          <p class="error">{{ scheduleError() }}</p>
-        }
-      }
-    </section>
-  }
-
-  @if (step() === 3) {
-    <section class="checkout-card">
-      <div class="mobile-section-head"><h2>Payment</h2></div>
-      <div class="pay-list">
-        @for (method of state.paymentMethods(); track method.id) {
-          <button type="button" [class.active]="(selectedPayment() || state.selectedPaymentMethod()) === method.id" (click)="selectPayment(method.id)">
-            <span class="material-symbols-rounded">{{ paymentIcon(method.id) }}</span>
-            <span>
-              <b>{{ method.label }}</b>
-              <small>{{ method.description || paymentPanelTitle(method.id) }}</small>
-            </span>
-          </button>
-        } @empty {
-          <button type="button" class="active" (click)="selectPayment('cod')">
-            <span class="material-symbols-rounded">payments</span>
-            <span><b>Cash on delivery</b><small>Pay when your order arrives</small></span>
-          </button>
-        }
-      </div>
-      @if (isUpiPayment(selectedPayment() || state.selectedPaymentMethod())) {
-        <div class="upi-apps">
-          @for (app of sharedUpiApps; track app) {
-          <button type="button" (click)="selectUpiApp(app.name)">{{ app.name }}</button>
+    <section class="checkout-card" [class.collapsed]="mobileSection() !== 'address'">
+      <button type="button" class="mobile-card-head" (click)="openMobileSection('address')">
+        <span class="material-symbols-rounded">location_on</span>
+        <span>
+          <b>Delivery address</b>
+          <small>{{ state.activeAddress()?.label || 'Select address' }}</small>
+        </span>
+        <span class="material-symbols-rounded">expand_more</span>
+      </button>
+      @if (mobileSection() === 'address') {
+        <div class="address-list">
+          @for (address of state.addresses(); track address.id) {
+            <button
+              type="button"
+              class="address-card"
+              [class.active]="isActiveAddress(address.id)"
+              [class.disabled]="addressDisabledReason(address)"
+              (click)="selectAddress(address.id)"
+            >
+              <span class="material-symbols-rounded">home_pin</span>
+              <span>
+                <b>{{ address.label || address.name || "Address" }}</b>
+                <small
+                  >{{ address.line }}, {{ address.city }} {{ address.pincode }}</small
+                >
+                <em>{{ addressMessage(address) }}</em>
+              </span>
+            </button>
+          } @empty {
+            <a routerLink="/addresses?add=1" class="mobile-cta secondary"
+              >Add delivery address</a
+            >
           }
         </div>
-      }
-    </section>
-  }
-
-  <section class="checkout-card">
-    <div class="mobile-section-head"><h2>Review items</h2></div>
-    <div class="review-items">
-      @for (item of state.cart(); track item.id) {
-        <div>
-          <img [src]="item.image" [alt]="item.name" />
-          <span><b>{{ item.name }}</b><small>Qty {{ item.quantity }}</small></span>
-          <strong>{{ item.price * item.quantity | appCurrency }}</strong>
+        <div class="card-actions">
+          <button type="button" class="mobile-cta secondary" (click)="goAddresses()">
+            Manage addresses
+          </button>
+          <button type="button" class="mobile-cta" (click)="openMobileSection('slot')">
+            Continue
+          </button>
         </div>
       }
-    </div>
-  </section>
-
-  <fd-order-summary [showButton]="false" />
-
-  @if (sameStoreSuggestions().length || otherStoreSuggestions().length) {
-    <section class="mobile-section">
-      <div class="mobile-section-head"><h2>Before you checkout</h2></div>
-      <div class="mobile-grid-2">
-        @for (product of sameStoreSuggestions().concat(otherStoreSuggestions()).slice(0, 4); track product.id) {
-          <fd-product-card [product]="product" />
-        }
-      </div>
     </section>
-  }
 
-  <section class="mobile-sticky-cta">
-    @if (step() === 1) {
-      <button type="button" class="mobile-cta" (click)="continueFromAddress()">Continue to delivery</button>
-    } @else if (step() === 2) {
-      <button type="button" class="mobile-cta" (click)="continueFromDelivery()">Continue to payment</button>
-    } @else {
-      <button type="button" class="mobile-cta" [disabled]="state.checkoutSubmitting()" (click)="placeOrder()">
-        @if (state.checkoutSubmitting()) {
-          Placing order...
-        } @else {
-          Place order · {{ state.total() | appCurrency }}
-        }
+    <section class="checkout-card" [class.collapsed]="mobileSection() !== 'slot'">
+      <button type="button" class="mobile-card-head" (click)="openMobileSection('slot')">
+        <span class="material-symbols-rounded">schedule</span>
+        <span>
+          <b>Delivery slot</b>
+          <small>{{ deliveryMode() === 'now' ? 'Deliver now' : 'Scheduled delivery' }}</small>
+        </span>
+        <span class="material-symbols-rounded">expand_more</span>
       </button>
-    }
-  </section>
-</main>
+      @if (mobileSection() === 'slot') {
+        <div class="slot-grid">
+          <button
+            type="button"
+            [class.active]="deliveryMode() === 'now'"
+            (click)="deliveryMode.set('now')"
+          >
+            <span class="material-symbols-rounded">bolt</span>
+            <b>Deliver now</b>
+            <small>{{ vendorSchedule().buffer }} min prep estimate</small>
+          </button>
+          <button
+            type="button"
+            [class.active]="deliveryMode() === 'scheduled'"
+            (click)="deliveryMode.set('scheduled')"
+          >
+            <span class="material-symbols-rounded">event</span>
+            <b>Schedule</b>
+            <small>Pick a time today or later</small>
+          </button>
+        </div>
+        @if (deliveryMode() === 'scheduled') {
+          <div class="schedule-form">
+            <label
+              >Date
+              <input
+                type="date"
+                [max]="maxScheduleDate"
+                [ngModel]="scheduledDate()"
+                (ngModelChange)="scheduledDate.set($event)"
+              />
+            </label>
+            <label
+              >Time
+              <input
+                type="time"
+                [ngModel]="scheduledTime()"
+                (ngModelChange)="scheduledTime.set($event)"
+              />
+            </label>
+          </div>
+          @if (scheduleError()) {
+            <p class="error">{{ scheduleError() }}</p>
+          }
+        }
+        @if (activeStoreAvailability(); as availability) {
+          @if (!availability.isOpen) {
+            <p class="store-availability closed">{{ availability.message }}</p>
+          }
+        }
+        <div class="card-actions">
+          <button type="button" class="mobile-cta secondary" (click)="openMobileSection('address')">
+            Back
+          </button>
+          <button type="button" class="mobile-cta" (click)="openMobileSection('payment')">
+            Continue
+          </button>
+        </div>
+      }
+    </section>
+
+    <section class="checkout-card" [class.collapsed]="mobileSection() !== 'payment'">
+      <button type="button" class="mobile-card-head" (click)="openMobileSection('payment')">
+        <span class="material-symbols-rounded">payments</span>
+        <span>
+          <b>Payment method</b>
+          <small>{{ selectedPaymentMeta().label }}</small>
+        </span>
+        <span class="material-symbols-rounded">expand_more</span>
+      </button>
+      @if (mobileSection() === 'payment') {
+        <div class="pay-list">
+          @for (method of state.paymentMethods(); track method.id) {
+            <button
+              type="button"
+              [class.active]="
+                (selectedPayment() || state.selectedPaymentMethod()) === method.id
+              "
+              (click)="selectPayment(method.id)"
+            >
+              <span
+                class="pay-dot"
+                [attr.data-icon]="paymentIcon(method.id)"
+                aria-hidden="true"
+              ></span>
+              <span>
+                <b>{{ method.label }}</b>
+                <small>{{ method.description || paymentPanelTitle(method.id) }}</small>
+              </span>
+            </button>
+          } @empty {
+            <button type="button" class="active" (click)="selectPayment('cod')">
+              <span class="pay-dot" data-icon="Rs" aria-hidden="true"></span>
+              <span><b>Cash on delivery</b><small>Pay when your order arrives</small></span>
+            </button>
+          }
+        </div>
+        @if (isUpiPayment(selectedPayment() || state.selectedPaymentMethod())) {
+          <div class="upi-apps">
+            @for (app of sharedUpiApps; track app) {
+              <button type="button" (click)="selectUpiApp(app.name)">
+                {{ app.name }}
+              </button>
+            }
+          </div>
+        }
+        <div class="card-actions">
+          <button type="button" class="mobile-cta secondary" (click)="openMobileSection('slot')">
+            Back
+          </button>
+          <button type="button" class="mobile-cta" (click)="openMobileSection('review')">
+            Continue
+          </button>
+        </div>
+      }
+    </section>
+
+    <section class="checkout-card" [class.collapsed]="mobileSection() !== 'review'">
+      <button type="button" class="mobile-card-head" (click)="openMobileSection('review')">
+        <span class="material-symbols-rounded">shopping_bag</span>
+        <span>
+          <b>Review and place order</b>
+          <small>{{ state.itemCount() }} items - {{ state.total() | appCurrency }}</small>
+        </span>
+        <span class="material-symbols-rounded">expand_more</span>
+      </button>
+      @if (mobileSection() === 'review') {
+        <div class="review-items">
+          @for (item of state.cart(); track item.id) {
+            <div>
+              <img [src]="item.image" [alt]="item.name" />
+              <span><b>{{ item.name }}</b><small>Qty {{ item.quantity }}</small></span>
+              <strong>{{ item.price * item.quantity | appCurrency }}</strong>
+            </div>
+          }
+        </div>
+
+        <fd-order-summary [showButton]="false" />
+
+        @if (sameStoreSuggestions().length || otherStoreSuggestions().length) {
+          <section class="mobile-section">
+            <div class="mobile-section-head"><h2>Before you checkout</h2></div>
+            <div class="mobile-grid-2">
+              @for (product of sameStoreSuggestions().concat(otherStoreSuggestions()).slice(0, 4); track product.id) {
+                <fd-product-card [product]="product" />
+              }
+            </div>
+          </section>
+        }
+      }
+    </section>
+
+    <section class="mobile-sticky-cta">
+      @if (mobileSection() !== 'review') {
+        <button
+          type="button"
+          class="mobile-cta"
+          (click)="openMobileSection('review')"
+        >
+          Review order
+        </button>
+      } @else {
+        <button
+          type="button"
+          class="mobile-cta"
+          [disabled]="!canPlaceOrder()"
+          (click)="placeOrder()"
+        >
+          @if (state.checkoutSubmitting()) {
+            Placing order...
+          } @else {
+            Place order - {{ state.total() | appCurrency }}
+          }
+        </button>
+      }
+    </section>
+  </main>
 </div>

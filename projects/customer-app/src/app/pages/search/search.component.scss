@@ -264,7 +264,7 @@
     display: grid;
     place-items: center;
     border-radius: 16px;
-    color: #5b2cff;
+    color: var(--fd-color-primary);
     background: #fff;
     box-shadow: 0 10px 24px rgba(33, 22, 82, 0.06);
   }
@@ -314,7 +314,7 @@
     display: grid;
     place-items: center;
     border-radius: 16px;
-    color: #5b2cff;
+    color: var(--fd-color-primary);
     background: #f1ecff;
   }
   
@@ -339,7 +339,7 @@
   
   .search-promo span,
   .empty-state span {
-    color: #5b2cff;
+    color: var(--fd-color-primary);
   }
   
   .search-promo b,
@@ -353,10 +353,17 @@
     color: #77708d;
     line-height: 1.35;
   }
+
+  .search-promo small {
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 12px;
+    font-weight: 700;
+  }
   
   .clear-filters {
     justify-self: start;
-    color: #5b2cff;
+    color: var(--fd-color-primary);
     font-weight: 950;
   }
 }

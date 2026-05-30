@@ -548,7 +548,7 @@
     display: grid;
     place-items: center;
     border-radius: 16px;
-    color: #5b2cff;
+    color: var(--fd-color-primary);
     background: #fff;
     box-shadow: 0 10px 24px rgba(33, 22, 82, 0.06);
   }
@@ -589,22 +589,14 @@
     place-items: center;
     align-content: center;
     gap: 8px;
-    color: #5b2cff;
+    color: var(--fd-color-primary);
     text-align: center;
   }
   
-  .map-actions {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
-  
-  .map-actions button {
-    min-height: 42px;
-    border-radius: 14px;
-    color: #5b2cff;
-    background: #f1ecff;
-    font-weight: 950;
+  .map-note {
+    color: #77708d;
+    font-size: 12px;
+    font-weight: 800;
   }
   
   .partner-card {
@@ -624,7 +616,7 @@
   .avatar {
     display: grid;
     place-items: center;
-    color: #5b2cff;
+    color: var(--fd-color-primary);
   }
   
   .partner-card small,
@@ -641,7 +633,7 @@
     place-items: center;
     border-radius: 16px;
     color: #fff;
-    background: #5b2cff;
+    background: var(--fd-color-primary);
   }
   
   .timeline-card h2,
@@ -668,7 +660,7 @@
     display: grid;
     place-items: center;
     border-radius: 16px;
-    color: #5b2cff;
+    color: var(--fd-color-primary);
     background: #f1ecff;
   }
   

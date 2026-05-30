@@ -26,6 +26,7 @@ import {
 export class CatalogComponent implements OnInit {
   private api = inject(ApiService);
   private toast = inject(ToastService);
+  readonly productPlaceholderImage = '/assets/placeholders/product.svg';
 
   readonly columns: DynamicTableColumn[] = [
     { key: 'item', label: 'Item', flex: 'minmax(280px, 2fr)' },
@@ -196,6 +197,16 @@ export class CatalogComponent implements OnInit {
       item.images?.[0]?.image ||
       null
     );
+  }
+
+  productImage(item: CatalogProduct): string {
+    return this.primaryImage(item) || this.productPlaceholderImage;
+  }
+
+  onImageError(event: Event): void {
+    const img = event.target as HTMLImageElement | null;
+    if (!img || img.src.includes(this.productPlaceholderImage)) return;
+    img.src = this.productPlaceholderImage;
   }
 
   private emptyForm() {

@@ -1,6 +1,6 @@
 :host {
   --login-accent: #6c2bff;
-  --login-accent-dark: #8b5cff;
+  --login-accent-dark: var(--fd-color-primary-hover);
   --login-accent-soft: #e6f7fb;
   --login-danger: #ef4444;
   --login-ink: #161719;

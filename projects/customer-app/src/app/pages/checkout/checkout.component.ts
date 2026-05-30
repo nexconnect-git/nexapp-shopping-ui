@@ -10,7 +10,7 @@ import {
   paymentPanelTitle,
 } from '@nexconnect/customer-checkout';
 import { isCustomerAddressComplete } from '@nexconnect/customer-validation';
-import { Address } from '../../models';
+import { Address, PaymentMethod } from '../../models';
 import { AppStateService } from '../../services/app-state.service';
 import { OrderService } from '../../services/order.service';
 import { CustomerCartApiService } from '../../services/customer-cart-api.service';
@@ -19,7 +19,6 @@ import { ProductCardComponent } from '../../components/product-card/product-card
 import { CatalogService } from '../../services/catalog.service';
 import { UiService } from '../../services/ui.service';
 import { AppCurrencyPipe, CurrencyService } from '@shared/public-api';
-import { MobileStepperComponent } from '../../mobile-ui/mobile-stepper/mobile-stepper.component';
 import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
 
 @Component({
@@ -31,44 +30,23 @@ import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.compo
     OrderSummaryComponent,
     ProductCardComponent,
     AppCurrencyPipe,
-    MobileStepperComponent,
   ],
   templateUrl: './checkout.component.html',
   styleUrls: ['./checkout.component.scss'],
 })
 export class CheckoutComponent {
-  step = signal(1);
+  mobileSection = signal<'address' | 'slot' | 'payment' | 'review'>(
+    'address',
+  );
   selectedAddress = signal('');
   deliveryMode = signal<'now' | 'scheduled'>('now');
   scheduledDate = signal(this.defaultScheduleDate());
   scheduledTime = signal(this.defaultScheduleTime());
   selectedPayment = signal('');
-  selectedSlot = signal('Express');
   addressPreviews = signal<
     Record<string, { loading?: boolean; preview?: any; error?: string }>
   >({});
-  steps = [
-    { id: 1, title: 'Address', sub: 'Choose delivery address' },
-    { id: 2, title: 'Delivery', sub: 'Schedule delivery' },
-    { id: 3, title: 'Payment', sub: 'Choose payment method' },
-  ];
   maxScheduleDate = this.offsetDateValue(7);
-  slots = [
-    {
-      name: 'Express',
-      type: 'ASAP delivery',
-      time: 'ASAP delivery',
-      fee: 'Current delivery fee',
-      price: 'Current fee',
-    },
-    {
-      name: 'Scheduled',
-      type: 'Pick a slot',
-      time: 'Pick a slot',
-      fee: 'Based on store hours',
-      price: 'Store hours',
-    },
-  ];
   readonly upiApps = [
     { name: 'Google Pay', logo: 'G', className: 'gpay' },
     { name: 'PhonePe', logo: 'पे', className: 'phonepe' },
@@ -78,13 +56,19 @@ export class CheckoutComponent {
     { name: 'Other UPI', logo: 'UPI', className: 'upi' },
   ];
   readonly sharedUpiApps = DEFAULT_UPI_APPS;
-  selectedPaymentMeta = computed(() => {
+  selectedPaymentMeta = computed<PaymentMethod>(() => {
     const selected =
       this.selectedPayment() || this.state.selectedPaymentMethod();
     return (
       this.state.paymentMethods().find((method) => method.id === selected) ||
       this.state.paymentMethods()[0] ||
-      null
+      {
+        id: 'cod',
+        label: 'Cash on delivery',
+        description: 'Pay using UPI at delivery',
+        icon: '₹',
+        isDefault: true,
+      }
     );
   });
   vendorSchedule = computed(() => {
@@ -104,6 +88,45 @@ export class CheckoutComponent {
     const value = new Date(`${date}T${time}:00`);
     return Number.isNaN(value.getTime()) ? null : value.toISOString();
   });
+  activeStoreAvailability = computed(() => {
+    const vendor = this.state.cart()[0]?.raw?.vendor as any;
+    if (!vendor)
+      return {
+        isOpen: true,
+        message: '',
+      };
+    const isOpen = (vendor?.is_open_now ?? vendor?.is_open) !== false;
+    const opening = vendor?.opening_time
+      ? this.formatClock(vendor.opening_time)
+      : '';
+    const closing = vendor?.closing_time
+      ? this.formatClock(vendor.closing_time)
+      : '';
+    const message =
+      vendor?.availability_note ||
+      (!isOpen && opening && closing
+        ? `'${vendor?.store_name || 'Store'}' is closed right now. Open ${opening} - ${closing}.`
+        : !isOpen
+          ? `'${vendor?.store_name || 'Store'}' is closed right now.`
+          : '');
+    return {
+      isOpen,
+      message,
+    };
+  });
+  canPlaceOrder = computed(
+    () => {
+      const activeAddress = this.state.activeAddress();
+      const addressReady =
+        !!activeAddress && !this.addressDisabledReason(activeAddress);
+      return (
+        !this.state.checkoutSubmitting() &&
+        this.activeStoreAvailability().isOpen &&
+        !this.scheduleError() &&
+        addressReady
+      );
+    },
+  );
   scheduleError = computed(() => {
     if (this.deliveryMode() !== 'scheduled') return '';
     const date = this.scheduledDate();
@@ -241,12 +264,19 @@ export class CheckoutComponent {
   }
 
   placeOrder(): void {
+    const availability = this.activeStoreAvailability();
+    if (!availability.isOpen) {
+      this.state.showToast(
+        availability.message || 'This store is closed right now.',
+      );
+      return;
+    }
     if (this.scheduleError()) {
       this.state.showToast(this.scheduleError());
       return;
     }
     const selectedPayment =
-      this.selectedPayment() || this.state.selectedPaymentMethod();
+      this.selectedPayment() || this.state.selectedPaymentMethod() || 'cod';
     if (selectedPayment === 'cod') {
       this.ui
         .confirm({
@@ -286,26 +316,8 @@ export class CheckoutComponent {
     this.router.navigate(['/addresses']);
   }
 
-  continueFromAddress(): void {
-    const active = this.state.activeAddress();
-    if (!active) {
-      this.state.showToast('Select a delivery address before continuing.');
-      return;
-    }
-    const reason = this.addressDisabledReason(active);
-    if (reason) {
-      this.state.showToast(reason);
-      return;
-    }
-    this.step.set(2);
-  }
-
-  continueFromDelivery(): void {
-    if (this.scheduleError()) {
-      this.state.showToast(this.scheduleError());
-      return;
-    }
-    this.step.set(3);
+  openMobileSection(section: 'address' | 'slot' | 'payment' | 'review'): void {
+    this.mobileSection.set(section);
   }
 
   addressDisabledReason(address: Address): string {
@@ -347,6 +359,12 @@ export class CheckoutComponent {
     this.selectedAddress.set(id);
     this.state.selectAddress(id);
     if (dropdown) dropdown.open = false;
+    if (
+      typeof window !== 'undefined' &&
+      window.matchMedia('(max-width: 760px)').matches
+    ) {
+      this.mobileSection.set('slot');
+    }
   }
 
   private addressTitle(address: Address | null | undefined): string {

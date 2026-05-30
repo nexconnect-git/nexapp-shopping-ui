@@ -8,7 +8,7 @@
 .mobile-topbar {
   padding: calc(14px + env(safe-area-inset-top, 0px)) 14px 12px;
   color: #fff;
-  background: linear-gradient(135deg, #5b2cff 0%, #7a4dff 58%, #ff6b9a 135%);
+  background: linear-gradient(135deg, var(--fd-color-primary) 0%, var(--fd-color-primary-hover) 58%, var(--fd-color-orange) 135%);
   border-radius: 0 0 24px 24px;
   box-shadow: 0 18px 42px rgba(91, 44, 255, 0.22);
 }

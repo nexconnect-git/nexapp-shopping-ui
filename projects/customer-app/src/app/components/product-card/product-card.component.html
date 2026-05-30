@@ -1,6 +1,11 @@
 <article class="product-card" [class.compact]="compact">
   <a [routerLink]="['/product', product.id]" class="image-wrap">
-    <img [src]="product.image" [alt]="product.name" loading="lazy" />
+    <img
+      [src]="product.image || placeholderImage"
+      [alt]="product.name"
+      loading="lazy"
+      (error)="onImageError($event)"
+    />
     @if (product.discount) {
       <span class="discount">{{ product.discount }}</span>
     }
@@ -36,6 +41,8 @@
             <span class="material-symbols-rounded">add</span>
           </button>
         </div>
+      } @else if (storeClosed()) {
+        <button type="button" class="add closed" disabled>Store closed</button>
       } @else {
         <button type="button" class="add" (click)="state.addToCart(product)">
           Add

@@ -26,11 +26,10 @@
           <section class="product-summary card">
             <div class="product-image">
               <img
-                *ngIf="service.product().imageUrl"
-                [src]="service.product().imageUrl"
+                [src]="productImage()"
                 [alt]="service.product().productName"
+                (error)="onImageError($event)"
               />
-              <span *ngIf="!service.product().imageUrl">🌾</span>
             </div>
 
             <div class="product-info">

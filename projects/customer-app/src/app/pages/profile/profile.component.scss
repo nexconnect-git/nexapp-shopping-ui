@@ -345,7 +345,7 @@
     align-items: center;
     padding: 16px;
     color: #fff;
-    background: linear-gradient(135deg, #5b2cff, #7a4dff);
+    background: linear-gradient(135deg, var(--fd-color-primary), var(--fd-color-primary-hover));
   }
   
   .avatar {
@@ -354,7 +354,7 @@
     display: grid;
     place-items: center;
     border-radius: 26px;
-    color: #5b2cff;
+    color: var(--fd-color-primary);
     background: #fff;
     font-size: 28px;
     font-weight: 950;
@@ -388,7 +388,7 @@
   
   .preview-grid span,
   .profile-link > span:first-child {
-    color: #5b2cff;
+    color: var(--fd-color-primary);
   }
   
   .preview-grid small,
@@ -432,6 +432,26 @@
     grid-template-columns: 34px minmax(0, 1fr) auto;
     gap: 8px;
     align-items: center;
+  }
+
+  .activity-card div:not(.mobile-section-head) > span {
+    grid-row: 1 / span 2;
+  }
+
+  .activity-card div:not(.mobile-section-head) > b {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .activity-card div:not(.mobile-section-head) > small {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .activity-card div:not(.mobile-section-head) > strong {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+    align-self: center;
   }
   
   .activity-card strong {

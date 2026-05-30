@@ -352,7 +352,7 @@ textarea:focus {
     justify-items: center;
     padding: 28px 18px;
     color: #fff;
-    background: linear-gradient(135deg, #5b2cff, #7a4dff);
+    background: linear-gradient(135deg, var(--fd-color-primary), var(--fd-color-primary-hover));
     text-align: center;
   }
   
@@ -362,7 +362,7 @@ textarea:focus {
     display: grid;
     place-items: center;
     border-radius: 26px;
-    color: #5b2cff;
+    color: var(--fd-color-primary);
     background: #fff;
     font-size: 36px;
   }
@@ -423,7 +423,7 @@ textarea:focus {
     display: grid;
     place-items: center;
     border-radius: 16px;
-    color: #5b2cff;
+    color: var(--fd-color-primary);
     background: #f1ecff;
   }
   
@@ -453,7 +453,7 @@ textarea:focus {
   }
   
   .coupon-card button {
-    color: #5b2cff;
+    color: var(--fd-color-primary);
     font-weight: 950;
   }
 }

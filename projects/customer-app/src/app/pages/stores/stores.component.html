@@ -13,12 +13,12 @@
         <div class="header-actions">
           <button
             type="button"
-            class="fd-btn outline"
+            class="fd-btn outline info"
             (click)="ui.openFilter()"
           >
             <span class="material-symbols-rounded">tune</span> Filters
           </button>
-          <button type="button" class="fd-btn outline" (click)="viewMap()">
+          <button type="button" class="fd-btn outline orange" (click)="viewMap()">
             <span class="material-symbols-rounded">location_on</span> Change
             location
           </button>
@@ -116,14 +116,13 @@
         </section>
         @if (catalog.storesHasMore()) {
           <div class="load-more-row">
-            <button type="button" class="fd-btn outline" (click)="loadMore()">
+            <button type="button" class="fd-btn info" (click)="loadMore()">
               Load more stores
             </button>
           </div>
         }
       }
     </div>
-    <fd-right-rail />
   </section>
 </main>
 </div>

@@ -30,7 +30,7 @@
                   ><small>{{ item.unit }}</small>
                 </div>
               </div>
-              <div>
+              <div class="price-col">
                 <b>{{ item.price | appCurrency }}</b
                 ><del>{{ item.mrp | appCurrency }}</del>
               </div>
@@ -48,7 +48,9 @@
                   <span class="material-symbols-rounded">add</span>
                 </button>
               </div>
-              <b>{{ item.price * item.quantity | appCurrency }}</b>
+              <b class="subtotal-col">{{
+                item.price * item.quantity | appCurrency
+              }}</b>
               <div class="row-actions">
                 <button type="button" (click)="state.removeItem(item.id)">
                   <span class="material-symbols-rounded">delete</span>
@@ -192,7 +194,7 @@
           <img [src]="item.image" [alt]="item.name" />
           <div>
             <b>{{ item.name }}</b>
-            <small>{{ item.unit }} · {{ item.storeName }}</small>
+            <small>{{ item.unit }} - {{ item.storeName }}</small>
             <span>{{ item.price | appCurrency }}</span>
           </div>
           <div class="cart-actions">
@@ -222,8 +224,6 @@
       <button type="button" (click)="applyCoupon(couponCode.value)">Apply</button>
     </section>
 
-    <fd-order-summary [showButton]="false" />
-
     <section class="mobile-section">
       <div class="mobile-section-head"><h2>Add a little more</h2></div>
       <div class="mobile-grid-2">
@@ -235,7 +235,7 @@
 
     <section class="mobile-sticky-cta">
       <a routerLink="/checkout" class="mobile-cta">
-        Checkout · {{ state.total() | appCurrency }}
+        Checkout - {{ state.total() | appCurrency }}
       </a>
     </section>
   } @else {

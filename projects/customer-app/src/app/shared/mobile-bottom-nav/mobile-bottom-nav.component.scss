@@ -16,7 +16,7 @@ a {
   display: grid;
   place-items: center;
   gap: 2px;
-  color: #697089;
+  color: var(--fd-color-text-muted);
   font-size: 11px;
   font-weight: 900;
   transition:
@@ -37,7 +37,7 @@ i {
   min-width: 17px;
   height: 17px;
   border-radius: 999px;
-  background: #f4434e;
+  background: var(--fd-color-danger);
   color: #fff;
   display: grid;
   place-items: center;
@@ -62,11 +62,11 @@ a:active {
     left: 10px;
     right: 10px;
     bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-    z-index: 90;
+    z-index: var(--fd-z-bottom-nav);
     height: var(--customer-bottom-nav-height);
     border-radius: 22px;
-    background: rgba(255, 255, 255, 0.94);
-    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid var(--fd-color-border);
     box-shadow: 0 20px 60px rgba(18, 14, 45, 0.18);
     backdrop-filter: blur(12px);
     width: auto;
@@ -91,7 +91,7 @@ a:active {
   }
 
   a {
-    min-height: 58px;
+    min-height: 60px;
     font-size: 10px;
     overflow: hidden;
     min-width: 0;
@@ -99,7 +99,7 @@ a:active {
   }
 
   a.active {
-    background: rgba(91, 44, 255, 0.08);
+    background: var(--fd-color-primary-soft);
   }
 
   b {

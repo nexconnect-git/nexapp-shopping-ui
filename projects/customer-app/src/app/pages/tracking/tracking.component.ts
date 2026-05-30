@@ -202,8 +202,12 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
           center: coordinate,
           zoom: 14,
           disableDefaultUI: true,
-          zoomControl: true,
-          fullscreenControl: true,
+          zoomControl:
+            typeof window !== 'undefined' &&
+            !window.matchMedia('(max-width: 760px)').matches,
+          fullscreenControl:
+            typeof window !== 'undefined' &&
+            !window.matchMedia('(max-width: 760px)').matches,
           clickableIcons: false,
           styles: this.mapStyles(),
         });

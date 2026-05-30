@@ -209,6 +209,7 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/issues/issues.component').then((m) => m.IssuesComponent),
   },
+  { path: 'notifications', redirectTo: 'issues' },
   {
     path: 'help',
     canActivate: [pageFeatureGuard('customer-app', 'customer-help')],

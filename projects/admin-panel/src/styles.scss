@@ -2,22 +2,22 @@
 
 /* ── Admin panel — accent override ──────────────── */
 :root {
-  --primary-gradient: linear-gradient(135deg, #6c2bff 0%, #8b5cff 100%);
+  --primary-gradient: linear-gradient(135deg, #6c2bff 0%, var(--fd-color-primary-hover) 100%);
   --cream: #ffffff;
   --peach: #ffffff;
   --surface: #ffffff;
   --surface-alt: #f5f2ff;
-  --brand-accent: #8b5cff;
+  --brand-accent: var(--fd-color-primary-hover);
   --brand-accent-deep: #6c2bff;
-  --coral: #8b5cff;
+  --coral: var(--fd-color-primary-hover);
   --coral-soft: #f5f2ff;
   --purple: #6c2bff;
   --purple-soft: #f5f2ff;
   --teal: #22c55e;
   --teal-soft: rgba(34, 197, 94, 0.12);
-  --cyan: #8b5cff;
+  --cyan: var(--fd-color-primary-hover);
   --cyan-soft: #f5f2ff;
-  --attention: #8b5cff;
+  --attention: var(--fd-color-primary-hover);
   --attention-soft: #f5f2ff;
   --indigo: #6c2bff;
   --indigo-soft: #f5f2ff;
@@ -1321,6 +1321,37 @@ app-dynamic-table {
   }
 }
 
+/* Shared token aliases (final override) */
+:root {
+  --primary: var(--fd-color-primary);
+  --primary-hover: var(--fd-color-primary-hover);
+  --primary-light: var(--fd-color-primary-soft);
+  --primary-shadow: color-mix(
+    in srgb,
+    var(--fd-color-primary) 24%,
+    transparent
+  );
+  --bg-color: var(--fd-color-bg);
+  --surface-color: var(--fd-color-surface);
+  --surface-hover: var(--fd-color-surface-soft);
+  --text-primary: var(--fd-color-text);
+  --text-secondary: var(--fd-color-text-secondary);
+  --text-muted: var(--fd-color-text-muted);
+  --border-color: var(--fd-color-border);
+  --border-light: var(--fd-color-border-soft);
+  --green: var(--fd-color-success);
+  --teal: var(--fd-color-success);
+  --teal-soft: var(--fd-color-success-soft);
+  --attention: var(--fd-color-warning);
+  --attention-soft: var(--fd-color-warning-soft);
+  --red: var(--fd-color-danger);
+  --danger-light: var(--fd-color-danger-soft);
+  --cyan: var(--fd-color-info);
+  --cyan-soft: var(--fd-color-info-soft);
+  --orange: var(--fd-color-orange);
+  --orange-soft: var(--fd-color-orange-soft);
+}
+
 /* Shared profile shell owns hero, metrics and tabs. Hide legacy direct-child chrome from old profile templates. */
 .vendor-profile-page > .loading-state,
 .customer-profile-page > .loading-state,
@@ -1338,7 +1369,7 @@ app-dynamic-table {
 }
 /* Final canvas guard: white page backgrounds, palette only on components. */
 :root {
-  --primary-gradient: linear-gradient(135deg, #6c2bff 0%, #8b5cff 100%);
+  --primary-gradient: linear-gradient(135deg, #6c2bff 0%, var(--fd-color-primary-hover) 100%);
   --background: #ffffff;
   --bg-color: #ffffff;
   --cream: #ffffff;
@@ -1691,4 +1722,75 @@ body .stock-badge {
   body .page-header > .header-actions {
     grid-template-columns: 1fr !important;
   }
+}
+
+/* Final global palette + typography enforcement */
+:root {
+  --font-family: var(--nc-font-family);
+  --font-heading: var(--nc-font-heading);
+  --font-body: var(--nc-font-family);
+
+  --primary: var(--fd-color-primary);
+  --primary-2: var(--fd-color-primary-hover);
+  --primary-hover: var(--fd-color-primary-hover);
+  --primary-light: var(--fd-color-primary-soft);
+  --primary-soft: var(--fd-color-primary-soft);
+  --primary-gradient: var(--fd-gradient-brand);
+
+  --green: var(--fd-color-success);
+  --teal: var(--fd-color-success);
+  --teal-soft: var(--fd-color-success-soft);
+  --mint: var(--fd-color-success);
+  --mint-soft: var(--fd-color-success-soft);
+
+  --attention: var(--fd-color-warning);
+  --attention-soft: var(--fd-color-warning-soft);
+  --warning: var(--fd-color-warning);
+  --warning-light: var(--fd-color-warning-soft);
+
+  --orange: var(--fd-color-orange);
+  --orange-soft: var(--fd-color-orange-soft);
+
+  --red: var(--fd-color-danger);
+  --danger: var(--fd-color-danger);
+  --danger-light: var(--fd-color-danger-soft);
+
+  --info: var(--fd-color-info);
+  --blue: var(--fd-color-info);
+  --cyan: var(--fd-color-info);
+  --cyan-soft: var(--fd-color-info-soft);
+  --info-light: var(--fd-color-info-soft);
+}
+
+html,
+body {
+  font-family: var(--nc-font-family) !important;
+}
+
+.nav-link.active,
+.menu-item.active {
+  background: var(--fd-color-primary-soft) !important;
+  color: var(--fd-color-primary) !important;
+}
+
+.badge-delivered,
+.status-delivered,
+.status-approved {
+  background: var(--fd-color-success-soft) !important;
+  color: #166534 !important;
+}
+
+.badge-pending,
+.status-pending,
+.status-searching {
+  background: var(--fd-color-orange-soft) !important;
+  color: #9a3412 !important;
+}
+
+.badge-cancelled,
+.badge-failed,
+.status-cancelled,
+.status-failed {
+  background: var(--fd-color-danger-soft) !important;
+  color: #991b1b !important;
 }

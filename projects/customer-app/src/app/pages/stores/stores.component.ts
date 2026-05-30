@@ -13,7 +13,6 @@ import { AppStateService } from '../../services/app-state.service';
 import { StoreCardComponent } from '../../components/store-card/store-card.component';
 import { CustomerContentConfigService } from '../../services/customer-content-config.service';
 import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
-import { RightRailComponent } from '../../components/right-rail/right-rail.component';
 
 @Component({
   standalone: true,
@@ -22,7 +21,6 @@ import { RightRailComponent } from '../../components/right-rail/right-rail.compo
     RouterLink,
     BreadcrumbsComponent,
     StoreCardComponent,
-    RightRailComponent,
   ],
   templateUrl: './stores.component.html',
   styleUrls: ['./stores.component.scss'],

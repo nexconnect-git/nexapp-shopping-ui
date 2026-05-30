@@ -17,7 +17,7 @@
   margin-bottom: 14px;
 
   a {
-    color: #5b2cff;
+    color: var(--fd-color-primary);
   }
   .current {
     color: #101426;
@@ -42,7 +42,7 @@
   margin-bottom: 16px;
 
   small {
-    color: #5b2cff;
+    color: var(--fd-color-primary);
     font-weight: 900;
     letter-spacing: 0.08em;
   }
@@ -64,12 +64,12 @@
   padding: 0 18px;
   border: 1px solid #d8cffd;
   background: #fff;
-  color: #5b2cff;
+  color: var(--fd-color-primary);
   font-weight: 900;
   cursor: pointer;
 
   &.primary {
-    background: linear-gradient(135deg, #5b2cff, #7c3cff);
+    background: linear-gradient(135deg, var(--fd-color-primary), var(--fd-color-primary-hover));
     color: #fff;
     border: 0;
   }
@@ -132,12 +132,12 @@
 
     &.active,
     &.done {
-      color: #5b2cff;
+      color: var(--fd-color-primary);
 
       span {
-        background: #5b2cff;
+        background: var(--fd-color-primary);
         color: #fff;
-        border-color: #5b2cff;
+        border-color: var(--fd-color-primary);
         box-shadow: 0 10px 22px rgba(91, 44, 255, 0.22);
       }
     }
@@ -168,7 +168,7 @@
       display: grid;
       place-items: center;
       background: #f3efff;
-      color: #5b2cff;
+      color: var(--fd-color-primary);
       font-size: 20px;
     }
 
@@ -234,7 +234,7 @@ textarea {
   font-size: 14px;
 
   &:focus {
-    border-color: #5b2cff;
+    border-color: var(--fd-color-primary);
     box-shadow: 0 0 0 4px rgba(91, 44, 255, 0.08);
   }
 }
@@ -287,7 +287,7 @@ textarea {
     border: 1px solid #d8cffd;
     border-radius: 8px;
     background: #fff;
-    color: #5b2cff;
+    color: var(--fd-color-primary);
     font-weight: 900;
     cursor: pointer;
     padding: 0 12px;
@@ -331,10 +331,10 @@ textarea {
   }
 
   &.on {
-    color: #5b2cff;
+    color: var(--fd-color-primary);
 
     span {
-      background: #5b2cff;
+      background: var(--fd-color-primary);
 
       &::after {
         left: 21px;
@@ -363,7 +363,7 @@ textarea {
     border-radius: 10px;
     border: 1px solid #d8cffd;
     background: #fff;
-    color: #5b2cff;
+    color: var(--fd-color-primary);
     font-weight: 900;
   }
 

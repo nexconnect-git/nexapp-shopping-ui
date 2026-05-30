@@ -1,6 +1,11 @@
 <article class="mobile-product-card" [class.row]="layout === 'row'">
   <a [routerLink]="['/product', product.id]" class="media">
-    <img [src]="product.image" [alt]="product.name" loading="lazy" />
+    <img
+      [src]="product.image || placeholderImage"
+      [alt]="product.name"
+      loading="lazy"
+      (error)="onImageError($event)"
+    />
     @if (product.discount) {
       <i>{{ product.discount }}</i>
     }
@@ -24,6 +29,8 @@
           (decrement)="state.updateQuantity(product.id, -1)"
           (increment)="state.updateQuantity(product.id, 1)"
         />
+      } @else if (storeClosed()) {
+        <button type="button" disabled>Store closed</button>
       } @else {
         <button type="button" (click)="state.addToCart(product)">Add</button>
       }

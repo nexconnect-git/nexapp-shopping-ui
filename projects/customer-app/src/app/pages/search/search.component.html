@@ -104,7 +104,7 @@
         </div>
       }
 
-      @if (noVisibleResults()) {
+      @if (hasQuery() && noVisibleResults()) {
         <section class="empty-results fd-card">
           <span class="material-symbols-rounded">search_off</span>
           <h2>{{ content.search().emptyTitle }}</h2>
@@ -137,6 +137,7 @@
       }
 
       @if (
+        hasQuery() &&
         !noVisibleResults() &&
         (activeTab() === "All" || activeTab() === "Stores")
       ) {
@@ -178,7 +179,7 @@
                 <img [src]="store.image" [alt]="store.name" /><b>{{
                   store.name
                 }}</b
-                ><span>{{ store.rating }} rating · {{ store.eta }}</span
+                ><span>{{ store.rating }} rating - {{ store.eta }}</span
                 ><em>{{ store.offer }}</em>
               </a>
             }
@@ -187,6 +188,7 @@
       }
 
       @if (
+        hasQuery() &&
         !noVisibleResults() &&
         (activeTab() === "All" || activeTab() === "Products")
       ) {
@@ -225,7 +227,6 @@
         }
       }
     </div>
-    <fd-right-rail />
   </section>
 </main>
 </div>
@@ -233,7 +234,7 @@
 <div class="mobile-customer-view">
 <main class="mobile-page search-page">
   <header class="search-head">
-    <button type="button" aria-label="Back" (click)="clearSearch()">
+    <button type="button" aria-label="Back" (click)="goBack()">
       <span class="material-symbols-rounded">arrow_back</span>
     </button>
     <form class="search-input" (submit)="submitSearch($event)">
@@ -257,7 +258,7 @@
     <section class="mobile-section">
       <div class="mobile-section-head"><h2>Popular searches</h2></div>
       <div class="mobile-chip-row">
-        @for (category of catalog.categories().slice(0, 8); track category.id) {
+        @for (category of recommendedCategories(); track category.id) {
           <button type="button" class="mobile-chip" (click)="updateQuery(category.label); submitSearch($event)">
             <span class="material-symbols-rounded">search</span>{{ category.label }}
           </button>
@@ -268,7 +269,7 @@
     <section class="mobile-section">
       <div class="mobile-section-head"><h2>Browse categories</h2></div>
       <div class="browse-grid">
-        @for (category of catalog.categories().slice(0, 8); track category.id) {
+        @for (category of recommendedCategories(); track category.id) {
           <a [routerLink]="['/category', category.id]">
             <span class="material-symbols-rounded">{{ category.icon || 'category' }}</span>
             <b>{{ category.label }}</b>
@@ -278,7 +279,7 @@
     </section>
   }
 
-  @if (searchPromo()) {
+  @if (hasQuery() && searchPromo()) {
     <button type="button" class="search-promo" (click)="handleSearchPromo(searchPromo()!)">
       <span class="material-symbols-rounded">{{ searchPromo()!.icon || 'local_offer' }}</span>
       <b>{{ searchPromo()!.title }}</b>
@@ -286,20 +287,22 @@
     </button>
   }
 
-  <section class="mobile-section">
-    <div class="mobile-chip-row">
-      @for (tab of tabs(); track tab) {
-        <button type="button" class="mobile-chip" [class.active]="activeTab() === tab" (click)="activeTab.set(tab)">
-          {{ tab }} <small>{{ count(tab) }}</small>
-        </button>
+  @if (hasQuery()) {
+    <section class="mobile-section">
+      <div class="mobile-chip-row">
+        @for (tab of tabs(); track tab) {
+          <button type="button" class="mobile-chip" [class.active]="activeTab() === tab" (click)="activeTab.set(tab)">
+            {{ tab }} <small>{{ count(tab) }}</small>
+          </button>
+        }
+      </div>
+      @if (activeFilters().length) {
+        <button type="button" class="clear-filters" (click)="clearFilters()">Clear filters</button>
       }
-    </div>
-    @if (activeFilters().length) {
-      <button type="button" class="clear-filters" (click)="clearFilters()">Clear filters</button>
-    }
-  </section>
+    </section>
+  }
 
-  @if (activeTab() === 'All' || activeTab() === 'Stores') {
+  @if (hasQuery() && (activeTab() === 'All' || activeTab() === 'Stores') && results().stores.length) {
     <section class="mobile-section">
       <div class="mobile-section-head"><h2>Stores</h2></div>
       <div class="mobile-list">
@@ -310,7 +313,7 @@
     </section>
   }
 
-  @if (activeTab() === 'All' || activeTab() === 'Products') {
+  @if (hasQuery() && (activeTab() === 'All' || activeTab() === 'Products') && results().products.length) {
     <section class="mobile-section">
       <div class="mobile-section-head"><h2>Products</h2></div>
       <div class="mobile-grid-2">
@@ -321,7 +324,7 @@
     </section>
   }
 
-  @if (activeTab() === 'All' || activeTab() === 'Categories') {
+  @if (hasQuery() && (activeTab() === 'All' || activeTab() === 'Categories') && results().categories.length) {
     <section class="mobile-section">
       <div class="mobile-section-head"><h2>Categories</h2></div>
       <div class="browse-grid">
@@ -335,7 +338,7 @@
     </section>
   }
 
-  @if (noVisibleResults()) {
+  @if (hasQuery() && noVisibleResults()) {
     <section class="empty-state">
       <span class="material-symbols-rounded">search_off</span>
       <h2>No matches found</h2>

@@ -136,7 +136,7 @@
   
   .help-categories button {
     justify-items: start;
-    color: #5b2cff;
+    color: var(--fd-color-primary);
     font-weight: 950;
   }
   
@@ -173,7 +173,7 @@
   .photo-button {
     min-height: 44px;
     border-radius: 15px;
-    color: #5b2cff;
+    color: var(--fd-color-primary);
     background: #f1ecff;
     font-weight: 950;
   }
@@ -191,7 +191,7 @@
     display: grid;
     place-items: center;
     border-radius: 16px;
-    color: #5b2cff;
+    color: var(--fd-color-primary);
     background: #f1ecff;
   }
   
@@ -211,7 +211,7 @@
   .message.customer {
     justify-self: end;
     color: #fff;
-    background: #5b2cff;
+    background: var(--fd-color-primary);
   }
   
   .message p {
@@ -231,6 +231,6 @@
     place-items: center;
     border-radius: 16px;
     color: #fff;
-    background: #5b2cff;
+    background: var(--fd-color-primary);
   }
 }

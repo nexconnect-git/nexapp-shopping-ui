@@ -8,7 +8,7 @@
   padding: 18px;
   border-radius: 26px;
   color: #fff;
-  background: linear-gradient(135deg, #5b2cff, #7a4dff 62%, #ff6b9a);
+  background: linear-gradient(135deg, var(--fd-color-primary), var(--fd-color-primary-hover) 62%, var(--fd-color-orange));
   box-shadow: 0 18px 44px rgba(91, 44, 255, 0.22);
 }
 
@@ -41,7 +41,7 @@ a {
   margin-top: 11px;
   padding: 9px 13px;
   border-radius: 14px;
-  color: #5b2cff;
+  color: var(--fd-color-primary);
   background: #fff;
   font-size: 12px;
   font-weight: 950;
@@ -58,7 +58,7 @@ img,
 .material-symbols-rounded {
   display: grid;
   place-items: center;
-  color: #5b2cff;
+  color: var(--fd-color-primary);
   background: rgba(255, 255, 255, 0.92);
   font-size: 46px;
 }

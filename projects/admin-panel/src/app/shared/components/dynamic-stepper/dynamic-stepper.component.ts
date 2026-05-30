@@ -441,8 +441,8 @@ export class DynamicStepperComponent implements OnChanges {
     return Number.isFinite(value) ? value : fallback;
   }
 
-  setLocationFromMap(location: MapLocation) {
-    this.model = {
+  setLocationFromMap(location: MapLocation, field?: StepperField) {
+    const nextModel = {
       ...this.model,
       latitude: location.lat,
       longitude: location.lng,
@@ -452,9 +452,35 @@ export class DynamicStepperComponent implements OnChanges {
       postal_code: location.postal_code || this.model.postal_code || '',
       country: inferCountryFromLocation(location) || 'IN',
     };
+
+    if (field?.key && field.key !== 'location') {
+      const value = this.formatMapFieldValue(location);
+      nextModel[field.key] = field.maxLength
+        ? value.slice(0, field.maxLength).trim()
+        : value;
+    }
+
+    this.model = nextModel;
     this.clearFieldError('latitude');
     this.clearFieldError('longitude');
     this.clearFieldError('location');
+    if (field?.key) this.clearFieldError(field.key);
+  }
+
+  private formatMapFieldValue(location: MapLocation): string {
+    const address = location.address?.trim();
+    const city = location.city?.trim();
+    const state = location.state?.trim();
+    const parts = [address, city, state].filter(
+      (part, index, list) =>
+        !!part &&
+        list.findIndex(
+          (candidate) => candidate?.toLowerCase() === part.toLowerCase(),
+        ) === index,
+    );
+
+    if (parts.length) return parts.join(', ');
+    return `Pinned location: ${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}`;
   }
 
   onFileSelected(field: StepperField, event: Event) {

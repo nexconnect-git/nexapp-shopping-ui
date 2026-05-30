@@ -132,13 +132,11 @@
     <ng-template tableCell="product" let-product>
       <div class="product-cell">
         <div class="product-thumb">
-          @if (product.primary_image) {
-            <img [src]="product.primary_image" alt="{{ product.name }}" />
-          } @else {
-            <div class="img-placeholder">
-              <span class="material-icons-outlined">image</span>
-            </div>
-          }
+          <img
+            [src]="productImage(product)"
+            [alt]="product.name"
+            (error)="onImageError($event)"
+          />
         </div>
         <div class="product-info">
           <span class="product-name">{{ product.name }}</span>

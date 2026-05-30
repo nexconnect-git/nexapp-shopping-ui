@@ -324,6 +324,12 @@
   }
 }
 
+.map-selected-value {
+  margin-top: 0.75rem;
+  background: color-mix(in srgb, var(--primary) 5%, #fff) !important;
+  font-weight: 800;
+}
+
 .req {
   color: var(--danger);
   margin-left: 2px;

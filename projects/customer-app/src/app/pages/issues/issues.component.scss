@@ -65,7 +65,7 @@
     display: grid;
     place-items: center;
     border-radius: 16px;
-    color: #5b2cff;
+    color: var(--fd-color-primary);
     background: #fff;
     box-shadow: 0 10px 24px rgba(33, 22, 82, 0.06);
   }
@@ -92,7 +92,7 @@
     display: grid;
     place-items: center;
     border-radius: 16px;
-    color: #5b2cff;
+    color: var(--fd-color-primary);
     background: #f1ecff;
   }
   

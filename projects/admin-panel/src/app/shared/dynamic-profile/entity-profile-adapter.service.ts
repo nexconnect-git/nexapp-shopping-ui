@@ -125,6 +125,7 @@ export class EntityProfileAdapterService {
     const type = this.normalizeType(entityType);
     const dto = this.asRecord(entityDto);
     const user = this.user(dto, type);
+    const hasTempPassword = Boolean(user['temp_password']);
 
     return {
       entityName: this.entityName(type, dto, user),
@@ -140,12 +141,16 @@ export class EntityProfileAdapterService {
       activeTabId: 'overview',
       metrics: this.metrics(type, dto, user),
       passwordNotice: {
-        enabled: Boolean(
-          user['force_password_change'] && user['temp_password'],
-        ),
-        title: 'Temporary password still active',
-        message: 'This user has not changed their auto-generated password yet.',
-        actionLabel: 'Reset Password',
+        enabled: Boolean(user['force_password_change'] || hasTempPassword),
+        title: hasTempPassword
+          ? 'Temporary password still active'
+          : 'Temporary password required',
+        message: hasTempPassword
+          ? 'This user has not changed their auto-generated password yet.'
+          : 'Generate a new temporary password to share with this user.',
+        actionLabel: hasTempPassword
+          ? 'Generate New Password'
+          : 'Generate Password',
         secretLabel: 'Temp Password',
         secretValue: this.str(user['temp_password']),
       },
@@ -178,6 +183,7 @@ export class EntityProfileAdapterService {
     const type = this.normalizeType(entityType);
     const dto = this.asRecord(entityDto);
     const user = this.user(dto, type);
+    const hasTempPassword = Boolean(user['temp_password']);
     return {
       title: `Review ${this.entityTypeLabel(type)}`,
       subtitle:
@@ -188,13 +194,16 @@ export class EntityProfileAdapterService {
       readinessLabel: this.readiness(type, dto, user),
       readinessTone: this.readinessTone(type, dto, user),
       warning: {
-        enabled: Boolean(
-          user['force_password_change'] && user['temp_password'],
-        ),
-        title: 'Action required: temporary password is active',
-        message:
-          'The user account will not be fully operational until the password is changed.',
-        actionLabel: 'Reset Password',
+        enabled: Boolean(user['force_password_change'] || hasTempPassword),
+        title: hasTempPassword
+          ? 'Action required: temporary password is active'
+          : 'Action required: generate temporary password',
+        message: hasTempPassword
+          ? 'The user account will not be fully operational until the password is changed.'
+          : 'Generate a new temporary password before sharing account access.',
+        actionLabel: hasTempPassword
+          ? 'Generate New Password'
+          : 'Generate Password',
         secretLabel: 'Temp Password',
         secretValue: this.str(user['temp_password']),
       },
@@ -1171,6 +1180,14 @@ export class EntityProfileAdapterService {
         variant: 'soft',
       });
     }
+    if (type === 'delivery-partner') {
+      actions.push({
+        id: 'resetPassword',
+        label: 'Generate Password',
+        icon: '🔐',
+        variant: 'outline',
+      });
+    }
     return actions;
   }
 
@@ -1420,7 +1437,7 @@ export class EntityProfileAdapterService {
   }
 
   private normalizeType(type: string): EntityType {
-    const clean = type.toLowerCase();
+    const clean = type.trim().toLowerCase().replace(/[\s-]+/g, '_');
     if (clean === 'store') return 'store';
     if (
       clean === 'delivery' ||

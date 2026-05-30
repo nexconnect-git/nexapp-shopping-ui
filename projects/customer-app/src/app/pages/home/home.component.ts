@@ -7,7 +7,6 @@ import { StoreCardComponent } from '../../components/store-card/store-card.compo
 import { UiService } from '../../services/ui.service';
 import { categoryIconFor } from '../../shared/category-icons';
 import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
-import { RightRailComponent } from '../../components/right-rail/right-rail.component';
 import {
   CustomerContentConfigService,
   type CustomerPromoCard,
@@ -20,7 +19,6 @@ import {
     BreadcrumbsComponent,
     ProductCardComponent,
     StoreCardComponent,
-    RightRailComponent,
   ],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss'],
@@ -66,16 +64,14 @@ export class HomeComponent {
   );
   promoCoupons = computed(() => this.catalog.topCoupons().slice(0, 2));
   promoCategories = computed(() =>
-    this.catalog
-      .categories()
-      .filter((category) => category.id !== 'all')
-      .slice(0, 2),
+    this.rankCategoriesByHistory(
+      this.catalog.categories().filter((category) => category.id !== 'all'),
+    ).slice(0, 2),
   );
   mobileCategories = computed(() =>
-    this.catalog
-      .categories()
-      .filter((category) => category.id !== 'all')
-      .slice(0, 6),
+    this.rankCategoriesByHistory(
+      this.catalog.categories().filter((category) => category.id !== 'all'),
+    ).slice(0, 6),
   );
   homePromos = computed<CustomerPromoCard[]>(() => {
     const contentPromos = this.content.ads().home;
@@ -136,5 +132,31 @@ export class HomeComponent {
       path: path || '/search',
       query: Object.keys(query).length ? query : null,
     };
+  }
+
+  private rankCategoriesByHistory<T extends { label?: string }>(
+    categories: T[],
+  ): T[] {
+    const preferred = new Set(
+      this.state
+        .cart()
+        .map((item) => this.normalize(item.category))
+        .filter(Boolean),
+    );
+    return [...categories].sort((a, b) => {
+      const aPreferred = preferred.has(this.normalize(a.label));
+      const bPreferred = preferred.has(this.normalize(b.label));
+      if (aPreferred === bPreferred)
+        return String(a.label || '').localeCompare(String(b.label || ''));
+      return aPreferred ? -1 : 1;
+    });
+  }
+
+  private normalize(value: string | null | undefined): string {
+    return String(value || '')
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
   }
 }

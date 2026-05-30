@@ -16,7 +16,7 @@
   --nav-text: var(--ink);
   --nav-muted: var(--muted);
   --accent: #6c2bff;
-  --accent-dark: #8b5cff;
+  --accent-dark: var(--fd-color-primary-hover);
   --accent-soft: rgba(6, 182, 212, 0.13);
   --danger: #ef4444;
   --green: #22c55e;
@@ -927,5 +927,12 @@
 
   .workspace-content {
     padding: 0.9rem;
+  }
+}
+
+@media (min-width: 761px) {
+  .mobile-overlay,
+  .mobile-menu-btn {
+    display: none !important;
   }
 }

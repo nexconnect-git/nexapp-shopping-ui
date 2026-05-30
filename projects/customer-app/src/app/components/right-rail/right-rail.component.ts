@@ -13,6 +13,7 @@ import { CatalogService } from '../../services/catalog.service';
   styleUrls: ['./right-rail.component.scss'],
 })
 export class RightRailComponent {
+  readonly placeholderImage = '/assets/placeholders/product.svg';
   readonly topCoupon = computed(() => this.catalog.topCoupons()[0] || null);
   readonly promoBanners = computed(() => this.catalog.banners().slice(1, 3));
   readonly featuredProducts = computed(() => {
@@ -51,5 +52,12 @@ export class RightRailComponent {
       return;
     }
     this.state.applyCoupon(code);
+  }
+
+  onImageError(event: Event): void {
+    const img = event.target as HTMLImageElement | null;
+    if (!img) return;
+    if (img.src.includes(this.placeholderImage)) return;
+    img.src = this.placeholderImage;
   }
 }

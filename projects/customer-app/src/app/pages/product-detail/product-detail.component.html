@@ -203,9 +203,9 @@
 <main class="mobile-page product-detail-page">
   <section class="product-hero">
     <div class="hero-actions">
-      <a [routerLink]="store()?.id ? ['/store', store()!.id] : ['/']" aria-label="Back">
+      <button type="button" aria-label="Back" (click)="goBack()">
         <span class="material-symbols-rounded">arrow_back</span>
-      </a>
+      </button>
       <button type="button" aria-label="Toggle wishlist" (click)="toggleWishlist()">
         <span class="material-symbols-rounded">favorite</span>
       </button>
@@ -220,7 +220,7 @@
       <span class="discount">{{ product().discount }}</span>
     }
     <h1>{{ product().name }}</h1>
-    <p>{{ product().unit }} · {{ product().category }}</p>
+    <p>{{ product().unit }} - {{ product().category }}</p>
     <div class="price-row">
       <b>{{ product().price | appCurrency }}</b>
       @if (product().mrp > product().price) {
@@ -239,7 +239,7 @@
     <div class="mobile-chip-row">
       @for (size of sizes(); track size.label) {
         <button type="button" class="mobile-chip" [class.active]="selectedSize() === size.label || (!selectedSize() && $index === 0)" (click)="selectedSize.set(size.label)">
-          {{ size.label }} · {{ size.price | appCurrency }}
+          {{ size.label }} - {{ size.price | appCurrency }}
         </button>
       }
     </div>

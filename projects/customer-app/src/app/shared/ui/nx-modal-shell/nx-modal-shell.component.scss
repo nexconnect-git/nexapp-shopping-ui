@@ -1,23 +1,27 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(12, 16, 31, 0.38);
+  background: var(--fd-sheet-overlay);
   backdrop-filter: blur(4px);
-  z-index: 130;
+  z-index: var(--fd-z-modal);
 }
+
 .modal {
   position: fixed;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
   width: min(94vw, 720px);
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: 0 30px 90px rgba(20, 16, 60, 0.28);
-  z-index: 140;
+  max-height: 88dvh;
+  overflow: auto;
+  background: var(--fd-modal-bg);
+  border: 1px solid var(--fd-modal-border);
+  border-radius: var(--fd-radius-xl);
+  box-shadow: var(--fd-shadow-lg);
+  z-index: calc(var(--fd-z-modal) + 1);
   padding: var(--space-xl);
 }
+
 header {
   display: flex;
   justify-content: space-between;
@@ -26,17 +30,20 @@ header {
   padding-bottom: 16px;
   margin-bottom: 18px;
 }
+
 h2 {
   margin: 0;
   font-size: 28px;
 }
+
 p {
   margin: 6px 0;
   color: var(--muted);
 }
+
 header button {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: var(--primary-soft);
   color: var(--primary);
@@ -45,8 +52,7 @@ header button {
 
 @media (max-width: 760px) {
   .overlay {
-    z-index: 300;
-    background: rgba(17, 24, 39, 0.4);
+    background: var(--fd-sheet-overlay);
     backdrop-filter: blur(3px);
   }
 
@@ -59,7 +65,6 @@ header button {
     max-height: min(84dvh, 680px);
     overflow: auto;
     transform: none;
-    z-index: 310;
     padding: 14px 12px calc(12px + env(safe-area-inset-bottom, 0px));
     border-radius: 22px 22px 0 0;
   }
@@ -70,7 +75,7 @@ header button {
     width: 42px;
     height: 4px;
     border-radius: 999px;
-    background: #d8d4e8;
+    background: var(--fd-sheet-handle);
     margin: 0 auto 10px;
   }
 
@@ -87,10 +92,5 @@ header button {
   p {
     font-size: 13px;
     line-height: 1.35;
-  }
-
-  header button {
-    width: 36px;
-    height: 36px;
   }
 }

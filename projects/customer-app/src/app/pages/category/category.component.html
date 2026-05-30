@@ -79,7 +79,6 @@
         </section>
       }
     </div>
-    <fd-right-rail />
   </section>
 </main>
 </div>
@@ -87,9 +86,9 @@
 <div class="mobile-customer-view">
 <main class="mobile-page category-page">
   <header class="page-head">
-    <a routerLink="/" aria-label="Back home">
+    <button type="button" aria-label="Back" (click)="goBack()">
       <span class="material-symbols-rounded">arrow_back</span>
-    </a>
+    </button>
     <div>
       <small>{{ storeCount() }} nearby stores</small>
       <h1>{{ title() }}</h1>

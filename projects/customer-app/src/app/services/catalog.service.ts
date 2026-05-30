@@ -30,8 +30,8 @@ import {
 } from '../models';
 import { CustomerCatalogApiService } from './customer-catalog-api.service';
 
-const FALLBACK_PRODUCT_IMAGE = '';
-const FALLBACK_STORE_IMAGE = '';
+const FALLBACK_PRODUCT_IMAGE = '/assets/placeholders/product.svg';
+const FALLBACK_STORE_IMAGE = '/assets/placeholders/store.svg';
 
 @Injectable({ providedIn: 'root' })
 export class CatalogService {
@@ -118,9 +118,18 @@ export class CatalogService {
                 category.is_active !== false,
             )
             .map((category, index) => this.mapCategory(category, index));
+          const seen = new Set<string>();
+          const uniqueCategories = categories.filter((category) => {
+            const key = normalizeKey(
+              category.raw?.slug || category.label || category.id,
+            );
+            if (!key || seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          });
           this._categories.set([
             { id: 'all', label: 'All', icon: 'grid_view', bg: '#f8fafc' },
-            ...categories,
+            ...uniqueCategories,
           ]);
         },
         error: () =>
@@ -376,6 +385,7 @@ export class CatalogService {
         )
         .slice(0, 12),
       categories: this._categories()
+        .filter((category) => category.id !== 'all')
         .filter((category) => matchesAny(category.label))
         .slice(0, 6),
     };
@@ -385,7 +395,11 @@ export class CatalogService {
     const q = parseMultiSearchQuery(query)
       .map((term) => term.value)
       .join(',');
-    if (!q || q === this.lastSearchQuery) return;
+    if (!q) {
+      this.lastSearchQuery = '';
+      return;
+    }
+    if (q === this.lastSearchQuery) return;
     this.lastSearchQuery = q;
     this.setProductsLoading(true);
     this.api

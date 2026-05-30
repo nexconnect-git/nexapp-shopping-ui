@@ -295,7 +295,7 @@ select:focus,
   width: 48px;
   height: 48px;
   border: 4px solid #eee9ff;
-  border-top-color: var(--primary, #5b2cff);
+  border-top-color: var(--primary, var(--fd-color-primary));
   border-radius: 50%;
   animation: fdSpin 0.85s linear infinite;
 }

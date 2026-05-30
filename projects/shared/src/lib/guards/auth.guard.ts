@@ -13,7 +13,9 @@ function getScopedToken(): string | null {
 
 function getScopedUser(): any | null {
   const prefix = inject(AUTH_PREFIX);
-  const raw = sessionStorage.getItem(`${prefix}_user`);
+  const raw =
+    sessionStorage.getItem(`${prefix}_user`) ||
+    localStorage.getItem(`${prefix}_user`);
   if (!raw) return null;
   try {
     return JSON.parse(raw);

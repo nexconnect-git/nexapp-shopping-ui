@@ -1,5 +1,6 @@
+import { Location } from '@angular/common';
 import { Component, computed, effect, signal } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService, AppCurrencyPipe } from '@shared/public-api';
 import { CatalogService } from '../../services/catalog.service';
 import { AppStateService } from '../../services/app-state.service';
@@ -22,7 +23,7 @@ type DetailPanel = {
 
 @Component({
   standalone: true,
-  imports: [RouterLink, ProductCardComponent, AppCurrencyPipe],
+  imports: [ProductCardComponent, AppCurrencyPipe],
   templateUrl: './product-detail.component.html',
   styleUrls: ['./product-detail.component.scss'],
 })
@@ -35,6 +36,7 @@ export class ProductDetailComponent {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
+    private location: Location,
     private api: ApiService,
     public catalog: CatalogService,
     public state: AppStateService,
@@ -173,6 +175,15 @@ export class ProductDetailComponent {
   buyNow(): void {
     if (this.state.addToCart(this.product(), this.qty()))
       this.router.navigate(['/checkout']);
+  }
+
+  goBack(): void {
+    if (history.length > 1) {
+      this.location.back();
+      return;
+    }
+    const storeId = this.store()?.id;
+    this.router.navigate(storeId ? ['/store', storeId] : ['/']);
   }
 
   toggleWishlist(): void {

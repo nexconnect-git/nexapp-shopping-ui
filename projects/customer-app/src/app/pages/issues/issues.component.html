@@ -33,7 +33,7 @@
           [class.red]="issue.status === 'Closed'"
           >{{ issue.status }}</span
         >
-        <a [routerLink]="['/issue', issue.id]">View ›</a>
+        <a [routerLink]="['/issue', issue.id]">View ></a>
       </article>
     }
   </section>
@@ -59,7 +59,7 @@
         <span class="material-symbols-rounded">support_agent</span>
         <div>
           <b>{{ issue.title }}</b>
-          <p>{{ issue.order }} · {{ issue.date }}</p>
+          <p>{{ issue.order }} - {{ issue.date }}</p>
         </div>
         <small [class.resolved]="issue.status === 'Resolved'">{{ issue.status }}</small>
       </a>

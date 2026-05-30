@@ -1,19 +1,17 @@
+import { Location } from '@angular/common';
 import { Component, computed, signal } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CatalogService } from '../../services/catalog.service';
 import { ProductCardComponent } from '../../components/product-card/product-card.component';
 import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
-import { RightRailComponent } from '../../components/right-rail/right-rail.component';
 
 @Component({
   standalone: true,
   imports: [
     FormsModule,
-    RouterLink,
     BreadcrumbsComponent,
     ProductCardComponent,
-    RightRailComponent,
   ],
   templateUrl: './category.component.html',
   styleUrls: ['./category.component.scss'],
@@ -24,6 +22,8 @@ export class CategoryComponent {
 
   constructor(
     private route: ActivatedRoute,
+    private location: Location,
+    private router: Router,
     public catalog: CatalogService,
   ) {}
 
@@ -73,5 +73,13 @@ export class CategoryComponent {
     if (key.includes('snack')) return 'bakery_dining';
     if (key.includes('home')) return 'home';
     return 'category';
+  }
+
+  goBack(): void {
+    if (history.length > 1) {
+      this.location.back();
+      return;
+    }
+    this.router.navigateByUrl('/');
   }
 }

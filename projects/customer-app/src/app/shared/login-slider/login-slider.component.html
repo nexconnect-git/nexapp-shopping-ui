@@ -5,7 +5,7 @@
     aria-label="Close login"
     (click)="ui.closeLogin()"
   ></button>
-  <aside class="login-slider animate-slide">
+  <aside class="login-slider animate-fade">
     <button
       type="button"
       class="close"
@@ -33,9 +33,9 @@
         }}
       </p>
       <div class="mobile-trust-grid">
-        <span>🛒 Saved cart</span>
-        <span>🎁 Live offers</span>
-        <span>📍 Fast checkout</span>
+        <span>Saved cart</span>
+        <span>Live offers</span>
+        <span>Fast checkout</span>
       </div>
     </section>
 
@@ -92,7 +92,7 @@
 
       @if (auth.otpRequested()) {
         <div class="otp-note">
-          <span class="otp-emoji">✉️</span>
+          <span class="otp-emoji" aria-hidden="true">OTP</span>
           <p>
             OTP sent to <b>{{ email }}</b
             >. Keep this drawer open while you enter the code.

@@ -211,12 +211,7 @@
         <p>Map is not available right now.</p>
       }
     </div>
-    <div class="map-actions">
-      <button type="button" (click)="mapAction('zoom-in')">
-        <span class="material-symbols-rounded">near_me</span> Directions
-      </button>
-      <button type="button" (click)="joinOne()">Wallet</button>
-    </div>
+    <small class="map-note">Live location updates automatically.</small>
   </section>
 
   @if (partner()) {

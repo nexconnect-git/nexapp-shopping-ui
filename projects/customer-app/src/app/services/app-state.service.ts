@@ -239,12 +239,16 @@ export class AppStateService {
       this.ui.openLogin();
       return false;
     }
+    if (!this.isStoreOpenForProduct(product)) {
+      this.showToast(this.storeClosedMessage(product));
+      return false;
+    }
     const productId = product.apiId || product.id;
     this.cartApi.addToCart(productId, quantity).subscribe({
       next: () => {
         this.lastAddedProductId.set(product.id);
         this.loadCart();
-        if (shouldOpenCartAfterAdd('add_item')) this.openMiniCart();
+        if (this.shouldAutoOpenMiniCart()) this.openMiniCart();
         this.showToast(`${product.name} added to cart`);
       },
       error: (error) => this.handleAddToCartError(error, product, quantity),
@@ -290,7 +294,7 @@ export class AppStateService {
                 next: () => {
                   this.lastAddedProductId.set(product.id);
                   this.loadCart();
-                  if (shouldOpenCartAfterAdd('add_item')) this.openMiniCart();
+                  if (this.shouldAutoOpenMiniCart()) this.openMiniCart();
                   this.showToast(`${product.name} added to cart`);
                 },
                 error: (retryError) =>
@@ -364,9 +368,13 @@ export class AppStateService {
       return;
     }
     const normalized = compact(code).toUpperCase();
+    if (!this.auth.isLoggedIn()) {
+      this.ui.openLogin();
+      this.showToast('Sign in to apply coupons');
+      return;
+    }
     this.coupon.set(normalized);
     this.couponDiscount.set(0);
-    if (!this.auth.isLoggedIn()) return;
     this.cartApi
       .validateCoupon(
         normalized,
@@ -940,5 +948,39 @@ export class AppStateService {
       error?.error || error,
       readApiError(error?.error || error) || fallback,
     ).message;
+  }
+
+  private isStoreOpenForProduct(product: Product): boolean {
+    const vendor = (product?.raw as any)?.vendor;
+    if (!vendor) return true;
+    return (vendor?.is_open_now ?? vendor?.is_open) !== false;
+  }
+
+  private storeClosedMessage(product: Product): string {
+    const vendor = (product?.raw as any)?.vendor || {};
+    const storeName = vendor?.store_name || product.storeName || 'Store';
+    const opening = this.formatClockTime(vendor?.opening_time);
+    const closing = this.formatClockTime(vendor?.closing_time);
+    if (opening && closing) {
+      return `'${storeName}' is closed right now. Open ${opening} - ${closing}.`;
+    }
+    return `'${storeName}' is closed right now.`;
+  }
+
+  private formatClockTime(value: string | null | undefined): string {
+    const text = String(value || '').slice(0, 5);
+    if (!text || !text.includes(':')) return '';
+    const [hoursRaw, minutesRaw] = text
+      .split(':')
+      .map((part) => Number(part || 0));
+    const date = new Date();
+    date.setHours(hoursRaw || 0, minutesRaw || 0, 0, 0);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  private shouldAutoOpenMiniCart(): boolean {
+    if (!shouldOpenCartAfterAdd('add_item')) return false;
+    if (typeof window === 'undefined' || !window.matchMedia) return true;
+    return !window.matchMedia('(max-width: 760px)').matches;
   }
 }

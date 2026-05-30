@@ -1,7 +1,7 @@
 .overlay {
   position: fixed;
   inset: 0;
-  z-index: 130;
+  z-index: var(--fd-z-modal);
   background: rgba(12, 16, 31, 0.34);
   backdrop-filter: blur(2px);
   animation: fadeIn 0.18s ease both;
@@ -11,7 +11,7 @@
   position: fixed;
   left: 50%;
   top: 50%;
-  z-index: 140;
+  z-index: calc(var(--fd-z-modal) + 1);
   width: min(680px, calc(100vw - 32px));
   max-height: 86dvh;
   display: grid;
@@ -306,8 +306,8 @@ footer {
 
 @media (max-width: 760px) {
   .overlay {
-    z-index: 300;
-    background: rgba(17, 24, 39, 0.38);
+    z-index: var(--fd-z-modal);
+    background: var(--fd-sheet-overlay);
     backdrop-filter: none;
   }
 
@@ -316,7 +316,7 @@ footer {
     right: 10px;
     top: auto;
     bottom: 0;
-    z-index: 320;
+    z-index: calc(var(--fd-z-modal) + 1);
     width: auto;
     max-height: min(78dvh, 680px);
     padding: 8px 12px calc(10px + env(safe-area-inset-bottom, 0px));

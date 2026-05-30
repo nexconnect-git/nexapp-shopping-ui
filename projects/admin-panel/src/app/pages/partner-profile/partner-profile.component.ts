@@ -292,10 +292,23 @@ export class PartnerProfileComponent implements OnInit {
       return;
     }
     if (action.id === 'resetPassword') {
-      this.toast.show(
-        'Password reset flow is available from auth support tools.',
-        'info',
-      );
+      this.actionLoading.set(true);
+      this.api
+        .generateAdminDeliveryPartnerTemporaryPassword(this.partnerId)
+        .subscribe({
+          next: (partner) => {
+            this.partner.set(partner);
+            this.actionLoading.set(false);
+            this.toast.show(
+              'Temporary password generated. Share it securely with the partner.',
+              'success',
+            );
+          },
+          error: () => {
+            this.actionLoading.set(false);
+            this.toast.show('Failed to generate temporary password.', 'error');
+          },
+        });
     }
   }
 

@@ -55,6 +55,16 @@
               },
               {
                 "glob": "**/*",
+                "input": "projects/customer-app/public/fonts",
+                "output": "/sa/fonts/"
+              },
+              {
+                "glob": "**/*",
+                "input": "projects/shared/src/assets",
+                "output": "/assets/"
+              },
+              {
+                "glob": "**/*",
                 "input": "projects/customer-app/src/assets",
                 "output": "/assets/"
               }
@@ -172,6 +182,16 @@
                 "glob": "**/*",
                 "input": "projects/customer-app/public",
                 "output": "/"
+              },
+              {
+                "glob": "**/*",
+                "input": "projects/customer-app/public/fonts",
+                "output": "/sa/fonts/"
+              },
+              {
+                "glob": "**/*",
+                "input": "projects/shared/src/assets",
+                "output": "/assets/"
               },
               {
                 "glob": "**/*",
@@ -335,6 +355,16 @@
               },
               {
                 "glob": "**/*",
+                "input": "projects/vendor-app/public/fonts",
+                "output": "/sa/fonts/"
+              },
+              {
+                "glob": "**/*",
+                "input": "projects/shared/src/assets",
+                "output": "/assets/"
+              },
+              {
+                "glob": "**/*",
                 "input": "projects/vendor-app/src/assets",
                 "output": "/assets/"
               }
@@ -460,6 +490,16 @@
                 "glob": "**/*",
                 "input": "projects/delivery-app/public",
                 "output": "/"
+              },
+              {
+                "glob": "**/*",
+                "input": "projects/delivery-app/public/fonts",
+                "output": "/sa/fonts/"
+              },
+              {
+                "glob": "**/*",
+                "input": "projects/shared/src/assets",
+                "output": "/assets/"
               },
               {
                 "glob": "**/*",
@@ -610,6 +650,16 @@
                 "glob": "**/*",
                 "input": "projects/admin-panel/public",
                 "output": "/"
+              },
+              {
+                "glob": "**/*",
+                "input": "projects/admin-panel/public/fonts",
+                "output": "/sa/fonts/"
+              },
+              {
+                "glob": "**/*",
+                "input": "projects/shared/src/assets",
+                "output": "/assets/"
               },
               {
                 "glob": "**/*",

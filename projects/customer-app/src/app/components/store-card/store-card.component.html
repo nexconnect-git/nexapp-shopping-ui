@@ -1,6 +1,11 @@
 <article class="store-card">
   <a [routerLink]="['/store', store.id]" class="store-img">
-    <img [src]="store.image" [alt]="store.name" loading="lazy" />
+    <img
+      [src]="store.image || placeholderImage"
+      [alt]="store.name"
+      loading="lazy"
+      (error)="onImageError($event)"
+    />
   </a>
   <div class="info">
     <a [routerLink]="['/store', store.id]" class="name">{{ store.name }}</a>
@@ -13,6 +18,13 @@
     </div>
     <div class="eta">
       <span class="material-symbols-rounded">schedule</span> {{ store.eta }}
+    </div>
+    <div
+      class="status-pill"
+      [class.open]="isStoreOpen()"
+      [class.closed]="!isStoreOpen()"
+    >
+      {{ storeStatusText() }}
     </div>
     @if (store.offer) {
       <div class="offer">

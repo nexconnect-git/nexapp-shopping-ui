@@ -131,16 +131,21 @@
       border: 1px solid #ccd2e2;
       font-weight: 900;
       color: #25304a;
+      grid-row: 1 / span 2;
     }
 
     b {
       display: block;
+      grid-column: 2;
+      grid-row: 1;
     }
 
     small {
       display: block;
       color: var(--muted);
       margin-top: 4px;
+      grid-column: 2;
+      grid-row: 2;
     }
 
     &.active {

@@ -12,4 +12,12 @@ import { Store } from '../../models';
 export class MobileStoreCardComponent {
   @Input({ required: true }) store!: Store;
   @Input() compact = false;
+  readonly placeholderImage = '/assets/placeholders/store.svg';
+
+  onImageError(event: Event): void {
+    const img = event.target as HTMLImageElement | null;
+    if (!img) return;
+    if (img.src.includes(this.placeholderImage)) return;
+    img.src = this.placeholderImage;
+  }
 }

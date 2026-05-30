@@ -200,7 +200,7 @@ app-map-picker {
     display: grid;
     place-items: center;
     border-radius: 16px;
-    color: #5b2cff;
+    color: var(--fd-color-primary);
     background: #fff;
     box-shadow: 0 10px 24px rgba(33, 22, 82, 0.06);
   }
@@ -225,7 +225,7 @@ app-map-picker {
     display: grid;
     place-items: center;
     border-radius: 16px;
-    color: #5b2cff;
+    color: var(--fd-color-primary);
     background: #f1ecff;
   }
   
@@ -248,7 +248,7 @@ app-map-picker {
   .address-card footer button {
     min-height: 38px;
     border-radius: 14px;
-    color: #5b2cff;
+    color: var(--fd-color-primary);
     background: #f1ecff;
     font-weight: 950;
   }

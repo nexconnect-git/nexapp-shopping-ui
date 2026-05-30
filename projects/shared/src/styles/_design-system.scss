@@ -3,7 +3,7 @@
    ============================================================ */
 
 :root {
-  --primary-gradient: linear-gradient(135deg, #6c2bff 0%, #8b5cff 100%);
+  --primary-gradient: linear-gradient(135deg, #6c2bff 0%, var(--fd-color-primary-hover) 100%);
   /* ── Core Color Palette ───────────────────── */
   --bg-color: #ffffff;
   --surface-color: #ffffff;
@@ -24,19 +24,33 @@
 
   /* ── Semantic Colors ───────────────────────── */
   --success: #22c55e;
-  --success-light: rgba(34, 197, 94, 0.12);
+  --success-light: var(--fd-color-success-soft);
   --danger: #ef4444;
-  --danger-light: rgba(239, 68, 68, 0.1);
-  --warning: #6c2bff;
-  --warning-light: rgba(139, 92, 255, 0.1);
-  --info: #8b5cff;
-  --info-light: #f5f2ff;
+  --danger-light: var(--fd-color-danger-soft);
+  --warning: #facc15;
+  --warning-light: var(--fd-color-warning-soft);
+  --info: #225cff;
+  --info-light: var(--fd-color-info-soft);
 
   /* ── Typography ──────────────────────────── */
-  --font-family:
-    Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    Arial, sans-serif;
-  --font-heading: var(--font-family);
+  --font-family: var(
+    --nc-font-family,
+    "Proxima Nova",
+    "Futura",
+    "Avenir Next",
+    "Segoe UI",
+    Arial,
+    sans-serif
+  );
+  --font-heading: var(
+    --nc-font-heading,
+    "Futura",
+    "Proxima Nova",
+    "Avenir Next",
+    "Segoe UI",
+    Arial,
+    sans-serif
+  );
 
   /* ── Geometry & Depth ────────────────────── */
   --radius-sm: 6px;
@@ -162,16 +176,16 @@ p {
 
 .btn-primary,
 .btn-create {
-  background: var(--primary);
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
   color: #fff;
-  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
+  box-shadow: 0 8px 18px rgba(91, 44, 255, 0.24);
   &:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+    box-shadow: 0 10px 22px rgba(91, 44, 255, 0.3);
   }
   &:active {
     transform: translateY(0);
-    box-shadow: 0 1px 4px rgba(79, 70, 229, 0.2);
+    box-shadow: 0 4px 10px rgba(91, 44, 255, 0.2);
   }
 }
 
@@ -187,12 +201,60 @@ p {
 }
 
 .btn-outline {
-  background: transparent;
-  color: var(--primary);
-  border: 1px solid var(--primary-light);
+  background: var(--info-light);
+  color: var(--info);
+  border: 1px solid #bfdbfe;
   &:hover {
-    background: var(--primary-light);
+    background: color-mix(in srgb, var(--info-light) 60%, #fff);
   }
+}
+
+.btn-success,
+.green-btn,
+.approve-btn,
+.accept-btn,
+.delivered-btn {
+  background: var(--success-light);
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.btn-warning,
+.btn-orange,
+.orange-btn,
+.pending-btn,
+.schedule-btn,
+.onway-btn {
+  background: var(--fd-color-orange-soft);
+  color: #9a3412;
+  border: 1px solid #fed7aa;
+}
+
+.btn-info,
+.blue-btn,
+.map-btn,
+.verify-btn {
+  background: var(--info-light);
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.btn-danger,
+.danger-btn,
+.reject-btn,
+.decline-btn,
+.delete-btn,
+.remove-btn,
+.danger {
+  background: var(--danger-light);
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.purple-btn {
+  background: var(--primary-light);
+  color: var(--primary);
+  border: 1px solid var(--fd-color-primary-border);
 }
 
 .btn-ghost {
@@ -374,13 +436,13 @@ select.has-warning,
 }
 
 .badge-pending {
-  background: var(--warning-light);
-  color: #5a1fe0;
+  background: var(--fd-color-orange-soft);
+  color: #9a3412;
 }
 .badge-confirmed,
 .badge-active {
   background: var(--info-light);
-  color: #6c2bff;
+  color: #1e40af;
 }
 .badge-preparing {
   background: #f5f2ff;

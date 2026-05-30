@@ -159,7 +159,7 @@
     padding: 20px;
     border-radius: 28px;
     color: #fff;
-    background: linear-gradient(135deg, #5b2cff, #7a4dff 62%, #ff6b9a);
+    background: linear-gradient(135deg, var(--fd-color-primary), var(--fd-color-primary-hover) 62%, var(--fd-color-orange));
     box-shadow: 0 18px 44px rgba(91, 44, 255, 0.22);
   }
   
@@ -183,7 +183,7 @@
     margin-top: 6px;
     padding: 10px 14px;
     border-radius: 14px;
-    color: #5b2cff;
+    color: var(--fd-color-primary);
     background: #fff;
     font-weight: 950;
   }
@@ -210,7 +210,7 @@
     display: grid;
     place-items: center;
     border-radius: 17px;
-    color: #5b2cff;
+    color: var(--fd-color-primary);
     background: #f1ecff;
   }
   
@@ -225,7 +225,7 @@
   .offer-card button {
     padding: 9px 11px;
     border-radius: 14px;
-    color: #5b2cff;
+    color: var(--fd-color-primary);
     background: #f1ecff;
     font-weight: 950;
   }

@@ -361,7 +361,7 @@
     display: grid;
     place-items: center;
     border-radius: 16px;
-    color: #5b2cff;
+    color: var(--fd-color-primary);
     background: #fff;
     box-shadow: 0 10px 24px rgba(33, 22, 82, 0.08);
   }
@@ -447,7 +447,7 @@
   }
   
   .benefits i {
-    color: #5b2cff;
+    color: var(--fd-color-primary);
   }
   
   dl {
@@ -485,7 +485,7 @@
     align-items: center;
     border: 1px solid rgba(91, 44, 255, 0.22);
     border-radius: 16px;
-    color: #5b2cff;
+    color: var(--fd-color-primary);
     background: #fff;
     text-align: center;
     font-weight: 950;

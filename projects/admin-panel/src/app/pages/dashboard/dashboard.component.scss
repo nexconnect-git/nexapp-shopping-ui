@@ -187,7 +187,7 @@
   }
   &.teal {
     background: #f5f2ff;
-    color: #8b5cff;
+    color: var(--fd-color-primary-hover);
   }
   &.green {
     background: rgba(34, 197, 94, 0.12);
@@ -242,7 +242,7 @@
     font-weight: 650;
   }
   a {
-    color: #8b5cff;
+    color: var(--fd-color-primary-hover);
     text-decoration: none;
     font-weight: 900;
     font-size: 0.86rem;

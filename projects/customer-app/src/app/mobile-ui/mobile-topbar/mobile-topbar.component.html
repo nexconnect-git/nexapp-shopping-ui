@@ -8,8 +8,11 @@
       <a routerLink="/offers" aria-label="Offers">
         <span class="material-symbols-rounded">local_offer</span>
       </a>
-      <a routerLink="/issues" aria-label="Notifications and support">
+      <a routerLink="/notifications" aria-label="Notifications and support">
         <span class="material-symbols-rounded">notifications</span>
+        @if (api.unreadNotifications()) {
+          <i>{{ api.unreadNotifications() }}</i>
+        }
       </a>
       <button type="button" aria-label="Open cart" (click)="openCart()">
         <span class="material-symbols-rounded">shopping_bag</span>

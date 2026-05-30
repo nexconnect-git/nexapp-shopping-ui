@@ -14,6 +14,7 @@ import { AppStateService } from '../../services/app-state.service';
 export class ProductCardComponent {
   @Input({ required: true }) product!: Product;
   @Input() compact = false;
+  readonly placeholderImage = '/assets/placeholders/product.svg';
 
   constructor(public state: AppStateService) {}
 
@@ -22,5 +23,17 @@ export class ProductCardComponent {
       this.state.cart().find((item) => item.id === this.product.id)?.quantity ??
       0
     );
+  }
+
+  storeClosed(): boolean {
+    const vendor = (this.product?.raw as any)?.vendor;
+    return vendor ? (vendor?.is_open_now ?? vendor?.is_open) === false : false;
+  }
+
+  onImageError(event: Event): void {
+    const img = event.target as HTMLImageElement | null;
+    if (!img) return;
+    if (img.src.includes(this.placeholderImage)) return;
+    img.src = this.placeholderImage;
   }
 }

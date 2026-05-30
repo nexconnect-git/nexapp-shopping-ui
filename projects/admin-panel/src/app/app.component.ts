@@ -45,6 +45,7 @@ export class AppComponent implements OnInit {
   unreadCount = signal(0);
   navQuery = signal('');
   breadcrumbs = signal<Array<{ label: string; url?: string }>>([]);
+  currentUrl = signal('/');
   readonly quickLinks = [
     { route: '/orders', icon: 'receipt_long', label: 'Orders' },
     { route: '/dispatch', icon: 'route', label: 'Dispatch' },
@@ -165,6 +166,8 @@ export class AppComponent implements OnInit {
     if (this.auth.isLoggedIn()) {
       this.startPolling();
     }
+    this.currentUrl.set(this.router.url);
+    this.redirectAuthenticatedAuthRoute(this.router.url);
     this.setBreadcrumbs(this.router.url);
     this.router.events
       .pipe(
@@ -173,8 +176,17 @@ export class AppComponent implements OnInit {
         ),
       )
       .subscribe((event) => {
+        this.currentUrl.set(event.urlAfterRedirects);
+        this.redirectAuthenticatedAuthRoute(event.urlAfterRedirects);
         this.setBreadcrumbs(event.urlAfterRedirects);
       });
+  }
+
+  private redirectAuthenticatedAuthRoute(url: string) {
+    const path = url.split('?')[0].split('#')[0];
+    if (this.auth.isLoggedIn() && (path === '/login' || path === '/setup')) {
+      this.router.navigate(['/']);
+    }
   }
 
   private setBreadcrumbs(url: string) {
@@ -377,6 +389,11 @@ export class AppComponent implements OnInit {
   pageTitle(): string {
     const crumbs = this.breadcrumbs();
     return crumbs[crumbs.length - 1]?.label || 'Command Center';
+  }
+
+  isAuthRoute(): boolean {
+    const path = this.currentUrl().split('?')[0].split('#')[0];
+    return path === '/login' || path === '/setup';
   }
 
   closeMobileMenu() {

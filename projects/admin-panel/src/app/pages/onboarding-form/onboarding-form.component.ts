@@ -764,10 +764,10 @@ export class OnboardingFormComponent implements OnInit {
               {
                 key: 'assigned_area',
                 label: 'Assigned Area',
-                type: 'text',
-                placeholder: 'e.g. South Mumbai',
+                type: 'map',
                 fullWidth: true,
                 maxLength: 120,
+                hint: 'Search or pick the assigned delivery area on the map.',
               },
               {
                 key: 'notes',
@@ -892,8 +892,9 @@ export class OnboardingFormComponent implements OnInit {
       next: (res: any) => {
         this.saving.set(false);
         this.success.set(true);
-        if (res?.temp_password) {
-          this.tempPassword.set(res.temp_password);
+        const temporaryPassword = this.extractTemporaryPassword(res);
+        if (temporaryPassword) {
+          this.tempPassword.set(temporaryPassword);
         } else {
           // Edit mode or no temp password — redirect automatically
           const dest =
@@ -914,6 +915,17 @@ export class OnboardingFormComponent implements OnInit {
         );
       },
     });
+  }
+
+  private extractTemporaryPassword(res: any): string {
+    return (
+      res?.temp_password ||
+      res?.temporary_password ||
+      res?.auto_generated_password ||
+      res?.user?.temp_password ||
+      res?.user_info?.temp_password ||
+      ''
+    );
   }
 
   copyTempPassword() {

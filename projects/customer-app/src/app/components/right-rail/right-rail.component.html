@@ -50,7 +50,11 @@
     </div>
     @for (p of featuredProducts(); track p.id) {
       <div class="deal">
-        <img [src]="p.image" [alt]="p.name" />
+        <img
+          [src]="p.image || placeholderImage"
+          [alt]="p.name"
+          (error)="onImageError($event)"
+        />
         <div>
           <b>{{ p.discount || "Live price" }}</b>
           <small>{{ p.name }}</small>

@@ -30,6 +30,7 @@ export class VendorProductEditComponent {
 
   readonly readiness = computed(() => this.service.readinessItems());
   readonly readinessScore = computed(() => this.service.readinessScore());
+  readonly productPlaceholderImage = '/assets/placeholders/product.svg';
 
   constructor(public service: VendorProductEditService) {}
 
@@ -42,6 +43,16 @@ export class VendorProductEditComponent {
 
   toggle(key: keyof VendorProductEdit): void {
     this.service.toggle(key);
+  }
+
+  productImage(): string {
+    return this.service.product().imageUrl || this.productPlaceholderImage;
+  }
+
+  onImageError(event: Event): void {
+    const img = event.target as HTMLImageElement | null;
+    if (!img || img.src.includes(this.productPlaceholderImage)) return;
+    img.src = this.productPlaceholderImage;
   }
 
   async save(mode: ProductEditSaveEvent['mode']): Promise<void> {

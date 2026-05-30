@@ -91,11 +91,11 @@
     <ng-template tableCell="item" let-item>
       <div class="item-cell">
         <div class="item-thumb">
-          @if (primaryImage(item)) {
-            <img [src]="primaryImage(item)" alt="{{ item.name }}" />
-          } @else {
-            <span>{{ item.name?.[0] || '?' }}</span>
-          }
+          <img
+            [src]="productImage(item)"
+            [alt]="item.name"
+            (error)="onImageError($event)"
+          />
         </div>
         <div class="item-copy">
           <strong>{{ item.name }}</strong>

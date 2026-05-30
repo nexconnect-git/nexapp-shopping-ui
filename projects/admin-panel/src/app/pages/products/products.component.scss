@@ -295,7 +295,7 @@
   }
   &.stock-low {
     background: rgba(108, 43, 255, 0.12);
-    color: #8b5cff;
+    color: var(--fd-color-primary-hover);
   }
   &.stock-empty {
     background: rgba(239, 68, 68, 0.12);

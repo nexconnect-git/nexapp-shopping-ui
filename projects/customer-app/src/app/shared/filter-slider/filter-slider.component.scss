@@ -1,9 +1,10 @@
 .overlay {
   position: fixed;
   inset: 78px 0 0;
-  z-index: 110;
+  z-index: var(--fd-z-drawer);
   background: rgba(12, 16, 31, 0.18);
   backdrop-filter: none;
+  cursor: pointer;
 }
 
 .filter-slider {
@@ -11,15 +12,19 @@
   top: 78px;
   right: 0;
   bottom: 0;
-  z-index: 120;
+  z-index: calc(var(--fd-z-drawer) + 1);
   width: min(440px, 94vw);
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
   overflow: hidden;
   box-sizing: border-box;
   border-left: 1px solid var(--line);
   background: #fff;
   box-shadow: -30px 0 70px rgba(18, 14, 45, 0.18);
+}
+
+.sheet-handle {
+  display: none;
 }
 
 header {
@@ -133,8 +138,8 @@ footer {
 @media (max-width: 760px) {
   .overlay {
     inset: 0;
-    z-index: 300;
-    background: rgba(17, 24, 39, 0.38);
+    z-index: var(--fd-z-modal);
+    background: var(--fd-sheet-overlay);
   }
 
   .filter-slider {
@@ -142,7 +147,7 @@ footer {
     right: 10px;
     top: auto;
     bottom: 0;
-    z-index: 320;
+    z-index: calc(var(--fd-z-modal) + 1);
     width: auto;
     max-width: none;
     max-height: min(74dvh, 640px);
@@ -150,10 +155,11 @@ footer {
     border: 0;
     border-radius: 28px 28px 0 0;
     box-shadow: 0 -26px 70px rgba(17, 24, 39, 0.24);
+    background: #fff;
   }
 
-  .filter-slider::before {
-    content: "";
+  .sheet-handle {
+    display: block;
     width: 42px;
     height: 4px;
     margin-top: 8px;
@@ -211,6 +217,8 @@ footer {
     position: sticky;
     bottom: 0;
     padding: 10px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(10px);
   }
 }
 

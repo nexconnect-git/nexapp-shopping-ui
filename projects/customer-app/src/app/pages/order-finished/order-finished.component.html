@@ -187,7 +187,7 @@
     <span class="material-symbols-rounded">task_alt</span>
     <small>Order #{{ order() | displayOrderId }}</small>
     <h1>{{ order().status === 'Delivered' ? 'Delivered successfully' : 'Order update' }}</h1>
-    <p>{{ order().date }} · {{ order().time }} · {{ order().amount | appCurrency }}</p>
+    <p>{{ order().date }} - {{ order().time }} - {{ order().amount | appCurrency }}</p>
   </section>
 
   <section class="items-card">

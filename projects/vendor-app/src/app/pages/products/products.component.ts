@@ -49,6 +49,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
   fixesTarget = signal<Product | null>(null);
   deleting = signal(false);
   submittingApproval = signal<string | null>(null);
+  readonly productPlaceholderImage = '/assets/placeholders/product.svg';
 
   // Pagination
   page = signal(1);
@@ -129,6 +130,16 @@ export class ProductsComponent implements OnInit, OnDestroy {
       product.low_stock_threshold > 0 &&
       product.stock <= product.low_stock_threshold
     );
+  }
+
+  productImage(product: Product): string {
+    return product.primary_image || this.productPlaceholderImage;
+  }
+
+  onImageError(event: Event): void {
+    const img = event.target as HTMLImageElement | null;
+    if (!img || img.src.includes(this.productPlaceholderImage)) return;
+    img.src = this.productPlaceholderImage;
   }
 
   needsAttention(product: Product): boolean {

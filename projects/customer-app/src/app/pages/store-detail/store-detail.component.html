@@ -20,9 +20,9 @@
           <p>{{ store().category }}</p>
           <div class="meta">
             <span class="material-symbols-rounded">star</span>
-            {{ store().rating }} ({{ store().ratings }}) ·
+            {{ store().rating }} ({{ store().ratings }}) -
             <span class="material-symbols-rounded">schedule</span>
-            {{ store().eta }} ·
+            {{ store().eta }} -
             <span class="material-symbols-rounded">near_me</span>
             {{ store().distance }}
           </div>
@@ -182,7 +182,6 @@
         }
       }
     </div>
-    <fd-order-summary [showButton]="true" />
   </section>
 </main>
 </div>
@@ -192,16 +191,16 @@
   <section class="store-hero">
     <img [src]="store().hero || store().image" [alt]="store().name" />
     <div class="hero-actions">
-      <a routerLink="/stores" aria-label="Back to stores">
+      <button type="button" aria-label="Back" (click)="goBack()">
         <span class="material-symbols-rounded">arrow_back</span>
-      </a>
+      </button>
       <button type="button" aria-label="Share store" (click)="shareStore()">
         <span class="material-symbols-rounded">ios_share</span>
       </button>
     </div>
     <div class="hero-info">
       <h1>{{ store().name }}</h1>
-      <p>{{ store().category }} · {{ store().distance || 'Nearby' }}</p>
+      <p>{{ store().category }} - {{ store().distance || 'Nearby' }}</p>
       <div>
         <span><b>{{ store().rating || 'New' }}</b> rating</span>
         <span>{{ store().eta || 'Fast' }}</span>
@@ -236,7 +235,7 @@
     <div class="mobile-chip-row">
       @for (category of categories(); track category) {
         <button type="button" class="mobile-chip" [class.active]="activeCategory() === category" (click)="setCategory(category)">
-          <span class="material-symbols-rounded">{{ icon(category) }}</span>{{ category }}
+          <span class="category-emoji" aria-hidden="true">{{ icon(category) }}</span>{{ category }}
         </button>
       }
     </div>

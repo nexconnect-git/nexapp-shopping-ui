@@ -100,7 +100,13 @@ del {
 .foot > button {
   height: 38px;
   border-radius: 14px;
-  color: #5b2cff;
-  background: #f1ecff;
+  color: var(--fd-color-primary);
+  background: var(--fd-color-primary-soft);
   font-weight: 950;
+}
+
+.foot > button:disabled {
+  color: #9a3412;
+  background: var(--fd-color-orange-soft);
+  cursor: not-allowed;
 }

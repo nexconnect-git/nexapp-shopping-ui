@@ -185,7 +185,7 @@
   letter-spacing: 0.05em;
   &.badge-open {
     background: #f5f2ff;
-    color: #8b5cff;
+    color: var(--fd-color-primary-hover);
     border: 1px solid rgba(139, 92, 255, 0.24);
   }
   &.badge-review {

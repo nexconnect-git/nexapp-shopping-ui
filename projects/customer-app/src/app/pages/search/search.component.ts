@@ -1,3 +1,4 @@
+import { Location } from '@angular/common';
 import { Component, computed, effect, OnDestroy, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { buildStoreSelectionTarget } from '@nexconnect/customer-search';
@@ -6,10 +7,10 @@ import { Subscription } from 'rxjs';
 import { AppCurrencyPipe } from '@shared/public-api';
 import { CatalogService } from '../../services/catalog.service';
 import { UiService } from '../../services/ui.service';
+import { AppStateService } from '../../services/app-state.service';
 import { ProductCardComponent } from '../../components/product-card/product-card.component';
 import { StoreCardComponent } from '../../components/store-card/store-card.component';
 import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
-import { RightRailComponent } from '../../components/right-rail/right-rail.component';
 import {
   CustomerContentConfigService,
   CustomerPromoCard,
@@ -24,7 +25,6 @@ import {
     BreadcrumbsComponent,
     ProductCardComponent,
     StoreCardComponent,
-    RightRailComponent,
     AppCurrencyPipe,
   ],
   templateUrl: './search.component.html',
@@ -36,12 +36,34 @@ export class SearchComponent implements OnDestroy {
   activeFilters = signal<string[]>([]);
   tabs = computed(() => this.content.search().tabs);
   searchPromo = computed(() => this.content.ads().search[0] || null);
+  hasQuery = computed(() => !!this.query().trim());
+  recommendedCategories = computed(() => {
+    const categories = this.catalog
+      .categories()
+      .filter((category) => category.id !== 'all');
+    const preferred = new Set(
+      this.state
+        .cart()
+        .map((item) => this.normalizeKey(item.category))
+        .filter(Boolean),
+    );
+    return [...categories]
+      .sort((a, b) => {
+        const aPreferred = preferred.has(this.normalizeKey(a.label));
+        const bPreferred = preferred.has(this.normalizeKey(b.label));
+        if (aPreferred === bPreferred) return a.label.localeCompare(b.label);
+        return aPreferred ? -1 : 1;
+      })
+      .slice(0, 8);
+  });
   private readonly routeSub: Subscription;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
+    private location: Location,
     public catalog: CatalogService,
+    public state: AppStateService,
     public ui: UiService,
     public content: CustomerContentConfigService,
   ) {
@@ -105,6 +127,14 @@ export class SearchComponent implements OnDestroy {
     this.syncUrl();
   }
 
+  goBack(): void {
+    if (history.length > 1) {
+      this.location.back();
+      return;
+    }
+    this.router.navigateByUrl('/');
+  }
+
   clearFilters(): void {
     this.activeFilters.set([]);
     this.activeTab.set('All');
@@ -138,5 +168,13 @@ export class SearchComponent implements OnDestroy {
     const q = this.query().trim();
     this.query.set(q);
     this.router.navigate(['/search'], { queryParams: q ? { q } : {} });
+  }
+
+  private normalizeKey(value: string | null | undefined): string {
+    return String(value || '')
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
   }
 }

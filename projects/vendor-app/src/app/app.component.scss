@@ -714,3 +714,9 @@
     max-height: calc(100dvh - 220px);
   }
 }
+
+@media (min-width: 761px) {
+  .mobile-scrim {
+    display: none !important;
+  }
+}

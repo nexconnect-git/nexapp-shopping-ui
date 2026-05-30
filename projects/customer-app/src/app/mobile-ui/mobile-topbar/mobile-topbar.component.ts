@@ -4,6 +4,7 @@ import { CatalogService } from '../../services/catalog.service';
 import { AppStateService } from '../../services/app-state.service';
 import { UiService } from '../../services/ui.service';
 import { AuthService } from '../../services/auth.service';
+import { ApiService } from '@shared/public-api';
 
 @Component({
   selector: 'fd-mobile-topbar',
@@ -27,9 +28,12 @@ export class MobileTopbarComponent {
     public state: AppStateService,
     public ui: UiService,
     public auth: AuthService,
+    public api: ApiService,
     private catalog: CatalogService,
     private router: Router,
-  ) {}
+  ) {
+    this.api.refreshUnreadCount();
+  }
 
   search(event: Event): void {
     event.preventDefault();
@@ -38,7 +42,6 @@ export class MobileTopbarComponent {
   }
 
   openCart(): void {
-    this.state.openMiniCart();
-    this.ui.openMiniCart();
+    this.router.navigate(['/cart']);
   }
 }

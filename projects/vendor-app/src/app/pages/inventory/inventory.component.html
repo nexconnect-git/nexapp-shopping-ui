@@ -68,11 +68,11 @@
         <article class="inventory-row">
           <div class="product-main">
             <div class="thumb">
-              @if (product.primary_image) {
-                <img [src]="product.primary_image" [alt]="product.name" />
-              } @else {
-                <span class="material-icons-outlined">image_not_supported</span>
-              }
+              <img
+                [src]="productImage(product)"
+                [alt]="product.name"
+                (error)="onImageError($event)"
+              />
             </div>
             <div class="product-copy">
               <h3>{{ product.name }}</h3>

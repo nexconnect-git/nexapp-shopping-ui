@@ -1,4 +1,10 @@
-import { Component, computed, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  effect,
+  OnInit,
+  signal,
+} from '@angular/core';
 import {
   NavigationCancel,
   NavigationEnd,
@@ -8,7 +14,6 @@ import {
   RouterOutlet,
 } from '@angular/router';
 import { TopbarComponent } from './shared/topbar/topbar.component';
-import { SidebarComponent } from './shared/sidebar/sidebar.component';
 import { AppStateService } from './services/app-state.service';
 import { LoginSliderComponent } from './shared/login-slider/login-slider.component';
 import { MiniCartComponent } from './shared/mini-cart/mini-cart.component';
@@ -24,7 +29,10 @@ import { MobileBottomNavComponent } from './mobile-ui/mobile-bottom-nav/mobile-b
 import { MobileLoaderComponent } from './mobile-ui/mobile-loader/mobile-loader.component';
 import { MobileToastComponent } from './mobile-ui/mobile-toast/mobile-toast.component';
 import {
+  ApiService,
+  AuthService as SharedAuthService,
   GlobalLoadingComponent,
+  NotificationPollingService,
   PageFeatureAccessService,
   PageFeatureLoadingComponent,
 } from '@shared/public-api';
@@ -37,7 +45,6 @@ import { CustomerContentConfigService } from './services/customer-content-config
   imports: [
     RouterOutlet,
     TopbarComponent,
-    SidebarComponent,
     MobileTopbarComponent,
     LoginSliderComponent,
     MiniCartComponent,
@@ -66,15 +73,18 @@ export class AppComponent implements OnInit {
   });
   showCartAssist = computed(() => {
     const url = this.currentUrl().split('?')[0].split('#')[0];
-    return (
-      this.isHomeRoute() ||
-      url === '/stores' ||
-      url === '/search' ||
-      url.startsWith('/store/') ||
-      url.startsWith('/product/') ||
-      url.startsWith('/category/')
-    );
+    return !url.startsWith('/checkout') && !url.startsWith('/cart');
   });
+  hasBlockingOverlay = computed(
+    () =>
+      this.ui.loginSliderOpen() ||
+      this.state.miniCartOpen() ||
+      this.ui.miniCartOpen() ||
+      this.ui.filterSliderOpen() ||
+      this.ui.locationModalOpen() ||
+      !!this.ui.editModal() ||
+      !!this.ui.confirmDialog(),
+  );
 
   constructor(
     public state: AppStateService,
@@ -83,6 +93,9 @@ export class AppComponent implements OnInit {
     private loader: AppLoaderService,
     private features: PageFeatureAccessService,
     private content: CustomerContentConfigService,
+    private sharedAuth: SharedAuthService,
+    private notifications: NotificationPollingService,
+    private api: ApiService,
   ) {
     this.currentUrl.set(this.router.url || '/');
     this.router.events.subscribe((event) => {
@@ -93,6 +106,14 @@ export class AppComponent implements OnInit {
       }
       if (event instanceof NavigationCancel || event instanceof NavigationError)
         this.loading.set(false);
+    });
+    effect(() => {
+      if (this.sharedAuth.isLoggedIn()) {
+        this.notifications.start();
+        this.api.refreshUnreadCount();
+      } else {
+        this.notifications.stop();
+      }
     });
   }
 

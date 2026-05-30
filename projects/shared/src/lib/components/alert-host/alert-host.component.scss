@@ -77,7 +77,7 @@
   place-items: center;
   border-radius: 18px;
   background: rgba(255, 122, 42, 0.12);
-  color: #8b5cff;
+  color: var(--fd-color-primary-hover);
 }
 .alert-modal h3 {
   margin: 0;

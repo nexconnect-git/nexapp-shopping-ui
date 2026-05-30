@@ -80,7 +80,16 @@
         <strong>{{ config.passwordNotice?.secretValue }}</strong>
       </code>
     </div>
-    <button *ngIf="config.passwordNotice?.actionLabel" type="button">
+    <button
+      *ngIf="config.passwordNotice?.actionLabel"
+      type="button"
+      (click)="
+        action.emit({
+          id: 'resetPassword',
+          label: config.passwordNotice?.actionLabel || 'Reset Password'
+        })
+      "
+    >
       {{ config.passwordNotice?.actionLabel }}
     </button>
   </section>
