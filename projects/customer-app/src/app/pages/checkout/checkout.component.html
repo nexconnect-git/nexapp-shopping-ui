@@ -6,9 +6,15 @@
     <section class="checkout-layout">
       <div class="checkout-main">
         <h1 class="fd-title">Checkout</h1>
+        <section class="checkout-flow fd-card">
+          <span class="active"><b>1</b><small>Address</small></span>
+          <span><b>2</b><small>Delivery Slot</small></span>
+          <span><b>3</b><small>Payment</small></span>
+          <span><b>4</b><small>Review</small></span>
+        </section>
 
         <section class="fd-card block">
-          <h2>Delivery Address</h2>
+          <h2>1. Delivery Address</h2>
           <details class="mobile-address-dropdown">
             <summary>
               <span class="material-symbols-rounded">location_on</span>
@@ -104,7 +110,7 @@
         </section>
 
         <section class="fd-card block">
-          <h2>Delivery Slot</h2>
+          <h2>2. Delivery Slot</h2>
           <div class="slot-grid">
             <button
               type="button"
@@ -161,7 +167,7 @@
         </section>
 
         <section class="fd-card block payment">
-          <h2>Payment Method</h2>
+          <h2>3. Payment Method</h2>
           <div class="pay-grid">
             <div class="pay-list">
               @for (method of state.paymentMethods(); track method.id) {
@@ -266,22 +272,25 @@
 
       <section class="checkout-summary">
         <fd-order-summary [showButton]="false" />
+        <div class="summary-actions fd-card">
+          <button
+            type="button"
+            class="fd-btn primary"
+            [disabled]="!canPlaceOrder()"
+            (click)="placeOrder()"
+          >
+            @if (state.checkoutSubmitting()) {
+              Placing order...
+            } @else {
+              Place Order
+            }
+          </button>
+          <small>
+            Delivery fee and final taxes are recalculated using your selected
+            address and slot before order confirmation.
+          </small>
+        </div>
       </section>
-
-      <div class="continue-row fd-card">
-        <button
-          type="button"
-          class="fd-btn primary"
-          [disabled]="!canPlaceOrder()"
-          (click)="placeOrder()"
-        >
-          @if (state.checkoutSubmitting()) {
-            Placing order...
-          } @else {
-            Place Order
-          }
-        </button>
-      </div>
     </section>
   </main>
 </div>

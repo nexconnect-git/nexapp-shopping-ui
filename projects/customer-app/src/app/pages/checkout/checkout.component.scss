@@ -10,6 +10,47 @@
 .checkout-main {
   min-width: 0;
 }
+.checkout-flow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  padding: 12px;
+  margin: 0 0 14px;
+}
+.checkout-flow > span {
+  min-height: 62px;
+  border: 1px solid var(--fd-color-border);
+  border-radius: 12px;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 5px;
+  background: #fff;
+}
+.checkout-flow > span b {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  border: 1px solid var(--fd-color-border);
+  color: var(--fd-color-text-secondary);
+}
+.checkout-flow > span small {
+  font-size: 11px;
+  font-weight: 900;
+  color: var(--fd-color-text-secondary);
+}
+.checkout-flow > span.active {
+  border-color: var(--fd-color-primary-border);
+  background: var(--fd-color-primary-soft);
+}
+.checkout-flow > span.active b {
+  background: var(--fd-color-primary);
+  border-color: var(--fd-color-primary);
+  color: #fff;
+}
 .stepper {
   height: 82px;
   display: grid;
@@ -262,7 +303,7 @@
   border: 1px solid var(--line);
   border-radius: 10px;
   display: grid;
-  grid-template-columns: 20px 34px minmax(0, 1fr);
+  grid-template-columns: 20px 40px minmax(0, 1fr);
   align-items: center;
   gap: 12px;
   padding: 10px 14px;
@@ -287,14 +328,14 @@
 }
 .pay-dot,
 .pay-method-logo {
-  width: 34px;
-  height: 34px;
+  width: 40px;
+  height: 40px;
   border-radius: 12px;
   background: var(--fd-color-primary-soft);
   color: var(--fd-color-primary);
   display: grid;
   place-items: center;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 1000;
 }
 .pay-dot:before,
@@ -392,7 +433,7 @@
   min-width: 0;
 }
 .pay-panel h3 {
-  margin: 18px 0 16px;
+  margin: 6px 0 12px;
 }
 .pay-panel small {
   display: block;
@@ -427,6 +468,19 @@
   backdrop-filter: blur(8px);
   border: 1px solid var(--fd-color-border);
   border-radius: 16px;
+}
+.summary-actions {
+  margin-top: 12px;
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+.summary-actions .fd-btn {
+  width: 100%;
+}
+.summary-actions small {
+  color: var(--muted);
+  line-height: 1.4;
 }
 .continue-row .fd-btn {
   flex: 1;
@@ -477,6 +531,9 @@
   .fd-title {
     font-size: 25px !important;
     margin: 0 0 8px !important;
+  }
+  .checkout-flow {
+    display: none;
   }
   .stepper {
     height: auto;
@@ -695,6 +752,9 @@
     border-radius: 18px;
     box-shadow: 0 18px 44px rgba(20, 16, 60, 0.18);
     background: #fff;
+  }
+  .summary-actions {
+    display: none;
   }
   .continue-row .fd-btn {
     width: 100%;

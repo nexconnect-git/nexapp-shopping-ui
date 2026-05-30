@@ -10,22 +10,22 @@
   font-size: 18px;
 }
 .cart-table {
-  overflow-x: auto;
+  overflow-x: hidden;
   overflow-y: hidden;
 }
 .table-head,
 .cart-row {
   display: grid;
   grid-template-columns:
-    minmax(260px, 2fr)
-    minmax(140px, 0.9fr)
-    minmax(150px, 0.95fr)
-    minmax(130px, 0.9fr)
-    minmax(170px, 1.1fr);
+    minmax(240px, 2fr)
+    minmax(110px, 0.85fr)
+    minmax(136px, 0.9fr)
+    minmax(110px, 0.8fr)
+    minmax(140px, 0.95fr);
   align-items: center;
-  gap: 18px;
-  padding: 18px 22px;
-  min-width: 980px;
+  gap: 14px;
+  padding: 16px;
+  min-width: 0;
 }
 .table-head {
   background: var(--fd-color-page);
@@ -52,7 +52,7 @@
 }
 .item b {
   display: block;
-  font-size: 26px;
+  font-size: 18px;
   line-height: 1.25;
   white-space: nowrap;
   overflow: hidden;
@@ -90,7 +90,7 @@ del {
 }
 .row-actions {
   display: grid;
-  gap: 10px;
+  gap: 6px;
   justify-items: start;
 }
 .row-actions button {
@@ -98,7 +98,7 @@ del {
   align-items: center;
   gap: 6px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12px;
   text-align: left;
   white-space: nowrap;
 }
@@ -218,11 +218,11 @@ del {
   .table-head,
   .cart-row {
     grid-template-columns:
-      minmax(220px, 1.8fr)
-      minmax(120px, 0.9fr)
-      minmax(138px, 0.9fr)
-      minmax(120px, 0.8fr)
-      minmax(148px, 1fr);
+      minmax(200px, 1.7fr)
+      minmax(100px, 0.8fr)
+      minmax(124px, 0.85fr)
+      minmax(104px, 0.75fr)
+      minmax(130px, 0.9fr);
     gap: 14px;
     padding-inline: 16px;
   }
@@ -235,6 +235,10 @@ del {
     width: 76px;
     height: 64px;
   }
+
+  .item b {
+    font-size: 17px;
+  }
 }
 @media (max-width: 1200px) {
   .cart-layout {
@@ -246,6 +250,11 @@ del {
   .table-head {
     display: none;
   }
+
+  .cart-table {
+    overflow-x: visible;
+  }
+
   .cart-row {
     grid-template-columns: 1fr;
   }

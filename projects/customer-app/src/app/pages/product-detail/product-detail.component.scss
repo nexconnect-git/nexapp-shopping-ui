@@ -1,6 +1,6 @@
 .product-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 520px 330px;
+  grid-template-columns: minmax(0, 0.95fr) minmax(420px, 500px) 300px;
   grid-template-areas: "media buy rail" "details buy rail" "suggestionTitle buy rail" "suggestions buy rail";
   gap: 28px;
 }
@@ -52,7 +52,7 @@
   object-fit: cover;
 }
 .main-img {
-  height: 520px;
+  height: 460px;
   border: 1px solid var(--line);
   border-radius: 18px;
   background: #fff;
@@ -111,7 +111,7 @@
   gap: 14px;
 }
 .buy-panel {
-  padding-top: 48px;
+  padding-top: 16px;
 }
 .buy-panel h1 {
   font-size: 30px;
@@ -205,7 +205,7 @@
 .right-info {
   display: grid;
   gap: 18px;
-  padding-top: 48px;
+  padding-top: 16px;
 }
 .right-info .fd-card {
   padding: 22px;

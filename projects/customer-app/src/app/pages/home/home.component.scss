@@ -779,6 +779,7 @@
     opacity: 0.84;
     font-size: 12px;
     font-weight: 900;
+    color: rgba(255, 255, 255, 0.94);
   }
   
   .hero-card h1 {
@@ -786,6 +787,8 @@
     font-size: 26px;
     line-height: 1.02;
     font-weight: 950;
+    color: #ffffff;
+    text-shadow: 0 2px 8px rgba(18, 8, 56, 0.32);
   }
   
   .hero-card p {
@@ -793,6 +796,7 @@
     opacity: 0.88;
     font-size: 13px;
     line-height: 1.35;
+    color: rgba(255, 255, 255, 0.94);
   }
   
   .hero-card a {

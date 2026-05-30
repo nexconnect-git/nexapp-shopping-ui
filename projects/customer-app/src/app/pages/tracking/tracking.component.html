@@ -26,21 +26,18 @@
         </div>
         <div>
           <small>Estimated Arrival</small>
-          <h2>{{ order().raw?.estimated_delivery_time || "Soon" }}</h2>
+          <h2>{{ estimatedArrivalLabel() }}</h2>
           <p>Today</p>
           <span>{{ order().status }}</span>
         </div>
-        <div class="progress" [class.compact]="steps().length <= 2">
-          @for (step of steps(); track step.name; let i = $index) {
+        <div class="progress">
+          @for (step of progressSteps(); track step.status) {
             <div>
-              <b
-                [class.done]="
-                  i < steps().length - 1 || order().status === 'Delivered'
-                "
+              <b [class.done]="step.done"
                 ><span class="material-symbols-rounded">{{
                   step.icon
                 }}</span></b
-              ><span>{{ step.name }}</span
+              ><span>{{ step.label }}</span
               ><small>{{ step.time }}</small>
             </div>
           }
@@ -132,14 +129,18 @@
 
       <div class="promo-row">
         <section>
-          <b>Enjoying fast deliveries?</b
-          ><span>View wallet and membership details</span
-          ><button type="button" (click)="joinOne()">Open Wallet</button>
+          <div class="promo-copy">
+            <b>Enjoying fast deliveries?</b>
+            <span>View wallet and membership details</span>
+          </div>
+          <button type="button" (click)="joinOne()">Open Wallet</button>
         </section>
         <section>
-          <b>Refer friends and get rewards</b
-          ><span>Invite your friends and earn rewards</span
-          ><button type="button" routerLink="/referral">Refer Now</button>
+          <div class="promo-copy">
+            <b>Refer friends and get rewards</b>
+            <span>Invite your friends and earn rewards</span>
+          </div>
+          <button type="button" routerLink="/referral">Refer Now</button>
         </section>
       </div>
     </div>
@@ -159,11 +160,11 @@
             ><small>{{ item.unit }}</small
             ><strong>{{ item.price | appCurrency }}</strong>
           </div>
-          <span>{{ item.unit }}</span>
+          <span>Qty {{ itemQuantity(item) }}</span>
         </div>
       }
       <button type="button" (click)="downloadInvoice()">
-        View all items ({{ order().items.length }})
+        Download invoice copy
       </button>
       <hr />
       <p>

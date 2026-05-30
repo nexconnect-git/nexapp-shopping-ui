@@ -13,7 +13,7 @@
   right: 0;
   bottom: 0;
   z-index: calc(var(--fd-z-drawer) + 1);
-  width: min(440px, 94vw);
+  width: min(392px, 92vw);
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr) auto;
   overflow: hidden;
@@ -33,17 +33,19 @@ header {
   align-items: start;
   gap: 14px;
   border-bottom: 1px solid var(--line);
-  padding: 24px 28px 18px;
+  padding: 16px 18px 12px;
 }
 
 h2 {
   margin: 0;
-  font-size: 30px;
+  font-size: 28px;
+  line-height: 1.1;
 }
 
 p {
-  margin: 5px 0;
+  margin: 3px 0 0;
   color: var(--muted);
+  font-size: 14px;
 }
 
 .close {
@@ -59,37 +61,40 @@ p {
 .scroll {
   min-height: 0;
   overflow: auto;
-  padding: 0 28px 10px;
+  padding: 0 18px 8px;
+  scrollbar-width: thin;
 }
 
 section {
   border-bottom: 1px solid var(--line);
-  padding: 24px 0;
+  padding: 14px 0;
 }
 
 section h3 {
-  margin: 0 0 14px;
+  margin: 0 0 10px;
   font-size: 18px;
 }
 
 .chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
 }
 
 .chips button {
   max-width: 100%;
-  min-height: 38px;
+  min-height: 34px;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: #fff;
-  padding: 8px 14px;
+  padding: 6px 12px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-weight: 900;
+  font-size: 13px;
+  line-height: 1.15;
 }
 
 .chips .active {
@@ -103,7 +108,8 @@ section h3 {
   display: flex;
   justify-content: space-between;
   color: var(--primary);
-  margin-bottom: 14px;
+  margin-bottom: 10px;
+  font-size: 13px;
 }
 
 input[type="range"] {
@@ -112,7 +118,7 @@ input[type="range"] {
 }
 
 .range-line {
-  height: 8px;
+  height: 6px;
   background: #e6e6ef;
   border-radius: 999px;
   overflow: hidden;
@@ -128,10 +134,10 @@ input[type="range"] {
 
 footer {
   border-top: 1px solid var(--line);
-  padding: 18px 28px 24px;
+  padding: 12px 18px calc(14px + env(safe-area-inset-bottom, 0px));
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 10px;
   background: #fff;
 }
 
@@ -150,7 +156,7 @@ footer {
     z-index: calc(var(--fd-z-modal) + 1);
     width: auto;
     max-width: none;
-    max-height: min(74dvh, 640px);
+    max-height: min(70dvh, 620px);
     transform: none;
     border: 0;
     border-radius: 28px 28px 0 0;
@@ -169,7 +175,7 @@ footer {
   }
 
   header {
-    padding: 12px 16px 10px;
+    padding: 10px 14px 8px;
   }
 
   h2 {
@@ -177,7 +183,7 @@ footer {
   }
 
   p {
-    font-size: 13px;
+    font-size: 12px;
   }
 
   .close {
@@ -186,7 +192,7 @@ footer {
   }
 
   .scroll {
-    padding: 0 16px 8px;
+    padding: 0 14px 6px;
     scrollbar-width: none;
   }
 
@@ -195,12 +201,12 @@ footer {
   }
 
   section {
-    padding: 14px 0;
+    padding: 10px 0;
   }
 
   section h3 {
     font-size: 15px;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
   }
 
   .chips {
@@ -208,15 +214,15 @@ footer {
   }
 
   .chips button {
-    min-height: 36px;
-    padding: 8px 13px;
-    font-size: 13px;
+    min-height: 32px;
+    padding: 6px 11px;
+    font-size: 12px;
   }
 
   footer {
     position: sticky;
     bottom: 0;
-    padding: 10px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+    padding: 8px 14px calc(10px + env(safe-area-inset-bottom, 0px));
     background: rgba(255, 255, 255, 0.98);
     backdrop-filter: blur(10px);
   }

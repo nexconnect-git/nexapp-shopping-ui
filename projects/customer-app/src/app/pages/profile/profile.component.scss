@@ -89,13 +89,16 @@
 }
 .address-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 16px;
 }
 .address {
-  padding: 22px;
-  min-height: 230px;
+  padding: 16px;
+  min-height: 208px;
   position: relative;
+  display: grid;
+  align-content: start;
+  gap: 10px;
 }
 .address > span {
   background: var(--primary-soft);
@@ -103,27 +106,42 @@
   font-weight: 900;
   border-radius: 8px;
   padding: 6px 10px;
+  width: max-content;
 }
 .address button {
-  float: right;
+  position: absolute;
+  top: 12px;
+  right: 10px;
 }
 .address b {
   display: block;
-  margin-top: 22px;
+  margin-top: 4px;
+  line-height: 1.25;
 }
 .address p {
   color: #4a5068;
-  line-height: 1.6;
+  line-height: 1.45;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+}
+.address small {
+  color: var(--muted);
 }
 .address em {
   display: inline-block;
-  margin-top: 12px;
+  margin-top: 2px;
   background: var(--green-soft);
   color: var(--green);
   font-style: normal;
   border-radius: 8px;
   padding: 6px 10px;
   font-weight: 900;
+  width: max-content;
 }
 .add-address {
   display: grid;
@@ -141,6 +159,7 @@
   grid-template-columns: 1fr 1.1fr;
   gap: 28px;
   margin-top: 26px;
+  align-items: start;
 }
 .bottom-grid article {
   padding: 22px;
@@ -168,16 +187,34 @@
 }
 .quick {
   display: grid;
-  grid-template-columns: 42px 1fr 1fr 20px;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
   gap: 12px;
   align-items: center;
-  padding: 13px 0;
+  padding: 12px 0;
+  border-top: 1px solid var(--fd-color-border-soft);
+}
+.quick:first-of-type {
+  border-top: 0;
 }
 .quick span {
-  font-size: 24px;
+  font-size: 20px;
+}
+.quick b {
+  display: block;
+  line-height: 1.2;
 }
 .quick small {
+  display: block;
+  margin-top: 2px;
   color: var(--muted);
+  font-size: 13px;
+  line-height: 1.3;
+}
+.quick em {
+  font-style: normal;
+  font-weight: 800;
+  color: var(--fd-color-info);
+  white-space: nowrap;
 }
 .right-profile {
   display: grid;

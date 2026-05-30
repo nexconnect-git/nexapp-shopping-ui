@@ -39,6 +39,16 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
   private mapHost: HTMLElement | null = null;
   private mapHostChanges?: Subscription;
   private mapInitialized = false;
+  private readonly statusOrder: string[] = [
+    'placed',
+    'confirmed',
+    'preparing',
+    'ready',
+    'picked_up',
+    'on_the_way',
+    'delivered',
+    'cancelled',
+  ];
 
   constructor(
     private route: ActivatedRoute,
@@ -86,32 +96,66 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
     const tracking = this.tracking().length
       ? this.tracking()
       : order.raw?.tracking || [];
-    if (tracking.length) {
-      return tracking.map((entry: any) => ({
-        icon: this.iconFor(entry.status),
-        name: this.labelFor(entry.status),
-        time: entry.timestamp
-          ? new Date(entry.timestamp).toLocaleTimeString([], {
-              hour: '2-digit',
-              minute: '2-digit',
-            })
-          : '',
-      }));
+    const normalized = tracking
+      .map((entry: any) => ({
+        status: this.normalizeStatusKey(entry?.status),
+        timestamp: entry?.timestamp || null,
+      }))
+      .filter((entry: any) => !!entry.status);
+    const orderStatus = this.normalizeStatusKey(order.raw?.status || order.status);
+    if (orderStatus && !normalized.some((entry: any) => entry.status === orderStatus)) {
+      normalized.push({ status: orderStatus, timestamp: null });
     }
-    return [
+    if (!normalized.some((entry: any) => entry.status === 'placed')) {
+      normalized.unshift({ status: 'placed', timestamp: null });
+    }
+    const deduped = normalized.filter(
+      (entry, index, list) => list.findIndex((item) => item.status === entry.status) === index,
+    );
+    deduped.sort((a, b) => this.statusWeight(a.status) - this.statusWeight(b.status));
+
+    return deduped.map((entry) => ({
+      icon: this.iconFor(entry.status),
+      name: this.labelFor(entry.status),
+      status: entry.status,
+      time: entry.timestamp
+        ? new Date(entry.timestamp).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+          })
+        : entry.status === 'placed'
+          ? order.time || ''
+          : '',
+    }));
+  });
+  progressSteps = computed(() => {
+    const status = this.normalizeStatusKey(this.order().raw?.status || this.order().status);
+    const currentWeight = this.statusWeight(status);
+    const timelineMap = new Map(this.steps().map((step: any) => [step.status, step.time]));
+    const display = [
+      { status: 'placed', label: 'Placed' },
+      { status: 'confirmed', label: 'Confirmed' },
+      { status: 'preparing', label: 'Preparing' },
       {
-        icon: this.iconFor('placed'),
-        name: 'Order Confirmed',
-        time: order.time || '',
-      },
-      { icon: this.iconFor('preparing'), name: 'Preparing', time: '' },
-      { icon: this.iconFor('on_the_way'), name: 'Out for Delivery', time: '' },
-      {
-        icon: this.iconFor('delivered'),
-        name: order.status === 'Delivered' ? 'Delivered' : 'Arriving soon',
-        time: order.status === 'Delivered' ? order.time : 'Upcoming',
+        status: status === 'delivered' ? 'delivered' : 'on_the_way',
+        label: status === 'delivered' ? 'Delivered' : 'On the way',
       },
     ];
+    return display.map((step) => ({
+      ...step,
+      icon: this.iconFor(step.status),
+      done: currentWeight >= this.statusWeight(step.status),
+      time: timelineMap.get(step.status) || '',
+    }));
+  });
+  estimatedArrivalLabel = computed(() => {
+    const raw = this.order().raw?.estimated_delivery_time;
+    if (raw === null || raw === undefined) return 'Soon';
+    const rawText = String(raw).trim();
+    if (!rawText) return 'Soon';
+    const numeric = Number(rawText);
+    if (Number.isFinite(numeric) && numeric > 0) return `${numeric} mins`;
+    return rawText;
   });
   hasPickedUp = computed(() => {
     const status = String(this.order().raw?.status || this.order().status || '').toLowerCase();
@@ -284,7 +328,14 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
     this.state.showToast('Invoice download started');
   }
 
+  itemQuantity(item: any): number {
+    const value = Number(item?.raw?.quantity ?? item?.quantity ?? 1);
+    return Number.isFinite(value) && value > 0 ? value : 1;
+  }
+
   private labelFor(status: string): string {
+    if (status === 'on_the_way') return 'On the way';
+    if (status === 'picked_up') return 'Picked up';
     return String(status || 'update')
       .replace(/_/g, ' ')
       .replace(/\b\w/g, (char) => char.toUpperCase());
@@ -295,7 +346,21 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
     if (key.includes('deliver')) return 'task_alt';
     if (key.includes('way') || key.includes('pick')) return 'two_wheeler';
     if (key.includes('prepar') || key.includes('pack')) return 'inventory_2';
+    if (key.includes('confirm')) return 'verified';
     return 'task_alt';
+  }
+
+  private normalizeStatusKey(value: string): string {
+    return String(value || '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '_');
+  }
+
+  private statusWeight(status: string): number {
+    const normalized = this.normalizeStatusKey(status);
+    const index = this.statusOrder.indexOf(normalized);
+    return index >= 0 ? index : this.statusOrder.length + 1;
   }
 
   private vendorCoordinate(): { lat: number; lng: number } | null {
