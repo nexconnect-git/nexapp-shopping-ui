@@ -18,6 +18,7 @@ declare global {
 @Injectable({ providedIn: 'root' })
 export class GoogleMapsService {
   private scriptPromise: Promise<void> | null = null;
+  private missingApiKeyWarned = false;
 
   apiKey(fallback = ''): string {
     return getGoogleMapsApiKey(fallback);
@@ -42,8 +43,15 @@ export class GoogleMapsService {
 
   loadJavaScriptApi(apiKey = this.apiKey()): Promise<void> {
     if (this.hasRuntime()) return Promise.resolve();
-    if (!apiKey)
+    if (!apiKey) {
+      if (!this.missingApiKeyWarned) {
+        this.missingApiKeyWarned = true;
+        console.warn(
+          '[Maps] Google Maps API key is missing. Configure window.__NEXCONNECT_CONFIG__.googleMapsApiKey (runtime-config.js) or app environment fallback for local development.',
+        );
+      }
       return Promise.reject(new Error('Google Maps API key is not configured'));
+    }
     if (this.scriptPromise) return this.scriptPromise;
 
     this.scriptPromise = new Promise<void>((resolve, reject) => {

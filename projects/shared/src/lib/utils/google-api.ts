@@ -28,6 +28,16 @@ export interface GoogleRouteResult {
   encodedPolyline: string;
 }
 
+export class GoogleApiHttpError extends Error {
+  constructor(
+    readonly operation: string,
+    readonly status: number,
+    message?: string,
+  ) {
+    super(message || `${operation} failed with status ${status}`);
+  }
+}
+
 export const DEFAULT_GOOGLE_MAPS_API_KEY = '';
 export const DEFAULT_GOOGLE_MAPS_MAP_ID = '';
 
@@ -67,6 +77,18 @@ const ROUTES_FIELD_MASK = [
   'routes.polyline.encodedPolyline',
 ].join(',');
 
+const PLACES_CIRCUIT_BREAKER_STATUSES = new Set([401, 403, 429]);
+const PLACES_CIRCUIT_BREAKER_MS = 5 * 60 * 1000;
+let placesAutocompleteCircuitOpenUntil = 0;
+
+export function isPlacesAutocompleteTemporarilyUnavailable(): boolean {
+  return Date.now() < placesAutocompleteCircuitOpenUntil;
+}
+
+function openPlacesAutocompleteCircuit() {
+  placesAutocompleteCircuitOpenUntil = Date.now() + PLACES_CIRCUIT_BREAKER_MS;
+}
+
 function googleLatLng(point: GoogleLatLng) {
   return {
     location: {
@@ -85,6 +107,7 @@ export async function autocompleteGooglePlaces(
   const trimmedInput = input.trim();
   if (!trimmedInput) return [];
   if (!apiKey) throw new Error('Google Places API key is not configured');
+  if (isPlacesAutocompleteTemporarilyUnavailable()) return [];
 
   const response = await fetch(
     'https://places.googleapis.com/v1/places:autocomplete',
@@ -103,7 +126,12 @@ export async function autocompleteGooglePlaces(
   );
 
   if (!response.ok) {
-    throw new Error(
+    if (PLACES_CIRCUIT_BREAKER_STATUSES.has(response.status)) {
+      openPlacesAutocompleteCircuit();
+    }
+    throw new GoogleApiHttpError(
+      'Places autocomplete',
+      response.status,
       `Places autocomplete failed with status ${response.status}`,
     );
   }
@@ -143,7 +171,11 @@ export async function getGooglePlaceDetails(
   );
 
   if (!response.ok) {
-    throw new Error(`Place details failed with status ${response.status}`);
+    throw new GoogleApiHttpError(
+      'Place details',
+      response.status,
+      `Place details failed with status ${response.status}`,
+    );
   }
 
   const place = await response.json();
@@ -184,7 +216,11 @@ export async function computeGoogleRoute(
   );
 
   if (!response.ok) {
-    throw new Error(`Routes API failed with status ${response.status}`);
+    throw new GoogleApiHttpError(
+      'Routes API',
+      response.status,
+      `Routes API failed with status ${response.status}`,
+    );
   }
 
   const data = await response.json();

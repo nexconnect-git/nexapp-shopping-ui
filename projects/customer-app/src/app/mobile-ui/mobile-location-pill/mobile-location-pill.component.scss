@@ -1,0 +1,49 @@
+:host {
+  display: block;
+}
+
+.location-pill {
+  width: 100%;
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border: 1px solid rgba(56, 38, 142, 0.12);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(17, 24, 39, 0.07);
+}
+
+.copy {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  gap: 2px;
+  text-align: left;
+}
+
+small {
+  font-size: 11px;
+  color: #6b7280;
+  font-weight: 800;
+}
+
+b {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #111111;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.material-symbols-rounded {
+  color: var(--fd-color-primary);
+}
+
+.chevron {
+  color: #6b7280;
+}
+

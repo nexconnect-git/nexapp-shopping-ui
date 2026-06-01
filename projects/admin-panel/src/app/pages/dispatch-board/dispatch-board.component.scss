@@ -1,4 +1,4 @@
-:host {
+﻿:host {
   display: block;
 }
 
@@ -38,7 +38,7 @@
     color: #ef4444;
   }
   &.cyan .material-icons-outlined {
-    color: #6c2bff;
+    color: #38268E;
   }
   &.green .material-icons-outlined {
     color: #22c55e;
@@ -92,7 +92,7 @@
   }
   &.picked_up,
   &.on_the_way {
-    background: #6c2bff;
+    background: #38268E;
   }
 }
 
@@ -211,3 +211,4 @@
     grid-template-columns: 1fr;
   }
 }
+

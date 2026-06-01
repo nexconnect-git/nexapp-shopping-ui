@@ -1,4 +1,4 @@
-.hero {
+﻿.hero {
   min-height: 330px;
   border-radius: 22px;
   background-size: cover;
@@ -95,14 +95,14 @@
   margin: 0 0 18px;
   border: 1px solid #efe7ff;
   border-radius: 18px;
-  background: linear-gradient(135deg, #f5f2ff, #fff);
+  background: linear-gradient(135deg, #EFECF8, #fff);
   display: grid;
   grid-template-columns: 50px minmax(0, 1fr);
   gap: 12px;
   align-items: center;
   padding: 15px 16px;
   box-shadow: 0 12px 32px rgba(23, 18, 61, 0.05);
-  color: #5a1fe0;
+  color: #23117C;
 }
 .store-offer-banner > .material-symbols-rounded {
   width: 50px;
@@ -474,3 +474,4 @@
     font-size: 32px;
   }
 }
+

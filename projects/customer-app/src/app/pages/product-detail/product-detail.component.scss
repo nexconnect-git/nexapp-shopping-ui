@@ -1,4 +1,4 @@
-.product-layout {
+﻿.product-layout {
   display: grid;
   grid-template-columns: minmax(0, 0.95fr) minmax(420px, 500px) 300px;
   grid-template-areas: "media buy rail" "details buy rail" "suggestionTitle buy rail" "suggestions buy rail";
@@ -483,7 +483,7 @@
     display: grid;
     grid-template-columns: 36px 1fr 36px;
     align-items: center;
-    border: 1px solid rgba(91, 44, 255, 0.22);
+    border: 1px solid rgba(56, 38, 142, 0.22);
     border-radius: 16px;
     color: var(--fd-color-primary);
     background: #fff;
@@ -491,3 +491,4 @@
     font-weight: 950;
   }
 }
+

@@ -7,10 +7,14 @@
     <aside class="app-sidebar" aria-label="Admin navigation">
       <div class="sidebar-brand-row">
         <a class="brand-lockup" routerLink="/" (click)="closeMobileMenu()">
-          <span class="brand-mark" aria-hidden="true">N</span>
+          <img
+            class="brand-mark"
+            src="assets/brand/nextou-logo-single.png"
+            alt="Nextou logo"
+          />
           @if (!sidebarCollapsed()) {
             <span class="brand-copy">
-              <strong>Nextou</strong>
+              <img src="assets/brand/nextou-brand-logo.png" alt="Nextou" class="brand-wordmark" />
               <small>Admin Cloud</small>
             </span>
           }
@@ -108,6 +112,16 @@
     <section class="app-workspace">
       <header class="app-topbar">
         <div class="topbar-left">
+          @if (showBackButton()) {
+            <button
+              class="back-btn"
+              type="button"
+              aria-label="Go back"
+              (click)="goBack()"
+            >
+              <span class="material-icons-outlined">arrow_back</span>
+            </button>
+          }
           <button
             class="mobile-menu-btn"
             type="button"

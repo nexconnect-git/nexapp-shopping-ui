@@ -89,7 +89,7 @@
         <button
           type="button"
           class="fd-btn outline"
-          (click)="state.addToCart(product(), qty())"
+          (click)="addToCart()"
         >
           <span class="material-symbols-rounded">shopping_cart</span> Add to
           Cart
@@ -285,7 +285,7 @@
         <span class="material-symbols-rounded">add</span>
       </button>
     </div>
-    <button type="button" class="mobile-cta" (click)="state.addToCart(product(), qty())">Add to cart</button>
+    <button type="button" class="mobile-cta" (click)="addToCart()">Add to cart</button>
     <button type="button" class="mobile-cta secondary" (click)="buyNow()">Buy now</button>
   </section>
 </main>

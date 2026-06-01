@@ -109,11 +109,16 @@ export class OrderService {
     });
   }
 
-  submitRating(orderId: string, rating: number): void {
-    this.api.submitOrderRating(orderId, rating).subscribe({
-      next: () => this.state.showToast('Thanks for rating your order'),
-      error: () => this.state.showToast('Could not submit rating'),
-    });
+  submitRating(
+    orderId: string,
+    payload: {
+      vendor_rating: number;
+      vendor_comment?: string;
+      delivery_rating?: number;
+      delivery_comment?: string;
+    },
+  ): Observable<any> {
+    return this.api.submitOrderRating(orderId, payload);
   }
 
   private mapOrder(raw: any): Order {

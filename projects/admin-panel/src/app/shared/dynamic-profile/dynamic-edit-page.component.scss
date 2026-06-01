@@ -1,4 +1,4 @@
-:host {
+﻿:host {
   display: block;
 }
 
@@ -138,7 +138,7 @@
         background: var(--fd-color-primary);
         color: #fff;
         border-color: var(--fd-color-primary);
-        box-shadow: 0 10px 22px rgba(91, 44, 255, 0.22);
+        box-shadow: 0 10px 22px rgba(56, 38, 142, 0.22);
       }
     }
   }
@@ -235,7 +235,7 @@ textarea {
 
   &:focus {
     border-color: var(--fd-color-primary);
-    box-shadow: 0 0 0 4px rgba(91, 44, 255, 0.08);
+    box-shadow: 0 0 0 4px rgba(56, 38, 142, 0.08);
   }
 }
 
@@ -421,3 +421,4 @@ textarea {
     grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
   }
 }
+

@@ -1,4 +1,4 @@
-:host {
+﻿:host {
   display: block;
   padding-bottom: 3rem;
 }
@@ -207,7 +207,7 @@
 .badge-pending {
   background: var(--warning-light);
   color: var(--warning);
-  border-color: rgba(108, 43, 255, 0.2);
+  border-color: rgba(56, 38, 142, 0.2);
 }
 .badge-suspended,
 .badge-rejected {
@@ -375,7 +375,7 @@
 .badge-placed {
   background: var(--warning-light);
   color: var(--warning);
-  border-color: rgba(108, 43, 255, 0.2);
+  border-color: rgba(56, 38, 142, 0.2);
 }
 .badge-confirmed {
   background: var(--success-light);
@@ -386,8 +386,8 @@
   color: var(--primary);
 }
 .badge-ready {
-  background: #f5f2ff;
-  color: #6c2bff;
+  background: #EFECF8;
+  color: #38268E;
 }
 .badge-delivered {
   background: rgba(34, 197, 94, 0.12);
@@ -604,7 +604,7 @@
   animation: fadeIn 0.4s ease-out;
 }
 
-/* ── Loyalty Tab ───────────────────────────────────── */
+/* â”€â”€ Loyalty Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .loyalty-cards {
   display: flex;
   gap: 1rem;
@@ -921,8 +921,8 @@
     color: #0e7490;
 
     &.warm {
-      background: rgba(108, 43, 255, 0.13);
-      color: #5a1fe0;
+      background: rgba(56, 38, 142, 0.13);
+      color: #23117C;
     }
     &.green {
       background: rgba(34, 197, 94, 0.12);
@@ -1408,3 +1408,5 @@
     font-weight: 500;
   }
 }
+
+

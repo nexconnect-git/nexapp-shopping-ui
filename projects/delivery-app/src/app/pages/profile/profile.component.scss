@@ -1,4 +1,4 @@
-:host {
+﻿:host {
   display: block;
   padding: 1.5rem;
   padding-bottom: 2rem;
@@ -133,7 +133,7 @@
   &.unverified {
     background: var(--warning-light);
     color: var(--warning);
-    border-color: rgba(108, 43, 255, 0.2);
+    border-color: rgba(56, 38, 142, 0.2);
   }
 }
 
@@ -350,3 +350,4 @@
     transform: translateY(0);
   }
 }
+

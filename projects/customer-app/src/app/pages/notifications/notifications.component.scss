@@ -1,0 +1,66 @@
+.fd-list,
+.mobile-list {
+  display: grid;
+  gap: 12px;
+}
+
+.notify-row,
+.notify-card {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  padding: 14px 16px;
+  color: var(--ink);
+}
+
+.notify-row.unread,
+.notify-card.unread {
+  border-color: rgba(108, 99, 255, 0.35);
+  background: #faf9ff;
+}
+
+.notify-row b,
+.notify-card b {
+  display: block;
+  font-size: 15px;
+}
+
+.notify-row p,
+.notify-card p {
+  margin: 4px 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.notify-row small,
+.notify-card small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.notify-row i {
+  text-transform: capitalize;
+  color: var(--primary);
+  font-style: normal;
+  font-size: 12px;
+}
+
+.simple-head button {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: #fff;
+  color: var(--primary);
+}
+
+@media (max-width: 760px) {
+  .notify-card {
+    grid-template-columns: 24px minmax(0, 1fr);
+  }
+}

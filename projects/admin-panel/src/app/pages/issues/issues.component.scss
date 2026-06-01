@@ -1,4 +1,4 @@
-:host {
+﻿:host {
   display: block;
   padding-bottom: 3rem;
 }
@@ -32,7 +32,7 @@
   }
 }
 
-/* ── Header ───────────────────────────────────────── */
+/* â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .page-header {
   display: flex;
   justify-content: space-between;
@@ -94,7 +94,7 @@
   }
 }
 
-/* ── Table Card ───────────────────────────────────── */
+/* â”€â”€ Table Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .table-card {
   background: white;
   border: 1px solid var(--border-color);
@@ -184,14 +184,14 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   &.badge-open {
-    background: #f5f2ff;
+    background: #EFECF8;
     color: var(--fd-color-primary-hover);
     border: 1px solid rgba(139, 92, 255, 0.24);
   }
   &.badge-review {
-    background: #f5f2ff;
-    color: #6c2bff;
-    border: 1px solid rgba(108, 43, 255, 0.24);
+    background: #EFECF8;
+    color: #38268E;
+    border: 1px solid rgba(56, 38, 142, 0.24);
   }
   &.badge-resolved {
     background: var(--success-light);
@@ -202,8 +202,8 @@
     color: var(--danger);
   }
   &.badge-refund {
-    background: #f5f2ff;
-    color: #6c2bff;
+    background: #EFECF8;
+    color: #38268E;
   }
 }
 
@@ -263,7 +263,7 @@
   animation: spin 0.8s linear infinite;
 }
 
-/* ── Side Panel ───────────────────────────────────── */
+/* â”€â”€ Side Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .panel-backdrop {
   position: fixed;
   inset: 0;
@@ -552,3 +552,5 @@ textarea.form-input {
     transform: translateX(0);
   }
 }
+
+

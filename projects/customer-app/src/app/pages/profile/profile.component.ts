@@ -1,5 +1,6 @@
 import { Component, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import {
   ApiService,
   AppCurrencyPipe,
@@ -77,6 +78,7 @@ export class ProfileComponent {
     public orders: OrderService,
     private api: ApiService,
     private currency: CurrencyService,
+    private router: Router,
   ) {
     this.loadWallet();
     this.loadReferral();
@@ -90,8 +92,12 @@ export class ProfileComponent {
     this.state.showToast('Nextou One membership management is coming soon');
   }
 
+  editProfile(): void {
+    this.ui.openEdit('profile');
+  }
+
   viewActivity(): void {
-    this.state.showToast('Showing recent account activity');
+    this.router.navigate(['/orders']);
   }
 
   private loadWallet(): void {

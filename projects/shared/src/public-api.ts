@@ -18,6 +18,7 @@ export * from './lib/components/global-loading/global-loading.component';
 export * from './lib/components/page-feature-loading/page-feature-loading.component';
 export * from './lib/components/page-feature-unavailable/page-feature-unavailable.component';
 export * from './lib/components/dynamic-table/dynamic-table.component';
+export * from './lib/components/custom-select/custom-select.component';
 export * from './lib/services/currency.service';
 export * from './lib/pipes/currency.pipe';
 export * from './lib/services/notification-polling.service';

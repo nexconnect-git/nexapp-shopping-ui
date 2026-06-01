@@ -1,5 +1,5 @@
 import { Component, computed } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { CatalogService } from '../../services/catalog.service';
 import { AppStateService } from '../../services/app-state.service';
 import { ProductCardComponent } from '../../components/product-card/product-card.component';
@@ -11,6 +11,11 @@ import {
   CustomerContentConfigService,
   type CustomerPromoCard,
 } from '../../services/customer-content-config.service';
+import {
+  MobileQuickAction,
+  MobileQuickActionGridComponent,
+} from '../../mobile-ui/mobile-quick-action-grid/mobile-quick-action-grid.component';
+import { MobileProductRowComponent } from '../../mobile-ui/mobile-product-row/mobile-product-row.component';
 
 @Component({
   standalone: true,
@@ -19,6 +24,8 @@ import {
     BreadcrumbsComponent,
     ProductCardComponent,
     StoreCardComponent,
+    MobileQuickActionGridComponent,
+    MobileProductRowComponent,
   ],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss'],
@@ -74,10 +81,6 @@ export class HomeComponent {
     ).slice(0, 6),
   );
   homePromos = computed<CustomerPromoCard[]>(() => {
-    const contentPromos = this.content.ads().home;
-    if (contentPromos.length) {
-      return contentPromos;
-    }
     const liveBanners = this.catalog
       .banners()
       .slice(1, 3)
@@ -93,17 +96,49 @@ export class HomeComponent {
         template: 'soft_card' as const,
         image: banner.image || undefined,
       }));
-    return liveBanners;
+
+    if (liveBanners.length) {
+      return liveBanners;
+    }
+
+    const contentPromos = this.content.ads().home;
+    return contentPromos;
   });
   engagementBanner = computed(
     () => this.content.home().engagementBanners[0] || null,
   );
-
+  readonly quickActions = computed<MobileQuickAction[]>(() => [
+    {
+      id: 'deals',
+      label: "Today's deals",
+      icon: 'local_offer',
+      route: '/offers',
+    },
+    {
+      id: 'nearby',
+      label: 'Nearby shops',
+      icon: 'storefront',
+      route: '/stores',
+    },
+    {
+      id: 'essentials',
+      label: 'Daily essentials',
+      icon: 'inventory_2',
+      route: '/stores',
+    },
+    {
+      id: 'recommended',
+      label: 'Recommended',
+      icon: 'favorite',
+      route: '/search',
+    },
+  ]);
   constructor(
     public catalog: CatalogService,
     public state: AppStateService,
     public ui: UiService,
     public content: CustomerContentConfigService,
+    private router: Router,
   ) {}
 
   categoryIcon(category: unknown): string {
@@ -116,6 +151,18 @@ export class HomeComponent {
 
   routeQuery(url: string | null | undefined): Record<string, string> | null {
     return this._splitUrl(url).query;
+  }
+
+  openCategory(categoryId: string): void {
+    const id = String(categoryId || '').trim();
+    this.router.navigate(['/stores'], {
+      queryParams: id && id !== 'all' ? { category: id } : {},
+    });
+  }
+
+  openProduct(productId: string): void {
+    if (!productId) return;
+    this.router.navigate(['/product', productId]);
   }
 
   private _splitUrl(url: string | null | undefined): {

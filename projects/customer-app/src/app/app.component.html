@@ -6,9 +6,7 @@
 >
   <fd-app-loader />
   <fd-topbar class="desktop-shell-only" [homeMode]="isHomeRoute()" />
-  @if (isHomeRoute()) {
-    <fd-mobile-topbar class="mobile-shell-only" />
-  }
+  <fd-mobile-topbar class="mobile-shell-only" />
   @if (loading()) {
     <fd-mobile-loader label="Loading page" />
   }
@@ -35,5 +33,5 @@
   <fd-mobile-bottom-nav class="mobile-shell-only" />
   <app-global-loading />
   <app-page-feature-loading />
-  <fd-mobile-toast [message]="state.toast()" />
+  <fd-mobile-toast [toast]="state.toast()" />
 </div>

@@ -20,6 +20,7 @@ import { CatalogService } from '../../services/catalog.service';
 import { UiService } from '../../services/ui.service';
 import { AppCurrencyPipe, CurrencyService } from '@shared/public-api';
 import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
+import { MobileCheckoutStepperComponent } from '../../mobile-ui/mobile-checkout-stepper/mobile-checkout-stepper.component';
 
 @Component({
   standalone: true,
@@ -30,6 +31,7 @@ import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.compo
     OrderSummaryComponent,
     ProductCardComponent,
     AppCurrencyPipe,
+    MobileCheckoutStepperComponent,
   ],
   templateUrl: './checkout.component.html',
   styleUrls: ['./checkout.component.scss'],

@@ -33,9 +33,27 @@
                 <span class="material-icons-outlined">radar</span>
                 {{ req.current_radius_km }} km radius
               </span>
+              @if (req.seconds_remaining !== undefined) {
+                <span class="radius-pill countdown">
+                  <span class="material-icons-outlined">schedule</span>
+                  {{ req.seconds_remaining }}s left
+                </span>
+              }
             </div>
             <span class="earn-badge">{{ req.order_total | appCurrency }}</span>
           </div>
+
+          @if (req.pickup_distance_km !== null && req.pickup_distance_km !== undefined) {
+            <p class="route-metrics">
+              Pickup: {{ req.pickup_distance_km }} km
+              @if (req.drop_distance_km !== null && req.drop_distance_km !== undefined) {
+                • Drop: {{ req.drop_distance_km }} km
+              }
+              @if (req.estimated_eta_minutes) {
+                • ETA ~ {{ req.estimated_eta_minutes }} mins
+              }
+            </p>
+          }
 
           <!-- Items preview -->
           <div class="items-preview">
@@ -107,5 +125,3 @@
     </div>
   }
 </div>
-
-<!-- aria-label -->

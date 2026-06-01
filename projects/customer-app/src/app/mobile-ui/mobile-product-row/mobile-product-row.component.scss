@@ -1,0 +1,77 @@
+:host {
+  display: block;
+}
+
+.product-row {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 70px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid rgba(56, 38, 142, 0.1);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(17, 24, 39, 0.06);
+}
+
+img {
+  width: 70px;
+  height: 70px;
+  border-radius: 14px;
+  object-fit: cover;
+  background: #f5f6fa;
+}
+
+.copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #111111;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.pricing {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+strong {
+  color: #050505;
+  font-size: 14px;
+}
+
+em {
+  color: #6b7280;
+  font-size: 12px;
+  font-style: normal;
+  text-decoration: line-through;
+}
+
+button {
+  min-width: 58px;
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: 12px;
+  color: #fff;
+  background: var(--fd-color-primary);
+  font-size: 12px;
+  font-weight: 900;
+}
+

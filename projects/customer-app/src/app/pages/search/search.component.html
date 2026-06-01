@@ -66,14 +66,14 @@
             }}
           </button>
         }
-        <label class="mobile-sort-control" aria-label="Sort search results">
-          <span class="material-symbols-rounded">sort</span>
-          <select class="fd-input">
-            @for (sort of content.filters().sortOptions; track sort) {
-              <option>Sort by: {{ sort }}</option>
-            }
-          </select>
-        </label>
+        <fd-custom-select
+          class="mobile-sort-control"
+          ariaLabel="Sort search results"
+          icon="sort"
+          [value]="sortBy()"
+          [options]="content.filters().sortOptions.map((sort) => 'Sort by: ' + sort)"
+          (valueChange)="setSort($event)"
+        />
       </div>
 
       @if (searchPromo(); as promo) {

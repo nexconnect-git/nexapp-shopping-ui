@@ -39,7 +39,11 @@ export class LoginComponent {
           return;
         }
 
-        this.auth.handleAuthResponse(res);
+        if (!this.auth.handleAuthResponse(res)) {
+          this.error.set('This account is not allowed in the vendor app.');
+          this.loading.set(false);
+          return;
+        }
         this.api.getVendorProfile().subscribe({
           next: (profile) => {
             localStorage.setItem(this.auth.vendorKey, profile.status);

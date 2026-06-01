@@ -79,25 +79,58 @@
         <div class="rating-title">
           <div>
             <h2>Rate your order</h2>
-            <p>How was your delivery experience?</p>
+            <p>Rate the store and rider separately.</p>
           </div>
           <span>{{ ratingLabel() }}</span>
         </div>
-        <div class="stars">
-          @for (star of [1, 2, 3, 4, 5]; track star) {
-            <button
-              type="button"
-              [class.active]="rating() >= star"
-              (click)="rating.set(star)"
-            >
-              <span class="material-symbols-rounded">star</span>
-            </button>
-          }
+        <div class="rating-group">
+          <h3>Store rating</h3>
+          <div class="stars">
+            @for (star of [1, 2, 3, 4, 5]; track star) {
+              <button
+                type="button"
+                [class.active]="vendorRating() >= star"
+                (click)="vendorRating.set(star)"
+              >
+                <span class="material-symbols-rounded">star</span>
+              </button>
+            }
+          </div>
+          <textarea
+            [value]="vendorComment()"
+            (input)="vendorComment.set($any($event.target).value)"
+            placeholder="Optional: share feedback for the store..."
+          ></textarea>
         </div>
-        <textarea
-          placeholder="Tell us what went well or what we can improve..."
-        ></textarea>
-        <button type="button" class="fd-btn primary" (click)="submitRating()">
+
+        @if (hasDeliveryPartner()) {
+          <div class="rating-group">
+            <h3>Rider rating</h3>
+            <div class="stars">
+              @for (star of [1, 2, 3, 4, 5]; track star) {
+                <button
+                  type="button"
+                  [class.active]="deliveryRating() >= star"
+                  (click)="deliveryRating.set(star)"
+                >
+                  <span class="material-symbols-rounded">star</span>
+                </button>
+              }
+            </div>
+            <textarea
+              [value]="deliveryComment()"
+              (input)="deliveryComment.set($any($event.target).value)"
+              placeholder="Optional: share feedback for the rider..."
+            ></textarea>
+          </div>
+        }
+
+        <button
+          type="button"
+          class="fd-btn primary"
+          (click)="submitRating()"
+          [disabled]="order().raw?.has_rating || ratingSubmitting()"
+        >
           Submit Rating
         </button>
       </section>
@@ -212,15 +245,43 @@
 
   <section class="rating-card">
     <h2>Rate your order</h2>
+    <h3>Store rating</h3>
     <div class="stars">
       @for (star of [1, 2, 3, 4, 5]; track star) {
-        <button type="button" [class.active]="rating() >= star" (click)="rating.set(star)">
+        <button type="button" [class.active]="vendorRating() >= star" (click)="vendorRating.set(star)">
           <span class="material-symbols-rounded">star</span>
         </button>
       }
     </div>
+    <textarea
+      [value]="vendorComment()"
+      (input)="vendorComment.set($any($event.target).value)"
+      placeholder="Optional store feedback"
+    ></textarea>
+    @if (hasDeliveryPartner()) {
+      <h3>Rider rating</h3>
+      <div class="stars">
+        @for (star of [1, 2, 3, 4, 5]; track star) {
+          <button type="button" [class.active]="deliveryRating() >= star" (click)="deliveryRating.set(star)">
+            <span class="material-symbols-rounded">star</span>
+          </button>
+        }
+      </div>
+      <textarea
+        [value]="deliveryComment()"
+        (input)="deliveryComment.set($any($event.target).value)"
+        placeholder="Optional rider feedback"
+      ></textarea>
+    }
     <p>{{ ratingLabel() }}</p>
-    <button type="button" class="mobile-cta" (click)="submitRating()">Submit rating</button>
+    <button
+      type="button"
+      class="mobile-cta"
+      (click)="submitRating()"
+      [disabled]="order().raw?.has_rating || ratingSubmitting()"
+    >
+      Submit rating
+    </button>
   </section>
 
   @if (nextCoupon()) {

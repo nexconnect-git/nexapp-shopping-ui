@@ -43,7 +43,7 @@ export class NextouHomeService {
         id: category.id,
         name: category.label,
         icon: categoryIconFor(category),
-        route: `/category/${category.id}`,
+        route: `/stores?category=${category.id}`,
         source: category,
       }));
 
@@ -93,26 +93,7 @@ export class NextouHomeService {
         tone: (index === 1 ? 'green' : 'purple') as NextouPromotion['tone'],
       }));
 
-    return banners.length
-      ? banners
-      : [
-          {
-            id: 'fresh-offers',
-            title: 'Fresh offers',
-            subtitle: 'Deals appear as stores publish them',
-            code: 'LIVE',
-            icon: '🎁',
-            tone: 'purple',
-          },
-          {
-            id: 'nearby-delivery',
-            title: 'Fast delivery',
-            subtitle: 'Shop from stores near your location',
-            code: '20 MINS',
-            icon: '🛵',
-            tone: 'green',
-          },
-        ];
+    return banners;
   });
 
   readonly stores = computed<NextouStore[]>(() =>

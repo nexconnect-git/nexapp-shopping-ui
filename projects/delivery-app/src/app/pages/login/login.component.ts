@@ -36,7 +36,11 @@ export class LoginComponent {
           return;
         }
 
-        this.auth.handleAuthResponse(res);
+        if (!this.auth.handleAuthResponse(res)) {
+          this.error.set('This account is not allowed in the delivery app.');
+          this.loading.set(false);
+          return;
+        }
         if (res.user.force_password_change) {
           this.router.navigate(['/change-password']);
           this.loading.set(false);

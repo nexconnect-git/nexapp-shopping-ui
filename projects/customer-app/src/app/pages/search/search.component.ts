@@ -4,7 +4,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { buildStoreSelectionTarget } from '@nexconnect/customer-search';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
-import { AppCurrencyPipe } from '@shared/public-api';
+import { AppCurrencyPipe, CustomSelectComponent } from '@shared/public-api';
 import { CatalogService } from '../../services/catalog.service';
 import { UiService } from '../../services/ui.service';
 import { AppStateService } from '../../services/app-state.service';
@@ -26,6 +26,7 @@ import {
     ProductCardComponent,
     StoreCardComponent,
     AppCurrencyPipe,
+    CustomSelectComponent,
   ],
   templateUrl: './search.component.html',
   styleUrls: ['./search.component.scss'],
@@ -33,6 +34,9 @@ import {
 export class SearchComponent implements OnDestroy {
   query = signal(this.route.snapshot.queryParamMap.get('q') ?? '');
   activeTab = signal<'All' | 'Stores' | 'Products' | 'Categories'>('All');
+  sortBy = signal(
+    `Sort by: ${this.content.filters().sortOptions[0] || 'Relevance'}`,
+  );
   activeFilters = signal<string[]>([]);
   tabs = computed(() => this.content.search().tabs);
   searchPromo = computed(() => this.content.ads().search[0] || null);
@@ -138,6 +142,10 @@ export class SearchComponent implements OnDestroy {
   clearFilters(): void {
     this.activeFilters.set([]);
     this.activeTab.set('All');
+  }
+
+  setSort(value: string): void {
+    this.sortBy.set(value);
   }
 
   handleSearchPromo(promo: CustomerPromoCard): void {

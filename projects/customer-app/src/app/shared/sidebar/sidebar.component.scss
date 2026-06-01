@@ -1,4 +1,4 @@
-.sidebar {
+﻿.sidebar {
   position: fixed;
   left: 0;
   top: 78px;
@@ -75,7 +75,7 @@ a:hover {
 .nav-skeleton {
   height: 48px;
   border-radius: 9px;
-  background: linear-gradient(90deg, #f5f2ff, #fbfaff, #f5f2ff);
+  background: linear-gradient(90deg, #EFECF8, #fbfaff, #EFECF8);
   background-size: 200% 100%;
   animation: shimmer 1.1s linear infinite;
 }
@@ -190,3 +190,4 @@ small {
     display: none !important;
   }
 }
+

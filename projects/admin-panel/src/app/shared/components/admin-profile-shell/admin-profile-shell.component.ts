@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 export interface AdminProfileBadge {
@@ -35,7 +35,7 @@ export class AdminProfileShellComponent {
   @Input() subtitle = '';
   @Input() avatarText = '';
   @Input() avatarImage = '';
-  @Input() avatarBg = '#6C2BFF';
+  @Input() avatarBg = '#38268E';
   @Input() badges: AdminProfileBadge[] = [];
   @Input() metrics: AdminProfileMetric[] = [];
   @Input() tabs: AdminProfileTab[] = [];
@@ -43,3 +43,4 @@ export class AdminProfileShellComponent {
 
   @Output() tabChange = new EventEmitter<string>();
 }
+

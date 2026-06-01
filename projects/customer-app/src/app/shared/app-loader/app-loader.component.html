@@ -1,9 +1,13 @@
 @if (loader.loading()) {
   <div class="fd-app-loader-backdrop">
     <section class="fd-app-loader" aria-live="polite" aria-busy="true">
-      <span class="fd-loader-logo" aria-hidden="true">N</span>
+      <img
+        class="fd-loader-logo"
+        src="assets/brand/nextou-logo-single.png"
+        alt="Nextou logo"
+      />
       <div class="fd-loader-ring" aria-hidden="true"></div>
-      <h1 class="fd-loader-title">Nextou</h1>
+      <h1 class="fd-loader-title"><img src="assets/brand/nextou-brand-logo.png" alt="Nextou" class="brand-wordmark" /></h1>
       <p class="fd-loader-subtitle">{{ loader.message() }}</p>
     </section>
   </div>

@@ -1,3 +1,4 @@
+import { Location } from '@angular/common';
 import { Component, computed, Input, signal } from '@angular/core';
 import {
   NavigationEnd,
@@ -24,6 +25,11 @@ export class TopbarComponent {
   @Input() homeMode = false;
   query = signal('');
   searchOpen = signal(false);
+  currentUrl = signal('');
+  showBackButton = computed(() => {
+    const path = this.currentUrl().split('?')[0].split('#')[0];
+    return path !== '/' && path !== '/new-home';
+  });
 
   constructor(
     public state: AppStateService,
@@ -32,10 +38,13 @@ export class TopbarComponent {
     public features: PageFeatureAccessService,
     private catalog: CatalogService,
     private router: Router,
+    private location: Location,
   ) {
+    this.currentUrl.set(this.router.url || '/');
     this.router.events
       .pipe(filter((event) => event instanceof NavigationEnd))
       .subscribe(() => {
+        this.currentUrl.set(this.router.url || '/');
         if (this.router.url.startsWith('/search')) {
           const parsed = this.router.parseUrl(this.router.url);
           this.query.set((parsed.queryParams['q'] as string) ?? '');
@@ -121,5 +130,14 @@ export class TopbarComponent {
 
   canUseRoute(route: string): boolean {
     return this.features.isRouteEnabled('customer-app', route);
+  }
+
+  goBack(): void {
+    if (!this.showBackButton()) return;
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      this.location.back();
+      return;
+    }
+    this.router.navigate(['/']);
   }
 }

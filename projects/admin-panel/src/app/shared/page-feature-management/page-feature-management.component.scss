@@ -1,4 +1,4 @@
-:host {
+﻿:host {
   display: block;
 }
 .pfm-page {
@@ -75,7 +75,7 @@ button {
   align-items: center;
   border: 1px solid var(--line);
   border-radius: 16px;
-  background: linear-gradient(120deg, #ffffff 0%, #f9f8ff 100%);
+  background: linear-gradient(120deg, #FBFBFC 0%, #f9f8ff 100%);
   padding: 20px;
 }
 .pfm-hero h1 {
@@ -281,7 +281,7 @@ select {
 }
 .orange-btn:not(.active) {
   background: #fff3e8;
-  color: #f47714;
+  color: #F97928;
   border: 0;
 }
 .purple-btn:not(.active) {
@@ -404,7 +404,7 @@ em.disabled,
 .app-name [data-tone="orange"],
 .group-name [data-tone="orange"] {
   background: #fff3e8;
-  color: #f47714;
+  color: #F97928;
 }
 .app-name [data-tone="purple"],
 .group-name [data-tone="purple"] {
@@ -483,7 +483,7 @@ em.disabled,
 }
 .app-pill[data-tone="orange"] {
   background: #fff3e8;
-  color: #f47714;
+  color: #F97928;
 }
 .app-pill[data-tone="purple"] {
   background: #f1ecff;
@@ -787,7 +787,7 @@ code {
   height: 72px;
   border-radius: 50%;
   background: #fff3e8;
-  color: #f47714;
+  color: #F97928;
   display: grid;
   place-items: center;
   margin: 8px auto 16px;
@@ -894,3 +894,4 @@ code {
     padding: 14px;
   }
 }
+

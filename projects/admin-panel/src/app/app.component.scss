@@ -1,21 +1,21 @@
-:host {
+﻿:host {
   display: block;
 }
 
 .saas-admin-shell {
   --shell-bg: #f3f6f8;
-  --panel: #ffffff;
+  --panel: #FBFBFC;
   --panel-soft: #f8fafc;
   --ink: #111827;
   --muted: #667085;
   --line: #dde5ec;
   --line-soft: #edf2f7;
-  --nav-bg: #ffffff;
-  --nav-panel: #ffffff;
-  --nav-raised: rgba(108, 43, 255, 0.1);
+  --nav-bg: #FBFBFC;
+  --nav-panel: #FBFBFC;
+  --nav-raised: rgba(56, 38, 142, 0.1);
   --nav-text: var(--ink);
   --nav-muted: var(--muted);
-  --accent: #6c2bff;
+  --accent: #38268E;
   --accent-dark: var(--fd-color-primary-hover);
   --accent-soft: rgba(6, 182, 212, 0.13);
   --danger: #ef4444;
@@ -61,16 +61,12 @@
 }
 
 .brand-mark {
-  display: grid;
-  place-items: center;
+  display: block;
   width: 40px;
   height: 40px;
   flex: 0 0 40px;
   border-radius: 8px;
   background: transparent;
-  color: #fff;
-  font-size: 0.78rem;
-  font-weight: 950;
   object-fit: contain;
 }
 
@@ -105,6 +101,7 @@
 
 .nav-collapse-btn,
 .mobile-menu-btn,
+.back-btn,
 .icon-button,
 .sidebar-logout {
   display: inline-grid;
@@ -115,6 +112,15 @@
     background 0.18s ease,
     color 0.18s ease,
     border-color 0.18s ease;
+}
+
+.back-btn {
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
 }
 
 .nav-collapse-btn {
@@ -291,7 +297,7 @@
   }
 
   &.active {
-    border-color: rgba(108, 43, 255, 0.18);
+    border-color: rgba(56, 38, 142, 0.18);
     background: var(--nav-raised);
     color: var(--primary);
     box-shadow: inset 3px 0 0 var(--accent);
@@ -454,7 +460,7 @@
 
     &:hover {
       border-color: rgba(6, 182, 212, 0.34);
-      background: #f5f2ff;
+      background: #EFECF8;
       color: var(--accent-dark);
     }
   }
@@ -608,7 +614,7 @@
   }
 
   &.unread {
-    background: #f5f2ff;
+    background: #EFECF8;
   }
 }
 
@@ -618,7 +624,7 @@
   width: 38px;
   height: 38px;
   border-radius: 8px;
-  background: #f5f2ff;
+  background: #EFECF8;
   color: var(--accent-dark);
 }
 
@@ -936,3 +942,5 @@
     display: none !important;
   }
 }
+
+

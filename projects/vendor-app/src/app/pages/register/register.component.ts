@@ -178,7 +178,11 @@ export class RegisterComponent {
 
     this.api.registerVendor(payload).subscribe({
       next: (res) => {
-        this.auth.handleAuthResponse(res);
+        if (!this.auth.handleAuthResponse(res)) {
+          this.error.set('This account is not allowed in the vendor app.');
+          this.loading.set(false);
+          return;
+        }
         localStorage.setItem(
           this.auth.vendorKey,
           res.vendor_status || 'pending',

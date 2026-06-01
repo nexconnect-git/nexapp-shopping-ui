@@ -74,8 +74,10 @@ export class RegisterComponent {
 
     this.api.registerDeliveryPartner(payload).subscribe({
       next: (res) => {
-        if (res.tokens) {
-          this.auth.handleAuthResponse(res);
+        if (res.tokens && !this.auth.handleAuthResponse(res)) {
+          this.error.set('This account is not allowed in the delivery app.');
+          this.loading.set(false);
+          return;
         }
         this.router.navigate(['/']);
         this.loading.set(false);

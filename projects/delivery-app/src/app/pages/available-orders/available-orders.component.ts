@@ -1,6 +1,7 @@
 import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
+  AlertService,
   ApiService,
   AppCurrencyPipe,
   DeliveryAssignment,
@@ -16,6 +17,7 @@ import { Subscription, timer } from 'rxjs';
 })
 export class AvailableOrdersComponent implements OnInit, OnDestroy {
   private api = inject(ApiService);
+  private alerts = inject(AlertService);
 
   requests = signal<DeliveryAssignment[]>([]);
   loading = signal(true);
@@ -23,7 +25,10 @@ export class AvailableOrdersComponent implements OnInit, OnDestroy {
   private sub?: Subscription;
 
   ngOnInit() {
-    this.sub = timer(0, 10000).subscribe(() => this.load());
+    this.sub = timer(0, 10000).subscribe(() => {
+      if (document.hidden) return;
+      this.load();
+    });
   }
 
   ngOnDestroy() {
@@ -37,7 +42,11 @@ export class AvailableOrdersComponent implements OnInit, OnDestroy {
         this.requests.set(r.results || r);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false),
+      error: (err) => {
+        this.loading.set(false);
+        const message = err?.error?.error || 'Could not load delivery requests.';
+        this.alerts.error(message);
+      },
     });
   }
 
@@ -46,9 +55,14 @@ export class AvailableOrdersComponent implements OnInit, OnDestroy {
     this.api.acceptDeliveryRequest(req.id).subscribe({
       next: () => {
         this.actionId.set(null);
+        this.alerts.success(`Accepted order #${req.order_number}.`);
         this.load();
       },
-      error: () => this.actionId.set(null),
+      error: (err) => {
+        this.actionId.set(null);
+        const message = err?.error?.error || 'Could not accept request.';
+        this.alerts.error(message);
+      },
     });
   }
 
@@ -57,9 +71,14 @@ export class AvailableOrdersComponent implements OnInit, OnDestroy {
     this.api.rejectDeliveryRequest(req.id).subscribe({
       next: () => {
         this.actionId.set(null);
+        this.alerts.info(`Rejected order #${req.order_number}.`);
         this.load();
       },
-      error: () => this.actionId.set(null),
+      error: (err) => {
+        this.actionId.set(null);
+        const message = err?.error?.error || 'Could not reject request.';
+        this.alerts.error(message);
+      },
     });
   }
 

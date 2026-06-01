@@ -1,4 +1,4 @@
-:host {
+﻿:host {
   display: block;
 }
 
@@ -62,7 +62,7 @@
 }
 
 .summary-value.accent {
-  color: var(--accent-cyan, #6c2bff);
+  color: var(--accent-cyan, #38268E);
 }
 
 .summary-value.warn {
@@ -162,7 +162,7 @@
 }
 
 .order-link {
-  color: var(--accent-cyan, #6c2bff);
+  color: var(--accent-cyan, #38268E);
   text-decoration: none;
   font-weight: 700;
 
@@ -199,7 +199,7 @@
 }
 
 .badge-pending {
-  background: rgba(108, 43, 255, 0.15);
+  background: rgba(56, 38, 142, 0.15);
   color: #ef4444;
 }
 
@@ -225,7 +225,7 @@
 
 .method-razorpay {
   background: rgba(6, 182, 212, 0.12);
-  color: #6c2bff;
+  color: #38268E;
 }
 
 /* Loading */
@@ -274,7 +274,7 @@
   }
 
   &:hover:not(:disabled) {
-    border-color: var(--accent-cyan, #6c2bff);
+    border-color: var(--accent-cyan, #38268E);
   }
 }
 
@@ -282,3 +282,5 @@
   font-size: 0.875rem;
   color: var(--text-secondary);
 }
+
+

@@ -1,4 +1,4 @@
-.overlay {
+﻿.overlay {
   position: fixed;
   inset: 0;
   z-index: var(--fd-z-modal);
@@ -71,12 +71,10 @@
   width: 42px;
   height: 42px;
   border-radius: 15px;
-  display: grid;
-  place-items: center;
-  background: var(--fd-gradient-brand);
-  color: #fff;
-  font-weight: 900;
-  box-shadow: 0 14px 32px rgba(108, 43, 255, 0.26);
+  display: block;
+  object-fit: contain;
+  background: transparent;
+  box-shadow: 0 14px 32px rgba(56, 38, 142, 0.26);
 }
 
 .mobile-brand-row small {
@@ -343,3 +341,4 @@
     transform: none !important;
   }
 }
+

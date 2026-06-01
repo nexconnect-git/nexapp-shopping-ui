@@ -55,6 +55,12 @@ import { CatalogService } from './catalog.service';
 import { UiService } from './ui.service';
 import { BrowserPaymentAdapter } from './adapters/browser-payment.adapter';
 
+export type ToastTone = 'success' | 'error' | 'info' | 'warning';
+export interface AppToast {
+  message: string;
+  tone: ToastTone;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AppStateService {
   private readonly accountApi = inject(CustomerAccountApiService);
@@ -69,6 +75,7 @@ export class AppStateService {
   private readonly paymentAdapter = inject(BrowserPaymentAdapter);
   private readonly router = inject(Router);
   private authenticatedBootstrapComplete = false;
+  private toastTimer: number | null = null;
 
   readonly location = signal('Select location');
   readonly cart = signal<CartItem[]>([]);
@@ -81,7 +88,7 @@ export class AppStateService {
   >([]);
   readonly coupon = signal('');
   readonly couponDiscount = signal(0);
-  readonly toast = signal('');
+  readonly toast = signal<AppToast | null>(null);
   readonly miniCartOpen = signal(false);
   readonly lastAddedProductId = signal('');
   readonly checkoutSubmitting = signal(false);
@@ -468,9 +475,13 @@ export class AppStateService {
     this.ui.closeMiniCart();
   }
 
-  showToast(message: string): void {
-    this.toast.set(message);
-    window.setTimeout(() => this.toast.set(''), 2200);
+  showToast(message: string, tone?: ToastTone): void {
+    const toastMessage = String(message || '').trim();
+    if (!toastMessage) return;
+    const resolvedTone = tone || this.inferToastTone(toastMessage);
+    this.toast.set({ message: toastMessage, tone: resolvedTone });
+    if (this.toastTimer) window.clearTimeout(this.toastTimer);
+    this.toastTimer = window.setTimeout(() => this.toast.set(null), 2200);
   }
 
   loadCart(): void {
@@ -982,5 +993,34 @@ export class AppStateService {
     if (!shouldOpenCartAfterAdd('add_item')) return false;
     if (typeof window === 'undefined' || !window.matchMedia) return true;
     return !window.matchMedia('(max-width: 760px)').matches;
+  }
+
+  private inferToastTone(message: string): ToastTone {
+    const text = message.toLowerCase();
+    if (
+      text.includes('could not') ||
+      text.includes('failed') ||
+      text.includes('not available') ||
+      text.includes('invalid') ||
+      text.includes('expired')
+    ) {
+      return 'error';
+    }
+    if (
+      text.includes('closed right now') ||
+      text.includes('pending') ||
+      text.includes('warning')
+    ) {
+      return 'warning';
+    }
+    if (
+      text.includes('loading') ||
+      text.includes('preparing') ||
+      text.includes('sign in') ||
+      text.includes('check')
+    ) {
+      return 'info';
+    }
+    return 'success';
   }
 }

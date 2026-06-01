@@ -3,56 +3,48 @@
    ============================================================ */
 
 :root {
-  --primary-gradient: linear-gradient(135deg, #6c2bff 0%, var(--fd-color-primary-hover) 100%);
-  /* ── Core Color Palette ───────────────────── */
-  --bg-color: #ffffff;
-  --surface-color: #ffffff;
-  --surface-hover: #f5f2ff;
+  --primary-gradient: linear-gradient(135deg, #38268E 0%, var(--fd-color-primary-hover) 100%);
+  /* â”€â”€ Core Color Palette â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  --bg-color: #FBFBFC;
+  --surface-color: #FBFBFC;
+  --surface-hover: #EFECF8;
 
   --text-primary: #111827;
   --text-secondary: #374151;
   --text-muted: #6b7280;
 
-  --border-color: #f3f4f6;
-  --border-light: #f3f4f6;
+  --border-color: #ddd8ee;
+  --border-light: #ebe7f5;
 
-  /* ── Accent Palette (Stripe-like vibrant tech) ─ */
-  --primary: #6c2bff;
-  --primary-hover: #5a1fe0;
-  --primary-light: #f5f2ff;
-  --cta: #6366f1;
+  /* â”€â”€ Accent Palette (Stripe-like vibrant tech) â”€ */
+  --primary: #38268E;
+  --primary-hover: #23117C;
+  --primary-light: #EFECF8;
+  --cta: #F97928;
 
-  /* ── Semantic Colors ───────────────────────── */
+  /* â”€â”€ Semantic Colors â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --success: #22c55e;
   --success-light: var(--fd-color-success-soft);
   --danger: #ef4444;
   --danger-light: var(--fd-color-danger-soft);
   --warning: #facc15;
   --warning-light: var(--fd-color-warning-soft);
-  --info: #225cff;
+  --info: #6557A8;
   --info-light: var(--fd-color-info-soft);
 
-  /* ── Typography ──────────────────────────── */
+  /* â”€â”€ Typography â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --font-family: var(
     --nc-font-family,
     "Proxima Nova",
-    "Futura",
-    "Avenir Next",
-    "Segoe UI",
-    Arial,
     sans-serif
   );
   --font-heading: var(
     --nc-font-heading,
-    "Futura",
     "Proxima Nova",
-    "Avenir Next",
-    "Segoe UI",
-    Arial,
     sans-serif
   );
 
-  /* ── Geometry & Depth ────────────────────── */
+  /* â”€â”€ Geometry & Depth â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 16px;
@@ -60,9 +52,9 @@
   --radius-2xl: 28px;
   --radius-full: 9999px;
 
-  /* ── Extended Primary ────────────────────── */
-  --primary-dark: #4a18ba;
-  --primary-shadow: rgba(108, 43, 255, 0.24);
+  /* â”€â”€ Extended Primary â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  --primary-dark: #23117C;
+  --primary-shadow: rgba(56, 38, 142, 0.24);
 
   // Premium soft shadows
   --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
@@ -70,9 +62,9 @@
     0 4px 12px rgba(15, 23, 42, 0.05), 0 2px 4px rgba(15, 23, 42, 0.03);
   --shadow-lg:
     0 10px 25px rgba(15, 23, 42, 0.05), 0 4px 10px rgba(15, 23, 42, 0.03);
-  --shadow-focus: 0 0 0 4px rgba(108, 43, 255, 0.16);
+  --shadow-focus: 0 0 0 4px rgba(56, 38, 142, 0.16);
 
-  /* ── Glassmorphism ───────────────────────── */
+  /* â”€â”€ Glassmorphism â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --glass-bg: rgba(255, 255, 255, 0.7);
   --glass-blur: blur(16px);
 }
@@ -127,7 +119,14 @@ p {
    GLOBAL COMPONENTS (Stylish UI)
    ============================================================ */
 
-/* ── Typography Utilities ── */
+.brand-wordmark {
+  height: 20px;
+  width: auto;
+  vertical-align: middle;
+  margin-left: 6px;
+}
+
+/* â”€â”€ Typography Utilities â”€â”€ */
 .text-muted {
   color: var(--text-muted) !important;
 }
@@ -141,7 +140,7 @@ p {
   color: var(--primary) !important;
 }
 
-/* ── Display Headings ── */
+/* â”€â”€ Display Headings â”€â”€ */
 .display-huge {
   font-size: clamp(3rem, 5vw, 4.5rem);
   font-weight: 800;
@@ -157,7 +156,7 @@ p {
   font-weight: 600;
 }
 
-/* ── Buttons ────────────────────────────────── */
+/* â”€â”€ Buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -178,14 +177,14 @@ p {
 .btn-create {
   background: linear-gradient(135deg, var(--primary), var(--primary-hover));
   color: #fff;
-  box-shadow: 0 8px 18px rgba(91, 44, 255, 0.24);
+  box-shadow: 0 8px 18px rgba(56, 38, 142, 0.24);
   &:hover {
     transform: translateY(-1px);
-    box-shadow: 0 10px 22px rgba(91, 44, 255, 0.3);
+    box-shadow: 0 10px 22px rgba(56, 38, 142, 0.3);
   }
   &:active {
     transform: translateY(0);
-    box-shadow: 0 4px 10px rgba(91, 44, 255, 0.2);
+    box-shadow: 0 4px 10px rgba(56, 38, 142, 0.2);
   }
 }
 
@@ -275,7 +274,7 @@ p {
   font-size: 0.8125rem;
 }
 
-/* ── Forms ──────────────────────────────────── */
+/* â”€â”€ Forms â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .form-group {
   margin-bottom: 1.25rem;
   display: flex;
@@ -380,7 +379,7 @@ select.has-warning,
     color-mix(in srgb, var(--attention, var(--warning)) 15%, transparent) !important;
 }
 
-/* ── Cards & Structure ──────────────────────── */
+/* â”€â”€ Cards & Structure â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .card {
   background: var(--surface-color);
   border-radius: var(--radius-lg);
@@ -422,7 +421,7 @@ select.has-warning,
   background: var(--bg-color);
 }
 
-/* ── Badges & Tags ──────────────────────────── */
+/* â”€â”€ Badges & Tags â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -445,8 +444,8 @@ select.has-warning,
   color: #1e40af;
 }
 .badge-preparing {
-  background: #f5f2ff;
-  color: #6c2bff;
+  background: #EFECF8;
+  color: #38268E;
 }
 .badge-ready_for_pickup {
   background: #fce7f3;
@@ -468,7 +467,7 @@ select.has-warning,
   color: var(--danger);
 }
 
-/* ── Data Tables ────────────────────────────── */
+/* â”€â”€ Data Tables â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .table-wrapper {
   overflow-x: auto;
   border-radius: var(--radius-lg);
@@ -510,7 +509,7 @@ select.has-warning,
   }
 }
 
-/* ── Alerts & Toasts ────────────────────────── */
+/* â”€â”€ Alerts & Toasts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .alert {
   padding: 1rem 1.25rem;
   border-radius: var(--radius-md);
@@ -534,11 +533,11 @@ select.has-warning,
 }
 .alert-info {
   background: var(--info-light);
-  color: #5a1fe0;
+  color: #23117C;
   border: 1px solid #bfdbfe;
 }
 
-/* ── Layout Helpers ─────────────────────────── */
+/* â”€â”€ Layout Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .fade-in {
   animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -589,3 +588,4 @@ select.has-warning,
 .mb-4 {
   margin-bottom: 1.5rem;
 }
+

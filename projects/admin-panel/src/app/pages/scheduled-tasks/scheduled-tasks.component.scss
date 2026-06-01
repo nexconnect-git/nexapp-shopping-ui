@@ -1,9 +1,9 @@
-:host {
+﻿:host {
   display: block;
   padding-bottom: 3rem;
 }
 
-/* ── Page Header ── */
+/* â”€â”€ Page Header â”€â”€ */
 .page-header {
   display: flex;
   justify-content: space-between;
@@ -93,7 +93,7 @@
   }
 }
 
-/* ── Loading ── */
+/* â”€â”€ Loading â”€â”€ */
 .loading-state {
   display: flex;
   flex-direction: column;
@@ -117,7 +117,7 @@
   animation: spin 0.8s linear infinite;
 }
 
-/* ── Two-column layout ── */
+/* â”€â”€ Two-column layout â”€â”€ */
 .tasks-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr);
@@ -128,9 +128,9 @@
   }
 }
 
-/* ══════════════════════════════
-   LEFT PANEL — Task Catalog
-══════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   LEFT PANEL â€” Task Catalog
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .catalog-header {
   margin-bottom: 1.5rem;
 }
@@ -224,7 +224,7 @@
   color: var(--success);
 }
 .task-card-icon--notifications {
-  background: rgba(108, 43, 255, 0.1);
+  background: rgba(56, 38, 142, 0.1);
   color: var(--warning);
 }
 
@@ -253,7 +253,7 @@
   transition: all 0.2s;
 }
 
-/* ── Schedule Form ── */
+/* â”€â”€ Schedule Form â”€â”€ */
 .schedule-form-wrap {
   background: white;
   border: 1.5px solid var(--border-color);
@@ -545,9 +545,9 @@
   flex-shrink: 0;
 }
 
-/* ══════════════════════════════
-   RIGHT PANEL — Jobs List
-══════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   RIGHT PANEL â€” Jobs List
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .right-panel {
   display: flex;
   flex-direction: column;
@@ -689,7 +689,7 @@
   color: var(--success);
 }
 .job-icon--notifications {
-  background: rgba(108, 43, 255, 0.1);
+  background: rgba(56, 38, 142, 0.1);
   color: var(--warning);
 }
 .job-icon--other {
@@ -741,7 +741,7 @@
   color: var(--primary);
 }
 .status-queued {
-  background: rgba(108, 43, 255, 0.1);
+  background: rgba(56, 38, 142, 0.1);
   color: var(--warning);
 }
 .status-running {
@@ -791,7 +791,7 @@
   animation: spin 0.7s linear infinite;
 }
 
-/* ── Stats card ── */
+/* â”€â”€ Stats card â”€â”€ */
 .stats-card {
   display: flex;
   align-items: center;
@@ -845,3 +845,4 @@
 .fade-in {
   animation: fadeIn 0.35s ease-out;
 }
+

@@ -1,0 +1,9 @@
+<div class="checkout-stepper" aria-label="Checkout progress">
+  @for (step of steps; track step.key) {
+    <span [class.active]="step.key === active">
+      <i></i>
+      <b>{{ step.label }}</b>
+    </span>
+  }
+</div>
+

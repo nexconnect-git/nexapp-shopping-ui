@@ -1,4 +1,4 @@
-.mobile-category-tabs {
+﻿.mobile-category-tabs {
   display: flex;
   gap: 9px;
   overflow-x: auto;
@@ -17,7 +17,7 @@ button {
   justify-items: center;
   gap: 6px;
   padding: 10px 9px;
-  border: 1px solid rgba(91, 44, 255, 0.1);
+  border: 1px solid rgba(56, 38, 142, 0.1);
   border-radius: 18px;
   color: #17122e;
   background: #fff;
@@ -51,3 +51,4 @@ button.active span {
   color: var(--fd-color-primary);
   background: #fff;
 }
+

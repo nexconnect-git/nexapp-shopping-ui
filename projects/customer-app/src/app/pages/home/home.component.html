@@ -81,7 +81,7 @@
 
       <section class="category-strip stagger">
         @for (cat of catalog.categories().slice(1, 9); track cat.id) {
-          <a [routerLink]="['/category', cat.id]" class="insta-category">
+          <a [routerLink]="['/stores']" [queryParams]="{ category: cat.id }" class="insta-category">
             <span [style.background]="cat.bg">
               @if (cat.image) {
                 <img [src]="cat.image" alt="" />
@@ -242,7 +242,7 @@
     </div>
     <div class="category-icons">
       @for (category of mobileCategories(); track category.id) {
-        <a [routerLink]="['/category', category.id]">
+        <a [routerLink]="['/stores']" [queryParams]="{ category: category.id }">
           <span class="material-symbols-rounded">{{ categoryIcon(category) }}</span>
           <b>{{ category.label }}</b>
         </a>
@@ -269,12 +269,7 @@
   </section>
 
   <section class="mobile-section">
-    <div class="shortcut-row">
-      <a routerLink="/offers">Today's deals</a>
-      <a routerLink="/stores">Nearby shops</a>
-      <a routerLink="/category/all">Daily essentials</a>
-      <a routerLink="/search">Recommended</a>
-    </div>
+    <fd-mobile-quick-action-grid [actions]="quickActions()" />
   </section>
 
   <section class="mobile-section">
@@ -298,8 +293,21 @@
       <h2>Recommended</h2>
       <a routerLink="/search">Search more</a>
     </div>
+    <div class="mobile-list">
+      @for (product of catalog.topProducts().slice(0, 3); track product.id) {
+        <fd-mobile-product-row
+          [image]="product.image"
+          [name]="product.name"
+          [subtitle]="product.storeName || product.category || 'Fresh pick'"
+          [price]="product.price"
+          [mrp]="product.mrp"
+          (pressed)="openProduct(product.id)"
+          (add)="state.addToCart(product)"
+        />
+      }
+    </div>
     <div class="mobile-grid-2">
-      @for (product of catalog.topProducts().slice(0, 8); track product.id) {
+      @for (product of catalog.topProducts().slice(3, 8); track product.id) {
         <fd-product-card [product]="product" />
       }
     </div>

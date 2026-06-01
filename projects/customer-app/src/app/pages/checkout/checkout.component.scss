@@ -1,4 +1,4 @@
-.checkout-layout {
+﻿.checkout-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 16px;
@@ -241,7 +241,7 @@
 .slots .active {
   border-color: var(--fd-color-primary-border);
   background: var(--fd-color-primary-soft);
-  box-shadow: 0 10px 26px rgba(91, 44, 255, 0.16);
+  box-shadow: 0 10px 26px rgba(56, 38, 142, 0.16);
 }
 .slots b {
   line-height: 1.25;
@@ -816,6 +816,11 @@
     margin: 2px 0 0;
     font-size: 23px;
   }
+
+  fd-mobile-checkout-stepper {
+    display: block;
+    margin-top: 2px;
+  }
   
   .checkout-card {
     display: grid;
@@ -1039,3 +1044,4 @@
     gap: 8px;
   }
 }
+

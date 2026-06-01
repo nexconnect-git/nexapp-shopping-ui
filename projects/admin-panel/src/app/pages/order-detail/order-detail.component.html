@@ -1,14 +1,14 @@
-<div class="saas-page order-detail-page">
+﻿<div class="saas-page order-detail-page">
   <!-- Loading -->
   @if (loading()) {
     <div class="loading-state">
       <div class="spinner"></div>
-      <p>Loading order…</p>
+      <p>Loading orderâ€¦</p>
     </div>
   }
 
   @if (!loading() && order()) {
-    <!-- ══ Header ══ -->
+    <!-- â•â• Header â•â• -->
     <div class="page-header">
       <div>
         <div class="title-row">
@@ -28,7 +28,7 @@
             "
             >calendar_today</span
           >
-          {{ order()!.placed_at | date: "MMMM d, y — h:mm a" }}
+          {{ order()!.placed_at | date: "MMMM d, y â€” h:mm a" }}
         </p>
       </div>
 
@@ -46,7 +46,7 @@
       </div>
     </div>
 
-    <!-- ══ Live Tracking Banner ══ -->
+    <!-- â•â• Live Tracking Banner â•â• -->
     @if (canTrack()) {
       <div class="map-section">
         <div class="map-section-header">
@@ -75,7 +75,7 @@
                 >Vendor</span
               >
               <span class="leg-item"
-                ><span class="leg-dot" style="background: #6366f1"></span
+                ><span class="leg-dot" style="background: #6557A8"></span
                 >Partner</span
               >
               <span class="leg-item"
@@ -93,7 +93,7 @@
               <span class="partner-meta">
                 {{ order()!.delivery_partner_info!.vehicle_type | titlecase }}
                 @if (order()!.delivery_partner_info!.vehicle_number) {
-                  · {{ order()!.delivery_partner_info!.vehicle_number }}
+                  Â· {{ order()!.delivery_partner_info!.vehicle_number }}
                 }
               </span>
               <span class="partner-rating">
@@ -106,7 +106,7 @@
       </div>
     }
 
-    <!-- ══ Main 2-Column Grid ══ -->
+    <!-- â•â• Main 2-Column Grid â•â• -->
     <div class="detail-grid">
       <!-- LEFT column -->
       <div class="detail-col">
@@ -133,7 +133,7 @@
                     {{ item.product_price | appCurrency }}
                   </td>
                   <td>
-                    <span class="qty-badge">×{{ item.quantity }}</span>
+                    <span class="qty-badge">Ã—{{ item.quantity }}</span>
                   </td>
                   <td class="text-right">
                     <strong>{{ item.subtotal | appCurrency }}</strong>
@@ -249,7 +249,7 @@
               <span
                 >{{ order()!.delivery_partner_info!.vehicle_type | titlecase }}
                 @if (order()!.delivery_partner_info!.vehicle_number) {
-                  · {{ order()!.delivery_partner_info!.vehicle_number }}
+                  Â· {{ order()!.delivery_partner_info!.vehicle_number }}
                 }
               </span>
             </p>
@@ -260,6 +260,40 @@
                 {{ order()!.delivery_partner_info!.average_rating }}
               </span>
             </p>
+          </div>
+        }
+
+        @if (order()!.has_rating) {
+          <div class="card">
+            <div class="card-header">
+              <h3>
+                <span class="material-icons-outlined">reviews</span>Customer Reviews
+              </h3>
+            </div>
+            @if (order()!.vendor_rating) {
+              <p class="info-row">
+                <strong>Store Rating</strong>
+                <span class="rating-val">
+                  <span class="material-icons-outlined">star</span>
+                  {{ order()!.vendor_rating }}/5
+                </span>
+              </p>
+              @if (order()!.vendor_comment) {
+                <p class="review-comment">{{ order()!.vendor_comment }}</p>
+              }
+            }
+            @if (order()!.delivery_rating) {
+              <p class="info-row">
+                <strong>Rider Rating</strong>
+                <span class="rating-val">
+                  <span class="material-icons-outlined">star</span>
+                  {{ order()!.delivery_rating }}/5
+                </span>
+              </p>
+              @if (order()!.delivery_comment) {
+                <p class="review-comment">{{ order()!.delivery_comment }}</p>
+              }
+            }
           </div>
         }
 
@@ -286,7 +320,7 @@
                       <p class="t-desc">{{ t.description }}</p>
                     }
                     <span class="t-time">{{
-                      t.timestamp | date: "MMM d, y — h:mm a"
+                      t.timestamp | date: "MMM d, y â€” h:mm a"
                     }}</span>
                   </div>
                 </div>
@@ -298,3 +332,4 @@
     </div>
   }
 </div>
+

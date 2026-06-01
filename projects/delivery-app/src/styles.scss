@@ -1,250 +1,30 @@
 @use "design-system";
 
-/* ── Delivery app — Emerald Orbit Design System ──────────────── */
 :root {
-  --primary-gradient: linear-gradient(135deg, #6c2bff 0%, var(--fd-color-primary-hover) 100%);
-  --primary: #6c2bff;
-  --primary-hover: #5a1fe0;
-  --primary-dark: #4a18ba;
-  --primary-light: #f5f2ff;
-  --primary-shadow: rgba(108, 43, 255, 0.24);
-
-  --bg-color: #ffffff;
-  --surface-color: #ffffff;
-  --surface-hover: #f5f2ff;
-
-  --text-primary: #111827;
-  --text-secondary: #374151;
-  --text-muted: #6b7280;
-  --border-color: #f3f4f6;
-  --border-light: #f3f4f6;
-
-  --sidebar-bg: #effcf8;
-  --sidebar-text-active: #22c55e;
-  --sidebar-item-active-bg: #e4f1ed;
-
-  --shadow-sm: 0 2px 8px -2px rgba(18, 30, 28, 0.04);
-  --shadow-md: 0 8px 24px -4px rgba(18, 30, 28, 0.06);
-  --shadow-lg: 0 16px 32px -4px rgba(18, 30, 28, 0.08);
-
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
-  --radius-full: 9999px;
-
-  --font-family: var(--nc-font-family);
-  --font-heading: var(--font-family);
-  --font-body: var(--font-family);
-  --cream: #ffffff;
-  --peach: #ffffff;
-  --surface: #ffffff;
-  --surface-alt: #f5f2ff;
-  --brand-accent: var(--fd-color-primary-hover);
-  --brand-accent-deep: #6c2bff;
-  --coral: var(--fd-color-primary-hover);
-  --coral-soft: #f5f2ff;
-  --purple: #6c2bff;
-  --purple-soft: #f5f2ff;
-  --teal: #22c55e;
-  --teal-soft: rgba(34, 197, 94, 0.12);
-  --cyan: var(--fd-color-primary-hover);
-  --cyan-soft: #f5f2ff;
-  --attention: var(--fd-color-primary-hover);
-  --attention-soft: #f5f2ff;
-  --indigo: #6c2bff;
-  --indigo-soft: #f5f2ff;
-  --mint: #22c55e;
-  --mint-soft: rgba(34, 197, 94, 0.12);
-  --charcoal: #111827;
-  --ink: #111827;
-  --muted: #6b7280;
-  --faint: #9ca3af;
-  --line: #f3f4f6;
-  --white: #ffffff;
-  --green: #22c55e;
-  --red: #ef4444;
-  --highlight: #6c2bff;
-  --blue: #6c2bff;
-
-  --primary: #6c2bff;
-  --primary-hover: #5a1fe0;
-  --primary-dark: #4a18ba;
-  --primary-light: #f5f2ff;
-  --primary-shadow: rgba(108, 43, 255, 0.24);
-  --bg-color: #ffffff;
-  --surface-color: #ffffff;
-  --surface-hover: #f5f2ff;
-  --text-primary: #111827;
-  --text-secondary: #374151;
-  --text-muted: #6b7280;
-  --border-color: #f3f4f6;
-  --border-light: #f3f4f6;
-  --sidebar-bg: var(--surface-alt);
-  --sidebar-text-active: var(--indigo);
-  --sidebar-item-active-bg: var(--indigo-soft);
-  --shadow-sm: 0 2px 8px -2px rgba(59, 19, 8, 0.04);
-  --shadow-md: 0 8px 24px -4px rgba(59, 19, 8, 0.06);
-  --shadow-lg: 0 16px 32px -4px rgba(47, 33, 30, 0.1);
-}
-
-/* ── Mobile / Capacitor safe-area support ────────────────────────── */
-:root {
-  --primary-gradient: linear-gradient(135deg, #6c2bff 0%, var(--fd-color-primary-hover) 100%);
   --safe-area-top: env(safe-area-inset-top, 0px);
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
   --safe-area-left: env(safe-area-inset-left, 0px);
   --safe-area-right: env(safe-area-inset-right, 0px);
-}
 
-html,
-body {
-  -webkit-tap-highlight-color: transparent;
-  -webkit-touch-callout: none;
-  overscroll-behavior: none;
-}
+  --font-family: var(--nc-font-family);
+  --font-heading: var(--nc-font-heading);
+  --font-body: var(--nc-font-family);
 
-.app-shell {
-  padding-top: var(--safe-area-top);
-  padding-bottom: var(--safe-area-bottom);
-}
-
-.scroll-container,
-main,
-.page-content {
-  -webkit-overflow-scrolling: touch;
-}
-
-body {
-  font-family: var(--font-body);
-  font-weight: 400;
-  background-color: var(--bg-color);
-  color: var(--text-primary);
-  -webkit-font-smoothing: antialiased;
-}
-
-body *:not(.material-icons-outlined):not(.material-symbols-rounded):not(.fd-icon) {
-  font-family: var(--font-family) !important;
-}
-
-body p,
-body li,
-body td,
-body input,
-body textarea,
-body select,
-body small,
-body span:not(.material-icons-outlined) {
-  font-weight: 400 !important;
-}
-
-body label,
-body th,
-body button,
-body a,
-body .btn {
-  font-weight: 500 !important;
-}
-
-body strong,
-body b {
-  font-weight: 600 !important;
-}
-
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: var(--font-heading);
-  font-weight: 700 !important;
-  letter-spacing: 0;
-}
-
-.material-icons-outlined {
-  font-family: "Material Icons Outlined" !important;
-  font-weight: normal !important;
-}
-
-/* Base Form overrides if any */
-.card {
-  background: var(--surface-color);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-light);
-  overflow: hidden;
-  transition:
-    box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1),
-    transform 0.2s;
-}
-
-.btn-primary {
-  background: var(--primary);
-  color: white;
-  border-radius: var(--radius-lg);
-  font-weight: 700;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  cursor: pointer;
-  box-shadow: 0 4px 12px var(--primary-shadow);
-  transition:
-    transform 0.2s,
-    box-shadow 0.2s;
-}
-.btn-primary:active {
-  transform: scale(0.98);
-}
-/* Final canvas guard: white page backgrounds, palette only on components. */
-:root {
-  --primary-gradient: linear-gradient(135deg, #6c2bff 0%, var(--fd-color-primary-hover) 100%);
-  --background: #ffffff;
-  --bg-color: #ffffff;
-  --cream: #ffffff;
-  --peach: #ffffff;
-  --surface: #ffffff;
-  --surface-alt: #f5f2ff;
-  --surface-card: #ffffff;
-  --sidebar-bg: #ffffff;
-  --sidebar-item-active-bg: rgba(108, 43, 255, 0.1);
-}
-
-html,
-body,
-app-root,
-.main-content,
-.page-content,
-.delivery-page,
-.dashboard-page,
-.available-orders-page,
-.active-delivery-page,
-.history-page,
-.earnings-page,
-.profile-page {
-  background: #ffffff !important;
-}
-
-.page-header,
-.section-hero,
-.hero,
-.login-page,
-.register-page,
-.change-pw-page {
-  background: #ffffff !important;
-  color: var(--text-primary) !important;
-  border-color: var(--border-color) !important;
-}
-
-/* Shared token aliases (final override) */
-:root {
   --primary: var(--fd-color-primary);
-  --primary-hover: var(--fd-color-primary-hover);
+  --primary-dark: var(--fd-color-primary-hover);
   --primary-light: var(--fd-color-primary-soft);
-  --primary-shadow: color-mix(
-    in srgb,
-    var(--fd-color-primary) 24%,
-    transparent
-  );
+  --primary-gradient: var(--fd-gradient-brand);
+  --primary-shadow: color-mix(in srgb, var(--fd-color-primary) 24%, transparent);
+
+  --success: var(--fd-color-success);
+  --success-light: var(--fd-color-success-soft);
+  --warning: var(--fd-color-warning);
+  --warning-light: var(--fd-color-warning-soft);
+  --danger: var(--fd-color-danger);
+  --danger-light: var(--fd-color-danger-soft);
+  --info: var(--fd-color-info);
+  --info-light: var(--fd-color-info-soft);
+
   --bg-color: var(--fd-color-bg);
   --surface-color: var(--fd-color-surface);
   --surface-hover: var(--fd-color-surface-soft);
@@ -253,81 +33,63 @@ app-root,
   --text-muted: var(--fd-color-text-muted);
   --border-color: var(--fd-color-border);
   --border-light: var(--fd-color-border-soft);
-  --green: var(--fd-color-success);
-  --teal: var(--fd-color-success);
-  --teal-soft: var(--fd-color-success-soft);
-  --attention: var(--fd-color-warning);
-  --attention-soft: var(--fd-color-warning-soft);
-  --red: var(--fd-color-danger);
-  --danger-light: var(--fd-color-danger-soft);
-  --cyan: var(--fd-color-info);
-  --cyan-soft: var(--fd-color-info-soft);
-  --orange: var(--fd-color-orange);
-  --orange-soft: var(--fd-color-orange-soft);
-}
 
-/* Final global palette + typography enforcement */
-:root {
-  --font-family: var(--nc-font-family);
-  --font-heading: var(--nc-font-heading);
-  --font-body: var(--nc-font-family);
-
-  --primary: var(--fd-color-primary);
-  --primary-2: var(--fd-color-primary-hover);
-  --primary-hover: var(--fd-color-primary-hover);
-  --primary-light: var(--fd-color-primary-soft);
-  --primary-soft: var(--fd-color-primary-soft);
-  --primary-gradient: var(--fd-gradient-brand);
-
-  --green: var(--fd-color-success);
-  --teal: var(--fd-color-success);
-  --teal-soft: var(--fd-color-success-soft);
-  --mint: var(--fd-color-success);
-  --mint-soft: var(--fd-color-success-soft);
-
-  --attention: var(--fd-color-warning);
-  --attention-soft: var(--fd-color-warning-soft);
-  --warning: var(--fd-color-warning);
-  --warning-light: var(--fd-color-warning-soft);
-
-  --orange: var(--fd-color-orange);
-  --orange-soft: var(--fd-color-orange-soft);
-
-  --red: var(--fd-color-danger);
-  --danger: var(--fd-color-danger);
-  --danger-light: var(--fd-color-danger-soft);
-
-  --info: var(--fd-color-info);
-  --blue: var(--fd-color-info);
-  --cyan: var(--fd-color-info);
-  --cyan-soft: var(--fd-color-info-soft);
-  --info-light: var(--fd-color-info-soft);
+  --shadow-sm: var(--fd-shadow-sm);
+  --shadow-md: var(--fd-shadow-md);
+  --shadow-lg: var(--fd-shadow-lg);
+  --radius-sm: var(--fd-radius-sm);
+  --radius-md: var(--fd-radius-md);
+  --radius-lg: var(--fd-radius-lg);
+  --radius-xl: var(--fd-radius-xl);
+  --radius-full: var(--fd-radius-pill);
 }
 
 html,
 body {
-  font-family: var(--nc-font-family) !important;
+  margin: 0;
+  font-family: var(--font-family) !important;
+  background: var(--bg-color);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
 }
 
-.bottom-menu-item.active {
-  color: var(--fd-color-primary) !important;
+body *:not(.material-icons-outlined):not(.material-symbols-rounded):not(.fd-icon) {
+  font-family: var(--font-family) !important;
+}
+
+.app-shell {
+  padding-top: var(--safe-area-top);
+  padding-bottom: var(--safe-area-bottom);
+}
+
+main,
+.page-content,
+.scroll-container {
+  -webkit-overflow-scrolling: touch;
+}
+
+.material-icons-outlined {
+  font-family: "Material Icons Outlined" !important;
 }
 
 .status-accepted,
 .status-delivered,
 .status-completed {
-  background: var(--fd-color-success-soft) !important;
+  background: var(--success-light) !important;
   color: #166534 !important;
 }
 
 .status-pending,
-.status-searching {
-  background: var(--fd-color-orange-soft) !important;
-  color: #9a3412 !important;
+.status-searching,
+.status-notified {
+  background: var(--warning-light) !important;
+  color: #854d0e !important;
 }
 
 .status-failed,
 .status-cancelled {
-  background: var(--fd-color-danger-soft) !important;
+  background: var(--danger-light) !important;
   color: #991b1b !important;
 }

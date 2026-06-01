@@ -1,9 +1,9 @@
-.mobile-product-card {
+﻿.mobile-product-card {
   height: 100%;
   display: grid;
   grid-template-rows: auto 1fr;
   overflow: hidden;
-  border: 1px solid rgba(91, 44, 255, 0.1);
+  border: 1px solid rgba(56, 38, 142, 0.1);
   border-radius: 22px;
   background: #fff;
   box-shadow: 0 12px 30px rgba(33, 22, 82, 0.07);
@@ -110,3 +110,4 @@ del {
   background: var(--fd-color-orange-soft);
   cursor: not-allowed;
 }
+

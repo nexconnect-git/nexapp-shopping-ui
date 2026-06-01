@@ -1,4 +1,4 @@
-.cart-layout {
+﻿.cart-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
   gap: 28px;
@@ -400,7 +400,7 @@ del {
     display: grid;
     grid-template-columns: 40px 1fr 40px;
     align-items: center;
-    border: 1px solid rgba(91, 44, 255, 0.2);
+    border: 1px solid rgba(56, 38, 142, 0.2);
     background: #fff;
     text-align: center;
   }
@@ -458,3 +458,4 @@ del {
     color: #77708d;
   }
 }
+

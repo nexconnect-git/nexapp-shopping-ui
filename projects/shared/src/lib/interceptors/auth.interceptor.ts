@@ -17,6 +17,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
   const loading = inject(GlobalLoadingService);
   const token = auth.getToken();
+  const hasSessionToken = !!token;
 
   if (token) {
     req = req.clone({
@@ -31,6 +32,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     catchError((err) => {
       const canRefresh =
         err.status === 401 &&
+        hasSessionToken &&
         !NON_REFRESHABLE_PATHS.some((path) => req.url.includes(path));
       if (!canRefresh) {
         return throwError(() => err);

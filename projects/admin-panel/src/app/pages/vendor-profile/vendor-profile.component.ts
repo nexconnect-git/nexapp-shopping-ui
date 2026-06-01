@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+﻿import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -196,7 +196,7 @@ export class VendorProfileComponent implements OnInit {
     const newStatus = (event.target as HTMLSelectElement).value;
     if (newStatus === this.vendor().status) return;
     if (!confirm(`Set vendor status to "${newStatus}"?`)) {
-      // Reset select visually — re-trigger change detection
+      // Reset select visually â€” re-trigger change detection
       this.vendor.update((v) => ({ ...v }));
       return;
     }
@@ -231,13 +231,13 @@ export class VendorProfileComponent implements OnInit {
 
   vendorColor(name: string): string {
     const colors = [
-      '#6C2BFF',
-      '#6C2BFF',
+      '#38268E',
+      '#38268E',
       '#EF4444',
       '#EF4444',
       '#22C55E',
       '#EF4444',
-      '#6C2BFF',
+      '#38268E',
     ];
     let hash = 0;
     for (let i = 0; i < name.length; i++)
@@ -371,3 +371,4 @@ export class VendorProfileComponent implements OnInit {
     this.loadOrders();
   }
 }
+

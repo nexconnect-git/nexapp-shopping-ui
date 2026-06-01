@@ -1,19 +1,19 @@
-/* ══════════════════════════════════════════════════════
-   ORDER DETAIL — "The Digital Atelier" Design System
-   Indigo (#6366F1) · Inter · Tonal surface layering
-   ══════════════════════════════════════════════════════ */
+﻿/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   ORDER DETAIL â€” "The Digital Atelier" Design System
+   Indigo (#6557A8) Â· Inter Â· Tonal surface layering
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 :host {
   display: block;
 }
 
-/* ── Page Wrapper ── */
+/* â”€â”€ Page Wrapper â”€â”€ */
 .order-detail-page {
   min-height: 100vh;
   font-family: var(--font-family);
 }
 
-/* ── Breadcrumb ── */
+/* â”€â”€ Breadcrumb â”€â”€ */
 .breadcrumb {
   display: flex;
   align-items: center;
@@ -25,7 +25,7 @@
     display: inline-flex;
     align-items: center;
     gap: 0.375rem;
-    color: #6366f1;
+    color: #6557A8;
     text-decoration: none;
     transition: opacity 0.2s;
 
@@ -49,7 +49,7 @@
   }
 }
 
-/* ── Page Header ── */
+/* â”€â”€ Page Header â”€â”€ */
 .page-header {
   display: flex;
   justify-content: space-between;
@@ -82,7 +82,7 @@
   margin: 0.5rem 0 0 0;
 }
 
-/* ── Status Badges ── */
+/* â”€â”€ Status Badges â”€â”€ */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -134,14 +134,14 @@
   color: #991b1b;
 }
 
-/* ── Header Actions ── */
+/* â”€â”€ Header Actions â”€â”€ */
 .header-actions {
   display: flex;
   align-items: center;
   gap: 0.75rem;
 }
 
-/* ── Status readonly pill (admin — view only) ── */
+/* â”€â”€ Status readonly pill (admin â€” view only) â”€â”€ */
 .status-readonly-pill {
   display: inline-flex;
   align-items: center;
@@ -166,14 +166,14 @@
   }
 }
 
-/* ── Live Tracking Banner ── */
+/* â”€â”€ Live Tracking Banner â”€â”€ */
 .map-section {
   background: var(--primary);
   border-radius: 16px;
   padding: 1.25rem 1.5rem;
   margin-bottom: 2rem;
-  border: 1px solid rgba(108, 43, 255, 0.2);
-  box-shadow: 0 4px 16px rgba(108, 43, 255, 0.06);
+  border: 1px solid rgba(56, 38, 142, 0.2);
+  box-shadow: 0 4px 16px rgba(56, 38, 142, 0.06);
 }
 
 .map-section-header {
@@ -192,7 +192,7 @@
 
   .material-icons-outlined {
     font-size: 22px;
-    color: #5a1fe0;
+    color: #23117C;
   }
 }
 
@@ -202,12 +202,12 @@
   gap: 0.5rem;
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(8px);
-  border: 1px solid rgba(108, 43, 255, 0.3);
+  border: 1px solid rgba(56, 38, 142, 0.3);
   border-radius: 9999px;
   padding: 0.5rem 1.125rem;
   font-size: 0.875rem;
   font-weight: 700;
-  color: #5a1fe0;
+  color: #23117C;
   cursor: pointer;
   transition: all 0.2s;
   font-family: var(--font-family);
@@ -272,7 +272,7 @@
 
   .material-icons-outlined {
     font-size: 22px;
-    color: #6366f1;
+    color: #6557A8;
   }
 
   .partner-name {
@@ -289,7 +289,7 @@
     display: flex;
     align-items: center;
     gap: 0.25rem;
-    color: #5a1fe0;
+    color: #23117C;
     font-weight: 800;
     margin-left: auto;
 
@@ -299,7 +299,7 @@
   }
 }
 
-/* ── Main 2-col Grid ── */
+/* â”€â”€ Main 2-col Grid â”€â”€ */
 .detail-grid {
   display: grid;
   grid-template-columns: 1.6fr 1fr;
@@ -317,9 +317,9 @@
   gap: 1.5rem;
 }
 
-/* ── Cards ── */
+/* â”€â”€ Cards â”€â”€ */
 .card {
-  background: #ffffff;
+  background: #FBFBFC;
   border-radius: 16px;
   box-shadow:
     0 4px 24px rgba(70, 72, 212, 0.06),
@@ -352,7 +352,7 @@
 
     .material-icons-outlined {
       font-size: 20px;
-      color: #6366f1;
+      color: #6557A8;
     }
   }
 }
@@ -367,7 +367,7 @@
   letter-spacing: 0.02em;
 }
 
-/* ── Items Table ── */
+/* â”€â”€ Items Table â”€â”€ */
 .items-table {
   width: 100%;
   border-collapse: collapse;
@@ -437,7 +437,7 @@
   }
 }
 
-/* ── Price Breakdown ── */
+/* â”€â”€ Price Breakdown â”€â”€ */
 .price-breakdown {
   padding: 1.25rem 1.75rem;
   background: #f9f8ff;
@@ -456,7 +456,7 @@
   color: #464554;
 
   &.discount {
-    color: #5a1fe0;
+    color: #23117C;
   }
 
   &.total {
@@ -474,7 +474,7 @@
   }
 }
 
-/* ── Notes card ── */
+/* â”€â”€ Notes card â”€â”€ */
 .notes-text {
   font-style: italic;
   color: #464554;
@@ -484,7 +484,7 @@
   padding: 1.5rem 1.75rem;
 }
 
-/* ── Info Rows (customer / vendor / partner) ── */
+/* â”€â”€ Info Rows (customer / vendor / partner) â”€â”€ */
 .info-row {
   display: flex;
   align-items: flex-start;
@@ -519,7 +519,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  color: #5a1fe0;
+  color: #23117C;
   font-weight: 800;
 
   .material-icons-outlined {
@@ -527,7 +527,15 @@
   }
 }
 
-/* ── Tracking Timeline ── */
+.review-comment {
+  margin: 0;
+  padding: 0 1.75rem 1rem 1.75rem;
+  color: #464554;
+  line-height: 1.5;
+  font-size: 0.9rem;
+}
+
+/* â”€â”€ Tracking Timeline â”€â”€ */
 .tracking-list {
   padding: 1.25rem 1.75rem;
   display: flex;
@@ -562,7 +570,7 @@
   position: relative;
 
   &.active {
-    background: #6366f1;
+    background: #6557A8;
     border-color: rgba(99, 102, 241, 0.25);
     box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
   }
@@ -605,7 +613,7 @@
   margin-top: 0.125rem;
 }
 
-/* ── Loading ── */
+/* â”€â”€ Loading â”€â”€ */
 .loading-state {
   display: flex;
   flex-direction: column;
@@ -626,7 +634,7 @@
   width: 40px;
   height: 40px;
   border: 3px solid #e4e1ed;
-  border-top-color: #6366f1;
+  border-top-color: #6557A8;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -652,3 +660,5 @@
 .detail-grid {
   animation: fadeSlideIn 0.35s ease-out;
 }
+
+

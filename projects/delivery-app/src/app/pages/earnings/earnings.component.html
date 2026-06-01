@@ -169,8 +169,16 @@
 
 <!-- ── Decline Reason Modal ─────────────────────────────────────── -->
 @if (showDeclineModal()) {
-  <div class="modal-backdrop" (click)="closeDeclineModal()">
-    <div class="modal-panel modal-sm" (click)="$event.stopPropagation()">
+  <div
+    class="modal-backdrop"
+    role="button"
+    tabindex="0"
+    aria-label="Close decline payout modal"
+    (click)="handleDeclineBackdrop($event)"
+    (keydown.enter)="closeDeclineModal()"
+    (keydown.space)="closeDeclineModal()"
+  >
+    <div class="modal-panel modal-sm">
       <div class="modal-header">
         <div class="modal-header-icon decline-icon">
           <span class="material-icons-outlined">cancel</span>
@@ -179,16 +187,17 @@
           <h2 class="modal-title">Decline Payout</h2>
           <p class="modal-sub">Tell us why you're declining this payout</p>
         </div>
-        <button class="modal-close-btn" (click)="closeDeclineModal()">
+        <button class="modal-close-btn" (click)="closeDeclineModal()" aria-label="Close decline payout modal">
           <span class="material-icons-outlined">close</span>
         </button>
       </div>
       <div class="modal-body">
         <div class="field-group">
-          <label class="field-label"
+          <label class="field-label" for="decline-reason"
             >Reason <span class="text-muted">(optional)</span></label
           >
           <textarea
+            id="decline-reason"
             class="field-input"
             rows="3"
             [(ngModel)]="declineReason"

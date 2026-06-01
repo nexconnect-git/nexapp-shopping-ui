@@ -1,4 +1,4 @@
-:host {
+﻿:host {
   display: block;
   padding-bottom: 3rem;
 }
@@ -116,8 +116,8 @@
   color: var(--warning);
 }
 .metric-icon.info {
-  background: #f5f2ff;
-  color: #6c2bff;
+  background: #EFECF8;
+  color: #38268E;
 }
 
 .metric-info {
@@ -258,3 +258,4 @@
 .fade-in {
   animation: fadeIn 0.4s ease-out;
 }
+

@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '@shared/public-api';
@@ -132,9 +132,10 @@ export class BannersComponent implements OnInit {
       cta_label: 'Order Now',
       cta_url: '/shops',
       image: null,
-      bg_gradient: '#6C2BFF',
+      bg_gradient: '#38268E',
       display_order: 0,
       is_active: true,
     };
   }
 }
+

@@ -22,8 +22,13 @@ import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.compo
   styleUrls: ['./order-finished.component.scss'],
 })
 export class OrderFinishedComponent {
-  rating = signal(5);
+  vendorRating = signal(5);
+  deliveryRating = signal(5);
+  vendorComment = signal('');
+  deliveryComment = signal('');
   coupons = signal<any[]>([]);
+  invoiceDownloading = signal(false);
+  ratingSubmitting = signal(false);
   private couponsLoaded = false;
 
   constructor(
@@ -83,18 +88,100 @@ export class OrderFinishedComponent {
   nextCoupon = computed(() => this.coupons()[0] || null);
 
   ratingLabel(): string {
-    if (this.rating() >= 5) return 'Excellent';
-    if (this.rating() >= 4) return 'Good';
-    if (this.rating() >= 3) return 'Okay';
+    if (this.vendorRating() >= 5) return 'Excellent';
+    if (this.vendorRating() >= 4) return 'Good';
+    if (this.vendorRating() >= 3) return 'Okay';
     return 'Needs improvement';
   }
 
   submitRating(): void {
-    this.orders.submitRating(this.order().id, this.rating());
+    if (this.ratingSubmitting()) return;
+    if ((this.order().raw as any)?.has_rating) {
+      this.state.showToast('You already reviewed this order', 'info');
+      return;
+    }
+    this.ratingSubmitting.set(true);
+    this.orders
+      .submitRating(this.order().id, {
+        vendor_rating: this.vendorRating(),
+        vendor_comment: this.vendorComment().trim(),
+        delivery_rating: this.hasDeliveryPartner()
+          ? this.deliveryRating()
+          : undefined,
+        delivery_comment: this.hasDeliveryPartner()
+          ? this.deliveryComment().trim()
+          : undefined,
+      })
+      .subscribe({
+        next: () => {
+          this.state.showToast('Thanks for sharing your review', 'success');
+          const raw = this.order().raw as any;
+          if (raw) raw.has_rating = true;
+          this.ratingSubmitting.set(false);
+        },
+        error: () => {
+          this.state.showToast('Could not submit rating', 'error');
+          this.ratingSubmitting.set(false);
+        },
+      });
+  }
+
+  hasDeliveryPartner(): boolean {
+    return Boolean((this.order().raw as any)?.delivery_partner_info);
   }
 
   downloadInvoice(): void {
-    this.state.showToast('Invoice download started');
+    if (this.invoiceDownloading()) return;
+    const order = this.order();
+    const orderId = String(order?.id || '');
+    if (!orderId || orderId === 'loading') {
+      this.state.showToast('Order details are still loading', 'info');
+      return;
+    }
+
+    const knownInvoiceId = String((order.raw as any)?.invoice_id || '').trim();
+    this.invoiceDownloading.set(true);
+    this.state.showToast('Preparing your invoice', 'info');
+
+    const downloadById = (invoiceId: string): void => {
+      this.api.downloadInvoice(invoiceId).subscribe({
+        next: (blob) => {
+          this.triggerFileDownload(
+            blob,
+            `receipt-${(order.raw as any)?.order_number || orderId}.pdf`,
+          );
+          this.state.showToast('Invoice downloaded', 'success');
+          this.invoiceDownloading.set(false);
+        },
+        error: () => {
+          this.state.showToast('Could not download invoice right now', 'error');
+          this.invoiceDownloading.set(false);
+        },
+      });
+    };
+
+    if (knownInvoiceId) {
+      downloadById(knownInvoiceId);
+      return;
+    }
+
+    this.api
+      .generateInvoice({ order: orderId, invoice_type: 'customer_receipt' })
+      .subscribe({
+        next: (invoice) => {
+          const invoiceId = String(invoice?.id || '').trim();
+          if (!invoiceId) {
+            this.state.showToast('Invoice is not ready yet', 'warning');
+            this.invoiceDownloading.set(false);
+            return;
+          }
+          downloadById(invoiceId);
+        },
+        error: () => {
+          this.state.showToast('Could not prepare invoice right now', 'error');
+          this.invoiceDownloading.set(false);
+        },
+      });
   }
 
   reorder(): void {
@@ -107,11 +194,11 @@ export class OrderFinishedComponent {
       coupon?.code || coupon?.coupon_code || '',
     ).toUpperCase();
     if (!code) {
-      this.state.showToast('No coupon available right now');
+      this.state.showToast('No coupon available right now', 'warning');
       return;
     }
     navigator.clipboard?.writeText(code);
-    this.state.showToast(`Coupon ${code} copied`);
+    this.state.showToast(`Coupon ${code} copied`, 'success');
   }
 
   couponCode(coupon: any): string {
@@ -139,5 +226,18 @@ export class OrderFinishedComponent {
     return String(status || 'Update')
       .replace(/_/g, ' ')
       .replace(/\b\w/g, (char) => char.toUpperCase());
+  }
+
+  private triggerFileDownload(blob: Blob, fileName: string): void {
+    const safeName = String(fileName || 'invoice.pdf').replace(/[^\w.-]+/g, '_');
+    const link = document.createElement('a');
+    const objectUrl = window.URL.createObjectURL(blob);
+    link.href = objectUrl;
+    link.download = safeName;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(objectUrl);
   }
 }

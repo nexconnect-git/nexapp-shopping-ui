@@ -1,4 +1,4 @@
-.store-card {
+﻿.store-card {
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 14px;
@@ -15,7 +15,7 @@
 .store-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 18px 42px rgba(23, 18, 61, 0.08);
-  border-color: rgba(91, 44, 255, 0.18);
+  border-color: rgba(56, 38, 142, 0.18);
 }
 .store-img {
   height: 112px;
@@ -148,3 +148,4 @@
     min-height: 30px;
   }
 }
+

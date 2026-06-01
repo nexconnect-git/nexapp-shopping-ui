@@ -1,22 +1,12 @@
 import { inject, Injectable } from '@angular/core';
-import { ApiService } from './api.service';
+import { Notification } from '../models';
 import { AlertService } from './alert.service';
+import { ApiService } from './api.service';
 
 export type NotifRouteMapper = (
-  n: any,
+  n: Notification,
 ) => { label: string; url: string } | null;
 
-/**
- * Centralised notification-polling service.
- *
- * Improvements:
- *  - Polls every 60s (was 5s) to avoid saturating the backend with parallel tabs.
- *  - Pauses automatically when the tab is hidden (visibilitychange API).
- *  - Removes duplicate: AppComponent no longer needs its own getUnreadCount poll.
- *  - Exposes unreadCount so AppComponent can read it reactively.
- *  - Exponential back-off on consecutive errors (max 5 min).
- *  - Uses the shared alert host instead of the legacy toast UI.
- */
 @Injectable({ providedIn: 'root' })
 export class NotificationPollingService {
   private api = inject(ApiService);
@@ -27,73 +17,69 @@ export class NotificationPollingService {
   private isOnline = true;
   private intervalId: ReturnType<typeof setInterval> | null = null;
   private mapper: NotifRouteMapper = () => null;
+  private onOnline = () => this.handleOnline();
+  private onOffline = () => {
+    this.isOnline = false;
+  };
+  private onVisibility = () => {
+    if (document.hidden) {
+      this._stopInterval();
+      return;
+    }
+    this._startInterval();
+    this.poll();
+  };
 
-  // Publicly readable unread count — AppComponent binds to this
   unreadCount = 0;
-  private _onUnreadChange: ((count: number) => void) | null = null;
+  private onUnread: ((count: number) => void) | null = null;
 
-  /** Subscribe to unread-count changes. */
   onUnreadChange(cb: (count: number) => void): void {
-    this._onUnreadChange = cb;
+    this.onUnread = cb;
   }
 
-  /** Call once when the user is authenticated. Safe to call multiple times — no-ops after first. */
   start(mapper?: NotifRouteMapper): void {
     if (mapper) this.mapper = mapper;
-    if (this.intervalId !== null) return; // already running
+    if (this.intervalId !== null) return;
 
-    // Seed seen-IDs without surfacing old notifications on boot.
     this.api.getNotifications().subscribe({
-      next: (r) => (r.results || r).forEach((n: any) => this.seenIds.add(n.id)),
+      next: (r) =>
+        ((r.results || r) as Notification[]).forEach((n) =>
+          this.seenIds.add(n.id),
+        ),
     });
 
-    window.addEventListener('online', () => this.handleOnline(), {
-      passive: true,
-    });
-    window.addEventListener(
-      'offline',
-      () => {
-        this.isOnline = false;
-      },
-      { passive: true },
-    );
-
-    // Pause polling when tab is not visible — saves CPU and network across all open tabs.
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) {
-        this._stopInterval();
-      } else {
-        this._startInterval();
-        this.poll(); // immediate catch-up poll on focus
-      }
-    });
+    window.addEventListener('online', this.onOnline, { passive: true });
+    window.addEventListener('offline', this.onOffline, { passive: true });
+    document.addEventListener('visibilitychange', this.onVisibility);
 
     this._startInterval();
+    this.poll();
   }
 
-  /** Tear down (call on logout or app destroy). */
   stop(): void {
     this._stopInterval();
     this.seenIds.clear();
     this.consecutiveErrors = 0;
     this.isOnline = true;
     this.unreadCount = 0;
+    this.api.unreadNotifications.set(0);
+    window.removeEventListener('online', this.onOnline);
+    window.removeEventListener('offline', this.onOffline);
+    document.removeEventListener('visibilitychange', this.onVisibility);
   }
 
   private _startInterval(): void {
     if (this.intervalId !== null) return;
-    this.intervalId = setInterval(() => this.poll(), 60_000); // 60s — was 5s
+    this.intervalId = setInterval(() => this.poll(), 60_000);
   }
 
   private _stopInterval(): void {
-    if (this.intervalId !== null) {
-      clearInterval(this.intervalId);
-      this.intervalId = null;
-    }
+    if (this.intervalId === null) return;
+    clearInterval(this.intervalId);
+    this.intervalId = null;
   }
 
   private poll(): void {
-    // Skip if tab is hidden — battery & network friendly
     if (document.hidden) return;
 
     this.api.getUnreadCount().subscribe({
@@ -102,24 +88,21 @@ export class NotificationPollingService {
         this.consecutiveErrors = 0;
         this.isOnline = true;
 
-        const count = r.count ?? 0;
+        const count = r.unread_count ?? r.count ?? 0;
         this.unreadCount = count;
-        this._onUnreadChange?.(count);
+        this.api.unreadNotifications.set(count);
+        this.onUnread?.(count);
 
         if (wasOffline) {
           this.handleOnline();
           return;
         }
-        if (count > 0) {
-          this.fetchAndNotify(false);
-        }
+        if (count > 0) this.fetchAndNotify(false);
       },
       error: () => {
         this.consecutiveErrors++;
         if (this.consecutiveErrors >= 2) this.isOnline = false;
 
-        // Exponential back-off: temporarily extend interval on repeated errors
-        // (max ceiling 5 min). We restart the interval with the longer delay.
         if (this.consecutiveErrors >= 3) {
           this._stopInterval();
           const backoffMs = Math.min(
@@ -143,7 +126,7 @@ export class NotificationPollingService {
   private fetchAndNotify(isReconnect: boolean): void {
     this.api.getNotifications().subscribe({
       next: (r) => {
-        const all: any[] = r.results || r;
+        const all = (r.results || r) as Notification[];
         const fresh = all.filter((n) => !this.seenIds.has(n.id));
         all.forEach((n) => this.seenIds.add(n.id));
 
@@ -154,22 +137,23 @@ export class NotificationPollingService {
             `${fresh.length} new notifications while offline`,
             'Notifications updated',
           );
-        } else {
-          fresh.slice(0, 5).forEach((n) => this.showBanner(n));
+          return;
         }
+
+        fresh.slice(0, 5).forEach((n) => this.showBanner(n));
       },
     });
   }
 
-  private showBanner(n: any): void {
-    const type = n.notification_type === 'order' ? 'success' : 'info';
+  private showBanner(n: Notification): void {
+    const tone = n.notification_type === 'order' ? 'success' : 'info';
     const title = n.title || 'New notification';
     const message = n.message || title;
 
     this.alerts.showBanner({
       title,
       message,
-      tone: type,
+      tone,
       durationMs: 7000,
     });
   }

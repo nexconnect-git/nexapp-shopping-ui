@@ -1,4 +1,4 @@
-import {
+﻿import {
   Component,
   inject,
   NgZone,
@@ -218,7 +218,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
           this.gmRoutePolyline = new google.maps.Polyline({
             path: decodeGooglePolyline(route.encodedPolyline),
             map: this.gmMap,
-            strokeColor: '#6C2BFF',
+            strokeColor: '#38268E',
             strokeWeight: 4,
             strokeOpacity: 0.85,
           });
@@ -331,3 +331,4 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
     return 'badge ' + (map[s] || '');
   }
 }
+

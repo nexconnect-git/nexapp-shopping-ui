@@ -26,16 +26,18 @@
       <h2>Personal Information</h2>
       <div class="form-row">
         <div class="form-group">
-          <label>First Name</label>
+          <label for="register-first-name">First Name</label>
           <input
+            id="register-first-name"
             type="text"
             [(ngModel)]="form.first_name"
             placeholder="First name"
           />
         </div>
         <div class="form-group">
-          <label>Last Name</label>
+          <label for="register-last-name">Last Name</label>
           <input
+            id="register-last-name"
             type="text"
             [(ngModel)]="form.last_name"
             placeholder="Last name"
@@ -43,28 +45,31 @@
         </div>
       </div>
       <div class="form-group">
-        <label>Username</label>
+        <label for="register-username">Username</label>
         <input
+          id="register-username"
           type="text"
           [(ngModel)]="form.username"
           placeholder="Choose a username"
         />
       </div>
       <div class="form-group">
-        <label>Email</label>
+        <label for="register-email">Email</label>
         <input
+          id="register-email"
           type="email"
           [(ngModel)]="form.email"
           placeholder="your@email.com"
         />
       </div>
       <div class="form-group">
-        <label>Phone</label>
-        <input type="tel" [(ngModel)]="form.phone" placeholder="Phone number" />
+        <label for="register-phone">Phone</label>
+        <input id="register-phone" type="tel" [(ngModel)]="form.phone" placeholder="Phone number" />
       </div>
       <div class="form-group">
-        <label>Password</label>
+        <label for="register-password">Password</label>
         <input
+          id="register-password"
           type="password"
           [(ngModel)]="form.password"
           placeholder="Create password"
@@ -76,8 +81,8 @@
     @if (step() === 2) {
       <h2>Vehicle Information</h2>
       <div class="form-group">
-        <label>Vehicle Type</label>
-        <select [(ngModel)]="vehicle.vehicle_type">
+        <label for="register-vehicle-type">Vehicle Type</label>
+        <select id="register-vehicle-type" [(ngModel)]="vehicle.vehicle_type">
           <option value="">Select vehicle type</option>
           <option value="bicycle">Bicycle</option>
           <option value="motorcycle">Motorcycle</option>
@@ -86,16 +91,18 @@
         </select>
       </div>
       <div class="form-group">
-        <label>Vehicle Number</label>
+        <label for="register-vehicle-number">Vehicle Number</label>
         <input
+          id="register-vehicle-number"
           type="text"
           [(ngModel)]="vehicle.vehicle_number"
           placeholder="e.g. ABC-1234"
         />
       </div>
       <div class="form-group">
-        <label>License Number</label>
+        <label for="register-license-number">License Number</label>
         <input
+          id="register-license-number"
           type="text"
           [(ngModel)]="vehicle.license_number"
           placeholder="Driver's license number"

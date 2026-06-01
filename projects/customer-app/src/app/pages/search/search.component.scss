@@ -1,4 +1,4 @@
-:host {
+﻿:host {
   display: block;
   min-width: 0;
 }
@@ -60,8 +60,9 @@
   flex-wrap: wrap;
   max-width: 100%;
 }
-.filters select {
+.filters .mobile-sort-control {
   margin-left: auto;
+  width: 210px;
   min-width: 0;
 }
 .fd-section-title small {
@@ -101,14 +102,14 @@
   margin: 0 0 12px;
   border: 1px solid #e5dcff;
   border-radius: 16px;
-  background: linear-gradient(135deg, #f5f2ff, #fff);
+  background: linear-gradient(135deg, #EFECF8, #fff);
   display: grid;
   grid-template-columns: 42px minmax(0, 1fr);
   gap: 12px;
   align-items: center;
   text-align: left;
   padding: 12px 14px;
-  color: #5a1fe0;
+  color: #23117C;
   box-shadow: 0 10px 28px rgba(23, 18, 61, 0.04);
 }
 .search-promo > .material-symbols-rounded {
@@ -367,3 +368,4 @@
     font-weight: 950;
   }
 }
+

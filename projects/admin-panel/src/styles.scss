@@ -2,25 +2,25 @@
 
 /* ── Admin panel — accent override ──────────────── */
 :root {
-  --primary-gradient: linear-gradient(135deg, #6c2bff 0%, var(--fd-color-primary-hover) 100%);
-  --cream: #ffffff;
-  --peach: #ffffff;
-  --surface: #ffffff;
-  --surface-alt: #f5f2ff;
+  --primary-gradient: linear-gradient(135deg, #38268E 0%, var(--fd-color-primary-hover) 100%);
+  --cream: #FBFBFC;
+  --peach: #FBFBFC;
+  --surface: #FBFBFC;
+  --surface-alt: #EFECF8;
   --brand-accent: var(--fd-color-primary-hover);
-  --brand-accent-deep: #6c2bff;
+  --brand-accent-deep: #38268E;
   --coral: var(--fd-color-primary-hover);
-  --coral-soft: #f5f2ff;
-  --purple: #6c2bff;
-  --purple-soft: #f5f2ff;
+  --coral-soft: #EFECF8;
+  --purple: #38268E;
+  --purple-soft: #EFECF8;
   --teal: #22c55e;
   --teal-soft: rgba(34, 197, 94, 0.12);
   --cyan: var(--fd-color-primary-hover);
-  --cyan-soft: #f5f2ff;
-  --attention: var(--fd-color-primary-hover);
-  --attention-soft: #f5f2ff;
-  --indigo: #6c2bff;
-  --indigo-soft: #f5f2ff;
+  --cyan-soft: #EFECF8;
+  --attention: var(--fd-color-orange);
+  --attention-soft: var(--fd-color-orange-soft);
+  --indigo: #38268E;
+  --indigo-soft: #EFECF8;
   --mint: #22c55e;
   --mint-soft: rgba(34, 197, 94, 0.12);
   --charcoal: #111827;
@@ -28,22 +28,22 @@
   --muted: #6b7280;
   --faint: #9ca3af;
   --line: #f3f4f6;
-  --white: #ffffff;
+  --white: #FBFBFC;
   --green: #22c55e;
   --red: #ef4444;
-  --highlight: #6c2bff;
-  --blue: #6c2bff;
+  --highlight: #38268E;
+  --blue: #38268E;
 
-  --primary: #6c2bff;
-  --primary-hover: #5a1fe0;
-  --primary-dark: #4a18ba;
-  --primary-light: #f5f2ff;
-  --primary-shadow: rgba(108, 43, 255, 0.24);
+  --primary: #38268E;
+  --primary-hover: #23117C;
+  --primary-dark: #23117C;
+  --primary-light: #EFECF8;
+  --primary-shadow: rgba(56, 38, 142, 0.24);
   --accent-red: #ef4444;
   --accent-green: #22c55e;
-  --surface-color: #ffffff;
-  --bg-color: #ffffff;
-  --surface-hover: #f5f2ff;
+  --surface-color: #FBFBFC;
+  --bg-color: #FBFBFC;
+  --surface-hover: #EFECF8;
   --border-color: #f3f4f6;
   --border-light: #f3f4f6;
   --text-primary: #111827;
@@ -1369,14 +1369,14 @@ app-dynamic-table {
 }
 /* Final canvas guard: white page backgrounds, palette only on components. */
 :root {
-  --primary-gradient: linear-gradient(135deg, #6c2bff 0%, var(--fd-color-primary-hover) 100%);
-  --background: #ffffff;
-  --bg-color: #ffffff;
-  --cream: #ffffff;
-  --peach: #ffffff;
-  --surface: #ffffff;
-  --surface-alt: #f5f2ff;
-  --surface-card: #ffffff;
+  --primary-gradient: linear-gradient(135deg, #38268E 0%, var(--fd-color-primary-hover) 100%);
+  --background: #FBFBFC;
+  --bg-color: #FBFBFC;
+  --cream: #FBFBFC;
+  --peach: #FBFBFC;
+  --surface: #FBFBFC;
+  --surface-alt: #EFECF8;
+  --surface-card: #FBFBFC;
 }
 
 html,
@@ -1390,7 +1390,7 @@ app-root,
 .dashboard,
 .onboarding-page,
 .auth-saas-page {
-  background: #ffffff !important;
+  background: #FBFBFC !important;
 }
 
 body .admin-page-hero,
@@ -1404,7 +1404,7 @@ body .dashboard .kpi-card.revenue,
 .customer-profile-page .hero-banner,
 .partner-profile-page .hero-banner,
 .setup-container {
-  background: #ffffff !important;
+  background: #FBFBFC !important;
   color: var(--text-primary) !important;
   border-color: var(--border-color) !important;
 }

@@ -1,0 +1,16 @@
+<div class="quick-grid">
+  @for (action of actions; track action.id) {
+    @if (action.route) {
+      <a [routerLink]="action.route" (click)="selected.emit(action.id)">
+        <span class="material-symbols-rounded">{{ action.icon || 'bolt' }}</span>
+        <b>{{ action.label }}</b>
+      </a>
+    } @else {
+      <button type="button" (click)="selected.emit(action.id)">
+        <span class="material-symbols-rounded">{{ action.icon || 'bolt' }}</span>
+        <b>{{ action.label }}</b>
+      </button>
+    }
+  }
+</div>
+

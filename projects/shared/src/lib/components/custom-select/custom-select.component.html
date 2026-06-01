@@ -1,0 +1,33 @@
+<div class="custom-select" [class.disabled]="disabled">
+  <button
+    type="button"
+    class="trigger"
+    [attr.aria-label]="ariaLabel"
+    [attr.aria-expanded]="open()"
+    [disabled]="disabled"
+    (click)="toggle()"
+  >
+    <span class="material-symbols-rounded icon">{{ icon }}</span>
+    <span class="value">{{ label() }}</span>
+    <span class="material-symbols-rounded caret">expand_more</span>
+  </button>
+
+  @if (open()) {
+    <div class="menu" role="listbox">
+      @for (option of options; track option) {
+        <button
+          type="button"
+          class="option"
+          [class.active]="value === option"
+          (click)="choose(option)"
+        >
+          <span>{{ option }}</span>
+          @if (value === option) {
+            <span class="material-symbols-rounded check">check</span>
+          }
+        </button>
+      }
+    </div>
+  }
+</div>
+

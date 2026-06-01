@@ -1,0 +1,19 @@
+<article class="product-row" (click)="pressed.emit()" (keydown.enter)="pressed.emit()" tabindex="0">
+  <img [src]="image" [alt]="name" loading="lazy" />
+  <div class="copy">
+    <b>{{ name }}</b>
+    @if (subtitle) {
+      <small>{{ subtitle }}</small>
+    }
+    <div class="pricing">
+      <strong>{{ price | appCurrency }}</strong>
+      @if (mrp && mrp > price) {
+        <em>{{ mrp | appCurrency }}</em>
+      }
+    </div>
+  </div>
+  <button type="button" (click)="$event.stopPropagation(); add.emit()">
+    {{ buttonLabel }}
+  </button>
+</article>
+

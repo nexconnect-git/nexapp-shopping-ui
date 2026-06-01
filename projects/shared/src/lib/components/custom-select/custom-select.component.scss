@@ -1,0 +1,77 @@
+:host {
+  display: block;
+}
+
+.custom-select {
+  position: relative;
+  min-width: 0;
+}
+
+.trigger {
+  width: 100%;
+  min-height: 42px;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border: 1px solid rgba(108, 99, 255, 0.22);
+  border-radius: 12px;
+  background: #fff;
+  color: #3a315f;
+  text-align: left;
+  font-weight: 700;
+}
+
+.icon,
+.caret {
+  font-size: 18px;
+  color: #675b8d;
+}
+
+.value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 25;
+  padding: 6px;
+  border: 1px solid rgba(108, 99, 255, 0.22);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 16px 30px rgba(31, 18, 74, 0.2);
+}
+
+.option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 10px;
+  border-radius: 9px;
+  color: #2f2459;
+  text-align: left;
+  font-weight: 700;
+}
+
+.option:hover,
+.option.active {
+  background: rgba(108, 99, 255, 0.12);
+}
+
+.check {
+  font-size: 18px;
+  color: #4a36c6;
+}
+
+.disabled .trigger {
+  opacity: 0.55;
+}
+

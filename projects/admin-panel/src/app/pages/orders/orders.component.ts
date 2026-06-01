@@ -1,4 +1,4 @@
-import {
+﻿import {
   Component,
   inject,
   NgZone,
@@ -20,7 +20,7 @@ import {
 import { Subscription, timer } from 'rxjs';
 import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
 
-// Google Maps loaded via <script> tag in index.html — no @types/google.maps needed
+// Google Maps loaded via <script> tag in index.html â€” no @types/google.maps needed
 declare const google: any;
 
 @Component({
@@ -99,7 +99,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
   /** Admin can cancel any order that hasn't been delivered yet. */
   getAvailableStatuses(order: Order): string[] {
     if (order.status === 'delivered' || order.status === 'cancelled') {
-      return [order.status]; // terminal — no transitions
+      return [order.status]; // terminal â€” no transitions
     }
     return this.statuses.filter(
       (s) => s !== 'cancelled' || order.status !== 'delivered',
@@ -295,7 +295,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
           this.gmRoutePolyline = new google.maps.Polyline({
             path: decodeGooglePolyline(route.encodedPolyline),
             map: this.gmMap,
-            strokeColor: '#6C2BFF',
+            strokeColor: '#38268E',
             strokeWeight: 4,
             strokeOpacity: 0.85,
           });
@@ -402,3 +402,4 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.closeTrackingMap();
   }
 }
+

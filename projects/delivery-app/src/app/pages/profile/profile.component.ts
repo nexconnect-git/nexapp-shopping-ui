@@ -2,11 +2,12 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
+  AlertService,
   ApiService,
   AuthService,
   MapLocation,
   MapPickerComponent,
-  ToastService,
+  User,
 } from '@shared/public-api';
 
 @Component({
@@ -19,9 +20,9 @@ import {
 export class ProfileComponent implements OnInit {
   private api = inject(ApiService);
   private auth = inject(AuthService);
-  private toast = inject(ToastService);
+  private alerts = inject(AlertService);
 
-  profile: any = {};
+  profile: Partial<User> = {};
   loading = signal(true);
   saving = signal(false);
   savingLocation = signal(false);
@@ -36,8 +37,24 @@ export class ProfileComponent implements OnInit {
         this.profile = { ...u };
         this.loading.set(false);
       },
-      error: () => this.loading.set(false),
+      error: () => {
+        this.loading.set(false);
+        this.alerts.error('Could not load profile details.');
+      },
     });
+  }
+
+  private flattenApiError(err: unknown): string {
+    const apiError = err as {
+      error?: Record<string, string | string[]> | string;
+    };
+    const payload = apiError.error;
+    if (!payload) return 'Update failed.';
+    if (typeof payload === 'string') return payload;
+    const values = Object.values(payload).flatMap((value) =>
+      Array.isArray(value) ? value : [value],
+    );
+    return values.filter(Boolean).join(' ') || 'Update failed.';
   }
 
   save() {
@@ -45,17 +62,11 @@ export class ProfileComponent implements OnInit {
     this.api.updateProfile(this.profile).subscribe({
       next: (u) => {
         this.auth.updateUserData(u);
-        this.toast.show('Profile updated!', 'success');
+        this.alerts.success('Profile updated.');
         this.saving.set(false);
       },
       error: (err) => {
-        const e = err.error;
-        this.toast.show(
-          typeof e === 'object'
-            ? Object.values(e).flat().join(' ')
-            : 'Update failed.',
-          'error',
-        );
+        this.alerts.error(this.flattenApiError(err));
         this.saving.set(false);
       },
     });
@@ -77,9 +88,12 @@ export class ProfileComponent implements OnInit {
         this.locationSaved.set(true);
         this.savingLocation.set(false);
         this.showMapPicker.set(false);
-        this.toast.show('Base location updated!', 'success');
+        this.alerts.success('Base location updated.');
       },
-      error: () => this.savingLocation.set(false),
+      error: () => {
+        this.savingLocation.set(false);
+        this.alerts.error('Could not update base location.');
+      },
     });
   }
 

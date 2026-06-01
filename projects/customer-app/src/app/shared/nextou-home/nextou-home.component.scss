@@ -69,9 +69,11 @@ button {
     filter: drop-shadow(0 10px 20px rgba(18, 8, 74, 0.22));
   }
 
-  b {
-    font-size: 28px;
-    letter-spacing: 0;
+  .brand-wordmark {
+    width: auto;
+    height: 22px;
+    border-radius: 0;
+    filter: none;
   }
 }
 
@@ -247,7 +249,7 @@ button {
 
   button.active span {
     transform: translateY(-2px);
-    box-shadow: 0 16px 34px rgba(91, 44, 255, 0.18);
+    box-shadow: 0 16px 34px rgba(56, 38, 142, 0.18);
     border-color: #d8ccff;
   }
 }
@@ -269,7 +271,7 @@ button {
   display: grid;
   grid-template-columns: 1.05fr 0.95fr;
   gap: 6px;
-  box-shadow: 0 18px 45px rgba(91, 44, 255, 0.24);
+  box-shadow: 0 18px 45px rgba(56, 38, 142, 0.24);
 }
 
 .banner-copy {
@@ -700,7 +702,7 @@ button {
   span {
     border-radius: 9px;
     padding: 6px 10px;
-    background: #eef4ff;
+    background: #F1EEFA;
     color: #3970d9;
     font-size: 12px;
     font-weight: 900;
@@ -998,4 +1000,3 @@ button {
     display: none;
   }
 }
-

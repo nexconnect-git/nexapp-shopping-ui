@@ -1,4 +1,4 @@
-:host {
+﻿:host {
   display: block;
   padding-bottom: 3rem;
 }
@@ -154,7 +154,7 @@
 .badge-info {
   background: var(--warning-light);
   color: var(--warning);
-  border-color: rgba(108, 43, 255, 0.2);
+  border-color: rgba(56, 38, 142, 0.2);
 }
 
 .user-pill {
@@ -171,8 +171,8 @@
   font-size: 0.75rem;
   padding: 0.25rem 0.5rem;
   border-radius: var(--radius-full);
-  background: #f5f2ff;
-  color: #6c2bff;
+  background: #EFECF8;
+  color: #38268E;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -601,3 +601,5 @@ select.input-field {
     opacity: 1;
   }
 }
+
+

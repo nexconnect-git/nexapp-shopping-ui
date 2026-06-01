@@ -1,4 +1,4 @@
-import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+﻿import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -77,13 +77,13 @@ export class VendorsComponent implements OnInit, OnDestroy {
 
   vendorColor(name: string): string {
     const colors = [
-      '#6C2BFF',
-      '#6C2BFF',
+      '#38268E',
+      '#38268E',
       '#EF4444',
       '#EF4444',
       '#22C55E',
       '#EF4444',
-      '#6C2BFF',
+      '#38268E',
     ];
     let hash = 0;
     for (let i = 0; i < name.length; i++)
@@ -230,7 +230,7 @@ export class VendorsComponent implements OnInit, OnDestroy {
 
   starsFor(r: number) {
     const f = Math.round(r);
-    return '★'.repeat(f) + '☆'.repeat(5 - f);
+    return 'â˜…'.repeat(f) + 'â˜†'.repeat(5 - f);
   }
 
   private vendorCreateErrorMessage(error: any): string {
@@ -249,3 +249,4 @@ export class VendorsComponent implements OnInit, OnDestroy {
     );
   }
 }
+

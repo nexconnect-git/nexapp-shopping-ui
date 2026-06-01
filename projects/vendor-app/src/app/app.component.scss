@@ -31,10 +31,8 @@
 .brand-mark {
   width: 46px;
   height: 46px;
-  display: grid;
-  place-items: center;
+  display: block;
   border-radius: 8px;
-  color: var(--nc-white);
   background: transparent;
   object-fit: contain;
   box-shadow: 0 16px 32px color-mix(in srgb, var(--nc-primary) 22%, transparent);
@@ -336,6 +334,7 @@
 }
 
 .mobile-menu-btn,
+.back-btn,
 .topbar-icon-btn,
 .topbar-avatar {
   width: 42px;
@@ -346,6 +345,12 @@
   box-shadow: 0 8px 18px
     color-mix(in srgb, var(--nc-text-primary) 5%, transparent);
   cursor: pointer;
+}
+
+.back-btn {
+  display: grid;
+  place-items: center;
+  color: var(--ink);
 }
 
 .topbar-avatar {

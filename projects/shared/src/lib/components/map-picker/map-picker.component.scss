@@ -1,4 +1,4 @@
-:host {
+﻿:host {
   display: block;
   width: 100%;
 }
@@ -8,13 +8,13 @@
   display: flex;
   flex-direction: column;
   border-radius: var(--radius-md, 8px);
-  /* Removed overflow:hidden — it was clipping Google Maps click events */
+  /* Removed overflow:hidden â€” it was clipping Google Maps click events */
   background: white;
   border: 1px solid var(--border-color, #e5e7eb);
   overflow: hidden;
 }
 
-/* ── Search bar ─────────────────────────────────────────────── */
+/* â”€â”€ Search bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .map-search-bar {
   position: relative;
   padding: 0.5rem;
@@ -65,7 +65,7 @@
     box-shadow 0.15s;
 
   &:focus {
-    border-color: var(--primary, #6c2bff);
+    border-color: var(--primary, #38268E);
     box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.12);
     background: white;
   }
@@ -75,7 +75,7 @@
   }
 }
 
-/* Google Places autocomplete dropdown — keep it on top */
+/* Google Places autocomplete dropdown â€” keep it on top */
 ::ng-deep .pac-container {
   z-index: 9999 !important;
   border-radius: var(--radius-sm, 6px);
@@ -99,7 +99,7 @@
   font-weight: 600;
 }
 
-/* ── Toolbar ────────────────────────────────────────────────── */
+/* â”€â”€ Toolbar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .map-toolbar {
   padding: 0.5rem;
   background: var(--surface-hover, #f9fafb);
@@ -145,18 +145,18 @@
     width: 14px;
     height: 14px;
     border: 2px solid var(--border-color, #ccc);
-    border-top-color: var(--primary, #6c2bff);
+    border-top-color: var(--primary, #38268E);
     border-radius: 50%;
     animation: map-spin 1s linear infinite;
   }
 }
 
-/* ── Map canvas ─────────────────────────────────────────────── */
+/* â”€â”€ Map canvas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .map-container {
   width: 100%;
   min-height: 220px;
   background: #e5e5e5;
-  /* No overflow clipping here — keep clicks reaching the map */
+  /* No overflow clipping here â€” keep clicks reaching the map */
 }
 
 .map-container.hidden {
@@ -170,7 +170,7 @@
   overflow: hidden;
   cursor: crosshair;
   background:
-    linear-gradient(135deg, rgba(108, 43, 255, 0.08), rgba(0, 200, 83, 0.08)),
+    linear-gradient(135deg, rgba(56, 38, 142, 0.08), rgba(0, 200, 83, 0.08)),
     #eef2f7;
   isolation: isolate;
 }
@@ -200,7 +200,7 @@
   left: 50%;
   top: 50%;
   z-index: 2;
-  color: var(--primary, #6c2bff);
+  color: var(--primary, #38268E);
   font-size: 38px;
   text-shadow: 0 4px 14px rgba(31, 41, 55, 0.24);
   transform: translate(-50%, -100%);
@@ -232,7 +232,7 @@
 }
 
 .fallback-map-controls button:hover {
-  color: var(--primary, #6c2bff);
+  color: var(--primary, #38268E);
 }
 
 .fallback-map-notice {
@@ -257,8 +257,8 @@
   border-radius: 12px;
   display: grid;
   place-items: center;
-  background: rgba(108, 43, 255, 0.1);
-  color: var(--primary, #6c2bff);
+  background: rgba(56, 38, 142, 0.1);
+  color: var(--primary, #38268E);
   font-size: 24px;
 }
 
@@ -290,7 +290,7 @@
   color: var(--text-muted, #6b7280);
 }
 
-/* ── Result strip ───────────────────────────────────────────── */
+/* â”€â”€ Result strip â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .map-address-preview {
   padding: 0.75rem;
   display: flex;
@@ -317,8 +317,8 @@
   height: 0.65rem;
   margin-top: 0.28rem;
   border-radius: 50%;
-  background: var(--primary, #6c2bff);
-  box-shadow: 0 0 0 4px rgba(108, 43, 255, 0.12);
+  background: var(--primary, #38268E);
+  box-shadow: 0 0 0 4px rgba(56, 38, 142, 0.12);
 }
 
 .map-hint {
@@ -395,3 +395,5 @@
 .map-search-error {
   color: #ef4444;
 }
+
+

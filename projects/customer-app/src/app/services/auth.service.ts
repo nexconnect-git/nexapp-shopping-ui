@@ -66,7 +66,12 @@ export class AuthService {
     this.error.set('');
     this.sharedAuth.verifyCustomerLoginOtp(phone, otp, email).subscribe({
       next: (response) => {
-        this.sharedAuth.handleAuthResponse(response);
+        if (!this.sharedAuth.handleAuthResponse(response)) {
+          this.loading.set(false);
+          this.error.set('This account is not allowed in the customer app.');
+          onError?.('This account is not allowed in the customer app.');
+          return;
+        }
         this.loading.set(false);
         this.otpRequested.set(false);
         onDone?.();

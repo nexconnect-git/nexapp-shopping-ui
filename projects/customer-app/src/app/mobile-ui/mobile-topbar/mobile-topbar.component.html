@@ -1,8 +1,17 @@
 <header class="mobile-topbar">
   <div class="brand-row">
+    @if (showBack()) {
+      <button type="button" class="back-btn" aria-label="Go back" (click)="goBack()">
+        <span class="material-symbols-rounded">arrow_back</span>
+      </button>
+    }
     <a routerLink="/" class="brand" aria-label="Nextou home">
-      <span class="brand-logo" aria-hidden="true">N</span>
-      <b>Nextou</b>
+      <img
+        class="brand-logo"
+        src="assets/brand/nextou-logo-single.png"
+        alt="Nextou logo"
+      />
+      <img src="assets/brand/nextou-brand-logo-white.png" alt="Nextou" class="brand-wordmark" />
     </a>
     <div class="top-actions">
       <a routerLink="/offers" aria-label="Offers">
@@ -23,23 +32,27 @@
     </div>
   </div>
 
-  <button type="button" class="location-card" (click)="ui.openLocation()">
-    <span class="material-symbols-rounded">location_on</span>
-    <span>
-      <small>Delivering to</small>
-      <b>{{ state.location() || 'Select location' }}</b>
-    </span>
-    <span class="material-symbols-rounded">expand_more</span>
-  </button>
+  @if (isHomeRoute()) {
+    <button type="button" class="location-card" (click)="ui.openLocation()">
+      <span class="material-symbols-rounded">location_on</span>
+      <span>
+        <small>Delivering to</small>
+        <b>{{ state.location() || 'Select location' }}</b>
+      </span>
+      <span class="material-symbols-rounded">expand_more</span>
+    </button>
+  }
 
-  <form class="search-card" (submit)="search($event)">
-    <span class="material-symbols-rounded">search</span>
-    <input
-      type="search"
-      name="q"
-      placeholder="Search milk, bread, pharmacy..."
-      [value]="query()"
-      (input)="query.set($any($event.target).value)"
-    />
-  </form>
+  @if (isHomeRoute()) {
+    <form class="search-card" (submit)="search($event)">
+      <span class="material-symbols-rounded">search</span>
+      <input
+        type="search"
+        name="q"
+        placeholder="Search milk, bread, pharmacy..."
+        [value]="query()"
+        (input)="query.set($any($event.target).value)"
+      />
+    </form>
+  }
 </header>

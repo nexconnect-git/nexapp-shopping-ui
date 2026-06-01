@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
 export class CustomerVisualService {
@@ -23,11 +23,12 @@ export class CustomerVisualService {
   coverForCategory(category: string | null | undefined) {
     const key = String(category || '').toLowerCase();
     if (key.includes('pharma') || key.includes('health'))
-      return 'linear-gradient(135deg,#e6f3ff,#ffffff)';
-    if (key.includes('care')) return 'linear-gradient(135deg,#ffeaf2,#eef4ff)';
+      return 'linear-gradient(135deg,#e6f3ff,#FBFBFC)';
+    if (key.includes('care')) return 'linear-gradient(135deg,#ffeaf2,#F1EEFA)';
     if (key.includes('pet')) return 'linear-gradient(135deg,#f4ecff,#fff)';
     if (key.includes('fruit') || key.includes('fresh'))
       return 'linear-gradient(135deg,#e5fff2,#fff7df)';
     return 'linear-gradient(135deg,#eef8ff,#fff)';
   }
 }
+

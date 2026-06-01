@@ -41,6 +41,18 @@
   border-bottom: 1px solid var(--border-light);
 }
 
+.sidebar-back-btn {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
 .sidebar-brand-icon {
   width: 36px;
   height: 36px;
@@ -180,7 +192,21 @@
     height: 34px;
     flex: 0 0 34px;
     border-radius: 9px;
+    display: block;
+    object-fit: contain;
   }
+}
+
+.header-back-btn {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border-light);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--text-secondary);
+  cursor: pointer;
 }
 
 .header-actions {
@@ -230,8 +256,8 @@
 .notif-dropdown {
   position: absolute;
   top: 100%;
-  right: -20px;
-  width: 320px;
+  right: 0;
+  width: min(360px, calc(100vw - 24px));
   background: white;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-xl);
@@ -285,6 +311,11 @@
   overflow-y: auto;
 }
 .notif-item {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
   display: flex;
   padding: 1.25rem;
   gap: 1rem;
@@ -541,5 +572,9 @@
     padding-top: 0;
     padding-bottom: 0;
     padding-left: 260px;
+  }
+
+  .notif-dropdown {
+    width: 360px;
   }
 }

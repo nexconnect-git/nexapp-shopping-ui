@@ -1,4 +1,4 @@
-.tracking-layout {
+﻿.tracking-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 380px;
   gap: 28px;
@@ -307,7 +307,7 @@
   padding: 0 16px;
   background: #fff;
   white-space: nowrap;
-  box-shadow: 0 10px 26px rgba(91, 44, 255, 0.08);
+  box-shadow: 0 10px 26px rgba(56, 38, 142, 0.08);
 }
 .summary {
   padding: 22px;
@@ -681,3 +681,4 @@
     background: #fbfaff;
   }
 }
+

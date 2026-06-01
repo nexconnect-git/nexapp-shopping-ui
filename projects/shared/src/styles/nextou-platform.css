@@ -24,30 +24,18 @@
   font-weight: 400;
   font-display: swap;
   src:
-    url("/sa/fonts/proxima-nova-regular.woff2") format("woff2"),
-    url("/fonts/proxima-nova-regular.woff2") format("woff2"),
     local("Proxima Nova"),
-    local("ProximaNova-Regular");
+    local("ProximaNova-Regular"),
+    local("Proxima Nova Regular");
 }
 
-@font-face {
-  font-family: "Futura";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src:
-    url("/sa/fonts/futura-regular.woff2") format("woff2"),
-    url("/fonts/futura-regular.woff2") format("woff2"),
-    local("Futura"),
-    local("Futura PT"),
-    local("Futura Std");
-}
+
 
 :root {
-  --fd-color-primary: #6c2bff;
-  --fd-color-primary-hover: #5a1fe0;
-  --fd-color-primary-soft: #f5f2ff;
-  --fd-color-primary-border: #ddd1ff;
+  --fd-color-primary: #38268E;
+  --fd-color-primary-hover: #23117C;
+  --fd-color-primary-soft: #EFECF8;
+  --fd-color-primary-border: #C7BFE8;
 
   --fd-color-success: #22c55e;
   --fd-color-success-soft: #eafbf1;
@@ -61,33 +49,33 @@
   --fd-color-danger-soft: #fee2e2;
   --fd-color-danger-border: #fecaca;
 
-  --fd-color-orange: #f47714;
-  --fd-color-orange-soft: #ffedd5;
+  --fd-color-orange: #F97928;
+  --fd-color-orange-soft: #FFF0E5;
   --fd-color-orange-border: #fed7aa;
 
-  --fd-color-info: #225cff;
-  --fd-color-info-soft: #eef4ff;
-  --fd-color-info-border: #bfdbfe;
+  --fd-color-info: #6557A8;
+  --fd-color-info-soft: #F1EEFA;
+  --fd-color-info-border: #C7BFE8;
 
-  --fd-color-bg: #ffffff;
-  --fd-color-page: #f8fafc;
-  --fd-color-surface: #ffffff;
-  --fd-color-surface-soft: #f9fafb;
-  --fd-color-text: #111827;
-  --fd-color-text-secondary: #374151;
-  --fd-color-text-muted: #6b7280;
-  --fd-color-border: #e5e7eb;
-  --fd-color-border-soft: #f3f4f6;
+  --fd-color-bg: #FBFBFC;
+  --fd-color-page: #F1EEFA;
+  --fd-color-surface: #FBFBFC;
+  --fd-color-surface-soft: #F1EEFA;
+  --fd-color-text: #23117C;
+  --fd-color-text-secondary: #4B466D;
+  --fd-color-text-muted: #6A6690;
+  --fd-color-border: #DDD8EE;
+  --fd-color-border-soft: #EBE7F5;
 
-  --fd-gradient-brand: linear-gradient(135deg, #6c2bff 0%, #5a1fe0 100%);
+  --fd-gradient-brand: linear-gradient(135deg, #38268E 0%, #23117C 100%);
   --fd-gradient-success: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
   --fd-gradient-danger: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
-  --fd-gradient-info: linear-gradient(135deg, #225cff 0%, #4f46e5 100%);
+  --fd-gradient-info: linear-gradient(135deg, #6557A8 0%, #38268E 100%);
 
   --fd-shadow-sm: 0 2px 8px rgba(17, 24, 39, 0.06);
   --fd-shadow-md: 0 8px 24px rgba(17, 24, 39, 0.08);
   --fd-shadow-lg: 0 16px 40px rgba(17, 24, 39, 0.12);
-  --fd-shadow-focus: 0 0 0 4px rgba(108, 43, 255, 0.16);
+  --fd-shadow-focus: 0 0 0 4px rgba(56, 38, 142, 0.16);
 
   --fd-radius-sm: 8px;
   --fd-radius-md: 12px;
@@ -144,7 +132,7 @@
 
   --fd-modal-bg: var(--fd-color-surface);
   --fd-modal-border: var(--fd-color-border);
-  --fd-sheet-bg: #ffffff;
+  --fd-sheet-bg: #FBFBFC;
   --fd-sheet-handle: #d1d5db;
   --fd-sheet-overlay: rgba(17, 24, 39, 0.42);
 
@@ -154,23 +142,23 @@
   --fd-field-error-bg: var(--fd-color-danger-soft);
   --fd-field-success: var(--fd-color-success);
 
-  --nc-primary: #6c2bff;
-  --nc-primary-2: #5a1fe0;
-  --nc-primary-hover: #5a1fe0;
-  --nc-primary-dark: #4a18ba;
-  --nc-primary-soft: #f5f2ff;
-  --nc-primary-shadow: rgba(108, 43, 255, 0.24);
+  --nc-primary: #38268E;
+  --nc-primary-2: #23117C;
+  --nc-primary-hover: #23117C;
+  --nc-primary-dark: #23117C;
+  --nc-primary-soft: #EFECF8;
+  --nc-primary-shadow: rgba(56, 38, 142, 0.24);
 
-  --nc-bg: #ffffff;
-  --nc-surface: #ffffff;
-  --nc-surface-alt: #f5f2ff;
-  --nc-surface-hover: #f5f2ff;
-  --nc-text-primary: #111827;
-  --nc-text-secondary: #374151;
-  --nc-muted: #6b7280;
-  --nc-faint: #9ca3af;
-  --nc-line: #f3f4f6;
-  --nc-white: #ffffff;
+  --nc-bg: #FBFBFC;
+  --nc-surface: #FBFBFC;
+  --nc-surface-alt: #EFECF8;
+  --nc-surface-hover: #EFECF8;
+  --nc-text-primary: #23117C;
+  --nc-text-secondary: #4B466D;
+  --nc-muted: #6A6690;
+  --nc-faint: #8A85A7;
+  --nc-line: #EBE7F5;
+  --nc-white: #FBFBFC;
 
   --nc-success: #22c55e;
   --nc-success-soft: rgba(34, 197, 94, 0.12);
@@ -178,10 +166,10 @@
   --nc-danger-soft: rgba(239, 68, 68, 0.1);
   --nc-warning: #facc15;
   --nc-warning-soft: #fef9c3;
-  --nc-orange: #f47714;
-  --nc-orange-soft: #ffedd5;
-  --nc-info: #225cff;
-  --nc-info-soft: #eef4ff;
+  --nc-orange: #F97928;
+  --nc-orange-soft: #FFF0E5;
+  --nc-info: #6557A8;
+  --nc-info-soft: #F1EEFA;
 
   --nc-radius-xs: 6px;
   --nc-radius-sm: 8px;
@@ -193,7 +181,7 @@
   --nc-shadow-sm: 0 2px 8px rgba(16, 24, 40, 0.04);
   --nc-shadow-md: 0 12px 28px rgba(16, 24, 40, 0.07);
   --nc-shadow-lg: 0 22px 60px rgba(16, 24, 40, 0.12);
-  --nc-shadow-focus: 0 0 0 4px rgba(108, 43, 255, 0.16);
+  --nc-shadow-focus: 0 0 0 4px rgba(56, 38, 142, 0.16);
 
   --nc-font-family:
     "Proxima Nova", "Futura", "Futura PT", "Avenir Next", "Segoe UI", Arial,
@@ -561,7 +549,7 @@ textarea:focus {
   width: 100%;
   height: 3px;
   overflow: hidden;
-  background: rgba(108, 43, 255, 0.12);
+  background: rgba(56, 38, 142, 0.12);
 }
 
 .nc-global-loader__bar::before {
@@ -571,7 +559,7 @@ textarea:focus {
   width: 38%;
   border-radius: var(--nc-radius-pill);
   background: var(--nc-primary);
-  box-shadow: 0 0 18px rgba(108, 43, 255, 0.36);
+  box-shadow: 0 0 18px rgba(56, 38, 142, 0.36);
   animation: ncLoaderBar 1s ease-in-out infinite;
 }
 
@@ -596,7 +584,7 @@ textarea:focus {
 .nc-global-loader__spinner {
   width: 15px;
   height: 15px;
-  border: 2px solid rgba(108, 43, 255, 0.18);
+  border: 2px solid rgba(56, 38, 142, 0.18);
   border-top-color: var(--nc-primary);
   border-radius: 50%;
   animation: ncLoaderSpin 0.78s linear infinite;
@@ -1487,7 +1475,7 @@ textarea:focus {
   background: var(--fd-color-primary) !important;
   color: #fff !important;
   border: 1px solid transparent !important;
-  box-shadow: 0 10px 24px rgba(91, 44, 255, 0.24) !important;
+  box-shadow: 0 10px 24px rgba(56, 38, 142, 0.24) !important;
 }
 
 :where(
@@ -1589,3 +1577,4 @@ textarea:focus {
   border-color: var(--fd-color-border) !important;
   box-shadow: var(--fd-shadow-sm) !important;
 }
+

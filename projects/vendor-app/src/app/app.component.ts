@@ -8,13 +8,14 @@ import {
   signal,
 } from '@angular/core';
 import {
+  NavigationEnd,
   Router,
   RouterLink,
   RouterLinkActive,
   RouterModule,
   RouterOutlet,
 } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import {
   ApiService,
   AuthService,
@@ -45,6 +46,7 @@ export class AppComponent implements OnInit {
   auth = inject(AuthService);
   api = inject(ApiService);
   private router = inject(Router);
+  private location = inject(Location);
   private destroyRef = inject(DestroyRef);
   private notifPolling = inject(NotificationPollingService);
   private currency = inject(CurrencyService);
@@ -55,6 +57,7 @@ export class AppComponent implements OnInit {
   notifications = signal<any[]>([]);
   notifLoading = signal(false);
   unreadCount = signal(0);
+  currentUrl = signal('/');
   private pollingStarted = false;
   private currencyConfiguredForUserId = '';
   readonly navGroups = [
@@ -122,6 +125,12 @@ export class AppComponent implements OnInit {
   ];
 
   constructor() {
+    this.currentUrl.set(this.router.url || '/');
+    this.router.events.subscribe((event) => {
+      if (event instanceof NavigationEnd) {
+        this.currentUrl.set(event.urlAfterRedirects || event.url || '/');
+      }
+    });
     effect(() => {
       if (this.auth.isLoggedIn()) {
         this.startPolling();
@@ -290,6 +299,20 @@ export class AppComponent implements OnInit {
           this.currency.configureFromLocation({ country: userCountry });
       },
     });
+  }
+
+  showBackButton(): boolean {
+    const path = this.currentUrl().split('?')[0].split('#')[0];
+    return !this.isAuthRoute() && path !== '/' && path !== '';
+  }
+
+  goBack(): void {
+    if (!this.showBackButton()) return;
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      this.location.back();
+      return;
+    }
+    this.router.navigate(['/']);
   }
 
   breadcrumbs(): Array<{ label: string; url?: string }> {

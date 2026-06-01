@@ -11,9 +11,13 @@
 
       <aside class="sidebar" aria-label="Vendor navigation">
         <div class="sidebar-brand">
-          <span class="brand-mark" aria-hidden="true">N</span>
+          <img
+            class="brand-mark"
+            src="assets/brand/nextou-logo-single.png"
+            alt="Nextou logo"
+          />
           <div class="brand-copy">
-            <span class="brand-name">Nextou</span>
+            <img src="assets/brand/nextou-brand-logo.png" alt="Nextou" class="brand-wordmark" />
             <span class="brand-sub">Vendor workspace</span>
           </div>
         </div>
@@ -65,6 +69,16 @@
     <div class="main-area">
       <header class="topbar">
         <div class="topbar-left">
+          @if (showBackButton()) {
+            <button
+              class="back-btn"
+              type="button"
+              aria-label="Go back"
+              (click)="goBack()"
+            >
+              <span class="material-icons-outlined">arrow_back</span>
+            </button>
+          }
           @if (!isPendingRoute()) {
             <button
               class="mobile-menu-btn"

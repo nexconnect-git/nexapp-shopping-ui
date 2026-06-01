@@ -1,20 +1,33 @@
-import { Component, HostListener, inject, OnInit, signal } from '@angular/core';
 import {
+  Component,
+  DestroyRef,
+  effect,
+  HostListener,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Location } from '@angular/common';
+import {
+  NavigationEnd,
   Router,
   RouterLink,
   RouterLinkActive,
   RouterOutlet,
 } from '@angular/router';
-import { CommonModule } from '@angular/common';
 import {
+  AlertHostComponent,
+  AlertService,
   ApiService,
   AuthService,
   GlobalLoadingComponent,
+  Notification,
   NotificationPollingService,
   PageFeatureAccessService,
   PageFeatureLoadingComponent,
-  ToastComponent,
 } from '@shared/public-api';
+import { filter } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -23,7 +36,7 @@ import {
     RouterLink,
     RouterLinkActive,
     CommonModule,
-    ToastComponent,
+    AlertHostComponent,
     GlobalLoadingComponent,
     PageFeatureLoadingComponent,
   ],
@@ -33,26 +46,44 @@ import {
 export class AppComponent implements OnInit {
   auth = inject(AuthService);
   api = inject(ApiService);
+  private alerts = inject(AlertService);
   private router = inject(Router);
+  private location = inject(Location);
   private notifPolling = inject(NotificationPollingService);
   private featureAccess = inject(PageFeatureAccessService);
+  private destroyRef = inject(DestroyRef);
+
   profileOpen = signal(false);
   notifOpen = signal(false);
-  notifications = signal<any[]>([]);
+  notifications = signal<Notification[]>([]);
   notifLoading = signal(false);
   unreadCount = signal(0);
+  currentUrl = signal('/');
+  private readonly authPollingEffect = effect(
+    () => {
+      const loggedIn = this.auth.isLoggedIn();
+      if (!loggedIn) {
+        this.notifPolling.stop();
+        this.unreadCount.set(0);
+        this.notifications.set([]);
+        return;
+      }
+      this.notifPolling.start();
+    },
+    { allowSignalWrites: true },
+  );
 
   ngOnInit() {
+    this.currentUrl.set(this.router.url || '/');
+    this.router.events
+      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+      .subscribe((event) =>
+        this.currentUrl.set(event.urlAfterRedirects || event.url || '/'),
+      );
     this.featureAccess.startPolling('delivery-app');
-    if (this.auth.isLoggedIn()) {
-      this.notifPolling.start((n) => {
-        if (n.notification_type === 'order')
-          return { label: 'View', url: '/orders' };
-        return null;
-      });
-    }
-    // Unread count is driven by NotificationPollingService — no extra timer needed here
+
     this.notifPolling.onUnreadChange((count) => this.unreadCount.set(count));
+    this.destroyRef.onDestroy(() => this.notifPolling.stop());
   }
 
   toggleProfile(event?: Event) {
@@ -73,10 +104,13 @@ export class AppComponent implements OnInit {
     this.notifLoading.set(true);
     this.api.getNotifications().subscribe({
       next: (r) => {
-        this.notifications.set((r.results || r).slice(0, 8));
+        this.notifications.set(((r.results || r) as Notification[]).slice(0, 8));
         this.notifLoading.set(false);
       },
-      error: () => this.notifLoading.set(false),
+      error: () => {
+        this.notifLoading.set(false);
+        this.alerts.error('Could not load notifications. Please retry.');
+      },
     });
   }
 
@@ -85,15 +119,29 @@ export class AppComponent implements OnInit {
       next: () => {
         this.unreadCount.set(0);
         this.notifications.update((list) =>
-          list.map((n: any) => ({ ...n, is_read: true })),
+          list.map((n) => ({ ...n, is_read: true })),
         );
+        this.alerts.success('All notifications marked as read.');
       },
-      error: () => {},
+      error: () => this.alerts.error('Failed to mark notifications as read.'),
     });
   }
 
-  @HostListener('document:click')
-  closeDropdowns() {
+  @HostListener('document:click', ['$event'])
+  closeDropdowns(event: MouseEvent) {
+    const target = event.target as HTMLElement | null;
+    if (
+      target?.closest('.notif-wrapper') ||
+      target?.closest('.profile-menu-wrapper')
+    ) {
+      return;
+    }
+    this.profileOpen.set(false);
+    this.notifOpen.set(false);
+  }
+
+  @HostListener('document:keydown.escape')
+  closeOnEscape() {
     this.profileOpen.set(false);
     this.notifOpen.set(false);
   }
@@ -102,7 +150,19 @@ export class AppComponent implements OnInit {
     this.profileOpen.set(false);
   }
 
-  handleNotificationClick(n: any) {
+  private routeForNotification(n: Notification): string {
+    const targetRoute = n.data?.target_route;
+    if (targetRoute && typeof targetRoute === 'string') return targetRoute;
+
+    if (n.notification_type === 'delivery') {
+      return n.data?.type === 'assignment_request' ? '/available' : '/active';
+    }
+    if (n.notification_type === 'order') return '/active';
+    if (n.notification_type === 'payout') return '/earnings';
+    return '/';
+  }
+
+  handleNotificationClick(n: Notification) {
     if (!n.is_read) {
       this.api.markNotificationRead(n.id).subscribe({
         next: () => {
@@ -115,12 +175,9 @@ export class AppComponent implements OnInit {
         },
       });
     }
+
     this.notifOpen.set(false);
-    if (n.notification_type === 'order') {
-      this.router.navigate(['/orders']);
-    } else {
-      this.router.navigate(['/']);
-    }
+    this.router.navigateByUrl(this.routeForNotification(n));
   }
 
   isAuthRoute(): boolean {
@@ -130,5 +187,19 @@ export class AppComponent implements OnInit {
 
   canUseRoute(route: string): boolean {
     return this.featureAccess.isRouteEnabled('delivery-app', route);
+  }
+
+  showBackButton(): boolean {
+    const path = this.currentUrl().split('?')[0].split('#')[0];
+    return !this.isAuthRoute() && path !== '/' && path !== '';
+  }
+
+  goBack(): void {
+    if (!this.showBackButton()) return;
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      this.location.back();
+      return;
+    }
+    this.router.navigate(['/']);
   }
 }

@@ -1,4 +1,4 @@
-import {
+﻿import {
   AfterViewInit,
   Component,
   inject,
@@ -202,7 +202,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
           this.routePolyline = new google.maps.Polyline({
             path: decodeGooglePolyline(route.encodedPolyline),
             map: this.nativeMap,
-            strokeColor: '#6C2BFF',
+            strokeColor: '#38268E',
             strokeWeight: 4,
             strokeOpacity: 0.8,
           });
@@ -457,3 +457,4 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     return 'badge ' + (map[s] || 'badge-secondary');
   }
 }
+

@@ -173,8 +173,28 @@ export class ProductDetailComponent {
   );
 
   buyNow(): void {
-    if (this.state.addToCart(this.product(), this.qty()))
+    if (this.addToCart())
       this.router.navigate(['/checkout']);
+  }
+
+  addToCart(): boolean {
+    const product = this.product();
+    const resolvedId = this.resolveProductId(product);
+    if (!resolvedId || resolvedId === 'loading' || resolvedId === 'product') {
+      this.state.showToast(
+        'This item is still loading. Please try again in a moment.',
+      );
+      this.catalog.ensureProductLoaded(this.route.snapshot.paramMap.get('id'));
+      return false;
+    }
+    return this.state.addToCart(
+      {
+        ...product,
+        id: resolvedId,
+        apiId: resolvedId,
+      },
+      this.qty(),
+    );
   }
 
   goBack(): void {
@@ -200,6 +220,18 @@ export class ProductDetailComponent {
 
   zoomImage(): void {
     this.state.showToast('Image preview opened');
+  }
+
+  private resolveProductId(product: any): string {
+    return String(
+      product?.apiId ||
+        product?.id ||
+        product?.raw?.id ||
+        product?.raw?.product_id ||
+        product?.raw?.uuid ||
+        product?.raw?.catalog_product_id ||
+        '',
+    ).trim();
   }
 
   private categoryTemplate(): string {

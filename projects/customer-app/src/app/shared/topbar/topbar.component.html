@@ -1,20 +1,37 @@
 <header class="topbar">
-  <button
-    type="button"
-    class="mobile-menu"
-    (click)="ui.toggleMobileSidebar()"
-    aria-label="Open navigation"
-  >
-    <span class="material-symbols-rounded">menu</span>
-  </button>
+  <div class="lead-controls">
+    @if (showBackButton()) {
+      <button
+        type="button"
+        class="back-btn"
+        (click)="goBack()"
+        aria-label="Go back"
+      >
+        <span class="material-symbols-rounded">arrow_back</span>
+      </button>
+    } @else {
+      <button
+        type="button"
+        class="mobile-menu"
+        (click)="ui.toggleMobileSidebar()"
+        aria-label="Open navigation"
+      >
+        <span class="material-symbols-rounded">menu</span>
+      </button>
+    }
+  </div>
   <a
     routerLink="/"
     class="brand"
     (click)="ui.closeMenus()"
     aria-label="Nextou home"
   >
-    <span class="logo" aria-hidden="true">N</span>
-    <b>Nextou</b>
+    <img
+      class="logo"
+      src="assets/brand/nextou-logo-single.png"
+      alt="Nextou logo"
+    />
+    <img src="assets/brand/nextou-brand-logo.png" alt="Nextou" class="brand-wordmark" />
   </a>
 
   <button

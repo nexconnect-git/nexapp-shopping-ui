@@ -1,30 +1,43 @@
 import {
   AfterViewChecked,
   Component,
+  HostListener,
   inject,
   OnDestroy,
   OnInit,
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Subscription, timer } from 'rxjs';
 import {
+  AlertService,
+  API_BASE_URL,
   ApiService,
   AppCurrencyPipe,
+  AuthService,
   GoogleMapsService,
   openAuthenticatedWebSocket,
   Order,
   PaymentQR,
 } from '@shared/public-api';
-import { Subscription, timer } from 'rxjs';
-import { AuthService } from '@shared/public-api';
 
-declare const google: any;
+declare const google: unknown;
+
+interface GoogleMarker {
+  setMap: (map: unknown) => void;
+  setPosition: (position: { lat: number; lng: number }) => void;
+}
+
+interface GooglePolyline {
+  setMap: (map: unknown) => void;
+  setPath: (path: Array<{ lat: number; lng: number }>) => void;
+}
 
 interface RouteMapState {
-  map: any;
-  markers: any[];
-  partnerMarker: any | null;
-  routePolyline: any | null;
+  map: unknown;
+  markers: GoogleMarker[];
+  partnerMarker: GoogleMarker | null;
+  routePolyline: GooglePolyline | null;
 }
 
 @Component({
@@ -40,35 +53,38 @@ export class ActiveDeliveryComponent
   private api = inject(ApiService);
   private auth = inject(AuthService);
   private googleMaps = inject(GoogleMapsService);
+  private alerts = inject(AlertService);
+  private apiBaseUrl = inject(API_BASE_URL);
 
   orders = signal<Order[]>([]);
   loading = signal(true);
   mapErrors = signal<Record<string, string>>({});
   private sub?: Subscription;
 
-  // Geotracking State
   private watchId?: number;
   private wsConns: Map<string, WebSocket> = new Map();
-
-  // Google route maps keyed by order.id
   private routeMaps: Map<string, RouteMapState> = new Map();
   private initializingMaps: Set<string> = new Set();
   private currentLat = 0;
   private currentLng = 0;
 
-  // Delivery confirmation modal state
+  actionLoading = signal<Record<string, boolean>>({});
+  cancelModalOrder = signal<Order | null>(null);
+
   confirmModalOrder = signal<Order | null>(null);
   confirmOtp = signal('');
   confirmPhoto = signal<File | null>(null);
   confirmError = signal('');
   confirming = signal(false);
 
-  // Payment QR state
   paymentQR = signal<PaymentQR | null>(null);
   loadingQR = signal(false);
 
   ngOnInit() {
-    this.sub = timer(0, 10000).subscribe(() => this.load());
+    this.sub = timer(0, 10000).subscribe(() => {
+      if (document.hidden) return;
+      this.load(false);
+    });
     this.startLocationTracking();
   }
 
@@ -84,16 +100,31 @@ export class ActiveDeliveryComponent
     this.initializingMaps.clear();
   }
 
-  // --- Tracking Broadcast ---
+  @HostListener('document:keydown.escape')
+  closeModalsOnEscape() {
+    if (this.confirmModalOrder()) this.closeConfirmModal();
+    if (this.cancelModalOrder()) this.closeCancelModal();
+  }
+
+  private setActionLoading(key: string, loading: boolean) {
+    this.actionLoading.update((current) => ({ ...current, [key]: loading }));
+  }
+
+  isActionLoading(key: string): boolean {
+    return !!this.actionLoading()[key];
+  }
+
+  actionKey(orderId: string, action: string): string {
+    return `${orderId}:${action}`;
+  }
+
   private startLocationTracking() {
-    if ('geolocation' in navigator) {
-      this.watchId = navigator.geolocation.watchPosition(
-        (pos) =>
-          this.broadcastLocation(pos.coords.latitude, pos.coords.longitude),
-        (err) => console.warn('Geolocation error:', err),
-        { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 },
-      );
-    }
+    if (!('geolocation' in navigator)) return;
+    this.watchId = navigator.geolocation.watchPosition(
+      (pos) => this.broadcastLocation(pos.coords.latitude, pos.coords.longitude),
+      () => {},
+      { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 },
+    );
   }
 
   private stopLocationTracking() {
@@ -109,29 +140,31 @@ export class ActiveDeliveryComponent
     this.currentLng = lng;
 
     const currentOrders = this.orders();
-    if (!currentOrders || currentOrders.length === 0) return;
+    if (!currentOrders.length) return;
 
     currentOrders.forEach((order) => {
-      if (order.status !== 'delivered' && order.status !== 'cancelled') {
-        let ws = this.wsConns.get(order.id);
-        if (!ws || ws.readyState === WebSocket.CLOSED) {
-          ws = this.connectTrackerSocket(order.id);
-        }
-        if (ws && ws.readyState === WebSocket.OPEN) {
-          ws.send(
-            JSON.stringify({
-              action: 'update_location',
-              lat,
-              lng,
-              partner_id: this.auth.user()?.id,
-            }),
-          );
-        }
-        const routeMap = this.routeMaps.get(order.id);
-        if (routeMap?.partnerMarker) {
-          routeMap.partnerMarker.setPosition({ lat, lng });
-          this.refreshRoutePolyline(order, routeMap);
-        }
+      if (order.status === 'delivered' || order.status === 'cancelled') return;
+
+      let ws = this.wsConns.get(order.id);
+      if (!ws || ws.readyState === WebSocket.CLOSED) {
+        ws = this.connectTrackerSocket(order.id);
+      }
+
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(
+          JSON.stringify({
+            action: 'update_location',
+            lat,
+            lng,
+            partner_id: this.auth.user()?.id,
+          }),
+        );
+      }
+
+      const routeMap = this.routeMaps.get(order.id);
+      if (routeMap?.partnerMarker) {
+        routeMap.partnerMarker.setPosition({ lat, lng });
+        this.refreshRoutePolyline(order, routeMap);
       }
     });
   }
@@ -175,11 +208,24 @@ export class ActiveDeliveryComponent
     this.initializingMaps.add(order.id);
     try {
       await this.googleMaps.loadJavaScriptApi();
-      if (!this.isRouteMapStatus(order.status) || this.routeMaps.has(order.id))
+      if (!this.isRouteMapStatus(order.status) || this.routeMaps.has(order.id)) {
         return;
+      }
+
+      const g = google as {
+        maps: {
+          Map: new (el: HTMLElement, opts: Record<string, unknown>) => unknown;
+          Marker: new (opts: Record<string, unknown>) => GoogleMarker;
+          Polyline: new (opts: Record<string, unknown>) => GooglePolyline;
+          LatLngBounds: new () => {
+            extend: (position: { lat: number; lng: number }) => void;
+            isEmpty: () => boolean;
+          };
+        };
+      };
 
       const center = this.routeCenter(order);
-      const map = new google.maps.Map(el, {
+      const map = new g.maps.Map(el, {
         center,
         zoom: 14,
         mapTypeControl: false,
@@ -187,7 +233,7 @@ export class ActiveDeliveryComponent
         streetViewControl: false,
         gestureHandling: 'greedy',
       });
-      const bounds = new google.maps.LatLngBounds();
+      const bounds = new g.maps.LatLngBounds();
       const state: RouteMapState = {
         map,
         markers: [],
@@ -200,12 +246,7 @@ export class ActiveDeliveryComponent
         title: string,
         label: string,
       ) => {
-        const marker = new google.maps.Marker({
-          map,
-          position,
-          title,
-          label,
-        });
+        const marker = new g.maps.Marker({ map, position, title, label });
         state.markers.push(marker);
         bounds.extend(position);
         return marker;
@@ -224,17 +265,18 @@ export class ActiveDeliveryComponent
       if (customerPoint) addMarker(customerPoint, 'Drop-off', 'D');
 
       const partnerPoint = this.partnerPoint();
-      if (partnerPoint) {
-        state.partnerMarker = addMarker(partnerPoint, 'You', 'Y');
-      }
+      if (partnerPoint) state.partnerMarker = addMarker(partnerPoint, 'You', 'Y');
 
       this.refreshRoutePolyline(order, state);
-      if (!bounds.isEmpty()) map.fitBounds(bounds, 48);
+      if (!bounds.isEmpty()) {
+        const fitBounds = (map as { fitBounds?: (b: unknown, p?: number) => void })
+          .fitBounds;
+        fitBounds?.call(map, bounds, 48);
+      }
 
       this.routeMaps.set(order.id, state);
       this.clearMapError(order.id);
-    } catch (error) {
-      console.warn('[Delivery map] Google Maps unavailable:', error);
+    } catch {
       this.setMapError(order.id, 'Google Maps could not be loaded.');
     } finally {
       this.initializingMaps.delete(order.id);
@@ -245,8 +287,12 @@ export class ActiveDeliveryComponent
     const path = this.routePoints(order);
     if (path.length < 2) return;
 
+    const g = google as {
+      maps: { Polyline: new (opts: Record<string, unknown>) => GooglePolyline };
+    };
+
     if (!state.routePolyline) {
-      state.routePolyline = new google.maps.Polyline({
+      state.routePolyline = new g.maps.Polyline({
         map: state.map,
         path,
         strokeColor: '#22C55E',
@@ -265,11 +311,9 @@ export class ActiveDeliveryComponent
   }
 
   private routePoints(order: Order): Array<{ lat: number; lng: number }> {
-    return [
-      this.partnerPoint(),
-      this.vendorPoint(order),
-      this.customerPoint(order),
-    ].filter(Boolean) as Array<{ lat: number; lng: number }>;
+    return [this.partnerPoint(), this.vendorPoint(order), this.customerPoint(order)].filter(
+      Boolean,
+    ) as Array<{ lat: number; lng: number }>;
   }
 
   private routeCenter(order: Order): { lat: number; lng: number } {
@@ -281,10 +325,7 @@ export class ActiveDeliveryComponent
   }
 
   private vendorPoint(order: Order): { lat: number; lng: number } | null {
-    return this.pointFrom(
-      order.vendor_info?.latitude,
-      order.vendor_info?.longitude,
-    );
+    return this.pointFrom(order.vendor_info?.latitude, order.vendor_info?.longitude);
   }
 
   private customerPoint(order: Order): { lat: number; lng: number } | null {
@@ -324,63 +365,117 @@ export class ActiveDeliveryComponent
       return next;
     });
   }
+
   private connectTrackerSocket(orderId: string): WebSocket {
     const ws = openAuthenticatedWebSocket(
-      `/sa/ws/delivery/${orderId}/tracking/`,
+      `/ws/delivery/${orderId}/tracking/`,
       this.auth.getToken(),
+      this.apiBaseUrl,
     );
-    ws.onopen = () =>
-      console.log(`Connected tracking socket for order ${orderId}`);
-    ws.onerror = (err) => console.error('WS Error:', err);
+    ws.onclose = () => this.wsConns.delete(orderId);
     this.wsConns.set(orderId, ws);
     return ws;
   }
 
-  load() {
+  load(showActionError = false) {
     this.loading.set(true);
     this.api.getDeliveryDashboard().subscribe({
       next: (d) => {
         this.orders.set(d.active_orders || []);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false),
+      error: (err) => {
+        this.loading.set(false);
+        if (showActionError) {
+          this.alerts.error(this.errorMessage(err, 'Could not refresh active deliveries.'));
+        }
+      },
     });
+  }
+
+  private errorMessage(err: unknown, fallback: string): string {
+    const apiError = err as {
+      error?: { error?: string; detail?: string; message?: string };
+    };
+    return (
+      apiError?.error?.error ||
+      apiError?.error?.detail ||
+      apiError?.error?.message ||
+      fallback
+    );
   }
 
   navigateToVendor(order: Order) {
     const lat = order.vendor_info?.latitude;
     const lng = order.vendor_info?.longitude;
-    if (lat && lng) {
-      window.open(
-        `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
-        '_blank',
-      );
+    if (!lat || !lng) {
+      this.alerts.info('Vendor location is not available for this order.');
+      return;
     }
+    window.open(
+      `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
+      '_blank',
+    );
   }
 
   navigateToCustomer(order: Order) {
     const lat = order.delivery_latitude;
     const lng = order.delivery_longitude;
-    if (lat && lng) {
-      window.open(
-        `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
-        '_blank',
-      );
+    if (!lat || !lng) {
+      this.alerts.info('Customer location is not available for this order.');
+      return;
     }
+    window.open(
+      `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
+      '_blank',
+    );
   }
 
   setOnTheWay(order: Order) {
-    this.api
-      .setDeliveryOnTheWay(order.id)
-      .subscribe({ next: () => this.load() });
+    const key = this.actionKey(order.id, 'on_the_way');
+    if (this.isActionLoading(key)) return;
+    this.setActionLoading(key, true);
+    this.api.setDeliveryOnTheWay(order.id).subscribe({
+      next: () => {
+        this.setActionLoading(key, false);
+        this.alerts.success(`Order #${order.order_number} marked as on the way.`);
+        this.load(true);
+      },
+      error: (err) => {
+        this.setActionLoading(key, false);
+        this.alerts.error(this.errorMessage(err, 'Could not update delivery status.'));
+      },
+    });
   }
 
-  cancelAssignment(order: Order) {
-    if (!confirm('Cancel this delivery? The system will find another partner.'))
-      return;
-    this.api
-      .cancelDeliveryAssignment(order.id)
-      .subscribe({ next: () => this.load() });
+  openCancelModal(order: Order) {
+    this.cancelModalOrder.set(order);
+  }
+
+  closeCancelModal() {
+    this.cancelModalOrder.set(null);
+  }
+
+  confirmCancelAssignment() {
+    const order = this.cancelModalOrder();
+    if (!order) return;
+
+    const key = this.actionKey(order.id, 'cancel');
+    if (this.isActionLoading(key)) return;
+    this.setActionLoading(key, true);
+
+    this.api.cancelDeliveryAssignment(order.id).subscribe({
+      next: () => {
+        this.setActionLoading(key, false);
+        this.closeCancelModal();
+        this.alerts.info(`Assignment for order #${order.order_number} has been cancelled.`);
+        this.load(true);
+      },
+      error: (err) => {
+        this.setActionLoading(key, false);
+        this.alerts.error(this.errorMessage(err, 'Could not cancel assignment.'));
+      },
+    });
   }
 
   openConfirmModal(order: Order) {
@@ -389,14 +484,19 @@ export class ActiveDeliveryComponent
     this.confirmPhoto.set(null);
     this.confirmError.set('');
     this.paymentQR.set(null);
-    // Load QR when opening modal
+
     this.loadingQR.set(true);
     this.api.getPaymentQR(order.id).subscribe({
       next: (qr) => {
         this.paymentQR.set(qr);
         this.loadingQR.set(false);
       },
-      error: () => this.loadingQR.set(false),
+      error: (err) => {
+        this.loadingQR.set(false);
+        this.confirmError.set(
+          this.errorMessage(err, 'Could not load payment QR. You can still complete with OTP.'),
+        );
+      },
     });
   }
 
@@ -405,17 +505,40 @@ export class ActiveDeliveryComponent
     this.paymentQR.set(null);
   }
 
+  handleOverlayClose(event: MouseEvent, modal: 'confirm' | 'cancel') {
+    if (event.target !== event.currentTarget) return;
+    if (modal === 'confirm') {
+      this.closeConfirmModal();
+      return;
+    }
+    this.closeCancelModal();
+  }
+
   onPhotoSelected(event: Event) {
-    const file = (event.target as HTMLInputElement).files?.[0] || null;
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] || null;
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      this.confirmError.set('Only image files are allowed for delivery proof.');
+      return;
+    }
     this.confirmPhoto.set(file);
+    this.confirmError.set('');
+  }
+
+  updateConfirmOtp(event: Event) {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement)) return;
+    this.confirmOtp.set(target.value);
   }
 
   submitDelivery() {
     const order = this.confirmModalOrder();
-    if (!order) return;
+    if (!order || this.confirming()) return;
+
     const otp = this.confirmOtp().trim();
-    if (!otp) {
-      this.confirmError.set('Please enter the OTP from the customer.');
+    if (!/^\d{4,6}$/.test(otp)) {
+      this.confirmError.set('Enter a valid numeric OTP (4 to 6 digits).');
       return;
     }
     if (!this.confirmPhoto()) {
@@ -429,12 +552,13 @@ export class ActiveDeliveryComponent
       next: () => {
         this.confirming.set(false);
         this.closeConfirmModal();
-        this.load();
+        this.alerts.success(`Delivery completed for order #${order.order_number}.`);
+        this.load(true);
       },
       error: (err) => {
         this.confirming.set(false);
         this.confirmError.set(
-          err.error?.error || 'Failed. Check the OTP and try again.',
+          this.errorMessage(err, 'Failed to confirm delivery. Please check OTP and retry.'),
         );
       },
     });

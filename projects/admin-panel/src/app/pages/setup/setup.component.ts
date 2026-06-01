@@ -66,7 +66,11 @@ export class SetupComponent implements OnInit {
       next: () => {
         this.auth.login(payload.username, payload.password).subscribe({
           next: (res) => {
-            this.auth.handleAuthResponse(res);
+            if (!this.auth.handleAuthResponse(res)) {
+              this.errorMsg = 'This account is not allowed in the admin panel.';
+              this.isSubmitting = false;
+              return;
+            }
             this.router.navigate(['/']);
           },
           error: () => {

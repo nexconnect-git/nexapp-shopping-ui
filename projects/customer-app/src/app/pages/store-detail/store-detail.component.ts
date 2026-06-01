@@ -2,6 +2,7 @@ import { Location } from '@angular/common';
 import { Component, computed, effect, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { CustomSelectComponent } from '@shared/public-api';
 import { CatalogService } from '../../services/catalog.service';
 import { AppStateService } from '../../services/app-state.service';
 import { UiService } from '../../services/ui.service';
@@ -16,6 +17,7 @@ import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.compo
     FormsModule,
     BreadcrumbsComponent,
     ProductCardComponent,
+    CustomSelectComponent,
   ],
   templateUrl: './store-detail.component.html',
   styleUrls: ['./store-detail.component.scss'],

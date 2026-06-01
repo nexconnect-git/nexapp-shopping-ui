@@ -1,3 +1,12 @@
-@if (message) {
-  <div class="mobile-toast">{{ message }}</div>
+@if (toast?.message) {
+  <div
+    class="mobile-toast"
+    [class.is-success]="toast?.tone === 'success'"
+    [class.is-error]="toast?.tone === 'error'"
+    [class.is-warning]="toast?.tone === 'warning'"
+    [class.is-info]="toast?.tone === 'info'"
+  >
+    <span class="material-symbols-rounded icon">{{ toneIcon(toast?.tone) }}</span>
+    <span>{{ toast?.message }}</span>
+  </div>
 }

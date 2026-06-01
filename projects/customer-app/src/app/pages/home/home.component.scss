@@ -316,6 +316,7 @@
   gap: 16px;
   max-width: 100%;
   overflow: hidden;
+  padding-right: 56px;
 }
 .recommended-row {
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -340,6 +341,7 @@
   box-shadow: 0 16px 32px rgba(40, 28, 100, 0.14);
   font-size: 38px;
   font-weight: 300;
+  z-index: 2;
 }
 .ad-container {
   display: grid;
@@ -673,6 +675,7 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
     overflow: visible;
+    padding-right: 0;
   }
   .compact {
     margin: 16px 0 10px;
@@ -754,6 +757,20 @@
   .home-page {
     padding-top: 14px;
   }
+
+  fd-mobile-location-pill,
+  fd-mobile-search-bar {
+    display: block;
+  }
+
+  fd-mobile-category-tabs {
+    display: block;
+    margin-top: -4px;
+  }
+
+  fd-mobile-quick-action-grid {
+    display: block;
+  }
   
   .hero-card {
     min-height: 178px;
@@ -766,7 +783,7 @@
     border-radius: 28px;
     color: #fff;
     background: var(--fd-color-primary);
-    box-shadow: 0 18px 44px rgba(91, 44, 255, 0.22);
+    box-shadow: 0 18px 44px rgba(56, 38, 142, 0.22);
   }
   
   .hero-card span,
@@ -787,7 +804,7 @@
     font-size: 26px;
     line-height: 1.02;
     font-weight: 950;
-    color: #ffffff;
+    color: #FBFBFC;
     text-shadow: 0 2px 8px rgba(18, 8, 56, 0.32);
   }
   
@@ -921,3 +938,5 @@
     flex: 0 0 min(190px, 66vw);
   }
 }
+
+

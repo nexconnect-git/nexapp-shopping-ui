@@ -1,4 +1,4 @@
-:host {
+﻿:host {
   display: block;
 }
 
@@ -107,7 +107,7 @@
 }
 [data-tone="info"] {
   color: #2261cf;
-  background-color: #eef4ff;
+  background-color: #F1EEFA;
 }
 [data-tone="purple"] {
   color: var(--fd-color-primary);
@@ -215,7 +215,7 @@
     display: grid;
     place-items: center;
     background: #fff0cf;
-    color: #f47714;
+    color: #F97928;
     font-weight: 900;
   }
 
@@ -445,3 +445,4 @@
     grid-template-columns: 1fr;
   }
 }
+

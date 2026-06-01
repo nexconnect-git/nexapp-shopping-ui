@@ -1,9 +1,18 @@
 <!-- Mobile header (shown ≤768px, only when logged in) -->
 @if (auth.isLoggedIn() && !isAuthRoute()) {
   <header class="mobile-header">
+    @if (showBackButton()) {
+      <button class="header-back-btn" type="button" aria-label="Go back" (click)="goBack()">
+        <span class="material-icons-outlined">arrow_back</span>
+      </button>
+    }
     <span class="mobile-brand">
-      <span class="mobile-brand-logo" aria-hidden="true">N</span>
-      <span>Nextou <b>Delivery</b></span>
+      <img
+        class="mobile-brand-logo"
+        src="assets/brand/nextou-logo-single.png"
+        alt="Nextou logo"
+      />
+      <span><img src="assets/brand/nextou-brand-logo.png" alt="Nextou" class="brand-wordmark" /> <b>Delivery</b></span>
     </span>
     <div class="header-actions">
       <!-- Notification Bell -->
@@ -12,6 +21,7 @@
           class="notif-btn"
           (click)="toggleNotif($event)"
           title="Notifications"
+          aria-label="Open notifications"
         >
           <span class="material-icons-outlined">notifications_none</span>
           @if (unreadCount() > 0) {
@@ -40,11 +50,12 @@
             } @else {
               <div class="notif-list">
                 @for (n of notifications(); track n.id) {
-                  <div
+                  <button
+                    type="button"
                     class="notif-item"
                     [class.unread]="!n.is_read"
                     (click)="handleNotificationClick(n)"
-                    style="cursor: pointer"
+                    aria-label="Open notification details"
                   >
                     <span class="material-icons-outlined notif-icon"
                       >local_shipping</span
@@ -53,15 +64,15 @@
                       <p class="notif-msg">{{ n.title }}</p>
                       <p class="notif-sub">{{ n.message }}</p>
                     </div>
-                  </div>
+                  </button>
                 }
               </div>
             }
           </div>
         }
       </div>
-      <div class="profile-menu-wrapper" (click)="toggleProfile($event)">
-        <button class="avatar-btn">
+      <div class="profile-menu-wrapper">
+        <button class="avatar-btn" aria-label="Open profile menu" (click)="toggleProfile($event)">
           <span class="avatar avatar-sm">
             {{
               (auth.user()?.first_name?.[0] || "") +
@@ -72,7 +83,7 @@
           </span>
         </button>
         @if (profileOpen()) {
-          <div class="profile-dropdown" (click)="$event.stopPropagation()">
+          <div class="profile-dropdown">
             <div class="pd-header">
               <div class="pd-avatar-lg">
                 {{
@@ -110,9 +121,14 @@
   <aside class="sidebar">
     <!-- Brand -->
     <div class="sidebar-brand">
+      @if (showBackButton()) {
+        <button class="sidebar-back-btn" type="button" aria-label="Go back" (click)="goBack()">
+          <span class="material-icons-outlined">arrow_back</span>
+        </button>
+      }
       <span class="sidebar-brand-icon" aria-hidden="true">N</span>
       <div class="sidebar-brand-text">
-        <span class="sidebar-brand-name">Nextou</span>
+        <img src="assets/brand/nextou-brand-logo.png" alt="Nextou" class="brand-wordmark" />
         <span class="sidebar-brand-sub">Delivery</span>
       </div>
     </div>
@@ -257,8 +273,6 @@
   </nav>
 }
 
-<app-toast />
+<app-alert-host />
 <app-global-loading />
 <app-page-feature-loading />
-
-<!-- aria-label -->

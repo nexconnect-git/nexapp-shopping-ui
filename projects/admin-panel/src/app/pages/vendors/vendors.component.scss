@@ -1,4 +1,4 @@
-:host {
+﻿:host {
   display: block;
   padding-bottom: 3rem;
 }
@@ -154,7 +154,7 @@
 .badge-pending {
   background: var(--warning-light);
   color: var(--warning);
-  border-color: rgba(108, 43, 255, 0.2);
+  border-color: rgba(56, 38, 142, 0.2);
 }
 .badge-approved {
   background: var(--success-light);
@@ -546,3 +546,4 @@
     justify-self: start;
   }
 }
+

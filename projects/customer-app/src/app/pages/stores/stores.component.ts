@@ -1,5 +1,4 @@
 import { Component, computed, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   categoryFilterKey,
@@ -13,14 +12,15 @@ import { AppStateService } from '../../services/app-state.service';
 import { StoreCardComponent } from '../../components/store-card/store-card.component';
 import { CustomerContentConfigService } from '../../services/customer-content-config.service';
 import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
+import { CustomSelectComponent } from '@shared/public-api';
 
 @Component({
   standalone: true,
   imports: [
-    FormsModule,
     RouterLink,
     BreadcrumbsComponent,
     StoreCardComponent,
+    CustomSelectComponent,
   ],
   templateUrl: './stores.component.html',
   styleUrls: ['./stores.component.scss'],

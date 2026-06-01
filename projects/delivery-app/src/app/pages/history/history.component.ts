@@ -1,6 +1,11 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ApiService, AppCurrencyPipe, Order } from '@shared/public-api';
+import {
+  AlertService,
+  ApiService,
+  AppCurrencyPipe,
+  Order,
+} from '@shared/public-api';
 
 @Component({
   selector: 'app-history',
@@ -11,16 +16,20 @@ import { ApiService, AppCurrencyPipe, Order } from '@shared/public-api';
 })
 export class HistoryComponent implements OnInit {
   private api = inject(ApiService);
+  private alerts = inject(AlertService);
   orders = signal<Order[]>([]);
   loading = signal(true);
 
   ngOnInit() {
-    this.api.getDeliveryHistory().subscribe({
+    this.api.getDeliveryHistory({ status: ['delivered', 'cancelled'] }).subscribe({
       next: (r) => {
         this.orders.set(r.results || r);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false),
+      error: () => {
+        this.loading.set(false);
+        this.alerts.error('Could not load delivery history.');
+      },
     });
   }
 }

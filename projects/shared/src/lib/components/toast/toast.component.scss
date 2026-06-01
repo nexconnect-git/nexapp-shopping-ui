@@ -1,4 +1,4 @@
-.toast-container {
+﻿.toast-container {
   position: fixed;
   top: 20px;
   right: 20px;
@@ -28,7 +28,7 @@
   border-left-color: #ef4444;
 }
 .toast-item.info {
-  border-left-color: #6c2bff;
+  border-left-color: #38268E;
 }
 .toast-content {
   display: flex;
@@ -45,7 +45,7 @@
   color: #ef4444;
 }
 .info .icon_custom {
-  color: #6c2bff;
+  color: #38268E;
 }
 .toast-msg {
   margin: 0;
@@ -94,3 +94,4 @@
     opacity: 1;
   }
 }
+

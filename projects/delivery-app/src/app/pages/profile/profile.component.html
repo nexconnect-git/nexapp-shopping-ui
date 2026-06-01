@@ -38,8 +38,9 @@
 
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">First Name</label>
+          <label class="form-label" for="profile-first-name">First Name</label>
           <input
+            id="profile-first-name"
             class="form-control"
             type="text"
             [(ngModel)]="profile.first_name"
@@ -48,8 +49,9 @@
           />
         </div>
         <div class="form-group">
-          <label class="form-label">Last Name</label>
+          <label class="form-label" for="profile-last-name">Last Name</label>
           <input
+            id="profile-last-name"
             class="form-control"
             type="text"
             [(ngModel)]="profile.last_name"
@@ -60,8 +62,9 @@
       </div>
 
       <div class="form-group">
-        <label class="form-label">Email Address</label>
+        <label class="form-label" for="profile-email">Email Address</label>
         <input
+          id="profile-email"
           class="form-control"
           type="email"
           [(ngModel)]="profile.email"
@@ -71,8 +74,9 @@
       </div>
 
       <div class="form-group">
-        <label class="form-label">Phone Number</label>
+        <label class="form-label" for="profile-phone">Phone Number</label>
         <input
+          id="profile-phone"
           class="form-control"
           type="tel"
           [(ngModel)]="profile.phone"
@@ -82,8 +86,9 @@
       </div>
 
       <div class="form-group">
-        <label class="form-label">Country</label>
+        <label class="form-label" for="profile-country">Country</label>
         <select
+          id="profile-country"
           class="form-control"
           [(ngModel)]="profile.country"
           name="country"

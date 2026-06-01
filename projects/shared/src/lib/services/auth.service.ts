@@ -9,6 +9,12 @@ import { CurrencyService } from './currency.service';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly prefix = inject(AUTH_PREFIX);
+  private readonly expectedRoleByPrefix: Record<string, User['role']> = {
+    customer: 'customer',
+    vendor: 'vendor',
+    delivery: 'delivery',
+    admin: 'admin',
+  };
   private readonly currentUser = signal<User | null>(null);
   private readonly accessToken = signal<string | null>(null);
   private refreshRequest$?: Observable<boolean>;
@@ -34,6 +40,16 @@ export class AuthService {
     return `${this.prefix}_vendor_status`;
   }
 
+  private get expectedRole(): User['role'] | null {
+    return this.expectedRoleByPrefix[this.prefix] || null;
+  }
+
+  private isPortalUser(user: User | null | undefined): boolean {
+    if (!user) return false;
+    if (!this.expectedRole) return true;
+    return user.role === this.expectedRole;
+  }
+
   constructor(
     private api: ApiService,
     private router: Router,
@@ -54,7 +70,11 @@ export class AuthService {
 
     if (userData && token) {
       try {
-        const user = JSON.parse(userData);
+        const user = JSON.parse(userData) as User;
+        if (!this.isPortalUser(user)) {
+          this.clearSession();
+          return;
+        }
         this.currentUser.set(user);
         this.currency.configureFromLocation(user);
       } catch {
@@ -127,7 +147,12 @@ export class AuthService {
     return this.api.verifyCustomerRegisterOtp(data);
   }
 
-  handleAuthResponse(response: AuthResponse) {
+  handleAuthResponse(response: AuthResponse): boolean {
+    if (!this.isPortalUser(response.user)) {
+      this.clearSession();
+      return false;
+    }
+
     this.setAccessToken(response.tokens.access);
     localStorage.setItem(this.userKey, JSON.stringify(response.user));
     localStorage.setItem(this.refreshSessionKey, '1');
@@ -135,6 +160,7 @@ export class AuthService {
     this.currentUser.set(response.user);
     this.currency.configureFromLocation(response.user);
     this.initializePushNotifications();
+    return true;
   }
 
   refreshAccessToken(): Observable<boolean> {
@@ -149,6 +175,10 @@ export class AuthService {
         localStorage.removeItem(this.refreshTokenKey);
         localStorage.setItem(this.refreshSessionKey, '1');
         if (response.user) {
+          if (!this.isPortalUser(response.user as User)) {
+            this.clearSession();
+            throw new Error('Portal role mismatch');
+          }
           localStorage.setItem(this.userKey, JSON.stringify(response.user));
           sessionStorage.setItem(this.userKey, JSON.stringify(response.user));
           this.currentUser.set(response.user);
@@ -210,6 +240,10 @@ export class AuthService {
   }
 
   updateUserData(user: User) {
+    if (!this.isPortalUser(user)) {
+      this.clearSession();
+      return;
+    }
     sessionStorage.setItem(this.userKey, JSON.stringify(user));
     localStorage.setItem(this.userKey, JSON.stringify(user));
     this.currentUser.set(user);

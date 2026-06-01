@@ -15,11 +15,6 @@ import {
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { GoogleMapsService } from '../../services/google-maps.service';
-import {
-  autocompleteGooglePlaces,
-  getGooglePlaceDetails,
-  GooglePlaceSuggestion,
-} from '../../utils/google-api';
 
 export interface MapLocation {
   lat: number;
@@ -37,6 +32,13 @@ interface FallbackMapTile {
   url: string;
   left: number;
   top: number;
+}
+interface PlaceSuggestionItem {
+  placeId: string;
+  text: string;
+  mainText: string;
+  secondaryText: string;
+  placePrediction: any | null;
 }
 
 declare const google: any;
@@ -64,10 +66,12 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
   private map: any = null;
   private marker: any = null;
   private geocoder: any = null;
-  private markerKind: 'legacy' | 'advanced' = 'legacy';
-  private advancedMarkersEnabled = false;
+  private autocompleteSuggestionCtor: any = null;
+  private autocompleteSessionTokenCtor: any = null;
+  private autocompleteSessionToken: any = null;
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
   private searchRequestId = 0;
+  private placesApiWarned = false;
 
   geocoding = signal(false);
   pickedAddress = signal('');
@@ -80,9 +84,11 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
   currentLat = signal(this.initialLat);
   currentLng = signal(this.initialLng);
   searchQuery = signal('');
-  placeSuggestions = signal<GooglePlaceSuggestion[]>([]);
+  placeSuggestions = signal<PlaceSuggestionItem[]>([]);
   searchingPlaces = signal(false);
   placesError = signal('');
+  placesAutocompleteUnavailable = signal(false);
+  placesAutocompleteError = signal('');
 
   private get resolvedApiKey() {
     return this.googleMaps.apiKey(this.apiKey);
@@ -90,6 +96,11 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
 
   private get resolvedMapId() {
     return this.googleMaps.mapId(this.mapId);
+  }
+
+  private get effectiveMapId() {
+    const configured = this.resolvedMapId;
+    return configured || 'DEMO_MAP_ID';
   }
 
   ngAfterViewInit() {
@@ -140,8 +151,7 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
       throw new Error('Google Maps Map constructor unavailable');
     }
 
-    const mapId = this.resolvedMapId;
-    this.advancedMarkersEnabled = !!mapId;
+    const mapId = this.effectiveMapId;
     this.map = new MapCtor(container, {
       center,
       zoom: 13,
@@ -149,7 +159,7 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
       streetViewControl: false,
       fullscreenControl: false,
       gestureHandling: 'greedy',
-      ...(mapId ? { mapId } : {}),
+      mapId,
     });
 
     await this.createMarker(center);
@@ -193,7 +203,9 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
     });
   }
 
-  private async importGoogleLibrary(name: 'maps' | 'marker' | 'geocoding') {
+  private async importGoogleLibrary(
+    name: 'maps' | 'marker' | 'geocoding' | 'places',
+  ) {
     if (google?.maps?.importLibrary) {
       return google.maps.importLibrary(name);
     }
@@ -201,53 +213,31 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
   }
 
   private async createMarker(position: { lat: number; lng: number }) {
-    if (this.advancedMarkersEnabled) {
-      const markerLibrary = await this.importGoogleLibrary('marker').catch(
-        () => null,
-      );
-      const AdvancedMarkerElement =
-        markerLibrary?.AdvancedMarkerElement ||
-        google?.maps?.marker?.AdvancedMarkerElement;
-      if (typeof AdvancedMarkerElement === 'function') {
-        this.markerKind = 'advanced';
-        this.marker = new AdvancedMarkerElement({
-          position,
-          map: this.map,
-          gmpDraggable: true,
-        });
-        return;
-      }
+    const markerLibrary = await this.importGoogleLibrary('marker').catch(
+      () => null,
+    );
+    const AdvancedMarkerElement =
+      markerLibrary?.AdvancedMarkerElement ||
+      google?.maps?.marker?.AdvancedMarkerElement;
+    if (typeof AdvancedMarkerElement !== 'function') {
+      throw new Error('Google Maps AdvancedMarkerElement unavailable');
     }
 
-    if (typeof google?.maps?.Marker === 'function') {
-      this.markerKind = 'legacy';
-      this.marker = new google.maps.Marker({
-        position,
-        map: this.map,
-        draggable: true,
-        animation: google.maps.Animation?.DROP,
-      });
-      return;
-    }
-    throw new Error('Google Maps marker constructor unavailable');
+    this.marker = new AdvancedMarkerElement({
+      position,
+      map: this.map,
+      gmpDraggable: true,
+    });
   }
 
   private setMarkerPosition(position: { lat: number; lng: number }) {
     this.currentLat.set(position.lat);
     this.currentLng.set(position.lng);
-    if (this.markerKind === 'legacy') {
-      this.marker.setPosition(position);
-    } else {
-      this.marker.position = position;
-    }
+    this.marker.position = position;
   }
 
   private getMarkerPosition(): { lat: number; lng: number } | null {
     if (!this.marker) return null;
-    if (this.markerKind === 'legacy') {
-      const pos = this.marker.getPosition();
-      return pos ? { lat: pos.lat(), lng: pos.lng() } : null;
-    }
     const pos = this.marker.position;
     if (!pos) return null;
     const lat = typeof pos.lat === 'function' ? pos.lat() : pos.lat;
@@ -255,22 +245,214 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
     return { lat: Number(lat), lng: Number(lng) };
   }
 
+  private async ensurePlacesApiNew() {
+    if (this.autocompleteSuggestionCtor && this.autocompleteSessionTokenCtor) {
+      return;
+    }
+
+    const placesLibrary = await this.importGoogleLibrary('places').catch(
+      () => null,
+    );
+    const AutocompleteSuggestion =
+      placesLibrary?.AutocompleteSuggestion ||
+      google?.maps?.places?.AutocompleteSuggestion;
+    const AutocompleteSessionToken =
+      placesLibrary?.AutocompleteSessionToken ||
+      google?.maps?.places?.AutocompleteSessionToken;
+
+    // Runtime reminder:
+    // - Enable Maps JavaScript API and Places API (New)
+    // - Allow Places API (New) on the key restrictions in Google Cloud
+    if (
+      typeof AutocompleteSuggestion !== 'function' ||
+      typeof AutocompleteSessionToken !== 'function'
+    ) {
+      throw new Error('Places API (New) JavaScript library unavailable');
+    }
+
+    this.autocompleteSuggestionCtor = AutocompleteSuggestion;
+    this.autocompleteSessionTokenCtor = AutocompleteSessionToken;
+  }
+
+  private ensureAutocompleteSessionToken() {
+    if (!this.autocompleteSessionToken && this.autocompleteSessionTokenCtor) {
+      this.autocompleteSessionToken = new this.autocompleteSessionTokenCtor();
+    }
+  }
+
+  private clearAutocompleteSessionToken() {
+    this.autocompleteSessionToken = null;
+  }
+
+  private extractErrorMessage(error: unknown): string {
+    if (!error) return '';
+    if (typeof error === 'string') return error;
+    if (typeof error === 'object') {
+      const value = error as { message?: unknown; status?: unknown };
+      const messagePart =
+        typeof value.message === 'string' ? value.message : '';
+      const statusPart =
+        typeof value.status === 'number' || typeof value.status === 'string'
+          ? String(value.status)
+          : '';
+      return `${messagePart} ${statusPart}`.trim();
+    }
+    return '';
+  }
+
+  private isAutocompleteConfigError(error: unknown): boolean {
+    const message = this.extractErrorMessage(error).toLowerCase();
+    return (
+      message.includes('403') ||
+      message.includes('forbidden') ||
+      message.includes('request_denied') ||
+      message.includes('request denied') ||
+      message.includes('blocked') ||
+      message.includes('not authorized')
+    );
+  }
+
+  private markAutocompleteUnavailable(error: unknown) {
+    this.placesAutocompleteUnavailable.set(true);
+    this.clearAutocompleteSessionToken();
+    this.placeSuggestions.set([]);
+    const userMessage =
+      'Place search is temporarily unavailable. You can still pick a location on the map.';
+    this.placesAutocompleteError.set(userMessage);
+    this.placesError.set(userMessage);
+    if (!this.placesApiWarned) {
+      this.placesApiWarned = true;
+      // A 403 from AutocompletePlaces usually means Google Cloud/API-key setup is incorrect.
+      // Keep this component on Places API (New) and verify:
+      // - Maps JavaScript API enabled
+      // - Places API (New) enabled
+      // - API key restrictions include Places API (New)
+      // - Referrer allows http://localhost:4203/*
+      // - Billing enabled
+      console.warn(
+        '[Map] Places autocomplete unavailable. Verify Places API (New), API key restrictions, referrer restrictions, and billing.',
+        error,
+      );
+    }
+  }
+
+  private async fetchAutocompleteSuggestions(
+    input: string,
+  ): Promise<PlaceSuggestionItem[]> {
+    await this.ensurePlacesApiNew();
+    this.ensureAutocompleteSessionToken();
+
+    const { suggestions } =
+      await this.autocompleteSuggestionCtor.fetchAutocompleteSuggestions({
+        input: input.trim(),
+        sessionToken: this.autocompleteSessionToken,
+        includedRegionCodes: ['in'],
+      });
+
+    return (suggestions || [])
+      .filter((entry: any) => !!entry?.placePrediction)
+      .map((entry: any) => {
+        const prediction = entry.placePrediction;
+        const fullText = String(prediction?.text || '').trim();
+        return {
+          placeId: prediction?.placeId || '',
+          text: fullText,
+          mainText: fullText,
+          secondaryText: '',
+          placePrediction: prediction,
+        };
+      })
+      .filter((item: PlaceSuggestionItem) => !!item.placeId && !!item.text);
+  }
+
+  private async fetchPlaceDetailsFromSuggestion(
+    suggestion: PlaceSuggestionItem,
+  ): Promise<{
+    lat: number;
+    lng: number;
+    formattedAddress: string;
+    displayName: string;
+    addressComponents: Array<{
+      longText?: string;
+      shortText?: string;
+      types?: string[];
+    }>;
+  } | null> {
+    await this.ensurePlacesApiNew();
+
+    const prediction = suggestion.placePrediction;
+    if (!prediction || typeof prediction.toPlace !== 'function') {
+      throw new Error('Selected suggestion has no place prediction');
+    }
+
+    const place = prediction.toPlace();
+    await place.fetchFields({
+      fields: [
+        'id',
+        'displayName',
+        'formattedAddress',
+        'location',
+        'addressComponents',
+      ],
+    });
+
+    const location = place.location;
+    if (!location) return null;
+
+    const lat = typeof location.lat === 'function' ? location.lat() : null;
+    const lng = typeof location.lng === 'function' ? location.lng() : null;
+    if (lat === null || lng === null) return null;
+
+    const components = Array.isArray(place.addressComponents)
+      ? place.addressComponents.map((component: any) => ({
+          longText: component?.longText,
+          shortText: component?.shortText,
+          types: Array.isArray(component?.types) ? component.types : [],
+        }))
+      : [];
+
+    return {
+      lat: Number(lat),
+      lng: Number(lng),
+      formattedAddress: String(place.formattedAddress || ''),
+      displayName:
+        typeof place.displayName === 'string'
+          ? place.displayName
+          : String(place.displayName?.text || ''),
+      addressComponents: components,
+    };
+  }
+
   onSearchInput(event: Event) {
     const query = (event.target as HTMLInputElement).value;
     this.searchQuery.set(query);
-    this.placesError.set('');
+    if (!this.placesAutocompleteUnavailable()) {
+      this.placesError.set('');
+      this.placesAutocompleteError.set('');
+    }
     if (this.searchTimer) clearTimeout(this.searchTimer);
 
     if (query.trim().length < 3) {
       this.placeSuggestions.set([]);
       this.searchingPlaces.set(false);
+      this.clearAutocompleteSessionToken();
+      return;
+    }
+
+    if (this.placesAutocompleteUnavailable()) {
+      this.placeSuggestions.set([]);
+      this.searchingPlaces.set(false);
+      this.placesError.set(
+        this.placesAutocompleteError() ||
+          'Place search is temporarily unavailable. You can still pick a location on the map.',
+      );
       return;
     }
 
     const requestId = ++this.searchRequestId;
     this.searchingPlaces.set(true);
     this.searchTimer = setTimeout(() => {
-      autocompleteGooglePlaces(this.resolvedApiKey, query)
+      this.fetchAutocompleteSuggestions(query)
         .then((suggestions) => {
           this.ngZone.run(() => {
             if (requestId !== this.searchRequestId) return;
@@ -283,21 +465,31 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
             if (requestId !== this.searchRequestId) return;
             this.placeSuggestions.set([]);
             this.searchingPlaces.set(false);
-            this.placesError.set('Location search is unavailable right now.');
-            console.warn('[Map] Places API (New) unavailable:', error);
+            if (this.isAutocompleteConfigError(error)) {
+              this.markAutocompleteUnavailable(error);
+              return;
+            }
+            this.placesError.set(
+              'Location search is temporarily unavailable. Pin your location on the map.',
+            );
           });
         });
     }, 250);
   }
 
-  selectPlace(suggestion: GooglePlaceSuggestion) {
+  selectPlace(suggestion: PlaceSuggestionItem) {
     this.searchingPlaces.set(true);
     this.placesError.set('');
-    getGooglePlaceDetails(this.resolvedApiKey, suggestion.placeId)
+    this.fetchPlaceDetailsFromSuggestion(suggestion)
       .then((place) => {
         this.ngZone.run(() => {
           this.searchingPlaces.set(false);
-          if (!place) return;
+          if (!place) {
+            this.placesError.set(
+              'Selected place has no coordinates. Pin your location on the map.',
+            );
+            return;
+          }
 
           const lat = place.lat;
           const lng = place.lng;
@@ -307,7 +499,9 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
           this.setMarkerPosition({ lat, lng });
 
           const get = (type: string) =>
-            place.addressComponents.find((c) => c.types?.includes(type))
+            place.addressComponents.find(
+              (c: { types?: string[] }) => c.types?.includes(type),
+            )
               ?.longText || '';
 
           const streetParts = [
@@ -329,15 +523,18 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
           const state = get('administrative_area_level_1');
           const postal_code = get('postal_code');
           const country =
-            place.addressComponents.find((c) => c.types?.includes('country'))
-              ?.longText || '';
+            place.addressComponents.find(
+              (c: { types?: string[] }) => c.types?.includes('country'),
+            )?.longText || '';
           const country_code =
-            place.addressComponents.find((c) => c.types?.includes('country'))
-              ?.shortText || '';
+            place.addressComponents.find(
+              (c: { types?: string[] }) => c.types?.includes('country'),
+            )?.shortText || '';
 
           this.pickedAddress.set(place.formattedAddress || address);
           this.searchQuery.set('');
           this.placeSuggestions.set([]);
+          this.clearAutocompleteSessionToken();
           this.locationPicked.emit({
             lat: Number(lat.toFixed(6)),
             lng: Number(lng.toFixed(6)),
@@ -353,8 +550,13 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
       .catch((error) => {
         this.ngZone.run(() => {
           this.searchingPlaces.set(false);
-          this.placesError.set('Could not load that location.');
-          console.warn('[Map] Place details unavailable:', error);
+          if (this.isAutocompleteConfigError(error)) {
+            this.markAutocompleteUnavailable(error);
+            return;
+          }
+          this.placesError.set(
+            'Location details are unavailable. Pin your location on the map.',
+          );
         });
       });
   }

@@ -17,12 +17,15 @@
           <small>ORDER ID</small>
           <h2>#{{ order() | displayOrderId }}</h2>
           <p>Placed on<br />{{ order().date }}, {{ order().time }}</p>
-          <a [routerLink]="['/orders']" class="fd-btn outline">View Orders</a
-          ><a
-            [routerLink]="['/order-finished', order().id]"
+          <a [routerLink]="['/orders']" class="fd-btn outline">View Orders</a>
+          <button
+            type="button"
             class="fd-btn outline"
-            >Receipt</a
+            (click)="downloadInvoice()"
+            [disabled]="invoiceDownloading()"
           >
+            {{ invoiceDownloading() ? 'Preparing...' : 'Receipt' }}
+          </button>
         </div>
         <div>
           <small>Estimated Arrival</small>

@@ -1,4 +1,4 @@
-/* ==========================================================================
+﻿/* ==========================================================================
    Nextou Motion System
    Smooth transitions, page-load states, loader and micro-interactions.
    ========================================================================== */
@@ -103,10 +103,10 @@ body {
 @keyframes fdPulseGlow {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(91, 44, 255, 0.22);
+    box-shadow: 0 0 0 0 rgba(56, 38, 142, 0.22);
   }
   50% {
-    box-shadow: 0 0 0 9px rgba(91, 44, 255, 0);
+    box-shadow: 0 0 0 9px rgba(56, 38, 142, 0);
   }
 }
 
@@ -264,7 +264,7 @@ select:focus,
       rgba(255, 255, 255, 0.62),
       transparent 32%
     ),
-    linear-gradient(135deg, #f7f3ff, #ffffff 42%, #fff6ed);
+    linear-gradient(135deg, #f7f3ff, #FBFBFC 42%, #fff6ed);
   animation: fdFadeIn 160ms var(--fd-ease-soft) both;
 }
 
@@ -339,3 +339,5 @@ select:focus,
     transition-duration: 1ms !important;
   }
 }
+
+

@@ -1,4 +1,5 @@
 import { Component, HostListener, inject, OnInit, signal } from '@angular/core';
+import { Location } from '@angular/common';
 import {
   NavigationEnd,
   Router,
@@ -34,6 +35,7 @@ export class AppComponent implements OnInit {
   auth = inject(AuthService);
   api = inject(ApiService);
   private router = inject(Router);
+  private location = inject(Location);
   private notifPolling = inject(NotificationPollingService);
 
   sidebarCollapsed = signal(false);
@@ -394,6 +396,20 @@ export class AppComponent implements OnInit {
   isAuthRoute(): boolean {
     const path = this.currentUrl().split('?')[0].split('#')[0];
     return path === '/login' || path === '/setup';
+  }
+
+  showBackButton(): boolean {
+    const path = this.currentUrl().split('?')[0].split('#')[0];
+    return !this.isAuthRoute() && path !== '/' && path !== '';
+  }
+
+  goBack(): void {
+    if (!this.showBackButton()) return;
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      this.location.back();
+      return;
+    }
+    this.router.navigate(['/']);
   }
 
   closeMobileMenu() {

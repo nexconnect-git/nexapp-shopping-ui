@@ -1,4 +1,4 @@
-:host {
+﻿:host {
   display: block;
   padding-bottom: 3rem;
 }
@@ -134,7 +134,7 @@
 .badge-pending {
   background: var(--warning-light);
   color: var(--warning);
-  border-color: rgba(108, 43, 255, 0.2);
+  border-color: rgba(56, 38, 142, 0.2);
 }
 .badge-approved {
   background: var(--success-light);
@@ -286,7 +286,7 @@
   padding: 1rem 1.25rem;
   border-bottom: 1px solid var(--border-color);
   background:
-    linear-gradient(135deg, rgba(108, 43, 255, 0.08), transparent 65%),
+    linear-gradient(135deg, rgba(56, 38, 142, 0.08), transparent 65%),
     var(--surface, #fff);
 
   h2 {
@@ -441,7 +441,7 @@
   border-color: transparent;
   background: linear-gradient(135deg, var(--primary), #8b5cf6);
   color: #fff;
-  box-shadow: 0 10px 24px rgba(108, 43, 255, 0.2);
+  box-shadow: 0 10px 24px rgba(56, 38, 142, 0.2);
 }
 
 @media (max-width: 640px) {
@@ -467,3 +467,4 @@
     }
   }
 }
+

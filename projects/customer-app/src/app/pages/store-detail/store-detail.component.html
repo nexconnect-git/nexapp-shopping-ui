@@ -91,15 +91,13 @@
         <button type="button" class="fd-btn outline" (click)="ui.openFilter()">
           <span class="material-symbols-rounded">tune</span> Filters
         </button>
-        <select
-          class="fd-input"
-          [ngModel]="sortBy()"
-          (ngModelChange)="setSortBy($event)"
-        >
-          <option>Sort: Relevance</option>
-          <option>Sort: Price Low to High</option>
-          <option>Sort: Rating</option>
-        </select>
+        <fd-custom-select
+          ariaLabel="Sort store products"
+          icon="sort"
+          [value]="sortBy()"
+          [options]="['Sort: Relevance', 'Sort: Price Low to High', 'Sort: Rating']"
+          (valueChange)="setSortBy($event)"
+        />
       </section>
 
       <section class="store-offer-banner" aria-label="Store promotion">

@@ -189,104 +189,14 @@ export const DEFAULT_CUSTOMER_CONTENT_CONFIG: CustomerContentConfig = {
     categoryPromoCopy: 'Browse products from active stores',
     loadingCatalogTitle: 'Loading catalog',
     loadingCatalogSubtitle: 'Live store data will appear here',
-    banners: [
-      {
-        id: 'fresh-start',
-        eyebrow: 'Quick basket',
-        title: 'Fresh essentials in minutes',
-        subtitle:
-          'Browse active stores, live stock, and nearby deals from one clean mobile flow.',
-        ctaLabel: 'Start shopping',
-        ctaUrl: '/search',
-        icon: 'bolt',
-        tone: 'purple',
-      },
-      {
-        id: 'weekly-deals',
-        eyebrow: 'Live offers',
-        title: 'Deals from stores near you',
-        subtitle:
-          'Find free delivery, flat discounts, and bundle offers when vendors publish them.',
-        ctaLabel: 'View offers',
-        ctaUrl: '/offers',
-        icon: 'local_offer',
-        tone: 'orange',
-      },
-    ],
-    engagementBanners: [
-      {
-        id: 'nextou-club',
-        eyebrow: 'Nextou Club',
-        title: 'Save more on repeat orders',
-        subtitle:
-          'Order again, collect offers, and keep your everyday essentials close.',
-        ctaLabel: 'Explore rewards',
-        ctaUrl: '/wallet',
-        icon: 'workspace_premium',
-        tone: 'green',
-      },
-    ],
+    banners: [],
+    engagementBanners: [],
   },
   ads: {
-    home: [
-      {
-        id: 'home-ad-grocery',
-        eyebrow: 'Today only',
-        title: 'Top picks for your kitchen',
-        subtitle: 'Curated products from live vendor catalogs.',
-        ctaLabel: 'Shop picks',
-        ctaUrl: '/search?q=grocery',
-        icon: 'shopping_basket',
-        tone: 'purple',
-      },
-      {
-        id: 'home-ad-offers',
-        eyebrow: 'Store promos',
-        title: 'Free delivery and fresh deals',
-        subtitle: 'Offers appear as vendors publish them.',
-        ctaLabel: 'See stores',
-        ctaUrl: '/stores',
-        icon: 'delivery_truck_speed',
-        tone: 'green',
-      },
-    ],
-    search: [
-      {
-        id: 'search-ad',
-        eyebrow: 'Tip',
-        title: 'Use filters to find faster delivery',
-        subtitle: 'Sort by rating, delivery time, category, or price.',
-        ctaLabel: 'Open filters',
-        ctaUrl: '',
-        icon: 'tune',
-        tone: 'blue',
-      },
-    ],
-    storeListing: [
-      {
-        id: 'store-listing-offers',
-        eyebrow: 'Running offers',
-        title: 'Shop vendor deals near you',
-        subtitle: 'Look for offer badges on store cards before checkout.',
-        ctaLabel: 'Browse stores',
-        ctaUrl: '/stores',
-        icon: 'local_offer',
-        tone: 'orange',
-      },
-    ],
-    storeDetail: [
-      {
-        id: 'store-detail-offer',
-        eyebrow: 'Store offer',
-        title: 'Add more to unlock vendor deals',
-        subtitle:
-          'Final discounts and delivery estimates are confirmed at checkout.',
-        ctaLabel: 'Add products',
-        ctaUrl: '',
-        icon: 'sell',
-        tone: 'purple',
-      },
-    ],
+    home: [],
+    search: [],
+    storeListing: [],
+    storeDetail: [],
   },
   search: {
     tabs: ['All', 'Stores', 'Products', 'Categories'],
@@ -330,19 +240,7 @@ export const DEFAULT_CUSTOMER_CONTENT_CONFIG: CustomerContentConfig = {
     emptyDescription:
       'Available offers will appear here as soon as the catalog has active coupons.',
     emptyCta: 'Browse stores',
-    shopBanners: [
-      {
-        id: 'coupon-strip',
-        eyebrow: 'Collect deals',
-        title: 'Vendor offers update live',
-        subtitle:
-          'Coupon availability depends on your selected store, address, and cart value.',
-        ctaLabel: 'Browse stores',
-        ctaUrl: '/stores',
-        icon: 'redeem',
-        tone: 'purple',
-      },
-    ],
+    shopBanners: [],
   },
   referral: {
     title: 'Refer and Earn',

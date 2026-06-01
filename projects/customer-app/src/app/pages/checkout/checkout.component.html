@@ -307,6 +307,8 @@
       </div>
     </header>
 
+    <fd-mobile-checkout-stepper [active]="mobileSection()" />
+
     <section class="checkout-card" [class.collapsed]="mobileSection() !== 'address'">
       <button type="button" class="mobile-card-head" (click)="openMobileSection('address')">
         <span class="material-symbols-rounded">location_on</span>

@@ -13,6 +13,7 @@ export class MobileBottomNavComponent {
   readonly items = [
     { icon: 'home', label: 'Home', route: '/', exact: true },
     { icon: 'search', label: 'Search', route: '/search' },
+    { icon: 'storefront', label: 'Stores', route: '/stores' },
     { icon: 'shopping_bag', label: 'Cart', route: '/cart', badge: true },
     { icon: 'receipt_long', label: 'Orders', route: '/orders' },
     { icon: 'person', label: 'Account', route: '/profile' },

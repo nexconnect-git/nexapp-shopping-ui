@@ -1,4 +1,4 @@
-:host {
+﻿:host {
   display: block;
   padding: 1.5rem;
   padding-bottom: 2rem;
@@ -414,6 +414,13 @@
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   border: none;
   outline: none;
+  min-height: 44px;
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+  }
 }
 .map-btn {
   background: var(--primary);
@@ -435,10 +442,10 @@
 .pickup-btn {
   background: var(--warning);
   color: white;
-  box-shadow: 0 4px 14px rgba(108, 43, 255, 0.3);
+  box-shadow: 0 4px 14px rgba(56, 38, 142, 0.3);
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(108, 43, 255, 0.4);
+    box-shadow: 0 8px 24px rgba(56, 38, 142, 0.4);
   }
 }
 .onway-btn {
@@ -535,6 +542,10 @@
   flex-direction: column;
   animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   max-height: 90vh;
+}
+
+.modal-card.compact {
+  max-width: 460px;
 }
 .modal-header {
   display: flex;
@@ -740,3 +751,4 @@
     border-radius: var(--radius-xl);
   }
 }
+

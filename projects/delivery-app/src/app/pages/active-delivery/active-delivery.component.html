@@ -113,7 +113,8 @@
               </button>
               <button
                 class="action-btn cancel-btn"
-                (click)="cancelAssignment(order)"
+                [disabled]="isActionLoading(actionKey(order.id, 'cancel'))"
+                (click)="openCancelModal(order)"
               >
                 <span class="material-icons-outlined">cancel</span>
                 Cancel Assignment
@@ -157,9 +158,17 @@
                 <span class="material-icons-outlined">navigation</span>
                 Navigate to Customer
               </button>
-              <button class="action-btn onway-btn" (click)="setOnTheWay(order)">
+              <button
+                class="action-btn onway-btn"
+                [disabled]="isActionLoading(actionKey(order.id, 'on_the_way'))"
+                (click)="setOnTheWay(order)"
+              >
                 <span class="material-icons-outlined">directions_bike</span>
-                I'm On the Way
+                @if (isActionLoading(actionKey(order.id, 'on_the_way'))) {
+                  Updating...
+                } @else {
+                  I'm On the Way
+                }
               </button>
             </div>
           }
@@ -193,8 +202,16 @@
      DELIVERY COMPLETION MODAL
      ══════════════════════════════════════════════════════ -->
 @if (confirmModalOrder()) {
-  <div class="modal-overlay" (click)="closeConfirmModal()">
-    <div class="modal-card" (click)="$event.stopPropagation()">
+  <div
+    class="modal-overlay"
+    role="button"
+    tabindex="0"
+    aria-label="Close delivery confirmation modal"
+    (click)="handleOverlayClose($event, 'confirm')"
+    (keydown.enter)="closeConfirmModal()"
+    (keydown.space)="closeConfirmModal()"
+  >
+    <div class="modal-card">
       <div class="modal-header">
         <h3>Complete Delivery</h3>
         <button class="modal-close" (click)="closeConfirmModal()">
@@ -248,7 +265,7 @@
             inputmode="numeric"
             placeholder="Enter 6-digit OTP from customer"
             [value]="confirmOtp()"
-            (input)="confirmOtp.set($any($event.target).value)"
+            (input)="updateConfirmOtp($event)"
           />
           <p class="form-hint">
             Ask the customer for the OTP shown on their order page.
@@ -311,6 +328,49 @@
           } @else {
             <span class="material-icons-outlined">task_alt</span>
             Complete Delivery
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (cancelModalOrder()) {
+  <div
+    class="modal-overlay"
+    role="button"
+    tabindex="0"
+    aria-label="Close cancel assignment modal"
+    (click)="handleOverlayClose($event, 'cancel')"
+    (keydown.enter)="closeCancelModal()"
+    (keydown.space)="closeCancelModal()"
+  >
+    <div class="modal-card compact">
+      <div class="modal-header">
+        <h3>Cancel Assignment?</h3>
+        <button class="modal-close" (click)="closeCancelModal()" aria-label="Close">
+          <span class="material-icons-outlined">close</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-order-num">Order #{{ cancelModalOrder()!.order_number }}</p>
+        <p class="form-hint">
+          This will release the assignment and allow another delivery partner to take it.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel-modal" (click)="closeCancelModal()">
+          Keep Assignment
+        </button>
+        <button
+          class="btn-confirm-delivery"
+          [disabled]="isActionLoading(actionKey(cancelModalOrder()!.id, 'cancel'))"
+          (click)="confirmCancelAssignment()"
+        >
+          @if (isActionLoading(actionKey(cancelModalOrder()!.id, 'cancel'))) {
+            <span class="spinner spinner-sm"></span> Cancelling...
+          } @else {
+            Cancel Assignment
           }
         </button>
       </div>

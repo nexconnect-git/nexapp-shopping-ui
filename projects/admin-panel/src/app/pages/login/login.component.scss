@@ -1,5 +1,5 @@
-:host {
-  --login-accent: #6c2bff;
+﻿:host {
+  --login-accent: #38268E;
   --login-accent-dark: var(--fd-color-primary-hover);
   --login-accent-soft: #e6f7fb;
   --login-danger: #ef4444;
@@ -63,11 +63,24 @@
 :host .left-heading {
   max-width: 660px;
   margin: 0;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.65rem;
+}
+
+:host .left-brand-wordmark {
+  display: block;
+  width: clamp(150px, 26vw, 300px);
+  height: auto;
+}
+
+:host .left-app-label {
   color: #fff;
-  font-size: clamp(2.35rem, 5vw, 4.7rem);
-  line-height: 0.98;
-  font-weight: 950;
-  letter-spacing: 0;
+  font-size: clamp(1.8rem, 4vw, 3.05rem);
+  line-height: 1.05;
+  font-weight: 900;
+  letter-spacing: 0.01em;
 }
 
 :host .left-subtitle {
@@ -356,3 +369,4 @@
     box-shadow: none;
   }
 }
+

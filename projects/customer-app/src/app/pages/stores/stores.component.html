@@ -47,19 +47,15 @@
             <span class="filter-label">{{ filter }}</span>
           </button>
         }
-        <label class="mobile-sort-control" aria-label="Sort stores">
-          <span class="material-symbols-rounded">sort</span>
-          <select
-            class="fd-input"
-            [disabled]="catalog.storesLoading()"
-            [ngModel]="sortBy()"
-            (ngModelChange)="setSort($event)"
-          >
-            <option>Relevance</option>
-            <option>Rating</option>
-            <option>Delivery Time</option>
-          </select>
-        </label>
+        <fd-custom-select
+          class="mobile-sort-control"
+          ariaLabel="Sort stores"
+          icon="sort"
+          [disabled]="catalog.storesLoading()"
+          [value]="sortBy()"
+          [options]="['Relevance', 'Rating', 'Delivery Time']"
+          (valueChange)="setSort($event)"
+        />
       </div>
 
       <section class="store-offer-strip" aria-label="Store offers">
@@ -155,14 +151,15 @@
         </button>
       }
     </div>
-    <label class="sort-row">
-      <span class="material-symbols-rounded">sort</span>
-      <select [ngModel]="sortBy()" (ngModelChange)="setSort($event)">
-        <option>Relevance</option>
-        <option>Rating</option>
-        <option>Delivery Time</option>
-      </select>
-    </label>
+    <fd-custom-select
+      class="sort-row"
+      ariaLabel="Sort stores"
+      icon="sort"
+      [disabled]="catalog.storesLoading()"
+      [value]="sortBy()"
+      [options]="['Relevance', 'Rating', 'Delivery Time']"
+      (valueChange)="setSort($event)"
+    />
   </section>
 
   <section class="mobile-section">

@@ -32,10 +32,10 @@ export const routes: Routes = [
   {
     path: 'category/:id',
     loadComponent: () =>
-      import('./pages/category/category.component').then(
-        (m) => m.CategoryComponent,
+      import('./pages/category-redirect/category-redirect.component').then(
+        (m) => m.CategoryRedirectComponent,
       ),
-    canActivate: [pageFeatureGuard('customer-app', 'customer-category')],
+    canActivate: [pageFeatureGuard('customer-app', 'customer-stores')],
   },
   {
     path: 'store/:id',
@@ -201,6 +201,17 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'notifications',
+    canActivate: [
+      customerAuthGuard,
+      pageFeatureGuard('customer-app', 'customer-issues'),
+    ],
+    loadComponent: () =>
+      import('./pages/notifications/notifications.component').then(
+        (m) => m.NotificationsComponent,
+      ),
+  },
+  {
     path: 'issues',
     canActivate: [
       customerAuthGuard,
@@ -209,7 +220,6 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/issues/issues.component').then((m) => m.IssuesComponent),
   },
-  { path: 'notifications', redirectTo: 'issues' },
   {
     path: 'help',
     canActivate: [pageFeatureGuard('customer-app', 'customer-help')],

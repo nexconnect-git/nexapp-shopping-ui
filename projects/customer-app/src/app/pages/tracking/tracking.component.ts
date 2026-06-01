@@ -1,4 +1,4 @@
-import {
+﻿import {
   AfterViewInit,
   Component,
   computed,
@@ -34,6 +34,7 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
   tracking = signal<any[]>([]);
   mapReady = signal(false);
   mapUnavailable = signal(false);
+  invoiceDownloading = signal(false);
   private map: any = null;
   private currentMarker: any = null;
   private mapHost: HTMLElement | null = null;
@@ -297,7 +298,7 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
         scale: 9,
         fillColor: this.hasPickedUp() ? '#6d3bff' : '#0f9f5f',
         fillOpacity: 1,
-        strokeColor: '#ffffff',
+        strokeColor: '#FBFBFC',
         strokeWeight: 4,
       },
     });
@@ -325,7 +326,57 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
   }
 
   downloadInvoice(): void {
-    this.state.showToast('Invoice download started');
+    if (this.invoiceDownloading()) return;
+    const order = this.order();
+    const orderId = String(order?.id || '');
+    if (!orderId || orderId === 'loading') {
+      this.state.showToast('Order details are still loading', 'info');
+      return;
+    }
+
+    const knownInvoiceId = String((order.raw as any)?.invoice_id || '').trim();
+    this.invoiceDownloading.set(true);
+    this.state.showToast('Preparing your receipt', 'info');
+
+    const downloadById = (invoiceId: string): void => {
+      this.api.downloadInvoice(invoiceId).subscribe({
+        next: (blob) => {
+          this.triggerFileDownload(
+            blob,
+            `receipt-${order.raw?.order_number || orderId}.pdf`,
+          );
+          this.state.showToast('Receipt downloaded', 'success');
+          this.invoiceDownloading.set(false);
+        },
+        error: () => {
+          this.state.showToast('Could not download receipt right now', 'error');
+          this.invoiceDownloading.set(false);
+        },
+      });
+    };
+
+    if (knownInvoiceId) {
+      downloadById(knownInvoiceId);
+      return;
+    }
+
+    this.api
+      .generateInvoice({ order: orderId, invoice_type: 'customer_receipt' })
+      .subscribe({
+        next: (invoice) => {
+          const invoiceId = String(invoice?.id || '').trim();
+          if (!invoiceId) {
+            this.state.showToast('Receipt is not ready yet', 'warning');
+            this.invoiceDownloading.set(false);
+            return;
+          }
+          downloadById(invoiceId);
+        },
+        error: () => {
+          this.state.showToast('Could not prepare receipt right now', 'error');
+          this.invoiceDownloading.set(false);
+        },
+      });
   }
 
   itemQuantity(item: any): number {
@@ -390,4 +441,18 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
     const lng = Number(value?.lng ?? value?.longitude);
     return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
   }
+
+  private triggerFileDownload(blob: Blob, fileName: string): void {
+    const safeName = String(fileName || 'receipt.pdf').replace(/[^\w.-]+/g, '_');
+    const link = document.createElement('a');
+    const objectUrl = window.URL.createObjectURL(blob);
+    link.href = objectUrl;
+    link.download = safeName;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(objectUrl);
+  }
 }
+

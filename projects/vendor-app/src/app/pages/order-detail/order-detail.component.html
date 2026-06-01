@@ -1,9 +1,9 @@
-<div class="order-detail-page">
+﻿<div class="order-detail-page">
   <!-- Loading -->
   @if (loading()) {
     <div class="loading-state">
       <div class="spinner"></div>
-      <p>Loading order details…</p>
+      <p>Loading order detailsâ€¦</p>
     </div>
   }
 
@@ -16,7 +16,7 @@
     </div>
 
   } @else {
-    <!-- ══ Page Header ══ -->
+    <!-- â•â• Page Header â•â• -->
     <section class="page-hero">
       <div class="page-hero-copy">
         <span class="eyebrow">Order detail</span>
@@ -28,7 +28,7 @@
         </div>
         <p class="page-subtitle">
           <span class="material-icons-outlined">calendar_today</span>
-          {{ order()!.placed_at | date: "MMMM d, y — h:mm a" }}
+          {{ order()!.placed_at | date: "MMMM d, y â€” h:mm a" }}
         </p>
       </div>
       <div class="page-hero-actions">
@@ -43,7 +43,7 @@
       </div>
     </section>
 
-    <!-- ══ Vendor Status Action Bar ══ -->
+    <!-- â•â• Vendor Status Action Bar â•â• -->
     @if (canUpdateStatus()) {
       <div class="status-update-bar">
         <span class="status-label">Update order status:</span>
@@ -99,7 +99,7 @@
       </div>
     }
 
-    <!-- ══ Main Grid ══ -->
+    <!-- â•â• Main Grid â•â• -->
     <div class="detail-grid">
       <!-- LEFT column -->
       <div class="detail-col">
@@ -126,7 +126,7 @@
                     {{ item.product_price | appCurrency }}
                   </td>
                   <td>
-                    <span class="qty-badge">×{{ item.quantity }}</span>
+                    <span class="qty-badge">Ã—{{ item.quantity }}</span>
                   </td>
                   <td class="text-right">
                     <strong>{{ item.subtotal | appCurrency }}</strong>
@@ -188,7 +188,7 @@
                 (click)="startDeliverySearch()"
               >
                 @if (startingSearch()) {
-                  <span class="spinner-xs"></span> Starting…
+                  <span class="spinner-xs"></span> Startingâ€¦
                 } @else {
                   <span class="material-icons-outlined">search</span> Find
                   Driver
@@ -207,7 +207,7 @@
                 <span class="material-icons-outlined">delivery_dining</span>
               </div>
               <div class="alert-body">
-                <strong>Searching for delivery partner…</strong>
+                <strong>Searching for delivery partnerâ€¦</strong>
                 <p>
                   We're looking for the nearest available partner. This page
                   updates automatically.
@@ -220,7 +220,7 @@
                 (click)="cancelDeliverySearch()"
               >
                 @if (cancellingSearch()) {
-                  <span class="spinner-xs"></span> Cancelling…
+                  <span class="spinner-xs"></span> Cancellingâ€¦
                 } @else {
                   <span class="material-icons-outlined">close</span> Cancel
                 }
@@ -228,7 +228,7 @@
             </div>
           }
 
-          <!-- Timed out or failed — allow restart -->
+          <!-- Timed out or failed â€” allow restart -->
           @if (
             order()!.assignment_status === "timed_out" ||
             order()!.assignment_status === "failed"
@@ -250,7 +250,7 @@
                 (click)="startDeliverySearch()"
               >
                 @if (startingSearch()) {
-                  <span class="spinner-xs"></span> Searching…
+                  <span class="spinner-xs"></span> Searchingâ€¦
                 } @else {
                   <span class="material-icons-outlined">refresh</span> Find
                   Driver
@@ -314,7 +314,7 @@
                     (click)="verifyPickupOtp()"
                   >
                     @if (verifying()) {
-                      <span class="spinner-xs"></span> Verifying…
+                      <span class="spinner-xs"></span> Verifyingâ€¦
                     } @else {
                       <span class="material-icons-outlined">check</span> Verify
                     }
@@ -395,7 +395,7 @@
                 Store</span
               >
               <span class="leg-item"
-                ><span class="leg-dot" style="background: #6366f1"></span
+                ><span class="leg-dot" style="background: #6557A8"></span
                 >Partner</span
               >
               <span class="leg-item"
@@ -474,7 +474,7 @@
                       <p class="t-desc">{{ t.description }}</p>
                     }
                     <span class="t-time">{{
-                      t.timestamp | date: "MMM d, y — h:mm a"
+                      t.timestamp | date: "MMM d, y â€” h:mm a"
                     }}</span>
                   </div>
                 </div>
@@ -486,7 +486,7 @@
     </div>
   }
 
-  <!-- ══ Cancel Order Modal ══ -->
+  <!-- â•â• Cancel Order Modal â•â• -->
   @if (showCancelModal()) {
     <div class="cancel-modal-backdrop" (click)="closeCancelModal()">
       <div class="cancel-modal" (click)="$event.stopPropagation()">
@@ -540,7 +540,7 @@
             [disabled]="cancelling()"
           >
             @if (cancelling()) {
-              <span class="spinner-xs-red"></span> Cancelling…
+              <span class="spinner-xs-red"></span> Cancellingâ€¦
             } @else {
               <span class="material-icons-outlined">cancel</span> Confirm Cancel
             }
@@ -550,3 +550,4 @@
     </div>
   }
 </div>
+

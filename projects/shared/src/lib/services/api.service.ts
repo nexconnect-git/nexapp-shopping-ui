@@ -52,7 +52,7 @@ export class ApiService {
 
   refreshUnreadCount() {
     this.getUnreadCount().subscribe({
-      next: (r) => this.unreadNotifications.set(r.count ?? 0),
+      next: (r) => this.unreadNotifications.set(r.unread_count ?? r.count ?? 0),
       error: () => {},
     });
   }
@@ -871,10 +871,17 @@ export class ApiService {
     return this.http.get(`${this.baseUrl}/orders/${id}/tracking/`);
   }
 
-  submitOrderRating(orderId: string, rating: number): Observable<any> {
-    return this.http.post(`${this.baseUrl}/orders/${orderId}/rate/`, {
-      rating,
-    });
+  submitOrderRating(
+    orderId: string,
+    payload: {
+      rating?: number;
+      vendor_rating?: number;
+      vendor_comment?: string;
+      delivery_rating?: number;
+      delivery_comment?: string;
+    },
+  ): Observable<any> {
+    return this.http.post(`${this.baseUrl}/orders/${orderId}/rate/`, payload);
   }
 
   // Order Issues
@@ -1099,8 +1106,17 @@ export class ApiService {
     });
   }
 
-  getDeliveryHistory(): Observable<any> {
-    return this.http.get(`${this.baseUrl}/delivery/history/`);
+  getDeliveryHistory(params?: { status?: string | string[] }): Observable<any> {
+    let httpParams = new HttpParams();
+    if (params?.status) {
+      const statusValue = Array.isArray(params.status)
+        ? params.status.join(',')
+        : params.status;
+      httpParams = httpParams.set('status', statusValue);
+    }
+    return this.http.get(`${this.baseUrl}/delivery/history/`, {
+      params: httpParams,
+    });
   }
 
   getDeliveryEarnings(): Observable<any> {

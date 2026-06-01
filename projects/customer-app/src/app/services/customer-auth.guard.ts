@@ -7,7 +7,10 @@ export const customerAuthGuard: CanActivateFn = () => {
   const auth = inject(SharedAuthService);
   const ui = inject(UiService);
   const router = inject(Router);
-  if (auth.isLoggedIn()) return true;
+  if (auth.isLoggedIn() && auth.getRole() === 'customer') return true;
+  if (auth.isLoggedIn() && auth.getRole() && auth.getRole() !== 'customer') {
+    auth.clearInvalidSession();
+  }
   ui.openLogin();
   router.navigate(['/']);
   return false;

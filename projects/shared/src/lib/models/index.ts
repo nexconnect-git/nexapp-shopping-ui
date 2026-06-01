@@ -400,6 +400,10 @@ export interface Order {
   placed_at: string;
   distance_km?: number;
   has_rating?: boolean;
+  vendor_rating?: number | null;
+  vendor_comment?: string;
+  delivery_rating?: number | null;
+  delivery_comment?: string;
   total_items?: number;
   total_amount?: number;
   delivery_tip?: string | null;
@@ -453,6 +457,11 @@ export interface DeliveryAssignment {
   vendor_address: string;
   order_total: string;
   order_items: AssignmentOrderItem[];
+  expires_at?: string;
+  seconds_remaining?: number;
+  pickup_distance_km?: number | null;
+  drop_distance_km?: number | null;
+  estimated_eta_minutes?: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -480,13 +489,25 @@ export interface DeliveryPartner {
   total_earnings: number;
 }
 
+export interface NotificationData {
+  id?: string;
+  order_id?: string;
+  order_number?: string;
+  assignment_id?: string;
+  type?: string;
+  target_route?: '/available' | '/active' | '/history' | '/' | string;
+  target_action?: string;
+  [key: string]: unknown;
+}
+
 export interface Notification {
   id: string;
   title: string;
   message: string;
   notification_type: string;
   is_read: boolean;
-  data: any;
+  related_entity_id?: string | null;
+  data: NotificationData | null;
   created_at: string;
 }
 

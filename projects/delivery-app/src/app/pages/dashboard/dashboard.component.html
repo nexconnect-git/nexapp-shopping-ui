@@ -15,6 +15,7 @@
         <input
           type="checkbox"
           [checked]="isAvailable()"
+          [disabled]="availabilityUpdating()"
           (change)="toggleAvailability()"
         />
         <span class="s-toggle-track">

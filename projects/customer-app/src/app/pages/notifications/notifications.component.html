@@ -1,0 +1,74 @@
+<div class="desktop-customer-view">
+  <main class="fd-content">
+    <div class="fd-page-header">
+      <div>
+        <h1 class="fd-title">Notifications</h1>
+        <p class="fd-subtitle">Latest order and account updates.</p>
+      </div>
+      <button type="button" class="fd-btn outline" (click)="markAllRead()">
+        Mark all as read
+      </button>
+    </div>
+
+    <section class="fd-list">
+      @if (loading()) {
+        <article class="fd-card">Loading notifications...</article>
+      } @else {
+        @for (item of notifications(); track item.id) {
+          <button
+            type="button"
+            class="fd-card notify-row"
+            [class.unread]="!item.read"
+            (click)="open(item)"
+          >
+            <span class="material-symbols-rounded">notifications</span>
+            <div>
+              <b>{{ item.title }}</b>
+              <p>{{ item.message }}</p>
+              <small>{{ item.timestamp }}</small>
+            </div>
+            <i>{{ item.type }}</i>
+          </button>
+        } @empty {
+          <article class="fd-card">No notifications yet.</article>
+        }
+      }
+    </section>
+  </main>
+</div>
+
+<div class="mobile-customer-view">
+  <main class="mobile-page notifications-page">
+    <header class="simple-head">
+      <div>
+        <small>Updates</small>
+        <h1>Notifications</h1>
+      </div>
+      <button type="button" (click)="markAllRead()">Mark all</button>
+    </header>
+
+    <section class="mobile-list">
+      @if (loading()) {
+        <article class="notify-card">Loading notifications...</article>
+      } @else {
+        @for (item of notifications(); track item.id) {
+          <button
+            type="button"
+            class="notify-card"
+            [class.unread]="!item.read"
+            (click)="open(item)"
+          >
+            <span class="material-symbols-rounded">notifications</span>
+            <div>
+              <b>{{ item.title }}</b>
+              <p>{{ item.message }}</p>
+              <small>{{ item.timestamp }}</small>
+            </div>
+          </button>
+        } @empty {
+          <article class="notify-card">No notifications yet.</article>
+        }
+      }
+    </section>
+  </main>
+</div>
