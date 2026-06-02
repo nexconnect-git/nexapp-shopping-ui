@@ -18,7 +18,8 @@ import { OrderSummaryComponent } from '../../components/order-summary/order-summ
 import { ProductCardComponent } from '../../components/product-card/product-card.component';
 import { CatalogService } from '../../services/catalog.service';
 import { UiService } from '../../services/ui.service';
-import { AppCurrencyPipe, CurrencyService } from '@shared/public-api';
+import { AppCurrencyPipe } from '@shared/lib/pipes/currency.pipe';
+import { CurrencyService } from '@shared/lib/services/currency.service';
 import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
 import { MobileCheckoutStepperComponent } from '../../mobile-ui/mobile-checkout-stepper/mobile-checkout-stepper.component';
 
@@ -58,9 +59,17 @@ export class CheckoutComponent {
     { name: 'Other UPI', logo: 'UPI', className: 'upi' },
   ];
   readonly sharedUpiApps = DEFAULT_UPI_APPS;
+  hasAddresses = computed(() => this.state.addresses().length > 0);
+  hasPaymentMethods = computed(() => this.state.paymentMethods().length > 0);
+  selectedPaymentId = computed(
+    () =>
+      this.selectedPayment() ||
+      this.state.selectedPaymentMethod() ||
+      this.state.paymentMethods()[0]?.id ||
+      '',
+  );
   selectedPaymentMeta = computed<PaymentMethod>(() => {
-    const selected =
-      this.selectedPayment() || this.state.selectedPaymentMethod();
+    const selected = this.selectedPaymentId();
     return (
       this.state.paymentMethods().find((method) => method.id === selected) ||
       this.state.paymentMethods()[0] ||
@@ -123,12 +132,62 @@ export class CheckoutComponent {
         !!activeAddress && !this.addressDisabledReason(activeAddress);
       return (
         !this.state.checkoutSubmitting() &&
+        this.hasPaymentMethods() &&
         this.activeStoreAvailability().isOpen &&
         !this.scheduleError() &&
         addressReady
       );
     },
   );
+  checkoutBlockingReason = computed(() => {
+    if (!this.hasAddresses()) return 'Add a delivery address to continue.';
+    const activeAddress = this.state.activeAddress();
+    if (!activeAddress) return 'Select a delivery address to continue.';
+    const addressIssue = this.addressDisabledReason(activeAddress);
+    if (addressIssue) return addressIssue;
+    if (!this.activeStoreAvailability().isOpen) {
+      return (
+        this.activeStoreAvailability().message ||
+        'This store is currently not accepting orders.'
+      );
+    }
+    const scheduleIssue = this.scheduleError();
+    if (scheduleIssue) return scheduleIssue;
+    if (!this.hasPaymentMethods())
+      return 'No payment methods are available for this order right now.';
+    return '';
+  });
+  mobileStickyState = computed(() => {
+    const section = this.mobileSection();
+    if (section === 'address') {
+      return {
+        label: this.hasAddresses()
+          ? 'Continue to delivery slot'
+          : 'Add delivery address',
+        disabled: false,
+      };
+    }
+    if (section === 'slot') {
+      const blocked = !this.activeStoreAvailability().isOpen || !!this.scheduleError();
+      return {
+        label: blocked ? 'Fix delivery slot' : 'Continue to payment',
+        disabled: blocked,
+      };
+    }
+    if (section === 'payment') {
+      const blocked = !this.selectedPaymentId() || !this.hasPaymentMethods();
+      return {
+        label: blocked ? 'Select a payment method' : 'Review order',
+        disabled: blocked,
+      };
+    }
+    return {
+      label: this.state.checkoutSubmitting()
+        ? 'Placing order...'
+        : `Place order - ${this.currency.format(this.state.total())}`,
+      disabled: !this.canPlaceOrder(),
+    };
+  });
   scheduleError = computed(() => {
     if (this.deliveryMode() !== 'scheduled') return '';
     const date = this.scheduledDate();
@@ -206,6 +265,13 @@ export class CheckoutComponent {
       if (key === this.previewKey) return;
       this.previewKey = key;
       this.refreshAddressPreviews();
+    });
+    effect(() => {
+      const selected = this.selectedPaymentId();
+      if (!selected) return;
+      if (selected !== this.state.selectedPaymentMethod()) {
+        this.state.selectPayment(selected);
+      }
     });
   }
 
@@ -322,6 +388,47 @@ export class CheckoutComponent {
     this.mobileSection.set(section);
   }
 
+  runMobileStickyAction(): void {
+    if (this.mobileSection() === 'review') {
+      if (this.canPlaceOrder()) this.placeOrder();
+      else this.state.showToast(this.checkoutBlockingReason() || 'Please review checkout details.');
+      return;
+    }
+    if (this.mobileSection() === 'address') {
+      if (!this.hasAddresses()) {
+        this.goAddresses();
+        return;
+      }
+      if (!this.state.activeAddress()) {
+        this.state.showToast('Select a delivery address to continue.');
+        return;
+      }
+      if (this.addressDisabledReason(this.state.activeAddress()!)) {
+        this.state.showToast(this.addressDisabledReason(this.state.activeAddress()!));
+        return;
+      }
+      this.mobileSection.set('slot');
+      return;
+    }
+    if (this.mobileSection() === 'slot') {
+      if (!this.activeStoreAvailability().isOpen) {
+        this.state.showToast(this.activeStoreAvailability().message || 'Store is currently closed.');
+        return;
+      }
+      if (this.scheduleError()) {
+        this.state.showToast(this.scheduleError());
+        return;
+      }
+      this.mobileSection.set('payment');
+      return;
+    }
+    if (!this.selectedPaymentId() || !this.hasPaymentMethods()) {
+      this.state.showToast('Select a payment method to continue.');
+      return;
+    }
+    this.mobileSection.set('review');
+  }
+
   addressDisabledReason(address: Address): string {
     if (!isCustomerAddressComplete(address as any))
       return 'Update this address before checkout. Required details are missing.';
@@ -361,12 +468,6 @@ export class CheckoutComponent {
     this.selectedAddress.set(id);
     this.state.selectAddress(id);
     if (dropdown) dropdown.open = false;
-    if (
-      typeof window !== 'undefined' &&
-      window.matchMedia('(max-width: 760px)').matches
-    ) {
-      this.mobileSection.set('slot');
-    }
   }
 
   private addressTitle(address: Address | null | undefined): string {

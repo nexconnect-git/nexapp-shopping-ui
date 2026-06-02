@@ -1,6 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { ApiService } from '@shared/public-api';
+import { ApiService } from '@shared/lib/services/api.service';
 import { Product } from '../../models';
 import { ProductCardComponent } from '../../components/product-card/product-card.component';
 import { AppStateService } from '../../services/app-state.service';

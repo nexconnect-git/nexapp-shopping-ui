@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { PageFeatureAccessService } from '@shared/public-api';
+import { PageFeatureAccessService } from '@shared/lib/services/page-feature-access.service';
 import {
   categoryFilterKey,
   categoryMatchesFilterKey,

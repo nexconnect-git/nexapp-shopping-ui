@@ -4,7 +4,8 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { buildStoreSelectionTarget } from '@nexconnect/customer-search';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
-import { AppCurrencyPipe, CustomSelectComponent } from '@shared/public-api';
+import { AppCurrencyPipe } from '@shared/lib/pipes/currency.pipe';
+import { CustomSelectComponent } from '@shared/lib/components/custom-select/custom-select.component';
 import { CatalogService } from '../../services/catalog.service';
 import { UiService } from '../../services/ui.service';
 import { AppStateService } from '../../services/app-state.service';
@@ -32,12 +33,23 @@ import {
   styleUrls: ['./search.component.scss'],
 })
 export class SearchComponent implements OnDestroy {
+  private readonly recentSearchStorageKey = 'nextou.customer.recent_searches';
   query = signal(this.route.snapshot.queryParamMap.get('q') ?? '');
   activeTab = signal<'All' | 'Stores' | 'Products' | 'Categories'>('All');
   sortBy = signal(
     `Sort by: ${this.content.filters().sortOptions[0] || 'Relevance'}`,
   );
   activeFilters = signal<string[]>([]);
+  recentSearches = signal<string[]>(this.readRecentSearches());
+  trendingSearches = computed(() => {
+    const fromCategories = this.catalog
+      .categories()
+      .filter((category) => category.id !== 'all')
+      .map((category) => category.label)
+      .slice(0, 6);
+    if (fromCategories.length) return fromCategories;
+    return ['Milk', 'Vegetables', 'Snacks', 'Fruits', 'Bakery', 'Pharmacy'];
+  });
   tabs = computed(() => this.content.search().tabs);
   searchPromo = computed(() => this.content.ads().search[0] || null);
   hasQuery = computed(() => !!this.query().trim());
@@ -61,6 +73,7 @@ export class SearchComponent implements OnDestroy {
       .slice(0, 8);
   });
   private readonly routeSub: Subscription;
+  private searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -71,7 +84,13 @@ export class SearchComponent implements OnDestroy {
     public ui: UiService,
     public content: CustomerContentConfigService,
   ) {
-    effect(() => this.catalog.refreshSearch(this.query()));
+    effect(() => {
+      const q = this.query();
+      if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer);
+      this.searchDebounceTimer = setTimeout(() => {
+        this.catalog.refreshSearch(q);
+      }, 250);
+    });
     this.routeSub = this.route.queryParamMap.subscribe((params) => {
       const next = params.get('q') ?? '';
       if (next !== this.query()) this.query.set(next);
@@ -123,6 +142,7 @@ export class SearchComponent implements OnDestroy {
 
   submitSearch(event: Event): void {
     event.preventDefault();
+    this.persistRecentSearch(this.query());
     this.syncUrl();
   }
 
@@ -159,6 +179,7 @@ export class SearchComponent implements OnDestroy {
   selectStore(event: Event, store: unknown): void {
     event.preventDefault();
     event.stopPropagation();
+    this.persistRecentSearch(this.query());
     const target = buildStoreSelectionTarget(store as any, {
       searchQuery: this.query(),
     });
@@ -169,7 +190,30 @@ export class SearchComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer);
     this.routeSub.unsubscribe();
+  }
+
+  searchFor(term: string): void {
+    const next = String(term || '').trim();
+    if (!next) return;
+    this.query.set(next);
+    this.persistRecentSearch(next);
+    this.syncUrl();
+  }
+
+  removeRecentSearch(term: string, event?: Event): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+    this.recentSearches.update((current) =>
+      current.filter((item) => item !== term),
+    );
+    this.writeRecentSearches(this.recentSearches());
+  }
+
+  clearRecentSearches(): void {
+    this.recentSearches.set([]);
+    this.writeRecentSearches([]);
   }
 
   private syncUrl(): void {
@@ -184,5 +228,39 @@ export class SearchComponent implements OnDestroy {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
+  }
+
+  private persistRecentSearch(term: string): void {
+    const normalized = String(term || '').trim();
+    if (!normalized) return;
+    const next = [normalized, ...this.recentSearches().filter((item) => item !== normalized)].slice(
+      0,
+      8,
+    );
+    this.recentSearches.set(next);
+    this.writeRecentSearches(next);
+  }
+
+  private readRecentSearches(): string[] {
+    try {
+      const value = localStorage.getItem(this.recentSearchStorageKey);
+      if (!value) return [];
+      const parsed = JSON.parse(value);
+      if (!Array.isArray(parsed)) return [];
+      return parsed
+        .map((item) => String(item || '').trim())
+        .filter(Boolean)
+        .slice(0, 8);
+    } catch {
+      return [];
+    }
+  }
+
+  private writeRecentSearches(items: string[]): void {
+    try {
+      localStorage.setItem(this.recentSearchStorageKey, JSON.stringify(items));
+    } catch {
+      // Storage can be unavailable in some browsers/privacy modes.
+    }
   }
 }

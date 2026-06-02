@@ -4,12 +4,10 @@ import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { AppComponent } from './app/app.component';
 import { routes } from './app/app.routes';
-import {
-  API_BASE_URL,
-  AUTH_PREFIX,
-  authInterceptor,
-  cacheInterceptor,
-} from '@shared/public-api';
+import { API_BASE_URL } from '@shared/lib/tokens/api-url.token';
+import { AUTH_PREFIX } from '@shared/lib/tokens/auth-prefix.token';
+import { authInterceptor } from '@shared/lib/interceptors/auth.interceptor';
+import { cacheInterceptor } from '@shared/lib/interceptors/cache.interceptor';
 import { environment } from './environments/environment';
 
 bootstrapApplication(AppComponent, {

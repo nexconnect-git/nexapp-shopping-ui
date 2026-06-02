@@ -1,5 +1,5 @@
-<div class="page">
-  <div class="page-head">
+<div class="page delivery-mobile-page earnings-page">
+  <div class="page-head delivery-page-head">
     <h1>Earnings</h1>
     <p>Track your delivery income</p>
   </div>
@@ -10,22 +10,22 @@
     </div>
   } @else {
     <!-- Summary Cards -->
-    <div class="summary-grid">
-      <div class="summary-card highlight">
+    <div class="summary-grid delivery-earnings-summary">
+      <div class="summary-card highlight delivery-earnings-hero">
         <div class="summary-icon">
           <span class="material-icons-outlined">account_balance_wallet</span>
         </div>
         <p class="summary-label">Total Earnings</p>
         <p class="summary-value">{{ totalEarnings() | appCurrency }}</p>
       </div>
-      <div class="summary-card">
+      <div class="summary-card delivery-metric-card">
         <div class="summary-icon secondary">
           <span class="material-icons-outlined">calendar_month</span>
         </div>
         <p class="summary-label">This Month</p>
         <p class="summary-value accent">{{ monthEarnings() | appCurrency }}</p>
       </div>
-      <div class="summary-card">
+      <div class="summary-card delivery-metric-card">
         <div class="summary-icon info">
           <span class="material-icons-outlined">local_shipping</span>
         </div>
@@ -35,7 +35,7 @@
     </div>
 
     <!-- Tabs -->
-    <div class="tabs-nav">
+    <div class="tabs-nav delivery-segmented-tabs">
       <button
         class="tab-btn"
         [class.active]="activeTab() === 'history'"
@@ -63,7 +63,7 @@
           <p>Complete deliveries to start earning money</p>
         </div>
       } @else {
-        <div class="earnings-table">
+        <div class="earnings-table delivery-card-list">
           <div class="table-header">
             <span>Order</span>
             <span>Date</span>
@@ -71,7 +71,7 @@
             <span>Status</span>
           </div>
           @for (e of earnings(); track e.id) {
-            <div class="table-row">
+            <div class="table-row delivery-earning-row">
               <span class="order-ref">#{{ e.order_number || e.order }}</span>
               <span class="date-cell">{{
                 e.created_at | date: "MMM d, y"
@@ -103,7 +103,7 @@
           </p>
         </div>
       } @else {
-        <div class="earnings-table payouts-table">
+        <div class="earnings-table payouts-table delivery-card-list">
           <div class="table-header payouts-header">
             <span>Period</span>
             <span>Amount</span>
@@ -113,7 +113,7 @@
           </div>
           @for (payout of payouts(); track payout.id) {
             <div
-              class="table-row payouts-row"
+              class="table-row payouts-row delivery-payout-row"
               [class.highlight-row]="
                 ['pending_approval', 'paid'].includes(payout.status)
               "
@@ -170,7 +170,7 @@
 <!-- ── Decline Reason Modal ─────────────────────────────────────── -->
 @if (showDeclineModal()) {
   <div
-    class="modal-backdrop"
+    class="modal-backdrop delivery-bottom-sheet-overlay"
     role="button"
     tabindex="0"
     aria-label="Close decline payout modal"
@@ -178,7 +178,7 @@
     (keydown.enter)="closeDeclineModal()"
     (keydown.space)="closeDeclineModal()"
   >
-    <div class="modal-panel modal-sm">
+    <div class="modal-panel modal-sm delivery-bottom-sheet">
       <div class="modal-header">
         <div class="modal-header-icon decline-icon">
           <span class="material-icons-outlined">cancel</span>

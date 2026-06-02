@@ -85,11 +85,17 @@ export interface Vendor {
   status: string;
   is_open: boolean;
   is_open_now?: boolean;
+  is_accepting_orders?: boolean;
   availability_note?: string;
   opening_time: string;
   closing_time: string;
+  operating_hours?: Record<string, unknown>;
   min_order_amount: number;
   delivery_radius_km: number;
+  instant_delivery_radius_km?: number;
+  max_delivery_radius_km?: number;
+  base_prep_time_min?: number;
+  prep_time_minutes?: number;
   average_rating: number;
   total_ratings: number;
   is_featured: boolean;
@@ -137,6 +143,9 @@ export interface ProductImage {
 export interface Product {
   id: string;
   catalog_product?: CatalogProduct | null;
+  parent_catalog_item_id?: string | null;
+  store_id?: string;
+  vendor_id?: string;
   name: string;
   slug: string;
   description: string;
@@ -323,19 +332,33 @@ export interface CartItem {
   product: Product;
   quantity: number;
   subtotal: number;
+  vendor_product_id?: string;
+  parent_catalog_item_id?: string | null;
+  price_at_add?: number;
+  unit_price_snapshot?: number;
+  store_id?: string;
 }
 
 export interface Cart {
   id: string;
   items: CartItem[];
+  store_id?: string;
+  vendor_id?: string;
   total_items: number;
   total_amount: number;
+  coupon_code?: string | null;
+  updated_at?: string;
 }
 
 export interface OrderItem {
   id: string;
   product?: string | null;
+  vendor_product_id?: string | null;
+  parent_catalog_item_id?: string | null;
+  store_id?: string;
   product_name: string;
+  brand?: string;
+  pack_size?: string;
   product_price: number;
   quantity: number;
   subtotal: number;
@@ -376,8 +399,10 @@ export interface Order {
   vendor: string;
   vendor_info: VendorInfo;
   status: string;
+  normalized_status?: OrderStatus;
   payment_method: string;
   is_payment_verified: boolean;
+  payment_status?: PaymentStatus | string;
   subtotal: number;
   delivery_fee: number;
   discount: number;
@@ -395,9 +420,11 @@ export interface Order {
   delivery_address: Address;
   delivery_partner?: string | null;
   delivery_partner_info?: DeliveryPartnerInfo | null;
-  assignment_status?: string | null;
+  assignment_status?: DeliveryStatus | string | null;
   refund_status?: 'none' | 'initiated' | 'processed' | 'failed' | null;
   placed_at: string;
+  store_id?: string;
+  vendor_id?: string;
   distance_km?: number;
   has_rating?: boolean;
   vendor_rating?: number | null;
@@ -447,14 +474,26 @@ export interface AssignmentOrderItem {
 
 export interface DeliveryAssignment {
   id: string;
-  status: string;
+  status: DeliveryStatus | string;
   current_radius_km: number;
   order: string;
   order_number: string;
+  store_id?: string;
+  delivery_partner_id?: string | null;
   vendor_name: string;
   vendor_lat: string;
   vendor_lng: string;
   vendor_address: string;
+  pickup_latitude?: number | string | null;
+  pickup_longitude?: number | string | null;
+  drop_latitude?: number | string | null;
+  drop_longitude?: number | string | null;
+  pickup_otp?: string;
+  delivery_otp?: string;
+  assigned_at?: string | null;
+  accepted_at?: string | null;
+  picked_up_at?: string | null;
+  delivered_at?: string | null;
   order_total: string;
   order_items: AssignmentOrderItem[];
   expires_at?: string;
@@ -551,4 +590,225 @@ export interface DeliveryDashboard {
   average_rating: string;
   active_orders: Order[];
   partner_status: 'available' | 'offline' | 'on_delivery';
+}
+
+// Direct-store shared contracts (Phase 1 hardening)
+export type OrderStatus =
+  | 'created'
+  | 'pending_payment'
+  | 'confirmed'
+  | 'vendor_accepted'
+  | 'preparing'
+  | 'packed'
+  | 'ready_for_pickup'
+  | 'delivery_assigned'
+  | 'picked_up'
+  | 'out_for_delivery'
+  | 'arrived_at_customer'
+  | 'delivered'
+  | 'cancelled'
+  | 'refunded'
+  // Existing backend values
+  | 'placed'
+  | 'ready'
+  | 'on_the_way';
+
+export type PaymentStatus =
+  | 'created'
+  | 'pending'
+  | 'success'
+  | 'failed'
+  | 'refund_initiated'
+  | 'refunded'
+  // Existing backend values
+  | 'none'
+  | 'initiated'
+  | 'processed';
+
+export type DeliveryStatus =
+  | 'available'
+  | 'assigned'
+  | 'accepted'
+  | 'arrived_at_store'
+  | 'pickup_verified'
+  | 'picked_up'
+  | 'on_the_way'
+  | 'arrived_at_customer'
+  | 'delivery_verified'
+  | 'delivered'
+  | 'cancelled'
+  | 'timed_out'
+  // Existing assignment values
+  | 'searching'
+  | 'notified'
+  | 'failed';
+
+export type StoreStatus =
+  | 'pending'
+  | 'approved'
+  | 'rejected'
+  | 'suspended'
+  | 'active'
+  | 'inactive';
+
+export type CatalogRequestStatus =
+  | 'pending'
+  | 'partially_approved'
+  | 'approved'
+  | 'rejected';
+
+export type VendorProductApprovalStatus =
+  | 'draft'
+  | 'pending_approval'
+  | 'approved'
+  | 'rejected';
+
+export type FeatureFlagStatus = 'enabled' | 'disabled' | 'partial';
+
+export interface ParentCatalogItem extends CatalogProduct {
+  status?: 'active' | 'inactive';
+  category_id?: string | null;
+  subcategory_id?: string | null;
+  created_by_admin_id?: string | null;
+  created_by_admin_name?: string | null;
+  attributes?: Record<string, string | number | boolean | null>;
+}
+
+export interface VendorProduct extends Product {
+  store_id: string;
+  vendor_id: string;
+  parent_catalog_item_id: string | null;
+  parentCatalogItemId?: string | null;
+  reserved_stock?: number;
+  available_stock?: number;
+  pack_size?: string;
+  visible?: boolean;
+  visibility?: 'visible' | 'hidden' | 'draft' | string;
+  offer?: Offer | null;
+  approval_status?: VendorProductApprovalStatus;
+  product_health_status?: 'ready_to_sell' | 'needs_attention' | 'blocked' | string;
+}
+
+export interface Inventory {
+  id?: string;
+  store_id?: string;
+  vendor_product_id: string;
+  stock_qty: number;
+  reserved_qty?: number;
+  available_qty?: number;
+  stock_quantity?: number;
+  reserved_quantity?: number;
+  available_stock?: number;
+  low_stock_threshold?: number;
+  audit_note?: string;
+  updated_at?: string;
+}
+
+export interface OrderItemSnapshot {
+  id: string;
+  order_id?: string;
+  vendor_product_id?: string | null;
+  parent_catalog_item_id?: string | null;
+  product_name: string;
+  brand?: string;
+  pack_size?: string;
+  unit_price: number;
+  quantity: number;
+  total_price: number;
+  store_id?: string;
+}
+
+export interface StoreVendor extends Vendor {
+  store_status?: StoreStatus;
+}
+
+export interface Store extends Vendor {
+  vendor_id?: string;
+  name?: string;
+  category_ids?: string[];
+  delivery_radius_km: number;
+  min_order_amount: number;
+  prep_time_minutes?: number;
+  opening_hours?: Record<string, unknown>;
+  accepting_orders?: boolean;
+  store_status?: StoreStatus;
+}
+
+export interface SupportTicket {
+  id: string;
+  order_id?: string | null;
+  customer_id?: string;
+  store_id?: string;
+  status: 'open' | 'in_review' | 'resolved' | 'rejected' | 'refund_initiated';
+  issue_type?: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface FeatureFlag {
+  key: string;
+  app_id?: string;
+  page_id?: string;
+  role?: User['role'];
+  status: FeatureFlagStatus;
+  reason?: string;
+}
+
+export interface Payment {
+  id: string;
+  order_id?: string;
+  method: string;
+  status: PaymentStatus;
+  gateway?: string;
+  transaction_id?: string | null;
+  amount: number;
+  currency?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface WalletTransaction {
+  id: string;
+  type: 'credit' | 'debit' | 'refund' | 'adjustment';
+  amount: number;
+  status?: 'pending' | 'success' | 'failed';
+  reference_id?: string | null;
+  reference_type?: 'order' | 'refund' | 'manual' | string;
+  created_at: string;
+}
+
+export interface Wallet {
+  id?: string;
+  customer_id?: string;
+  balance: number;
+  currency?: string;
+  transactions?: WalletTransaction[];
+  updated_at?: string;
+}
+
+export interface Coupon {
+  id: string;
+  code: string;
+  title?: string;
+  description?: string;
+  discount_type?: 'flat' | 'percentage';
+  discount_value?: number;
+  min_order_amount?: number;
+  max_discount_amount?: number | null;
+  active?: boolean;
+  starts_at?: string | null;
+  ends_at?: string | null;
+}
+
+export interface Offer {
+  id: string;
+  title: string;
+  description?: string;
+  offer_type?: 'product' | 'store' | 'shipping' | 'coupon' | string;
+  store_id?: string;
+  vendor_product_id?: string;
+  coupon_code?: string;
+  active?: boolean;
+  starts_at?: string | null;
+  ends_at?: string | null;
 }

@@ -1,11 +1,11 @@
 import { Location } from '@angular/common';
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, signal, OnInit, OnDestroy } from '@angular/core';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { CatalogService } from '../../services/catalog.service';
 import { AppStateService } from '../../services/app-state.service';
 import { UiService } from '../../services/ui.service';
 import { AuthService } from '../../services/auth.service';
-import { ApiService } from '@shared/public-api';
+import { ApiService } from '@shared/lib/services/api.service';
 import { filter } from 'rxjs';
 
 @Component({
@@ -15,7 +15,7 @@ import { filter } from 'rxjs';
   templateUrl: './mobile-topbar.component.html',
   styleUrls: ['./mobile-topbar.component.scss'],
 })
-export class MobileTopbarComponent {
+export class MobileTopbarComponent implements OnInit, OnDestroy {
   query = signal('');
   private currentUrl = signal('/');
   readonly isHomeRoute = computed(() => {
@@ -23,6 +23,18 @@ export class MobileTopbarComponent {
     return path === '/' || path === '/new-home';
   });
   readonly showBack = computed(() => !this.isHomeRoute());
+
+  placeholders = [
+    'Search "milk, bread, butter"...',
+    'Search "fresh fruits & veggies"...',
+    'Search "chocolates & snacks"...',
+    'Search "daily essentials"...',
+    'Search "tea, coffee & drinks"...'
+  ];
+  currentPlaceholderIndex = signal(0);
+  readonly activePlaceholder = computed(() => this.placeholders[this.currentPlaceholderIndex()]);
+  private intervalId: any;
+
   suggestions = computed(() =>
     [
       ...this.catalog.products().map((item) => item.name),
@@ -49,6 +61,20 @@ export class MobileTopbarComponent {
       });
     if (this.auth.isLoggedIn()) {
       this.api.refreshUnreadCount();
+    }
+  }
+
+  ngOnInit(): void {
+    if (typeof window !== 'undefined') {
+      this.intervalId = setInterval(() => {
+        this.currentPlaceholderIndex.update(idx => (idx + 1) % this.placeholders.length);
+      }, 3000);
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
     }
   }
 

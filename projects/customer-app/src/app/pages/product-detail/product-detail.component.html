@@ -53,6 +53,13 @@
           <span>{{ product().category }}</span>
         }
       </div>
+      <div class="stock-state" [class.warning]="stockState().tone === 'warning'" [class.danger]="stockState().tone === 'danger'">
+        <span class="material-symbols-rounded">inventory_2</span>
+        {{ stockState().label }}
+      </div>
+      @if (!storeOrderState().canOrder) {
+        <p class="availability-warning">{{ storeOrderState().message }}</p>
+      }
       <div class="price">
         <b>{{ product().price | appCurrency }}</b
         ><del>{{ product().mrp | appCurrency }}</del
@@ -89,12 +96,13 @@
         <button
           type="button"
           class="fd-btn outline"
+          [disabled]="!canPurchase()"
           (click)="addToCart()"
         >
           <span class="material-symbols-rounded">shopping_cart</span> Add to
           Cart
         </button>
-        <button type="button" class="fd-btn primary" (click)="buyNow()">
+        <button type="button" class="fd-btn primary" [disabled]="!canPurchase()" (click)="buyNow()">
           <span class="material-symbols-rounded">bolt</span> Buy Now
         </button>
       </div>
@@ -118,6 +126,7 @@
           {{ deliveryLabel() }}
         </h3>
         <p>{{ deliveryMode() }}</p>
+        <small class="delivery-promise">{{ deliveryPromise() }}</small>
       </section>
       <section class="fd-card orange">
         <h3>Secure payment</h3>
@@ -140,61 +149,46 @@
 
     <section class="details fd-card">
       <nav>
-        <button
-          type="button"
-          [class.active]="activePanel() === 'details'"
-          (click)="activePanel.set('details')"
-        >
-          Product Details
-        </button>
-        <button
-          type="button"
-          [class.active]="activePanel() === 'nutrition'"
-          (click)="activePanel.set('nutrition')"
-        >
-          Nutritional Info
-        </button>
-        <button
-          type="button"
-          [class.active]="activePanel() === 'reviews'"
-          (click)="activePanel.set('reviews')"
-        >
-          Reviews
-        </button>
+        @for (panel of detailPanels(); track panel.id) {
+          <button
+            type="button"
+            [class.active]="activePanel() === panel.id"
+            (click)="activePanel.set(panel.id)"
+          >
+            {{ resolvePanelLabel(panel.id) }}
+          </button>
+        }
       </nav>
-      @if (activePanel() === "details") {
-        <p>
-          {{
-            product().raw?.description ||
-              "Product details update when the store provides them."
-          }}
-        </p>
+      <p>{{ selectedPanel().intro }}</p>
+      @if (selectedPanel().items.length) {
         <ul>
-          <li><b>Unit:</b> {{ product().unit }}</li>
-          <li><b>Category:</b> {{ product().category }}</li>
-          <li><b>Store:</b> {{ product().storeName || "Partner store" }}</li>
+          @for (item of selectedPanel().items; track item.label) {
+            <li><b>{{ item.label }}:</b> {{ item.value }}</li>
+          }
         </ul>
-      } @else if (activePanel() === "nutrition") {
-        <p>
-          Nutrition details are shown when the store provides them. Check
-          packaging for complete information.
-        </p>
-      } @else {
-        <p>
-          {{ product().rating || "New" }} rating. Reviews from verified
-          Nextou orders appear here.
-        </p>
       }
     </section>
 
-    <div class="fd-section-title suggestion-title">
-      <h3>You might also like</h3>
-    </div>
-    <section class="suggestions">
-      @for (p of catalog.products().slice(1, 6); track p.id) {
-        <fd-product-card [product]="p" />
-      }
-    </section>
+    @if (similarFromStore().length) {
+      <div class="fd-section-title suggestion-title">
+        <h3>More from {{ store()?.name || "this store" }}</h3>
+      </div>
+      <section class="suggestions">
+        @for (p of similarFromStore(); track p.id) {
+          <fd-product-card [product]="p" />
+        }
+      </section>
+    }
+    @if (similarFromCategory().length) {
+      <div class="fd-section-title suggestion-title">
+        <h3>Similar from nearby stores</h3>
+      </div>
+      <section class="suggestions">
+        @for (p of similarFromCategory(); track p.id) {
+          <fd-product-card [product]="p" />
+        }
+      </section>
+    }
   </section>
 </main>
 </div>
@@ -203,9 +197,6 @@
 <main class="mobile-page product-detail-page">
   <section class="product-hero">
     <div class="hero-actions">
-      <button type="button" aria-label="Back" (click)="goBack()">
-        <span class="material-symbols-rounded">arrow_back</span>
-      </button>
       <button type="button" aria-label="Toggle wishlist" (click)="toggleWishlist()">
         <span class="material-symbols-rounded">favorite</span>
       </button>
@@ -231,7 +222,28 @@
       <span><i class="material-symbols-rounded">schedule</i>{{ deliveryLabel() }}</span>
       <span><i class="material-symbols-rounded">storefront</i>{{ store()?.name || product().storeName || 'Partner store' }}</span>
       <span><i class="material-symbols-rounded">verified</i>{{ deliveryMode() }}</span>
+      <span><i class="material-symbols-rounded">bolt</i>{{ deliveryPromise() }}</span>
     </div>
+    <div class="stock-state" [class.warning]="stockState().tone === 'warning'" [class.danger]="stockState().tone === 'danger'">
+      {{ stockState().label }}
+    </div>
+    @if (!storeOrderState().canOrder) {
+      <p class="availability-warning">{{ storeOrderState().message }}</p>
+    }
+
+    <section class="product-action-card detail-cta" aria-label="Product purchase actions">
+      <div class="qty">
+        <button type="button" aria-label="Decrease quantity" (click)="qty.set(Math.max(1, qty() - 1))">
+          <span class="material-symbols-rounded">remove</span>
+        </button>
+        <b>{{ qty() }}</b>
+        <button type="button" aria-label="Increase quantity" (click)="qty.set(qty() + 1)">
+          <span class="material-symbols-rounded">add</span>
+        </button>
+      </div>
+      <button type="button" class="mobile-cta" [disabled]="!canPurchase()" (click)="addToCart()">{{ canPurchase() ? 'Add to cart' : 'Unavailable' }}</button>
+      <button type="button" class="mobile-cta secondary" [disabled]="!canPurchase()" (click)="buyNow()">Buy now</button>
+    </section>
   </section>
 
   <section class="mobile-section">
@@ -268,25 +280,25 @@
         <h2>More from {{ store()?.name }}</h2>
       </div>
       <div class="mobile-grid-2">
-        @for (item of catalog.productsByStore(store()!.id).slice(0, 4); track item.id) {
+        @for (item of similarFromStore().slice(0, 4); track item.id) {
           <fd-product-card [product]="item" />
         }
       </div>
     </section>
   }
 
-  <section class="mobile-sticky-cta detail-cta">
-    <div class="qty">
-      <button type="button" aria-label="Decrease quantity" (click)="qty.set(Math.max(1, qty() - 1))">
-        <span class="material-symbols-rounded">remove</span>
-      </button>
-      <b>{{ qty() }}</b>
-      <button type="button" aria-label="Increase quantity" (click)="qty.set(qty() + 1)">
-        <span class="material-symbols-rounded">add</span>
-      </button>
-    </div>
-    <button type="button" class="mobile-cta" (click)="addToCart()">Add to cart</button>
-    <button type="button" class="mobile-cta secondary" (click)="buyNow()">Buy now</button>
-  </section>
+  @if (similarFromCategory().length) {
+    <section class="mobile-section">
+      <div class="mobile-section-head">
+        <h2>Similar nearby</h2>
+      </div>
+      <div class="mobile-grid-2">
+        @for (item of similarFromCategory().slice(0, 4); track item.id) {
+          <fd-product-card [product]="item" />
+        }
+      </div>
+    </section>
+  }
+
 </main>
 </div>

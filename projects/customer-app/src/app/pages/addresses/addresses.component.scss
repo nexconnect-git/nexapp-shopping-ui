@@ -181,6 +181,7 @@ app-map-picker {
     align-items: center;
     justify-content: space-between;
     gap: 12px;
+    margin-bottom: 4px;
   }
   
   .simple-head small {
@@ -192,6 +193,8 @@ app-map-picker {
   .simple-head h1 {
     margin: 2px 0 0;
     font-size: 24px;
+    font-weight: 950;
+    color: #12095f;
   }
   
   .simple-head button {
@@ -202,21 +205,28 @@ app-map-picker {
     border-radius: 16px;
     color: var(--fd-color-primary);
     background: #fff;
-    box-shadow: 0 10px 24px rgba(33, 22, 82, 0.06);
+    box-shadow: 0 6px 16px rgba(33, 22, 82, 0.04);
+    transition: transform 0.2s ease;
+    &:active {
+      transform: scale(0.9);
+    }
   }
   
   .address-card,
   .empty-panel {
     display: grid;
-    gap: 10px;
-    padding: 15px;
-    border-radius: 22px;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 24px;
     background: #fff;
-    box-shadow: 0 12px 30px rgba(33, 22, 82, 0.07);
+    box-shadow: 0 8px 24px rgba(33, 22, 82, 0.04);
+    border: 1px solid rgba(56, 38, 142, 0.05);
   }
   
   .address-card {
     grid-template-columns: 44px minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
   }
   
   .address-card > span {
@@ -224,9 +234,18 @@ app-map-picker {
     height: 44px;
     display: grid;
     place-items: center;
-    border-radius: 16px;
+    border-radius: 14px;
     color: var(--fd-color-primary);
-    background: #f1ecff;
+    background: var(--fd-color-primary-soft);
+    font-size: 22px;
+    box-shadow: 0 6px 16px rgba(56, 38, 142, 0.06);
+  }
+
+  .address-card b {
+    font-size: 15px;
+    font-weight: 950;
+    color: #12095f;
+    display: block;
   }
   
   .address-card p,
@@ -235,7 +254,8 @@ app-map-picker {
     margin: 4px 0 0;
     color: #77708d;
     font-size: 12px;
-    line-height: 1.35;
+    line-height: 1.4;
+    font-weight: 700;
   }
   
   .address-card footer {
@@ -243,14 +263,23 @@ app-map-picker {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
+    margin-top: 6px;
+    padding-top: 12px;
+    border-top: 1px solid #fbfaff;
   }
   
   .address-card footer button {
     min-height: 38px;
-    border-radius: 14px;
+    border-radius: 12px;
     color: var(--fd-color-primary);
     background: #f1ecff;
     font-weight: 950;
+    font-size: 12px;
+    transition: transform 0.15s ease;
+    
+    &:active {
+      transform: scale(0.95);
+    }
   }
   
   .address-card footer .danger {
@@ -261,5 +290,25 @@ app-map-picker {
   .empty-panel {
     justify-items: center;
     text-align: center;
+    padding: 36px 16px;
+    
+    span {
+      width: 58px;
+      height: 58px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: var(--fd-color-primary);
+      background: var(--fd-color-primary-soft);
+      font-size: 28px;
+      box-shadow: 0 6px 16px rgba(56, 38, 142, 0.08);
+    }
+    
+    h2 {
+      font-size: 18px;
+      font-weight: 950;
+      color: #12095f;
+      margin: 4px 0 0;
+    }
   }
 }

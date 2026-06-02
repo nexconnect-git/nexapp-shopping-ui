@@ -34,6 +34,40 @@
         </button>
       </form>
 
+      @if (!query() && recentSearches().length) {
+        <section class="search-history fd-card" aria-label="Recent searches">
+          <div class="head">
+            <h2>Recent searches</h2>
+            <button type="button" (click)="clearRecentSearches()">Clear</button>
+          </div>
+          <div class="chips">
+            @for (term of recentSearches(); track term) {
+              <button type="button" class="fd-pill" (click)="searchFor(term)">
+                <span class="material-symbols-rounded">history</span>{{ term }}
+                <span
+                  class="material-symbols-rounded chip-remove"
+                  (click)="removeRecentSearch(term, $event)"
+                  >close</span
+                >
+              </button>
+            }
+          </div>
+        </section>
+      }
+
+      @if (!query()) {
+        <section class="search-history fd-card" aria-label="Trending searches">
+          <div class="head"><h2>Trending near you</h2></div>
+          <div class="chips">
+            @for (term of trendingSearches(); track term) {
+              <button type="button" class="fd-pill" (click)="searchFor(term)">
+                <span class="material-symbols-rounded">trending_up</span>{{ term }}
+              </button>
+            }
+          </div>
+        </section>
+      }
+
       <div class="tabs">
         @for (tab of tabs(); track tab) {
           <button
@@ -255,12 +289,28 @@
   </header>
 
   @if (!query()) {
+    @if (recentSearches().length) {
+      <section class="mobile-section">
+        <div class="mobile-section-head">
+          <h2>Recent searches</h2>
+          <button type="button" (click)="clearRecentSearches()">Clear</button>
+        </div>
+        <div class="mobile-chip-row">
+          @for (term of recentSearches(); track term) {
+            <button type="button" class="mobile-chip" (click)="searchFor(term)">
+              <span class="material-symbols-rounded">history</span>{{ term }}
+            </button>
+          }
+        </div>
+      </section>
+    }
+
     <section class="mobile-section">
       <div class="mobile-section-head"><h2>Popular searches</h2></div>
       <div class="mobile-chip-row">
-        @for (category of recommendedCategories(); track category.id) {
-          <button type="button" class="mobile-chip" (click)="updateQuery(category.label); submitSearch($event)">
-            <span class="material-symbols-rounded">search</span>{{ category.label }}
+        @for (term of trendingSearches(); track term) {
+          <button type="button" class="mobile-chip" (click)="searchFor(term)">
+            <span class="material-symbols-rounded">search</span>{{ term }}
           </button>
         }
       </div>

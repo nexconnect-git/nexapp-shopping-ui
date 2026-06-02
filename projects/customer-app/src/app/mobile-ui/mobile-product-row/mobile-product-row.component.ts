@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { AppCurrencyPipe } from '@shared/public-api';
+import { AppCurrencyPipe } from '@shared/lib/pipes/currency.pipe';
 
 @Component({
   selector: 'fd-mobile-product-row',
@@ -18,4 +18,3 @@ export class MobileProductRowComponent {
   @Output() pressed = new EventEmitter<void>();
   @Output() add = new EventEmitter<void>();
 }
-

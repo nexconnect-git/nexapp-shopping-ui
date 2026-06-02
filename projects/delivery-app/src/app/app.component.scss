@@ -488,15 +488,16 @@
   left: 0;
   right: 0;
   height: 72px;
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border-top: 1px solid var(--border-light);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
   display: flex;
   justify-content: space-around;
   align-items: center;
   z-index: 1000;
   padding-bottom: env(safe-area-inset-bottom, 0px);
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.03);
 }
 .bottom-menu-item {
   display: flex;
@@ -507,9 +508,13 @@
   height: 100%;
   color: var(--text-muted);
   text-decoration: none;
-  transition: color 0.2s;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   gap: 0.25rem;
   position: relative;
+
+  &:active {
+    transform: scale(0.9);
+  }
 
   &::before {
     content: "";
@@ -518,7 +523,7 @@
     left: 50%;
     transform: translateX(-50%);
     width: 0;
-    height: 3px;
+    height: 4px;
     background: var(--primary);
     border-radius: 0 0 4px 4px;
     transition: width 0.2s ease;
@@ -526,24 +531,25 @@
 
   .material-icons-outlined {
     font-size: 24px;
-    transition: transform 0.2s;
+    transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   }
   span:not(.material-icons-outlined) {
     font-size: 0.6875rem;
-    font-weight: 700;
+    font-weight: 800;
   }
 
   &.active {
     color: var(--primary);
     .material-icons-outlined {
-      transform: translateY(-2px);
+      transform: translateY(-4px) scale(1.15);
       font-variation-settings: "FILL" 1;
     }
     &::before {
-      width: 32px;
+      width: 24px;
     }
   }
 }
+
 
 /* Animations */
 @keyframes slideDown {

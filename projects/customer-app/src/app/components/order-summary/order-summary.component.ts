@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { AppCurrencyPipe } from '@shared/public-api';
+import { AppCurrencyPipe } from '@shared/lib/pipes/currency.pipe';
 import { AppStateService } from '../../services/app-state.service';
 
 @Component({

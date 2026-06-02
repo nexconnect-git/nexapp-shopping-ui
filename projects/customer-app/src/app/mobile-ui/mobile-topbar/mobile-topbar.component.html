@@ -34,9 +34,12 @@
 
   @if (isHomeRoute()) {
     <button type="button" class="location-card" (click)="ui.openLocation()">
-      <span class="material-symbols-rounded">location_on</span>
+      <span class="material-symbols-rounded loc-icon">location_on</span>
       <span>
-        <small>Delivering to</small>
+        <small class="delivering-label">
+          <span class="live-pulse"></span>
+          Delivering to
+        </small>
         <b>{{ state.location() || 'Select location' }}</b>
       </span>
       <span class="material-symbols-rounded">expand_more</span>
@@ -49,7 +52,7 @@
       <input
         type="search"
         name="q"
-        placeholder="Search milk, bread, pharmacy..."
+        [placeholder]="activePlaceholder()"
         [value]="query()"
         (input)="query.set($any($event.target).value)"
       />

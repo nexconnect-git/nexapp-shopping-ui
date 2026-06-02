@@ -10,9 +10,79 @@
   align-items: start;
   width: 100%;
 }
+.location-guard {
+  margin: 0 0 18px;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border: 1px solid var(--fd-color-primary-border);
+  background: linear-gradient(135deg, var(--fd-color-primary-soft), #fff);
+}
+.location-guard h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+.location-guard p {
+  margin: 0;
+  color: var(--muted);
+}
+.location-guard.out-of-service {
+  border-color: var(--fd-color-warning-border);
+  background: linear-gradient(135deg, var(--fd-color-warning-soft), #fff);
+}
 .main-area {
   min-width: 0;
   overflow: hidden;
+}
+
+.animate-in {
+  animation: fadeUp 0.38s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.stagger > * {
+  animation: fadeUp 0.42s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.stagger > *:nth-child(2) {
+  animation-delay: 0.04s;
+}
+
+.stagger > *:nth-child(3) {
+  animation-delay: 0.08s;
+}
+
+.stagger > *:nth-child(4) {
+  animation-delay: 0.12s;
+}
+
+.stagger > *:nth-child(5) {
+  animation-delay: 0.16s;
+}
+
+.stagger > *:nth-child(6) {
+  animation-delay: 0.2s;
+}
+
+.stagger > *:nth-child(7) {
+  animation-delay: 0.24s;
+}
+
+.stagger > *:nth-child(8) {
+  animation-delay: 0.28s;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .insta-hero {
@@ -320,6 +390,19 @@
 }
 .recommended-row {
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+.discovery-rails {
+  display: grid;
+  gap: 12px;
+  margin-top: 8px;
+}
+.product-rail {
+  min-width: 0;
+}
+.compact-product-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
 }
 .top-store-row .nc-skeleton-list,
 .recommended-row .nc-skeleton-list {
@@ -677,6 +760,9 @@
     overflow: visible;
     padding-right: 0;
   }
+  .discovery-rails {
+    display: none;
+  }
   .compact {
     margin: 16px 0 10px;
   }
@@ -758,6 +844,18 @@
     padding-top: 14px;
   }
 
+  .location-guard.mobile {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 12px;
+    padding: 14px;
+    border-radius: 18px;
+  }
+
+  .location-guard.mobile h2 {
+    font-size: 16px;
+  }
+
   fd-mobile-location-pill,
   fd-mobile-search-bar {
     display: block;
@@ -782,8 +880,22 @@
     padding: 18px;
     border-radius: 28px;
     color: #fff;
-    background: var(--fd-color-primary);
+    background: linear-gradient(135deg, rgba(56, 38, 142, 0.96) 0%, rgba(35, 17, 124, 0.98) 58%, rgba(249, 121, 40, 0.96) 100%);
     box-shadow: 0 18px 44px rgba(56, 38, 142, 0.22);
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -150%;
+      width: 50%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+      transform: skewX(-20deg);
+      animation: shimmerLight 4.5s infinite linear;
+    }
   }
   
   .hero-card span,
@@ -793,19 +905,21 @@
   }
   
   .hero-card span {
-    opacity: 0.84;
-    font-size: 12px;
+    opacity: 0.9;
+    font-size: 11px;
     font-weight: 900;
-    color: rgba(255, 255, 255, 0.94);
+    color: #ffda6a;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
   
   .hero-card h1 {
     margin-top: 6px;
-    font-size: 26px;
-    line-height: 1.02;
+    font-size: 24px;
+    line-height: 1.08;
     font-weight: 950;
     color: #FBFBFC;
-    text-shadow: 0 2px 8px rgba(18, 8, 56, 0.32);
+    text-shadow: 0 2px 8px rgba(18, 8, 56, 0.24);
   }
   
   .hero-card p {
@@ -813,26 +927,35 @@
     opacity: 0.88;
     font-size: 13px;
     line-height: 1.35;
-    color: rgba(255, 255, 255, 0.94);
+    color: rgba(255, 255, 255, 0.9);
   }
   
   .hero-card a {
     display: inline-flex;
-    margin-top: 12px;
-    padding: 10px 14px;
-    border-radius: 14px;
-    color: var(--fd-color-primary);
-    background: #fff;
+    margin-top: 14px;
+    padding: 8px 16px;
+    border-radius: 12px;
+    color: #fff;
+    background: var(--fd-color-primary);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 20px rgba(18, 8, 56, 0.15);
     font-size: 12px;
-    font-weight: 950;
+    font-weight: 900;
+    transition: all 0.2s ease;
+
+    &:active {
+      transform: scale(0.95);
+    }
   }
   
   .hero-card img {
     width: 112px;
     height: 112px;
-    border-radius: 28px;
+    border-radius: 24px;
     object-fit: cover;
     background: rgba(255, 255, 255, 0.2);
+    border: 3px solid rgba(255, 255, 255, 0.35);
+    box-shadow: 0 8px 24px rgba(18, 8, 56, 0.16);
   }
   
   .category-icons {
@@ -846,21 +969,33 @@
     display: grid;
     justify-items: center;
     gap: 7px;
-    padding: 12px 8px;
-    border-radius: 20px;
+    padding: 14px 10px;
+    border-radius: 18px;
     background: #fff;
-    box-shadow: 0 12px 30px rgba(33, 22, 82, 0.07);
+    border: 1px solid rgba(56, 38, 142, 0.04);
+    box-shadow: 0 10px 24px rgba(33, 22, 82, 0.05);
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+    &:active {
+      transform: scale(0.93);
+      box-shadow: 0 4px 12px rgba(33, 22, 82, 0.02);
+    }
   }
   
   .category-icons span {
-    width: 42px;
-    height: 42px;
+    width: 48px;
+    height: 48px;
     display: grid;
     place-items: center;
-    border-radius: 16px;
+    border-radius: 14px;
     color: var(--fd-color-primary);
     background: #f1ecff;
-    font-size: 23px;
+    font-size: 24px;
+    transition: transform 0.2s ease;
+  }
+
+  .category-icons a:hover span {
+    transform: scale(1.08) rotate(2deg);
   }
   
   .category-icons b {
@@ -870,6 +1005,7 @@
     text-align: center;
     text-overflow: ellipsis;
     white-space: nowrap;
+    font-weight: 800;
   }
   
   .promo-row,
@@ -894,12 +1030,18 @@
     display: grid;
     gap: 5px;
     justify-items: start;
-    padding: 14px;
-    border-radius: 22px;
+    padding: 16px;
+    border-radius: 18px;
     color: #17122e;
     background: #fff;
-    box-shadow: 0 12px 30px rgba(33, 22, 82, 0.07);
+    border: 1px solid rgba(56, 38, 142, 0.04);
+    box-shadow: 0 10px 24px rgba(33, 22, 82, 0.05);
     text-align: left;
+    transition: all 0.2s ease-in-out;
+
+    &:active {
+      transform: scale(0.95);
+    }
   }
   
   .promo-card span {
@@ -907,9 +1049,10 @@
     height: 36px;
     display: grid;
     place-items: center;
-    border-radius: 14px;
+    border-radius: 12px;
     color: var(--fd-color-orange);
     background: var(--fd-color-warning-soft);
+    border: 1px solid var(--fd-color-warning-border);
     border: 1px solid var(--fd-color-warning-border);
   }
   

@@ -32,7 +32,11 @@
         }
         <label class="mobile-sort-control" aria-label="Sort products">
           <span class="material-symbols-rounded">sort</span>
-          <select class="fd-input" [(ngModel)]="sortBy">
+          <select
+            class="fd-input"
+            [ngModel]="sortBy()"
+            (ngModelChange)="sortBy.set($event)"
+          >
             <option>Popularity</option>
             <option>Price Low to High</option>
             <option>Rating</option>

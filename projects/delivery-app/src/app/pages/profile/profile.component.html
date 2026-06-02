@@ -1,5 +1,5 @@
-<div class="page">
-  <div class="page-head">
+<div class="page delivery-mobile-page profile-page">
+  <div class="page-head delivery-page-head">
     <h1>My Profile</h1>
     <p>Manage your delivery partner account</p>
   </div>
@@ -10,7 +10,7 @@
     </div>
   } @else {
     <!-- Profile Card -->
-    <div class="profile-hero">
+    <section class="profile-hero delivery-profile-hero">
       <div class="avatar-large">{{ initials() }}</div>
       <div class="hero-info">
         <h2>{{ profile.first_name }} {{ profile.last_name }}</h2>
@@ -27,10 +27,36 @@
           {{ profile.is_verified ? "Verified" : "Pending Verification" }}
         </span>
       </div>
-    </div>
+    </section>
 
-    <!-- Form Card -->
-    <div class="form-card">
+    <section class="profile-shortcuts delivery-settings-list" aria-label="Delivery partner settings">
+      <a routerLink="/earnings" class="settings-row">
+        <span class="material-icons-outlined">payments</span>
+        <div>
+          <b>Earnings and payouts</b>
+          <small>View settlement status and trip income</small>
+        </div>
+        <span class="material-icons-outlined">chevron_right</span>
+      </a>
+      <a routerLink="/history" class="settings-row">
+        <span class="material-icons-outlined">history</span>
+        <div>
+          <b>Delivery history</b>
+          <small>Completed and cancelled trips</small>
+        </div>
+        <span class="material-icons-outlined">chevron_right</span>
+      </a>
+      <button type="button" class="settings-row danger" (click)="logout()">
+        <span class="material-icons-outlined">logout</span>
+        <div>
+          <b>Sign out</b>
+          <small>End this delivery partner session</small>
+        </div>
+        <span class="material-icons-outlined">chevron_right</span>
+      </button>
+    </section>
+
+    <section class="form-card delivery-form-card">
       <div class="form-section-title">
         <span class="material-icons-outlined">person</span>
         Account Details
@@ -134,10 +160,9 @@
           Save Changes
         }
       </button>
-    </div>
+    </section>
 
-    <!-- Base Location Card -->
-    <div class="form-card location-card">
+    <section class="form-card location-card delivery-form-card">
       <div class="form-section-title">
         <span class="material-icons-outlined">location_on</span>
         Base Location
@@ -194,6 +219,6 @@
           }
         </div>
       }
-    </div>
+    </section>
   }
 </div>

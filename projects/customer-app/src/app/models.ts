@@ -5,7 +5,7 @@ import type {
   Order as ApiOrder,
   Product as ApiProduct,
   Vendor as ApiVendor,
-} from '@shared/public-api';
+} from '@shared/lib/models';
 
 export type BadgeTone = 'green' | 'red' | 'purple' | 'orange' | 'blue';
 

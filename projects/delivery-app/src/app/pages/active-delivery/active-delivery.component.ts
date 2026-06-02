@@ -76,6 +76,7 @@ export class ActiveDeliveryComponent
   confirmPhoto = signal<File | null>(null);
   confirmError = signal('');
   confirming = signal(false);
+  deliverySuccess = signal(false);
 
   paymentQR = signal<PaymentQR | null>(null);
   loadingQR = signal(false);
@@ -551,9 +552,13 @@ export class ActiveDeliveryComponent
     this.api.confirmDelivery(order.id, otp, this.confirmPhoto()!).subscribe({
       next: () => {
         this.confirming.set(false);
-        this.closeConfirmModal();
-        this.alerts.success(`Delivery completed for order #${order.order_number}.`);
-        this.load(true);
+        this.deliverySuccess.set(true);
+        setTimeout(() => {
+          this.deliverySuccess.set(false);
+          this.closeConfirmModal();
+          this.alerts.success(`Delivery completed for order #${order.order_number}.`);
+          this.load(true);
+        }, 2200);
       },
       error: (err) => {
         this.confirming.set(false);

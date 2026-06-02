@@ -368,33 +368,49 @@
 
   .profile-hero,
   .preview-grid a,
-  .profile-link,
-  .activity-card {
-    border-radius: 22px;
+  .profile-link {
+    border-radius: 24px;
     background: #fff;
-    box-shadow: 0 12px 30px rgba(33, 22, 82, 0.07);
+    box-shadow: 0 8px 24px rgba(33, 22, 82, 0.04);
+    border: 1px solid rgba(56, 38, 142, 0.05);
   }
   
   .profile-hero {
     display: grid;
-    grid-template-columns: 68px minmax(0, 1fr) auto;
-    gap: 13px;
+    grid-template-columns: 64px minmax(0, 1fr);
+    gap: 14px;
     align-items: center;
-    padding: 16px;
+    padding: 20px;
     color: #fff;
-    background: linear-gradient(135deg, var(--fd-color-primary), var(--fd-color-primary-hover));
+    background: linear-gradient(135deg, var(--fd-color-primary) 0%, var(--fd-color-primary-hover) 100%);
+    box-shadow: 0 16px 36px rgba(56, 38, 142, 0.16);
+    position: relative;
+    overflow: hidden;
+    
+    &::after {
+      content: "";
+      position: absolute;
+      right: -20px;
+      bottom: -20px;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.06);
+    }
   }
   
   .avatar {
-    width: 68px;
-    height: 68px;
+    width: 64px;
+    height: 64px;
     display: grid;
     place-items: center;
-    border-radius: 26px;
+    border-radius: 50%;
     color: var(--fd-color-primary);
     background: #fff;
-    font-size: 28px;
+    font-size: 26px;
     font-weight: 950;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    border: 3px solid rgba(255, 255, 255, 0.2);
   }
   
   h1,
@@ -404,31 +420,46 @@
   
   .profile-hero h1 {
     font-size: 22px;
-  }
-
-  .profile-hero h1,
-  .profile-hero p,
-  .profile-hero small {
+    font-weight: 950;
     color: #fff;
   }
-  
-  .profile-hero p,
-  .profile-hero small {
-    opacity: 0.86;
+
+  .profile-hero p {
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 13px;
+    margin-top: 4px;
+    font-weight: 700;
   }
 
+  .profile-hero small {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 800;
+  }
+  
   .edit-profile-btn {
-    min-height: 36px;
-    padding: 0 12px;
-    border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.24);
+    grid-column: 1 / -1;
+    margin-top: 10px;
+    min-height: 38px;
+    padding: 0 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
     background: rgba(255, 255, 255, 0.16);
     color: #fff;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 900;
+    transition: background-color 0.2s;
+    z-index: 1;
+    
+    &:active {
+      background: rgba(255, 255, 255, 0.28);
+    }
   }
   
   .preview-grid {
@@ -439,51 +470,71 @@
   
   .preview-grid a {
     display: grid;
-    gap: 7px;
-    padding: 14px;
+    gap: 6px;
+    padding: 16px;
   }
   
-  .preview-grid span,
-  .profile-link > span:first-child {
+  .preview-grid span {
+    font-size: 24px;
     color: var(--fd-color-primary);
+    background: var(--fd-color-primary-soft);
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(56, 38, 142, 0.05);
   }
   
-  .preview-grid small,
-  .profile-link small,
-  .activity-card small,
-  .activity-card p {
+  .preview-grid small {
     color: #77708d;
     font-size: 12px;
+    font-weight: 800;
+  }
+  
+  .preview-grid b {
+    font-size: 18px;
+    color: #12095f;
+    font-weight: 950;
   }
   
   .profile-link {
     display: grid;
-    grid-template-columns: 42px minmax(0, 1fr) 22px;
-    gap: 10px;
+    grid-template-columns: 40px minmax(0, 1fr) 20px;
+    gap: 12px;
     align-items: center;
-    padding: 13px;
-  }
-  
-  .profile-link > span:first-child {
-    width: 42px;
-    height: 42px;
-    display: grid;
-    place-items: center;
-    border-radius: 16px;
-    background: #f1ecff;
-  }
-  
-  .profile-link b,
-  .profile-link small {
-    display: block;
-  }
-
-  .profile-link-btn {
-    width: 100%;
-    border: 0;
-    text-align: left;
-    background: #fff;
-    cursor: pointer;
+    padding: 14px;
+    transition: transform 0.15s ease;
+    
+    &:active {
+      transform: scale(0.98);
+    }
+    
+    > span:first-child {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      background: #f1ecff;
+      color: var(--fd-color-primary);
+      font-size: 20px;
+    }
+    
+    b {
+      color: #12095f;
+      font-size: 14px;
+      font-weight: 900;
+    }
+    
+    small {
+      color: #77708d;
+      font-size: 12px;
+    }
+    
+    i {
+      color: #9c97b0;
+    }
   }
   
   .activity-card {
@@ -528,6 +579,13 @@
     border-radius: 16px;
     color: #e94560;
     background: #fff0f3;
+    border: 1px solid rgba(233, 69, 96, 0.1);
     font-weight: 950;
+    font-size: 14px;
+    transition: transform 0.2s ease;
+    
+    &:active {
+      transform: scale(0.96);
+    }
   }
 }

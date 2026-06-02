@@ -16,6 +16,25 @@
           }}</a>
         </section>
       } @else {
+        <section class="store-context fd-card">
+          <div>
+            <small>Ordering from</small>
+            <b>{{ cartStoreName() }}</b>
+            <p>{{ cartStoreStatus() }}</p>
+          </div>
+          @if (hasMixedStoreItems()) {
+            <span class="store-warning">
+              <span class="material-symbols-rounded">warning</span>
+              Cart contains items from multiple stores.
+            </span>
+          } @else {
+            <span class="store-note">
+              <span class="material-symbols-rounded">verified</span>
+              Store-specific cart confirmed
+            </span>
+          }
+        </section>
+
         <section class="cart-table fd-card">
           <div class="table-head">
             <span>Item</span><span>Price</span><span>Quantity</span
@@ -154,6 +173,10 @@
           <p class="total">
             <span>To Pay</span><b>{{ state.total() | appCurrency }}</b>
           </p>
+          <p class="server-note">
+            <span class="material-symbols-rounded">sync</span>
+            Final stock, price, and coupon checks are revalidated at checkout.
+          </p>
           <a routerLink="/checkout" class="fd-btn primary"
             >Proceed to Checkout</a
           >
@@ -181,6 +204,12 @@
   </header>
 
   @if (state.itemCount()) {
+    <section class="store-context mobile">
+      <small>Ordering from</small>
+      <b>{{ cartStoreName() }}</b>
+      <p>{{ cartStoreStatus() }}</p>
+    </section>
+
     @if (state.discount()) {
       <section class="savings-banner">
         <span class="material-symbols-rounded">savings</span>
@@ -224,6 +253,54 @@
       <button type="button" (click)="applyCoupon(couponCode.value)">Apply</button>
     </section>
 
+    <section class="mobile-order-details">
+      <div class="mobile-section-head">
+        <h2>Order details</h2>
+        <span>{{ state.itemCount() }} items</span>
+      </div>
+      <p>
+        <span>MRP total</span>
+        <b>{{ state.mrpTotal() | appCurrency }}</b>
+      </p>
+      <p>
+        <span>Item total</span>
+        <b>{{ state.subtotal() | appCurrency }}</b>
+      </p>
+      <p>
+        <span>Total savings</span>
+        <b class="green">-{{ state.discount() | appCurrency }}</b>
+      </p>
+      @if (state.coupon()) {
+        <p>
+          <span>{{ state.coupon() }} coupon</span>
+          <b class="green">-{{ state.couponDiscount() | appCurrency }}</b>
+        </p>
+      }
+      <p>
+        <span>Delivery fee</span>
+        <b>{{ state.deliveryFeeLabel() }}</b>
+      </p>
+      <p>
+        <span>Handling fee</span>
+        <b>{{ state.handlingFee() | appCurrency }}</b>
+      </p>
+      <p class="total">
+        <span>To pay</span>
+        <b>{{ state.total() | appCurrency }}</b>
+      </p>
+      <small>
+        <span class="material-symbols-rounded">verified_user</span>
+        Final stock, price, and coupon checks are revalidated at checkout.
+      </small>
+    </section>
+
+    <section class="mobile-checkout-card">
+      <a routerLink="/checkout" class="mobile-cta">
+        Checkout - {{ state.total() | appCurrency }}
+        <small>{{ state.itemCount() }} {{ state.itemCount() === 1 ? 'item' : 'items' }}</small>
+      </a>
+    </section>
+
     <section class="mobile-section">
       <div class="mobile-section-head"><h2>Add a little more</h2></div>
       <div class="mobile-grid-2">
@@ -233,11 +310,6 @@
       </div>
     </section>
 
-    <section class="mobile-sticky-cta">
-      <a routerLink="/checkout" class="mobile-cta">
-        Checkout - {{ state.total() | appCurrency }}
-      </a>
-    </section>
   } @else {
     <section class="empty-cart">
       <span class="material-symbols-rounded">shopping_bag</span>

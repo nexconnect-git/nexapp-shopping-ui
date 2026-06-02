@@ -1,7 +1,7 @@
 import { Component, computed, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { MapLocation, MapPickerComponent } from '@shared/public-api';
+import { MapPickerComponent, type MapLocation } from '@shared/lib/components/map-picker/map-picker.component';
 import { Address } from '../../models';
 import { AppStateService } from '../../services/app-state.service';
 import { MobileBottomSheetComponent } from '../../mobile-ui/mobile-bottom-sheet/mobile-bottom-sheet.component';

@@ -1,5 +1,6 @@
 import { Component, signal } from '@angular/core';
-import { ApiService, AppCurrencyPipe } from '@shared/public-api';
+import { ApiService } from '@shared/lib/services/api.service';
+import { AppCurrencyPipe } from '@shared/lib/pipes/currency.pipe';
 import { AppStateService } from '../../services/app-state.service';
 import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
 

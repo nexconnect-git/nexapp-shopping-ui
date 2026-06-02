@@ -38,15 +38,11 @@ import {
   validateCode,
 } from '@nexconnect/customer-validation';
 import { map, Observable, throwError } from 'rxjs';
-import {
-  Address as ApiAddress,
-  Cart as ApiCart,
-  CartItem as ApiCartItem,
-  ApiService,
-  CurrencyService,
-  LocationService,
-  AuthService as SharedAuthService,
-} from '@shared/public-api';
+import { type Address as ApiAddress, type Cart as ApiCart, type CartItem as ApiCartItem } from '@shared/lib/models';
+import { ApiService } from '@shared/lib/services/api.service';
+import { CurrencyService } from '@shared/lib/services/currency.service';
+import { LocationService } from '@shared/lib/services/location.service';
+import { AuthService as SharedAuthService } from '@shared/lib/services/auth.service';
 import { Address, CartItem, Order, PaymentMethod, Product } from '../models';
 import { CustomerAccountApiService } from './customer-account-api.service';
 import { CustomerCartApiService } from './customer-cart-api.service';
@@ -294,28 +290,17 @@ export class AppStateService {
         })
         .then((confirmed) => {
           if (!confirmed) return;
-          this.cartApi.clearCart().subscribe({
+          const productId = product.apiId || product.id;
+          this.cartApi.replaceCart(productId, quantity).subscribe({
             next: () => {
-              const productId = product.apiId || product.id;
-              this.cartApi.addToCart(productId, quantity).subscribe({
-                next: () => {
-                  this.lastAddedProductId.set(product.id);
-                  this.loadCart();
-                  if (this.shouldAutoOpenMiniCart()) this.openMiniCart();
-                  this.showToast(`${product.name} added to cart`);
-                },
-                error: (retryError) =>
-                  this.showToast(
-                    this.explainApiError(
-                      retryError,
-                      'Could not add item to cart',
-                    ),
-                  ),
-              });
+              this.lastAddedProductId.set(product.id);
+              this.loadCart();
+              if (this.shouldAutoOpenMiniCart()) this.openMiniCart();
+              this.showToast(`${product.name} added to cart`);
             },
-            error: (clearError) =>
+            error: (replaceError) =>
               this.showToast(
-                this.explainApiError(clearError, 'Could not clear cart'),
+                this.explainApiError(replaceError, 'Could not replace cart'),
               ),
           });
         });

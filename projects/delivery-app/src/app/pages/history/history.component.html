@@ -1,7 +1,28 @@
-<div class="page">
-  <div class="page-head">
+<div class="page delivery-mobile-page history-page">
+  <div class="page-head delivery-page-head">
     <h1>Delivery History</h1>
     <p>All your past deliveries</p>
+  </div>
+
+  <div class="delivery-segmented-tabs history-filter-tabs" aria-label="Delivery history filters">
+    <button
+      type="button"
+      class="tab-btn"
+      [class.active]="activeFilter() === 'delivered'"
+      (click)="activeFilter.set('delivered')"
+    >
+      <span class="material-icons-outlined">done_all</span>
+      Completed
+    </button>
+    <button
+      type="button"
+      class="tab-btn"
+      [class.active]="activeFilter() === 'cancelled'"
+      (click)="activeFilter.set('cancelled')"
+    >
+      <span class="material-icons-outlined">cancel</span>
+      Cancelled
+    </button>
   </div>
 
   @if (loading()) {
@@ -15,10 +36,9 @@
       <p>Your completed and cancelled deliveries will appear here</p>
     </div>
   } @else {
-    <div class="history-list">
-      @for (order of orders(); track order.id) {
-        <div class="history-card">
-          <!-- Status Icon -->
+    <div class="history-list delivery-card-list">
+      @for (order of filteredOrders(); track order.id) {
+        <article class="history-card delivery-history-card">
           <div
             class="status-icon"
             [class.delivered]="order.status === 'delivered'"
@@ -31,7 +51,6 @@
             }
           </div>
 
-          <!-- Order Info -->
           <div class="order-info">
             <div class="order-top-row">
               <span class="order-num">#{{ order.order_number }}</span>
@@ -44,8 +63,10 @@
                 >store</span
               >
               {{ order.vendor_name }}
+            </p>
+            <p class="route-text drop-route">
               <span class="material-icons-outlined" style="font-size: 13px"
-                >arrow_forward</span
+                >location_on</span
               >
               {{ order.delivery_address.city }}
             </p>
@@ -54,7 +75,6 @@
             </p>
           </div>
 
-          <!-- Earnings -->
           <div class="earn-col">
             <span
               class="earn-amount"
@@ -65,6 +85,12 @@
             </span>
             <span class="earn-label">fee</span>
           </div>
+        </article>
+      } @empty {
+        <div class="empty-state delivery-empty-card compact">
+          <span class="material-icons-outlined">inbox</span>
+          <h3>No {{ activeFilter() | titlecase }} deliveries</h3>
+          <p>Matching deliveries will appear here after your trips are updated.</p>
         </div>
       }
     </div>

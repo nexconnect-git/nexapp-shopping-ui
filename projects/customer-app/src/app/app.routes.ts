@@ -1,12 +1,12 @@
 import { type Routes } from '@angular/router';
-import { pageFeatureGuard } from '@shared/public-api';
+import { pageFeatureGuard } from '@shared/lib/guards/page-feature.guard';
 import { customerAuthGuard } from './services/customer-auth.guard';
 
 export const routes: Routes = [
   {
     path: 'feature-unavailable',
     loadComponent: () =>
-      import('@shared/public-api').then(
+      import('@shared/lib/components/page-feature-unavailable/page-feature-unavailable.component').then(
         (m) => m.PageFeatureUnavailableComponent,
       ),
   },
@@ -24,6 +24,14 @@ export const routes: Routes = [
     canActivate: [pageFeatureGuard('customer-app', 'customer-home')],
   },
   {
+    path: 'categories',
+    loadComponent: () =>
+      import('./pages/categories/categories.component').then(
+        (m) => m.CategoriesComponent,
+      ),
+    canActivate: [pageFeatureGuard('customer-app', 'customer-categories')],
+  },
+  {
     path: 'stores',
     loadComponent: () =>
       import('./pages/stores/stores.component').then((m) => m.StoresComponent),
@@ -32,10 +40,10 @@ export const routes: Routes = [
   {
     path: 'category/:id',
     loadComponent: () =>
-      import('./pages/category-redirect/category-redirect.component').then(
-        (m) => m.CategoryRedirectComponent,
+      import('./pages/category/category.component').then(
+        (m) => m.CategoryComponent,
       ),
-    canActivate: [pageFeatureGuard('customer-app', 'customer-stores')],
+    canActivate: [pageFeatureGuard('customer-app', 'customer-categories')],
   },
   {
     path: 'store/:id',

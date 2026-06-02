@@ -4,7 +4,7 @@ import {
   createCustomerApiClient,
   type CustomerApiClientOptions,
 } from '@nexconnect/customer-api-client';
-import { API_BASE_URL } from '@shared/public-api';
+import { API_BASE_URL } from '@shared/lib/tokens/api-url.token';
 import { AngularHttpAdapter } from './adapters/angular-http.adapter';
 import { BrowserTokenStorageAdapter } from './adapters/browser-token-storage.adapter';
 

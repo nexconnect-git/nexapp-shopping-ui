@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { AppCurrencyPipe } from '@shared/public-api';
+import { AppCurrencyPipe } from '@shared/lib/pipes/currency.pipe';
 import { Product } from '../../models';
 import { AppStateService } from '../../services/app-state.service';
 
@@ -17,6 +17,23 @@ export class ProductCardComponent {
   readonly placeholderImage = '/assets/placeholders/product.svg';
 
   constructor(public state: AppStateService) {}
+
+  stockBadge(): { label: string; tone: 'success' | 'warning' | 'danger' } | null {
+    const raw = (this.product?.raw as any) || {};
+    const stock = Number(raw?.stock ?? this.product?.raw?.stock ?? 0);
+    const lowStockThreshold = Number(raw?.low_stock_threshold ?? 5);
+    const available = raw?.is_available !== false && raw?.in_stock !== false;
+    if (!available || (Number.isFinite(stock) && stock <= 0)) {
+      return { label: 'Out of stock', tone: 'danger' };
+    }
+    if (Number.isFinite(stock) && stock > 0 && stock <= lowStockThreshold) {
+      return { label: `Only ${stock} left`, tone: 'warning' };
+    }
+    if (Number.isFinite(stock) && stock > 0) {
+      return { label: 'In stock', tone: 'success' };
+    }
+    return null;
+  }
 
   quantity(): number {
     return (

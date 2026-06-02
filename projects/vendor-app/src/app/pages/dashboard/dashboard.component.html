@@ -65,6 +65,41 @@
       </a>
     </section>
 
+    <section class="direct-store-strip" aria-label="Direct-store operating flow">
+      <a routerLink="/products" class="direct-store-card">
+        <span class="material-icons-outlined">hub</span>
+        <div>
+          <small>Parent catalog</small>
+          <strong>Use approved Nextou SKUs</strong>
+          <p>Map store listings to shared catalog items before selling.</p>
+        </div>
+      </a>
+      <a routerLink="/inventory" class="direct-store-card">
+        <span class="material-icons-outlined">inventory_2</span>
+        <div>
+          <small>Live stock</small>
+          <strong>Update quantities each shift</strong>
+          <p>Customers only see products that can be fulfilled now.</p>
+        </div>
+      </a>
+      <a routerLink="/live-orders" class="direct-store-card">
+        <span class="material-icons-outlined">swap_horiz</span>
+        <div>
+          <small>Handoff</small>
+          <strong>Prepare, OTP, dispatch</strong>
+          <p>Move orders from acceptance to delivery search without guesswork.</p>
+        </div>
+      </a>
+      <a routerLink="/payments" class="direct-store-card">
+        <span class="material-icons-outlined">account_balance_wallet</span>
+        <div>
+          <small>Settlement</small>
+          <strong>Track payout readiness</strong>
+          <p>Review COD, UPI, commissions, and payout status in one place.</p>
+        </div>
+      </a>
+    </section>
+
     @if (ops()) {
       <div class="section-heading">
         <span>Today</span>

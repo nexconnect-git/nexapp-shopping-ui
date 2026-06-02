@@ -1,11 +1,9 @@
 import { Component, OnDestroy, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import {
-  ApiService,
-  openAuthenticatedWebSocket,
-  AuthService as SharedAuthService,
-} from '@shared/public-api';
+import { ApiService } from '@shared/lib/services/api.service';
+import { openAuthenticatedWebSocket } from '@shared/lib/services/websocket-auth';
+import { AuthService as SharedAuthService } from '@shared/lib/services/auth.service';
 import { AppStateService } from '../../services/app-state.service';
 import { CustomerContentConfigService } from '../../services/customer-content-config.service';
 import { displayOrderId } from '../../shared/display-order-id.pipe';

@@ -1,9 +1,7 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { mapCustomerError } from '@nexconnect/customer-errors';
-import {
-  ApiService,
-  AuthService as SharedAuthService,
-} from '@shared/public-api';
+import { ApiService } from '@shared/lib/services/api.service';
+import { AuthService as SharedAuthService } from '@shared/lib/services/auth.service';
 import { type UserProfile } from '../models';
 
 @Injectable({ providedIn: 'root' })

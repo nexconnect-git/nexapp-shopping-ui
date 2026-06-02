@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import {
   AlertService,
   ApiService,
@@ -13,7 +14,7 @@ import {
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, DecimalPipe, MapPickerComponent],
+  imports: [CommonModule, FormsModule, DecimalPipe, MapPickerComponent, RouterLink],
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.scss'],
 })
@@ -95,6 +96,10 @@ export class ProfileComponent implements OnInit {
         this.alerts.error('Could not update base location.');
       },
     });
+  }
+
+  logout() {
+    this.auth.logout();
   }
 
   initials() {

@@ -1,36 +1,57 @@
 <div class="desktop-customer-view">
 <main class="fd-content home-content desktop-home">
   <fd-breadcrumbs [items]="[{ label: 'Instant Delivery' }]" />
+  @if (!hasLocation()) {
+    <section class="location-guard fd-card">
+      <div>
+        <h2>Select your location</h2>
+        <p>{{ content.messages().locationPrompt }}</p>
+      </div>
+      <button type="button" class="fd-btn primary" (click)="openLocationPicker()">
+        Set location
+      </button>
+    </section>
+  } @else if (noServiceableStores()) {
+    <section class="location-guard out-of-service fd-card">
+      <div>
+        <h2>Service not available here yet</h2>
+        <p>We could not find nearby serviceable stores for your selected location.</p>
+      </div>
+      <button type="button" class="fd-btn warning" (click)="openLocationPicker()">
+        Change location
+      </button>
+    </section>
+  }
   <section class="home-layout">
     <div class="main-area">
       <section
-        class="insta-hero animate-in"
+        class="insta-hero animate-in glass-panel gradient-primary hover-lift"
         [style.background]="heroBackground()"
       >
         <div class="hero-copy">
-          <div class="speed-line">
-            <span class="material-symbols-rounded">campaign</span>
+          <div class="speed-line bounce-tap">
+            <span class="material-symbols-rounded">bolt</span>
             {{ heroBadge() }}
           </div>
           <h1>{{ heroTitle() }}</h1>
           <p class="hero-subtitle">{{ heroSubtitle() }}</p>
           @if (heroStore(); as store) {
-            <div class="hero-offer">
-              <b>{{ store.name }}</b>
+            <div class="hero-offer glass-nav">
+              <b class="gradient-accent">{{ store.name }}</b>
               <span>{{ store.category }}</span>
             </div>
           }
           <a
             [routerLink]="routePath(heroCtaUrl())"
             [queryParams]="routeQuery(heroCtaUrl())"
-            class="shop-btn"
+            class="shop-btn bounce-tap"
             >{{ heroCtaLabel() }}
             <span class="material-symbols-rounded">arrow_forward</span></a
           >
         </div>
 
         <div class="hero-visual">
-          <img [src]="heroImage()" alt="Featured store" />
+          <img [src]="heroImage()" alt="Featured store" class="bounce-tap" />
           <div class="clock">
             <span class="material-symbols-rounded">schedule</span>
           </div>
@@ -103,15 +124,21 @@
       </section>
 
       <section class="mobile-vibe-strip" aria-label="Shopping highlights">
-        <a routerLink="/offers"
-          ><span>🎁</span><b>Today’s deals</b><small>Fresh offers</small></a
-        >
-        <a routerLink="/stores"
-          ><span>🏪</span><b>Nearby shops</b><small>Live catalog</small></a
-        >
-        <a routerLink="/search" [queryParams]="{ q: 'milk' }"
-          ><span>🥛</span><b>Daily basics</b><small>Quick basket</small></a
-        >
+        <a routerLink="/offers">
+          <span class="material-symbols-rounded">local_offer</span>
+          <b>Today's deals</b>
+          <small>Fresh offers</small>
+        </a>
+        <a routerLink="/stores">
+          <span class="material-symbols-rounded">storefront</span>
+          <b>Nearby shops</b>
+          <small>Live catalog</small>
+        </a>
+        <a routerLink="/search" [queryParams]="{ q: 'milk' }">
+          <span class="material-symbols-rounded">local_drink</span>
+          <b>Daily basics</b>
+          <small>Quick basket</small>
+        </a>
       </section>
 
       <div class="fd-section-title compact">
@@ -139,7 +166,7 @@
             }
           </div>
         } @else {
-          @for (store of catalog.stores().slice(0, 5); track store.id) {
+          @for (store of serviceableStores().slice(0, 5); track store.id) {
             <fd-store-card [store]="store" />
           }
         }
@@ -210,13 +237,69 @@
             }
           </div>
         } @else {
-          @for (product of catalog.products().slice(0, 6); track product.id) {
+          @for (product of homeProducts().slice(0, 6); track product.id) {
             <fd-product-card [product]="product" />
           }
         }
         <a routerLink="/search" class="row-next product-next"
           ><span class="material-symbols-rounded">chevron_right</span></a
         >
+      </section>
+
+      <section class="discovery-rails" aria-label="Product discovery">
+        <article class="product-rail">
+          <div class="fd-section-title compact">
+            <h2>Recently ordered</h2>
+            <a routerLink="/orders">Reorder</a>
+          </div>
+          <div class="compact-product-strip">
+            @for (product of recentlyOrderedProducts(); track product.id) {
+              <fd-product-card [product]="product" />
+            }
+          </div>
+        </article>
+
+        <article class="product-rail">
+          <div class="fd-section-title compact">
+            <h2>Trending near you</h2>
+            <a routerLink="/search" [queryParams]="{ sort: 'trending' }"
+              >See all</a
+            >
+          </div>
+          <div class="compact-product-strip">
+            @for (product of trendingProducts(); track product.id) {
+              <fd-product-card [product]="product" />
+            }
+          </div>
+        </article>
+
+        <article class="product-rail">
+          <div class="fd-section-title compact">
+            <h2>New arrivals</h2>
+            <a routerLink="/search" [queryParams]="{ sort: 'newest' }"
+              >See all</a
+            >
+          </div>
+          <div class="compact-product-strip">
+            @for (product of newArrivalProducts(); track product.id) {
+              <fd-product-card [product]="product" />
+            }
+          </div>
+        </article>
+
+        <article class="product-rail">
+          <div class="fd-section-title compact">
+            <h2>Bestsellers</h2>
+            <a routerLink="/search" [queryParams]="{ sort: 'bestseller' }"
+              >See all</a
+            >
+          </div>
+          <div class="compact-product-strip">
+            @for (product of bestSellerProducts(); track product.id) {
+              <fd-product-card [product]="product" />
+            }
+          </div>
+        </article>
       </section>
     </div>
   </section>
@@ -225,6 +308,27 @@
 
 <div class="mobile-customer-view">
 <main class="mobile-page home-page">
+  @if (!hasLocation()) {
+    <section class="location-guard mobile fd-card">
+      <div>
+        <h2>Select your location</h2>
+        <p>{{ content.messages().locationPrompt }}</p>
+      </div>
+      <button type="button" class="mobile-cta" (click)="openLocationPicker()">
+        Set location
+      </button>
+    </section>
+  } @else if (noServiceableStores()) {
+    <section class="location-guard mobile out-of-service fd-card">
+      <div>
+        <h2>Service not available here yet</h2>
+        <p>Try another address to discover nearby stores.</p>
+      </div>
+      <button type="button" class="mobile-cta secondary" (click)="openLocationPicker()">
+        Change location
+      </button>
+    </section>
+  }
   <section class="hero-card" [style.background]="heroBackground() || null">
     <div>
       <span>{{ heroBadge() }}</span>
@@ -278,7 +382,7 @@
       <a routerLink="/stores">See all</a>
     </div>
     <div class="store-scroller">
-      @for (store of catalog.featuredStores().slice(0, 8); track store.id) {
+      @for (store of serviceableStores().slice(0, 8); track store.id) {
         <fd-store-card [store]="store" />
       } @empty {
         @for (store of catalog.stores().slice(0, 8); track store.id) {
@@ -293,8 +397,8 @@
       <h2>Recommended</h2>
       <a routerLink="/search">Search more</a>
     </div>
-    <div class="mobile-list">
-      @for (product of catalog.topProducts().slice(0, 3); track product.id) {
+      <div class="mobile-list">
+      @for (product of homeProducts().slice(0, 3); track product.id) {
         <fd-mobile-product-row
           [image]="product.image"
           [name]="product.name"
@@ -307,7 +411,65 @@
       }
     </div>
     <div class="mobile-grid-2">
-      @for (product of catalog.topProducts().slice(3, 8); track product.id) {
+      @for (product of homeProducts().slice(3, 8); track product.id) {
+        <fd-product-card [product]="product" />
+      }
+    </div>
+  </section>
+
+  <section class="mobile-section">
+    <div class="mobile-section-head">
+      <h2>Recently ordered</h2>
+      <a routerLink="/orders">Reorder</a>
+    </div>
+    <div class="mobile-list">
+      @for (product of recentlyOrderedProducts().slice(0, 3); track product.id) {
+        <fd-mobile-product-row
+          [image]="product.image"
+          [name]="product.name"
+          [subtitle]="product.storeName || product.category || 'Quick reorder'"
+          [price]="product.price"
+          [mrp]="product.mrp"
+          (pressed)="openProduct(product.id)"
+          (add)="state.addToCart(product)"
+        />
+      }
+    </div>
+  </section>
+
+  <section class="mobile-section">
+    <div class="mobile-section-head">
+      <h2>Trending near you</h2>
+      <a routerLink="/search" [queryParams]="{ sort: 'trending' }">See all</a>
+    </div>
+    <div class="mobile-grid-2">
+      @for (product of trendingProducts().slice(0, 4); track product.id) {
+        <fd-product-card [product]="product" />
+      }
+    </div>
+  </section>
+
+  <section class="mobile-section">
+    <div class="mobile-section-head">
+      <h2>New arrivals</h2>
+      <a routerLink="/search" [queryParams]="{ sort: 'newest' }">See all</a>
+    </div>
+    <div class="mobile-grid-2">
+      @for (product of newArrivalProducts().slice(0, 4); track product.id) {
+        <fd-product-card [product]="product" />
+      }
+    </div>
+  </section>
+
+  <section class="mobile-section">
+    <div class="mobile-section-head">
+      <h2>Bestsellers</h2>
+      <a routerLink="/search" [queryParams]="{ sort: 'bestseller' }"
+        >See all</a
+      >
+    </div>
+    <div class="mobile-grid-2">
+      @for (product of bestSellerProducts().slice(0, 4); track product.id) {
         <fd-product-card [product]="product" />
       }
     </div>

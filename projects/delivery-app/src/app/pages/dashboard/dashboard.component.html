@@ -1,6 +1,5 @@
-<div class="dashboard fade-in">
-  <!-- Elegant Welcome Card -->
-  <div class="welcome-card card">
+<div class="dashboard delivery-mobile-page fade-in">
+  <section class="delivery-hero-card welcome-card card">
     <div class="welcome-left">
       <p class="welcome-greeting">
         Hello, {{ auth.user()?.first_name || auth.user()?.username }}
@@ -56,17 +55,23 @@
         >local_shipping</span
       >
     </div>
-  </div>
+  </section>
 
   @if (loading()) {
-    <div class="loading-state card">
+    <div class="delivery-loading-card loading-state card">
       <div class="spinner"></div>
       <p>Syncing latest deliveries...</p>
     </div>
   } @else if (stats()) {
-    <!-- Soft Metrics Grid -->
-    <div class="stats-grid">
-      <div class="stat-card">
+    <section class="delivery-section">
+      <div class="section-title-row">
+        <span class="pulse-dot"></span>
+        <h2 class="section-title">Today at a glance</h2>
+      </div>
+    </section>
+
+    <div class="stats-grid delivery-metric-grid">
+      <div class="stat-card delivery-metric-card">
         <div class="stat-icon-wrap bg-primary-soft text-primary">
           <span class="material-icons-outlined">local_shipping</span>
         </div>
@@ -75,7 +80,7 @@
           <p class="stat-label">Total Deliveries</p>
         </div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card delivery-metric-card">
         <div class="stat-icon-wrap bg-success-soft text-success">
           <span class="material-icons-outlined">payments</span>
         </div>
@@ -84,7 +89,7 @@
           <p class="stat-label">Earnings</p>
         </div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card delivery-metric-card">
         <div class="stat-icon-wrap bg-warning-soft text-warning">
           <span class="material-icons-outlined">star</span>
         </div>
@@ -95,7 +100,7 @@
           <p class="stat-label">Avg. Rating</p>
         </div>
       </div>
-      <div class="stat-card highlight-card">
+      <div class="stat-card delivery-metric-card highlight-card">
         <div class="stat-icon-wrap bg-white text-primary">
           <span class="material-icons-outlined">delivery_dining</span>
         </div>
@@ -110,7 +115,7 @@
 
     <!-- Active Deliveries Section -->
     @if (stats()!.active_orders.length > 0) {
-      <div class="section-header">
+      <div class="section-header delivery-section">
         <div class="section-title-row">
           <span class="pulse-dot"></span>
           <h2 class="section-title">Active Orders</h2>
@@ -120,7 +125,7 @@
 
       <div class="active-orders-list">
         @for (order of stats()!.active_orders; track order.id) {
-          <a routerLink="/active" class="order-card card">
+          <a routerLink="/active" class="order-card delivery-route-card card">
             <div class="order-info">
               <span class="order-num">#{{ order.order_number }}</span>
               <div class="order-route">
@@ -151,10 +156,10 @@
     }
 
     <!-- Quick Actions (Soft grid) -->
-    <div class="section-header mt-4">
+    <div class="section-header delivery-section mt-4">
       <h2 class="section-title">Quick Actions</h2>
     </div>
-    <div class="quick-actions-grid">
+    <div class="quick-actions-grid delivery-action-grid">
       <a routerLink="/available" class="action-card primary">
         <div class="action-icon">
           <span class="material-icons-outlined">radar</span>
@@ -175,7 +180,7 @@
       </a>
     </div>
   } @else {
-    <div class="empty-state card text-center p-4">
+    <div class="delivery-empty-card empty-state card text-center p-4">
       <span class="material-icons-outlined text-muted" style="font-size: 48px"
         >signal_wifi_off</span
       >

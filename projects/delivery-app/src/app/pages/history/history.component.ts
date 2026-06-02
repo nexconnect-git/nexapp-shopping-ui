@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   AlertService,
@@ -19,6 +19,10 @@ export class HistoryComponent implements OnInit {
   private alerts = inject(AlertService);
   orders = signal<Order[]>([]);
   loading = signal(true);
+  activeFilter = signal<'delivered' | 'cancelled'>('delivered');
+  filteredOrders = computed(() =>
+    this.orders().filter((order) => order.status === this.activeFilter()),
+  );
 
   ngOnInit() {
     this.api.getDeliveryHistory({ status: ['delivered', 'cancelled'] }).subscribe({

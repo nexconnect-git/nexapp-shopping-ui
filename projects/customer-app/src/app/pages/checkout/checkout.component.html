@@ -15,6 +15,17 @@
 
         <section class="fd-card block">
           <h2>1. Delivery Address</h2>
+          @if (!hasAddresses()) {
+            <section class="no-payment">
+              <b>No delivery address found</b>
+              <small
+                >Add at least one complete address to place this order.</small
+              >
+              <button type="button" class="fd-btn primary" (click)="goAddresses()">
+                Add address
+              </button>
+            </section>
+          }
           <details class="mobile-address-dropdown">
             <summary>
               <span class="material-symbols-rounded">location_on</span>
@@ -285,6 +296,9 @@
               Place Order
             }
           </button>
+          @if (checkoutBlockingReason()) {
+            <small class="error">{{ checkoutBlockingReason() }}</small>
+          }
           <small>
             Delivery fee and final taxes are recalculated using your selected
             address and slot before order confirmation.
@@ -298,9 +312,6 @@
 <div class="mobile-customer-view">
   <main class="mobile-page checkout-page">
     <header class="checkout-head">
-      <a routerLink="/cart" aria-label="Back to cart">
-        <span class="material-symbols-rounded">arrow_back</span>
-      </a>
       <div>
         <small>Secure checkout</small>
         <h1>Place your order</h1>
@@ -347,7 +358,7 @@
           <button type="button" class="mobile-cta secondary" (click)="goAddresses()">
             Manage addresses
           </button>
-          <button type="button" class="mobile-cta" (click)="openMobileSection('slot')">
+          <button type="button" class="mobile-cta" (click)="runMobileStickyAction()">
             Continue
           </button>
         </div>
@@ -417,7 +428,12 @@
           <button type="button" class="mobile-cta secondary" (click)="openMobileSection('address')">
             Back
           </button>
-          <button type="button" class="mobile-cta" (click)="openMobileSection('payment')">
+          <button
+            type="button"
+            class="mobile-cta"
+            [disabled]="!activeStoreAvailability().isOpen || !!scheduleError()"
+            (click)="runMobileStickyAction()"
+          >
             Continue
           </button>
         </div>
@@ -473,7 +489,12 @@
           <button type="button" class="mobile-cta secondary" (click)="openMobileSection('slot')">
             Back
           </button>
-          <button type="button" class="mobile-cta" (click)="openMobileSection('review')">
+          <button
+            type="button"
+            class="mobile-cta"
+            [disabled]="!selectedPaymentId() || !hasPaymentMethods()"
+            (click)="runMobileStickyAction()"
+          >
             Continue
           </button>
         </div>
@@ -516,27 +537,16 @@
     </section>
 
     <section class="mobile-sticky-cta">
-      @if (mobileSection() !== 'review') {
-        <button
-          type="button"
-          class="mobile-cta"
-          (click)="openMobileSection('review')"
-        >
-          Review order
-        </button>
-      } @else {
-        <button
-          type="button"
-          class="mobile-cta"
-          [disabled]="!canPlaceOrder()"
-          (click)="placeOrder()"
-        >
-          @if (state.checkoutSubmitting()) {
-            Placing order...
-          } @else {
-            Place order - {{ state.total() | appCurrency }}
-          }
-        </button>
+      <button
+        type="button"
+        class="mobile-cta"
+        [disabled]="mobileStickyState().disabled"
+        (click)="runMobileStickyAction()"
+      >
+        {{ mobileStickyState().label }}
+      </button>
+      @if (mobileSection() === 'review' && checkoutBlockingReason()) {
+        <small>{{ checkoutBlockingReason() }}</small>
       }
     </section>
   </main>

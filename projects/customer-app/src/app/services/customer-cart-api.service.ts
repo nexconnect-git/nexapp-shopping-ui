@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { ApiService } from '@shared/public-api';
+import { ApiService } from '@shared/lib/services/api.service';
 import { CustomerApiClientService } from './customer-api-client.service';
 
 @Injectable({ providedIn: 'root' })
@@ -14,6 +14,12 @@ export class CustomerCartApiService {
   addToCart(productId: string, quantity: number) {
     return this.api.toObservable<any>(
       this.api.client.cart.addToCart(productId, quantity),
+    );
+  }
+
+  replaceCart(productId: string, quantity: number) {
+    return this.api.toObservable<any>(
+      this.api.client.cart.replaceCart(productId, quantity),
     );
   }
 

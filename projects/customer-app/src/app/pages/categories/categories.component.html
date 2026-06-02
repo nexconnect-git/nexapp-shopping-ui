@@ -1,0 +1,272 @@
+<div class="desktop-customer-view">
+  <main class="fd-content categories-content">
+    <fd-breadcrumbs [items]="[{ label: 'Categories' }]" />
+
+    <header class="categories-hero">
+      <div>
+        <small>Store-aware catalog</small>
+        <h1>Shop categories from nearby stores</h1>
+        <p>
+          Categories come from the Nextou catalog. Prices, stock, ETA, and
+          availability come from each store.
+        </p>
+      </div>
+      <a routerLink="/stores" class="fd-btn primary">
+        <span class="material-symbols-rounded">storefront</span>
+        Browse stores
+      </a>
+    </header>
+
+    <section class="category-layout">
+      <aside class="category-rail fd-card">
+        <button
+          type="button"
+          [class.active]="activeCategoryKey() === 'all'"
+          (click)="selectCategory('all')"
+        >
+          <span class="material-symbols-rounded">apps</span>
+          <b>All</b>
+        </button>
+        @for (category of categories(); track category.id) {
+          <button
+            type="button"
+            [class.active]="activeCategoryKey() === category.id || activeCategoryKey() === category.raw?.slug"
+            (click)="selectCategory(category.raw?.slug || category.id)"
+          >
+            <span class="material-symbols-rounded">{{
+              category.icon || iconFor(category.label)
+            }}</span>
+            <b>{{ category.label }}</b>
+          </button>
+        }
+      </aside>
+
+      <section class="category-results">
+        <div class="results-head">
+          <div>
+            <small>{{ serviceableStoreCount() }} serviceable stores</small>
+            <h2>{{ title() }}</h2>
+            <p>
+              {{ filteredCategoryProducts().length }} products from
+              {{ matchingStoreCount() }} matching stores.
+            </p>
+          </div>
+          @if (activeCategoryKey() !== 'all') {
+            <button
+              type="button"
+              class="fd-btn outline"
+              (click)="openCategory(activeCategoryKey())"
+            >
+              Open category
+            </button>
+          }
+        </div>
+
+        <div class="category-controls fd-card">
+          @if (subcategoryChips().length) {
+            <div class="subcategory-row" aria-label="Subcategories">
+              <button
+                type="button"
+                [class.active]="activeSubcategoryKey() === 'all'"
+                (click)="selectSubcategory('all')"
+              >
+                All
+              </button>
+              @for (chip of subcategoryChips(); track chip.key) {
+                <button
+                  type="button"
+                  [class.active]="activeSubcategoryKey() === chip.key"
+                  (click)="selectSubcategory(chip.key)"
+                >
+                  {{ chip.label }}
+                </button>
+              }
+            </div>
+          }
+          <div class="filter-sort-row">
+            <div class="availability-row" aria-label="Availability">
+              @for (filter of availabilityOptions; track filter) {
+                <button
+                  type="button"
+                  [class.active]="availabilityFilter() === filter"
+                  (click)="setAvailabilityFilter(filter)"
+                >
+                  {{ filter }}
+                </button>
+              }
+            </div>
+            <label class="sort-control">
+              <span class="material-symbols-rounded">sort</span>
+              <select
+                [value]="sortBy()"
+                (change)="setSort($any($event.target).value)"
+                aria-label="Sort category products"
+              >
+                @for (option of sortOptions; track option) {
+                  <option [value]="option">{{ option }}</option>
+                }
+              </select>
+            </label>
+          </div>
+        </div>
+
+        @if (catalog.productsLoading()) {
+          <section
+            class="nc-skeleton-center"
+            role="status"
+            aria-live="polite"
+            aria-label="Loading category products"
+          >
+            <div class="nc-skeleton-list grid">
+              @for (item of [1, 2, 3, 4, 5, 6]; track item) {
+                <div class="nc-skeleton-card">
+                  <span class="nc-skeleton-media"></span>
+                  <span class="nc-skeleton-copy">
+                    <span class="nc-skeleton-line medium"></span>
+                    <span class="nc-skeleton-line long"></span>
+                    <span class="nc-skeleton-line short"></span>
+                  </span>
+                </div>
+              }
+            </div>
+          </section>
+        } @else {
+          <div class="product-grid">
+            @for (product of filteredCategoryProducts(); track product.id) {
+              <fd-product-card [product]="product" />
+            } @empty {
+              <section class="empty-panel">
+                <span class="material-symbols-rounded">inventory_2</span>
+                <b>No products available</b>
+                <small>Try another category or change your delivery location.</small>
+              </section>
+            }
+          </div>
+        }
+      </section>
+    </section>
+  </main>
+</div>
+
+<div class="mobile-customer-view">
+  <main class="mobile-page categories-page">
+    <header class="page-head">
+      <button type="button" aria-label="Back" (click)="goBack()">
+        <span class="material-symbols-rounded">arrow_back</span>
+      </button>
+      <div>
+        <small>{{ serviceableStoreCount() }} nearby stores</small>
+        <h1>Categories</h1>
+      </div>
+      <a routerLink="/search" aria-label="Search">
+        <span class="material-symbols-rounded">search</span>
+      </a>
+    </header>
+
+    <section class="mobile-category-grid">
+      <button
+        type="button"
+        [class.active]="activeCategoryKey() === 'all'"
+        (click)="selectCategory('all')"
+      >
+        <span class="material-symbols-rounded">apps</span>
+        <b>All</b>
+      </button>
+      @for (category of categories(); track category.id) {
+        <button
+          type="button"
+          [class.active]="activeCategoryKey() === category.id || activeCategoryKey() === category.raw?.slug"
+          (click)="selectCategory(category.raw?.slug || category.id)"
+        >
+          <span class="material-symbols-rounded">{{
+            category.icon || iconFor(category.label)
+          }}</span>
+          <b>{{ category.label }}</b>
+        </button>
+      }
+    </section>
+
+    <section class="category-summary">
+      <span class="material-symbols-rounded">{{
+        iconFor(title())
+      }}</span>
+      <div>
+        <b>{{ title() }}</b>
+        <small>
+          {{ filteredCategoryProducts().length }} products from
+          {{ matchingStoreCount() }} stores
+        </small>
+      </div>
+    </section>
+
+    <section class="mobile-category-controls">
+      @if (subcategoryChips().length) {
+        <div class="mobile-chip-row">
+          <button
+            type="button"
+            class="mobile-chip"
+            [class.active]="activeSubcategoryKey() === 'all'"
+            (click)="selectSubcategory('all')"
+          >
+            All
+          </button>
+          @for (chip of subcategoryChips(); track chip.key) {
+            <button
+              type="button"
+              class="mobile-chip"
+              [class.active]="activeSubcategoryKey() === chip.key"
+              (click)="selectSubcategory(chip.key)"
+            >
+              {{ chip.label }}
+            </button>
+          }
+        </div>
+      }
+      <div class="mobile-filter-row">
+        @for (filter of availabilityOptions; track filter) {
+          <button
+            type="button"
+            [class.active]="availabilityFilter() === filter"
+            (click)="setAvailabilityFilter(filter)"
+          >
+            {{ filter }}
+          </button>
+        }
+      </div>
+      <label class="mobile-sort-control">
+        <span class="material-symbols-rounded">sort</span>
+        <select
+          [value]="sortBy()"
+          (change)="setSort($any($event.target).value)"
+          aria-label="Sort category products"
+        >
+          @for (option of sortOptions; track option) {
+            <option [value]="option">{{ option }}</option>
+          }
+        </select>
+      </label>
+    </section>
+
+    <section class="mobile-section">
+      <div class="mobile-section-head">
+        <h2>Available nearby</h2>
+        @if (activeCategoryKey() !== 'all') {
+          <button type="button" (click)="openCategory(activeCategoryKey())">
+            View all
+          </button>
+        }
+      </div>
+      <div class="mobile-grid-2">
+        @for (product of filteredCategoryProducts().slice(0, 12); track product.id) {
+          <fd-product-card [product]="product" />
+        } @empty {
+          <section class="empty-panel">
+            <span class="material-symbols-rounded">inventory_2</span>
+            <b>No products found</b>
+            <small>Try another category or update your location.</small>
+          </section>
+        }
+      </div>
+    </section>
+  </main>
+</div>

@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import type { TokenStorage } from '@nexconnect/customer-api-client';
-import { AuthService as SharedAuthService } from '@shared/public-api';
+import { AuthService as SharedAuthService } from '@shared/lib/services/auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class BrowserTokenStorageAdapter implements TokenStorage {

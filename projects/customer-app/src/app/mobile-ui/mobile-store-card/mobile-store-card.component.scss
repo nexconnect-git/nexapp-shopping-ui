@@ -1,32 +1,31 @@
-﻿.mobile-store-card {
-  min-width: 176px;
+.mobile-store-card {
+  min-width: 0;
   display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
   overflow: hidden;
   border: 1px solid rgba(56, 38, 142, 0.1);
-  border-radius: 22px;
+  border-radius: 14px;
   background: #fff;
-  box-shadow: 0 12px 30px rgba(33, 22, 82, 0.07);
+  box-shadow: 0 8px 20px rgba(33, 22, 82, 0.05);
 }
 
 .mobile-store-card.compact {
-  grid-template-columns: 96px minmax(0, 1fr);
+  grid-template-columns: 88px minmax(0, 1fr);
 }
 
 img {
   width: 100%;
-  height: 112px;
-  object-fit: cover;
-}
-
-.compact img {
   height: 100%;
+  min-height: 96px;
+  object-fit: cover;
+  background: #f5f6fa;
 }
 
 .info {
   min-width: 0;
   display: grid;
-  gap: 4px;
-  padding: 11px;
+  gap: 3px;
+  padding: 9px;
 }
 
 b,
@@ -39,13 +38,13 @@ strong {
 
 b {
   color: #17122e;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 small,
 em {
   color: #77708d;
-  font-size: 12px;
+  font-size: 11px;
   font-style: normal;
 }
 
@@ -57,7 +56,7 @@ em {
 
 em span {
   color: #15a35b;
-  font-size: 15px;
+  font-size: 14px;
 }
 
 .dot {
@@ -70,10 +69,9 @@ em span {
 strong {
   width: max-content;
   max-width: 100%;
-  padding: 4px 8px;
+  padding: 3px 7px;
   border-radius: 99px;
   color: var(--fd-color-primary);
   background: #f1ecff;
-  font-size: 11px;
+  font-size: 10px;
 }
-

@@ -3,24 +3,45 @@
    ============================================================ */
 
 :root {
+  /* Nextou canonical brand tokens (Phase 1) */
+  --nextou-primary-purple: #38268e;
+  --nextou-deep-purple: #23117c;
+  --nextou-secondary-purple: #6557a8;
+  --nextou-accent-orange: #f97928;
+  --nextou-white: #fbfbfc;
+  --nextou-text: #111111;
+  --nextou-text-strong: #050505;
+  --nextou-text-muted: #3f3f46;
+  --nextou-text-soft: #6b7280;
+  --nextou-bg: #f7f6fc;
+  --nextou-surface: #ffffff;
+  --nextou-surface-soft: #efecf8;
+  --nextou-border: #e8e5f4;
+  --nextou-shadow-card: 0 12px 32px rgba(35, 17, 124, 0.1);
+  --nextou-shadow: var(--nextou-shadow-card);
+  --nextou-radius-sm: 12px;
+  --nextou-radius-md: 18px;
+  --nextou-radius-lg: 24px;
+  --nextou-radius-xl: 32px;
+
   --primary-gradient: linear-gradient(135deg, #38268E 0%, var(--fd-color-primary-hover) 100%);
   /* â”€â”€ Core Color Palette â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-  --bg-color: #FBFBFC;
-  --surface-color: #FBFBFC;
-  --surface-hover: #EFECF8;
+  --bg-color: var(--nextou-white);
+  --surface-color: var(--nextou-surface);
+  --surface-hover: var(--nextou-surface-soft);
 
-  --text-primary: #111827;
+  --text-primary: var(--nextou-text-strong);
   --text-secondary: #374151;
-  --text-muted: #6b7280;
+  --text-muted: var(--nextou-text-muted);
 
-  --border-color: #ddd8ee;
+  --border-color: var(--nextou-border);
   --border-light: #ebe7f5;
 
   /* â”€â”€ Accent Palette (Stripe-like vibrant tech) â”€ */
-  --primary: #38268E;
-  --primary-hover: #23117C;
-  --primary-light: #EFECF8;
-  --cta: #F97928;
+  --primary: var(--nextou-primary-purple);
+  --primary-hover: var(--nextou-deep-purple);
+  --primary-light: var(--nextou-surface-soft);
+  --cta: var(--nextou-accent-orange);
 
   /* â”€â”€ Semantic Colors â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --success: #22c55e;
@@ -29,31 +50,31 @@
   --danger-light: var(--fd-color-danger-soft);
   --warning: #facc15;
   --warning-light: var(--fd-color-warning-soft);
-  --info: #6557A8;
+  --info: var(--nextou-secondary-purple);
   --info-light: var(--fd-color-info-soft);
 
   /* â”€â”€ Typography â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --font-family: var(
     --nc-font-family,
-    "Proxima Nova",
+    "Nunito",
     sans-serif
   );
   --font-heading: var(
     --nc-font-heading,
-    "Proxima Nova",
+    "Nunito",
     sans-serif
   );
 
   /* â”€â”€ Geometry & Depth â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
+  --radius-md: var(--nextou-radius-sm);
+  --radius-lg: var(--nextou-radius-md);
   --radius-xl: 20px;
-  --radius-2xl: 28px;
+  --radius-2xl: var(--nextou-radius-lg);
   --radius-full: 9999px;
 
   /* â”€â”€ Extended Primary â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-  --primary-dark: #23117C;
+  --primary-dark: var(--nextou-deep-purple);
   --primary-shadow: rgba(56, 38, 142, 0.24);
 
   // Premium soft shadows
@@ -589,3 +610,68 @@ select.has-warning,
   margin-bottom: 1.5rem;
 }
 
+/* ── Mobile Redesign: Quick-Commerce Utilities ── */
+
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+}
+
+.glass-nav {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.gradient-primary {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: white;
+}
+
+.gradient-accent {
+  background: linear-gradient(135deg, #f97928 0%, #ff512f 100%);
+  color: white;
+}
+
+/* Micro-Animations */
+.bounce-tap {
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.bounce-tap:active {
+  transform: scale(0.96);
+}
+
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Radar Pulse Animation for Delivery App */
+.radar-pulse-container {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.radar-pulse {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--primary);
+  opacity: 0.6;
+  animation: radar-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+@keyframes radar-ping {
+  75%, 100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}

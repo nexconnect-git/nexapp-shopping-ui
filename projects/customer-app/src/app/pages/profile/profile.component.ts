@@ -1,11 +1,9 @@
 import { Component, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Router } from '@angular/router';
-import {
-  ApiService,
-  AppCurrencyPipe,
-  CurrencyService,
-} from '@shared/public-api';
+import { ApiService } from '@shared/lib/services/api.service';
+import { AppCurrencyPipe } from '@shared/lib/pipes/currency.pipe';
+import { CurrencyService } from '@shared/lib/services/currency.service';
 import { UiService } from '../../services/ui.service';
 import { AppStateService } from '../../services/app-state.service';
 import { AuthService } from '../../services/auth.service';

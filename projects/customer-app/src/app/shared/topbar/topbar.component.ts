@@ -7,7 +7,8 @@ import {
   RouterLinkActive,
 } from '@angular/router';
 import { filter } from 'rxjs/operators';
-import { AppCurrencyPipe, PageFeatureAccessService } from '@shared/public-api';
+import { AppCurrencyPipe } from '@shared/lib/pipes/currency.pipe';
+import { PageFeatureAccessService } from '@shared/lib/services/page-feature-access.service';
 import { buildStoreSelectionTarget } from '@nexconnect/customer-search';
 import { CatalogService } from '../../services/catalog.service';
 import { AppStateService } from '../../services/app-state.service';

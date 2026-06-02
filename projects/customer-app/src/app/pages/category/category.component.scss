@@ -1,4 +1,4 @@
-﻿.crumb {
+.crumb {
   color: var(--muted);
   font-size: 13px;
 }
@@ -142,6 +142,7 @@
     grid-template-columns: 44px minmax(0, 1fr) 44px;
     gap: 10px;
     align-items: center;
+    margin-bottom: 4px;
   }
   
   .page-head > a,
@@ -154,7 +155,7 @@
     border-radius: 16px;
     color: var(--fd-color-primary);
     background: #fff;
-    box-shadow: 0 10px 24px rgba(33, 22, 82, 0.06);
+    box-shadow: 0 6px 16px rgba(33, 22, 82, 0.04);
   }
   
   .page-head small {
@@ -170,6 +171,8 @@
     line-height: 1.1;
     text-overflow: ellipsis;
     white-space: nowrap;
+    font-weight: 950;
+    color: #12095f;
   }
   
   .sort-button {
@@ -180,39 +183,47 @@
     position: absolute;
     inset: 0;
     opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
   }
   
   .category-hero {
     display: grid;
-    grid-template-columns: 54px minmax(0, 1fr);
+    grid-template-columns: 50px minmax(0, 1fr);
     gap: 12px;
     align-items: center;
-    padding: 15px;
+    padding: 16px;
     border-radius: 24px;
     color: #fff;
     background: linear-gradient(135deg, var(--fd-color-primary), var(--fd-color-primary-hover));
-    box-shadow: 0 16px 36px rgba(56, 38, 142, 0.2);
+    box-shadow: 0 16px 36px rgba(56, 38, 142, 0.16);
   }
   
   .category-hero > span {
-    width: 54px;
-    height: 54px;
+    width: 50px;
+    height: 50px;
     display: grid;
     place-items: center;
-    border-radius: 20px;
-    color: var(--fd-color-primary);
+    border-radius: 16px;
     background: #fff;
-    font-size: 28px;
+    color: var(--fd-color-primary);
+    font-size: 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   }
   
-  .category-hero b,
+  .category-hero b {
+    display: block;
+    font-size: 16px;
+    font-weight: 950;
+  }
+  
   .category-hero small {
     display: block;
-  }
-  
-  .category-hero small {
-    margin-top: 4px;
+    margin-top: 3px;
     opacity: 0.86;
+    font-size: 12px;
+    font-weight: 700;
   }
   
   .mobile-section-head span {
@@ -225,17 +236,39 @@
     grid-column: 1 / -1;
     display: grid;
     justify-items: center;
-    gap: 7px;
-    padding: 28px 14px;
-    border-radius: 22px;
+    gap: 12px;
+    padding: 36px 16px;
+    border-radius: 24px;
     background: #fff;
     text-align: center;
-    box-shadow: 0 12px 30px rgba(33, 22, 82, 0.07);
+    box-shadow: 0 8px 24px rgba(33, 22, 82, 0.04);
+    border: 1px solid rgba(56, 38, 142, 0.05);
   }
   
   .empty-panel span {
+    width: 58px;
+    height: 58px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
     color: var(--fd-color-primary);
-    font-size: 32px;
+    background: var(--fd-color-primary-soft);
+    font-size: 28px;
+    box-shadow: 0 6px 16px rgba(56, 38, 142, 0.08);
+  }
+
+  .empty-panel b {
+    font-size: 16px;
+    font-weight: 950;
+    color: #12095f;
+    margin-top: 4px;
+    display: block;
+  }
+  .empty-panel small {
+    color: #77708d;
+    font-size: 12px;
+    line-height: 1.4;
+    display: block;
   }
 }
 

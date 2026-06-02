@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap');
+
 @font-face {
   font-family: "Material Icons Outlined";
   font-style: normal;
@@ -18,20 +20,31 @@
     url("/fonts/material-symbols-rounded.ttf") format("truetype");
 }
 
-@font-face {
-  font-family: "Proxima Nova";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src:
-    local("Proxima Nova"),
-    local("ProximaNova-Regular"),
-    local("Proxima Nova Regular");
-}
-
 
 
 :root {
+  /* Nextou brand core */
+  --nextou-primary-purple: #38268E;
+  --nextou-deep-purple: #23117C;
+  --nextou-secondary-purple: #6557A8;
+  --nextou-accent-orange: #F97928;
+  --nextou-white: #FBFBFC;
+  --nextou-text: #111111;
+  --nextou-text-strong: #050505;
+  --nextou-text-muted: #3f3f46;
+  --nextou-text-soft: #6b7280;
+  --nextou-bg: #F7F6FC;
+  --nextou-surface: #FFFFFF;
+  --nextou-border: #E8E5F4;
+  --nextou-shadow-card: 0 12px 32px rgba(35, 17, 124, 0.10);
+  --nextou-shadow-sm: 0 2px 8px rgba(17, 24, 39, 0.06);
+  --nextou-shadow-md: 0 8px 24px rgba(17, 24, 39, 0.08);
+  --nextou-shadow-lg: 0 16px 40px rgba(17, 24, 39, 0.12);
+  --nextou-radius-sm: 12px;
+  --nextou-radius-md: 18px;
+  --nextou-radius-lg: 24px;
+  --nextou-radius-xl: 32px;
+
   --fd-color-primary: #38268E;
   --fd-color-primary-hover: #23117C;
   --fd-color-primary-soft: #EFECF8;
@@ -184,11 +197,9 @@
   --nc-shadow-focus: 0 0 0 4px rgba(56, 38, 142, 0.16);
 
   --nc-font-family:
-    "Proxima Nova", "Futura", "Futura PT", "Avenir Next", "Segoe UI", Arial,
-    sans-serif;
+    "Nunito", sans-serif;
   --nc-font-heading:
-    "Futura", "Proxima Nova", "Futura PT", "Avenir Next", "Segoe UI", Arial,
-    sans-serif;
+    "Nunito", sans-serif;
   --nc-emoji-font:
     "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", emoji, sans-serif;
 
@@ -331,9 +342,9 @@ textarea {
 }
 
 body
-  *:not(.material-icons-outlined):not(.material-symbols-rounded):not(
+  *:not(.material-icons):not(.material-icons-outlined):not(.material-icons-two-tone):not(.material-icons-round):not(.material-icons-sharp):not(.material-symbols):not(.material-symbols-outlined):not(.material-symbols-rounded):not(.material-symbols-sharp):not(
     .fd-icon
-  ):not(.nc-emoji-icon) {
+  ):not(.nc-emoji-icon):not(.category-emoji) {
   font-family: var(--nc-font-family) !important;
   letter-spacing: 0;
 }

@@ -1,6 +1,6 @@
 import { Component, computed, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { AppCurrencyPipe } from '@shared/public-api';
+import { AppCurrencyPipe } from '@shared/lib/pipes/currency.pipe';
 import { categoryFilterKey } from '@nexconnect/customer-core';
 import { buildProductFilterQuery } from '@nexconnect/customer-search';
 import { buildCustomerLocationQuery } from '@nexconnect/customer-location';

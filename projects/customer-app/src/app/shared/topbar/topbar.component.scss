@@ -60,6 +60,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
+  overflow: hidden;
 }
 .logo {
   width: 40px;
@@ -69,6 +71,14 @@
   border-radius: 10px;
   object-fit: contain;
   filter: drop-shadow(0 8px 16px rgba(44, 23, 110, 0.18));
+}
+.brand-wordmark {
+  display: block;
+  width: auto;
+  max-width: 138px;
+  height: 22px;
+  flex: 0 1 auto;
+  object-fit: contain;
 }
 .brand b {
   display: block;

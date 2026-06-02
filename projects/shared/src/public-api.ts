@@ -1,4 +1,5 @@
 export * from './lib/models';
+export * from './lib/models/adapters';
 export * from './lib/tokens/api-url.token';
 export * from './lib/tokens/auth-prefix.token';
 export * from './lib/services/api.service';

@@ -11,6 +11,21 @@
           <p class="fd-subtitle">Live updates on your order</p>
         </div>
       </header>
+      @if (isLoadingOrder()) {
+        <section class="loading-note">
+          <span class="material-symbols-rounded">hourglass_top</span>
+          <p>Fetching your latest tracking updates...</p>
+        </section>
+      }
+      @if (trackingError()) {
+        <section class="loading-note error">
+          <span class="material-symbols-rounded">wifi_off</span>
+          <p>{{ trackingError() }}</p>
+          <button type="button" class="fd-btn outline" (click)="retryTracking()">
+            Retry
+          </button>
+        </section>
+      }
 
       <section class="status-card fd-card">
         <div>
@@ -31,11 +46,12 @@
           <small>Estimated Arrival</small>
           <h2>{{ estimatedArrivalLabel() }}</h2>
           <p>Today</p>
-          <span>{{ order().status }}</span>
+          <span>{{ statusLabel() }}</span>
+          <small class="refresh-note">{{ trackingFreshnessLabel() }}</small>
         </div>
         <div class="progress">
           @for (step of progressSteps(); track step.status) {
-            <div>
+            <div [class.current]="step.current">
               <b [class.done]="step.done"
                 ><span class="material-symbols-rounded">{{
                   step.icon
@@ -165,6 +181,12 @@
           </div>
           <span>Qty {{ itemQuantity(item) }}</span>
         </div>
+      } @empty {
+        <section class="partner-pending">
+          <span class="material-symbols-rounded">inventory_2</span>
+          <b>Order items are loading</b>
+          <small>Item details will appear in a moment.</small>
+        </section>
       }
       <button type="button" (click)="downloadInvoice()">
         Download invoice copy
@@ -199,9 +221,6 @@
 <div class="mobile-customer-view">
 <main class="mobile-page tracking-page">
   <header class="tracking-head">
-    <a routerLink="/orders" aria-label="Back to orders">
-      <span class="material-symbols-rounded">arrow_back</span>
-    </a>
     <div>
       <small>Order #{{ order() | displayOrderId }}</small>
       <h1>{{ mapStageLabel() }}</h1>
@@ -215,7 +234,21 @@
         <p>Map is not available right now.</p>
       }
     </div>
-    <small class="map-note">Live location updates automatically.</small>
+    <small class="map-note">{{ trackingFreshnessLabel() }}</small>
+    @if (trackingError()) {
+      <button type="button" class="mobile-cta secondary" (click)="retryTracking()">
+        Retry tracking
+      </button>
+    }
+  </section>
+
+  <section class="store-card">
+    <span class="material-symbols-rounded">storefront</span>
+    <div>
+      <small>Ordered from</small>
+      <b>{{ storeName() }}</b>
+      <em>{{ storeCategory() }}</em>
+    </div>
   </section>
 
   @if (partner()) {
@@ -239,13 +272,19 @@
     <h2>Tracking timeline</h2>
     <div class="timeline">
       @for (step of steps(); track step.name) {
-        <article>
+        <article [class.done]="step.done" [class.current]="step.current">
           <span class="material-symbols-rounded">{{ step.icon }}</span>
           <div>
             <b>{{ step.name }}</b>
-            <small>{{ step.time || 'Updating soon' }}</small>
+            <small>{{ step.time || (step.current ? 'In progress' : 'Updating soon') }}</small>
           </div>
         </article>
+      } @empty {
+        <section class="partner-pending">
+          <span class="material-symbols-rounded">pending</span>
+          <b>No timeline updates yet</b>
+          <small>Tracking checkpoints will appear here automatically.</small>
+        </section>
       }
     </div>
   </section>
@@ -258,14 +297,29 @@
     @for (item of order().items; track item.id) {
       <div class="order-item">
         <img [src]="item.image" [alt]="item.name" />
-        <span><b>{{ item.name }}</b><small>{{ item.unit }}</small></span>
+        <span
+          ><b>{{ item.name }}</b
+          ><small>{{ item.unit }} · Qty {{ itemQuantity(item) }}</small></span
+        >
       </div>
+    } @empty {
+      <section class="partner-pending">
+        <span class="material-symbols-rounded">inventory_2</span>
+        <b>Items are still loading</b>
+        <small>We'll show your ordered items here shortly.</small>
+      </section>
     }
   </section>
 
   <section class="mobile-sticky-cta">
-    <a [routerLink]="['/order', order().id, 'help']" class="mobile-cta secondary">Get help</a>
-    <button type="button" class="mobile-cta" (click)="downloadInvoice()">Invoice</button>
+    @if (directionsUrl()) {
+      <a [href]="directionsUrl()" target="_blank" rel="noopener" class="mobile-cta secondary">Open route</a>
+    } @else {
+      <a [routerLink]="supportLink()" class="mobile-cta secondary">Get help</a>
+    }
+    <button type="button" class="mobile-cta" [disabled]="invoiceDownloading()" (click)="downloadInvoice()">
+      {{ invoiceDownloading() ? 'Preparing...' : 'Invoice' }}
+    </button>
   </section>
 </main>
 </div>

@@ -4,10 +4,8 @@ import {
   normalizeOrder as normalizeSharedOrder,
 } from '@nexconnect/customer-core';
 import { map, Observable } from 'rxjs';
-import {
-  ApiService,
-  AuthService as SharedAuthService,
-} from '@shared/public-api';
+import { ApiService } from '@shared/lib/services/api.service';
+import { AuthService as SharedAuthService } from '@shared/lib/services/auth.service';
 import { AppStateService } from './app-state.service';
 import { Order } from '../models';
 
@@ -17,21 +15,31 @@ export class OrderService {
   private readonly auth = inject(SharedAuthService);
   private readonly state = inject(AppStateService);
   private readonly _orders = signal<Order[]>([]);
+  private readonly _loading = signal(false);
+  private readonly _error = signal('');
   private readonly orderCache = new Map<string, Order>();
+  private readonly pendingOrderRequests = new Set<string>();
 
   readonly orders = this._orders.asReadonly();
+  readonly loading = this._loading.asReadonly();
+  readonly error = this._error.asReadonly();
 
   constructor() {
     effect(() => {
       if (this.auth.isLoggedIn()) this.loadOrders();
       else {
         this._orders.set([]);
+        this._loading.set(false);
+        this._error.set('');
         this.orderCache.clear();
+        this.pendingOrderRequests.clear();
       }
     });
   }
 
   loadOrders(): void {
+    this._loading.set(true);
+    this._error.set('');
     this.api.getOrders().subscribe({
       next: (response) => {
         const orders = listFromResponse<any>(response).map((order) =>
@@ -39,8 +47,13 @@ export class OrderService {
         );
         this._orders.set(orders);
         orders.forEach((order) => this.orderCache.set(order.id, order));
+        this._loading.set(false);
       },
-      error: () => this._orders.set([]),
+      error: () => {
+        this._orders.set([]);
+        this._error.set('Could not load your orders right now.');
+        this._loading.set(false);
+      },
     });
   }
 
@@ -51,7 +64,8 @@ export class OrderService {
       this._orders().find(
         (order) => order.id === key || order.raw?.order_number === key,
       );
-    if (key && !cached) {
+    if (key && !cached && !this.pendingOrderRequests.has(key)) {
+      this.pendingOrderRequests.add(key);
       this.api.getOrder(key).subscribe({
         next: (raw) => {
           const order = this.mapOrder(raw);
@@ -60,8 +74,11 @@ export class OrderService {
             order,
             ...list.filter((item) => item.id !== order.id),
           ]);
+          this.pendingOrderRequests.delete(key);
         },
-        error: () => {},
+        error: () => {
+          this.pendingOrderRequests.delete(key);
+        },
       });
     }
     return cached || this.emptyOrder(key);

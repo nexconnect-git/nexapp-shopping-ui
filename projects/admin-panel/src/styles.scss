@@ -49,8 +49,8 @@
   --text-primary: #111827;
   --text-secondary: #374151;
   --text-muted: #6b7280;
-  --font-family: var(--nc-font-family);
-  --font-heading: var(--font-family);
+  --font-family: "Nunito", sans-serif;
+  --font-heading: "Nunito", sans-serif;
 }
 
 body {
@@ -60,7 +60,7 @@ body {
   color: var(--text-primary);
 }
 
-body * {
+body *:not(.material-icons):not(.material-icons-outlined):not(.material-icons-two-tone):not(.material-icons-round):not(.material-icons-sharp):not(.material-symbols):not(.material-symbols-outlined):not(.material-symbols-rounded):not(.material-symbols-sharp):not(.fd-icon):not(.nc-emoji-icon):not(.category-emoji) {
   font-family: var(--font-family) !important;
   letter-spacing: 0;
 }
@@ -1726,10 +1726,11 @@ body .stock-badge {
 
 /* Final global palette + typography enforcement */
 :root {
-  --font-family: var(--nc-font-family);
-  --font-heading: var(--nc-font-heading);
-  --font-body: var(--nc-font-family);
-
+  --font-family: "Nunito", sans-serif;
+  --font-heading: "Nunito", sans-serif;
+  --font-body: "Nunito", sans-serif;
+  --nc-font-family: "Nunito", sans-serif;
+  --nc-font-heading: "Nunito", sans-serif;
   --primary: var(--fd-color-primary);
   --primary-2: var(--fd-color-primary-hover);
   --primary-hover: var(--fd-color-primary-hover);
@@ -1764,7 +1765,7 @@ body .stock-badge {
 
 html,
 body {
-  font-family: var(--nc-font-family) !important;
+  font-family: "Nunito", sans-serif !important;
 }
 
 .nav-link.active,

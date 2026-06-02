@@ -28,14 +28,12 @@ import { MobileTopbarComponent } from './mobile-ui/mobile-topbar/mobile-topbar.c
 import { MobileBottomNavComponent } from './mobile-ui/mobile-bottom-nav/mobile-bottom-nav.component';
 import { MobileLoaderComponent } from './mobile-ui/mobile-loader/mobile-loader.component';
 import { MobileToastComponent } from './mobile-ui/mobile-toast/mobile-toast.component';
-import {
-  ApiService,
-  AuthService as SharedAuthService,
-  GlobalLoadingComponent,
-  NotificationPollingService,
-  PageFeatureAccessService,
-  PageFeatureLoadingComponent,
-} from '@shared/public-api';
+import { ApiService } from '@shared/lib/services/api.service';
+import { AuthService as SharedAuthService } from '@shared/lib/services/auth.service';
+import { GlobalLoadingComponent } from '@shared/lib/components/global-loading/global-loading.component';
+import { NotificationPollingService } from '@shared/lib/services/notification-polling.service';
+import { PageFeatureAccessService } from '@shared/lib/services/page-feature-access.service';
+import { PageFeatureLoadingComponent } from '@shared/lib/components/page-feature-loading/page-feature-loading.component';
 import { UiService } from './services/ui.service';
 import { CustomerContentConfigService } from './services/customer-content-config.service';
 
@@ -73,7 +71,14 @@ export class AppComponent implements OnInit {
   });
   showCartAssist = computed(() => {
     const url = this.currentUrl().split('?')[0].split('#')[0];
-    return !url.startsWith('/checkout') && !url.startsWith('/cart');
+    if (url === '/' || url === '/new-home') return true;
+    return (
+      url.startsWith('/stores') ||
+      url.startsWith('/store/') ||
+      url.startsWith('/category') ||
+      url.startsWith('/categories') ||
+      url.startsWith('/search')
+    );
   });
   hasBlockingOverlay = computed(
     () =>

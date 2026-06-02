@@ -55,7 +55,7 @@ body {
   color: var(--charcoal);
 }
 
-body * {
+body *:not(.material-icons):not(.material-icons-outlined):not(.material-icons-two-tone):not(.material-icons-round):not(.material-icons-sharp):not(.material-symbols):not(.material-symbols-outlined):not(.material-symbols-rounded):not(.material-symbols-sharp):not(.fd-icon):not(.nc-emoji-icon):not(.category-emoji) {
   font-family: var(--font-family) !important;
   letter-spacing: 0;
 }

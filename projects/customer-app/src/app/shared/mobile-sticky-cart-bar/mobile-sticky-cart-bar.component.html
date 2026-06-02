@@ -1,11 +1,25 @@
 @if (visible && state.itemCount() > 0) {
   <aside class="mobile-sticky-cart" aria-label="Checkout shortcut">
-    <a routerLink="/checkout" class="checkout-cta">
-      Checkout - {{ state.total() | appCurrency }}
-      <small
-        >{{ state.itemCount() }}
-        {{ state.itemCount() === 1 ? "item" : "items" }}</small
-      >
+    <a routerLink="/cart" class="checkout-cta-wrap">
+      <div class="cta-left">
+        <div class="bag-icon-container">
+          <span class="material-symbols-rounded">shopping_bag</span>
+        </div>
+        <div class="cart-summary">
+          <span class="item-count">
+            {{ state.itemCount() }} {{ state.itemCount() === 1 ? 'Item' : 'Items' }} &bull; <b>{{ state.total() | appCurrency }}</b>
+          </span>
+          @if (savings() > 0) {
+            <span class="savings-tag">Saved {{ savings() | appCurrency }}!</span>
+          } @else {
+            <span class="delivery-badge">Fast delivery in 10 mins</span>
+          }
+        </div>
+      </div>
+      <div class="cta-right">
+        <span class="view-cart-label">View Cart</span>
+        <span class="material-symbols-rounded chevron">arrow_right_alt</span>
+      </div>
     </a>
   </aside>
 }

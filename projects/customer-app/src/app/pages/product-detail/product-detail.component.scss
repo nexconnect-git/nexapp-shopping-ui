@@ -1,4 +1,4 @@
-﻿.product-layout {
+.product-layout {
   display: grid;
   grid-template-columns: minmax(0, 0.95fr) minmax(420px, 500px) 300px;
   grid-template-areas: "media buy rail" "details buy rail" "suggestionTitle buy rail" "suggestions buy rail";
@@ -125,6 +125,33 @@
   margin: 18px 0;
   color: var(--muted);
 }
+.stock-state {
+  width: max-content;
+  border-radius: 999px;
+  padding: 5px 10px;
+  margin: -8px 0 10px;
+  font-size: 12px;
+  font-weight: 900;
+  color: #166534;
+  background: var(--fd-color-success-soft);
+  border: 1px solid var(--fd-color-success-border);
+}
+.stock-state.warning {
+  color: #9a3412;
+  background: var(--fd-color-warning-soft);
+  border-color: var(--fd-color-warning-border);
+}
+.stock-state.danger {
+  color: #991b1b;
+  background: var(--fd-color-danger-soft);
+  border-color: var(--fd-color-danger-border);
+}
+.availability-warning {
+  margin: -2px 0 12px;
+  color: #b45309;
+  font-size: 13px;
+  font-weight: 800;
+}
 .rating span {
   background: var(--primary-soft);
   color: var(--primary);
@@ -194,8 +221,18 @@
   gap: 12px;
   margin: 28px 0;
 }
+.buy-actions .fd-btn[disabled] {
+  opacity: 0.62;
+  cursor: not-allowed;
+}
 .delivery {
   padding: 22px;
+}
+.delivery-promise {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  line-height: 1.35;
 }
 .delivery button {
   float: right;
@@ -344,14 +381,15 @@
   
   .product-hero {
     margin: -16px calc(-1 * var(--mobile-page-x)) 0;
-    padding: 14px var(--mobile-page-x) 20px;
-    border-radius: 0 0 30px 30px;
-    background: linear-gradient(180deg, #fff, #f1ecff);
+    padding: 10px var(--mobile-page-x) 14px;
+    border-radius: 0 0 22px 22px;
+    background: linear-gradient(180deg, #f5f2ff 0%, #ffffff 100%);
+    box-shadow: 0 8px 24px rgba(56, 38, 142, 0.04);
   }
   
   .hero-actions {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
   }
   
   .hero-actions a,
@@ -360,43 +398,55 @@
     height: 42px;
     display: grid;
     place-items: center;
-    border-radius: 16px;
+    border-radius: 50%;
     color: var(--fd-color-primary);
     background: #fff;
-    box-shadow: 0 10px 24px rgba(33, 22, 82, 0.08);
+    border: 1px solid rgba(56, 38, 142, 0.08);
+    box-shadow: 0 6px 20px rgba(33, 22, 82, 0.06);
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    
+    &:active {
+      transform: scale(0.9);
+    }
   }
   
   .image-button {
     width: 100%;
-    height: 250px;
+    height: 196px;
     display: grid;
     place-items: center;
-  }
-  
-  .image-button img {
-    max-width: 92%;
-    max-height: 230px;
-    object-fit: contain;
+    background: transparent;
+    
+    img {
+      max-width: 90%;
+      max-height: 184px;
+      object-fit: contain;
+      filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.06));
+      transition: transform 0.3s ease;
+    }
   }
   
   .product-info,
   .details-card {
     display: grid;
-    gap: 10px;
-    padding: 15px;
-    border-radius: 24px;
+    gap: 9px;
+    padding: 13px;
+    border-radius: 16px;
     background: #fff;
-    box-shadow: 0 12px 30px rgba(33, 22, 82, 0.07);
+    box-shadow: 0 8px 24px rgba(33, 22, 82, 0.04);
+    border: 1px solid rgba(56, 38, 142, 0.05);
   }
   
   .discount {
     width: max-content;
-    padding: 5px 8px;
-    border-radius: 10px;
+    padding: 5px 10px;
+    border-radius: 8px;
     color: #159653;
     background: #eafaf1;
     font-size: 11px;
     font-weight: 950;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
   }
   
   h1,
@@ -407,14 +457,17 @@
   }
   
   h1 {
-    font-size: 24px;
-    line-height: 1.12;
+    font-size: 21px;
+    line-height: 1.15;
+    font-weight: 950;
+    color: #12095f;
   }
   
   .product-info p,
   .details-card p {
     color: #77708d;
-    line-height: 1.38;
+    line-height: 1.4;
+    font-size: 13px;
   }
   
   .price-row {
@@ -425,29 +478,46 @@
   
   .price-row b {
     font-size: 24px;
+    font-weight: 950;
+    color: #12095f;
   }
   
   .price-row del {
     color: #9d96ac;
+    font-size: 14px;
   }
   
   .benefits {
     display: grid;
-    gap: 8px;
+    gap: 7px;
+    padding-top: 10px;
+    border-top: 1px solid #f3efff;
   }
   
   .benefits span {
     display: grid;
-    grid-template-columns: 26px minmax(0, 1fr);
+    grid-template-columns: 24px minmax(0, 1fr);
     gap: 8px;
     align-items: center;
-    color: #5d566e;
+    color: #4a435f;
     font-size: 13px;
     font-weight: 800;
   }
   
   .benefits i {
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+    background: var(--fd-color-primary-soft);
     color: var(--fd-color-primary);
+    display: grid;
+    place-items: center;
+    font-size: 15px;
+  }
+
+  .stock-state {
+    margin: 0;
+    display: inline-flex;
   }
   
   dl {
@@ -455,12 +525,13 @@
     grid-template-columns: 110px minmax(0, 1fr);
     gap: 10px;
     padding-top: 8px;
-    border-top: 1px solid #eee9f8;
+    border-top: 1px solid #f3efff;
   }
   
   dt {
     color: #77708d;
     font-size: 12px;
+    font-weight: 700;
   }
   
   dd {
@@ -470,25 +541,54 @@
     font-weight: 900;
   }
   
-  .detail-cta {
-    grid-template-columns: 112px minmax(0, 1fr);
+  .product-action-card {
+    display: grid;
+    grid-template-columns: 96px 1fr 1fr;
+    gap: 7px;
+    margin-top: 4px;
+    padding: 8px;
+    background: #fbfaff;
+    border: 1px solid rgba(56, 38, 142, 0.08);
+    box-shadow: none;
+    border-radius: 14px;
   }
   
-  .detail-cta .secondary {
-    grid-column: 1 / -1;
+  .product-action-card .mobile-cta {
+    border-radius: 12px;
+    height: 42px;
+    box-shadow: none;
+    font-size: 14px;
+    min-width: 0;
+  }
+  
+  .product-action-card .secondary {
+    grid-column: auto;
+    border-radius: 12px;
+    height: 42px;
+    box-shadow: none;
+    font-size: 14px;
   }
   
   .qty {
-    height: 48px;
+    height: 42px;
     display: grid;
-    grid-template-columns: 36px 1fr 36px;
+    grid-template-columns: 28px 1fr 28px;
     align-items: center;
-    border: 1px solid rgba(56, 38, 142, 0.22);
-    border-radius: 16px;
+    border: 1px solid rgba(56, 38, 142, 0.16);
+    border-radius: 12px;
     color: var(--fd-color-primary);
-    background: #fff;
+    background: #fbfaff;
     text-align: center;
     font-weight: 950;
+    
+    button {
+      height: 100%;
+      display: grid;
+      place-items: center;
+      color: var(--fd-color-primary);
+      &:active {
+        background: rgba(56, 38, 142, 0.06);
+      }
+    }
   }
 }
-

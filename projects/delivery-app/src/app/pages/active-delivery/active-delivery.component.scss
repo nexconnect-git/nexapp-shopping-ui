@@ -1,4 +1,4 @@
-﻿:host {
+:host {
   display: block;
   padding: 1.5rem;
   padding-bottom: 2rem;
@@ -44,6 +44,54 @@
     color: var(--text-muted);
     font-weight: 500;
   }
+}
+
+.direct-store-flow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.direct-store-flow > div {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 0.35rem 0.75rem;
+  align-items: center;
+  padding: 0.9rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: white;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+}
+
+.direct-store-flow .material-icons-outlined {
+  grid-row: span 2;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-md);
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+.direct-store-flow small {
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.direct-store-flow strong {
+  overflow: hidden;
+  color: var(--text-primary);
+  font-size: 0.86rem;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Base states */
@@ -345,36 +393,50 @@
 /* OTP Box */
 .otp-box {
   padding: 1.5rem 1.25rem;
-  background: var(--primary);
+  background: var(--primary-light);
+  border-top: 1px solid var(--border-light);
   border-bottom: 1px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
   .otp-label {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     font-size: 0.75rem;
-    font-weight: 800;
+    font-weight: 900;
     color: var(--primary);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
     margin-bottom: 0.75rem;
+
+    span {
+      font-size: 16px;
+      animation: pulse 1.5s infinite ease-in-out;
+    }
   }
   .otp-code {
-    font-size: 2.5rem;
+    font-size: 2.25rem;
     font-weight: 900;
-    letter-spacing: 0.4em;
-    color: var(--text-primary);
+    letter-spacing: 0.3em;
+    color: var(--primary);
     font-family: monospace;
-    padding: 0.75rem 1rem;
+    padding: 0.6rem 1rem;
     background: white;
     border-radius: var(--radius-md);
     border: 2px dashed var(--primary);
     text-align: center;
+    width: 100%;
+    max-width: 280px;
+    box-shadow: 0 4px 12px rgba(0, 105, 72, 0.06);
   }
   .otp-hint {
     font-size: 0.8125rem;
     font-weight: 600;
     color: var(--text-secondary);
     margin: 0.75rem 0 0;
+    text-align: center;
   }
 }
 
@@ -751,4 +813,212 @@
     border-radius: var(--radius-xl);
   }
 }
+
+@media (max-width: 768px) {
+  .direct-store-flow {
+    display: flex;
+    overflow-x: auto;
+    gap: 0.75rem;
+    padding-bottom: 0.65rem;
+    scrollbar-width: none;
+    margin-bottom: 1.25rem;
+    
+    &::-webkit-scrollbar {
+      display: none;
+    }
+    
+    & > div {
+      flex: 0 0 178px;
+      padding: 0.75rem 0.9rem;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.03);
+    }
+  }
+}
+
+.success-checkmark-container {
+  position: absolute;
+  inset: 0;
+  background: white;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
+.celebration-title {
+  font-size: 1.75rem;
+  font-weight: 900;
+  color: #059669;
+  margin: 1.5rem 0 0.5rem;
+  letter-spacing: -0.02em;
+}
+
+.celebration-sub {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin: 0;
+  b {
+    color: #059669;
+    font-weight: 900;
+  }
+}
+
+.success-checkmark {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto;
+
+  .check-icon {
+    width: 80px;
+    height: 80px;
+    position: relative;
+    border-radius: 50%;
+    box-sizing: content-box;
+    border: 4px solid #10b981;
+
+    &::before {
+      top: 3px;
+      left: -2px;
+      width: 30px;
+      transform-origin: 100% 50%;
+      border-radius: 100px 0 0 100px;
+    }
+
+    &::after {
+      top: 0;
+      left: 30px;
+      width: 60px;
+      transform-origin: 0 50%;
+      border-radius: 0 100px 100px 0;
+      animation: rotate-circle 4.25s ease-in;
+    }
+
+    &::before, &::after {
+      content: '';
+      height: 100px;
+      position: absolute;
+      background: #FFFFFF;
+      transform: rotate(-45deg);
+    }
+
+    .icon-line {
+      height: 5px;
+      background-color: #10b981;
+      display: block;
+      border-radius: 2px;
+      position: absolute;
+      z-index: 10;
+
+      &.line-tip {
+        top: 46px;
+        left: 19px;
+        width: 25px;
+        transform: rotate(45deg);
+        animation: icon-line-tip 0.75s;
+      }
+
+      &.line-long {
+        top: 38px;
+        right: 8px;
+        width: 47px;
+        transform: rotate(-45deg);
+        animation: icon-line-long 0.75s;
+      }
+    }
+
+    .icon-circle {
+      top: -4px;
+      left: -4px;
+      box-sizing: content-box;
+      border: 4px solid rgba(16, 185, 129, .5);
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      position: absolute;
+      z-index: 1;
+    }
+
+    .icon-fix {
+      top: 8px;
+      left: 28px;
+      width: 5px;
+      height: 85px;
+      position: absolute;
+      z-index: 1;
+      transform: rotate(-45deg);
+      background: #FFFFFF;
+    }
+  }
+}
+
+@keyframes icon-line-tip {
+  0% {
+    width: 0;
+    left: 1px;
+    top: 19px;
+  }
+  54% {
+    width: 0;
+    left: 1px;
+    top: 19px;
+  }
+  70% {
+    width: 50px;
+    left: -8px;
+    top: 37px;
+  }
+  84% {
+    width: 17px;
+    left: 21px;
+    top: 48px;
+  }
+  100% {
+    width: 25px;
+    left: 19px;
+    top: 46px;
+  }
+}
+
+@keyframes icon-line-long {
+  0% {
+    width: 0;
+    right: 46px;
+    top: 54px;
+  }
+  65% {
+    width: 0;
+    right: 46px;
+    top: 54px;
+  }
+  84% {
+    width: 55px;
+    right: 0px;
+    top: 35px;
+  }
+  100% {
+    width: 47px;
+    right: 8px;
+    top: 38px;
+  }
+}
+
+@keyframes rotate-circle {
+  0% {
+    transform: rotate(-45deg);
+  }
+  5% {
+    transform: rotate(-45deg);
+  }
+  12% {
+    transform: rotate(-405deg);
+  }
+  100% {
+    transform: rotate(-405deg);
+  }
+}
+
 

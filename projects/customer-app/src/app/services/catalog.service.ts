@@ -19,7 +19,7 @@ import type {
   Category as ApiCategory,
   Product as ApiProduct,
   Vendor as ApiVendor,
-} from '@shared/public-api';
+} from '@shared/lib/models';
 import { finalize } from 'rxjs';
 import {
   Category,

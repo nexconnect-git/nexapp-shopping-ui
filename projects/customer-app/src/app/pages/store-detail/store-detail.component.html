@@ -111,6 +111,32 @@
         </div>
       </section>
 
+      @if (canOrderFromStore()) {
+        <section class="inventory-banner">
+          <span class="material-symbols-rounded">inventory_2</span>
+          <div>
+            <b>{{ stockSummary().available }} products available now</b>
+            <small>
+              {{ stockSummary().lowStock }} low-stock - {{ stockSummary().total }} total listed
+            </small>
+            <small class="promise">{{ inventoryDeliveryPromise() }}</small>
+          </div>
+        </section>
+      }
+
+      @if (!canOrderFromStore()) {
+        <section class="store-unavailable-banner fd-card">
+          <span class="material-symbols-rounded">location_off</span>
+          <div>
+            <b>This store is unavailable right now</b>
+            <p>{{ storeUnavailableReason() }}</p>
+          </div>
+          <button type="button" class="fd-btn outline info" (click)="changeLocation()">
+            Change location
+          </button>
+        </section>
+      }
+
       <div class="cat-row" [class.is-filtering]="filteringCategories()">
         @for (cat of categories(); track cat) {
           <button
@@ -152,15 +178,31 @@
       @if (!filteringCategories() && !groupedProducts().length) {
         <section class="empty fd-card">
           <h2><span class="material-symbols-rounded">search_off</span></h2>
-          <h3>No products found</h3>
-          <p>Try another search term or clear filters.</p>
-          <button
-            type="button"
-            class="fd-btn primary"
-            (click)="clearStoreSearch()"
-          >
-            Clear Search
-          </button>
+          <h3>{{ canOrderFromStore() ? "No products found" : "Store unavailable" }}</h3>
+          <p>
+            {{
+              canOrderFromStore()
+                ? "Try another search term or clear filters."
+                : storeUnavailableReason()
+            }}
+          </p>
+          @if (canOrderFromStore()) {
+            <button
+              type="button"
+              class="fd-btn primary"
+              (click)="clearStoreSearch()"
+            >
+              Clear Search
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="fd-btn outline info"
+              (click)="changeLocation()"
+            >
+              Change location
+            </button>
+          }
         </section>
       }
 
@@ -214,6 +256,30 @@
       <small>{{ storeOfferPromo().subtitle }}</small>
     </div>
   </section>
+
+  @if (canOrderFromStore()) {
+    <section class="inventory-banner mobile">
+      <span class="material-symbols-rounded">inventory_2</span>
+      <div>
+        <b>{{ stockSummary().available }} products available</b>
+        <small>{{ stockSummary().lowStock }} low-stock items</small>
+        <small class="promise">{{ inventoryDeliveryPromise() }}</small>
+      </div>
+    </section>
+  }
+
+  @if (!canOrderFromStore()) {
+    <section class="store-unavailable-banner mobile fd-card">
+      <span class="material-symbols-rounded">location_off</span>
+      <div>
+        <b>Store unavailable right now</b>
+        <p>{{ storeUnavailableReason() }}</p>
+      </div>
+      <button type="button" class="mobile-cta secondary" (click)="changeLocation()">
+        Change location
+      </button>
+    </section>
+  }
 
   <section class="mobile-section">
     <div class="store-search">

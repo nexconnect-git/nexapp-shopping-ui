@@ -1,21 +1,44 @@
-<div class="page">
-  <div class="page-head">
+<div class="page delivery-mobile-page active-delivery-page">
+  <div class="page-head delivery-page-head">
     <h1>Active Deliveries</h1>
     <p>Manage your current deliveries</p>
   </div>
 
+  <section class="direct-store-flow delivery-phase-strip" aria-label="Direct-store delivery flow">
+    <div>
+      <span class="material-icons-outlined">storefront</span>
+      <small>Pickup</small>
+      <strong>Reach the store</strong>
+    </div>
+    <div>
+      <span class="material-icons-outlined">pin</span>
+      <small>Verify</small>
+      <strong>Share pickup OTP</strong>
+    </div>
+    <div>
+      <span class="material-icons-outlined">navigation</span>
+      <small>Drop</small>
+      <strong>Navigate to customer</strong>
+    </div>
+    <div>
+      <span class="material-icons-outlined">task_alt</span>
+      <small>Close</small>
+      <strong>OTP, photo, payment</strong>
+    </div>
+  </section>
+
   @if (loading()) {
-    <div class="spinner-wrap"><div class="spinner"></div></div>
+    <div class="spinner-wrap delivery-loading-card"><div class="spinner"></div></div>
   } @else if (orders().length === 0) {
-    <div class="empty-state">
+    <div class="empty-state delivery-empty-card">
       <span class="material-icons-outlined">delivery_dining</span>
       <h3>No active deliveries</h3>
       <p>Accept a delivery request to get started</p>
     </div>
   } @else {
-    <div class="deliveries-list">
+    <div class="deliveries-list delivery-active-stack">
       @for (order of orders(); track order.id) {
-        <div class="delivery-card">
+        <article class="delivery-card delivery-task-card">
           <!-- Header -->
           <div class="card-header">
             <div class="order-id-group">
@@ -30,7 +53,7 @@
           </div>
 
           <!-- Step Tracker -->
-          <div class="status-steps">
+          <div class="status-steps delivery-status-timeline">
             <div
               class="status-step"
               [class.done]="
@@ -72,7 +95,31 @@
           </div>
 
           <!-- Items -->
-          <div class="items-chips">
+          <section class="delivery-route-stack active-route-stack">
+            <div class="route-line-col">
+              <span class="route-dot pickup"></span>
+              <span class="route-connector"></span>
+              <span class="route-dot dropoff"></span>
+            </div>
+            <div class="route-info-col">
+              <div class="route-point pickup-card">
+                <span class="route-label">Pickup store</span>
+                <span class="route-address">{{
+                  order.vendor_info.store_name || order.vendor_name || "Store"
+                }}</span>
+                <span class="route-sub">{{ order.vendor_info.address || "Store pickup location" }}</span>
+              </div>
+              <div class="route-point drop-card">
+                <span class="route-label">Drop customer</span>
+                <span class="route-address">
+                  {{ order.delivery_address.address_line1 }},
+                  {{ order.delivery_address.city }}
+                </span>
+              </div>
+            </div>
+          </section>
+
+          <div class="items-chips delivery-item-strip">
             @for (item of order.items.slice(0, 3); track item.id) {
               <span class="item-chip"
                 >{{ item.quantity }}x {{ item.product_name }}</span
@@ -89,10 +136,10 @@
           @if (
             ["placed", "confirmed", "preparing", "ready"].includes(order.status)
           ) {
-            <div class="otp-box">
+            <div class="otp-box pickup-otp-card">
               <div class="otp-label">
                 <span class="material-icons-outlined">lock</span>
-                Your Pickup OTP — tell this to the vendor
+                Your pickup OTP for the store
               </div>
               <div class="otp-code">{{ order.pickup_otp || "------" }}</div>
               <p class="otp-hint">
@@ -100,7 +147,7 @@
               </p>
             </div>
 
-            <div class="action-col">
+            <div class="action-col delivery-sticky-actions">
               <button
                 class="action-btn map-btn"
                 (click)="navigateToVendor(order)"
@@ -150,7 +197,7 @@
               </div>
             </div>
 
-            <div class="action-col">
+            <div class="action-col delivery-sticky-actions">
               <button
                 class="action-btn map-btn"
                 (click)="navigateToCustomer(order)"
@@ -175,7 +222,7 @@
 
           <!-- ════════ ON THE WAY: Deliver ════════ -->
           @if (order.status === "on_the_way") {
-            <div class="action-col">
+            <div class="action-col delivery-sticky-actions">
               <button
                 class="action-btn map-btn"
                 (click)="navigateToCustomer(order)"
@@ -192,7 +239,7 @@
               </button>
             </div>
           }
-        </div>
+        </article>
       }
     </div>
   }
@@ -203,7 +250,7 @@
      ══════════════════════════════════════════════════════ -->
 @if (confirmModalOrder()) {
   <div
-    class="modal-overlay"
+    class="modal-overlay delivery-bottom-sheet-overlay"
     role="button"
     tabindex="0"
     aria-label="Close delivery confirmation modal"
@@ -211,11 +258,26 @@
     (keydown.enter)="closeConfirmModal()"
     (keydown.space)="closeConfirmModal()"
   >
-    <div class="modal-card">
+    <div class="modal-card delivery-bottom-sheet" style="position: relative;">
+      @if (deliverySuccess()) {
+        <div class="success-checkmark-container animate-fade">
+          <div class="success-checkmark">
+            <div class="check-icon">
+              <span class="icon-line line-tip"></span>
+              <span class="icon-line line-long"></span>
+              <div class="icon-circle"></div>
+              <div class="icon-fix"></div>
+            </div>
+          </div>
+          <h2 class="celebration-title">Order Delivered!</h2>
+          <p class="celebration-sub">You earned <b>{{ confirmModalOrder()!.delivery_fee | appCurrency }}</b></p>
+        </div>
+      }
+
       <div class="modal-header">
         <h3>Complete Delivery</h3>
         <button class="modal-close" (click)="closeConfirmModal()">
-          <span class="material-icons-outlined">close</span>
+          <span class="material-symbols-rounded">close</span>
         </button>
       </div>
 
@@ -337,7 +399,7 @@
 
 @if (cancelModalOrder()) {
   <div
-    class="modal-overlay"
+    class="modal-overlay delivery-bottom-sheet-overlay"
     role="button"
     tabindex="0"
     aria-label="Close cancel assignment modal"
@@ -345,7 +407,7 @@
     (keydown.enter)="closeCancelModal()"
     (keydown.space)="closeCancelModal()"
   >
-    <div class="modal-card compact">
+    <div class="modal-card compact delivery-bottom-sheet">
       <div class="modal-header">
         <h3>Cancel Assignment?</h3>
         <button class="modal-close" (click)="closeCancelModal()" aria-label="Close">

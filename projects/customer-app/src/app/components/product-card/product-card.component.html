@@ -18,6 +18,11 @@
       <small class="store-name">{{ product.storeName }}</small>
     }
     <small>{{ product.unit }}</small>
+    @if (stockBadge(); as badge) {
+      <span class="stock-badge" [class.warning]="badge.tone === 'warning'" [class.danger]="badge.tone === 'danger'">
+        {{ badge.label }}
+      </span>
+    }
     <div class="bottom">
       <div class="price">
         <b>{{ product.price | appCurrency }}</b

@@ -31,9 +31,96 @@ import { MobileProductRowComponent } from '../../mobile-ui/mobile-product-row/mo
   styleUrls: ['./home.component.scss'],
 })
 export class HomeComponent {
+  private readonly defaultLocationLabel = 'Select location';
+
+  hasLocation = computed(() => {
+    const selectedAddress = this.state.activeAddress();
+    if (selectedAddress?.id) return true;
+    const locationText = String(this.state.location() || '').trim();
+    return !!locationText && locationText !== this.defaultLocationLabel;
+  });
+  serviceableStores = computed(() =>
+    this.catalog
+      .stores()
+      .filter((store) => (store.raw as any)?.is_serviceable !== false),
+  );
+  serviceableStoreIds = computed(
+    () => new Set(this.serviceableStores().map((store) => store.id)),
+  );
+  private homeProductPool = computed(() =>
+    (
+      this.catalog.products().length
+        ? this.catalog.products()
+        : this.catalog.topProducts()
+    ).filter((product) => this.isServiceableProduct(product)),
+  );
+  noServiceableStores = computed(
+    () =>
+      this.hasLocation() &&
+      !this.catalog.storesLoading() &&
+      !this.serviceableStores().length,
+  );
+  homeProducts = computed(() =>
+    this.catalog
+      .topProducts()
+      .filter(
+        (product) =>
+          !product.storeId || this.serviceableStoreIds().has(product.storeId),
+      )
+      .slice(0, 8),
+  );
+  recentlyOrderedProducts = computed(() => {
+    const historyKeys = new Set(
+      this.state
+        .cart()
+        .flatMap((item) => {
+          const rawItem = item as any;
+          return [
+            rawItem.productId,
+            rawItem.product_id,
+            rawItem.id,
+            rawItem.storeId,
+            rawItem.store_id,
+            item.category,
+          ];
+        })
+        .map((value) => this.normalize(value))
+        .filter(Boolean),
+    );
+    const pool = this.homeProductPool();
+    const matches = pool.filter((product) =>
+      [
+        product.id,
+        product.storeId,
+        product.category,
+        product.storeName,
+        product.name,
+      ].some((value) => historyKeys.has(this.normalize(value))),
+    );
+    return (matches.length ? matches : pool).slice(0, 6);
+  });
+  trendingProducts = computed(() =>
+    [...this.homeProductPool()]
+      .sort((a, b) => this.trendingScore(b) - this.trendingScore(a))
+      .slice(0, 6),
+  );
+  newArrivalProducts = computed(() =>
+    [...this.homeProductPool()]
+      .sort((a, b) => this.productDateScore(b) - this.productDateScore(a))
+      .slice(0, 6),
+  );
+  bestSellerProducts = computed(() =>
+    [...this.homeProductPool()]
+      .sort((a, b) => this.salesScore(b) - this.salesScore(a))
+      .slice(0, 6),
+  );
   heroBanner = computed(() => this.catalog.banners()[0] || null);
   heroStore = computed(
-    () => this.catalog.featuredStores()[0] || this.catalog.stores()[0] || null,
+    () =>
+      this.serviceableStores()[0] ||
+      this.catalog.featuredStores()[0] ||
+      this.catalog.stores()[0] ||
+      null,
   );
   heroImage = computed(
     () =>
@@ -165,6 +252,10 @@ export class HomeComponent {
     this.router.navigate(['/product', productId]);
   }
 
+  openLocationPicker(): void {
+    this.ui.openLocation();
+  }
+
   private _splitUrl(url: string | null | undefined): {
     path: string;
     query: Record<string, string> | null;
@@ -197,6 +288,43 @@ export class HomeComponent {
         return String(a.label || '').localeCompare(String(b.label || ''));
       return aPreferred ? -1 : 1;
     });
+  }
+
+  private isServiceableProduct(product: { storeId?: string | null }): boolean {
+    return !product.storeId || this.serviceableStoreIds().has(product.storeId);
+  }
+
+  private trendingScore(product: any): number {
+    return (
+      this.salesScore(product) * 2 +
+      this.numberFrom(product.rating ?? product.raw?.average_rating) * 10 +
+      this.numberFrom(product.raw?.review_count ?? product.raw?.ratings_count)
+    );
+  }
+
+  private salesScore(product: any): number {
+    return this.numberFrom(
+      product.raw?.total_orders ??
+        product.raw?.sold_count ??
+        product.raw?.order_count ??
+        product.raw?.orders_count ??
+        0,
+    );
+  }
+
+  private productDateScore(product: any): number {
+    const value =
+      product.raw?.created_at ||
+      product.raw?.updated_at ||
+      product.raw?.listed_at ||
+      '';
+    const timestamp = Date.parse(String(value));
+    return Number.isFinite(timestamp) ? timestamp : 0;
+  }
+
+  private numberFrom(value: unknown): number {
+    const numberValue = Number(value);
+    return Number.isFinite(numberValue) ? numberValue : 0;
   }
 
   private normalize(value: string | null | undefined): string {

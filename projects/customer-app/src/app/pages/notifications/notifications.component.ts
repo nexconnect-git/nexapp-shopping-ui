@@ -1,6 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { ApiService } from '@shared/public-api';
+import { ApiService } from '@shared/lib/services/api.service';
 
 type NotificationItem = {
   id: string;

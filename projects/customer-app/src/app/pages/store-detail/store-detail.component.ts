@@ -2,7 +2,7 @@ import { Location } from '@angular/common';
 import { Component, computed, effect, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { CustomSelectComponent } from '@shared/public-api';
+import { CustomSelectComponent } from '@shared/lib/components/custom-select/custom-select.component';
 import { CatalogService } from '../../services/catalog.service';
 import { AppStateService } from '../../services/app-state.service';
 import { UiService } from '../../services/ui.service';
@@ -72,10 +72,24 @@ export class StoreDetailComponent {
       icon: fallback?.icon || 'sell',
     };
   });
+  storeUnavailableReason = computed(() => {
+    const raw = (this.store().raw as any) || {};
+    if (raw?.is_serviceable === false) {
+      return raw?.serviceability_error || 'This store is not serviceable for your selected location.';
+    }
+    if ((raw?.is_open_now ?? raw?.is_open) === false) {
+      return this.closingLabel() || 'This store is currently closed.';
+    }
+    if (raw?.is_accepting_orders === false) {
+      return 'This store is temporarily not accepting orders.';
+    }
+    return '';
+  });
+  canOrderFromStore = computed(() => !this.storeUnavailableReason());
 
   availableStoreProducts = computed(() => {
+    if (!this.canOrderFromStore()) return [];
     const store = this.store();
-    if ((store.raw as any)?.is_serviceable === false) return [];
     return this.catalog
       .productsByStore(store.id)
       .filter((product) => this.isProductAvailable(product));
@@ -127,6 +141,26 @@ export class StoreDetailComponent {
       name,
       items: items.slice(0, 12),
     }));
+  });
+  stockSummary = computed(() => {
+    const all = this.catalog.productsByStore(this.store().id);
+    const available = all.filter((product) => this.isProductAvailable(product));
+    const lowStock = available.filter((product) => {
+      const raw = (product.raw as any) || {};
+      const stock = Number(raw?.stock ?? 0);
+      const threshold = Number(raw?.low_stock_threshold ?? 5);
+      return Number.isFinite(stock) && stock > 0 && stock <= threshold;
+    });
+    return {
+      total: all.length,
+      available: available.length,
+      lowStock: lowStock.length,
+    };
+  });
+  inventoryDeliveryPromise = computed(() => {
+    const eta = this.store().eta?.trim();
+    if (eta) return `Delivery in ${eta}`;
+    return 'Delivery promise confirmed at checkout';
   });
 
   clearStoreSearch(): void {
@@ -185,6 +219,10 @@ export class StoreDetailComponent {
       return;
     }
     this.router.navigateByUrl('/stores');
+  }
+
+  changeLocation(): void {
+    this.ui.openLocation();
   }
 
   private isProductAvailable(product: any): boolean {

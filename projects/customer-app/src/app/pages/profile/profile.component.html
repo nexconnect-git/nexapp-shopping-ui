@@ -8,15 +8,6 @@
           <span class="avatar-initials">{{
             (auth.currentUser()?.name || "NT").slice(0, 2).toUpperCase()
           }}</span>
-          <button
-            type="button"
-            aria-label="Edit profile"
-            (click)="ui.openEdit('profile')"
-          >
-            <span class="material-symbols-rounded" aria-hidden="true"
-              >edit</span
-            >
-          </button>
         </div>
         <div>
           <h1>
@@ -152,22 +143,6 @@
           Manage Membership
         </button>
       </section>
-      <section class="activity fd-card">
-        <div class="fd-section-title">
-          <h2>Recent Account Activity</h2>
-          <button type="button" (click)="viewActivity()">View all</button>
-        </div>
-        @for (item of activities(); track item.title + item.sub) {
-          <p>
-            <span class="material-symbols-rounded">{{ item.icon }}</span
-            ><b>{{ item.title }}</b
-            ><small>{{ item.sub }}</small
-            ><em>{{ item.amount }}</em>
-          </p>
-        } @empty {
-          <p>No recent account activity.</p>
-        }
-      </section>
     </aside>
   </section>
 </main>
@@ -202,11 +177,6 @@
   </section>
 
   <section class="mobile-list">
-    <button type="button" class="profile-link profile-link-btn" (click)="editProfile()">
-      <span class="material-symbols-rounded">person_edit</span>
-      <span><b>Edit Profile</b><small>Update your name, email and phone</small></span>
-      <i class="material-symbols-rounded">chevron_right</i>
-    </button>
     @for (link of quickLinks; track link.path) {
       <a [routerLink]="link.path" class="profile-link">
         <span class="material-symbols-rounded">{{ link.icon }}</span>
@@ -219,23 +189,6 @@
       <span><b>Addresses</b><small>Manage delivery locations</small></span>
       <i class="material-symbols-rounded">chevron_right</i>
     </a>
-  </section>
-
-  <section class="activity-card">
-    <div class="mobile-section-head">
-      <h2>Recent activity</h2>
-      <button type="button" (click)="viewActivity()">View</button>
-    </div>
-    @for (activity of activities(); track activity.title + activity.sub) {
-      <div>
-        <span class="material-symbols-rounded">{{ activity.icon }}</span>
-        <b>{{ activity.title }}</b>
-        <small>{{ activity.sub }}</small>
-        <strong>{{ activity.amount }}</strong>
-      </div>
-    } @empty {
-      <p>No recent account activity yet.</p>
-    }
   </section>
 
   <button type="button" class="logout" (click)="auth.logout()">Logout</button>

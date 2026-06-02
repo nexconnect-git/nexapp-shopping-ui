@@ -1,7 +1,8 @@
 import { Location } from '@angular/common';
 import { Component, computed, effect, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ApiService, AppCurrencyPipe } from '@shared/public-api';
+import { ApiService } from '@shared/lib/services/api.service';
+import { AppCurrencyPipe } from '@shared/lib/pipes/currency.pipe';
 import { CatalogService } from '../../services/catalog.service';
 import { AppStateService } from '../../services/app-state.service';
 import { UiService } from '../../services/ui.service';
@@ -69,6 +70,56 @@ export class ProductDetailComponent {
     () =>
       this.store()?.delivery || 'Delivery availability updates from the store',
   );
+  deliveryPromise = computed(() => {
+    const raw = (this.product().raw as any) || {};
+    if (raw?.is_instant_delivery) return 'Instant delivery eligible';
+    if (raw?.is_scheduled_delivery) return 'Scheduled delivery supported';
+    const storeEta = this.store()?.eta;
+    return storeEta
+      ? `Expected in ${storeEta}`
+      : 'Delivery estimate confirmed at checkout';
+  });
+  stockState = computed(() => {
+    const raw = (this.product().raw as any) || {};
+    const stock = Number(raw?.stock ?? 0);
+    const lowThreshold = Number(raw?.low_stock_threshold ?? 5);
+    const available = raw?.is_available !== false && raw?.in_stock !== false;
+    if (!available || (Number.isFinite(stock) && stock <= 0)) {
+      return { canBuy: false, label: 'Out of stock', tone: 'danger' as const };
+    }
+    if (Number.isFinite(stock) && stock > 0 && stock <= lowThreshold) {
+      return {
+        canBuy: true,
+        label: `Only ${stock} left`,
+        tone: 'warning' as const,
+      };
+    }
+    return { canBuy: true, label: 'In stock', tone: 'success' as const };
+  });
+  storeOrderState = computed(() => {
+    const vendor = (this.product().raw as any)?.vendor || {};
+    if (vendor?.is_serviceable === false) {
+      return {
+        canOrder: false,
+        message:
+          vendor?.serviceability_error ||
+          'This store is not serviceable for your selected location.',
+      };
+    }
+    if ((vendor?.is_open_now ?? vendor?.is_open) === false) {
+      return { canOrder: false, message: 'This store is currently closed.' };
+    }
+    if (vendor?.is_accepting_orders === false) {
+      return {
+        canOrder: false,
+        message: 'This store is temporarily not accepting orders.',
+      };
+    }
+    return { canOrder: true, message: '' };
+  });
+  canPurchase = computed(
+    () => this.stockState().canBuy && this.storeOrderState().canOrder,
+  );
   sizes = computed(() => {
     const product = this.product();
     const variants =
@@ -95,6 +146,41 @@ export class ProductDetailComponent {
       ? this.product().highlights
       : ['Details update when the store provides them'],
   );
+  similarFromStore = computed(() => {
+    const product = this.product();
+    if (!product.storeId) return [];
+    return this.catalog
+      .productsByStore(product.storeId)
+      .filter(
+        (item) =>
+          item.id !== product.id &&
+          this.isSuggestedProduct(item) &&
+          item.category === product.category,
+      )
+      .sort(
+        (a, b) =>
+          this.recommendationScore(b, product) -
+          this.recommendationScore(a, product),
+      )
+      .slice(0, 6);
+  });
+  similarFromCategory = computed(() => {
+    const product = this.product();
+    return this.catalog
+      .productsByCategory(product.category)
+      .filter(
+        (item) =>
+          item.id !== product.id &&
+          item.storeId !== product.storeId &&
+          this.isSuggestedProduct(item),
+      )
+      .sort(
+        (a, b) =>
+          this.recommendationScore(b, product) -
+          this.recommendationScore(a, product),
+      )
+      .slice(0, 6);
+  });
   detailPanels = computed<DetailPanel[]>(() => {
     const product = this.product();
     const raw = (product.raw || {}) as any;
@@ -178,6 +264,12 @@ export class ProductDetailComponent {
   }
 
   addToCart(): boolean {
+    if (!this.canPurchase()) {
+      this.state.showToast(
+        this.storeOrderState().message || 'This product is not available right now.',
+      );
+      return false;
+    }
     const product = this.product();
     const resolvedId = this.resolveProductId(product);
     if (!resolvedId || resolvedId === 'loading' || resolvedId === 'product') {
@@ -234,6 +326,39 @@ export class ProductDetailComponent {
     ).trim();
   }
 
+  private isSuggestedProduct(item: any): boolean {
+    const raw = item?.raw || item || {};
+    if (raw.is_available === false || raw.in_stock === false) return false;
+    if (raw.status && raw.status !== 'active') return false;
+    if (raw.approval_status && raw.approval_status !== 'approved') return false;
+    const stock = Number(raw.stock);
+    return !Number.isFinite(stock) || stock > 0;
+  }
+
+  private recommendationScore(item: any, baseProduct: any): number {
+    const itemEta = this.deliveryEtaMinutes(item?.store?.eta || item?.raw?.vendor?.estimated_delivery_label);
+    const baseEta = this.deliveryEtaMinutes(
+      this.store()?.eta || (baseProduct?.raw as any)?.vendor?.estimated_delivery_label,
+    );
+    const rating = Number(item?.rating || item?.raw?.rating || 0);
+    const sameUnit = String(item?.unit || '').toLowerCase() === String(baseProduct?.unit || '').toLowerCase();
+    const priceGap = Math.abs(Number(item?.price || 0) - Number(baseProduct?.price || 0));
+    const etaBoost = Number.isFinite(itemEta) && Number.isFinite(baseEta) ? Math.max(0, 12 - Math.abs(itemEta - baseEta)) : 0;
+    return (
+      rating * 4 +
+      (sameUnit ? 6 : 0) +
+      etaBoost -
+      Math.min(12, priceGap / 25)
+    );
+  }
+
+  private deliveryEtaMinutes(value: unknown): number {
+    const text = String(value || '').toLowerCase();
+    const match = text.match(/(\d+)\s*(min|mins|minute|minutes)/);
+    if (!match) return NaN;
+    return Number(match[1]);
+  }
+
   private categoryTemplate(): string {
     const product = this.product();
     const key = `${product.category} ${product.name}`.toLowerCase();
@@ -288,5 +413,12 @@ export class ProductDetailComponent {
         value: String(value ?? '').trim(),
       }))
       .filter((item) => item.value);
+  }
+
+  resolvePanelLabel(panelId: DetailPanelId): string {
+    if (panelId === 'details') return 'Product Details';
+    if (panelId === 'nutrition') return 'Nutritional Info';
+    if (panelId === 'handling') return 'Handling & Care';
+    return 'Reviews';
   }
 }

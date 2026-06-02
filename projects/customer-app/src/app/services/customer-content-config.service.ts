@@ -1,6 +1,6 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { API_BASE_URL } from '@shared/public-api';
+import { API_BASE_URL } from '@shared/lib/tokens/api-url.token';
 import { catchError, of } from 'rxjs';
 
 export interface CustomerNavItem {

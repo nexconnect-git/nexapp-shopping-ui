@@ -1,5 +1,5 @@
-<div class="page">
-  <div class="page-head">
+<div class="page delivery-mobile-page delivery-requests-page">
+  <div class="page-head delivery-page-head">
     <div>
       <h1>Delivery Requests</h1>
       <p>Orders assigned to you for pickup</p>
@@ -10,22 +10,25 @@
   </div>
 
   @if (loading()) {
-    <div class="spinner-wrap"><div class="spinner"></div></div>
+    <div class="spinner-wrap delivery-loading-card"><div class="spinner"></div></div>
   } @else if (requests().length === 0) {
-    <div class="empty-state">
-      <span class="material-icons-outlined">local_shipping</span>
-      <h3>No new requests</h3>
+    <div class="empty-state glass-panel delivery-empty-card">
+      <div class="radar-pulse-container" style="width: 120px; height: 120px; margin-bottom: 1rem;">
+        <div class="radar-pulse"></div>
+        <span class="material-icons-outlined" style="font-size: 48px; color: var(--primary); z-index: 1;">radar</span>
+      </div>
+      <h3>Searching for orders...</h3>
       <p>
-        You'll be notified when an order in your area needs a delivery partner
+        Keep this screen open. You'll be notified immediately when a new delivery request matches your location.
       </p>
-      <button class="btn-outline-refresh" (click)="load()">
+      <button class="btn-outline-refresh hover-lift bounce-tap" (click)="load()" style="margin-top: 1rem;">
         <span class="material-icons-outlined">refresh</span> Refresh
       </button>
     </div>
   } @else {
-    <div class="orders-list">
+    <div class="orders-list delivery-request-feed">
       @for (req of requests(); track req.id) {
-        <div class="order-card">
+        <article class="order-card delivery-request-card">
           <div class="order-top">
             <div>
               <span class="order-num">#{{ req.order_number }}</span>
@@ -56,7 +59,7 @@
           }
 
           <!-- Items preview -->
-          <div class="items-preview">
+          <div class="items-preview delivery-item-strip">
             @for (item of req.order_items.slice(0, 3); track item.name) {
               <span class="item-chip"
                 >{{ item.quantity }}x {{ item.name }}</span
@@ -70,19 +73,19 @@
           </div>
 
           <!-- Pickup location -->
-          <div class="route-visual">
+          <div class="route-visual delivery-route-stack">
             <div class="route-line-col">
               <span class="route-dot pickup"></span>
               <span class="route-connector"></span>
               <span class="route-dot dropoff"></span>
             </div>
             <div class="route-info-col">
-              <div class="route-point">
+              <div class="route-point pickup-card">
                 <span class="route-label">Pickup from</span>
                 <span class="route-address">{{ req.vendor_name }}</span>
                 <span class="route-sub">{{ req.vendor_address }}</span>
               </div>
-              <div class="route-point">
+              <div class="route-point drop-card">
                 <span class="route-label">Deliver to</span>
                 <span class="route-address"
                   >Customer address (after acceptance)</span
@@ -98,7 +101,7 @@
           </button>
 
           <!-- Accept / Reject -->
-          <div class="action-row">
+          <div class="action-row delivery-bottom-actions">
             <button
               class="reject-btn"
               [disabled]="actionId() === req.id"
@@ -120,7 +123,7 @@
               }
             </button>
           </div>
-        </div>
+        </article>
       }
     </div>
   }

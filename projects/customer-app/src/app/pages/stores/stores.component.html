@@ -25,6 +25,22 @@
         </div>
       </header>
 
+      <form class="store-search" role="search" (submit)="$event.preventDefault()">
+        <span class="material-symbols-rounded">search</span>
+        <input
+          type="search"
+          placeholder="Search stores, categories, city, or offers"
+          [value]="searchQuery()"
+          (input)="setSearchQuery($event)"
+          aria-label="Search stores"
+        />
+        @if (searchQuery()) {
+          <button type="button" aria-label="Clear search" (click)="clearSearch()">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        }
+      </form>
+
       <div class="filters">
         @if (catalog.categoriesLoading()) {
           <div class="filter-loading" role="status" aria-live="polite">
@@ -142,6 +158,22 @@
       <small>{{ storePromo().subtitle }}</small>
     </div>
   </section>
+
+  <form class="mobile-store-search" role="search" (submit)="$event.preventDefault()">
+    <span class="material-symbols-rounded">search</span>
+    <input
+      type="search"
+      placeholder="Search stores"
+      [value]="searchQuery()"
+      (input)="setSearchQuery($event)"
+      aria-label="Search stores"
+    />
+    @if (searchQuery()) {
+      <button type="button" aria-label="Clear search" (click)="clearSearch()">
+        <span class="material-symbols-rounded">close</span>
+      </button>
+    }
+  </form>
 
   <section class="mobile-section">
     <div class="mobile-chip-row">

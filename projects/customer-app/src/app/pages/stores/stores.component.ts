@@ -12,7 +12,7 @@ import { AppStateService } from '../../services/app-state.service';
 import { StoreCardComponent } from '../../components/store-card/store-card.component';
 import { CustomerContentConfigService } from '../../services/customer-content-config.service';
 import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
-import { CustomSelectComponent } from '@shared/public-api';
+import { CustomSelectComponent } from '@shared/lib/components/custom-select/custom-select.component';
 
 @Component({
   standalone: true,
@@ -38,6 +38,7 @@ export class StoresComponent {
       .slice(0, 8),
   ]);
   sortBy = signal('Relevance');
+  searchQuery = signal('');
 
   constructor(
     public catalog: CatalogService,
@@ -56,7 +57,24 @@ export class StoresComponent {
   }
 
   filteredStores = computed(() => {
-    const list = [...this.catalog.stores()];
+    const query = this.normalizeSearch(this.searchQuery());
+    const list = [...this.catalog.stores()].filter((store) => {
+      if (!query) return true;
+      const raw = store.raw as any;
+      return [
+        store.name,
+        store.category,
+        (store as any).offer,
+        (store as any).location,
+        raw?.store_name,
+        raw?.city,
+        raw?.state,
+        raw?.address,
+        raw?.category?.name,
+      ]
+        .map((value) => this.normalizeSearch(value))
+        .some((value) => value.includes(query));
+    });
     if (this.sortBy() === 'Rating') list.sort((a, b) => b.rating - a.rating);
     if (this.sortBy() === 'Delivery Time')
       list.sort((a, b) => parseInt(a.eta, 10) - parseInt(b.eta, 10));
@@ -81,6 +99,15 @@ export class StoresComponent {
   setSort(sort: string): void {
     this.sortBy.set(sort);
     this.refreshBackendFilters();
+  }
+
+  setSearchQuery(event: Event): void {
+    const target = event.target as HTMLInputElement | null;
+    this.searchQuery.set(target?.value || '');
+  }
+
+  clearSearch(): void {
+    this.searchQuery.set('');
   }
 
   loadMore(): void {
@@ -185,5 +212,9 @@ export class StoresComponent {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
+  }
+
+  private normalizeSearch(value: unknown): string {
+    return String(value || '').trim().toLowerCase();
   }
 }

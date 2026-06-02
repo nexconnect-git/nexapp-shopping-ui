@@ -35,7 +35,12 @@
 
   <section class="orders-table fd-card">
     <div class="toolbar">
-      <input class="fd-input" placeholder="Search by Order ID or items..." />
+      <input
+        class="fd-input"
+        placeholder="Search by Order ID or items..."
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+      />
       <button type="button" class="fd-btn outline" (click)="chooseDateRange()">
         Recent orders
         <span class="material-symbols-rounded">keyboard_arrow_down</span>
@@ -44,57 +49,83 @@
         <span class="material-symbols-rounded">tune</span> Filters
       </button>
     </div>
-    <div class="thead">
-      <span>Order Details</span><span>Date & Time</span><span>Amount</span
-      ><span>Status</span><span>Actions</span>
-    </div>
-    @for (order of filteredOrders(); track order.id) {
-      <div class="tr">
-        <div class="order-info">
-          <img [src]="order.items[0].image" alt="" />
+    @if (orders.loading()) {
+      <section class="empty-panel desktop-empty">
+        <span class="material-symbols-rounded">hourglass_top</span>
+        <h2>Loading your orders</h2>
+        <p>Please wait while we fetch your latest order history.</p>
+      </section>
+    } @else if (orders.error()) {
+      <section class="empty-panel desktop-empty">
+        <span class="material-symbols-rounded">wifi_off</span>
+        <h2>Could not load orders</h2>
+        <p>{{ orders.error() }}</p>
+        <button type="button" class="fd-btn primary" (click)="retryLoad()">
+          Retry
+        </button>
+      </section>
+    } @else {
+      <div class="thead">
+        <span>Order Details</span><span>Date & Time</span><span>Amount</span
+        ><span>Status</span><span>Actions</span>
+      </div>
+      @for (order of filteredOrders(); track order.id) {
+        <div class="tr">
+          <div class="order-info">
+            <img [src]="order.items[0]?.image || ''" alt="" />
+            <div>
+              <b>Order #{{ order | displayOrderId }}</b
+              ><small>Placed on {{ order.date }}<br />{{ order.time }}</small>
+            </div>
+          </div>
+          <div class="thumbs">
+            @for (item of order.items.slice(0, 3); track item.id) {
+              <img [src]="item.image" alt="" />
+            }
+            <span>+{{ Math.max(0, order.items.length - 3) }}</span>
+            <b>{{ order.items.length }} Items</b>
+          </div>
           <div>
-            <b>Order #{{ order | displayOrderId }}</b
-            ><small>Placed on {{ order.date }}<br />{{ order.time }}</small>
+            <b>{{ order.amount | appCurrency }}</b
+            ><small>{{ order.payment }}</small>
+          </div>
+          <span
+            class="fd-badge"
+            [class.green]="statusBadgeClass(order) === 'green'"
+            [class.red]="statusBadgeClass(order) === 'red'"
+            [class.purple]="statusBadgeClass(order) === 'purple'"
+            >{{ statusLabel(order) }}</span
+          >
+          <div class="actions">
+            <a
+              [routerLink]="
+                isDelivered(order)
+                  ? ['/order-finished', order.id]
+                  : ['/tracking', order.id]
+              "
+              class="fd-btn outline"
+              ><span class="material-symbols-rounded">visibility</span> View
+              Details</a
+            >
+            <button
+              type="button"
+              class="fd-btn primary"
+              (click)="orders.reorder(order)"
+            >
+              <span class="material-symbols-rounded">replay</span> Reorder
+            </button>
           </div>
         </div>
-        <div class="thumbs">
-          @for (item of order.items.slice(0, 3); track item.id) {
-            <img [src]="item.image" alt="" />
-          }
-          <span>+{{ Math.max(0, order.items.length - 3) }}</span>
-          <b>{{ order.items.length }} Items</b>
-        </div>
-        <div>
-          <b>{{ order.amount | appCurrency }}</b
-          ><small>{{ order.payment }}</small>
-        </div>
-        <span
-          class="fd-badge"
-          [class.green]="order.status === 'Delivered'"
-          [class.red]="order.status === 'Cancelled'"
-          [class.purple]="order.status === 'Active'"
-          >{{ order.status }}</span
-        >
-        <div class="actions">
-          <a
-            [routerLink]="
-              order.status === 'Delivered'
-                ? ['/order-finished', order.id]
-                : ['/tracking', order.id]
-            "
-            class="fd-btn outline"
-            ><span class="material-symbols-rounded">visibility</span> View
-            Details</a
-          >
-          <button
-            type="button"
-            class="fd-btn primary"
-            (click)="orders.reorder(order)"
-          >
-            <span class="material-symbols-rounded">replay</span> Reorder
+      } @empty {
+        <section class="empty-panel desktop-empty">
+          <span class="material-symbols-rounded">receipt_long</span>
+          <h2>No matching orders</h2>
+          <p>Try another search term or switch tabs to see more orders.</p>
+          <button type="button" class="fd-btn outline" (click)="searchQuery.set('')">
+            Clear search
           </button>
-        </div>
-      </div>
+        </section>
+      }
     }
   </section>
 </main>
@@ -121,39 +152,65 @@
   </section>
 
   <section class="mobile-list">
-    @for (order of filteredOrders(); track order.id) {
-      <article class="order-card">
-        <header>
-          <span class="status" [class.done]="order.status === 'Delivered'" [class.cancelled]="order.status === 'Cancelled'">{{ order.status }}</span>
-          <b>#{{ order | displayOrderId }}</b>
-        </header>
-        <div class="order-items">
-          @for (item of order.items.slice(0, 3); track item.id) {
-            <img [src]="item.image" [alt]="item.name" />
-          }
-          @if (order.items.length > 3) {
-            <span>+{{ order.items.length - 3 }}</span>
-          }
-        </div>
-        <p>{{ order.date }} - {{ order.time }} - {{ order.amount | appCurrency }}</p>
-        <footer>
-          @if (order.status === 'Active') {
-            <a [routerLink]="['/tracking', order.id]" class="mobile-cta">Track</a>
-          } @else if (order.status === 'Delivered') {
-            <a [routerLink]="['/order-finished', order.id]" class="mobile-cta">View details</a>
-          } @else {
-            <a routerLink="/help" class="mobile-cta secondary">Get help</a>
-          }
-          <a [routerLink]="['/order-finished', order.id]" class="mobile-cta secondary">Reorder</a>
-        </footer>
-      </article>
-    } @empty {
+    @if (orders.loading()) {
       <section class="empty-panel">
-        <span class="material-symbols-rounded">receipt_long</span>
-        <h2>No orders yet</h2>
-        <p>Your Nextou orders will appear here.</p>
-        <a routerLink="/stores" class="mobile-cta">Start shopping</a>
+        <span class="material-symbols-rounded">hourglass_top</span>
+        <h2>Loading your orders</h2>
+        <p>Please wait while we fetch your latest order history.</p>
       </section>
+    } @else if (orders.error()) {
+      <section class="empty-panel">
+        <span class="material-symbols-rounded">wifi_off</span>
+        <h2>Could not load orders</h2>
+        <p>{{ orders.error() }}</p>
+        <button type="button" class="mobile-cta" (click)="retryLoad()">Retry</button>
+      </section>
+    } @else {
+      @for (order of filteredOrders(); track order.id) {
+        <article class="order-card">
+          <header>
+            <span
+              class="status"
+              [class.done]="isDelivered(order)"
+              [class.cancelled]="isCancelled(order)"
+              >{{ statusLabel(order) }}</span
+            >
+            <b>#{{ order | displayOrderId }}</b>
+          </header>
+          <p class="store-name">
+            <span class="material-symbols-rounded">storefront</span>
+            {{ storeName(order) }}
+          </p>
+          <div class="order-items">
+            @for (item of order.items.slice(0, 3); track item.id) {
+              <img [src]="item.image" [alt]="item.name" />
+            }
+            @if (order.items.length > 3) {
+              <span>+{{ order.items.length - 3 }}</span>
+            }
+          </div>
+          <p>{{ order.date }} - {{ order.time }} - {{ order.amount | appCurrency }}</p>
+          <footer>
+            @if (isActive(order)) {
+              <a [routerLink]="['/tracking', order.id]" class="mobile-cta">Track</a>
+            } @else if (isDelivered(order)) {
+              <a [routerLink]="['/order-finished', order.id]" class="mobile-cta">View details</a>
+            } @else {
+              <a routerLink="/help" class="mobile-cta secondary">Get help</a>
+            }
+            <button type="button" class="mobile-cta secondary" (click)="reorder(order)">
+              Reorder
+            </button>
+          </footer>
+        </article>
+      } @empty {
+        <section class="empty-panel">
+          <span class="material-symbols-rounded">receipt_long</span>
+          <h2>No orders yet</h2>
+          <p>Your Nextou orders will appear here.</p>
+          <a routerLink="/stores" class="mobile-cta">Start shopping</a>
+        </section>
+      }
     }
   </section>
 </main>

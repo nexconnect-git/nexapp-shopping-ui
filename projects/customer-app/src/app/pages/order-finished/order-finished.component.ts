@@ -1,10 +1,8 @@
 import { Component, computed, effect, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import {
-  ApiService,
-  AppCurrencyPipe,
-  AuthService as SharedAuthService,
-} from '@shared/public-api';
+import { ApiService } from '@shared/lib/services/api.service';
+import { AppCurrencyPipe } from '@shared/lib/pipes/currency.pipe';
+import { AuthService as SharedAuthService } from '@shared/lib/services/auth.service';
 import { OrderService } from '../../services/order.service';
 import { AppStateService } from '../../services/app-state.service';
 import { DisplayOrderIdPipe } from '../../shared/display-order-id.pipe';
