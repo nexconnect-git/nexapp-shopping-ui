@@ -20,6 +20,27 @@ export class LoginComponent {
   loading = signal(false);
   error = signal('');
 
+  canSubmit(): boolean {
+    return !this.loading() && !!this.username.trim() && !!this.password;
+  }
+
+  goToRegister(event?: MouseEvent) {
+    if (
+      event &&
+      (event.button !== 0 ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.shiftKey ||
+        event.altKey)
+    ) {
+      return;
+    }
+
+    event?.preventDefault();
+    this.auth.clearInvalidSession();
+    void this.router.navigateByUrl('/register');
+  }
+
   onLogin() {
     if (!this.username || !this.password) {
       this.error.set('Please enter both username and password.');
@@ -33,7 +54,7 @@ export class LoginComponent {
       next: (res) => {
         if (res.user.role !== 'vendor') {
           this.error.set(
-            'Access denied. This portal is strictly for vendors and merchants.',
+            'Access denied. This portal is strictly for vendors and merchants.'
           );
           this.loading.set(false);
           return;
@@ -59,8 +80,17 @@ export class LoginComponent {
             }
             this.loading.set(false);
           },
-          error: () => {
-            this.router.navigate(['/pending-approval']);
+          error: (err) => {
+            if ([401, 403, 404].includes(err?.status)) {
+              this.auth.clearInvalidSession();
+              this.error.set(
+                'Vendor profile could not be verified for this account.'
+              );
+            } else {
+              this.error.set(
+                'Could not verify vendor approval status. Please retry.'
+              );
+            }
             this.loading.set(false);
           },
         });
@@ -69,7 +99,7 @@ export class LoginComponent {
         this.error.set(
           err.error?.detail ||
             err.error?.error ||
-            'Invalid credentials. Please try again.',
+            'Invalid credentials. Please try again.'
         );
         this.loading.set(false);
       },

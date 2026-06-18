@@ -2,39 +2,34 @@
   <a [routerLink]="['/store', store.id]" class="store-img">
     <img
       [src]="store.image || placeholderImage"
-      [alt]="store.name"
+      [alt]="storeName()"
       loading="lazy"
       (error)="onImageError($event)"
     />
+    <span class="eta-badge">
+      <span class="material-symbols-rounded">bolt</span>
+      {{ etaLabel() }}
+    </span>
+    @if (store.offer) {
+      <span class="offer-badge">{{ store.offer }}</span>
+    }
   </a>
   <div class="info">
-    <a [routerLink]="['/store', store.id]" class="name">{{ store.name }}</a>
-    <div class="meta">
+    <small class="category">{{ store.category || "Store" }}</small>
+    <a [routerLink]="['/store', store.id]" class="name">{{ storeName() }}</a>
+    <div class="meta-row">
+      <span><span class="material-symbols-rounded">star</span>{{ ratingLabel() }}</span>
+      <span><span class="material-symbols-rounded">near_me</span>{{ store.distance || "Nearby" }}</span>
+    </div>
+    <div class="status-row">
       <span
-        ><span class="material-symbols-rounded">star</span>
-        {{ store.rating }}</span
+        class="status-pill"
+        [class.open]="isStoreOpen()"
+        [class.closed]="!isStoreOpen()"
       >
-      <small>({{ store.ratings }})</small>
+        {{ storeStatusText() }}
+      </span>
+      <small>{{ ratingsCountLabel() }} ratings</small>
     </div>
-    <div class="eta">
-      <span class="material-symbols-rounded">schedule</span> {{ store.eta }}
-    </div>
-    <div
-      class="status-pill"
-      [class.open]="isStoreOpen()"
-      [class.closed]="!isStoreOpen()"
-    >
-      {{ storeStatusText() }}
-    </div>
-    @if (store.offer) {
-      <div class="offer">
-        <span class="material-symbols-rounded">local_offer</span>
-        {{ store.offer }}
-      </div>
-    } @else {
-      <div class="offer muted">
-        <span class="material-symbols-rounded">sell</span> Live catalog offers
-      </div>
-    }
   </div>
 </article>

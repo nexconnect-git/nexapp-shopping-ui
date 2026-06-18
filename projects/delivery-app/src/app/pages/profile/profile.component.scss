@@ -230,6 +230,18 @@
     font-weight: 500;
   }
 }
+.form-control.has-error {
+  border-color: var(--danger);
+  background: var(--danger-light);
+}
+.field-error {
+  display: block;
+  margin-top: 0.4rem;
+  color: var(--danger);
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
 
 .save-btn {
   width: 100%;
@@ -350,4 +362,3 @@
     transform: translateY(0);
   }
 }
-

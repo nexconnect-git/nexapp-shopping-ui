@@ -1,11 +1,12 @@
 import { Location } from '@angular/common';
-import { Component, computed, signal, OnInit, OnDestroy } from '@angular/core';
+import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { CatalogService } from '../../services/catalog.service';
 import { AppStateService } from '../../services/app-state.service';
 import { UiService } from '../../services/ui.service';
 import { AuthService } from '../../services/auth.service';
 import { ApiService } from '@shared/lib/services/api.service';
+import { PageFeatureAccessService } from '@shared/lib/services/page-feature-access.service';
 import { filter } from 'rxjs';
 
 @Component({
@@ -16,11 +17,12 @@ import { filter } from 'rxjs';
   styleUrls: ['./mobile-topbar.component.scss'],
 })
 export class MobileTopbarComponent implements OnInit, OnDestroy {
+  private features = inject(PageFeatureAccessService);
   query = signal('');
   private currentUrl = signal('/');
   readonly isHomeRoute = computed(() => {
     const path = this.currentUrl().split('?')[0].split('#')[0];
-    return path === '/' || path === '/new-home';
+    return path === '/';
   });
   readonly showBack = computed(() => !this.isHomeRoute());
 
@@ -33,7 +35,7 @@ export class MobileTopbarComponent implements OnInit, OnDestroy {
   ];
   currentPlaceholderIndex = signal(0);
   readonly activePlaceholder = computed(() => this.placeholders[this.currentPlaceholderIndex()]);
-  private intervalId: any;
+  private intervalId?: ReturnType<typeof setInterval>;
 
   suggestions = computed(() =>
     [
@@ -81,16 +83,26 @@ export class MobileTopbarComponent implements OnInit, OnDestroy {
   search(event: Event): void {
     event.preventDefault();
     const value = this.query().trim();
-    this.router.navigate(['/search'], { queryParams: value ? { q: value } : {} });
+    this.router.navigate(['/explore'], { queryParams: value ? { q: value } : {} });
   }
 
   openCart(): void {
     this.router.navigate(['/cart']);
   }
 
+  canUseRoute(route: string): boolean {
+    if (route === '/explore') {
+      return (
+        this.features.isRouteEnabled('customer-app', '/explore') ||
+        this.features.isRouteEnabled('customer-app', '/search')
+      );
+    }
+    return this.features.isRouteEnabled('customer-app', route);
+  }
+
   goBack(): void {
     const path = this.currentUrl().split('?')[0].split('#')[0];
-    if (path === '/' || path === '/new-home') return;
+    if (path === '/') return;
     if (typeof window !== 'undefined' && window.history.length > 1) {
       this.location.back();
       return;

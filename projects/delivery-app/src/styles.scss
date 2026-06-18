@@ -94,6 +94,65 @@ main,
   color: #991b1b !important;
 }
 
+/* ── Delivery component base styles (all viewports) ── */
+.delivery-settings-list {
+  display: grid;
+  gap: 8px;
+}
+
+.settings-row {
+  width: 100%;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 40px 1fr 20px;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border-light, #e8e5f4);
+  border-radius: 16px;
+  background: #fff;
+  color: #111;
+  text-decoration: none;
+  text-align: left;
+}
+
+button.settings-row {
+  font: inherit;
+  cursor: pointer;
+}
+
+.settings-row > .material-icons-outlined:first-child {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: #f1effb;
+  color: #38268e;
+}
+
+.settings-row b,
+.settings-row small {
+  display: block;
+}
+
+.settings-row b {
+  font-size: 0.88rem;
+  font-weight: 900;
+}
+
+.settings-row small {
+  margin-top: 2px;
+  color: #6b7280;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.settings-row.danger > .material-icons-outlined:first-child {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
 @media (max-width: 768px) {
   :root {
     --delivery-mobile-x: 12px;
@@ -102,13 +161,24 @@ main,
 
   html,
   body {
+    min-height: 100%;
+    height: auto;
     overflow-x: hidden;
     background: #f7f6fc;
+  }
+
+  app-root {
+    display: block;
+    min-height: 100dvh;
+    overflow: visible;
   }
 
   .delivery-mobile-page {
     width: 100%;
     max-width: 430px;
+    min-height: calc(
+      100dvh - 64px - var(--delivery-bottom-nav-height) - var(--safe-area-bottom)
+    );
     margin: 0 auto;
     box-sizing: border-box;
     padding: 12px var(--delivery-mobile-x)

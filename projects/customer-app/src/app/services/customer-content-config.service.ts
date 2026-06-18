@@ -139,19 +139,17 @@ export const DEFAULT_CUSTOMER_CONTENT_CONFIG: CustomerContentConfig = {
   navigation: {
     bottomNav: [
       { label: 'Home', icon: 'home', route: '/', exact: true },
-      { label: 'Search', icon: 'search', route: '/search' },
-      { label: 'Stores', icon: 'storefront', route: '/stores' },
+      { label: 'Categories', icon: 'category', route: '/categories' },
+      { label: 'Explore', icon: 'travel_explore', route: '/explore' },
       { label: 'Cart', icon: 'shopping_cart', route: '/cart', badge: 'cart' },
-      { label: 'Orders', icon: 'receipt_long', route: '/orders' },
-      { label: 'Account', icon: 'person', route: '/profile' },
+      { label: 'Account', icon: 'person', route: '/account' },
     ],
     footerGroups: [
       {
         title: 'Shop',
         links: [
-          { label: 'Stores', route: '/stores' },
-          { label: 'Offers', route: '/offers' },
-          { label: 'Search', route: '/search' },
+          { label: 'Explore', route: '/explore' },
+          { label: 'Explore', route: '/explore' },
         ],
       },
       {
@@ -159,15 +157,6 @@ export const DEFAULT_CUSTOMER_CONTENT_CONFIG: CustomerContentConfig = {
         links: [
           { label: 'Orders', route: '/orders' },
           { label: 'Addresses', route: '/addresses' },
-          { label: 'Wallet', route: '/wallet' },
-        ],
-      },
-      {
-        title: 'Support',
-        links: [
-          { label: 'Help', route: '/help' },
-          { label: 'My Issues', route: '/issues' },
-          { label: 'Referral', route: '/referral' },
         ],
       },
     ],
@@ -179,7 +168,7 @@ export const DEFAULT_CUSTOMER_CONTENT_CONFIG: CustomerContentConfig = {
       subtitle:
         'Live catalog, prices, and availability update from the server.',
       ctaLabel: 'Shop now',
-      ctaUrl: '/stores',
+      ctaUrl: '/explore',
       image: '',
     },
     sectionTitles: {
@@ -220,7 +209,6 @@ export const DEFAULT_CUSTOMER_CONTENT_CONFIG: CustomerContentConfig = {
     sortOptions: ['Relevance', 'Rating', 'Delivery Time', 'Price Low to High'],
     quickFilters: [
       { label: 'Fast Delivery', icon: 'bolt', action: 'fast_delivery' },
-      { label: 'Offers', icon: 'local_offer', action: 'offers' },
       { label: 'Ratings 4+', icon: 'star', action: 'rating_4_plus' },
       { label: 'Under budget', action: 'under_budget' },
     ],
@@ -229,7 +217,7 @@ export const DEFAULT_CUSTOMER_CONTENT_CONFIG: CustomerContentConfig = {
     miniCartTitle: 'Mini Cart',
     emptyTitle: 'Your cart is empty',
     emptyDescription: 'Browse nearby stores and add fresh essentials.',
-    emptyCta: 'Browse Stores',
+    emptyCta: 'Explore products',
     browseCta: 'Browse products',
     securePayment: 'Safe and secure payments',
   },
@@ -239,7 +227,7 @@ export const DEFAULT_CUSTOMER_CONTENT_CONFIG: CustomerContentConfig = {
     emptyTitle: 'No active coupons right now',
     emptyDescription:
       'Available offers will appear here as soon as the catalog has active coupons.',
-    emptyCta: 'Browse stores',
+    emptyCta: 'Explore products',
     shopBanners: [],
   },
   referral: {
@@ -303,12 +291,12 @@ function normalizeBottomNav(items: CustomerNavItem[]): CustomerNavItem[] {
   const seenRoutes = new Set<string>();
   const nav = items
     .map((item) =>
-      item.route === '/stores' || item.label.toLowerCase() === 'categories'
+      item.route === '/stores' || item.route === '/search'
         ? {
             ...item,
-            label: 'Stores',
-            icon: item.icon === 'more_horiz' ? 'storefront' : item.icon,
-            route: '/stores',
+            label: item.route === '/search' ? 'Explore' : 'Categories',
+            icon: item.route === '/search' ? 'travel_explore' : 'category',
+            route: item.route === '/search' ? '/explore' : '/categories',
           }
         : item,
     )
@@ -317,16 +305,16 @@ function normalizeBottomNav(items: CustomerNavItem[]): CustomerNavItem[] {
       seenRoutes.add(item.route);
       return true;
     });
-  if (!nav.some((item) => item.route === '/stores')) {
+  if (!nav.some((item) => item.route === '/explore')) {
     const cartIndex = nav.findIndex((item) => item.route === '/cart');
     const insertAt = cartIndex >= 0 ? cartIndex : Math.min(2, nav.length);
     nav.splice(insertAt, 0, {
-      label: 'Stores',
-      icon: 'storefront',
-      route: '/stores',
+      label: 'Explore',
+      icon: 'travel_explore',
+      route: '/explore',
     });
   }
-  return nav;
+  return nav.filter((item) => item.route !== '/orders');
 }
 
 @Injectable({ providedIn: 'root' })

@@ -1058,10 +1058,6 @@ export class ApiService {
   }
 
   // Delivery
-  registerDeliveryPartner(data: any): Observable<any> {
-    return this.http.post(`${this.baseUrl}/delivery/register/`, data);
-  }
-
   getDeliveryDashboard(): Observable<any> {
     return this.http.get(`${this.baseUrl}/delivery/dashboard/`);
   }
@@ -1244,6 +1240,7 @@ export class ApiService {
     field: string;
     value: string;
     exclude_user_id?: string;
+    role?: 'customer' | 'vendor' | 'delivery' | 'admin';
   }): Observable<any> {
     return this.http.post(`${this.baseUrl}/admin/identity-availability/`, data);
   }
@@ -1262,9 +1259,10 @@ export class ApiService {
     });
   }
 
-  setVendorStatus(id: string, status: string): Observable<any> {
+  setVendorStatus(id: string, status: string, reason = ''): Observable<any> {
     return this.http.post(`${this.baseUrl}/admin/vendors/${id}/status/`, {
       status,
+      reason,
     });
   }
 
@@ -1316,7 +1314,10 @@ export class ApiService {
   }
 
   createAdminDeliveryPartner(data: any): Observable<any> {
-    return this.http.post(`${this.baseUrl}/admin/delivery-partners/`, data);
+    return this.http.post(
+      `${this.baseUrl}/admin/delivery-partners/`,
+      this.bodyWithFiles(data),
+    );
   }
 
   getAdminDeliveryPartners(params?: any): Observable<any> {
@@ -1350,7 +1351,7 @@ export class ApiService {
   updateAdminDeliveryPartner(id: string, data: any): Observable<any> {
     return this.http.patch(
       `${this.baseUrl}/admin/delivery-partners/${id}/`,
-      data,
+      this.bodyWithFiles(data),
     );
   }
 

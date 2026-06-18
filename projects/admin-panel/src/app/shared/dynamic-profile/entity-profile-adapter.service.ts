@@ -105,6 +105,31 @@ const VENDOR_STORE_TYPE_OPTIONS = [
   },
 ];
 
+const VENDOR_REVIEW_STATUS_OPTIONS = [
+  { label: 'Approve', value: 'approved' },
+  { label: 'Reject', value: 'rejected' },
+  { label: 'Hold', value: 'hold' },
+  { label: 'Suspended', value: 'suspended' },
+  { label: 'In Review', value: 'in_review' },
+  { label: 'Pending', value: 'pending' },
+  { label: 'Pending Details', value: 'pending_details' },
+  { label: 'Pending Documents', value: 'pending_documents' },
+  { label: 'Invalid Details', value: 'invalid_details' },
+  { label: 'Invalid Documents', value: 'invalid_documents' },
+];
+
+const VENDOR_DOCUMENT_UPLOAD_FIELDS = [
+  'license_document',
+  'pan_card_document',
+  'gstin_certificate_document',
+  'identity_proof_document',
+  'address_proof_document',
+  'cancelled_cheque_document',
+  'fssai_license_document',
+  'business_registration_document',
+  'trademark_document',
+];
+
 function normalizeVendorStoreType(value: unknown): string {
   const raw = String(value || '').trim();
   if (VENDOR_STORE_TYPE_OPTIONS.some((option) => option.value === raw)) {
@@ -132,6 +157,7 @@ export class EntityProfileAdapterService {
       entityTypeLabel: this.entityTypeLabel(type),
       subtitle: this.subtitle(type, dto, user),
       avatarUrl: this.mediaUrl(user['avatar'] ?? dto['logo'] ?? dto['image']),
+      coverUrl: this.mediaUrl(dto['banner'] ?? dto['cover_image']),
       avatarIcon: this.entityIcon(type),
       avatarInitials: this.initials(this.entityName(type, dto, user)),
       breadcrumbs: this.breadcrumbs(type, dto, 'Profile'),
@@ -210,9 +236,17 @@ export class EntityProfileAdapterService {
       attentionItems: this.attentionItems(type, dto, user),
       sections: this.reviewSections(type, dto, user),
       saveDraftLabel: 'Save Draft',
+      statusValue:
+        type === 'vendor' || type === 'store'
+          ? this.str(dto['status']) || 'pending'
+          : undefined,
+      statusOptions:
+        type === 'vendor' || type === 'store'
+          ? VENDOR_REVIEW_STATUS_OPTIONS
+          : undefined,
       submitLabel:
         type === 'vendor' || type === 'store'
-          ? 'Approve Vendor'
+          ? 'Save Status'
           : 'Submit Review',
     };
   }
@@ -281,6 +315,7 @@ export class EntityProfileAdapterService {
         'is_accepting_orders',
         'require_stock_check',
         'is_featured',
+        ...VENDOR_DOCUMENT_UPLOAD_FIELDS,
       ]);
       return this.withParsedCollections(payload, [
         'business_addresses',
@@ -315,6 +350,7 @@ export class EntityProfileAdapterService {
         'vehicle_type',
         'vehicle_number',
         'license_number',
+        'id_proof',
         'is_available',
         'is_approved',
         'status',
@@ -420,6 +456,13 @@ export class EntityProfileAdapterService {
           this.field('Contact Phone', dto['contact_person_phone']),
           this.field('Business Addresses', dto['business_addresses']),
         ]),
+        this.section(
+          'documents',
+          'Uploaded Documents',
+          '📄',
+          'compliance',
+          this.documentFields(dto['documents']),
+        ),
         this.section('bank', 'Bank & Settlement', '🏦', 'bank', [
           this.field('Account Holder', dto['account_holder_name']),
           this.field(
@@ -667,6 +710,59 @@ export class EntityProfileAdapterService {
                 'trademark_number',
                 'Trademark Number',
                 'text',
+                false,
+              ),
+            ]),
+            this.formSection('documents', 'Documents', '📄', [
+              this.formField(
+                'license_document',
+                'License Document',
+                'file',
+                false,
+                1,
+                'Upload a new license document to attach it to this vendor.',
+              ),
+              this.formField('pan_card_document', 'PAN Card', 'file', false),
+              this.formField(
+                'gstin_certificate_document',
+                'GSTIN Certificate',
+                'file',
+                false,
+              ),
+              this.formField(
+                'identity_proof_document',
+                'Identity Proof',
+                'file',
+                false,
+              ),
+              this.formField(
+                'address_proof_document',
+                'Address Proof',
+                'file',
+                false,
+              ),
+              this.formField(
+                'cancelled_cheque_document',
+                'Cancelled Cheque',
+                'file',
+                false,
+              ),
+              this.formField(
+                'fssai_license_document',
+                'FSSAI License Document',
+                'file',
+                false,
+              ),
+              this.formField(
+                'business_registration_document',
+                'Business Registration',
+                'file',
+                false,
+              ),
+              this.formField(
+                'trademark_document',
+                'Trademark Document',
+                'file',
                 false,
               ),
             ]),
@@ -1417,13 +1513,38 @@ export class EntityProfileAdapterService {
     label: string,
     value: unknown,
     tone?: ProfileStatusTone,
+    href?: string,
   ): ProfileDisplayField {
     return {
       label,
       value:
         value === undefined || value === null || value === '' ? '-' : value,
       tone,
+      href,
     };
+  }
+
+  private documentFields(value: unknown): ProfileDisplayField[] {
+    const documents = Array.isArray(value) ? value : [];
+    if (!documents.length) {
+      return [this.field('Documents', 'No documents uploaded', 'warning')];
+    }
+    return documents.map((item, index) => {
+      const document = this.asRecord(item);
+      const typeLabel =
+        this.str(document['document_type_label']) ||
+        this.title(this.str(document['document_type'])) ||
+        `Document ${index + 1}`;
+      const status = this.str(document['status']) || 'pending';
+      const filename =
+        this.str(document['original_filename']) || 'Open document';
+      return this.field(
+        typeLabel,
+        `${filename} (${this.title(status)})`,
+        this.statusTone(status),
+        this.mediaUrl(document['file']),
+      );
+    });
   }
 
   private user(
@@ -1594,9 +1715,28 @@ export class EntityProfileAdapterService {
     const status = this.str(value).toLowerCase();
     if (['approved', 'active', 'available', 'delivered'].includes(status))
       return 'success';
-    if (['rejected', 'suspended', 'cancelled', 'offline'].includes(status))
+    if (
+      [
+        'rejected',
+        'suspended',
+        'invalid_details',
+        'invalid_documents',
+        'cancelled',
+        'offline',
+      ].includes(status)
+    )
       return 'danger';
-    if (['pending', 'on_delivery', 'preparing'].includes(status))
+    if (
+      [
+        'pending',
+        'hold',
+        'in_review',
+        'pending_details',
+        'pending_documents',
+        'on_delivery',
+        'preparing',
+      ].includes(status)
+    )
       return 'warning';
     return 'neutral';
   }
@@ -1622,9 +1762,14 @@ export class EntityProfileAdapterService {
     if ('vendor_type' in value) {
       value['vendor_type'] = normalizeVendorStoreType(value['vendor_type']);
     }
-    for (const imageKey of ['logo', 'banner']) {
-      if (typeof File === 'undefined' || !(value[imageKey] instanceof File)) {
-        delete value[imageKey];
+    for (const fileKey of [
+      'logo',
+      'banner',
+      'id_proof',
+      ...VENDOR_DOCUMENT_UPLOAD_FIELDS,
+    ]) {
+      if (typeof File === 'undefined' || !(value[fileKey] instanceof File)) {
+        delete value[fileKey];
       }
     }
     for (const key of [

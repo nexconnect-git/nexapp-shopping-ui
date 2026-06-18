@@ -9,10 +9,18 @@
       <div class="spinner-wrap"><div class="spinner"></div></div>
     } @else {
       <div class="status-icon" [class]="'status-icon--' + status()">
-        @if (status() === "pending") {
+        @if (status() === "pending" || status() === "in_review") {
           <span class="material-icons-outlined">hourglass_top</span>
-        } @else if (status() === "rejected") {
+        } @else if (
+          status() === "rejected" ||
+          status() === "invalid_details" ||
+          status() === "invalid_documents"
+        ) {
           <span class="material-icons-outlined">cancel</span>
+        } @else if (status() === "hold") {
+          <span class="material-icons-outlined">pause_circle</span>
+        } @else if (status() === "pending_details" || status() === "pending_documents") {
+          <span class="material-icons-outlined">assignment_late</span>
         } @else if (status() === "suspended") {
           <span class="material-icons-outlined">block</span>
         } @else {
@@ -26,13 +34,39 @@
         <p class="store-name">{{ storeName() }}</p>
       }
 
+      @if (error()) {
+        <div class="reason-box">
+          <span class="material-icons-outlined">error_outline</span>
+          <div>
+            <strong>Status Check Failed</strong>
+            <p>{{ error() }}</p>
+          </div>
+        </div>
+      }
+
       <p class="message">{{ statusMessage }}</p>
+
+      @if (statusReason()) {
+        <div class="reason-box">
+          <span class="material-icons-outlined">info</span>
+          <div>
+            <strong>Admin Note</strong>
+            <p>{{ statusReason() }}</p>
+          </div>
+        </div>
+      }
 
       <div class="status-badge status-badge--{{ status() }}">
         Account Status: <strong>{{ statusLabel }}</strong>
       </div>
 
-      @if (status() === "pending") {
+      @if (
+        status() === "pending" ||
+        status() === "in_review" ||
+        status() === "pending_details" ||
+        status() === "pending_documents" ||
+        status() === "hold"
+      ) {
         <div class="info-list">
           <div class="info-item">
             <span class="material-icons-outlined">check</span>
@@ -52,7 +86,12 @@
         </p>
       }
 
-      @if (status() === "rejected" || status() === "suspended") {
+      @if (
+        status() === "rejected" ||
+        status() === "suspended" ||
+        status() === "invalid_details" ||
+        status() === "invalid_documents"
+      ) {
         <p class="poll-note">
           Automatic checks are paused for this final status.
         </p>

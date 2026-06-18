@@ -60,21 +60,6 @@
       </section>
 
       <section>
-        <h3>{{ content.filters().offersTitle }}</h3>
-        <div class="chips">
-          @for (item of offers(); track item) {
-            <button
-              type="button"
-              [class.active]="selectedOffer() === item"
-              (click)="selectedOffer.set(item)"
-            >
-              {{ item }}
-            </button>
-          }
-        </div>
-      </section>
-
-      <section>
         <h3>{{ content.filters().categoriesTitle }}</h3>
         <div class="chips">
           @for (item of categories(); track item) {

@@ -96,12 +96,21 @@
       animation: float 3s ease-in-out infinite;
     }
   }
+  &--in_review,
+  &--pending_details,
+  &--pending_documents,
+  &--hold {
+    border-color: var(--warning-light);
+    color: var(--warning);
+  }
   &--approved {
     border-color: var(--success-light);
     color: var(--success);
   }
   &--rejected,
-  &--suspended {
+  &--suspended,
+  &--invalid_details,
+  &--invalid_documents {
     border-color: var(--danger-light);
     color: var(--danger);
   }
@@ -153,16 +162,55 @@
     background: var(--warning-light);
     border-color: transparent;
   }
+  &--in_review,
+  &--pending_details,
+  &--pending_documents,
+  &--hold {
+    background: var(--warning-light);
+    border-color: transparent;
+  }
   &--approved {
     background: var(--success-light);
     border-color: transparent;
     color: var(--success);
   }
   &--rejected,
-  &--suspended {
+  &--suspended,
+  &--invalid_details,
+  &--invalid_documents {
     background: var(--danger-light);
     border-color: transparent;
     color: var(--danger);
+  }
+}
+
+.reason-box {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 0.875rem;
+  text-align: left;
+  padding: 1rem;
+  border: 1px solid var(--warning-light);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--warning-light) 62%, var(--nc-white));
+  margin: 0 0 1.75rem;
+
+  .material-icons-outlined {
+    color: var(--warning);
+    font-size: 24px;
+  }
+
+  strong {
+    display: block;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+  }
+
+  p {
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0;
+    overflow-wrap: anywhere;
   }
 }
 

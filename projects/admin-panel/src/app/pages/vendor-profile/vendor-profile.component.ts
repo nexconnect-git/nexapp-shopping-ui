@@ -204,8 +204,13 @@ export class VendorProfileComponent implements OnInit {
   }
 
   setStatus(newStatus: string) {
+    const reason =
+      newStatus === 'approved'
+        ? ''
+        : window.prompt(`Reason for setting vendor status to "${newStatus}"?`)?.trim();
+    if (newStatus !== 'approved' && !reason) return;
     this.actionLoading.set(true);
-    this.api.setVendorStatus(this.vendorId, newStatus).subscribe({
+    this.api.setVendorStatus(this.vendorId, newStatus, reason || '').subscribe({
       next: () => {
         this.toast.show(`Vendor status set to ${newStatus}.`, 'success');
         this.actionLoading.set(false);

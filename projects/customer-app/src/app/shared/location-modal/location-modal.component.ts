@@ -61,6 +61,11 @@ export class LocationModalComponent {
     this.state.showToast(`${address.label} selected`);
   }
 
+  isAddressSelected(address: Address): boolean {
+    const selectedId = this.selectedAddressId() || this.state.activeAddress()?.id;
+    return selectedId === address.id;
+  }
+
   useCurrentLocation(): void {
     this.state.showToast('Requesting browser location permission...');
     this.state.useCurrentLocation();

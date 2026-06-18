@@ -61,65 +61,59 @@
       </div>
 
       @if (error()) {
-        <div class="error-msg">
-          <span class="material-icons-outlined">error_outline</span>
-          {{ error() }}
-        </div>
-      }
-
-      @if (checkingSetup()) {
-        <div class="checking-setup">
-          <span class="btn-spinner"></span>
-          <span>Checking system status...</span>
-        </div>
+      <div class="error-msg">
+        <span class="material-icons-outlined">error_outline</span>
+        {{ error() }}
+      </div>
+      } @if (checkingSetup()) {
+      <div class="checking-setup">
+        <span class="btn-spinner"></span>
+        <span>Checking system status...</span>
+      </div>
       } @else {
-        <form (ngSubmit)="onLogin()">
-          <div class="form-group">
-            <label class="form-label" for="username">Username</label>
-            <div class="input-icon-wrapper">
-              <span class="material-icons-outlined input-icon"
-                >person_outline</span
-              >
-              <input
-                id="username"
-                class="form-input"
-                type="text"
-                [(ngModel)]="username"
-                name="username"
-                placeholder="Enter your username"
-                required
-                autocomplete="username"
-              />
-            </div>
+      <form (ngSubmit)="onLogin()">
+        <div class="form-group">
+          <label class="form-label" for="username">Username</label>
+          <div class="input-icon-wrapper">
+            <span class="material-icons-outlined input-icon"
+              >person_outline</span
+            >
+            <input
+              id="username"
+              class="form-input"
+              type="text"
+              [(ngModel)]="username"
+              name="username"
+              placeholder="Enter your username"
+              required
+              autocomplete="username"
+            />
           </div>
-          <div class="form-group">
-            <label class="form-label" for="password">Password</label>
-            <div class="input-icon-wrapper">
-              <span class="material-icons-outlined input-icon"
-                >lock_outline</span
-              >
-              <input
-                id="password"
-                class="form-input"
-                type="password"
-                [(ngModel)]="password"
-                name="password"
-                placeholder="Enter your password"
-                required
-                autocomplete="current-password"
-              />
-            </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <div class="input-icon-wrapper">
+            <span class="material-icons-outlined input-icon">lock_outline</span>
+            <input
+              id="password"
+              class="form-input"
+              type="password"
+              [(ngModel)]="password"
+              name="password"
+              placeholder="Enter your password"
+              required
+              autocomplete="current-password"
+            />
           </div>
-          <button type="submit" class="signin-btn" [disabled]="loading()">
-            @if (loading()) {
-              <span class="btn-spinner"></span>
-              Signing in...
-            } @else {
-              <span class="material-icons-outlined">login</span>
-              Sign in
-            }
-          </button>
-        </form>
+        </div>
+        <button type="submit" class="signin-btn" [disabled]="!canSubmit()">
+          @if (loading()) {
+          <span class="btn-spinner"></span>
+          Signing in... } @else {
+          <span class="material-icons-outlined">login</span>
+          Sign in }
+        </button>
+      </form>
       }
 
       <p class="admin-note">

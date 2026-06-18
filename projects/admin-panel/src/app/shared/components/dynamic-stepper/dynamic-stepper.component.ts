@@ -545,6 +545,15 @@ export class DynamicStepperComponent implements OnChanges {
       return;
     }
 
+    const existingState = this.uniqueStates[key];
+    if (
+      existingState?.value === value &&
+      existingState.checking === false &&
+      existingState.unique !== undefined
+    ) {
+      return;
+    }
+
     const localErrors: Record<string, string> = {};
     this.validateField(field, value, key, localErrors);
     if (localErrors[key]) {

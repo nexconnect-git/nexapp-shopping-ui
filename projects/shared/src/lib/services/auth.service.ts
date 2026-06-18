@@ -5,6 +5,7 @@ import { ApiService } from './api.service';
 import { AuthResponse, User } from '../models';
 import { AUTH_PREFIX } from '../tokens/auth-prefix.token';
 import { CurrencyService } from './currency.service';
+import { NativePlatformService } from './native-platform.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -54,18 +55,27 @@ export class AuthService {
     private api: ApiService,
     private router: Router,
     private currency: CurrencyService,
+    private nativePlatform: NativePlatformService,
   ) {
     this.loadSession();
   }
 
   private loadSession() {
-    const token = sessionStorage.getItem(this.tokenKey);
+    const token =
+      sessionStorage.getItem(this.tokenKey) ||
+      localStorage.getItem(this.tokenKey);
     const userData =
       localStorage.getItem(this.userKey) ||
       sessionStorage.getItem(this.userKey);
 
     if (token) {
       this.accessToken.set(token);
+      sessionStorage.setItem(this.tokenKey, token);
+    }
+
+    if (token && !userData) {
+      this.clearSession();
+      return;
     }
 
     if (userData && token) {
@@ -94,8 +104,10 @@ export class AuthService {
     this.accessToken.set(token);
     if (token) {
       sessionStorage.setItem(this.tokenKey, token);
+      localStorage.setItem(this.tokenKey, token);
     } else {
       sessionStorage.removeItem(this.tokenKey);
+      localStorage.removeItem(this.tokenKey);
     }
   }
 
@@ -200,14 +212,16 @@ export class AuthService {
   }
 
   private initializePushNotifications() {
-    // Web push registration is intentionally disabled until a real service-worker
-    // + Firebase/Web Push flow is wired in. Registering fake tokens pollutes the
-    // device token store and creates false positives in production.
+    void this.nativePlatform.registerForPushNotifications().then((registration) => {
+      if (!registration) return;
+      this.api.registerDeviceToken(registration).subscribe({ error: () => {} });
+    });
   }
 
   private clearSession() {
     sessionStorage.removeItem(this.tokenKey);
     sessionStorage.removeItem(this.userKey);
+    localStorage.removeItem(this.tokenKey);
     localStorage.removeItem(this.refreshTokenKey);
     localStorage.removeItem(this.refreshSessionKey);
     localStorage.removeItem(this.userKey);

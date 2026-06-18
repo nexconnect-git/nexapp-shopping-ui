@@ -1,5 +1,6 @@
 import { type Routes } from '@angular/router';
 import {
+  approvedDeliveryGuard,
   authGuard,
   pageFeatureGuard,
   portalUnauthGuard,
@@ -7,8 +8,9 @@ import {
 } from '@shared/public-api';
 
 const deliveryGuard = [authGuard, roleGuard('delivery')];
+const approvedDeliveryGuardStack = [...deliveryGuard, approvedDeliveryGuard];
 const deliveryPageGuard = (pageId: string) => [
-  ...deliveryGuard,
+  ...approvedDeliveryGuardStack,
   pageFeatureGuard('delivery-app', pageId),
 ];
 
@@ -34,12 +36,20 @@ export const routes: Routes = [
     ],
   },
   {
+    path: 'pending-approval',
+    loadComponent: () =>
+      import('./pages/pending-approval/pending-approval.component').then(
+        (m) => m.PendingApprovalComponent,
+      ),
+    canActivate: deliveryGuard,
+  },
+  {
     path: 'feature-unavailable',
     loadComponent: () =>
       import('@shared/public-api').then(
         (m) => m.PageFeatureUnavailableComponent,
       ),
-    canActivate: deliveryGuard,
+    canActivate: approvedDeliveryGuardStack,
   },
   {
     path: '',

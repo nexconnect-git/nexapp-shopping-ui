@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Nextou</string>
+    <string name="title_activity_main">Nextou</string>
+    <string name="package_name">com.nextou.customer</string>
+    <string name="custom_url_scheme">nextou</string>
+</resources>

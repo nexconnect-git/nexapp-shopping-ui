@@ -196,7 +196,7 @@
             } @else if (isDelivered(order)) {
               <a [routerLink]="['/order-finished', order.id]" class="mobile-cta">View details</a>
             } @else {
-              <a routerLink="/help" class="mobile-cta secondary">Get help</a>
+              <a routerLink="/orders" class="mobile-cta secondary">View orders</a>
             }
             <button type="button" class="mobile-cta secondary" (click)="reorder(order)">
               Reorder
@@ -208,7 +208,7 @@
           <span class="material-symbols-rounded">receipt_long</span>
           <h2>No orders yet</h2>
           <p>Your Nextou orders will appear here.</p>
-          <a routerLink="/stores" class="mobile-cta">Start shopping</a>
+          <a routerLink="/explore" class="mobile-cta">Start shopping</a>
         </section>
       }
     }

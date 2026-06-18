@@ -5,10 +5,13 @@ import { ApiService } from '../services/api.service';
 import { AuthService } from '../services/auth.service';
 import { AUTH_PREFIX } from '../tokens/auth-prefix.token';
 
-/** Read the portal-scoped token from sessionStorage. */
+/** Read the portal-scoped token from durable storage. */
 function getScopedToken(): string | null {
   const prefix = inject(AUTH_PREFIX);
-  return sessionStorage.getItem(`${prefix}_access_token`);
+  return (
+    sessionStorage.getItem(`${prefix}_access_token`) ||
+    localStorage.getItem(`${prefix}_access_token`)
+  );
 }
 
 function getScopedUser(): any | null {
@@ -28,8 +31,9 @@ function getScopedUser(): any | null {
  * authGuard — allows only authenticated users (reads scoped token).
  */
 export const authGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
   const router = inject(Router);
-  if (getScopedToken()) return true;
+  if (auth.isLoggedIn() || getScopedToken()) return true;
   const returnUrl = router.url && router.url !== '/' ? router.url : undefined;
   router.navigate(
     ['/login'],
@@ -42,8 +46,14 @@ export const authGuard: CanActivateFn = () => {
  * unauthGuard — allows only unauthenticated users (e.g. login page).
  */
 export const unauthGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
   const router = inject(Router);
-  if (!getScopedToken()) return true;
+  const token = getScopedToken();
+  if (!auth.isLoggedIn() && !token) return true;
+  if (token && !getScopedUser()) {
+    auth.clearInvalidSession();
+    return true;
+  }
   router.navigate(['/']);
   return false;
 };
@@ -56,11 +66,15 @@ export const unauthGuard: CanActivateFn = () => {
 export const portalUnauthGuard = (expectedRole: string): CanActivateFn => {
   return () => {
     const router = inject(Router);
-    const token = getScopedToken();
+    const auth = inject(AuthService);
+    const token = auth.getToken() || getScopedToken();
     if (!token) return true;
 
     const user = getScopedUser();
-    if (!user) return true;
+    if (!user) {
+      auth.clearInvalidSession();
+      return true;
+    }
 
     if (user.role === expectedRole) {
       router.navigate(['/']);
@@ -89,10 +103,15 @@ export const roleGuard = (allowedRole: string): CanActivateFn => {
 export const approvedVendorGuard: CanActivateFn = () => {
   const router = inject(Router);
   const api = inject(ApiService);
+  const auth = inject(AuthService);
   const prefix = inject(AUTH_PREFIX);
 
-  const token = sessionStorage.getItem(`${prefix}_access_token`);
-  const userData = sessionStorage.getItem(`${prefix}_user`);
+  const token =
+    sessionStorage.getItem(`${prefix}_access_token`) ||
+    localStorage.getItem(`${prefix}_access_token`);
+  const userData =
+    sessionStorage.getItem(`${prefix}_user`) ||
+    localStorage.getItem(`${prefix}_user`);
 
   if (!token || !userData) {
     router.navigate(['/login']);
@@ -100,6 +119,8 @@ export const approvedVendorGuard: CanActivateFn = () => {
   }
 
   const user = JSON.parse(userData);
+  sessionStorage.setItem(`${prefix}_access_token`, token);
+  sessionStorage.setItem(`${prefix}_user`, userData);
   if (user.role !== 'vendor') {
     router.navigate(['/login']);
     return false;
@@ -118,9 +139,45 @@ export const approvedVendorGuard: CanActivateFn = () => {
       router.navigate(['/pending-approval']);
       return false;
     }),
-    catchError(() => {
+    catchError((err) => {
       localStorage.removeItem(`${prefix}_vendor_status`);
+      if (err?.status === 401 || err?.status === 403 || err?.status === 404) {
+        auth.clearInvalidSession();
+        router.navigate(['/login']);
+      } else {
+        router.navigate(['/login'], {
+          queryParams: { reason: 'profile_unavailable' },
+        });
+      }
+      return of(false);
+    }),
+  );
+};
+
+export const approvedDeliveryGuard: CanActivateFn = () => {
+  const router = inject(Router);
+  const api = inject(ApiService);
+  const auth = inject(AuthService);
+  const user = getScopedUser();
+
+  if (user?.force_password_change) {
+    router.navigate(['/change-password']);
+    return false;
+  }
+
+  return api.getDeliveryDashboard().pipe(
+    map((profile: any) => {
+      if (profile?.is_approved) return true;
       router.navigate(['/pending-approval']);
+      return false;
+    }),
+    catchError((err) => {
+      if (err?.status === 401 || err?.status === 403 || err?.status === 404) {
+        auth.clearInvalidSession();
+        router.navigate(['/login']);
+      } else {
+        router.navigate(['/pending-approval']);
+      }
       return of(false);
     }),
   );

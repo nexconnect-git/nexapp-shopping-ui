@@ -21,7 +21,7 @@
         Change location
       </button>
     </section>
-  }
+  } @else {
   <section class="home-layout">
     <div class="main-area">
       <section
@@ -63,7 +63,7 @@
 
       <section class="promo-strip stagger">
         @for (coupon of promoCoupons(); track coupon.id) {
-          <a routerLink="/offers" class="mini-banner red">
+          <a routerLink="/explore" class="mini-banner red">
             <span class="material-symbols-rounded">{{
               coupon.iconName || "local_offer"
             }}</span>
@@ -75,7 +75,7 @@
         }
         @for (category of promoCategories(); track category.id) {
           <a
-            [routerLink]="['/category', category.id]"
+            [routerLink]="['/explore', category.id]"
             class="mini-banner purple"
           >
             <span
@@ -90,7 +90,7 @@
           </a>
         }
         @if (!promoCoupons().length && !promoCategories().length) {
-          <a routerLink="/stores" class="mini-banner purple">
+          <a routerLink="/explore" class="mini-banner purple">
             <span class="material-symbols-rounded">storefront</span>
             <div>
               <b>{{ content.home().loadingCatalogTitle }}</b
@@ -102,7 +102,7 @@
 
       <section class="category-strip stagger">
         @for (cat of catalog.categories().slice(1, 9); track cat.id) {
-          <a [routerLink]="['/stores']" [queryParams]="{ category: cat.id }" class="insta-category">
+          <a [routerLink]="['/explore']" [queryParams]="{ category: cat.id }" class="insta-category">
             <span [style.background]="cat.bg">
               @if (cat.image) {
                 <img [src]="cat.image" alt="" />
@@ -117,24 +117,24 @@
             <small>{{ cat.label }}</small>
           </a>
         }
-        <a routerLink="/stores" class="insta-category view-all">
+        <a routerLink="/explore" class="insta-category view-all">
           <span class="material-symbols-rounded">apps</span>
           <small>View All</small>
         </a>
       </section>
 
       <section class="mobile-vibe-strip" aria-label="Shopping highlights">
-        <a routerLink="/offers">
+        <a routerLink="/explore">
           <span class="material-symbols-rounded">local_offer</span>
-          <b>Today's deals</b>
-          <small>Fresh offers</small>
+          <b>Nearby deals</b>
+          <small>Store savings</small>
         </a>
-        <a routerLink="/stores">
+        <a routerLink="/explore">
           <span class="material-symbols-rounded">storefront</span>
           <b>Nearby shops</b>
           <small>Live catalog</small>
         </a>
-        <a routerLink="/search" [queryParams]="{ q: 'milk' }">
+        <a routerLink="/explore" [queryParams]="{ q: 'milk' }">
           <span class="material-symbols-rounded">local_drink</span>
           <b>Daily basics</b>
           <small>Quick basket</small>
@@ -143,7 +143,7 @@
 
       <div class="fd-section-title compact">
         <h2>{{ content.home().sectionTitles.topStores }}</h2>
-        <a routerLink="/stores">See all</a>
+        <a routerLink="/explore">See all</a>
       </div>
 
       <section class="top-store-row stagger">
@@ -170,7 +170,7 @@
             <fd-store-card [store]="store" />
           }
         }
-        <a routerLink="/stores" class="row-next"
+        <a routerLink="/explore" class="row-next"
           ><span class="material-symbols-rounded">chevron_right</span></a
         >
       </section>
@@ -184,8 +184,8 @@
             [class.orange]="promo.tone === 'orange'"
             [class.blue]="promo.tone === 'blue'"
             [class.purple]="!promo.tone || promo.tone === 'purple'"
-            [routerLink]="routePath(promo.ctaUrl || '/search')"
-            [queryParams]="routeQuery(promo.ctaUrl || '/search')"
+            [routerLink]="routePath(promo.ctaUrl || '/explore')"
+            [queryParams]="routeQuery(promo.ctaUrl || '/explore')"
           >
             <span class="ad-icon material-symbols-rounded">{{
               promo.icon || "local_offer"
@@ -214,8 +214,23 @@
 
       <div class="fd-section-title compact">
         <h2>{{ content.home().sectionTitles.recommended }}</h2>
-        <a routerLink="/search">See all</a>
+        <a routerLink="/explore">See all</a>
       </div>
+
+      @if (flashDealProducts().length) {
+        <section class="deal-shelf">
+          <div class="deal-copy">
+            <small>Limited-time picks</small>
+            <h2>Flash deals</h2>
+            <p>Fresh savings from stores around you.</p>
+          </div>
+          <div class="deal-grid">
+            @for (product of flashDealProducts().slice(0, 4); track product.id) {
+              <fd-product-card [product]="product" />
+            }
+          </div>
+        </section>
+      }
 
       <section class="recommended-row stagger">
         @if (catalog.productsLoading()) {
@@ -241,7 +256,7 @@
             <fd-product-card [product]="product" />
           }
         }
-        <a routerLink="/search" class="row-next product-next"
+        <a routerLink="/explore" class="row-next product-next"
           ><span class="material-symbols-rounded">chevron_right</span></a
         >
       </section>
@@ -262,7 +277,7 @@
         <article class="product-rail">
           <div class="fd-section-title compact">
             <h2>Trending near you</h2>
-            <a routerLink="/search" [queryParams]="{ sort: 'trending' }"
+            <a routerLink="/explore" [queryParams]="{ sort: 'trending' }"
               >See all</a
             >
           </div>
@@ -276,7 +291,7 @@
         <article class="product-rail">
           <div class="fd-section-title compact">
             <h2>New arrivals</h2>
-            <a routerLink="/search" [queryParams]="{ sort: 'newest' }"
+            <a routerLink="/explore" [queryParams]="{ sort: 'newest' }"
               >See all</a
             >
           </div>
@@ -290,7 +305,7 @@
         <article class="product-rail">
           <div class="fd-section-title compact">
             <h2>Bestsellers</h2>
-            <a routerLink="/search" [queryParams]="{ sort: 'bestseller' }"
+            <a routerLink="/explore" [queryParams]="{ sort: 'bestseller' }"
               >See all</a
             >
           </div>
@@ -303,6 +318,7 @@
       </section>
     </div>
   </section>
+  }
 </main>
 </div>
 
@@ -328,7 +344,7 @@
         Change location
       </button>
     </section>
-  }
+  } @else {
   <section class="hero-card" [style.background]="heroBackground() || null">
     <div>
       <span>{{ heroBadge() }}</span>
@@ -342,11 +358,11 @@
   <section class="mobile-section">
     <div class="mobile-section-head">
       <h2>Shop by need</h2>
-      <a routerLink="/stores">View all</a>
+      <a routerLink="/explore">View all</a>
     </div>
     <div class="category-icons">
       @for (category of mobileCategories(); track category.id) {
-        <a [routerLink]="['/stores']" [queryParams]="{ category: category.id }">
+        <a [routerLink]="['/explore']" [queryParams]="{ category: category.id }">
           <span class="material-symbols-rounded">{{ categoryIcon(category) }}</span>
           <b>{{ category.label }}</b>
         </a>
@@ -356,7 +372,7 @@
 
   <section class="promo-row">
     @for (promo of homePromos(); track promo.id) {
-      <a [routerLink]="routePath(promo.ctaUrl || '/offers')" [queryParams]="routeQuery(promo.ctaUrl || '/offers')" class="promo-card">
+      <a [routerLink]="routePath(promo.ctaUrl || '/explore')" [queryParams]="routeQuery(promo.ctaUrl || '/explore')" class="promo-card">
         <span class="material-symbols-rounded">{{ promo.icon || 'local_offer' }}</span>
         <b>{{ promo.title }}</b>
         <small>{{ promo.subtitle }}</small>
@@ -372,6 +388,20 @@
     }
   </section>
 
+  @if (flashDealProducts().length) {
+    <section class="mobile-section flash-mobile">
+      <div class="mobile-section-head">
+        <h2>Flash deals</h2>
+        <a routerLink="/explore" [queryParams]="{ offers: true }">See all</a>
+      </div>
+      <div class="mobile-grid-2">
+        @for (product of flashDealProducts().slice(0, 4); track product.id) {
+          <fd-product-card [product]="product" />
+        }
+      </div>
+    </section>
+  }
+
   <section class="mobile-section">
     <fd-mobile-quick-action-grid [actions]="quickActions()" />
   </section>
@@ -379,15 +409,11 @@
   <section class="mobile-section">
     <div class="mobile-section-head">
       <h2>Top stores</h2>
-      <a routerLink="/stores">See all</a>
+      <a routerLink="/explore">See all</a>
     </div>
     <div class="store-scroller">
       @for (store of serviceableStores().slice(0, 8); track store.id) {
         <fd-store-card [store]="store" />
-      } @empty {
-        @for (store of catalog.stores().slice(0, 8); track store.id) {
-          <fd-store-card [store]="store" />
-        }
       }
     </div>
   </section>
@@ -395,7 +421,7 @@
   <section class="mobile-section">
     <div class="mobile-section-head">
       <h2>Recommended</h2>
-      <a routerLink="/search">Search more</a>
+      <a routerLink="/explore">Search more</a>
     </div>
       <div class="mobile-list">
       @for (product of homeProducts().slice(0, 3); track product.id) {
@@ -440,7 +466,7 @@
   <section class="mobile-section">
     <div class="mobile-section-head">
       <h2>Trending near you</h2>
-      <a routerLink="/search" [queryParams]="{ sort: 'trending' }">See all</a>
+      <a routerLink="/explore" [queryParams]="{ sort: 'trending' }">See all</a>
     </div>
     <div class="mobile-grid-2">
       @for (product of trendingProducts().slice(0, 4); track product.id) {
@@ -452,7 +478,7 @@
   <section class="mobile-section">
     <div class="mobile-section-head">
       <h2>New arrivals</h2>
-      <a routerLink="/search" [queryParams]="{ sort: 'newest' }">See all</a>
+      <a routerLink="/explore" [queryParams]="{ sort: 'newest' }">See all</a>
     </div>
     <div class="mobile-grid-2">
       @for (product of newArrivalProducts().slice(0, 4); track product.id) {
@@ -464,7 +490,7 @@
   <section class="mobile-section">
     <div class="mobile-section-head">
       <h2>Bestsellers</h2>
-      <a routerLink="/search" [queryParams]="{ sort: 'bestseller' }"
+      <a routerLink="/explore" [queryParams]="{ sort: 'bestseller' }"
         >See all</a
       >
     </div>
@@ -474,5 +500,6 @@
       }
     </div>
   </section>
+  }
 </main>
 </div>

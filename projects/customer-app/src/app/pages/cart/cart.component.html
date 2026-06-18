@@ -11,7 +11,7 @@
           <h2><span class="material-symbols-rounded">shopping_cart</span></h2>
           <h3>{{ content.cart().emptyTitle }}</h3>
           <p>{{ content.cart().emptyDescription }}</p>
-          <a routerLink="/stores" class="fd-btn primary">{{
+          <a routerLink="/explore" class="fd-btn primary">{{
             content.cart().emptyCta
           }}</a>
         </section>
@@ -73,14 +73,7 @@
               <div class="row-actions">
                 <button type="button" (click)="state.removeItem(item.id)">
                   <span class="material-symbols-rounded">delete</span>
-                  Remove</button
-                ><button
-                  type="button"
-                  (click)="saveForLater(item.apiId || item.id)"
-                >
-                  <span class="material-symbols-rounded">favorite</span> Save
-                  for later
-                </button>
+                  Remove</button>
               </div>
             </div>
           }
@@ -106,14 +99,23 @@
           <section class="saving fd-card">
             <span class="material-symbols-rounded">celebration</span> You're
             saving {{ state.discount() | appCurrency }} on this order with
-            offers and discounts
+            cart savings
           </section>
+          @if (bestCoupon()?.best_coupon && !state.coupon()) {
+            <section class="coupon fd-card best-coupon">
+              <b><span class="material-symbols-rounded">auto_awesome</span>
+                Best coupon: {{ bestCoupon().best_coupon.code }}</b>
+              <button type="button" class="fd-btn outline" (click)="applyBestCoupon()">
+                Apply
+              </button>
+            </section>
+          }
         </div>
       }
 
       <div class="fd-section-title"><h2>You might also need</h2></div>
       <section class="product-grid">
-        @for (p of catalog.products().slice(9, 14); track p.id) {
+        @for (p of (cartSuggestions().length ? cartSuggestions() : catalog.products().slice(9, 14)); track p.id) {
           <fd-product-card [product]="p" />
         }
       </section>
@@ -227,9 +229,6 @@
             <span>{{ item.price | appCurrency }}</span>
           </div>
           <div class="cart-actions">
-            <button type="button" aria-label="Save for later" (click)="saveForLater(item.apiId || item.id)">
-              <span class="material-symbols-rounded">favorite</span>
-            </button>
             <button type="button" aria-label="Remove item" (click)="state.removeItem(item.id)">
               <span class="material-symbols-rounded">delete</span>
             </button>
@@ -252,6 +251,13 @@
       <input #couponCode type="text" placeholder="Enter coupon code" [value]="state.coupon()" />
       <button type="button" (click)="applyCoupon(couponCode.value)">Apply</button>
     </section>
+    @if (bestCoupon()?.best_coupon && !state.coupon()) {
+      <section class="coupon-card best-coupon-mobile">
+        <span class="material-symbols-rounded">auto_awesome</span>
+        <b>{{ bestCoupon().best_coupon.code }}</b>
+        <button type="button" (click)="applyBestCoupon()">Apply best</button>
+      </section>
+    }
 
     <section class="mobile-order-details">
       <div class="mobile-section-head">
@@ -304,7 +310,7 @@
     <section class="mobile-section">
       <div class="mobile-section-head"><h2>Add a little more</h2></div>
       <div class="mobile-grid-2">
-        @for (product of catalog.topProducts().slice(0, 4); track product.id) {
+        @for (product of (cartSuggestions().length ? cartSuggestions() : catalog.topProducts().slice(0, 4)); track product.id) {
           <fd-product-card [product]="product" />
         }
       </div>
@@ -315,7 +321,7 @@
       <span class="material-symbols-rounded">shopping_bag</span>
       <h2>{{ content.cart().emptyTitle }}</h2>
       <p>{{ content.cart().emptyDescription }}</p>
-      <a routerLink="/stores" class="mobile-cta">{{ content.cart().emptyCta }}</a>
+      <a routerLink="/explore" class="mobile-cta">{{ content.cart().emptyCta }}</a>
     </section>
   }
 </main>

@@ -23,9 +23,9 @@
 
   --customer-header-height: 78px;
   --customer-header-tablet-height: 128px;
-  --customer-header-mobile-height: 198px;
+  --customer-header-mobile-height: 152px;
   --customer-sidebar-width: 260px;
-  --customer-bottom-nav-height: 74px;
+  --customer-bottom-nav-height: 66px;
   --customer-page-x: clamp(18px, 2.4vw, 34px);
 }
 
@@ -529,6 +529,7 @@ fd-right-rail {
     min-width: 0;
     display: grid;
     grid-template-columns: minmax(0, 1fr);
+    align-content: start;
     gap: 8px;
     padding: 8px var(--mobile-page-x)
       calc(
@@ -768,4 +769,665 @@ body *:not(.material-icons):not(.material-icons-outlined):not(.material-icons-tw
   color: #854d0e !important;
   border-color: var(--fd-color-warning-border) !important;
 }
+
+/* Customer app consistency layer.
+   Keep this last so every page inherits the same shell, surfaces, and controls. */
+:root {
+  --customer-app-bg: #f7f6fc;
+  --customer-app-surface: #ffffff;
+  --customer-app-surface-soft: #fbfaff;
+  --customer-app-border: #e8e5f4;
+  --customer-app-card-radius: 18px;
+  --customer-app-control-radius: 14px;
+  --customer-app-shadow: 0 10px 28px rgba(35, 17, 124, 0.07);
+  --customer-app-shadow-strong: 0 18px 46px rgba(35, 17, 124, 0.12);
+}
+
+.fd-page,
+.fd-page--app,
+.fd-page--home {
+  background: var(--customer-app-bg);
+}
+
+.desktop-customer-view .fd-content {
+  width: 100%;
+  max-width: 1280px;
+  padding-top: 22px;
+}
+
+.fd-page-header,
+.page-head,
+.history-head,
+.category-head,
+.store-head,
+.track-title {
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.fd-title,
+.fd-page-header h1,
+.page-head h1,
+.history-head h1,
+.category-head h1,
+.store-head h1,
+.track-title h1 {
+  color: var(--nextou-text-strong);
+  letter-spacing: 0;
+}
+
+.fd-subtitle,
+.fd-page-header p,
+.page-head p,
+.history-head p,
+.category-head p,
+.store-head p,
+.track-title p {
+  color: var(--nextou-text-soft);
+  line-height: 1.45;
+  margin-bottom: 0;
+}
+
+.fd-card,
+.block,
+.summary,
+.summary-col,
+.cart-table,
+.orders-table,
+.transactions,
+.help-form,
+.faq,
+.rating,
+.profile-card,
+.wallet-card,
+.success-card,
+.status-card,
+.map-block,
+.address-grid article,
+.offer-grid article,
+.issue-list article,
+.modal form {
+  border: 1px solid var(--customer-app-border) !important;
+  border-radius: var(--customer-app-card-radius) !important;
+  background: var(--customer-app-surface) !important;
+  box-shadow: var(--customer-app-shadow) !important;
+}
+
+.fd-card:hover {
+  box-shadow: var(--customer-app-shadow-strong) !important;
+}
+
+.fd-btn,
+.fd-input,
+.fd-search,
+.fd-pill,
+.qty,
+.schedule-form input,
+.pay-list label,
+.address-row,
+.slot-grid button,
+.mobile-address-dropdown,
+.mobile-address-options button {
+  border-radius: var(--customer-app-control-radius) !important;
+}
+
+.fd-btn {
+  min-height: 44px;
+  height: auto;
+}
+
+.fd-input,
+.fd-search,
+input,
+select,
+textarea {
+  accent-color: var(--fd-color-primary);
+}
+
+.empty,
+.empty-state,
+.desktop-empty,
+.no-payment {
+  border: 1px dashed var(--customer-app-border) !important;
+  border-radius: var(--customer-app-card-radius) !important;
+  background: var(--customer-app-surface-soft) !important;
+}
+
+@media (max-width: 760px) {
+  .fd-page {
+    background: var(--customer-app-bg) !important;
+  }
+
+  .mobile-page {
+    width: 100%;
+    max-width: 430px;
+    min-height: 100dvh;
+    margin: 0 auto;
+    gap: 10px;
+    padding: 10px var(--mobile-page-x)
+      calc(
+        var(--customer-bottom-nav-height) + 30px +
+          env(safe-area-inset-bottom, 0px)
+      ) !important;
+    background: var(--customer-app-bg) !important;
+  }
+
+  .simple-head,
+  .stores-head,
+  .checkout-head,
+  .tracking-head,
+  .history-head,
+  .category-head,
+  .store-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px 10px;
+    align-items: center;
+    margin: 0 0 4px !important;
+    padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: 0 !important;
+  }
+
+  .simple-head small,
+  .stores-head small,
+  .checkout-head small,
+  .tracking-head small {
+    color: var(--nextou-text-soft) !important;
+    font-size: 12px !important;
+    font-weight: 900 !important;
+    line-height: 1.25;
+  }
+
+  .simple-head h1,
+  .stores-head h1,
+  .checkout-head h1,
+  .tracking-head h1,
+  .history-head h1,
+  .category-head h1,
+  .store-head h1 {
+    margin: 0 !important;
+    color: var(--nextou-text-strong) !important;
+    font-size: clamp(21px, 6vw, 26px) !important;
+    line-height: 1.12 !important;
+    font-weight: 950 !important;
+    letter-spacing: 0 !important;
+  }
+
+  .mobile-section {
+    gap: 10px;
+  }
+
+  .mobile-list,
+  .address-list,
+  .review-items,
+  .pay-list {
+    gap: 10px !important;
+  }
+
+  .address-card,
+  .order-card,
+  .notify-card,
+  .issue-card,
+  .offer-card,
+  .faq-card,
+  .support-card,
+  .checkout-card,
+  .map-card,
+  .store-card,
+  .partner-card,
+  .timeline-card,
+  .items-card,
+  .topup-card,
+  .transaction,
+  .empty-panel,
+  .mobile-form,
+  .mobile-checkout-card,
+  .mobile-order-details,
+  .cart-item,
+  .empty-cart,
+  .product-action-card {
+    border: 1px solid var(--customer-app-border) !important;
+    border-radius: var(--customer-app-card-radius) !important;
+    background: var(--customer-app-surface) !important;
+    box-shadow: var(--customer-app-shadow) !important;
+  }
+
+  .empty-panel {
+    background: var(--customer-app-surface-soft) !important;
+  }
+
+  .mobile-cta {
+    min-height: 44px !important;
+    border-radius: var(--customer-app-control-radius) !important;
+    font-weight: 950 !important;
+  }
+
+  .mobile-cta.secondary {
+    border: 1px solid var(--customer-app-border) !important;
+    background: var(--fd-color-primary-soft) !important;
+  }
+
+  .mobile-sticky-cta {
+    bottom: calc(
+      var(--customer-bottom-nav-height) + 10px +
+        env(safe-area-inset-bottom, 0px)
+    ) !important;
+    border: 1px solid var(--customer-app-border) !important;
+    border-radius: 18px !important;
+    background: rgba(255, 255, 255, 0.96) !important;
+    box-shadow: var(--customer-app-shadow-strong) !important;
+  }
+
+  .mobile-form input,
+  .mobile-form textarea,
+  .mobile-form select {
+    border-color: var(--customer-app-border) !important;
+    border-radius: var(--customer-app-control-radius) !important;
+  }
+}
+
+/* Customer commerce production polish.
+   This bridge intentionally sits last: existing pages keep their structure while
+   shared tokens, surfaces, controls, and responsive behavior become consistent. */
+:root {
+  --cx-primary: var(--nextou-primary-purple);
+  --cx-primary-dark: var(--nextou-deep-purple);
+  --cx-primary-hover: #4f3ccf;
+  --cx-primary-soft: #f1ecff;
+  --cx-primary-border: #d9d1ff;
+  --cx-success: #16a34a;
+  --cx-warning: #f59e0b;
+  --cx-danger: #dc2626;
+  --cx-info: #2563eb;
+  --cx-bg: var(--nextou-bg);
+  --cx-surface: #ffffff;
+  --cx-surface-raised: var(--nextou-surface-soft);
+  --cx-text: var(--nextou-text);
+  --cx-muted: var(--nextou-text-soft);
+  --cx-border: var(--nextou-border);
+  --cx-radius-sm: 10px;
+  --cx-radius-md: 14px;
+  --cx-radius-lg: 18px;
+  --cx-radius-xl: 24px;
+  --cx-shadow-sm: 0 8px 22px rgba(17, 24, 39, 0.05);
+  --cx-shadow-md: 0 16px 38px rgba(17, 24, 39, 0.08);
+  --cx-shadow-lg: 0 24px 70px rgba(17, 24, 39, 0.14);
+  --cx-page-max: 1280px;
+  --cx-mobile-nav-height: var(--customer-bottom-nav-height);
+  --cx-sticky-cta-height: 64px;
+
+  --fd-color-primary: var(--cx-primary);
+  --fd-color-primary-hover: var(--cx-primary-hover);
+  --fd-color-primary-soft: var(--cx-primary-soft);
+  --fd-color-primary-border: var(--cx-primary-border);
+  --fd-color-page: var(--cx-bg);
+  --fd-color-surface: var(--cx-surface);
+  --fd-color-border: var(--cx-border);
+  --fd-field-border: var(--cx-border);
+  --fd-field-focus: var(--cx-primary);
+  --fd-shadow-sm: var(--cx-shadow-sm);
+  --fd-shadow-md: var(--cx-shadow-md);
+  --fd-shadow-lg: var(--cx-shadow-lg);
+  --fd-shadow-focus: 0 0 0 4px rgba(56, 38, 142, 0.14);
+  --fd-radius-sm: var(--cx-radius-sm);
+  --fd-radius-md: var(--cx-radius-md);
+  --fd-radius-lg: var(--cx-radius-lg);
+  --fd-radius-xl: var(--cx-radius-xl);
+
+  --primary: var(--cx-primary);
+  --primary-2: var(--cx-primary-hover);
+  --primary-hover: var(--cx-primary-hover);
+  --primary-light: var(--cx-primary-soft);
+  --primary-soft: var(--cx-primary-soft);
+  --primary-gradient: var(--cx-primary);
+  --ink: var(--cx-text);
+  --muted: var(--cx-muted);
+  --bg: var(--cx-bg);
+  --surface: var(--cx-surface);
+  --line: var(--cx-border);
+  --radius: var(--cx-radius-lg);
+  --shadow: var(--cx-shadow-sm);
+
+  --customer-app-bg: var(--cx-bg);
+  --customer-app-surface: var(--cx-surface);
+  --customer-app-surface-soft: var(--cx-surface-raised);
+  --customer-app-border: var(--cx-border);
+  --customer-app-card-radius: var(--cx-radius-lg);
+  --customer-app-control-radius: var(--cx-radius-md);
+  --customer-app-shadow: var(--cx-shadow-sm);
+  --customer-app-shadow-strong: var(--cx-shadow-md);
+}
+
+body {
+  color: var(--cx-text);
+  background: var(--cx-bg);
+}
+
+.desktop-customer-view .fd-content,
+.fd-content {
+  max-width: var(--cx-page-max);
+}
+
+.fd-card,
+.product-card,
+.store-card,
+.mini-store,
+.cart-table,
+.orders-table,
+.summary-col,
+.profile-hero,
+.status-card,
+.map-block,
+.location-modal,
+.dropdown,
+.nx-card {
+  border-color: var(--cx-border) !important;
+  border-radius: var(--cx-radius-lg) !important;
+  background: var(--cx-surface) !important;
+  box-shadow: var(--cx-shadow-sm) !important;
+}
+
+.fd-card:hover,
+.product-card:hover,
+.store-card:hover,
+.mini-store:hover {
+  border-color: var(--cx-primary-border) !important;
+  box-shadow: var(--cx-shadow-md) !important;
+}
+
+.fd-btn.primary,
+.nx-btn.primary,
+.mobile-cta:not(.secondary),
+.shop-btn:hover {
+  background: var(--cx-primary) !important;
+  border-color: var(--cx-primary) !important;
+  color: #fff !important;
+}
+
+.fd-btn.primary:hover,
+.nx-btn.primary:hover,
+.mobile-cta:not(.secondary):hover {
+  background: var(--cx-primary-hover) !important;
+}
+
+.fd-btn.outline,
+.nx-btn.outline,
+.fd-pill,
+.tabs button,
+.filters button,
+.actions button,
+.row-actions button {
+  border-color: var(--cx-border) !important;
+}
+
+.fd-btn.outline,
+.nx-btn.outline,
+.fd-btn.soft,
+.nx-btn.soft,
+.mobile-cta.secondary,
+.fd-pill.active {
+  color: var(--cx-primary) !important;
+  background: var(--cx-primary-soft) !important;
+}
+
+.fd-input,
+.fd-search,
+.nx-field .box,
+input,
+select,
+textarea {
+  min-width: 0;
+  border-color: var(--cx-border) !important;
+  border-radius: var(--cx-radius-md) !important;
+}
+
+.fd-input:focus,
+.fd-search:focus-within,
+.nx-field .box:focus-within,
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--cx-primary) !important;
+  box-shadow: var(--fd-shadow-focus) !important;
+}
+
+.fd-section-title h2,
+.fd-section-title h3,
+.fd-title,
+.page-head h1,
+.history-head h1,
+.category-head h1,
+.store-head h1,
+.track-title h1 {
+  color: var(--cx-text) !important;
+  letter-spacing: 0 !important;
+}
+
+.fd-section-title a,
+.fd-section-title button,
+.address button,
+.search-history .head button {
+  color: var(--cx-primary) !important;
+}
+
+.product-grid,
+.recommended-row,
+.checkout-products,
+.store-mini-grid,
+.top-store-row,
+.address-grid,
+.offer-grid {
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  align-items: stretch;
+}
+
+.cart-table,
+.orders-table {
+  overflow-x: auto !important;
+  scrollbar-gutter: stable;
+}
+
+.cart-row,
+.table-head,
+.orders-table .tr,
+.orders-table .thead {
+  min-width: min(920px, 100%);
+}
+
+.empty,
+.empty-panel,
+.empty-state,
+.empty-results,
+.desktop-empty,
+.no-payment {
+  color: var(--cx-muted);
+  border-color: var(--cx-border) !important;
+  background: var(--cx-surface-raised) !important;
+}
+
+.empty h2,
+.empty-panel h2,
+.empty-state h2,
+.empty-results h2,
+.desktop-empty h2,
+.no-payment b {
+  color: var(--cx-text);
+}
+
+.fd-badge.purple,
+.status,
+.status-pill.open,
+.stock-badge {
+  background: var(--cx-primary-soft) !important;
+  border-color: var(--cx-primary-border) !important;
+  color: var(--cx-primary-dark) !important;
+}
+
+.server-note,
+.store-note,
+.progress-promo {
+  background: var(--cx-primary-soft) !important;
+  border-color: var(--cx-primary-border) !important;
+  color: var(--cx-primary-dark) !important;
+}
+
+.address-field {
+  min-width: 0;
+}
+
+@media (min-width: 761px) {
+  .modal form:has(.address-field) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .modal form:has(.address-field) .modal-head,
+  .modal form:has(.address-field) app-map-picker,
+  .modal form:has(.address-field) .modal-actions {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  :root {
+    --mobile-bg: var(--cx-bg);
+    --mobile-page-x: 12px;
+  }
+
+  .mobile-page {
+    max-width: 430px;
+    padding-bottom: calc(
+      var(--cx-mobile-nav-height) + var(--cx-sticky-cta-height) +
+        env(safe-area-inset-bottom, 0px)
+    ) !important;
+  }
+
+  .mobile-grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  .mobile-list,
+  .address-list,
+  .review-items {
+    gap: 10px !important;
+  }
+
+  .product-card,
+  .store-card,
+  .cart-item,
+  .order-card,
+  .address-card,
+  .profile-link,
+  .checkout-card,
+  .empty-panel {
+    border-radius: var(--cx-radius-lg) !important;
+  }
+
+  .mobile-sticky-cta {
+    bottom: calc(
+      var(--cx-mobile-nav-height) + 10px + env(safe-area-inset-bottom, 0px)
+    ) !important;
+  }
+}
+
+/* Customer quick-commerce route polish */
+@media (max-width: 760px) {
+  .orders-page,
+  .tracking-page,
+  .profile-page,
+  .addresses-page,
+  .notifications-page,
+  .wishlist-page,
+  .wallet-page,
+  .offers-page,
+  .referral-page,
+  .help-page,
+  .issues-page,
+  .cart-page,
+  .checkout-page,
+  .product-detail-page,
+  .store-detail-page,
+  .category-page,
+  .categories-page,
+  .stores-page,
+  .search-page,
+  .home-page,
+  .finished-page {
+    align-content: start;
+    gap: 12px;
+  }
+
+  .simple-head,
+  .orders-head,
+  .mobile-section-head {
+    min-width: 0;
+  }
+
+  .simple-head h1,
+  .orders-head h1,
+  .mobile-section-head h2,
+  .mobile-section-head h3 {
+    letter-spacing: 0 !important;
+    overflow-wrap: anywhere;
+  }
+
+  .order-card,
+  .address-card,
+  .notify-card,
+  .transaction,
+  .offer-card,
+  .issue-card,
+  .thread-card,
+  .help-form,
+  .share-card,
+  .topup-card,
+  .checkout-card,
+  .cart-item,
+  .summary-card,
+  .details-card,
+  .action-card,
+  .store-panel,
+  .mobile-store-card,
+  .empty-panel {
+    min-width: 0;
+    border: 1px solid rgba(56, 38, 142, 0.07) !important;
+    box-shadow: 0 10px 26px rgba(33, 22, 82, 0.06) !important;
+  }
+
+  .order-card *,
+  .address-card *,
+  .notify-card *,
+  .transaction *,
+  .offer-card *,
+  .issue-card *,
+  .checkout-card *,
+  .cart-item *,
+  .product-card *,
+  .store-card * {
+    min-width: 0;
+  }
+
+  .wishlist-page .mobile-grid-2,
+  .product-detail-page .mobile-grid-2,
+  .category-page .mobile-grid-2,
+  .categories-page .mobile-grid-2,
+  .cart-page .mobile-grid-2,
+  .store-detail-page .mobile-grid-2,
+  .checkout-page .mobile-grid-2,
+  .search-page .mobile-grid-2,
+  .home-page .mobile-grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .orders-page .order-card footer,
+  .cart-page .mobile-sticky-cta,
+  .checkout-page .mobile-sticky-cta,
+  .product-detail-page .mobile-sticky-cta,
+  .store-detail-page .mobile-sticky-cta {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
 

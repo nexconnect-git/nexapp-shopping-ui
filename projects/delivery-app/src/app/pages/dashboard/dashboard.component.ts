@@ -8,6 +8,8 @@ import {
   AppCurrencyPipe,
   AuthService,
   DeliveryDashboard,
+  NativePlatformService,
+  type NativeWatchId,
 } from '@shared/public-api';
 import { Subscription, timer } from 'rxjs';
 
@@ -22,6 +24,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   auth = inject(AuthService);
   private api = inject(ApiService);
   private alerts = inject(AlertService);
+  private nativePlatform = inject(NativePlatformService);
 
   stats = signal<DeliveryDashboard | null>(null);
   loading = signal(true);
@@ -30,7 +33,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   locationStatus = signal<'idle' | 'watching' | 'denied' | 'error'>('idle');
 
   private dashSub?: Subscription;
-  private locationWatchId: number | null = null;
+  private locationWatchId: NativeWatchId | null = null;
   private locationIntervalId: ReturnType<typeof setInterval> | null = null;
   private locationRetryId: ReturnType<typeof setTimeout> | null = null;
   private lastLocationPushAt = 0;
@@ -38,6 +41,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private initialized = false;
   private locationAuthBlocked = false;
   private locationAuthErrorShown = false;
+  private locationTrackingStarting = false;
 
   ngOnInit() {
     if (this.auth.getRole() !== 'delivery') {
@@ -60,7 +64,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
               d.partner_status === 'on_delivery';
             this.isAvailable.set(serverOnline);
             if (serverOnline) {
-              this._startLocationTracking();
+              void this._startLocationTracking();
             }
           }
         },
@@ -80,6 +84,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
       return;
     }
     if (this.availabilityUpdating()) return;
+    if (this.stats()?.is_approved === false) {
+      this.alerts.error('Your delivery account must be approved before going online.');
+      return;
+    }
     const goOnline = !this.isAvailable();
     this.isAvailable.set(goOnline);
     this.availabilityUpdating.set(true);
@@ -102,44 +110,59 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
 
     if (goOnline) {
-      this._startLocationTracking();
+      void this._startLocationTracking();
     } else {
       this._stopLocationTracking();
     }
   }
 
-  private _startLocationTracking() {
-    if (this.auth.getRole() !== 'delivery' || this.locationAuthBlocked) {
+  private async _startLocationTracking() {
+    if (
+      this.auth.getRole() !== 'delivery' ||
+      this.locationAuthBlocked ||
+      this.locationTrackingStarting ||
+      this.locationStatus() === 'watching'
+    ) {
       return;
     }
-    if (!navigator.geolocation) {
+
+    this.locationTrackingStarting = true;
+
+    try {
+      const hasPermission = await this.nativePlatform.requestLocationPermissions();
+      if (!hasPermission) {
+        this.locationStatus.set('denied');
+        return;
+      }
+    } catch {
       this.locationStatus.set('error');
       return;
+    } finally {
+      this.locationTrackingStarting = false;
     }
+
     this.locationStatus.set('watching');
 
-    // Send current position immediately, then every 15 seconds
-    this._sendCurrentLocation();
+    void this._sendCurrentLocation();
     this.locationIntervalId = setInterval(
-      () => this._sendCurrentLocation(),
+      () => void this._sendCurrentLocation(),
       15000,
     );
 
-    // Also watch for significant position changes (e.g. partner is driving)
-    this.locationWatchId = navigator.geolocation.watchPosition(
-      (pos) => this._pushLocation(pos.coords.latitude, pos.coords.longitude),
-      (err) => {
-        this.locationStatus.set(
-          err.code === err.PERMISSION_DENIED ? 'denied' : 'error',
-        );
-      },
-      { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 },
-    );
+    try {
+      this.locationWatchId = await this.nativePlatform.watchPosition(
+        { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 },
+        (pos) => this._pushLocation(pos.coords.latitude, pos.coords.longitude),
+        (err) => this.locationStatus.set(this._locationErrorStatus(err)),
+      );
+    } catch {
+      this.locationStatus.set('error');
+    }
   }
 
   private _stopLocationTracking() {
     if (this.locationWatchId !== null) {
-      navigator.geolocation.clearWatch(this.locationWatchId);
+      void this.nativePlatform.clearWatch(this.locationWatchId);
       this.locationWatchId = null;
     }
     if (this.locationIntervalId !== null) {
@@ -153,19 +176,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.locationStatus.set('idle');
   }
 
-  private _sendCurrentLocation() {
+  private async _sendCurrentLocation() {
     if (!this._shouldSendLocation()) {
       return;
     }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => this._pushLocation(pos.coords.latitude, pos.coords.longitude),
-      (err) => {
-        this.locationStatus.set(
-          err.code === err.PERMISSION_DENIED ? 'denied' : 'error',
-        );
-      },
-      { enableHighAccuracy: true, timeout: 10000 },
-    );
+
+    try {
+      const pos = await this.nativePlatform.getCurrentPosition({
+        enableHighAccuracy: true,
+        timeout: 10000,
+      });
+      this._pushLocation(pos.coords.latitude, pos.coords.longitude);
+    } catch (err) {
+      this.locationStatus.set(this._locationErrorStatus(err));
+    }
   }
 
   private _pushLocation(lat: number, lng: number) {
@@ -223,8 +247,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
     this.locationRetryId = setTimeout(() => {
       this.locationRetryId = null;
-      this._sendCurrentLocation();
+      void this._sendCurrentLocation();
       this.locationRetryDelayMs = Math.min(this.locationRetryDelayMs * 2, 60000);
     }, this.locationRetryDelayMs);
+  }
+
+  private _locationErrorStatus(error: unknown): 'denied' | 'error' {
+    const maybePositionError = error as GeolocationPositionError;
+    return maybePositionError?.code === maybePositionError?.PERMISSION_DENIED
+      ? 'denied'
+      : 'error';
   }
 }

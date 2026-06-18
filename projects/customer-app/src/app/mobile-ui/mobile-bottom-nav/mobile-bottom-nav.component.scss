@@ -2,7 +2,7 @@
   position: fixed;
   left: 50%;
   bottom: 0;
-  z-index: 90;
+  z-index: 120;
   display: block;
   width: 100%;
   max-width: var(--mobile-shell-max, 430px);
@@ -15,12 +15,16 @@
 .mobile-bottom-nav {
   height: var(--mobile-bottom-nav-height);
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   overflow: hidden;
-  border: 1px solid rgba(56, 38, 142, 0.12);
-  border-radius: 17px;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 14px 34px rgba(35, 24, 84, 0.16);
+  overflow-y: hidden;
+  border: 1px solid var(--customer-app-border, rgba(56, 38, 142, 0.12));
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: var(
+    --customer-app-shadow-strong,
+    0 18px 46px rgba(35, 24, 84, 0.16)
+  );
   pointer-events: auto;
 }
 
@@ -42,7 +46,7 @@ span {
 }
 
 b {
-  max-width: 58px;
+  max-width: 100%;
   overflow: hidden;
   text-align: center;
   text-overflow: ellipsis;

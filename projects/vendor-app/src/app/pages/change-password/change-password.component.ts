@@ -22,6 +22,15 @@ export class ChangePasswordComponent {
   error = signal('');
   success = signal(false);
 
+  canSubmit(): boolean {
+    return (
+      !this.loading() &&
+      !!this.currentPassword.trim() &&
+      this.newPassword.length >= 8 &&
+      this.newPassword === this.confirmPassword
+    );
+  }
+
   onSubmit() {
     this.error.set('');
 
@@ -63,7 +72,7 @@ export class ChangePasswordComponent {
             error: () =>
               setTimeout(
                 () => this.router.navigate(['/pending-approval']),
-                1500,
+                1500
               ),
           });
         },
@@ -74,7 +83,7 @@ export class ChangePasswordComponent {
             e?.current_password ||
               e?.new_password ||
               e?.detail ||
-              'Failed to update password.',
+              'Failed to update password.'
           );
         },
       });

@@ -1,6 +1,7 @@
 import { computed, Injectable, signal } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs';
+import { buildCustomerLocationQuery } from '@nexconnect/customer-location';
 import { Product, Store } from '../../models';
 import { AppStateService } from '../../services/app-state.service';
 import { CatalogService } from '../../services/catalog.service';
@@ -55,7 +56,7 @@ export class NextouHomeService {
   });
 
   readonly quickTiles = computed<NextouCategory[]>(() => [
-    { id: 'deals', name: "Today's deals", icon: '🎁', route: '/offers' },
+    { id: 'deals', name: 'Nearby deals', icon: '🎁', route: '/stores' },
     { id: 'shops', name: 'Nearby shops', icon: '🏪', route: '/stores' },
     {
       id: 'daily',
@@ -99,6 +100,7 @@ export class NextouHomeService {
   readonly stores = computed<NextouStore[]>(() =>
     this.catalog
       .stores()
+      .filter((store) => (store.raw as any)?.is_serviceable !== false)
       .slice(0, 8)
       .map((store) => this.mapStore(store)),
   );
@@ -186,7 +188,7 @@ export class NextouHomeService {
   }
 
   openOffers(): void {
-    this.router.navigate(['/offers']);
+    this.router.navigate(['/stores']);
   }
 
   openNotifications(): void {
@@ -238,7 +240,7 @@ export class NextouHomeService {
       this.router.navigate(['/search']);
       return;
     }
-    this.catalog.refreshSearch(query);
+    this.catalog.refreshSearch(query, this.activeLocation());
     this.router.navigate(['/search'], { queryParams: { q: query } });
   }
 
@@ -279,6 +281,17 @@ export class NextouHomeService {
       logoTone: this.logoTone(store.name),
       rawStore: store,
     };
+  }
+
+  private activeLocation(): Record<string, any> {
+    const address = this.state.activeAddress();
+    return buildCustomerLocationQuery({
+      lat: address?.latitude ?? undefined,
+      lng: address?.longitude ?? undefined,
+      state: address?.state || undefined,
+      city: address?.city || undefined,
+      postal_code: address?.pincode || undefined,
+    });
   }
 
   private mapProduct(product: Product): NextouProduct {
@@ -323,9 +336,7 @@ export class NextouHomeService {
       return 'orders';
     if (
       url.startsWith('/profile') ||
-      url.startsWith('/addresses') ||
-      url.startsWith('/wallet') ||
-      url.startsWith('/wishlist')
+      url.startsWith('/addresses')
     )
       return 'account';
     if (url.startsWith('/stores') || url.startsWith('/category'))

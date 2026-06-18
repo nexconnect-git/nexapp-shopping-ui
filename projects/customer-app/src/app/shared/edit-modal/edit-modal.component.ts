@@ -32,6 +32,13 @@ export class EditModalComponent {
     return 'Edit';
   }
 
+  subtitle(): string {
+    if (this.ui.editModal() === 'profile') return 'Nextou account';
+    if (this.ui.editModal() === 'address') return 'Delivery details';
+    if (this.ui.editModal() === 'payment') return 'Payment details';
+    return 'Update details';
+  }
+
   save(event: Event): void {
     event.preventDefault();
     if (this.ui.editModal() === 'profile') {

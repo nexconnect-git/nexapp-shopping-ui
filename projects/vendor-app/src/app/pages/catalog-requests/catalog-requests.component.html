@@ -4,8 +4,8 @@
       <span class="eyebrow">Admin catalog</span>
       <h1>Catalog Requests</h1>
       <p>
-        Request missing products so admins can review and add them to the
-        shared catalog.
+        Request missing products so admins can review and add them to the shared
+        catalog.
       </p>
     </div>
     <div class="page-hero-actions">
@@ -25,145 +25,142 @@
         </div>
         <span class="count-pill"
           >{{ draftItems().length }} item{{
-            draftItems().length === 1 ? '' : 's'
+            draftItems().length === 1 ? "" : "s"
           }}</span
         >
       </div>
       <div class="card-body">
         @for (item of draftItems(); track $index) {
-          <section class="draft-row">
-            <div class="draft-head">
-              <div>
-                <strong>Item {{ $index + 1 }}</strong>
-                <span>{{ item.name || 'New catalog proposal' }}</span>
-              </div>
-              @if (draftItems().length > 1) {
-                <button
-                  type="button"
-                  class="icon-btn danger"
-                  (click)="removeItem($index)"
-                  title="Remove item"
-                >
-                  <span class="material-icons-outlined">delete</span>
-                </button>
+        <section class="draft-row">
+          <div class="draft-head">
+            <div>
+              <strong>Item {{ $index + 1 }}</strong>
+              <span>{{ item.name || "New catalog proposal" }}</span>
+            </div>
+            @if (draftItems().length > 1) {
+            <button
+              type="button"
+              class="icon-btn danger"
+              (click)="removeItem($index)"
+              title="Remove item"
+            >
+              <span class="material-icons-outlined">delete</span>
+            </button>
+            }
+          </div>
+
+          <div class="form-row">
+            <div class="form-group span-2">
+              <label class="form-label">Item Name *</label>
+              <input
+                class="form-input"
+                [(ngModel)]="item.name"
+                (ngModelChange)="clearItemError($index, 'name')"
+                name="name_{{ $index }}"
+                placeholder="e.g. Amul salted butter 500g"
+                required
+              />
+              <small class="field-hint"
+                >Exact product name plus pack size so admin can create the right
+                catalog item.</small
+              >
+              @if (itemError($index, 'name')) {
+              <small class="field-error">{{ itemError($index, "name") }}</small>
               }
             </div>
-
-            <div class="form-row">
-              <div class="form-group span-2">
-                <label class="form-label">Item Name *</label>
-                <input
-                  class="form-input"
-                  [(ngModel)]="item.name"
-                  (ngModelChange)="clearItemError($index, 'name')"
-                  name="name_{{ $index }}"
-                  placeholder="e.g. Amul salted butter 500g"
-                  required
-                />
-                <small class="field-hint"
-                  >Exact product name plus pack size so admin can create the
-                  right catalog item.</small
-                >
-                @if (itemError($index, 'name')) {
-                  <small class="field-error">{{
-                    itemError($index, 'name')
-                  }}</small>
+            <div class="form-group">
+              <label class="form-label">Category</label>
+              <select
+                class="form-input form-select"
+                [(ngModel)]="item.category_id"
+                name="category_{{ $index }}"
+              >
+                <option [ngValue]="null">Select category</option>
+                @for (cat of categories(); track cat.id) {
+                <option [ngValue]="cat.id">{{ cat.name }}</option>
                 }
-              </div>
-              <div class="form-group">
-                <label class="form-label">Category</label>
-                <select
-                  class="form-input form-select"
-                  [(ngModel)]="item.category_id"
-                  name="category_{{ $index }}"
-                >
-                  <option [ngValue]="null">Select category</option>
-                  @for (cat of categories(); track cat.id) {
-                    <option [ngValue]="cat.id">{{ cat.name }}</option>
-                  }
-                </select>
-                <small class="field-hint"
-                  >Choose the closest category if you know it; admin can
-                  adjust during review.</small
-                >
-              </div>
+              </select>
+              <small class="field-hint"
+                >Choose the closest category if you know it; admin can adjust
+                during review.</small
+              >
             </div>
+          </div>
 
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Brand</label>
-                <input
-                  class="form-input"
-                  [(ngModel)]="item.brand"
-                  name="brand_{{ $index }}"
-                  placeholder="Brand or maker"
-                />
-                <small class="field-hint"
-                  >Manufacturer, maker, or house brand printed on the
-                  item.</small
-                >
-              </div>
-              <div class="form-group">
-                <label class="form-label">Unit</label>
-                <select
-                  class="form-input form-select"
-                  [(ngModel)]="item.unit"
-                  name="unit_{{ $index }}"
-                >
-                  @for (unit of unitOptions; track unit.value) {
-                    <option [value]="unit.value">{{ unit.label }}</option>
-                  }
-                </select>
-                <small class="field-hint"
-                  >Measurement unit customers use to understand the
-                  product.</small
-                >
-              </div>
-              <div class="form-group">
-                <label class="form-label">Barcode</label>
-                <input
-                  class="form-input"
-                  [(ngModel)]="item.barcode"
-                  name="barcode_{{ $index }}"
-                  placeholder="e.g. 8901234567890"
-                />
-                <small class="field-hint"
-                  >Optional barcode from the package for easier catalog
-                  matching.</small
-                >
-              </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Brand</label>
+              <input
+                class="form-input"
+                [(ngModel)]="item.brand"
+                name="brand_{{ $index }}"
+                placeholder="Brand or maker"
+              />
+              <small class="field-hint"
+                >Manufacturer, maker, or house brand printed on the item.</small
+              >
             </div>
+            <div class="form-group">
+              <label class="form-label">Unit</label>
+              <select
+                class="form-input form-select"
+                [(ngModel)]="item.unit"
+                name="unit_{{ $index }}"
+              >
+                @for (unit of unitOptions; track unit.value) {
+                <option [value]="unit.value">{{ unit.label }}</option>
+                }
+              </select>
+              <small class="field-hint"
+                >Measurement unit customers use to understand the
+                product.</small
+              >
+            </div>
+            <div class="form-group">
+              <label class="form-label">Barcode</label>
+              <input
+                class="form-input"
+                [(ngModel)]="item.barcode"
+                name="barcode_{{ $index }}"
+                placeholder="e.g. 8901234567890"
+              />
+              <small class="field-hint"
+                >Optional barcode from the package for easier catalog
+                matching.</small
+              >
+            </div>
+          </div>
 
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">SKU Hint</label>
-                <input
-                  class="form-input"
-                  [(ngModel)]="item.sku_hint"
-                  name="sku_{{ $index }}"
-                  placeholder="Optional internal code"
-                />
-                <small class="field-hint"
-                  >Your internal reference code, if this product already
-                  exists in your stock system.</small
-                >
-              </div>
-              <div class="form-group span-2">
-                <label class="form-label">Description</label>
-                <textarea
-                  class="form-input"
-                  [(ngModel)]="item.description"
-                  name="desc_{{ $index }}"
-                  rows="2"
-                  placeholder="Pack size, flavor, variant, or any catalog detail admins need."
-                ></textarea>
-                <small class="field-hint"
-                  >Add details that help admin distinguish this item from
-                  similar products.</small
-                >
-              </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">SKU Hint</label>
+              <input
+                class="form-input"
+                [(ngModel)]="item.sku_hint"
+                name="sku_{{ $index }}"
+                placeholder="Optional internal code"
+              />
+              <small class="field-hint"
+                >Your internal reference code, if this product already exists in
+                your stock system.</small
+              >
             </div>
-          </section>
+            <div class="form-group span-2">
+              <label class="form-label">Description</label>
+              <textarea
+                class="form-input"
+                [(ngModel)]="item.description"
+                name="desc_{{ $index }}"
+                rows="2"
+                placeholder="Pack size, flavor, variant, or any catalog detail admins need."
+              ></textarea>
+              <small class="field-hint"
+                >Add details that help admin distinguish this item from similar
+                products.</small
+              >
+            </div>
+          </div>
+        </section>
         }
 
         <div class="form-actions">
@@ -171,14 +168,16 @@
             <span class="material-icons-outlined">add</span>
             Add Another Item
           </button>
-          <button type="submit" class="btn-primary" [disabled]="saving()">
+          <button
+            type="submit"
+            class="btn-primary"
+            [disabled]="!canSubmitRequest()"
+          >
             @if (saving()) {
-              <span class="spinner-inline"></span>
-              Submitting...
-            } @else {
-              <span class="material-icons-outlined">send</span>
-              Submit Request
-            }
+            <span class="spinner-inline"></span>
+            Submitting... } @else {
+            <span class="material-icons-outlined">send</span>
+            Submit Request }
           </button>
         </div>
       </div>
@@ -189,17 +188,17 @@
         <span class="material-icons-outlined">tips_and_updates</span>
         <h3>Good requests get approved faster</h3>
         <p>
-          Add clear item names, pack size, brand, unit, barcode, and
-          category when you know it.
+          Add clear item names, pack size, brand, unit, barcode, and category
+          when you know it.
         </p>
       </div>
       <div class="help-card">
         <span class="material-icons-outlined">schedule</span>
         <h3>What happens next</h3>
         <p>
-          Pending requests are admin reviewed. Edit and cancel actions are
-          not available yet, so submit a new request with corrections if
-          details change.
+          Pending requests are admin reviewed. Edit and cancel actions are not
+          available yet, so submit a new request with corrections if details
+          change.
         </p>
       </div>
       <div class="help-stat">
@@ -218,51 +217,49 @@
     </div>
     <div class="card-body">
       @if (loading()) {
-        <div class="loading-state">
-          <div class="spinner"></div>
-          <p>Loading requests...</p>
-        </div>
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading requests...</p>
+      </div>
       } @else if (proposals().length === 0) {
-        <div class="empty-state">
-          <span class="material-icons-outlined">playlist_add</span>
-          <p>No catalog requests yet.</p>
-        </div>
+      <div class="empty-state">
+        <span class="material-icons-outlined">playlist_add</span>
+        <p>No catalog requests yet.</p>
+      </div>
       } @else {
-        <div class="proposal-list">
-          @for (proposal of proposals(); track proposal.id) {
-            <article class="proposal-card">
-              <div class="proposal-head">
-                <strong
-                  >{{ proposal.items.length }} item{{
-                    proposal.items.length !== 1 ? 's' : ''
-                  }}</strong
-                >
-                <span class="status-pill" [class]="proposal.status">{{
-                  proposal.status.replace('_', ' ')
-                }}</span>
-              </div>
-              @if (proposal.status === 'pending') {
-                <p class="proposal-guidance">
-                  Admin review is pending. Most catalog checks need the item
-                  name, pack size, brand, and barcode. To correct a
-                  submitted request, create a new request with the updated
-                  details.
-                </p>
-              }
-              @for (item of proposal.items; track item.id) {
-                <div class="proposal-item">
-                  <span>{{ item.name }}</span>
-                  <span class="status-pill" [class]="item.status">{{
-                    item.status
-                  }}</span>
-                  @if (item.rejection_reason) {
-                    <small>{{ item.rejection_reason }}</small>
-                  }
-                </div>
-              }
-            </article>
+      <div class="proposal-list">
+        @for (proposal of proposals(); track proposal.id) {
+        <article class="proposal-card">
+          <div class="proposal-head">
+            <strong
+              >{{ proposal.items.length }} item{{
+                proposal.items.length !== 1 ? "s" : ""
+              }}</strong
+            >
+            <span class="status-pill" [class]="proposal.status">{{
+              proposal.status.replace("_", " ")
+            }}</span>
+          </div>
+          @if (proposal.status === 'pending') {
+          <p class="proposal-guidance">
+            Admin review is pending. Most catalog checks need the item name,
+            pack size, brand, and barcode. To correct a submitted request,
+            create a new request with the updated details.
+          </p>
+          } @for (item of proposal.items; track item.id) {
+          <div class="proposal-item">
+            <span>{{ item.name }}</span>
+            <span class="status-pill" [class]="item.status">{{
+              item.status
+            }}</span>
+            @if (item.rejection_reason) {
+            <small>{{ item.rejection_reason }}</small>
+            }
+          </div>
           }
-        </div>
+        </article>
+        }
+      </div>
       }
     </div>
   </div>

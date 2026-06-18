@@ -11,10 +11,9 @@ export class CategoryRedirectComponent {
     private router: Router,
   ) {
     const category = String(this.route.snapshot.paramMap.get('id') || '').trim();
-    this.router.navigate(['/stores'], {
+    this.router.navigate(['/explore', category || 'all'], {
       queryParams: category && category !== 'all' ? { category } : {},
       replaceUrl: true,
     });
   }
 }
-

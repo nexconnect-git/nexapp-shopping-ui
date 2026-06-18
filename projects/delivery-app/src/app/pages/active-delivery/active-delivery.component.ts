@@ -16,6 +16,8 @@ import {
   AppCurrencyPipe,
   AuthService,
   GoogleMapsService,
+  NativePlatformService,
+  type NativeWatchId,
   openAuthenticatedWebSocket,
   Order,
   PaymentQR,
@@ -53,6 +55,7 @@ export class ActiveDeliveryComponent
   private api = inject(ApiService);
   private auth = inject(AuthService);
   private googleMaps = inject(GoogleMapsService);
+  private nativePlatform = inject(NativePlatformService);
   private alerts = inject(AlertService);
   private apiBaseUrl = inject(API_BASE_URL);
 
@@ -61,7 +64,7 @@ export class ActiveDeliveryComponent
   mapErrors = signal<Record<string, string>>({});
   private sub?: Subscription;
 
-  private watchId?: number;
+  private watchId?: NativeWatchId;
   private wsConns: Map<string, WebSocket> = new Map();
   private routeMaps: Map<string, RouteMapState> = new Map();
   private initializingMaps: Set<string> = new Set();
@@ -119,18 +122,25 @@ export class ActiveDeliveryComponent
     return `${orderId}:${action}`;
   }
 
-  private startLocationTracking() {
-    if (!('geolocation' in navigator)) return;
-    this.watchId = navigator.geolocation.watchPosition(
-      (pos) => this.broadcastLocation(pos.coords.latitude, pos.coords.longitude),
-      () => {},
-      { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 },
-    );
+  private async startLocationTracking() {
+    try {
+      const hasPermission = await this.nativePlatform.requestLocationPermissions();
+      if (!hasPermission) return;
+
+      this.watchId = await this.nativePlatform.watchPosition(
+        { enableHighAccuracy: true, maximumAge: 10000, timeout: 10000 },
+        (pos) => this.broadcastLocation(pos.coords.latitude, pos.coords.longitude),
+        () => {},
+      );
+    } catch {
+      this.alerts.info('Location permission is required for live delivery tracking.');
+    }
   }
 
   private stopLocationTracking() {
-    if (this.watchId !== undefined && 'geolocation' in navigator) {
-      navigator.geolocation.clearWatch(this.watchId);
+    if (this.watchId !== undefined) {
+      void this.nativePlatform.clearWatch(this.watchId);
+      this.watchId = undefined;
     }
     this.wsConns.forEach((ws) => ws.close());
     this.wsConns.clear();
@@ -163,8 +173,8 @@ export class ActiveDeliveryComponent
       }
 
       const routeMap = this.routeMaps.get(order.id);
-      if (routeMap?.partnerMarker) {
-        routeMap.partnerMarker.setPosition({ lat, lng });
+      if (routeMap) {
+        routeMap.partnerMarker?.setPosition({ lat, lng });
         this.refreshRoutePolyline(order, routeMap);
       }
     });

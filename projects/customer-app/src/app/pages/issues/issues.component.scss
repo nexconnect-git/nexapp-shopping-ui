@@ -7,6 +7,20 @@
   display: grid;
   gap: 14px;
 }
+.issue-list .empty-panel {
+  justify-items: center;
+  text-align: center;
+  padding: 34px;
+}
+.issue-list .empty-panel > span {
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  color: var(--fd-color-primary);
+  background: var(--fd-color-primary-soft);
+}
 .issue-list article {
   padding: 22px;
   display: grid;

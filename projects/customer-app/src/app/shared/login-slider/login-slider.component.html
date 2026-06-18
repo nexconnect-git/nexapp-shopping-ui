@@ -1,166 +1,162 @@
 @if (ui.loginSliderOpen()) {
+<button
+  type="button"
+  class="overlay"
+  aria-label="Close login"
+  (click)="ui.closeLogin()"
+></button>
+<aside class="login-slider animate-fade">
   <button
     type="button"
-    class="overlay"
+    class="close"
     aria-label="Close login"
     (click)="ui.closeLogin()"
-  ></button>
-  <aside class="login-slider animate-fade">
-    <button
-      type="button"
-      class="close"
-      aria-label="Close login"
-      (click)="ui.closeLogin()"
-    >
-      <span class="material-symbols-rounded">close</span>
-    </button>
+  >
+    <span class="material-symbols-rounded">close</span>
+  </button>
 
-    <section class="mobile-auth-hero" aria-label="Nextou mobile login">
-      <div class="mobile-brand-row">
+  <section class="mobile-auth-hero" aria-label="Nextou mobile login">
+    <div class="mobile-brand-row">
+      <img
+        class="mobile-logo"
+        src="assets/brand/nextou-logo-single.png"
+        alt="Nextou logo"
+      />
+      <div>
         <img
-          class="mobile-logo"
-          src="assets/brand/nextou-logo-single.png"
-          alt="Nextou logo"
+          src="assets/brand/nextou-brand-logo.png"
+          alt="Nextou"
+          class="brand-wordmark"
+          style="height: 16px; margin-bottom: 4px"
         />
-        <div>
-          <img src="assets/brand/nextou-brand-logo.png" alt="Nextou" class="brand-wordmark" style="height: 16px; margin-bottom: 4px;" />
-          <b>{{
-            auth.otpRequested() ? "Enter your secure OTP" : "Welcome back"
-          }}</b>
-        </div>
+        <b>{{
+          auth.otpRequested() ? "Enter your secure OTP" : "Welcome back"
+        }}</b>
       </div>
+    </div>
+    <p>
+      {{
+        auth.otpRequested()
+          ? "We sent the code to your email. Keep this sheet open and finish checkout faster."
+          : "Sign in once to unlock saved addresses, checkout, and order tracking."
+      }}
+    </p>
+    <div class="mobile-trust-grid">
+      <span>Saved cart</span>
+      <span>Saved addresses</span>
+      <span>Fast checkout</span>
+    </div>
+  </section>
+
+  <section class="intro">
+    <span class="spark">NT</span>
+    <small>Nextou Secure Login</small>
+    <h2>Continue with OTP</h2>
+    <p>Sign in with your mobile number and receive the OTP on your email.</p>
+  </section>
+
+  <form (submit)="login($event)" class="login-form" novalidate>
+    <label class="auth-field" [class.invalid]="fieldErrors().mobile">
+      <span>Mobile Number <b>*</b></span>
+      <span class="input-shell">
+        <span class="material-symbols-rounded">phone</span>
+        <input
+          type="tel"
+          name="mobile"
+          autocomplete="tel"
+          inputmode="numeric"
+          [ngModel]="mobile"
+          (ngModelChange)="updateMobile($event)"
+          placeholder="Enter 10-digit mobile number"
+          aria-describedby="mobile-error"
+        />
+      </span>
+      @if (fieldErrors().mobile) {
+      <small id="mobile-error" class="field-error">{{
+        fieldErrors().mobile
+      }}</small>
+      }
+    </label>
+
+    <label class="auth-field" [class.invalid]="fieldErrors().email">
+      <span>Email Address <b>*</b></span>
+      <span class="input-shell">
+        <span class="material-symbols-rounded">mail</span>
+        <input
+          type="email"
+          name="email"
+          autocomplete="email"
+          [ngModel]="email"
+          (ngModelChange)="updateEmail($event)"
+          placeholder="Enter email address for OTP"
+          aria-describedby="email-error"
+        />
+      </span>
+      @if (fieldErrors().email) {
+      <small id="email-error" class="field-error">{{
+        fieldErrors().email
+      }}</small>
+      }
+    </label>
+
+    @if (auth.otpRequested()) {
+    <div class="otp-note">
+      <span class="otp-emoji" aria-hidden="true">OTP</span>
       <p>
-        {{
-          auth.otpRequested()
-            ? "We sent the code to your email. Keep this sheet open and finish checkout faster."
-            : "Sign in once to unlock saved addresses, cart, offers, and order tracking."
-        }}
+        OTP sent to <b>{{ email }}</b
+        >. Keep this drawer open while you enter the code.
       </p>
-      <div class="mobile-trust-grid">
-        <span>Saved cart</span>
-        <span>Live offers</span>
-        <span>Fast checkout</span>
-      </div>
-    </section>
-
-    <section class="intro">
-      <span class="spark">NT</span>
-      <small>Nextou Secure Login</small>
-      <h2>Continue with OTP</h2>
-      <p>Sign in with your mobile number and receive the OTP on your email.</p>
-    </section>
-
-    <form (submit)="login($event)" class="login-form" novalidate>
-      <label class="auth-field" [class.invalid]="fieldErrors().mobile">
-        <span>Mobile Number <b>*</b></span>
-        <span class="input-shell">
-          <span class="material-symbols-rounded">phone</span>
-          <input
-            type="tel"
-            name="mobile"
-            autocomplete="tel"
-            inputmode="numeric"
-            [ngModel]="mobile"
-            (ngModelChange)="updateMobile($event)"
-            placeholder="Enter 10-digit mobile number"
-            aria-describedby="mobile-error"
-          />
-        </span>
-        @if (fieldErrors().mobile) {
-          <small id="mobile-error" class="field-error">{{
-            fieldErrors().mobile
-          }}</small>
-        }
-      </label>
-
-      <label class="auth-field" [class.invalid]="fieldErrors().email">
-        <span>Email Address <b>*</b></span>
-        <span class="input-shell">
-          <span class="material-symbols-rounded">mail</span>
-          <input
-            type="email"
-            name="email"
-            autocomplete="email"
-            [ngModel]="email"
-            (ngModelChange)="updateEmail($event)"
-            placeholder="Enter email address for OTP"
-            aria-describedby="email-error"
-          />
-        </span>
-        @if (fieldErrors().email) {
-          <small id="email-error" class="field-error">{{
-            fieldErrors().email
-          }}</small>
-        }
-      </label>
-
-      @if (auth.otpRequested()) {
-        <div class="otp-note">
-          <span class="otp-emoji" aria-hidden="true">OTP</span>
-          <p>
-            OTP sent to <b>{{ email }}</b
-            >. Keep this drawer open while you enter the code.
-          </p>
-        </div>
-        <label class="auth-field" [class.invalid]="fieldErrors().otp">
-          <span>One-Time Passcode <b>*</b></span>
-          <span class="input-shell">
-            <span class="material-symbols-rounded">key</span>
-            <input
-              type="text"
-              name="otp"
-              autocomplete="one-time-code"
-              inputmode="numeric"
-              [ngModel]="otp"
-              (ngModelChange)="updateOtp($event)"
-              placeholder="Enter OTP"
-              aria-describedby="otp-error"
-            />
-          </span>
-          @if (fieldErrors().otp) {
-            <small id="otp-error" class="field-error">{{
-              fieldErrors().otp
-            }}</small>
-          }
-        </label>
+    </div>
+    <label class="auth-field" [class.invalid]="fieldErrors().otp">
+      <span>One-Time Passcode <b>*</b></span>
+      <span class="input-shell">
+        <span class="material-symbols-rounded">key</span>
+        <input
+          type="text"
+          name="otp"
+          autocomplete="one-time-code"
+          inputmode="numeric"
+          [ngModel]="otp"
+          (ngModelChange)="updateOtp($event)"
+          placeholder="Enter OTP"
+          aria-describedby="otp-error"
+        />
+      </span>
+      @if (fieldErrors().otp) {
+      <small id="otp-error" class="field-error">{{ fieldErrors().otp }}</small>
       }
-      @if (auth.error()) {
-        <div class="form-error">{{ auth.error() }}</div>
-      }
-      <fd-nx-button
-        type="submit"
-        variant="primary"
-        [full]="true"
-        [disabled]="auth.loading()"
-      >
-        {{
-          auth.loading()
-            ? "Please wait..."
-            : auth.otpRequested()
-              ? "Verify & Continue"
-              : "Send OTP"
-        }}
-      </fd-nx-button>
-      @if (auth.otpRequested()) {
-        <div class="otp-actions">
-          <button type="button" (click)="changeDetails()">
-            Change details
-          </button>
-          <button
-            type="button"
-            (click)="resendOtp()"
-            [disabled]="auth.loading()"
-          >
-            Resend OTP
-          </button>
-        </div>
-      }
-    </form>
+    </label>
+    } @if (auth.error()) {
+    <div class="form-error">{{ auth.error() }}</div>
+    }
+    <fd-nx-button
+      type="submit"
+      variant="primary"
+      [full]="true"
+      [disabled]="!canSubmit()"
+    >
+      {{
+        auth.loading()
+          ? "Please wait..."
+          : auth.otpRequested()
+          ? "Verify & Continue"
+          : "Send OTP"
+      }}
+    </fd-nx-button>
+    @if (auth.otpRequested()) {
+    <div class="otp-actions">
+      <button type="button" (click)="changeDetails()">Change details</button>
+      <button type="button" (click)="resendOtp()" [disabled]="!canResendOtp()">
+        Resend OTP
+      </button>
+    </div>
+    }
+  </form>
 
-    <section class="benefits">
-      <span>Fast delivery</span>
-      <span>Secure checkout</span>
-      <span>Member-only offers</span>
-    </section>
-  </aside>
+  <section class="benefits">
+    <span>Fast delivery</span>
+    <span>Secure checkout</span>
+    <span>Order tracking</span>
+  </section>
+</aside>
 }

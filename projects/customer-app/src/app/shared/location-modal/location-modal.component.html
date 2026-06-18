@@ -9,11 +9,13 @@
     <span class="sheet-handle" aria-hidden="true"></span>
     <header>
       <div>
-        <span class="eyebrow">📍 Delivery address</span>
+        <span class="eyebrow">
+          <span class="material-symbols-rounded" aria-hidden="true">location_on</span>
+          Delivery address
+        </span>
         <h2>Choose location</h2>
         <p>
-          Pick where we should show nearby stores, live offers, and accurate
-          fees.
+          Pick where we should show nearby stores and accurate fees.
         </p>
       </div>
       <button
@@ -69,10 +71,7 @@
       @for (address of filteredAddresses(); track address.id) {
         <button
           type="button"
-          [class.active]="
-            selectedAddressId() === address.id ||
-            selected().area === address.label
-          "
+          [class.active]="isAddressSelected(address)"
           (click)="chooseSaved(address)"
         >
           <span class="material-symbols-rounded">{{
@@ -93,10 +92,7 @@
             <strong>{{ address.phone }}</strong>
           </span>
           <i class="material-symbols-rounded">{{
-            selectedAddressId() === address.id ||
-            selected().area === address.label
-              ? "check_circle"
-              : "radio_button_unchecked"
+            isAddressSelected(address) ? "check_circle" : "radio_button_unchecked"
           }}</i>
         </button>
       } @empty {

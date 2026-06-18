@@ -2,7 +2,19 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { ApiService, AppCurrencyPipe } from '@shared/public-api';
+import {
+  ApiService,
+  AppCurrencyPipe,
+  INDIA_PINCODE_PATTERN,
+  isValidEmail,
+  isValidIndianPhone,
+  normalizeIndianPhone,
+  sanitizeDigits,
+  sanitizeEmail,
+  sanitizeUsername,
+  stripControlCharacters,
+  USERNAME_PATTERN,
+} from '@shared/public-api';
 
 interface StepConfig {
   id: number;
@@ -153,9 +165,10 @@ export class VendorOnboardingComponent {
   validateStep(step: number): string {
     switch (step) {
       case 1:
+        this.s1.username = sanitizeUsername(this.s1.username);
         if (!this.s1.username.trim()) return 'Username is required.';
-        if (this.s1.username.length < 3)
-          return 'Username must be at least 3 characters.';
+        if (!USERNAME_PATTERN.test(this.s1.username))
+          return 'Use 3-30 letters, numbers, dots, dashes, or underscores.';
         if (this.s1.password) {
           if (this.s1.password.length < 8)
             return 'Password must be at least 8 characters.';
@@ -164,13 +177,39 @@ export class VendorOnboardingComponent {
         }
         break;
       case 2:
+        this.s2.phone = normalizeIndianPhone(this.s2.phone);
+        this.s2.email = sanitizeEmail(this.s2.email);
+        this.s2.postal_code = sanitizeDigits(this.s2.postal_code, 6);
         if (!this.s2.store_name.trim()) return 'Store name is required.';
+        if (!this.s2.description.trim()) return 'Description is required.';
         if (!this.s2.phone.trim()) return 'Phone number is required.';
         if (!this.s2.email.trim()) return 'Email is required.';
-        if (!/\S+@\S+\.\S+/.test(this.s2.email))
-          return 'Enter a valid email address.';
+        if (!isValidIndianPhone(this.s2.phone))
+          return 'Enter a valid 10-digit Indian mobile number.';
+        if (!isValidEmail(this.s2.email)) return 'Enter a valid email address.';
+        if (
+          this.s2.postal_code &&
+          !INDIA_PINCODE_PATTERN.test(this.s2.postal_code)
+        )
+          return 'Enter a valid 6-digit postal code.';
         break;
       case 3:
+        this.s3.contact_person_phone = normalizeIndianPhone(
+          this.s3.contact_person_phone
+        );
+        this.s3.contact_person_email = sanitizeEmail(
+          this.s3.contact_person_email
+        );
+        if (
+          this.s3.contact_person_phone &&
+          !isValidIndianPhone(this.s3.contact_person_phone)
+        )
+          return 'Enter a valid contact person phone number.';
+        if (
+          this.s3.contact_person_email &&
+          !isValidEmail(this.s3.contact_person_email)
+        )
+          return 'Enter a valid contact person email address.';
         if (
           this.s3.pan_number &&
           !/^[A-Z]{5}[0-9]{4}[A-Z]$/i.test(this.s3.pan_number)
@@ -262,26 +301,28 @@ export class VendorOnboardingComponent {
       // Step 1
       username: this.s1.username,
       password: this.s1.password,
-      first_name: this.s1.first_name,
-      last_name: this.s1.last_name,
+      first_name: stripControlCharacters(this.s1.first_name),
+      last_name: stripControlCharacters(this.s1.last_name),
       // Step 2
-      store_name: this.s2.store_name,
+      store_name: stripControlCharacters(this.s2.store_name),
       vendor_type: this.s2.vendor_type,
-      description: this.s2.description,
-      phone: this.s2.phone,
-      email: this.s2.email,
-      address: this.s2.address,
-      city: this.s2.city,
-      state: this.s2.state,
-      postal_code: this.s2.postal_code,
+      description: stripControlCharacters(this.s2.description),
+      phone: normalizeIndianPhone(this.s2.phone),
+      email: sanitizeEmail(this.s2.email),
+      address: stripControlCharacters(this.s2.address),
+      city: stripControlCharacters(this.s2.city),
+      state: stripControlCharacters(this.s2.state),
+      postal_code: sanitizeDigits(this.s2.postal_code, 6),
       latitude: this.s2.latitude || 0,
       longitude: this.s2.longitude || 0,
       gst_registered: this.s2.gst_registered,
       // Step 3
-      legal_name: this.s3.legal_name || this.s2.store_name,
-      contact_person_name: this.s3.contact_person_name,
-      contact_person_email: this.s3.contact_person_email,
-      contact_person_phone: this.s3.contact_person_phone,
+      legal_name:
+        stripControlCharacters(this.s3.legal_name) ||
+        stripControlCharacters(this.s2.store_name),
+      contact_person_name: stripControlCharacters(this.s3.contact_person_name),
+      contact_person_email: sanitizeEmail(this.s3.contact_person_email),
+      contact_person_phone: normalizeIndianPhone(this.s3.contact_person_phone),
       pan_number: this.s3.pan_number.toUpperCase(),
       gstin: this.s3.gstin.toUpperCase(),
       cin_udyam: this.s3.cin_udyam,
@@ -322,7 +363,7 @@ export class VendorOnboardingComponent {
         this.saving.set(false);
         if (res.auto_generated_password) {
           alert(
-            `Vendor created successfully!\n\nTemporary Password: ${res.auto_generated_password}\n\nPlease share this securely with the vendor. They will be required to change it on their first login.`,
+            `Vendor created successfully!\n\nTemporary Password: ${res.auto_generated_password}\n\nPlease share this securely with the vendor. They will be required to change it on their first login.`
           );
         }
         this.router.navigate(['/vendors']);
@@ -342,6 +383,7 @@ export class VendorOnboardingComponent {
             2: [
               'store_name',
               'vendor_type',
+              'description',
               'phone',
               'email',
               'address',
@@ -377,7 +419,7 @@ export class VendorOnboardingComponent {
           this.error.set(
             typeof e === 'string'
               ? e
-              : 'Failed to create vendor. Please try again.',
+              : 'Failed to create vendor. Please try again.'
           );
         }
       },
@@ -386,6 +428,48 @@ export class VendorOnboardingComponent {
 
   fieldErr(key: string): string {
     return this.fieldErrors()[key] || '';
+  }
+
+  onUsernameInput(value: string): void {
+    this.s1.username = sanitizeUsername(value);
+    this.clearErrors();
+  }
+
+  onBusinessPhoneInput(value: string): void {
+    this.s2.phone = normalizeIndianPhone(value);
+    this.clearErrors();
+  }
+
+  onBusinessEmailInput(value: string): void {
+    this.s2.email = sanitizeEmail(value);
+    this.clearErrors();
+  }
+
+  onPostalCodeInput(value: string): void {
+    this.s2.postal_code = sanitizeDigits(value, 6);
+    this.clearErrors();
+  }
+
+  onContactPhoneInput(value: string): void {
+    this.s3.contact_person_phone = normalizeIndianPhone(value);
+    this.clearErrors();
+  }
+
+  onContactEmailInput(value: string): void {
+    this.s3.contact_person_email = sanitizeEmail(value);
+    this.clearErrors();
+  }
+
+  canContinueCurrentStep(): boolean {
+    return !this.validateStep(this.currentStep());
+  }
+
+  canSubmitVendor(): boolean {
+    if (this.saving()) return false;
+    for (let i = 1; i <= this.steps.length; i++) {
+      if (this.validateStep(i)) return false;
+    }
+    return true;
   }
 
   get progressPercent(): number {

@@ -5,6 +5,28 @@ import { CustomerApiClientService } from './customer-api-client.service';
 export class CustomerCatalogApiService {
   private api = inject(CustomerApiClientService);
 
+  getHome(params?: Record<string, any>) {
+    return this.api.toObservable<any>(this.api.client.catalog.home(params));
+  }
+
+  checkServiceability(params?: Record<string, any>) {
+    return this.api.toObservable<any>(
+      this.api.client.catalog.serviceability(params),
+    );
+  }
+
+  explore(params?: Record<string, any>) {
+    return this.api.toObservable<any>(
+      this.api.client.catalog.explore(params),
+    );
+  }
+
+  buyAgain(params?: Record<string, any>) {
+    return this.api.toObservable<any>(
+      this.api.client.catalog.buyAgain(params),
+    );
+  }
+
   getBanners() {
     return this.api.toObservable<any>(this.api.client.catalog.banners());
   }

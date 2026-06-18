@@ -1,211 +1,225 @@
 <!-- Mobile header (shown ≤768px, only when logged in) -->
 @if (auth.isLoggedIn() && !isAuthRoute()) {
-  <header class="mobile-header">
-    @if (showBackButton()) {
-      <button class="header-back-btn" type="button" aria-label="Go back" (click)="goBack()">
-        <span class="material-icons-outlined">arrow_back</span>
-      </button>
-    }
-    <span class="mobile-brand">
-      <img
-        class="mobile-brand-logo"
-        src="assets/brand/nextou-logo-single.png"
-        alt="Nextou logo"
+<header class="mobile-header">
+  @if (showBackButton()) {
+  <button
+    class="header-back-btn"
+    type="button"
+    aria-label="Go back"
+    (click)="goBack()"
+  >
+    <span class="material-icons-outlined">arrow_back</span>
+  </button>
+  }
+  <span class="mobile-brand">
+    <img
+      class="mobile-brand-logo"
+      src="assets/brand/nextou-logo-single.png"
+      alt="Nextou logo"
+    />
+    <span
+      ><img
+        src="assets/brand/nextou-brand-logo.png"
+        alt="Nextou"
+        class="brand-wordmark"
       />
-      <span><img src="assets/brand/nextou-brand-logo.png" alt="Nextou" class="brand-wordmark" /> <b>Delivery</b></span>
-    </span>
-    <div class="header-actions">
-      <!-- Notification Bell -->
-      <div class="notif-wrapper" (click)="$event.stopPropagation()">
-        <button
-          class="notif-btn"
-          (click)="toggleNotif($event)"
-          title="Notifications"
-          aria-label="Open notifications"
-        >
-          <span class="material-icons-outlined">notifications_none</span>
+      <b>Delivery</b></span
+    >
+  </span>
+  <div class="header-actions">
+    <!-- Notification Bell -->
+    <div class="notif-wrapper" (click)="$event.stopPropagation()">
+      <button
+        class="notif-btn"
+        (click)="toggleNotif($event)"
+        title="Notifications"
+        aria-label="Open notifications"
+      >
+        <span class="material-icons-outlined">notifications_none</span>
+        @if (unreadCount() > 0) {
+        <span class="notif-badge">{{
+          unreadCount() > 9 ? "9+" : unreadCount()
+        }}</span>
+        }
+      </button>
+      @if (notifOpen()) {
+      <div class="notif-dropdown">
+        <div class="notif-header">
+          <span class="notif-title">Notifications</span>
           @if (unreadCount() > 0) {
-            <span class="notif-badge">{{
-              unreadCount() > 9 ? "9+" : unreadCount()
-            }}</span>
+          <button class="notif-mark-read" (click)="markAllRead()">
+            Mark all read
+          </button>
           }
-        </button>
-        @if (notifOpen()) {
-          <div class="notif-dropdown">
-            <div class="notif-header">
-              <span class="notif-title">Notifications</span>
-              @if (unreadCount() > 0) {
-                <button class="notif-mark-read" (click)="markAllRead()">
-                  Mark all read
-                </button>
-              }
+        </div>
+        @if (notifLoading()) {
+        <div class="notif-loading"><div class="notif-spinner"></div></div>
+        } @else if (notifications().length === 0) {
+        <div class="notif-empty">
+          <span class="material-icons-outlined">notifications_none</span>
+          <span>No notifications</span>
+        </div>
+        } @else {
+        <div class="notif-list">
+          @for (n of notifications(); track n.id) {
+          <button
+            type="button"
+            class="notif-item"
+            [class.unread]="!n.is_read"
+            (click)="handleNotificationClick(n)"
+            aria-label="Open notification details"
+          >
+            <span class="material-icons-outlined notif-icon"
+              >local_shipping</span
+            >
+            <div class="notif-body">
+              <p class="notif-msg">{{ n.title }}</p>
+              <p class="notif-sub">{{ n.message }}</p>
             </div>
-            @if (notifLoading()) {
-              <div class="notif-loading"><div class="notif-spinner"></div></div>
-            } @else if (notifications().length === 0) {
-              <div class="notif-empty">
-                <span class="material-icons-outlined">notifications_none</span>
-                <span>No notifications</span>
-              </div>
-            } @else {
-              <div class="notif-list">
-                @for (n of notifications(); track n.id) {
-                  <button
-                    type="button"
-                    class="notif-item"
-                    [class.unread]="!n.is_read"
-                    (click)="handleNotificationClick(n)"
-                    aria-label="Open notification details"
-                  >
-                    <span class="material-icons-outlined notif-icon"
-                      >local_shipping</span
-                    >
-                    <div class="notif-body">
-                      <p class="notif-msg">{{ n.title }}</p>
-                      <p class="notif-sub">{{ n.message }}</p>
-                    </div>
-                  </button>
-                }
-              </div>
-            }
-          </div>
+          </button>
+          }
+        </div>
         }
       </div>
-      <div class="profile-menu-wrapper">
-        <button class="avatar-btn" aria-label="Open profile menu" (click)="toggleProfile($event)">
-          <span class="avatar avatar-sm">
-            {{
+      }
+    </div>
+    <div class="profile-menu-wrapper">
+      <button
+        class="avatar-btn"
+        aria-label="Open profile menu"
+        (click)="toggleProfile($event)"
+      >
+        <span class="avatar avatar-sm">
+          {{
               (auth.user()?.first_name?.[0] || "") +
                 (auth.user()?.last_name?.[0] || "") ||
                 auth.user()?.username?.[0]?.toUpperCase() ||
                 "?"
-            }}
-          </span>
-        </button>
-        @if (profileOpen()) {
-          <div class="profile-dropdown">
-            <div class="pd-header">
-              <div class="pd-avatar-lg">
-                {{
+          }}
+        </span>
+      </button>
+      @if (profileOpen()) {
+      <div class="profile-dropdown">
+        <div class="pd-header">
+          <div class="pd-avatar-lg">
+            {{
                   (auth.user()?.first_name?.[0] || "") +
                     (auth.user()?.last_name?.[0] || "") || "?"
-                }}
-              </div>
-              <div>
-                <p class="pd-name">
-                  {{ auth.user()?.first_name }} {{ auth.user()?.last_name }}
-                </p>
-                <p class="pd-email">{{ auth.user()?.email }}</p>
-              </div>
-            </div>
-            <div class="pd-divider"></div>
-            @if (canUseRoute("/profile")) {
-              <a routerLink="/profile" class="pd-item" (click)="closeProfile()">
-                <span class="material-icons-outlined">person</span> My Profile
-              </a>
-            }
-            <div class="pd-divider"></div>
-            <button
-              class="pd-item danger"
-              (click)="auth.logout(); closeProfile()"
-            >
-              <span class="material-icons-outlined">logout</span> Sign Out
-            </button>
+            }}
           </div>
+          <div>
+            <p class="pd-name">
+              {{ auth.user()?.first_name }} {{ auth.user()?.last_name }}
+            </p>
+            <p class="pd-email">{{ auth.user()?.email }}</p>
+          </div>
+        </div>
+        <div class="pd-divider"></div>
+        @if (canUseRoute("/profile")) {
+        <a routerLink="/profile" class="pd-item" (click)="closeProfile()">
+          <span class="material-icons-outlined">person</span> My Profile
+        </a>
         }
-      </div>
-    </div>
-  </header>
-
-  <!-- Desktop sidebar (shown >768px) -->
-  <aside class="sidebar">
-    <!-- Brand -->
-    <div class="sidebar-brand">
-      @if (showBackButton()) {
-        <button class="sidebar-back-btn" type="button" aria-label="Go back" (click)="goBack()">
-          <span class="material-icons-outlined">arrow_back</span>
+        <div class="pd-divider"></div>
+        <button class="pd-item danger" (click)="auth.logout(); closeProfile()">
+          <span class="material-icons-outlined">logout</span> Sign Out
         </button>
-      }
-      <span class="sidebar-brand-icon" aria-hidden="true">N</span>
-      <div class="sidebar-brand-text">
-        <img src="assets/brand/nextou-brand-logo.png" alt="Nextou" class="brand-wordmark" />
-        <span class="sidebar-brand-sub">Delivery</span>
       </div>
+      }
     </div>
+  </div>
+</header>
 
-    <!-- Nav items -->
-    <nav class="sidebar-nav">
-      @if (canUseRoute("/")) {
-        <a
-          routerLink="/"
-          routerLinkActive="active"
-          [routerLinkActiveOptions]="{ exact: true }"
-          class="sidebar-menu-item"
-        >
-          <span class="material-icons-outlined">dashboard</span>
-          <span>Dashboard</span>
-        </a>
-      }
-      @if (canUseRoute("/available")) {
-        <a
-          routerLink="/available"
-          routerLinkActive="active"
-          class="sidebar-menu-item"
-        >
-          <span class="material-icons-outlined">local_shipping</span>
-          <span>Available Orders</span>
-        </a>
-      }
-      @if (canUseRoute("/active")) {
-        <a
-          routerLink="/active"
-          routerLinkActive="active"
-          class="sidebar-menu-item"
-        >
-          <span class="material-icons-outlined">delivery_dining</span>
-          <span>Active Delivery</span>
-        </a>
-      }
-      @if (canUseRoute("/history")) {
-        <a
-          routerLink="/history"
-          routerLinkActive="active"
-          class="sidebar-menu-item"
-        >
-          <span class="material-icons-outlined">history</span>
-          <span>History</span>
-        </a>
-      }
-      @if (canUseRoute("/earnings")) {
-        <a
-          routerLink="/earnings"
-          routerLinkActive="active"
-          class="sidebar-menu-item"
-        >
-          <span class="material-icons-outlined">payments</span>
-          <span>Earnings</span>
-        </a>
-      }
-    </nav>
-
-    <!-- Profile + Logout at bottom -->
-    <div class="sidebar-footer">
-      @if (canUseRoute("/profile")) {
-        <a
-          routerLink="/profile"
-          routerLinkActive="active"
-          class="sidebar-menu-item"
-        >
-          <span class="material-icons-outlined">person</span>
-          <span>Profile</span>
-        </a>
-      }
-      <button class="sidebar-menu-item sidebar-logout" (click)="auth.logout()">
-        <span class="material-icons-outlined">logout</span>
-        <span>Logout</span>
-      </button>
+<!-- Desktop sidebar (shown >768px) -->
+<aside class="sidebar">
+  <!-- Brand -->
+  <div class="sidebar-brand">
+    @if (showBackButton()) {
+    <button
+      class="sidebar-back-btn"
+      type="button"
+      aria-label="Go back"
+      (click)="goBack()"
+    >
+      <span class="material-icons-outlined">arrow_back</span>
+    </button>
+    }
+    <span class="sidebar-brand-icon" aria-hidden="true">N</span>
+    <div class="sidebar-brand-text">
+      <img
+        src="assets/brand/nextou-brand-logo.png"
+        alt="Nextou"
+        class="brand-wordmark"
+      />
+      <span class="sidebar-brand-sub">Delivery</span>
     </div>
-  </aside>
+  </div>
+
+  <!-- Nav items -->
+  <nav class="sidebar-nav">
+    @if (canUseRoute("/")) {
+    <a
+      routerLink="/"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: true }"
+      class="sidebar-menu-item"
+    >
+      <span class="material-icons-outlined">dashboard</span>
+      <span>Dashboard</span>
+    </a>
+    } @if (canUseRoute("/available")) {
+    <a
+      routerLink="/available"
+      routerLinkActive="active"
+      class="sidebar-menu-item"
+    >
+      <span class="material-icons-outlined">local_shipping</span>
+      <span>Available Orders</span>
+    </a>
+    } @if (canUseRoute("/active")) {
+    <a routerLink="/active" routerLinkActive="active" class="sidebar-menu-item">
+      <span class="material-icons-outlined">delivery_dining</span>
+      <span>Active Delivery</span>
+    </a>
+    } @if (canUseRoute("/history")) {
+    <a
+      routerLink="/history"
+      routerLinkActive="active"
+      class="sidebar-menu-item"
+    >
+      <span class="material-icons-outlined">history</span>
+      <span>History</span>
+    </a>
+    } @if (canUseRoute("/earnings")) {
+    <a
+      routerLink="/earnings"
+      routerLinkActive="active"
+      class="sidebar-menu-item"
+    >
+      <span class="material-icons-outlined">payments</span>
+      <span>Earnings</span>
+    </a>
+    }
+  </nav>
+
+  <!-- Profile + Logout at bottom -->
+  <div class="sidebar-footer">
+    @if (canUseRoute("/profile")) {
+    <a
+      routerLink="/profile"
+      routerLinkActive="active"
+      class="sidebar-menu-item"
+    >
+      <span class="material-icons-outlined">person</span>
+      <span>Profile</span>
+    </a>
+    }
+    <button class="sidebar-menu-item sidebar-logout" (click)="auth.logout()">
+      <span class="material-icons-outlined">logout</span>
+      <span>Logout</span>
+    </button>
+  </div>
+</aside>
 }
 
 <!-- Main content -->
@@ -218,61 +232,47 @@
 
 <!-- Mobile bottom nav (shown ≤768px, only when logged in) -->
 @if (auth.isLoggedIn() && !isAuthRoute()) {
-  <nav class="bottom-nav">
-    @if (canUseRoute("/")) {
-      <a
-        routerLink="/"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: true }"
-        class="bottom-menu-item"
-      >
-        <span class="material-icons-outlined">dashboard</span>
-        <span>Dashboard</span>
-      </a>
-    }
-    @if (canUseRoute("/available")) {
-      <a
-        routerLink="/available"
-        routerLinkActive="active"
-        class="bottom-menu-item"
-      >
-        <span class="material-icons-outlined">local_shipping</span>
-        <span>Available</span>
-      </a>
-    }
-    @if (canUseRoute("/active")) {
-      <a
-        routerLink="/active"
-        routerLinkActive="active"
-        class="bottom-menu-item"
-      >
-        <span class="material-icons-outlined">delivery_dining</span>
-        <span>Active</span>
-      </a>
-    }
-    @if (canUseRoute("/history")) {
-      <a
-        routerLink="/history"
-        routerLinkActive="active"
-        class="bottom-menu-item"
-      >
-        <span class="material-icons-outlined">history</span>
-        <span>History</span>
-      </a>
-    }
-    @if (canUseRoute("/earnings")) {
-      <a
-        routerLink="/earnings"
-        routerLinkActive="active"
-        class="bottom-menu-item"
-      >
-        <span class="material-icons-outlined">payments</span>
-        <span>Earnings</span>
-      </a>
-    }
-  </nav>
+<nav class="bottom-nav">
+  @if (canUseRoute("/")) {
+  <a
+    routerLink="/"
+    routerLinkActive="active"
+    [routerLinkActiveOptions]="{ exact: true }"
+    class="bottom-menu-item"
+  >
+    <span class="material-icons-outlined">dashboard</span>
+    <span>Dashboard</span>
+  </a>
+  } @if (canUseRoute("/available")) {
+  <a routerLink="/available" routerLinkActive="active" class="bottom-menu-item">
+    <span class="material-icons-outlined">local_shipping</span>
+    <span>Available</span>
+  </a>
+  } @if (canUseRoute("/active")) {
+  <a routerLink="/active" routerLinkActive="active" class="bottom-menu-item">
+    <span class="material-icons-outlined">delivery_dining</span>
+    <span>Active</span>
+  </a>
+  } @if (canUseRoute("/history")) {
+  <a routerLink="/history" routerLinkActive="active" class="bottom-menu-item">
+    <span class="material-icons-outlined">history</span>
+    <span>History</span>
+  </a>
+  } @if (canUseRoute("/earnings")) {
+  <a routerLink="/earnings" routerLinkActive="active" class="bottom-menu-item">
+    <span class="material-icons-outlined">payments</span>
+    <span>Earnings</span>
+  </a>
+  } @if (canUseRoute("/profile")) {
+  <a routerLink="/profile" routerLinkActive="active" class="bottom-menu-item">
+    <span class="material-icons-outlined">person</span>
+    <span>Profile</span>
+  </a>
+  }
+</nav>
 }
 
 <app-alert-host />
+<app-toast />
 <app-global-loading />
 <app-page-feature-loading />

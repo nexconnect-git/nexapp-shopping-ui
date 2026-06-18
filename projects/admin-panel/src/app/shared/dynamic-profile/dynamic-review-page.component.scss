@@ -1,3 +1,102 @@
 :host {
   display: block;
 }
+
+.nc-status-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+
+  span {
+    color: #67708b;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
+  select {
+    width: 180px;
+    height: 38px;
+    border: 1px solid #d8cffd;
+    border-radius: 8px;
+    background: #fff;
+    color: #24114f;
+    font-weight: 800;
+    padding: 0 10px;
+  }
+}
+
+.nc-review-link {
+  color: var(--fd-color-primary, #4b2ea7);
+  font-weight: 900;
+  overflow-wrap: anywhere;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.nc-status-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(16, 20, 38, 0.48);
+}
+
+.nc-status-dialog {
+  width: min(100%, 480px);
+  border: 1px solid #e9eaf3;
+  border-radius: 12px;
+  background: #fff;
+  padding: 20px;
+  box-shadow: 0 24px 60px rgba(23, 18, 61, 0.18);
+
+  h2 {
+    margin: 0 0 8px;
+    font-size: 20px;
+  }
+
+  p {
+    margin: 0 0 14px;
+    color: #67708b;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 120px;
+    resize: vertical;
+    border: 1px solid #dfe3ef;
+    border-radius: 10px;
+    padding: 12px;
+    font: inherit;
+    box-sizing: border-box;
+  }
+}
+
+.nc-status-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+
+  button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+@media (max-width: 720px) {
+  .nc-status-select {
+    width: 100%;
+
+    select {
+      width: 100%;
+    }
+  }
+}

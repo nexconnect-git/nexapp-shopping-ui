@@ -95,6 +95,30 @@
   place-items: center;
   flex: 0 0 auto;
 }
+.address-field {
+  min-width: 0;
+  display: grid;
+  gap: 7px;
+}
+.address-field span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.address-field.full {
+  grid-column: 1 / -1;
+}
+.form-error {
+  border: 1px solid rgba(239, 68, 68, 0.24);
+  border-radius: 12px;
+  background: #fff1f2;
+  color: #b91c1c;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.4;
+  padding: 10px 12px;
+}
 .modal textarea {
   height: 78px;
   padding-top: 14px;
@@ -183,20 +207,20 @@ app-map-picker {
     gap: 12px;
     margin-bottom: 4px;
   }
-  
+
   .simple-head small {
     color: #77708d;
     font-size: 12px;
     font-weight: 900;
   }
-  
+
   .simple-head h1 {
     margin: 2px 0 0;
     font-size: 24px;
     font-weight: 950;
     color: #12095f;
   }
-  
+
   .simple-head button {
     width: 44px;
     height: 44px;
@@ -211,7 +235,7 @@ app-map-picker {
       transform: scale(0.9);
     }
   }
-  
+
   .address-card,
   .empty-panel {
     display: grid;
@@ -222,13 +246,13 @@ app-map-picker {
     box-shadow: 0 8px 24px rgba(33, 22, 82, 0.04);
     border: 1px solid rgba(56, 38, 142, 0.05);
   }
-  
+
   .address-card {
     grid-template-columns: 44px minmax(0, 1fr);
     align-items: center;
     gap: 12px;
   }
-  
+
   .address-card > span {
     width: 44px;
     height: 44px;
@@ -247,7 +271,7 @@ app-map-picker {
     color: #12095f;
     display: block;
   }
-  
+
   .address-card p,
   .address-card small,
   .empty-panel p {
@@ -257,7 +281,7 @@ app-map-picker {
     line-height: 1.4;
     font-weight: 700;
   }
-  
+
   .address-card footer {
     grid-column: 1 / -1;
     display: grid;
@@ -267,7 +291,7 @@ app-map-picker {
     padding-top: 12px;
     border-top: 1px solid #fbfaff;
   }
-  
+
   .address-card footer button {
     min-height: 38px;
     border-radius: 12px;
@@ -276,22 +300,22 @@ app-map-picker {
     font-weight: 950;
     font-size: 12px;
     transition: transform 0.15s ease;
-    
+
     &:active {
       transform: scale(0.95);
     }
   }
-  
+
   .address-card footer .danger {
     color: #e94560;
     background: #fff0f3;
   }
-  
+
   .empty-panel {
     justify-items: center;
     text-align: center;
     padding: 36px 16px;
-    
+
     span {
       width: 58px;
       height: 58px;
@@ -303,12 +327,256 @@ app-map-picker {
       font-size: 28px;
       box-shadow: 0 6px 16px rgba(56, 38, 142, 0.08);
     }
-    
+
     h2 {
       font-size: 18px;
       font-weight: 950;
       color: #12095f;
       margin: 4px 0 0;
     }
+  }
+
+  fd-mobile-bottom-sheet {
+    --address-sheet-bg: #f8f6ff;
+  }
+
+  :host ::ng-deep fd-mobile-bottom-sheet .mobile-bottom-sheet {
+    width: min(calc(100vw - 8px), var(--mobile-shell-max, 430px));
+    max-height: min(90dvh, 760px);
+    background: var(--address-sheet-bg);
+    border-radius: 26px 26px 0 0;
+  }
+
+  :host ::ng-deep fd-mobile-bottom-sheet header {
+    padding: 18px 16px 10px;
+    background: #ffffff;
+    border-bottom: 1px solid #eee9fb;
+  }
+
+  :host ::ng-deep fd-mobile-bottom-sheet h2 {
+    color: #12095f;
+    font-size: 18px;
+    font-weight: 950;
+  }
+
+  :host ::ng-deep fd-mobile-bottom-sheet .sheet-body {
+    padding: 10px 10px 0;
+    background: var(--address-sheet-bg);
+  }
+
+  .mobile-form {
+    display: grid;
+    gap: 10px;
+    padding-bottom: 0;
+  }
+
+  .form-section {
+    display: grid;
+    gap: 10px;
+    padding: 12px;
+    background: #ffffff;
+    border: 1px solid rgba(56, 38, 142, 0.07);
+    border-radius: 20px;
+    box-shadow: 0 10px 28px rgba(33, 22, 82, 0.045);
+  }
+
+  .form-section-head {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
+  }
+
+  .form-section-head > span {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    color: var(--fd-color-primary);
+    background: var(--fd-color-primary-soft);
+    border-radius: 14px;
+    font-size: 20px;
+  }
+
+  .form-section-head b,
+  .form-section-head small {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .form-section-head b {
+    color: #12095f;
+    font-size: 14px;
+    font-weight: 950;
+  }
+
+  .form-section-head small {
+    margin-top: 2px;
+    color: #77708d;
+    font-size: 11px;
+    font-weight: 750;
+  }
+
+  .mobile-form label {
+    min-width: 0;
+    display: grid;
+    gap: 7px;
+    color: #59516f;
+    font-size: 12px;
+    font-weight: 900;
+  }
+
+  .mobile-form label > span {
+    padding-left: 2px;
+  }
+
+  .mobile-form input,
+  .mobile-form textarea {
+    width: 100%;
+    min-width: 0;
+    border: 1px solid #e6e0f4;
+    border-radius: 14px;
+    background: #ffffff;
+    color: #12095f;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 800;
+    outline: 0;
+    box-sizing: border-box;
+    transition:
+      border-color 0.18s ease,
+      box-shadow 0.18s ease;
+  }
+
+  .mobile-form input {
+    height: 46px;
+    padding: 0 13px;
+  }
+
+  .mobile-form textarea {
+    min-height: 86px;
+    padding: 13px;
+    resize: vertical;
+  }
+
+  .mobile-form input::placeholder,
+  .mobile-form textarea::placeholder {
+    color: #a39bb5;
+    font-weight: 800;
+  }
+
+  .mobile-form input:focus,
+  .mobile-form textarea:focus {
+    border-color: var(--fd-color-primary);
+    box-shadow: 0 0 0 4px rgba(56, 38, 142, 0.08);
+  }
+
+  .mobile-form .has-error {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08);
+  }
+
+  .field-pair {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .field-error {
+    color: #b91c1c;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1.25;
+  }
+
+  .map-section {
+    padding-bottom: 12px;
+  }
+
+  .map-section app-map-picker {
+    height: auto;
+    border: 1px solid #e6e0f4;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: none;
+  }
+
+  :host ::ng-deep .map-section .map-picker-wrap {
+    border: 0;
+    border-radius: 18px;
+    background: #f3f0fb;
+  }
+
+  :host ::ng-deep .map-section .map-search-bar {
+    padding: 8px;
+    border-bottom: 0;
+    background: #f3f0fb;
+  }
+
+  :host ::ng-deep .map-section .map-search-input {
+    min-height: 40px;
+    border: 1px solid #ded7ee;
+    border-radius: 14px;
+    background: #ffffff;
+    color: #12095f;
+    font-size: 13px;
+    font-weight: 750;
+  }
+
+  :host ::ng-deep .map-section .map-toolbar {
+    padding: 0 8px 8px;
+    border-bottom: 0;
+    background: #f3f0fb;
+  }
+
+  :host ::ng-deep .map-section .map-locate-btn {
+    min-height: 34px;
+    border-color: #ded7ee;
+    border-radius: 11px;
+    color: var(--fd-color-primary);
+    font-size: 12px;
+    font-weight: 900;
+  }
+
+  :host ::ng-deep .map-section .map-geocoding {
+    font-size: 11px;
+  }
+
+  :host ::ng-deep .map-section .map-container {
+    min-height: 132px;
+  }
+
+  :host ::ng-deep .map-section .map-address-preview,
+  :host ::ng-deep .map-section .map-hint {
+    padding: 8px 10px;
+    font-size: 11px;
+    line-height: 1.3;
+  }
+
+  .mobile-form-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 4;
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    gap: 9px;
+    margin: 0 -10px;
+    padding: 10px 10px calc(12px + env(safe-area-inset-bottom, 0px));
+    background: #ffffff;
+    border-top: 1px solid #eee9fb;
+    box-shadow: 0 -12px 28px rgba(33, 22, 82, 0.08);
+  }
+
+  .mobile-form-actions .mobile-cta {
+    min-height: 46px;
+    margin: 0;
+    border-radius: 15px;
+  }
+
+  .mobile-form-actions .mobile-cta.secondary {
+    color: var(--fd-color-primary);
+    background: var(--fd-color-primary-soft);
   }
 }

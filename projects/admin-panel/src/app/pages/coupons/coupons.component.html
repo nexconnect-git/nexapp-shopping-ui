@@ -15,9 +15,9 @@
 
   <!-- ── Alerts ──────────────────────────────────────────── -->
   @if (success()) {
-    <div class="alert alert-success">
-      <span class="material-icons-outlined">check_circle</span>{{ success() }}
-    </div>
+  <div class="alert alert-success">
+    <span class="material-icons-outlined">check_circle</span>{{ success() }}
+  </div>
   }
 
   <!-- ── Table Card ──────────────────────────────────────── -->
@@ -44,7 +44,7 @@
       <ng-template tableCell="details" let-row="row">
         <div class="coupon-title">{{ row.title }}</div>
         @if (row.description) {
-          <div class="coupon-desc">{{ row.description }}</div>
+        <div class="coupon-desc">{{ row.description }}</div>
         }
       </ng-template>
 
@@ -90,18 +90,18 @@
       <ng-template tableCell="status" let-row="row">
         <div>
           <div class="text-muted" style="margin-bottom: 4px; font-size: 0.8rem">
-            @if (row.valid_until) {
-              Until {{ row.valid_until | date: "mediumDate" }}
+            @if (row.valid_until) { Until
+            {{ row.valid_until | date : "mediumDate" }}
             } @else {
-              <span class="no-expiry">No expiry</span>
+            <span class="no-expiry">No expiry</span>
             }
           </div>
           @if (isExpired(row)) {
-            <span class="status-badge expired">Expired</span>
+          <span class="status-badge expired">Expired</span>
           } @else if (row.is_active) {
-            <span class="status-badge active">Active</span>
+          <span class="status-badge active">Active</span>
           } @else {
-            <span class="status-badge inactive">Inactive</span>
+          <span class="status-badge inactive">Inactive</span>
           }
         </div>
       </ng-template>
@@ -118,9 +118,9 @@
             (click)="delete(row.id)"
           >
             @if (deleting() === row.id) {
-              <span class="spinner-sm"></span>
+            <span class="spinner-sm"></span>
             } @else {
-              <span class="material-icons-outlined">delete_outline</span>
+            <span class="material-icons-outlined">delete_outline</span>
             }
           </button>
         </div>
@@ -130,218 +130,280 @@
 
   <!-- ── Create / Edit Modal ─────────────────────────────── -->
   @if (showForm()) {
-    <div class="modal-backdrop" (click)="showForm.set(false)">
-      <div class="modal" (click)="$event.stopPropagation()">
-        <div class="modal-header">
-          <div class="modal-title-group">
-            <span class="material-icons-outlined modal-icon"
-              >confirmation_number</span
-            >
-            <h2>{{ editingId() ? "Edit Coupon" : "New Coupon" }}</h2>
+  <div class="modal-backdrop" (click)="showForm.set(false)">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="material-icons-outlined modal-icon"
+            >confirmation_number</span
+          >
+          <h2>{{ editingId() ? "Edit Coupon" : "New Coupon" }}</h2>
+        </div>
+        <button class="modal-close" (click)="showForm.set(false)">✕</button>
+      </div>
+
+      <div class="modal-body">
+        @if (error()) {
+        <div class="alert-error">
+          <span class="material-icons-outlined">error_outline</span
+          >{{ error() }}
+        </div>
+        }
+
+        <div class="form-row two">
+          <div class="form-group">
+            <label class="form-label">Coupon Code *</label>
+            <input
+              class="form-input"
+              [class.has-error]="fieldError('code')"
+              [(ngModel)]="form.code"
+              (ngModelChange)="clearFieldError('code')"
+              placeholder="e.g. SAVE20"
+              style="text-transform: uppercase"
+            />
+            @if (fieldError("code")) {
+            <small class="field-error">{{ fieldError("code") }}</small>
+            }
           </div>
-          <button class="modal-close" (click)="showForm.set(false)">✕</button>
+          <div class="form-group">
+            <label class="form-label">Discount Type *</label>
+            <select class="form-input" [(ngModel)]="form.discount_type">
+              @for (t of discountTypes; track t.value) {
+              <option [value]="t.value">{{ t.label }}</option>
+              }
+            </select>
+          </div>
         </div>
 
-        <div class="modal-body">
-          @if (error()) {
-            <div class="alert-error">
-              <span class="material-icons-outlined">error_outline</span
-              >{{ error() }}
-            </div>
+        <div class="form-group">
+          <label class="form-label">Title *</label>
+          <input
+            class="form-input"
+            [class.has-error]="fieldError('title')"
+            [(ngModel)]="form.title"
+            (ngModelChange)="clearFieldError('title')"
+            placeholder="e.g. 20% off your order"
+          />
+          @if (fieldError("title")) {
+          <small class="field-error">{{ fieldError("title") }}</small>
           }
+        </div>
 
-          <div class="form-row two">
-            <div class="form-group">
-              <label class="form-label">Coupon Code *</label>
-              <input
-                class="form-input"
-                [(ngModel)]="form.code"
-                placeholder="e.g. SAVE20"
-                style="text-transform: uppercase"
-              />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Discount Type *</label>
-              <select class="form-input" [(ngModel)]="form.discount_type">
-                @for (t of discountTypes; track t.value) {
-                  <option [value]="t.value">{{ t.label }}</option>
-                }
-              </select>
-            </div>
-          </div>
+        <div class="form-group">
+          <label class="form-label">Description *</label>
+          <textarea
+            class="form-input"
+            [class.has-error]="fieldError('description')"
+            [(ngModel)]="form.description"
+            (ngModelChange)="clearFieldError('description')"
+            rows="2"
+            placeholder="Details customers should know"
+          ></textarea>
+          @if (fieldError("description")) {
+          <small class="field-error">{{ fieldError("description") }}</small>
+          }
+        </div>
 
+        <div class="form-row two">
           <div class="form-group">
-            <label class="form-label">Title *</label>
+            <label class="form-label">Deals Page Section</label>
+            <select class="form-input" [(ngModel)]="form.display_section">
+              @for (section of displaySections; track section.value) {
+              <option [value]="section.value">{{ section.label }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Display Order</label>
             <input
+              type="number"
               class="form-input"
-              [(ngModel)]="form.title"
-              placeholder="e.g. 20% off your order"
+              [(ngModel)]="form.display_order"
+              min="0"
+              placeholder="0"
             />
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Description</label>
-            <textarea
-              class="form-input"
-              [(ngModel)]="form.description"
-              rows="2"
-              placeholder="Optional details for customers"
-            ></textarea>
-          </div>
-
-          <div class="form-row two">
-            <div class="form-group">
-              <label class="form-label">Deals Page Section</label>
-              <select class="form-input" [(ngModel)]="form.display_section">
-                @for (section of displaySections; track section.value) {
-                  <option [value]="section.value">{{ section.label }}</option>
-                }
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Display Order</label>
-              <input
-                type="number"
-                class="form-input"
-                [(ngModel)]="form.display_order"
-                min="0"
-                placeholder="0"
-              />
-            </div>
-          </div>
-
-          <div class="form-row two">
-            <div class="form-group">
-              <label class="form-label">Deals Icon</label>
-              <select class="form-input" [(ngModel)]="form.icon_name">
-                @for (icon of iconOptions; track icon.value) {
-                  <option [value]="icon.value">{{ icon.label }}</option>
-                }
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Badge Text</label>
-              <input
-                class="form-input"
-                [(ngModel)]="form.badge_text"
-                placeholder="e.g. Limited time"
-              />
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Accent Color</label>
-            <input
-              class="form-input"
-              [(ngModel)]="form.accent_color"
-              placeholder="#ff4b1f"
-            />
-          </div>
-
-          <div class="form-row two">
-            @if (form.discount_type !== "free_delivery") {
-              <div class="form-group">
-                <label class="form-label">Discount Value *</label>
-                <input
-                  type="number"
-                  class="form-input"
-                  [(ngModel)]="form.discount_value"
-                  min="0"
-                  [placeholder]="
-                    form.discount_type === 'percentage' ? 'e.g. 20' : 'e.g. 500'
-                  "
-                />
-              </div>
-              <div class="form-group">
-                <label class="form-label"
-                  >Max Discount ({{ 0 | appCurrency: true }})</label
-                >
-                <input
-                  type="number"
-                  class="form-input"
-                  [(ngModel)]="form.max_discount_amount"
-                  min="0"
-                  placeholder="Blank = unlimited"
-                />
-              </div>
-            }
-          </div>
-
-          <div class="form-row two">
-            <div class="form-group">
-              <label class="form-label"
-                >Min Order Amount ({{ 0 | appCurrency: true }})</label
-              >
-              <input
-                type="number"
-                class="form-input"
-                [(ngModel)]="form.min_order_amount"
-                min="0"
-              />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Per-User Limit</label>
-              <input
-                type="number"
-                class="form-input"
-                [(ngModel)]="form.per_user_limit"
-                min="1"
-              />
-            </div>
-          </div>
-
-          <div class="form-row two">
-            <div class="form-group">
-              <label class="form-label">Valid From *</label>
-              <input
-                type="datetime-local"
-                class="form-input"
-                [(ngModel)]="form.valid_from"
-              />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Valid Until</label>
-              <input
-                type="datetime-local"
-                class="form-input"
-                [(ngModel)]="form.valid_until"
-              />
-            </div>
-          </div>
-
-          <div class="form-row two">
-            <div class="form-group">
-              <label class="form-label">Total Usage Limit</label>
-              <input
-                type="number"
-                class="form-input"
-                [(ngModel)]="form.usage_limit"
-                min="1"
-                placeholder="Blank = unlimited"
-              />
-            </div>
-            <div class="form-group toggle-field">
-              <label class="form-label">Active</label>
-              <label class="toggle">
-                <input type="checkbox" [(ngModel)]="form.is_active" />
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
           </div>
         </div>
 
-        <div class="modal-footer">
-          <button class="btn-secondary" (click)="showForm.set(false)">
-            Cancel
-          </button>
-          <button class="btn-primary" (click)="save()" [disabled]="saving()">
-            @if (saving()) {
-              <span class="spinner-sm white"></span>
+        <div class="form-row two">
+          <div class="form-group">
+            <label class="form-label">Deals Icon</label>
+            <select class="form-input" [(ngModel)]="form.icon_name">
+              @for (icon of iconOptions; track icon.value) {
+              <option [value]="icon.value">{{ icon.label }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Badge Text</label>
+            <input
+              class="form-input"
+              [(ngModel)]="form.badge_text"
+              placeholder="e.g. Limited time"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Accent Color</label>
+          <input
+            class="form-input"
+            [(ngModel)]="form.accent_color"
+            placeholder="#ff4b1f"
+          />
+        </div>
+
+        <div class="form-row two">
+          @if (form.discount_type !== "free_delivery") {
+          <div class="form-group">
+            <label class="form-label">Discount Value *</label>
+            <input
+              type="number"
+              class="form-input"
+              [class.has-error]="fieldError('discount_value')"
+              [(ngModel)]="form.discount_value"
+              (ngModelChange)="clearFieldError('discount_value')"
+              min="0"
+              [placeholder]="
+                form.discount_type === 'percentage' ? 'e.g. 20' : 'e.g. 500'
+              "
+            />
+            @if (fieldError("discount_value")) {
+            <small class="field-error">{{
+              fieldError("discount_value")
+            }}</small>
             }
-            {{ editingId() ? "Save Changes" : "Create Coupon" }}
-          </button>
+          </div>
+          <div class="form-group">
+            <label class="form-label"
+              >Max Discount ({{ 0 | appCurrency : true }})</label
+            >
+            <input
+              type="number"
+              class="form-input"
+              [class.has-error]="fieldError('max_discount_amount')"
+              [(ngModel)]="form.max_discount_amount"
+              (ngModelChange)="clearFieldError('max_discount_amount')"
+              min="0"
+              placeholder="Blank = unlimited"
+            />
+            @if (fieldError("max_discount_amount")) {
+            <small class="field-error">{{
+              fieldError("max_discount_amount")
+            }}</small>
+            }
+          </div>
+          }
+        </div>
+
+        <div class="form-row two">
+          <div class="form-group">
+            <label class="form-label"
+              >Min Order Amount ({{ 0 | appCurrency : true }})</label
+            >
+            <input
+              type="number"
+              class="form-input"
+              [class.has-error]="fieldError('min_order_amount')"
+              [(ngModel)]="form.min_order_amount"
+              (ngModelChange)="clearFieldError('min_order_amount')"
+              min="0"
+            />
+            @if (fieldError("min_order_amount")) {
+            <small class="field-error">{{
+              fieldError("min_order_amount")
+            }}</small>
+            }
+          </div>
+          <div class="form-group">
+            <label class="form-label">Per-User Limit</label>
+            <input
+              type="number"
+              class="form-input"
+              [class.has-error]="fieldError('per_user_limit')"
+              [(ngModel)]="form.per_user_limit"
+              (ngModelChange)="clearFieldError('per_user_limit')"
+              min="1"
+            />
+            @if (fieldError("per_user_limit")) {
+            <small class="field-error">{{
+              fieldError("per_user_limit")
+            }}</small>
+            }
+          </div>
+        </div>
+
+        <div class="form-row two">
+          <div class="form-group">
+            <label class="form-label">Valid From *</label>
+            <input
+              type="datetime-local"
+              class="form-input"
+              [class.has-error]="fieldError('valid_from')"
+              [(ngModel)]="form.valid_from"
+              (ngModelChange)="clearFieldError('valid_from')"
+            />
+            @if (fieldError("valid_from")) {
+            <small class="field-error">{{ fieldError("valid_from") }}</small>
+            }
+          </div>
+          <div class="form-group">
+            <label class="form-label">Valid Until</label>
+            <input
+              type="datetime-local"
+              class="form-input"
+              [class.has-error]="fieldError('valid_until')"
+              [(ngModel)]="form.valid_until"
+              (ngModelChange)="clearFieldError('valid_until')"
+            />
+            @if (fieldError("valid_until")) {
+            <small class="field-error">{{ fieldError("valid_until") }}</small>
+            }
+          </div>
+        </div>
+
+        <div class="form-row two">
+          <div class="form-group">
+            <label class="form-label">Total Usage Limit</label>
+            <input
+              type="number"
+              class="form-input"
+              [class.has-error]="fieldError('usage_limit')"
+              [(ngModel)]="form.usage_limit"
+              (ngModelChange)="clearFieldError('usage_limit')"
+              min="1"
+              placeholder="Blank = unlimited"
+            />
+            @if (fieldError("usage_limit")) {
+            <small class="field-error">{{ fieldError("usage_limit") }}</small>
+            }
+          </div>
+          <div class="form-group toggle-field">
+            <label class="form-label">Active</label>
+            <label class="toggle">
+              <input type="checkbox" [(ngModel)]="form.is_active" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
         </div>
       </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="showForm.set(false)">
+          Cancel
+        </button>
+        <button
+          class="btn-primary"
+          (click)="save()"
+          [disabled]="saving() || !isCouponFormValid()"
+        >
+          @if (saving()) {
+          <span class="spinner-sm white"></span>
+          }
+          {{ editingId() ? "Save Changes" : "Create Coupon" }}
+        </button>
+      </div>
     </div>
+  </div>
   }
 </div>

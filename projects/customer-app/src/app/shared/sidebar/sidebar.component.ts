@@ -41,7 +41,7 @@ export class SidebarComponent {
 
   isCategoryActive(category: SidebarCategory): boolean {
     const tree = this.router.parseUrl(this.router.url);
-    if (tree.root.children['primary']?.segments[0]?.path !== 'stores')
+    if (tree.root.children['primary']?.segments[0]?.path !== 'explore')
       return false;
     const activeCategory = this.normalize(
       tree.queryParams['category'] || 'all',
@@ -58,6 +58,13 @@ export class SidebarComponent {
   }
 
   canUseRoute(path: string): boolean {
+    if (path === '/explore') {
+      return (
+        this.features.isRouteEnabled('customer-app', '/explore') ||
+        this.features.isRouteEnabled('customer-app', '/search') ||
+        this.features.isRouteEnabled('customer-app', '/categories')
+      );
+    }
     return this.features.isRouteEnabled('customer-app', path);
   }
 

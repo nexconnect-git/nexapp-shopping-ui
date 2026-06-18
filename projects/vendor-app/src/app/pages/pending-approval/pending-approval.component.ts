@@ -16,7 +16,9 @@ export class PendingApprovalComponent implements OnInit, OnDestroy {
   private router = inject(Router);
 
   status = signal<string>('pending');
+  statusReason = signal<string>('');
   storeName = signal<string>('');
+  error = signal('');
   loading = signal(true);
   private pollInterval: any;
 
@@ -33,17 +35,24 @@ export class PendingApprovalComponent implements OnInit, OnDestroy {
     this.api.getVendorProfile().subscribe({
       next: (profile) => {
         this.status.set(profile.status);
+        this.statusReason.set(profile.status_reason || '');
         this.storeName.set(profile.store_name || '');
+        this.error.set('');
         localStorage.setItem(this.auth.vendorKey, profile.status);
         this.loading.set(false);
         if (profile.status === 'approved') {
           clearInterval(this.pollInterval);
           this.router.navigate(['/']);
-        } else if (['rejected', 'suspended'].includes(profile.status)) {
+        } else if (
+          ['rejected', 'suspended', 'invalid_details', 'invalid_documents'].includes(profile.status)
+        ) {
           clearInterval(this.pollInterval);
         }
       },
-      error: () => this.loading.set(false),
+      error: () => {
+        this.error.set('Could not check approval status. Please retry shortly.');
+        this.loading.set(false);
+      },
     });
   }
 
@@ -56,7 +65,13 @@ export class PendingApprovalComponent implements OnInit, OnDestroy {
       pending: 'Pending Review',
       approved: 'Approved',
       rejected: 'Rejected',
+      hold: 'On Hold',
       suspended: 'Suspended',
+      in_review: 'In Review',
+      pending_details: 'Pending Details',
+      pending_documents: 'Pending Documents',
+      invalid_details: 'Invalid Details',
+      invalid_documents: 'Invalid Documents',
     };
     return labels[this.status()] ?? this.status();
   }
@@ -67,8 +82,20 @@ export class PendingApprovalComponent implements OnInit, OnDestroy {
         'Your store registration is under review. Our team will verify your details and get back to you shortly.',
       rejected:
         'Your application was not approved. Please contact support for more information.',
+      hold:
+        'Your store registration is on hold while our team reviews the next action.',
       suspended:
         'Your vendor account has been suspended. Please contact support.',
+      in_review:
+        'Your store registration is actively being reviewed by our admin team.',
+      pending_details:
+        'Our team needs more details before approving your store.',
+      pending_documents:
+        'Our team needs additional or corrected documents before approval.',
+      invalid_details:
+        'Some submitted details could not be validated. Please contact support for next steps.',
+      invalid_documents:
+        'Some uploaded documents could not be validated. Please contact support for next steps.',
     };
     return messages[this.status()] ?? '';
   }

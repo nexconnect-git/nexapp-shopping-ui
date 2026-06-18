@@ -156,7 +156,7 @@
                   #fileInput
                   [id]="fieldId(field)"
                   type="file"
-                  accept="image/*"
+                  accept="image/*,application/pdf"
                   (change)="setFile(field, $event)"
                 />
                 <span>{{ fileName(field) || "No file selected" }}</span>

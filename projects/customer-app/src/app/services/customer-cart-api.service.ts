@@ -11,6 +11,14 @@ export class CustomerCartApiService {
     return this.api.toObservable<any>(this.api.client.cart.cart());
   }
 
+  getSuggestions() {
+    return this.api.toObservable<any>(this.api.client.cart.suggestions());
+  }
+
+  getBestCoupon() {
+    return this.api.toObservable<any>(this.api.client.cart.bestCoupon());
+  }
+
   addToCart(productId: string, quantity: number) {
     return this.api.toObservable<any>(
       this.api.client.cart.addToCart(productId, quantity),
@@ -59,7 +67,7 @@ export class CustomerCartApiService {
 
   getAvailableSlots(params?: Record<string, any>) {
     return this.api.toObservable<any>(
-      this.api.client.checkout.availableSlots(params),
+      this.api.client.checkout.customerSlots(params),
     );
   }
 

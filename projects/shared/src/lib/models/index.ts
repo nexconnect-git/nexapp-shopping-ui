@@ -590,6 +590,7 @@ export interface DeliveryDashboard {
   average_rating: string;
   active_orders: Order[];
   partner_status: 'available' | 'offline' | 'on_delivery';
+  is_approved: boolean;
 }
 
 // Direct-store shared contracts (Phase 1 hardening)

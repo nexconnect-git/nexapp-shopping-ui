@@ -14,21 +14,22 @@
       <img src="assets/brand/nextou-brand-logo-white.png" alt="Nextou" class="brand-wordmark" />
     </a>
     <div class="top-actions">
-      <a routerLink="/offers" aria-label="Offers">
-        <span class="material-symbols-rounded">local_offer</span>
-      </a>
-      <a routerLink="/notifications" aria-label="Notifications and support">
-        <span class="material-symbols-rounded">notifications</span>
-        @if (api.unreadNotifications()) {
-          <i>{{ api.unreadNotifications() }}</i>
-        }
-      </a>
-      <button type="button" aria-label="Open cart" (click)="openCart()">
-        <span class="material-symbols-rounded">shopping_bag</span>
-        @if (state.itemCount()) {
-          <i>{{ state.itemCount() }}</i>
-        }
-      </button>
+      @if (canUseRoute("/notifications")) {
+        <a routerLink="/notifications" aria-label="Notifications">
+          <span class="material-symbols-rounded">notifications</span>
+          @if (api.unreadNotifications()) {
+            <i>{{ api.unreadNotifications() }}</i>
+          }
+        </a>
+      }
+      @if (canUseRoute("/cart")) {
+        <button type="button" aria-label="Open cart" (click)="openCart()">
+          <span class="material-symbols-rounded">shopping_bag</span>
+          @if (state.itemCount()) {
+            <i>{{ state.itemCount() }}</i>
+          }
+        </button>
+      }
     </div>
   </div>
 
@@ -47,15 +48,17 @@
   }
 
   @if (isHomeRoute()) {
-    <form class="search-card" (submit)="search($event)">
-      <span class="material-symbols-rounded">search</span>
-      <input
-        type="search"
-        name="q"
-        [placeholder]="activePlaceholder()"
-        [value]="query()"
-        (input)="query.set($any($event.target).value)"
-      />
-    </form>
+    @if (canUseRoute("/explore")) {
+      <form class="search-card" (submit)="search($event)">
+        <span class="material-symbols-rounded">search</span>
+        <input
+          type="search"
+          name="q"
+          [placeholder]="activePlaceholder()"
+          [value]="query()"
+          (input)="query.set($any($event.target).value)"
+        />
+      </form>
+    }
   }
 </header>

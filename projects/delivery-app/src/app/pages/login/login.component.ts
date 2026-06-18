@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AuthService } from '@shared/public-api';
+import { ApiService, AuthService } from '@shared/public-api';
 
 @Component({
   selector: 'app-login',
@@ -11,12 +11,17 @@ import { AuthService } from '@shared/public-api';
 })
 export class LoginComponent {
   private auth = inject(AuthService);
+  private api = inject(ApiService);
   private router = inject(Router);
 
   username = '';
   password = '';
   loading = signal(false);
   error = signal('');
+
+  canSubmit(): boolean {
+    return !this.loading() && !!this.username.trim() && !!this.password;
+  }
 
   onLogin() {
     if (!this.username || !this.password) {
@@ -30,7 +35,7 @@ export class LoginComponent {
       next: (res) => {
         if (res.user.role !== 'delivery') {
           this.error.set(
-            'Access denied. This portal is strictly for delivery partners.',
+            'Access denied. This portal is strictly for delivery partners.'
           );
           this.loading.set(false);
           return;
@@ -46,8 +51,18 @@ export class LoginComponent {
           this.loading.set(false);
           return;
         }
-        this.router.navigate(['/']);
-        this.loading.set(false);
+        this.api.getDeliveryDashboard().subscribe({
+          next: (profile) => {
+            this.router.navigate([
+              profile?.is_approved ? '/' : '/pending-approval',
+            ]);
+            this.loading.set(false);
+          },
+          error: () => {
+            this.router.navigate(['/pending-approval']);
+            this.loading.set(false);
+          },
+        });
       },
       error: (err) => {
         this.error.set(err.error?.detail || 'Login failed. Please try again.');

@@ -885,11 +885,15 @@ textarea:focus {
 }
 
 .nc-review-head {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
   gap: 16px;
   padding: 18px;
+}
+
+.nc-review-head > div:first-child {
+  min-width: 0;
 }
 
 .nc-review-head small {
@@ -921,6 +925,11 @@ textarea:focus {
   gap: 8px;
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+.nc-review-head-actions {
+  width: max-content;
+  max-width: min(100%, 620px);
 }
 
 .nc-review-overview {

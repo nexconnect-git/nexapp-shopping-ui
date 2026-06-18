@@ -3,6 +3,9 @@
   <section class="product-layout">
     <div class="media-col">
       <section class="gallery">
+        @if (product().discount) {
+          <span class="gallery-badge">{{ product().discount }}</span>
+        }
         <div class="thumbs">
           @for (i of [1, 2, 3, 4]; track i) {
             <button
@@ -18,13 +21,6 @@
           <img [src]="product().image" [alt]="product().name" />
           <button
             type="button"
-            aria-label="Toggle wishlist"
-            (click)="toggleWishlist()"
-          >
-            <span class="material-symbols-rounded">favorite</span>
-          </button>
-          <button
-            type="button"
             class="zoom"
             aria-label="Preview image"
             (click)="zoomImage()"
@@ -32,42 +28,59 @@
             <span class="material-symbols-rounded">zoom_in</span>
           </button>
         </div>
+        <div class="gallery-promises">
+          <span><i class="material-symbols-rounded">verified</i>Fresh checked</span>
+          <span><i class="material-symbols-rounded">bolt</i>{{ deliveryLabel() }}</span>
+          <span><i class="material-symbols-rounded">storefront</i>{{ store()?.name || product().storeName || 'Partner store' }}</span>
+        </div>
       </section>
     </div>
 
-    <aside class="buy-panel">
-      <span class="fd-badge green">{{
-        product().discount || "Fresh deal"
-      }}</span>
-      <h1>{{ product().name }}</h1>
-      <p>
-        {{
-          product().raw?.description ||
-            "Description updates when the store provides it."
-        }}
-      </p>
-      <div class="rating">
-        <span class="material-symbols-rounded">star</span>
-        {{ product().rating || "New" }} rating
-        @if (product().category) {
-          <span>{{ product().category }}</span>
-        }
+    <aside class="buy-panel fd-card">
+      <div class="buy-top">
+        <span class="deal-pill">{{ product().discount || "Fresh deal" }}</span>
+        <h1>{{ product().name }}</h1>
+        <p>
+          {{
+            product().raw?.description ||
+              "Description updates when the store provides it."
+          }}
+        </p>
+        <div class="meta-row">
+          <span class="rating">
+            <i class="material-symbols-rounded">star</i>
+            {{ product().rating || "New" }} rating
+          </span>
+          @if (product().category) {
+            <span class="category-pill">{{ product().category }}</span>
+          }
+        </div>
       </div>
-      <div class="stock-state" [class.warning]="stockState().tone === 'warning'" [class.danger]="stockState().tone === 'danger'">
-        <span class="material-symbols-rounded">inventory_2</span>
-        {{ stockState().label }}
+
+      <div class="status-row">
+        <div class="stock-state" [class.warning]="stockState().tone === 'warning'" [class.danger]="stockState().tone === 'danger'">
+          <span class="material-symbols-rounded">inventory_2</span>
+          {{ stockState().label }}
+        </div>
+        <span class="store-pill">{{ store()?.name || product().storeName || 'Partner store' }}</span>
       </div>
       @if (!storeOrderState().canOrder) {
         <p class="availability-warning">{{ storeOrderState().message }}</p>
       }
-      <div class="price">
-        <b>{{ product().price | appCurrency }}</b
-        ><del>{{ product().mrp | appCurrency }}</del
-        ><em>{{ product().discount }}</em>
+      <div class="price-card">
+        <div class="price">
+          <b>{{ product().price | appCurrency }}</b>
+          @if (product().mrp > product().price) {
+            <del>{{ product().mrp | appCurrency }}</del>
+          }
+          @if (product().discount) {
+            <em>{{ product().discount }}</em>
+          }
+        </div>
+        <small>Inclusive of all taxes</small>
       </div>
-      <small>Inclusive of all taxes</small>
 
-      <h3>Select Size</h3>
+      <h3 class="field-label">Choose pack</h3>
       <div class="sizes">
         @for (size of sizes(); track size.label) {
           <button
@@ -82,7 +95,7 @@
         }
       </div>
 
-      <h3>Quantity</h3>
+      <h3 class="field-label">Quantity</h3>
       <div class="qty">
         <button type="button" (click)="qty.set(Math.max(1, qty() - 1))">
           <span class="material-symbols-rounded">remove</span></button
@@ -107,7 +120,7 @@
         </button>
       </div>
 
-      <section class="delivery fd-card">
+      <section class="delivery">
         <h3>
           <span class="material-symbols-rounded">bolt</span>
           {{ deliveryLabel() }}
@@ -117,33 +130,31 @@
           <button type="button" (click)="ui.openLocation()">Change</button>
         </p>
       </section>
-    </aside>
 
-    <aside class="right-info">
-      <section class="fd-card purple">
-        <h3>
+      <section class="pdp-assurance" aria-label="Shopping assurances">
+        <article>
           <span class="material-symbols-rounded">schedule</span>
-          {{ deliveryLabel() }}
-        </h3>
-        <p>{{ deliveryMode() }}</p>
-        <small class="delivery-promise">{{ deliveryPromise() }}</small>
-      </section>
-      <section class="fd-card orange">
-        <h3>Secure payment</h3>
-        <p>Available methods load during checkout</p>
-      </section>
-      <section class="fd-card rating-box">
-        <h2>{{ product().rating || "New" }}</h2>
-        <p>{{ product().rating ? "(ratings)" : "No ratings yet" }}</p>
-        <div class="bars"><span></span><span></span><span></span></div>
-      </section>
-      <section class="fd-card">
-        <h3>Highlights</h3>
-        @for (h of highlights(); track h) {
-          <p>
-            <span class="material-symbols-rounded">check_circle</span> {{ h }}
-          </p>
-        }
+          <div>
+            <b>{{ deliveryLabel() }}</b>
+            <small>{{ deliveryPromise() }}</small>
+          </div>
+        </article>
+        <article>
+          <span class="material-symbols-rounded">verified_user</span>
+          <div>
+            <b>Secure checkout</b>
+            <small>Payment options load at checkout</small>
+          </div>
+        </article>
+        <article>
+          <span class="material-symbols-rounded">check_circle</span>
+          <div>
+            <b>Product highlights</b>
+            @for (h of shortHighlights(); track h) {
+              <small>{{ h }}</small>
+            }
+          </div>
+        </article>
       </section>
     </aside>
 
@@ -196,11 +207,6 @@
 <div class="mobile-customer-view">
 <main class="mobile-page product-detail-page">
   <section class="product-hero">
-    <div class="hero-actions">
-      <button type="button" aria-label="Toggle wishlist" (click)="toggleWishlist()">
-        <span class="material-symbols-rounded">favorite</span>
-      </button>
-    </div>
     <button type="button" class="image-button" (click)="zoomImage()">
       <img [src]="product().image" [alt]="product().name" />
     </button>

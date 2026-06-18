@@ -115,9 +115,15 @@
   align-items: flex-start;
 }
 .stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
   color: var(--warning);
-  letter-spacing: 2px;
-  font-weight: 900;
+
+  .material-icons-outlined {
+    font-size: 17px;
+    line-height: 1;
+  }
 }
 
 .badge {

@@ -1,0 +1,66 @@
+<main class="confirmed-page">
+  @if (loading()) {
+    <section class="confirmed-card loading">
+      <span class="pulse"></span>
+      <h1>Confirming your order</h1>
+      <p>Pulling the latest ETA and payment status.</p>
+    </section>
+  } @else if (error()) {
+    <section class="confirmed-card">
+      <span class="material-symbols-rounded error" aria-hidden="true">error</span>
+      <h1>Order confirmation unavailable</h1>
+      <p>{{ error() }}</p>
+      <a routerLink="/" class="secondary">Continue shopping</a>
+    </section>
+  } @else if (summary(); as order) {
+    <section class="confirmed-card">
+      <div class="success-animation" aria-hidden="true">
+        <span class="success-ring"></span>
+        <span class="success-spark spark-one"></span>
+        <span class="success-spark spark-two"></span>
+        <span class="success-spark spark-three"></span>
+        <span class="success-mark material-symbols-rounded">check</span>
+      </div>
+      <p class="eyebrow">Order placed</p>
+      <h1>We are getting your basket ready</h1>
+      <div class="order-number">#{{ order.order_number }}</div>
+
+      <dl class="summary-grid">
+        <div>
+          <dt>Payment</dt>
+          <dd>{{ order.payment_status || order.payment_method }}</dd>
+        </div>
+        <div>
+          <dt>ETA</dt>
+          <dd>{{ order.eta_label || 'Preparing ETA' }}</dd>
+        </div>
+        <div>
+          <dt>Store</dt>
+          <dd>{{ order.store?.store_name || order.store?.name || 'Selected store' }}</dd>
+        </div>
+        <div>
+          <dt>Total</dt>
+          <dd>{{ orderTotal() | appCurrency }}</dd>
+        </div>
+      </dl>
+
+      @if (order.delivery_address) {
+        <article class="address">
+          <span class="material-symbols-rounded" aria-hidden="true">location_on</span>
+          <div>
+            <b>Delivering to</b>
+            <small>{{ order.delivery_address.address_line1 || order.delivery_address.line || order.delivery_address.city }}</small>
+          </div>
+        </article>
+      }
+
+      <div class="actions">
+        @if (order.can_track) {
+          <a [routerLink]="['/tracking', order.id]" class="primary">Track order</a>
+        }
+        <a routerLink="/" class="secondary">Continue shopping</a>
+        <a routerLink="/help" class="text-link">Need help?</a>
+      </div>
+    </section>
+  }
+</main>

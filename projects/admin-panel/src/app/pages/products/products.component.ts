@@ -1,7 +1,11 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService, AppCurrencyPipe } from '@shared/public-api';
+import {
+  ApiService,
+  AppCurrencyPipe,
+  formatFormErrors,
+} from '@shared/public-api';
 
 interface ProductRow {
   id: string;
@@ -149,9 +153,21 @@ export class ProductsComponent implements OnInit {
     this.showModal.set(false);
   }
 
+  isProductFormValid(): boolean {
+    return (
+      !!this.form.name?.trim() &&
+      !!this.form.description?.trim() &&
+      Number(this.form.price) > 0
+    );
+  }
+
   save() {
     if (!this.form.name?.trim()) {
       this.error.set('Name is required.');
+      return;
+    }
+    if (!this.form.description?.trim()) {
+      this.error.set('Description is required.');
       return;
     }
     if (!this.form.price) {
@@ -183,7 +199,7 @@ export class ProductsComponent implements OnInit {
       },
       error: (err) => {
         this.saving.set(false);
-        this.error.set(err.error?.detail || 'Save failed.');
+        this.error.set(formatFormErrors(err.error, 'Save failed.'));
       },
     });
   }

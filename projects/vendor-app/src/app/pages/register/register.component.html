@@ -1,16 +1,16 @@
 <div class="register-page fade-in">
   @if (loading()) {
-    <div class="register-loading-screen" role="status" aria-live="polite">
-      <div class="brand">
-        <span class="material-icons-outlined">storefront</span>
-        <span class="brand-text">Nextou</span>
-      </div>
-      <div class="register-loading-mark">
-        <span class="spinner"></span>
-      </div>
-      <h1>Creating your vendor account</h1>
-      <p>Please wait while we submit your store for review.</p>
+  <div class="register-loading-screen" role="status" aria-live="polite">
+    <div class="brand">
+      <span class="material-icons-outlined">storefront</span>
+      <span class="brand-text">Nextou</span>
     </div>
+    <div class="register-loading-mark">
+      <span class="spinner"></span>
+    </div>
+    <h1>Creating your vendor account</h1>
+    <p>Please wait while we submit your store for review.</p>
+  </div>
   } @else {
   <div class="register-container card">
     <!-- Stylish Left Panel -->
@@ -71,8 +71,8 @@
             step() === 1
               ? "Create your account"
               : step() === 2
-                ? "Store settings"
-                : "Location details"
+              ? "Store settings"
+              : "Location details"
           }}
         </h2>
         <p class="step-subtitle">
@@ -80,16 +80,16 @@
             step() === 1
               ? "Start by setting up your credentials."
               : step() === 2
-                ? "Tell us about your business."
-                : "Pinpoint your exact store location."
+              ? "Tell us about your business."
+              : "Pinpoint your exact store location."
           }}
         </p>
 
         @if (error()) {
-          <div class="alert alert-error">
-            <span class="material-icons-outlined">error_outline</span>
-            <span>{{ error() }}</span>
-          </div>
+        <div class="alert alert-error">
+          <span class="material-icons-outlined">error_outline</span>
+          <span>{{ error() }}</span>
+        </div>
         }
 
         <form (ngSubmit)="onSubmit()">
@@ -112,34 +112,25 @@
                 unique.</small
               >
               @if (availabilityState("username")?.checking) {
-                <span class="field-checking">Checking availability...</span>
-              }
-              @if (
-                availabilityState("username")?.unique === true &&
-                !fieldError("username")
-              ) {
-                <span class="field-success">Username available</span>
-              }
-              @if (
-                availabilityState("username")?.unique === false &&
-                availabilityState("username")?.suggestions?.length
-              ) {
-                <div class="suggestions">
-                  @for (
-                    suggestion of availabilityState("username")!.suggestions;
-                    track suggestion
-                  ) {
-                    <button
-                      type="button"
-                      (click)="useSuggestion('username', suggestion)"
-                    >
-                      {{ suggestion }}
-                    </button>
-                  }
-                </div>
-              }
-              @if (fieldError("username")) {
-                <span class="field-error">{{ fieldError("username") }}</span>
+              <span class="field-checking">Checking availability...</span>
+              } @if ( availabilityState("username")?.unique === true &&
+              !fieldError("username") ) {
+              <span class="field-success">Username available</span>
+              } @if ( availabilityState("username")?.unique === false &&
+              availabilityState("username")?.suggestions?.length ) {
+              <div class="suggestions">
+                @for ( suggestion of availabilityState("username")!.suggestions;
+                track suggestion ) {
+                <button
+                  type="button"
+                  (click)="useSuggestion('username', suggestion)"
+                >
+                  {{ suggestion }}
+                </button>
+                }
+              </div>
+              } @if (fieldError("username")) {
+              <span class="field-error">{{ fieldError("username") }}</span>
               }
             </div>
             <div class="form-group">
@@ -159,34 +150,25 @@
                 communication.</small
               >
               @if (availabilityState("email")?.checking) {
-                <span class="field-checking">Checking availability...</span>
-              }
-              @if (
-                availabilityState("email")?.unique === true &&
-                !fieldError("email")
-              ) {
-                <span class="field-success">Email available</span>
-              }
-              @if (
-                availabilityState("email")?.unique === false &&
-                availabilityState("email")?.suggestions?.length
-              ) {
-                <div class="suggestions">
-                  @for (
-                    suggestion of availabilityState("email")!.suggestions;
-                    track suggestion
-                  ) {
-                    <button
-                      type="button"
-                      (click)="useSuggestion('email', suggestion)"
-                    >
-                      {{ suggestion }}
-                    </button>
-                  }
-                </div>
-              }
-              @if (fieldError("email")) {
-                <span class="field-error">{{ fieldError("email") }}</span>
+              <span class="field-checking">Checking availability...</span>
+              } @if ( availabilityState("email")?.unique === true &&
+              !fieldError("email") ) {
+              <span class="field-success">Email available</span>
+              } @if ( availabilityState("email")?.unique === false &&
+              availabilityState("email")?.suggestions?.length ) {
+              <div class="suggestions">
+                @for ( suggestion of availabilityState("email")!.suggestions;
+                track suggestion ) {
+                <button
+                  type="button"
+                  (click)="useSuggestion('email', suggestion)"
+                >
+                  {{ suggestion }}
+                </button>
+                }
+              </div>
+              } @if (fieldError("email")) {
+              <span class="field-error">{{ fieldError("email") }}</span>
               }
             </div>
             <div class="form-group">
@@ -206,34 +188,25 @@
                 follow-up.</small
               >
               @if (availabilityState("phone")?.checking) {
-                <span class="field-checking">Checking availability...</span>
-              }
-              @if (
-                availabilityState("phone")?.unique === true &&
-                !fieldError("phone")
-              ) {
-                <span class="field-success">Phone available</span>
-              }
-              @if (
-                availabilityState("phone")?.unique === false &&
-                availabilityState("phone")?.suggestions?.length
-              ) {
-                <div class="suggestions">
-                  @for (
-                    suggestion of availabilityState("phone")!.suggestions;
-                    track suggestion
-                  ) {
-                    <button
-                      type="button"
-                      (click)="useSuggestion('phone', suggestion)"
-                    >
-                      {{ suggestion }}
-                    </button>
-                  }
-                </div>
-              }
-              @if (fieldError("phone")) {
-                <span class="field-error">{{ fieldError("phone") }}</span>
+              <span class="field-checking">Checking availability...</span>
+              } @if ( availabilityState("phone")?.unique === true &&
+              !fieldError("phone") ) {
+              <span class="field-success">Phone available</span>
+              } @if ( availabilityState("phone")?.unique === false &&
+              availabilityState("phone")?.suggestions?.length ) {
+              <div class="suggestions">
+                @for ( suggestion of availabilityState("phone")!.suggestions;
+                track suggestion ) {
+                <button
+                  type="button"
+                  (click)="useSuggestion('phone', suggestion)"
+                >
+                  {{ suggestion }}
+                </button>
+                }
+              </div>
+              } @if (fieldError("phone")) {
+              <span class="field-error">{{ fieldError("phone") }}</span>
               }
             </div>
             <div class="form-group">
@@ -254,13 +227,14 @@
                 secure.</small
               >
               @if (fieldError("password")) {
-                <span class="field-error">{{ fieldError("password") }}</span>
+              <span class="field-error">{{ fieldError("password") }}</span>
               }
             </div>
             <div class="form-group mt-4">
               <button
                 type="button"
                 class="btn btn-primary w-100 btn-lg"
+                [disabled]="!canContinueStep(1)"
                 (click)="nextStep()"
               >
                 Continue to Store Profile
@@ -287,7 +261,7 @@
                 >Customer-facing store name shown in the marketplace.</small
               >
               @if (fieldError("store_name")) {
-                <span class="field-error">{{ fieldError("store_name") }}</span>
+              <span class="field-error">{{ fieldError("store_name") }}</span>
               }
             </div>
             <div class="form-group">
@@ -298,7 +272,7 @@
                 class="form-input"
               >
                 @for (option of storeTypeOptions; track option.value) {
-                  <option [value]="option.value">{{ option.label }}</option>
+                <option [value]="option.value">{{ option.label }}</option>
                 }
               </select>
               <small class="field-hint"
@@ -307,14 +281,20 @@
               >
             </div>
             <div class="form-group">
-              <label>Description (Optional)</label>
+              <label>Description</label>
               <textarea
                 [(ngModel)]="form.description"
+                (ngModelChange)="clearFieldError('description')"
                 name="description"
                 class="form-input"
+                [class.has-error]="fieldError('description')"
                 placeholder="Tell customers about what you sell..."
                 rows="3"
+                required
               ></textarea>
+              @if (fieldError("description")) {
+              <span class="field-error">{{ fieldError("description") }}</span>
+              }
               <small class="field-hint"
                 >Mention your specialties, product range, or what makes the
                 store trustworthy.</small
@@ -329,10 +309,10 @@
                   (click)="logoInput.click()"
                 >
                   @if (logoPreview()) {
-                    <img [src]="logoPreview()" alt="Store profile preview" />
+                  <img [src]="logoPreview()" alt="Store profile preview" />
                   } @else {
-                    <span class="material-icons-outlined">storefront</span>
-                    <strong>Choose profile image</strong>
+                  <span class="material-icons-outlined">storefront</span>
+                  <strong>Choose profile image</strong>
                   }
                 </button>
                 <input
@@ -346,9 +326,13 @@
                   >Square logo or storefront image shown on store cards.</small
                 >
                 @if (logoFile()) {
-                  <button type="button" class="link-button" (click)="clearImage('logo'); logoInput.value = ''">
-                    Remove image
-                  </button>
+                <button
+                  type="button"
+                  class="link-button"
+                  (click)="clearImage('logo'); logoInput.value = ''"
+                >
+                  Remove image
+                </button>
                 }
               </div>
 
@@ -360,10 +344,10 @@
                   (click)="bannerInput.click()"
                 >
                   @if (bannerPreview()) {
-                    <img [src]="bannerPreview()" alt="Store cover preview" />
+                  <img [src]="bannerPreview()" alt="Store cover preview" />
                   } @else {
-                    <span class="material-icons-outlined">panorama</span>
-                    <strong>Choose cover image</strong>
+                  <span class="material-icons-outlined">panorama</span>
+                  <strong>Choose cover image</strong>
                   }
                 </button>
                 <input
@@ -377,9 +361,13 @@
                   >Wide image used as the store profile cover.</small
                 >
                 @if (bannerFile()) {
-                  <button type="button" class="link-button" (click)="clearImage('banner'); bannerInput.value = ''">
-                    Remove image
-                  </button>
+                <button
+                  type="button"
+                  class="link-button"
+                  (click)="clearImage('banner'); bannerInput.value = ''"
+                >
+                  Remove image
+                </button>
                 }
               </div>
             </div>
@@ -388,7 +376,7 @@
               <input
                 type="email"
                 [(ngModel)]="form.vendor_email"
-                (ngModelChange)="clearFieldError('vendor_email')"
+                (ngModelChange)="onPublicEmailInput()"
                 name="vendor_email"
                 class="form-input"
                 [class.has-error]="fieldError('vendor_email')"
@@ -398,9 +386,7 @@
                 >Public store email for customer or admin follow-up.</small
               >
               @if (fieldError("vendor_email")) {
-                <span class="field-error">{{
-                  fieldError("vendor_email")
-                }}</span>
+              <span class="field-error">{{ fieldError("vendor_email") }}</span>
               }
             </div>
             <div class="form-actions mt-4">
@@ -414,6 +400,7 @@
               <button
                 type="button"
                 class="btn btn-primary"
+                [disabled]="!canContinueStep(2)"
                 (click)="nextStep()"
               >
                 Continue to Location
@@ -447,7 +434,7 @@
                 orders.</small
               >
               @if (fieldError("address")) {
-                <span class="field-error">{{ fieldError("address") }}</span>
+              <span class="field-error">{{ fieldError("address") }}</span>
               }
             </div>
             <div class="location-fields">
@@ -467,7 +454,7 @@
                   >City where your store operates.</small
                 >
                 @if (fieldError("city")) {
-                  <span class="field-error">{{ fieldError("city") }}</span>
+                <span class="field-error">{{ fieldError("city") }}</span>
                 }
               </div>
               <div class="form-group">
@@ -486,7 +473,7 @@
                   >State or region for service and compliance records.</small
                 >
                 @if (fieldError("state")) {
-                  <span class="field-error">{{ fieldError("state") }}</span>
+                <span class="field-error">{{ fieldError("state") }}</span>
                 }
               </div>
               <div class="form-group">
@@ -494,26 +481,25 @@
                 <input
                   type="text"
                   [(ngModel)]="form.postal_code"
-                  (ngModelChange)="clearFieldError('postal_code')"
+                  (ngModelChange)="onPostalCodeInput()"
                   name="postal_code"
                   class="form-input"
                   [class.has-error]="fieldError('postal_code')"
                   placeholder="400001"
+                  required
                 />
                 <small class="field-hint"
                   >Postal or ZIP code for the pickup location.</small
                 >
                 @if (fieldError("postal_code")) {
-                  <span class="field-error">{{
-                    fieldError("postal_code")
-                  }}</span>
+                <span class="field-error">{{ fieldError("postal_code") }}</span>
                 }
               </div>
             </div>
             @if (fieldError("location")) {
-              <div class="field-error location-error">
-                {{ fieldError("location") }}
-              </div>
+            <div class="field-error location-error">
+              {{ fieldError("location") }}
+            </div>
             }
 
             <div class="form-actions mt-4">
@@ -527,13 +513,12 @@
               <button
                 type="submit"
                 class="btn btn-primary"
-                [disabled]="loading() || !form.latitude"
+                [disabled]="!canSubmitRegistration()"
               >
                 @if (loading()) {
-                  <span class="spinner"></span> Processing...
-                } @else {
-                  Complete Registration
-                  <span class="material-icons-outlined">check_circle</span>
+                <span class="spinner"></span> Processing... } @else { Complete
+                Registration
+                <span class="material-icons-outlined">check_circle</span>
                 }
               </button>
             </div>

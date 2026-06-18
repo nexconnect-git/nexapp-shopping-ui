@@ -269,7 +269,8 @@
                 }
               ],
               "outputHashing": "all",
-              "optimization": true
+              "optimization": true,
+              "baseHref": "./"
             }
           },
           "defaultConfiguration": "production"
@@ -567,7 +568,8 @@
                 }
               ],
               "outputHashing": "all",
-              "optimization": true
+              "optimization": true,
+              "baseHref": "./"
             }
           },
           "defaultConfiguration": "production"

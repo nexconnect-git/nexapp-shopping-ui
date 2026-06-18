@@ -164,10 +164,12 @@ export class CategoriesComponent {
   openCategory(categoryKey: string): void {
     const key = this.normalize(categoryKey || 'all') || 'all';
     if (key === 'all') {
-      this.router.navigate(['/categories']);
+      this.router.navigate(['/explore']);
       return;
     }
-    this.router.navigate(['/category', key]);
+    this.router.navigate(['/explore', key], {
+      queryParams: { category: key },
+    });
   }
 
   goBack(): void {

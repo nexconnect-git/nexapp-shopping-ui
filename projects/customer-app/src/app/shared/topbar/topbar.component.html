@@ -135,46 +135,14 @@
   </form>
 
   <nav>
-    @if (canUseRoute("/offers")) {
+    @if (canUseRoute("/explore")) {
       <a
-        routerLink="/offers"
-        class="tone-warning"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: true }"
-        (click)="ui.closeMenus()"
-        >Offers</a
-      >
-    }
-    @if (canUseRoute("/orders")) {
-      <a
-        routerLink="/orders"
-        class="tone-info"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: true }"
-        (click)="ui.closeMenus()"
-        >Orders</a
-      >
-    }
-    @if (state.walletEnabled()) {
-      @if (canUseRoute("/wallet")) {
-        <a
-          routerLink="/wallet"
-          class="tone-success"
-          routerLinkActive="active"
-          [routerLinkActiveOptions]="{ exact: true }"
-          (click)="ui.closeMenus()"
-          >Wallet</a
-        >
-      }
-    }
-    @if (canUseRoute("/stores")) {
-      <a
-        routerLink="/stores"
+        routerLink="/explore"
         class="tone-primary"
         routerLinkActive="active"
         [routerLinkActiveOptions]="{ exact: true }"
         (click)="ui.closeMenus()"
-        >Stores</a
+        >Explore</a
       >
     }
   </nav>
@@ -227,22 +195,6 @@
               >Addresses</a
             >
           }
-          @if (canUseRoute("/referral")) {
-            <a routerLink="/referral" (click)="ui.closeMenus()"
-              ><span class="material-symbols-rounded">redeem</span>Referral</a
-            >
-          }
-          @if (canUseRoute("/help")) {
-            <a routerLink="/help" (click)="ui.closeMenus()"
-              ><span class="material-symbols-rounded">help</span>Help</a
-            >
-          }
-          @if (canUseRoute("/issues")) {
-            <a routerLink="/issues" (click)="ui.closeMenus()"
-              ><span class="material-symbols-rounded">support_agent</span
-              >Issues</a
-            >
-          }
           <button type="button" class="danger" (click)="logout()">
             <span class="material-symbols-rounded">logout</span>Logout
           </button>
@@ -250,17 +202,6 @@
           <button type="button" (click)="ui.openLogin()">
             <span class="material-symbols-rounded">lock_open</span>Login
           </button>
-          @if (canUseRoute("/help")) {
-            <a routerLink="/help" (click)="ui.closeMenus()"
-              ><span class="material-symbols-rounded">help</span>Help</a
-            >
-          }
-          @if (canUseRoute("/issues")) {
-            <a routerLink="/issues" (click)="ui.closeMenus()"
-              ><span class="material-symbols-rounded">support_agent</span
-              >Issues</a
-            >
-          }
         }
       </section>
     }

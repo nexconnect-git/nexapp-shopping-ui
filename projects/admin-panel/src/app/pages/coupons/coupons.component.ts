@@ -1,7 +1,12 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService, AppCurrencyPipe } from '@shared/public-api';
+import {
+  ApiService,
+  AppCurrencyPipe,
+  formatFormErrors,
+  parseFormErrors,
+} from '@shared/public-api';
 import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
 
 interface CouponForm {
@@ -49,6 +54,7 @@ export class CouponsComponent implements OnInit {
   editingId = signal<string | null>(null);
   error = signal('');
   success = signal('');
+  fieldErrors = signal<Record<string, string>>({});
 
   totalItems = 0;
   page = 1;
@@ -112,7 +118,7 @@ export class CouponsComponent implements OnInit {
     const later = new Date(
       now.getFullYear() + 1,
       now.getMonth(),
-      now.getDate(),
+      now.getDate()
     );
     return {
       code: '',
@@ -140,6 +146,7 @@ export class CouponsComponent implements OnInit {
     this.form = this.blankForm();
     this.editingId.set(null);
     this.error.set('');
+    this.fieldErrors.set({});
     this.showForm.set(true);
   }
 
@@ -166,12 +173,20 @@ export class CouponsComponent implements OnInit {
     };
     this.editingId.set(c.id);
     this.error.set('');
+    this.fieldErrors.set({});
     this.showForm.set(true);
   }
 
   save() {
-    this.saving.set(true);
     this.error.set('');
+    const validationErrors = this.validateCouponForm();
+    this.fieldErrors.set(validationErrors);
+    if (Object.keys(validationErrors).length) {
+      this.error.set('Please fix the highlighted coupon fields.');
+      return;
+    }
+
+    this.saving.set(true);
     const payload = {
       ...this.form,
       code: this.form.code.trim().toUpperCase(),
@@ -189,18 +204,25 @@ export class CouponsComponent implements OnInit {
         this.saving.set(false);
         this.showForm.set(false);
         this.success.set(
-          this.editingId() ? 'Coupon updated.' : 'Coupon created.',
+          this.editingId() ? 'Coupon updated.' : 'Coupon created.'
         );
         setTimeout(() => this.success.set(''), 3000);
         this.load();
       },
       error: (err) => {
         this.saving.set(false);
-        const data = err.error;
+        const parsed = parseFormErrors(err.error);
+        this.fieldErrors.set(parsed.fieldErrors);
         this.error.set(
-          typeof data === 'object'
-            ? JSON.stringify(data)
-            : 'Failed to save coupon.',
+          formatFormErrors(err.error, 'Failed to save coupon.', {
+            code: 'Coupon code',
+            title: 'Title',
+            description: 'Description',
+            discount_value: 'Discount value',
+            min_order_amount: 'Minimum order',
+            valid_from: 'Start date',
+            valid_until: 'End date',
+          })
         );
       },
     });
@@ -230,5 +252,65 @@ export class CouponsComponent implements OnInit {
 
   isExpired(c: any): boolean {
     return c.valid_until && new Date(c.valid_until) < new Date();
+  }
+
+  fieldError(field: string): string {
+    return this.fieldErrors()[field] || '';
+  }
+
+  clearFieldError(field: string): void {
+    if (!this.fieldErrors()[field]) return;
+    this.fieldErrors.update((current) => {
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+    this.error.set('');
+  }
+
+  isCouponFormValid(): boolean {
+    return (
+      Object.keys(this.validateCouponForm()).length === 0 &&
+      Object.keys(this.fieldErrors()).length === 0
+    );
+  }
+
+  private validateCouponForm(): Record<string, string> {
+    const errors: Record<string, string> = {};
+    if (!this.form.code.trim()) errors['code'] = 'Coupon code is required.';
+    else if (!/^[A-Z0-9_-]{3,50}$/i.test(this.form.code.trim()))
+      errors['code'] =
+        'Coupon code must be 3-50 letters, numbers, dashes, or underscores.';
+    if (!this.form.title.trim()) errors['title'] = 'Coupon title is required.';
+    if (!this.form.description.trim())
+      errors['description'] = 'Description is required.';
+    if (
+      this.form.discount_type === 'percentage' &&
+      (this.form.discount_value <= 0 || this.form.discount_value > 100)
+    ) {
+      errors['discount_value'] =
+        'Percentage discount must be between 1 and 100.';
+    }
+    if (this.form.discount_type === 'fixed' && this.form.discount_value <= 0)
+      errors['discount_value'] = 'Fixed discount must be greater than 0.';
+    if (this.form.min_order_amount < 0)
+      errors['min_order_amount'] = 'Minimum order cannot be negative.';
+    if (
+      this.form.max_discount_amount !== null &&
+      this.form.max_discount_amount < 0
+    )
+      errors['max_discount_amount'] = 'Maximum discount cannot be negative.';
+    if (this.form.usage_limit !== null && this.form.usage_limit < 1)
+      errors['usage_limit'] = 'Usage limit must be at least 1.';
+    if (this.form.per_user_limit < 1)
+      errors['per_user_limit'] = 'Per-user limit must be at least 1.';
+    if (!this.form.valid_from) errors['valid_from'] = 'Start date is required.';
+    if (
+      this.form.valid_until &&
+      new Date(this.form.valid_until) <= new Date(this.form.valid_from)
+    ) {
+      errors['valid_until'] = 'End date must be after start date.';
+    }
+    return errors;
   }
 }

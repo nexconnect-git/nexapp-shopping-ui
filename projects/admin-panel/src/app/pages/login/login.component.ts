@@ -21,6 +21,10 @@ export class LoginComponent implements OnInit {
   error = signal('');
   checkingSetup = signal(true);
 
+  canSubmit(): boolean {
+    return !this.loading() && !!this.username.trim() && !!this.password;
+  }
+
   ngOnInit() {
     this.api.checkSetup().subscribe({
       next: (res: any) => {

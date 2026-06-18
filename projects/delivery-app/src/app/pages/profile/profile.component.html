@@ -5,220 +5,243 @@
   </div>
 
   @if (loading()) {
-    <div class="spinner-wrap">
-      <div class="spinner"></div>
-    </div>
+  <div class="spinner-wrap">
+    <div class="spinner"></div>
+  </div>
   } @else {
-    <!-- Profile Card -->
-    <section class="profile-hero delivery-profile-hero">
-      <div class="avatar-large">{{ initials() }}</div>
-      <div class="hero-info">
-        <h2>{{ profile.first_name }} {{ profile.last_name }}</h2>
-        <p>
-          <span class="material-icons-outlined" style="font-size: 14px"
-            >delivery_dining</span
-          >
-          Delivery Partner
-        </p>
-        <span class="verified-badge" [class.unverified]="!profile.is_verified">
-          <span class="material-icons-outlined">{{
-            profile.is_verified ? "verified" : "pending"
-          }}</span>
-          {{ profile.is_verified ? "Verified" : "Pending Verification" }}
-        </span>
-      </div>
-    </section>
-
-    <section class="profile-shortcuts delivery-settings-list" aria-label="Delivery partner settings">
-      <a routerLink="/earnings" class="settings-row">
-        <span class="material-icons-outlined">payments</span>
-        <div>
-          <b>Earnings and payouts</b>
-          <small>View settlement status and trip income</small>
-        </div>
-        <span class="material-icons-outlined">chevron_right</span>
-      </a>
-      <a routerLink="/history" class="settings-row">
-        <span class="material-icons-outlined">history</span>
-        <div>
-          <b>Delivery history</b>
-          <small>Completed and cancelled trips</small>
-        </div>
-        <span class="material-icons-outlined">chevron_right</span>
-      </a>
-      <button type="button" class="settings-row danger" (click)="logout()">
-        <span class="material-icons-outlined">logout</span>
-        <div>
-          <b>Sign out</b>
-          <small>End this delivery partner session</small>
-        </div>
-        <span class="material-icons-outlined">chevron_right</span>
-      </button>
-    </section>
-
-    <section class="form-card delivery-form-card">
-      <div class="form-section-title">
-        <span class="material-icons-outlined">person</span>
-        Account Details
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label" for="profile-first-name">First Name</label>
-          <input
-            id="profile-first-name"
-            class="form-control"
-            type="text"
-            [(ngModel)]="profile.first_name"
-            name="first_name"
-            placeholder="First name"
-          />
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="profile-last-name">Last Name</label>
-          <input
-            id="profile-last-name"
-            class="form-control"
-            type="text"
-            [(ngModel)]="profile.last_name"
-            name="last_name"
-            placeholder="Last name"
-          />
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label" for="profile-email">Email Address</label>
-        <input
-          id="profile-email"
-          class="form-control"
-          type="email"
-          [(ngModel)]="profile.email"
-          name="email"
-          placeholder="your@email.com"
-        />
-      </div>
-
-      <div class="form-group">
-        <label class="form-label" for="profile-phone">Phone Number</label>
-        <input
-          id="profile-phone"
-          class="form-control"
-          type="tel"
-          [(ngModel)]="profile.phone"
-          name="phone"
-          placeholder="+1 (555) 000-0000"
-        />
-      </div>
-
-      <div class="form-group">
-        <label class="form-label" for="profile-country">Country</label>
-        <select
-          id="profile-country"
-          class="form-control"
-          [(ngModel)]="profile.country"
-          name="country"
+  <!-- Profile Card -->
+  <section class="profile-hero delivery-profile-hero">
+    <div class="avatar-large">{{ initials() }}</div>
+    <div class="hero-info">
+      <h2>{{ profile.first_name }} {{ profile.last_name }}</h2>
+      <p>
+        <span class="material-icons-outlined" style="font-size: 14px"
+          >delivery_dining</span
         >
-          <option value="US">United States</option>
-          <option value="GB">United Kingdom</option>
-          <option value="CA">Canada</option>
-          <option value="AU">Australia</option>
-          <option value="IN">India</option>
-          <option value="NG">Nigeria</option>
-          <option value="ZA">South Africa</option>
-          <option value="AE">United Arab Emirates</option>
-          <option value="SA">Saudi Arabia</option>
-          <option value="SG">Singapore</option>
-          <option value="MY">Malaysia</option>
-          <option value="PH">Philippines</option>
-          <option value="PK">Pakistan</option>
-          <option value="BD">Bangladesh</option>
-          <option value="LK">Sri Lanka</option>
-          <option value="EG">Egypt</option>
-          <option value="DE">Germany</option>
-          <option value="FR">France</option>
-          <option value="IT">Italy</option>
-          <option value="ES">Spain</option>
-          <option value="NL">Netherlands</option>
-          <option value="JP">Japan</option>
-          <option value="KR">South Korea</option>
-          <option value="CN">China</option>
-          <option value="BR">Brazil</option>
-          <option value="MX">Mexico</option>
-          <option value="TR">Turkey</option>
-          <option value="ID">Indonesia</option>
-          <option value="TH">Thailand</option>
-        </select>
-      </div>
-
-      <button class="save-btn" [disabled]="saving()" (click)="save()">
-        @if (saving()) {
-          <span class="spinner spinner-sm"></span>
-          Saving...
-        } @else {
-          <span class="material-icons-outlined">save</span>
-          Save Changes
-        }
-      </button>
-    </section>
-
-    <section class="form-card location-card delivery-form-card">
-      <div class="form-section-title">
-        <span class="material-icons-outlined">location_on</span>
-        Base Location
-      </div>
-      <p class="location-desc">
-        Set your home/base location so dispatchers know your area.
+        Delivery Partner
       </p>
+      <span class="verified-badge" [class.unverified]="!profile.is_verified">
+        <span class="material-icons-outlined">{{
+          profile.is_verified ? "verified" : "pending"
+        }}</span>
+        {{ profile.is_verified ? "Verified" : "Pending Verification" }}
+      </span>
+    </div>
+  </section>
 
-      @if (pickedLat()) {
-        <div class="location-preview">
-          <span class="material-icons-outlined">my_location</span>
-          <span
-            >{{ pickedLat() | number: "1.4-4" }},
-            {{ pickedLng() | number: "1.4-4" }}</span
-          >
-        </div>
+  <section
+    class="profile-shortcuts delivery-settings-list"
+    aria-label="Delivery partner settings"
+  >
+    <a routerLink="/earnings" class="settings-row">
+      <span class="material-icons-outlined">payments</span>
+      <div>
+        <b>Earnings and payouts</b>
+        <small>View settlement status and trip income</small>
+      </div>
+      <span class="material-icons-outlined">chevron_right</span>
+    </a>
+    <a routerLink="/history" class="settings-row">
+      <span class="material-icons-outlined">history</span>
+      <div>
+        <b>Delivery history</b>
+        <small>Completed and cancelled trips</small>
+      </div>
+      <span class="material-icons-outlined">chevron_right</span>
+    </a>
+    <button type="button" class="settings-row danger" (click)="logout()">
+      <span class="material-icons-outlined">logout</span>
+      <div>
+        <b>Sign out</b>
+        <small>End this delivery partner session</small>
+      </div>
+      <span class="material-icons-outlined">chevron_right</span>
+    </button>
+  </section>
+
+  <section class="form-card delivery-form-card">
+    <div class="form-section-title">
+      <span class="material-icons-outlined">person</span>
+      Account Details
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" for="profile-first-name">First Name</label>
+        <input
+          id="profile-first-name"
+          class="form-control"
+          [class.has-error]="fieldError('first_name')"
+          type="text"
+          [(ngModel)]="profile.first_name"
+          (ngModelChange)="clearFieldError('first_name')"
+          name="first_name"
+          placeholder="First name"
+        />
+        @if (fieldError("first_name")) {
+        <small class="field-error">{{ fieldError("first_name") }}</small>
+        }
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="profile-last-name">Last Name</label>
+        <input
+          id="profile-last-name"
+          class="form-control"
+          [class.has-error]="fieldError('last_name')"
+          type="text"
+          [(ngModel)]="profile.last_name"
+          (ngModelChange)="clearFieldError('last_name')"
+          name="last_name"
+          placeholder="Last name"
+        />
+        @if (fieldError("last_name")) {
+        <small class="field-error">{{ fieldError("last_name") }}</small>
+        }
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="profile-email">Email Address</label>
+      <input
+        id="profile-email"
+        class="form-control"
+        [class.has-error]="fieldError('email')"
+        type="email"
+        [(ngModel)]="profile.email"
+        (ngModelChange)="onEmailInput($event)"
+        name="email"
+        placeholder="your@email.com"
+      />
+      @if (fieldError("email")) {
+      <small class="field-error">{{ fieldError("email") }}</small>
       }
+    </div>
 
-      <button
-        class="map-open-btn"
-        type="button"
-        (click)="showMapPicker.set(!showMapPicker())"
+    <div class="form-group">
+      <label class="form-label" for="profile-phone">Phone Number</label>
+      <input
+        id="profile-phone"
+        class="form-control"
+        [class.has-error]="fieldError('phone')"
+        type="tel"
+        [(ngModel)]="profile.phone"
+        (ngModelChange)="onPhoneInput($event)"
+        name="phone"
+        placeholder="9876543210"
+      />
+      @if (fieldError("phone")) {
+      <small class="field-error">{{ fieldError("phone") }}</small>
+      }
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="profile-country">Country</label>
+      <select
+        id="profile-country"
+        class="form-control"
+        [(ngModel)]="profile.country"
+        name="country"
       >
-        <span class="material-icons-outlined">map</span>
-        {{
-          showMapPicker()
-            ? "Close Map"
-            : pickedLat()
-              ? "Update Location on Map"
-              : "Pick Location on Map"
-        }}
-      </button>
+        <option value="US">United States</option>
+        <option value="GB">United Kingdom</option>
+        <option value="CA">Canada</option>
+        <option value="AU">Australia</option>
+        <option value="IN">India</option>
+        <option value="NG">Nigeria</option>
+        <option value="ZA">South Africa</option>
+        <option value="AE">United Arab Emirates</option>
+        <option value="SA">Saudi Arabia</option>
+        <option value="SG">Singapore</option>
+        <option value="MY">Malaysia</option>
+        <option value="PH">Philippines</option>
+        <option value="PK">Pakistan</option>
+        <option value="BD">Bangladesh</option>
+        <option value="LK">Sri Lanka</option>
+        <option value="EG">Egypt</option>
+        <option value="DE">Germany</option>
+        <option value="FR">France</option>
+        <option value="IT">Italy</option>
+        <option value="ES">Spain</option>
+        <option value="NL">Netherlands</option>
+        <option value="JP">Japan</option>
+        <option value="KR">South Korea</option>
+        <option value="CN">China</option>
+        <option value="BR">Brazil</option>
+        <option value="MX">Mexico</option>
+        <option value="TR">Turkey</option>
+        <option value="ID">Indonesia</option>
+        <option value="TH">Thailand</option>
+      </select>
+    </div>
 
-      @if (showMapPicker()) {
-        <div class="map-wrap">
-          <app-map-picker
-            [height]="'280px'"
-            (locationPicked)="onLocationPicked($event)"
-          >
-          </app-map-picker>
-          @if (pickedLat()) {
-            <button
-              class="save-loc-btn"
-              type="button"
-              [disabled]="savingLocation()"
-              (click)="saveLocation()"
-            >
-              @if (savingLocation()) {
-                <span class="spinner spinner-sm"></span> Saving...
-              } @else {
-                <span class="material-icons-outlined">save</span> Save Location
-              }
-            </button>
-          }
-        </div>
+    <button
+      class="save-btn"
+      [disabled]="saving() || !isProfileFormValid()"
+      (click)="save()"
+    >
+      @if (saving()) {
+      <span class="spinner spinner-sm"></span>
+      Saving... } @else {
+      <span class="material-icons-outlined">save</span>
+      Save Changes }
+    </button>
+  </section>
+
+  <section class="form-card location-card delivery-form-card">
+    <div class="form-section-title">
+      <span class="material-icons-outlined">location_on</span>
+      Base Location
+    </div>
+    <p class="location-desc">
+      Set your home/base location so dispatchers know your area.
+    </p>
+
+    @if (pickedLat()) {
+    <div class="location-preview">
+      <span class="material-icons-outlined">my_location</span>
+      <span
+        >{{ pickedLat() | number : "1.4-4" }},
+        {{ pickedLng() | number : "1.4-4" }}</span
+      >
+    </div>
+    }
+
+    <button
+      class="map-open-btn"
+      type="button"
+      (click)="showMapPicker.set(!showMapPicker())"
+    >
+      <span class="material-icons-outlined">map</span>
+      {{
+        showMapPicker()
+          ? "Close Map"
+          : pickedLat()
+          ? "Update Location on Map"
+          : "Pick Location on Map"
+      }}
+    </button>
+
+    @if (showMapPicker()) {
+    <div class="map-wrap">
+      <app-map-picker
+        [height]="'280px'"
+        (locationPicked)="onLocationPicked($event)"
+      >
+      </app-map-picker>
+      @if (pickedLat()) {
+      <button
+        class="save-loc-btn"
+        type="button"
+        [disabled]="savingLocation()"
+        (click)="saveLocation()"
+      >
+        @if (savingLocation()) {
+        <span class="spinner spinner-sm"></span> Saving... } @else {
+        <span class="material-icons-outlined">save</span> Save Location }
+      </button>
       }
-    </section>
+    </div>
+    }
+  </section>
   }
 </div>

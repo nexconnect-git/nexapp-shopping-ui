@@ -4,7 +4,7 @@
   <section class="fd-two-col">
     <div>
       <h1 class="fd-title">
-        {{ query() ? 'Results for "' + query() + '"' : "Search live catalog" }}
+        {{ query() ? 'Results for "' + query() + '"' : "Explore stores and products" }}
       </h1>
       <p class="fd-subtitle">{{ content.search().subtitle }}</p>
 
@@ -171,16 +171,16 @@
       }
 
       @if (
-        hasQuery() &&
         !noVisibleResults() &&
-        (activeTab() === "All" || activeTab() === "Stores")
+        (activeTab() === "All" || activeTab() === "Stores") &&
+        visibleResults().stores.length
       ) {
         <div class="fd-section-title">
           <h2>
             <span class="material-symbols-rounded">storefront</span> Stores
-            <small>{{ results().stores.length }} stores found</small>
+            <small>{{ visibleResults().stores.length }} stores found</small>
           </h2>
-          <a routerLink="/stores">See all stores</a>
+          <a routerLink="/explore">See all stores</a>
         </div>
         @if (catalog.storesLoading()) {
           <section
@@ -204,7 +204,7 @@
           </section>
         } @else {
           <section class="store-mini-grid">
-            @for (store of results().stores; track store.id) {
+            @for (store of visibleResults().stores; track store.id) {
               <a
                 [routerLink]="['/store', store.id]"
                 class="mini-store fd-card"
@@ -222,14 +222,14 @@
       }
 
       @if (
-        hasQuery() &&
         !noVisibleResults() &&
-        (activeTab() === "All" || activeTab() === "Products")
+        (activeTab() === "All" || activeTab() === "Products") &&
+        visibleResults().products.length
       ) {
         <div class="fd-section-title">
           <h2>
             <span class="material-symbols-rounded">shopping_bag</span> Products
-            <small>{{ results().products.length }} products found</small>
+            <small>{{ visibleResults().products.length }} products found</small>
           </h2>
         </div>
         @if (catalog.productsLoading()) {
@@ -254,11 +254,32 @@
           </section>
         } @else {
           <section class="product-grid">
-            @for (product of results().products; track product.id) {
+            @for (product of visibleResults().products; track product.id) {
               <fd-product-card [product]="product" />
             }
           </section>
         }
+      }
+
+      @if (
+        !noVisibleResults() &&
+        (activeTab() === "All" || activeTab() === "Categories") &&
+        visibleResults().categories.length
+      ) {
+        <div class="fd-section-title">
+          <h2>
+            <span class="material-symbols-rounded">category</span> Categories
+            <small>{{ visibleResults().categories.length }} categories found</small>
+          </h2>
+        </div>
+        <section class="category-result-grid">
+          @for (category of visibleResults().categories; track category.id) {
+            <a [routerLink]="['/explore', category.id]" [queryParams]="{ category: category.id }">
+              <span class="material-symbols-rounded">{{ category.icon || 'category' }}</span>
+              <b>{{ category.label }}</b>
+            </a>
+          }
+        </section>
       }
     </div>
   </section>
@@ -317,10 +338,15 @@
     </section>
 
     <section class="mobile-section">
-      <div class="mobile-section-head"><h2>Browse categories</h2></div>
+      <div class="mobile-section-head browse-head">
+        <div>
+          <small>Shop by aisle</small>
+          <h2>Browse categories</h2>
+        </div>
+      </div>
       <div class="browse-grid">
         @for (category of recommendedCategories(); track category.id) {
-          <a [routerLink]="['/category', category.id]">
+          <a [routerLink]="['/explore', category.id]" [queryParams]="{ category: category.id }">
             <span class="material-symbols-rounded">{{ category.icon || 'category' }}</span>
             <b>{{ category.label }}</b>
           </a>
@@ -352,34 +378,34 @@
     </section>
   }
 
-  @if (hasQuery() && (activeTab() === 'All' || activeTab() === 'Stores') && results().stores.length) {
+  @if ((activeTab() === 'All' || activeTab() === 'Stores') && visibleResults().stores.length) {
     <section class="mobile-section">
       <div class="mobile-section-head"><h2>Stores</h2></div>
       <div class="mobile-list">
-        @for (store of results().stores; track store.id) {
+        @for (store of visibleResults().stores; track store.id) {
           <fd-store-card [store]="store" />
         }
       </div>
     </section>
   }
 
-  @if (hasQuery() && (activeTab() === 'All' || activeTab() === 'Products') && results().products.length) {
+  @if ((activeTab() === 'All' || activeTab() === 'Products') && visibleResults().products.length) {
     <section class="mobile-section">
       <div class="mobile-section-head"><h2>Products</h2></div>
       <div class="mobile-grid-2">
-        @for (product of results().products; track product.id) {
+        @for (product of visibleResults().products; track product.id) {
           <fd-product-card [product]="product" />
         }
       </div>
     </section>
   }
 
-  @if (hasQuery() && (activeTab() === 'All' || activeTab() === 'Categories') && results().categories.length) {
+  @if (hasQuery() && (activeTab() === 'All' || activeTab() === 'Categories') && visibleResults().categories.length) {
     <section class="mobile-section">
       <div class="mobile-section-head"><h2>Categories</h2></div>
       <div class="browse-grid">
-        @for (category of results().categories; track category.id) {
-          <a [routerLink]="['/category', category.id]">
+        @for (category of visibleResults().categories; track category.id) {
+          <a [routerLink]="['/explore', category.id]" [queryParams]="{ category: category.id }">
             <span class="material-symbols-rounded">{{ category.icon || 'category' }}</span>
             <b>{{ category.label }}</b>
           </a>

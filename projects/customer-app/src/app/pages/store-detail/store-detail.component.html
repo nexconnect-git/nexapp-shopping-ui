@@ -1,7 +1,59 @@
+@if (!canOrderFromStore()) {
+  <div class="desktop-customer-view">
+    <main class="fd-content">
+      <section class="service-unavailable-screen">
+        <button type="button" class="back-link" (click)="goBack()">
+          <span class="material-symbols-rounded">arrow_back</span>
+          Back to stores
+        </button>
+        <div class="service-unavailable-card">
+          <div class="service-unavailable-visual">
+            <img [src]="store().image" [alt]="store().name" />
+            <span class="material-symbols-rounded">location_off</span>
+          </div>
+          <small>{{ store().category || "Nextou store" }}</small>
+          <h1>{{ store().name }} is unavailable right now</h1>
+          <p>{{ storeUnavailableReason() }}</p>
+          <div class="service-unavailable-actions">
+            <button type="button" class="fd-btn primary" (click)="changeLocation()">
+              Change location
+            </button>
+            <button type="button" class="fd-btn outline" (click)="goBack()">
+              Find another store
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="mobile-customer-view">
+    <main class="mobile-page service-unavailable-mobile">
+      <button type="button" class="mobile-back" aria-label="Back" (click)="goBack()">
+        <span class="material-symbols-rounded">arrow_back</span>
+      </button>
+      <section class="service-unavailable-card">
+        <div class="service-unavailable-visual">
+          <img [src]="store().image" [alt]="store().name" />
+          <span class="material-symbols-rounded">location_off</span>
+        </div>
+        <small>{{ store().category || "Nextou store" }}</small>
+        <h1>{{ store().name }} is unavailable right now</h1>
+        <p>{{ storeUnavailableReason() }}</p>
+        <button type="button" class="mobile-cta" (click)="changeLocation()">
+          Change location
+        </button>
+        <button type="button" class="mobile-cta secondary" (click)="goBack()">
+          Find another store
+        </button>
+      </section>
+    </main>
+  </div>
+} @else {
 <div class="desktop-customer-view">
 <main class="fd-content">
   <fd-breadcrumbs
-    [items]="[{ label: 'Stores', link: '/stores' }, { label: store().name }]"
+    [items]="[{ label: 'Explore', link: '/explore' }, { label: store().name }]"
   />
 
   <section class="fd-two-col">
@@ -33,13 +85,6 @@
           </div>
           <div class="actions">
             <button
-              type="button"
-              class="fd-btn outline"
-              (click)="followStore()"
-            >
-              <span class="material-symbols-rounded">favorite</span>
-              Follow</button
-            ><button
               type="button"
               class="fd-btn outline"
               (click)="shareStore()"
@@ -328,3 +373,4 @@
   }
 </main>
 </div>
+}

@@ -17,7 +17,7 @@
   <header class="sidebar-mobile-head">
     <div>
       <b>Browse Nextou</b>
-      <small>Categories, offers, and account links</small>
+      <small>Categories, stores, and account links</small>
     </div>
     <button
       type="button"
@@ -36,10 +36,10 @@
       @for (item of [1, 2, 3, 4, 5, 6, 7, 8]; track item) {
         <span class="nav-skeleton"></span>
       }
-    } @else if (canUseRoute("/stores")) {
+    } @else if (canUseRoute("/explore")) {
       @for (cat of catalog.categories(); track cat.id) {
         <a
-          routerLink="/stores"
+          routerLink="/explore"
           [queryParams]="categoryQueryParams(cat)"
           [class.active]="isCategoryActive(cat)"
           (click)="ui.closeMobileSidebar()"
@@ -54,39 +54,11 @@
   </nav>
   <hr />
   <nav>
-    @if (canUseRoute("/stores")) {
-      <a routerLink="/stores" (click)="ui.closeMobileSidebar()"
+    @if (canUseRoute("/explore")) {
+      <a routerLink="/explore" (click)="ui.closeMobileSidebar()"
         ><span class="nav-emoji material-symbols-rounded" aria-hidden="true"
-          >storefront</span
-        >Top Stores</a
-      >
-      <a routerLink="/stores" (click)="ui.closeMobileSidebar()"
-        ><span class="nav-emoji material-symbols-rounded" aria-hidden="true"
-          >bolt</span
-        >Nextou Express</a
-      >
-    }
-    @if (canUseRoute("/offers")) {
-      <a
-        routerLink="/offers"
-        [class.active]="isRouteActive('/offers')"
-        (click)="ui.closeMobileSidebar()"
-        ><span class="nav-emoji nav-badge" aria-hidden="true">%</span>Offers</a
-      >
-    }
-    @if (canUseRoute("/help")) {
-      <a routerLink="/help" (click)="ui.closeMobileSidebar()"
-        ><span class="nav-emoji material-symbols-rounded" aria-hidden="true"
-          >inventory_2</span
-        >Bulk Orders</a
-      >
-      <a
-        routerLink="/help"
-        [class.active]="isRouteActive('/help')"
-        (click)="ui.closeMobileSidebar()"
-        ><span class="nav-emoji material-symbols-rounded" aria-hidden="true"
-          >help</span
-        >Help & Support</a
+          >travel_explore</span
+        >Explore</a
       >
     }
   </nav>
@@ -95,11 +67,11 @@
     <small>ACCOUNT</small>
     @if (canUseRoute("/profile")) {
       <a
-        routerLink="/profile"
-        [class.active]="isRouteActive('/profile')"
+        routerLink="/account"
+        [class.active]="isRouteActive('/account') || isRouteActive('/profile')"
         (click)="ui.closeMobileSidebar()"
         ><span class="nav-emoji nav-badge" aria-hidden="true">ME</span>My
-        Profile</a
+        Account</a
       >
     }
     @if (canUseRoute("/addresses")) {
@@ -110,26 +82,6 @@
         ><span class="nav-emoji material-symbols-rounded" aria-hidden="true"
           >location_on</span
         >Addresses</a
-      >
-    }
-    @if (state.walletEnabled() && canUseRoute("/wallet")) {
-      <a
-        routerLink="/wallet"
-        [class.active]="isRouteActive('/wallet')"
-        (click)="ui.closeMobileSidebar()"
-        ><span class="nav-emoji material-symbols-rounded" aria-hidden="true"
-          >account_balance_wallet</span
-        >Wallet</a
-      >
-    }
-    @if (canUseRoute("/wishlist")) {
-      <a
-        routerLink="/wishlist"
-        [class.active]="isRouteActive('/wishlist')"
-        (click)="ui.closeMobileSidebar()"
-        ><span class="nav-emoji material-symbols-rounded" aria-hidden="true"
-          >favorite</span
-        >Wishlist</a
       >
     }
   </nav>

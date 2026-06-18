@@ -72,6 +72,23 @@ export class DynamicEntityReviewComponent implements OnInit {
     });
   }
 
+  submitStatus(payload: { status: string; reason: string }): void {
+    if (this.entityType() !== 'vendor') {
+      this.submitForApproval();
+      return;
+    }
+    this.api
+      .setVendorStatus(this.entityId(), payload.status, payload.reason)
+      .subscribe({
+        next: (dto: unknown) => {
+          this.entityDto.set(this.normalizeLoadedDto(dto));
+          this.toast.show('Vendor status updated.', 'success');
+          this.router.navigate([this.profileUrl()]);
+        },
+        error: () => this.toast.show('Unable to update vendor status.', 'error'),
+      });
+  }
+
   private load(): void {
     this.loading.set(true);
     const type = this.entityType();

@@ -16,489 +16,530 @@
 
   <!-- ── Alerts ──────────────────────────────────────────── -->
   @if (success()) {
-    <div class="cp-alert success">
-      <span class="material-icons-outlined">check_circle</span>{{ success() }}
+  <div class="cp-alert success">
+    <span class="material-icons-outlined">check_circle</span>{{ success() }}
+  </div>
+  } @if (!loading() && coupons().length > 0) {
+  <div class="cp-presets">
+    <div class="preset-title">
+      <strong>Campaign starters</strong>
+      <span>Pick a proven promotion template</span>
     </div>
-  }
+    @for (preset of campaignPresets; track preset.code) {
+    <button (click)="applyPreset(preset)">
+      <span class="material-icons-outlined">auto_awesome</span>
+      {{ preset.label }}
+    </button>
+    }
+  </div>
 
-  @if (!loading() && coupons().length > 0) {
-    <div class="cp-presets">
-      <div class="preset-title">
-        <strong>Campaign starters</strong>
-        <span>Pick a proven promotion template</span>
-      </div>
-      @for (preset of campaignPresets; track preset.code) {
-        <button (click)="applyPreset(preset)">
-          <span class="material-icons-outlined">auto_awesome</span>
-          {{ preset.label }}
-        </button>
-      }
+  <div class="cp-growth-summary">
+    <div class="cp-summary-item">
+      <span class="material-icons-outlined">campaign</span>
+      <strong>{{ summary().active }}</strong>
+      <span>Active</span>
     </div>
+    <div class="cp-summary-item">
+      <span class="material-icons-outlined">group</span>
+      <strong>{{ summary().usage }}</strong>
+      <span>Uses</span>
+    </div>
+    <div class="cp-summary-item">
+      <span class="material-icons-outlined">payments</span>
+      <strong>{{ summary().revenue | appCurrency }}</strong>
+      <span>Influenced</span>
+    </div>
+    <div class="cp-summary-item" [class.warn]="summary().warnings > 0">
+      <span class="material-icons-outlined">health_and_safety</span>
+      <strong>{{ summary().warnings }}</strong>
+      <span>Need review</span>
+    </div>
+  </div>
 
-    <div class="cp-growth-summary">
-      <div class="cp-summary-item">
-        <span class="material-icons-outlined">campaign</span>
-        <strong>{{ summary().active }}</strong>
-        <span>Active</span>
-      </div>
-      <div class="cp-summary-item">
-        <span class="material-icons-outlined">group</span>
-        <strong>{{ summary().usage }}</strong>
-        <span>Uses</span>
-      </div>
-      <div class="cp-summary-item">
-        <span class="material-icons-outlined">payments</span>
-        <strong>{{ summary().revenue | appCurrency }}</strong>
-        <span>Influenced</span>
-      </div>
-      <div class="cp-summary-item" [class.warn]="summary().warnings > 0">
-        <span class="material-icons-outlined">health_and_safety</span>
-        <strong>{{ summary().warnings }}</strong>
-        <span>Need review</span>
-      </div>
-    </div>
-
-    <div class="cp-filter-row">
-      <span class="filter-label">Show</span>
-      @for (
-        f of ["all", "active", "upcoming", "expired", "inactive"];
-        track f
-      ) {
-        <button [class.active]="filter() === f" (click)="filter.set($any(f))">
-          {{ f | titlecase }}
-        </button>
-      }
-    </div>
+  <div class="cp-filter-row">
+    <span class="filter-label">Show</span>
+    @for ( f of ["all", "active", "upcoming", "expired", "inactive"]; track f )
+    {
+    <button [class.active]="filter() === f" (click)="filter.set($any(f))">
+      {{ f | titlecase }}
+    </button>
+    }
+  </div>
   }
 
   <!-- ── Loading ─────────────────────────────────────────── -->
   @if (loading()) {
-    <div class="cp-loading"><div class="cp-spinner"></div></div>
+  <div class="cp-loading"><div class="cp-spinner"></div></div>
   }
 
   <!-- ── Empty ───────────────────────────────────────────── -->
   @else if (coupons().length === 0) {
-    <div class="cp-empty">
-      <span class="material-icons-outlined">confirmation_number</span>
-      <h3>No coupons yet</h3>
-      <p>Create your first coupon to attract more customers</p>
-      <button (click)="openCreate()">
-        <span class="material-icons-outlined">add</span>
-        Create Coupon
-      </button>
-    </div>
+  <div class="cp-empty">
+    <span class="material-icons-outlined">confirmation_number</span>
+    <h3>No coupons yet</h3>
+    <p>Create your first coupon to attract more customers</p>
+    <button (click)="openCreate()">
+      <span class="material-icons-outlined">add</span>
+      Create Coupon
+    </button>
+  </div>
   }
 
   <!-- ── Coupon List ──────────────────────────────────────── -->
   @else {
-    <div class="cp-list">
-      @for (c of filteredCoupons(); track c.id) {
-        <div
-          class="cp-card"
-          [class.inactive]="!c.is_active"
-          [class.expired]="isExpired(c)"
-        >
-          <div class="cp-card-top">
-            <div class="cp-card-left">
-              <div class="cp-code-badge">{{ c.code }}</div>
-              <div>
-                <div class="cp-card-title">{{ c.title }}</div>
-                <div class="cp-card-discount">{{ discountLabel(c) }}</div>
-              </div>
-            </div>
-            <div class="cp-card-status">
-              @if (isExpired(c)) {
-                <span class="cp-status expired">{{
-                  c.status_label || "Expired"
-                }}</span>
-              } @else if (c.is_active) {
-                <span class="cp-status active">{{
-                  c.status_label || "Active"
-                }}</span>
-              } @else {
-                <span class="cp-status inactive">{{
-                  c.status_label || "Inactive"
-                }}</span>
-              }
-            </div>
-          </div>
-
-          <div class="cp-card-meta">
-            <span>
-              <span class="material-icons-outlined">shopping_bag</span>
-              Min {{ c.min_order_amount | appCurrency }}
-            </span>
-            <span>
-              <span class="material-icons-outlined">people</span>
-              {{ c.used_count
-              }}{{ c.usage_limit ? "/" + c.usage_limit : "" }} used
-            </span>
-            <span>
-              <span class="material-icons-outlined">payments</span>
-              {{ c.revenue_influenced || 0 | appCurrency }} influenced
-            </span>
-            @if (c.valid_until) {
-              <span>
-                <span class="material-icons-outlined">schedule</span>
-                Until {{ c.valid_until | date: "mediumDate" }}
-              </span>
-            }
-          </div>
-
-          @if (c.health_warnings?.length) {
-            <div class="cp-health">
-              <span class="material-icons-outlined">error_outline</span>
-              <span>{{ c.health_warnings[0] }}</span>
-            </div>
-          }
-
-          <div class="cp-card-actions">
-            <button class="cp-edit-btn" (click)="openEdit(c)">
-              <span class="material-icons-outlined">edit</span>
-              Edit
-            </button>
-            <button class="cp-edit-btn" (click)="duplicate(c)">
-              <span class="material-icons-outlined">content_copy</span>
-              Duplicate
-            </button>
-            @if (!c.is_active || isExpired(c)) {
-              <button class="cp-edit-btn" (click)="reactivate(c)">
-                <span class="material-icons-outlined">restart_alt</span>
-                Reactivate
-              </button>
-            }
-            <button
-              class="cp-del-btn"
-              (click)="requestDelete(c)"
-              [disabled]="deleting() === c.id"
-            >
-              @if (deleting() === c.id) {
-                <span class="cp-spinner-sm"></span>
-              } @else {
-                <span class="material-icons-outlined">delete_outline</span>
-              }
-              Delete
-            </button>
+  <div class="cp-list">
+    @for (c of filteredCoupons(); track c.id) {
+    <div
+      class="cp-card"
+      [class.inactive]="!c.is_active"
+      [class.expired]="isExpired(c)"
+    >
+      <div class="cp-card-top">
+        <div class="cp-card-left">
+          <div class="cp-code-badge">{{ c.code }}</div>
+          <div>
+            <div class="cp-card-title">{{ c.title }}</div>
+            <div class="cp-card-discount">{{ discountLabel(c) }}</div>
           </div>
         </div>
-      }
-    </div>
-
-    <!-- Pagination -->
-    @if (totalPages() > 1) {
-      <div class="pagination-bar">
-        <span class="pagination-info">
-          Showing {{ (page() - 1) * pageSize + 1 }}–{{
-            Math.min(page() * pageSize, total())
-          }}
-          of {{ total() }} coupons
-        </span>
-        <div class="pagination-controls">
-          <button
-            class="page-btn"
-            (click)="setPage(1)"
-            [disabled]="page() === 1"
-            title="First"
-          >
-            <span class="material-icons-outlined">first_page</span>
-          </button>
-          <button
-            class="page-btn"
-            (click)="setPage(page() - 1)"
-            [disabled]="page() === 1"
-            title="Previous"
-          >
-            <span class="material-icons-outlined">chevron_left</span>
-          </button>
-          @for (n of pageNumbers(); track n) {
-            <button
-              class="page-btn"
-              [class.active]="n === page()"
-              (click)="setPage(n)"
-            >
-              {{ n }}
-            </button>
+        <div class="cp-card-status">
+          @if (isExpired(c)) {
+          <span class="cp-status expired">{{
+            c.status_label || "Expired"
+          }}</span>
+          } @else if (c.is_active) {
+          <span class="cp-status active">{{ c.status_label || "Active" }}</span>
+          } @else {
+          <span class="cp-status inactive">{{
+            c.status_label || "Inactive"
+          }}</span>
           }
-          <button
-            class="page-btn"
-            (click)="setPage(page() + 1)"
-            [disabled]="page() === totalPages()"
-            title="Next"
-          >
-            <span class="material-icons-outlined">chevron_right</span>
-          </button>
-          <button
-            class="page-btn"
-            (click)="setPage(totalPages())"
-            [disabled]="page() === totalPages()"
-            title="Last"
-          >
-            <span class="material-icons-outlined">last_page</span>
-          </button>
         </div>
       </div>
+
+      <div class="cp-card-meta">
+        <span>
+          <span class="material-icons-outlined">shopping_bag</span>
+          Min {{ c.min_order_amount | appCurrency }}
+        </span>
+        <span>
+          <span class="material-icons-outlined">people</span>
+          {{ c.used_count }}{{ c.usage_limit ? "/" + c.usage_limit : "" }} used
+        </span>
+        <span>
+          <span class="material-icons-outlined">payments</span>
+          {{ c.revenue_influenced || 0 | appCurrency }} influenced
+        </span>
+        @if (c.valid_until) {
+        <span>
+          <span class="material-icons-outlined">schedule</span>
+          Until {{ c.valid_until | date : "mediumDate" }}
+        </span>
+        }
+      </div>
+
+      @if (c.health_warnings?.length) {
+      <div class="cp-health">
+        <span class="material-icons-outlined">error_outline</span>
+        <span>{{ c.health_warnings[0] }}</span>
+      </div>
+      }
+
+      <div class="cp-card-actions">
+        <button class="cp-edit-btn" (click)="openEdit(c)">
+          <span class="material-icons-outlined">edit</span>
+          Edit
+        </button>
+        <button class="cp-edit-btn" (click)="duplicate(c)">
+          <span class="material-icons-outlined">content_copy</span>
+          Duplicate
+        </button>
+        @if (!c.is_active || isExpired(c)) {
+        <button class="cp-edit-btn" (click)="reactivate(c)">
+          <span class="material-icons-outlined">restart_alt</span>
+          Reactivate
+        </button>
+        }
+        <button
+          class="cp-del-btn"
+          (click)="requestDelete(c)"
+          [disabled]="deleting() === c.id"
+        >
+          @if (deleting() === c.id) {
+          <span class="cp-spinner-sm"></span>
+          } @else {
+          <span class="material-icons-outlined">delete_outline</span>
+          } Delete
+        </button>
+      </div>
+    </div>
     }
-  }
+  </div>
+
+  <!-- Pagination -->
+  @if (totalPages() > 1) {
+  <div class="pagination-bar">
+    <span class="pagination-info">
+      Showing {{ (page() - 1) * pageSize + 1 }}–{{
+        Math.min(page() * pageSize, total())
+      }}
+      of {{ total() }} coupons
+    </span>
+    <div class="pagination-controls">
+      <button
+        class="page-btn"
+        (click)="setPage(1)"
+        [disabled]="page() === 1"
+        title="First"
+      >
+        <span class="material-icons-outlined">first_page</span>
+      </button>
+      <button
+        class="page-btn"
+        (click)="setPage(page() - 1)"
+        [disabled]="page() === 1"
+        title="Previous"
+      >
+        <span class="material-icons-outlined">chevron_left</span>
+      </button>
+      @for (n of pageNumbers(); track n) {
+      <button
+        class="page-btn"
+        [class.active]="n === page()"
+        (click)="setPage(n)"
+      >
+        {{ n }}
+      </button>
+      }
+      <button
+        class="page-btn"
+        (click)="setPage(page() + 1)"
+        [disabled]="page() === totalPages()"
+        title="Next"
+      >
+        <span class="material-icons-outlined">chevron_right</span>
+      </button>
+      <button
+        class="page-btn"
+        (click)="setPage(totalPages())"
+        [disabled]="page() === totalPages()"
+        title="Last"
+      >
+        <span class="material-icons-outlined">last_page</span>
+      </button>
+    </div>
+  </div>
+  } }
 
   <!-- ── Create / Edit Form Modal ────────────────────────── -->
   @if (showForm()) {
-    <div class="cp-backdrop" (click)="showForm.set(false)"></div>
-    <div class="cp-modal">
-      <div class="cp-modal-header">
-        <h2>{{ editingId() ? "Edit Coupon" : "New Coupon" }}</h2>
-        <button class="cp-modal-close" (click)="showForm.set(false)">
-          <span class="material-icons-outlined">close</span>
-        </button>
+  <div class="cp-backdrop" (click)="showForm.set(false)"></div>
+  <div class="cp-modal">
+    <div class="cp-modal-header">
+      <h2>{{ editingId() ? "Edit Coupon" : "New Coupon" }}</h2>
+      <button class="cp-modal-close" (click)="showForm.set(false)">
+        <span class="material-icons-outlined">close</span>
+      </button>
+    </div>
+
+    <div class="cp-modal-body">
+      @if (error()) {
+      <div class="cp-alert error">
+        <span class="material-icons-outlined">error_outline</span>{{ error() }}
       </div>
+      }
 
-      <div class="cp-modal-body">
-        @if (error()) {
-          <div class="cp-alert error">
-            <span class="material-icons-outlined">error_outline</span
-            >{{ error() }}
-          </div>
-        }
-
-        <div class="cp-form-row two">
-          <div class="cp-field">
-            <label>Coupon Code *</label>
-            <input
-              [(ngModel)]="form.code"
-              placeholder="e.g. SAVE20"
-              autocapitalize="characters"
-              style="text-transform: uppercase"
-            />
-            <small class="field-hint"
-              >Short code customers type at checkout. Use letters and numbers
-              only.</small
-            >
-          </div>
-          <div class="cp-field">
-            <label>Discount Type *</label>
-            <select [(ngModel)]="form.discount_type">
-              @for (t of discountTypes; track t.value) {
-                <option [value]="t.value">{{ t.label }}</option>
-              }
-            </select>
-            <small class="field-hint"
-              >Choose how the coupon reduces the order total.</small
-            >
-          </div>
-        </div>
-
+      <div class="cp-form-row two">
         <div class="cp-field">
-          <label>Title *</label>
+          <label>Coupon Code *</label>
           <input
-            [(ngModel)]="form.title"
-            placeholder="e.g. 20% off your order"
+            [class.has-error]="fieldError('code')"
+            [(ngModel)]="form.code"
+            (ngModelChange)="clearFieldError('code')"
+            placeholder="e.g. SAVE20"
+            autocapitalize="characters"
+            style="text-transform: uppercase"
           />
+          @if (fieldError("code")) {
+          <small class="field-error">{{ fieldError("code") }}</small>
+          }
           <small class="field-hint"
-            >Friendly campaign name shown in coupon lists and admin
-            review.</small
+            >Short code customers type at checkout. Use letters and numbers
+            only.</small
           >
         </div>
-
         <div class="cp-field">
-          <label>Description</label>
-          <textarea
-            [(ngModel)]="form.description"
-            rows="2"
-            placeholder="Optional details for customers"
-          ></textarea>
+          <label>Discount Type *</label>
+          <select [(ngModel)]="form.discount_type">
+            @for (t of discountTypes; track t.value) {
+            <option [value]="t.value">{{ t.label }}</option>
+            }
+          </select>
           <small class="field-hint"
-            >Explain the offer, exclusions, or why customers should use
-            it.</small
+            >Choose how the coupon reduces the order total.</small
           >
         </div>
-
-        <div class="cp-form-row two">
-          @if (form.discount_type !== "free_delivery") {
-            <div class="cp-field">
-              <label>Discount Value *</label>
-              <input
-                type="number"
-                [(ngModel)]="form.discount_value"
-                min="0"
-                [placeholder]="
-                  form.discount_type === 'percentage' ? 'e.g. 20' : 'e.g. 500'
-                "
-              />
-              <small class="field-hint">{{
-                form.discount_type === "percentage"
-                  ? "Enter a percentage value, such as 20 for 20% off."
-                  : "Enter the flat amount to reduce from the order total."
-              }}</small>
-            </div>
-            <div class="cp-field">
-              <label>Max Discount ({{ 0 | appCurrency: true }})</label>
-              <input
-                type="number"
-                [(ngModel)]="form.max_discount_amount"
-                min="0"
-                placeholder="Leave blank for unlimited"
-              />
-              <small class="field-hint"
-                >Optional cap for percentage discounts so large carts do not
-                over-discount.</small
-              >
-            </div>
-          }
-        </div>
-
-        <div class="cp-form-row two">
-          <div class="cp-field">
-            <label>Min Order Amount ({{ 0 | appCurrency: true }})</label>
-            <input
-              type="number"
-              [(ngModel)]="form.min_order_amount"
-              min="0"
-              placeholder="e.g. 1000"
-            />
-            <small class="field-hint"
-              >Minimum cart value required before this coupon can be
-              applied.</small
-            >
-          </div>
-          <div class="cp-field">
-            <label>Per-User Limit</label>
-            <input
-              type="number"
-              [(ngModel)]="form.per_user_limit"
-              min="1"
-              placeholder="e.g. 1"
-            />
-            <small class="field-hint"
-              >How many times the same customer can use this coupon.</small
-            >
-          </div>
-        </div>
-
-        <div class="cp-form-row two">
-          <div class="cp-field">
-            <label>Valid From *</label>
-            <input
-              type="datetime-local"
-              [(ngModel)]="form.valid_from"
-              title="Choose the date and time this coupon starts"
-            />
-            <small class="field-hint"
-              >Start date and time when the coupon should become usable.</small
-            >
-          </div>
-          <div class="cp-field">
-            <label>Valid Until</label>
-            <input
-              type="datetime-local"
-              [(ngModel)]="form.valid_until"
-              title="Choose the date and time this coupon expires"
-            />
-            <small class="field-hint"
-              >Optional expiry date and time. Leave blank for no planned end
-              date.</small
-            >
-          </div>
-        </div>
-
-        <div class="cp-form-row two">
-          <div class="cp-field">
-            <label>Total Usage Limit</label>
-            <input
-              type="number"
-              [(ngModel)]="form.usage_limit"
-              min="1"
-              placeholder="Blank = unlimited"
-            />
-            <small class="field-hint"
-              >Maximum total redemptions across all customers.</small
-            >
-          </div>
-          <div class="cp-field cp-toggle-field">
-            <div>
-              <label>Active</label>
-              <small class="field-hint"
-                >Turn on when customers should be able to use this
-                coupon.</small
-              >
-            </div>
-            <label class="cp-toggle">
-              <input type="checkbox" [(ngModel)]="form.is_active" />
-              <span class="cp-toggle-slider"></span>
-            </label>
-          </div>
-        </div>
       </div>
 
-      <div class="cp-modal-footer">
-        <button class="cp-cancel-btn" (click)="showForm.set(false)">
-          Cancel
-        </button>
-        <button class="cp-save-btn" (click)="save()" [disabled]="saving()">
-          @if (saving()) {
-            <span class="cp-spinner-sm"></span>
-          }
-          {{ editingId() ? "Save Changes" : "Create Coupon" }}
-        </button>
-      </div>
-    </div>
-  }
-
-  @if (deleteCandidate()) {
-    <div class="cp-backdrop" (click)="closeDeleteConfirm()"></div>
-    <div
-      class="cp-modal cp-confirm-modal"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="deleteCouponTitle"
-    >
-      <div class="cp-modal-header">
-        <h2 id="deleteCouponTitle">Delete Coupon</h2>
-        <button
-          class="cp-modal-close"
-          (click)="closeDeleteConfirm()"
-          [disabled]="!!deleting()"
+      <div class="cp-field">
+        <label>Title *</label>
+        <input
+          [class.has-error]="fieldError('title')"
+          [(ngModel)]="form.title"
+          (ngModelChange)="clearFieldError('title')"
+          placeholder="e.g. 20% off your order"
+        />
+        @if (fieldError("title")) {
+        <small class="field-error">{{ fieldError("title") }}</small>
+        }
+        <small class="field-hint"
+          >Friendly campaign name shown in coupon lists and admin review.</small
         >
-          <span class="material-icons-outlined">close</span>
-        </button>
       </div>
-      <div class="cp-modal-body">
-        <div class="delete-warning-icon">
-          <span class="material-icons-outlined">warning</span>
+
+      <div class="cp-field">
+        <label>Description *</label>
+        <textarea
+          [class.has-error]="fieldError('description')"
+          [(ngModel)]="form.description"
+          (ngModelChange)="clearFieldError('description')"
+          rows="2"
+          placeholder="Details customers should know"
+        ></textarea>
+        @if (fieldError("description")) {
+        <small class="field-error">{{ fieldError("description") }}</small>
+        }
+        <small class="field-hint"
+          >Explain the offer, exclusions, or why customers should use it.</small
+        >
+      </div>
+
+      <div class="cp-form-row two">
+        @if (form.discount_type !== "free_delivery") {
+        <div class="cp-field">
+          <label>Discount Value *</label>
+          <input
+            type="number"
+            [class.has-error]="fieldError('discount_value')"
+            [(ngModel)]="form.discount_value"
+            (ngModelChange)="clearFieldError('discount_value')"
+            min="0"
+            [placeholder]="
+              form.discount_type === 'percentage' ? 'e.g. 20' : 'e.g. 500'
+            "
+          />
+          <small class="field-hint">{{
+            form.discount_type === "percentage"
+              ? "Enter a percentage value, such as 20 for 20% off."
+              : "Enter the flat amount to reduce from the order total."
+          }}</small>
+          @if (fieldError("discount_value")) {
+          <small class="field-error">{{ fieldError("discount_value") }}</small>
+          }
         </div>
-        <p class="delete-confirm-copy">
-          Delete
-          <strong>{{
-            deleteCandidate()?.code || deleteCandidate()?.title
-          }}</strong
-          >? Customers will no longer be able to use this coupon.
-        </p>
-        @if (error()) {
-          <div class="cp-alert error">
-            <span class="material-icons-outlined">error_outline</span
-            >{{ error() }}
-          </div>
+        <div class="cp-field">
+          <label>Max Discount ({{ 0 | appCurrency : true }})</label>
+          <input
+            type="number"
+            [class.has-error]="fieldError('max_discount_amount')"
+            [(ngModel)]="form.max_discount_amount"
+            (ngModelChange)="clearFieldError('max_discount_amount')"
+            min="0"
+            placeholder="Leave blank for unlimited"
+          />
+          @if (fieldError("max_discount_amount")) {
+          <small class="field-error">{{
+            fieldError("max_discount_amount")
+          }}</small>
+          }
+          <small class="field-hint"
+            >Optional cap for percentage discounts so large carts do not
+            over-discount.</small
+          >
+        </div>
         }
       </div>
-      <div class="cp-modal-footer">
-        <button
-          class="cp-cancel-btn"
-          (click)="closeDeleteConfirm()"
-          [disabled]="!!deleting()"
-        >
-          Cancel
-        </button>
-        <button
-          class="cp-del-btn confirm-delete-btn"
-          (click)="confirmDelete()"
-          [disabled]="!!deleting()"
-        >
-          @if (deleting()) {
-            <span class="cp-spinner-sm"></span>
-          } @else {
-            <span class="material-icons-outlined">delete_outline</span>
+
+      <div class="cp-form-row two">
+        <div class="cp-field">
+          <label>Min Order Amount ({{ 0 | appCurrency : true }})</label>
+          <input
+            type="number"
+            [class.has-error]="fieldError('min_order_amount')"
+            [(ngModel)]="form.min_order_amount"
+            (ngModelChange)="clearFieldError('min_order_amount')"
+            min="0"
+            placeholder="e.g. 1000"
+          />
+          @if (fieldError("min_order_amount")) {
+          <small class="field-error">{{
+            fieldError("min_order_amount")
+          }}</small>
           }
-          Delete
-        </button>
+          <small class="field-hint"
+            >Minimum cart value required before this coupon can be
+            applied.</small
+          >
+        </div>
+        <div class="cp-field">
+          <label>Per-User Limit</label>
+          <input
+            type="number"
+            [class.has-error]="fieldError('per_user_limit')"
+            [(ngModel)]="form.per_user_limit"
+            (ngModelChange)="clearFieldError('per_user_limit')"
+            min="1"
+            placeholder="e.g. 1"
+          />
+          @if (fieldError("per_user_limit")) {
+          <small class="field-error">{{ fieldError("per_user_limit") }}</small>
+          }
+          <small class="field-hint"
+            >How many times the same customer can use this coupon.</small
+          >
+        </div>
+      </div>
+
+      <div class="cp-form-row two">
+        <div class="cp-field">
+          <label>Valid From *</label>
+          <input
+            type="datetime-local"
+            [class.has-error]="fieldError('valid_from')"
+            [(ngModel)]="form.valid_from"
+            (ngModelChange)="clearFieldError('valid_from')"
+            title="Choose the date and time this coupon starts"
+          />
+          @if (fieldError("valid_from")) {
+          <small class="field-error">{{ fieldError("valid_from") }}</small>
+          }
+          <small class="field-hint"
+            >Start date and time when the coupon should become usable.</small
+          >
+        </div>
+        <div class="cp-field">
+          <label>Valid Until</label>
+          <input
+            type="datetime-local"
+            [class.has-error]="fieldError('valid_until')"
+            [(ngModel)]="form.valid_until"
+            (ngModelChange)="clearFieldError('valid_until')"
+            title="Choose the date and time this coupon expires"
+          />
+          @if (fieldError("valid_until")) {
+          <small class="field-error">{{ fieldError("valid_until") }}</small>
+          }
+          <small class="field-hint"
+            >Optional expiry date and time. Leave blank for no planned end
+            date.</small
+          >
+        </div>
+      </div>
+
+      <div class="cp-form-row two">
+        <div class="cp-field">
+          <label>Total Usage Limit</label>
+          <input
+            type="number"
+            [class.has-error]="fieldError('usage_limit')"
+            [(ngModel)]="form.usage_limit"
+            (ngModelChange)="clearFieldError('usage_limit')"
+            min="1"
+            placeholder="Blank = unlimited"
+          />
+          @if (fieldError("usage_limit")) {
+          <small class="field-error">{{ fieldError("usage_limit") }}</small>
+          }
+          <small class="field-hint"
+            >Maximum total redemptions across all customers.</small
+          >
+        </div>
+        <div class="cp-field cp-toggle-field">
+          <div>
+            <label>Active</label>
+            <small class="field-hint"
+              >Turn on when customers should be able to use this coupon.</small
+            >
+          </div>
+          <label class="cp-toggle">
+            <input type="checkbox" [(ngModel)]="form.is_active" />
+            <span class="cp-toggle-slider"></span>
+          </label>
+        </div>
       </div>
     </div>
+
+    <div class="cp-modal-footer">
+      <button class="cp-cancel-btn" (click)="showForm.set(false)">
+        Cancel
+      </button>
+      <button
+        class="cp-save-btn"
+        (click)="save()"
+        [disabled]="saving() || !isCouponFormValid()"
+      >
+        @if (saving()) {
+        <span class="cp-spinner-sm"></span>
+        }
+        {{ editingId() ? "Save Changes" : "Create Coupon" }}
+      </button>
+    </div>
+  </div>
+  } @if (deleteCandidate()) {
+  <div class="cp-backdrop" (click)="closeDeleteConfirm()"></div>
+  <div
+    class="cp-modal cp-confirm-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="deleteCouponTitle"
+  >
+    <div class="cp-modal-header">
+      <h2 id="deleteCouponTitle">Delete Coupon</h2>
+      <button
+        class="cp-modal-close"
+        (click)="closeDeleteConfirm()"
+        [disabled]="!!deleting()"
+      >
+        <span class="material-icons-outlined">close</span>
+      </button>
+    </div>
+    <div class="cp-modal-body">
+      <div class="delete-warning-icon">
+        <span class="material-icons-outlined">warning</span>
+      </div>
+      <p class="delete-confirm-copy">
+        Delete
+        <strong>{{
+          deleteCandidate()?.code || deleteCandidate()?.title
+        }}</strong
+        >? Customers will no longer be able to use this coupon.
+      </p>
+      @if (error()) {
+      <div class="cp-alert error">
+        <span class="material-icons-outlined">error_outline</span>{{ error() }}
+      </div>
+      }
+    </div>
+    <div class="cp-modal-footer">
+      <button
+        class="cp-cancel-btn"
+        (click)="closeDeleteConfirm()"
+        [disabled]="!!deleting()"
+      >
+        Cancel
+      </button>
+      <button
+        class="cp-del-btn confirm-delete-btn"
+        (click)="confirmDelete()"
+        [disabled]="!!deleting()"
+      >
+        @if (deleting()) {
+        <span class="cp-spinner-sm"></span>
+        } @else {
+        <span class="material-icons-outlined">delete_outline</span>
+        } Delete
+      </button>
+    </div>
+  </div>
   }
 </div>

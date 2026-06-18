@@ -6,12 +6,12 @@
 }
 
 .mobile-topbar {
-  padding: calc(7px + env(safe-area-inset-top, 0px)) 10px 8px;
+  padding: calc(6px + env(safe-area-inset-top, 0px)) 10px 7px;
   color: #fff;
   background: linear-gradient(135deg, rgba(56, 38, 142, 0.94) 0%, rgba(35, 17, 124, 0.96) 60%, rgba(249, 121, 40, 0.94) 100%);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border-radius: 0 0 18px 18px;
+  border-radius: 0 0 16px 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 12px 28px rgba(35, 17, 124, 0.14);
 }
@@ -42,8 +42,8 @@
 }
 
 .brand-logo {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   display: block;
   border-radius: 12px;
   object-fit: contain;
@@ -57,8 +57,8 @@
 .top-actions a,
 .top-actions button {
   position: relative;
-  width: 31px;
-  height: 31px;
+  width: 30px;
+  height: 30px;
   display: grid;
   place-items: center;
   border-radius: 10px;
@@ -93,9 +93,9 @@ i {
 .location-card {
   width: 100%;
   gap: 10px;
-  margin-top: 9px;
-  padding: 8px 11px;
-  border-radius: 13px;
+  margin-top: 7px;
+  padding: 7px 10px;
+  border-radius: 12px;
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.12);
   text-align: left;
@@ -172,9 +172,9 @@ i {
 
 
 .search-card {
-  height: 44px;
+  height: 40px;
   gap: 8px;
-  margin-top: 8px;
+  margin-top: 7px;
   padding: 0 11px;
   border-radius: 14px;
   background: #fff;

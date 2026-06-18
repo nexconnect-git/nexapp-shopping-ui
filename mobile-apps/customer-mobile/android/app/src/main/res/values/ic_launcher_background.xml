@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ic_launcher_background">#38268E</color>
+    <color name="colorPrimary">#38268E</color>
+    <color name="colorPrimaryDark">#38268E</color>
+    <color name="colorAccent">#FF7A21</color>
+    <color name="splashBackground">#38268E</color>
+</resources>

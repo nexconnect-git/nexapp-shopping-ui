@@ -180,10 +180,6 @@ export class StoreDetailComponent {
     this.activeCategory.set(category);
   }
 
-  followStore(): void {
-    this.state.showToast(`${this.store().name} added to your favorites`);
-  }
-
   shareStore(): void {
     const store = this.store();
     const url = `${location.origin}/store/${store.id}`;
@@ -218,7 +214,7 @@ export class StoreDetailComponent {
       this.location.back();
       return;
     }
-    this.router.navigateByUrl('/stores');
+    this.router.navigateByUrl('/explore');
   }
 
   changeLocation(): void {

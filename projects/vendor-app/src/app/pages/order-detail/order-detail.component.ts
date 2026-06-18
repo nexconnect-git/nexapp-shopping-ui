@@ -99,10 +99,15 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    this.initMarkerOptions();
+    this.initMapOptions();
     this.googleMaps
       .loadJavaScriptApi()
-      .then(() => this.zone.run(() => this.mapsApiReady.set(true)))
+      .then(() =>
+        this.zone.run(() => {
+          this.initMarkerOptions();
+          this.mapsApiReady.set(true);
+        }),
+      )
       .catch(() =>
         console.warn(
           '[Map] Google Maps JavaScript API is not configured or unavailable.',
@@ -132,7 +137,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     this.requestDirections();
   }
 
-  private initMarkerOptions() {
+  private initMapOptions() {
     this.mapOptions = {
       zoomControl: true,
       streetViewControl: false,
@@ -140,11 +145,18 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
       mapTypeControl: false,
       clickableIcons: false,
     };
+  }
+
+  private initMarkerOptions() {
+    const maps = (globalThis as any).google?.maps;
+    if (!maps) {
+      return;
+    }
     this.driverMarkerOptions = {
       icon: {
         url: 'https://maps.google.com/mapfiles/ms/micons/motorcycling.png',
-        scaledSize: new google.maps.Size(36, 36),
-        anchor: new google.maps.Point(18, 18),
+        scaledSize: new maps.Size(36, 36),
+        anchor: new maps.Point(18, 18),
       },
       zIndex: 10,
       title: 'Delivery Partner',
@@ -152,7 +164,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     this.vendorMarkerOptions = {
       icon: {
         url: 'https://maps.google.com/mapfiles/ms/icons/restaurant.png',
-        scaledSize: new google.maps.Size(30, 30),
+        scaledSize: new maps.Size(30, 30),
       },
       zIndex: 5,
       title: 'Your Store',
@@ -160,7 +172,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     this.customerMarkerOptions = {
       icon: {
         url: 'https://maps.google.com/mapfiles/ms/icons/homegardenbusiness.png',
-        scaledSize: new google.maps.Size(30, 30),
+        scaledSize: new maps.Size(30, 30),
       },
       zIndex: 5,
       title: 'Customer Location',

@@ -94,6 +94,30 @@ export interface Order {
   raw?: ApiOrder;
 }
 
+export interface CustomerServiceability {
+  is_serviceable: boolean;
+  message: string;
+  nearby_store_count: number;
+  instant_store_count: number;
+  eta_label: string;
+  nearest_store_eta?: number | null;
+  nearest_store?: any;
+}
+
+export interface ActiveOrderSummary {
+  id: string;
+  order_number: string;
+  status: string;
+  payment_status: string;
+  payment_method?: string;
+  eta_label: string;
+  store?: any;
+  delivery_address?: any;
+  total: string;
+  can_track: boolean;
+  can_cancel: boolean;
+}
+
 export interface Offer {
   code: string;
   title: string;
@@ -127,6 +151,25 @@ export interface CustomerCoupon {
   accentColor: string;
   validUntil: string | null;
   raw?: any;
+}
+
+export interface CustomerHomeHero {
+  title: string;
+  subtitle: string;
+  badge: string;
+  cta_label: string;
+  cta_url: string;
+  image: string;
+  store?: unknown;
+  coupon?: unknown;
+}
+
+export interface CustomerHomeSection<T = unknown> {
+  key: string;
+  title: string;
+  layout: 'category_grid' | 'store_rail' | 'product_rail' | 'product_grid' | 'coupon_rail' | string;
+  items: T[];
+  count: number;
 }
 
 export interface UserProfile {

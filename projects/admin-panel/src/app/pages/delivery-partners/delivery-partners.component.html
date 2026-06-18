@@ -125,7 +125,13 @@
 
     <!-- Custom rating column -->
     <ng-template tableCell="rating" let-p>
-      <span class="stars">{{ starsFor(p.average_rating) }}</span>
+      <span class="stars" [attr.aria-label]="ratingLabel(p.average_rating)">
+        @for (icon of ratingIcons(p.average_rating); track $index) {
+          <span class="material-icons-outlined" aria-hidden="true">{{
+            icon
+          }}</span>
+        }
+      </span>
     </ng-template>
 
     <!-- Custom approved column -->
@@ -246,132 +252,4 @@
     </div>
   }
 
-  <!-- Create / Onboard Modal -->
-  @if (showCreateModal()) {
-    <div class="modal-backdrop" (click)="closeCreateModal()">
-      <div class="modal-content" (click)="$event.stopPropagation()">
-        <div class="modal-header">
-          <h2>Onboard Delivery Partner</h2>
-          <button class="close-btn" (click)="closeCreateModal()">
-            &times;
-          </button>
-        </div>
-        <div class="modal-body">
-          @if (createError()) {
-            <div class="alert alert-danger">{{ createError() }}</div>
-          }
-          <div class="form-row">
-            <div class="form-group">
-              <label class="input-label">First Name</label>
-              <input
-                class="input-field"
-                type="text"
-                [(ngModel)]="createForm.first_name"
-                placeholder="First name"
-              />
-            </div>
-            <div class="form-group">
-              <label class="input-label">Last Name</label>
-              <input
-                class="input-field"
-                type="text"
-                [(ngModel)]="createForm.last_name"
-                placeholder="Last name"
-              />
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="input-label"
-                >Username <span class="required">*</span></label
-              >
-              <input
-                class="input-field"
-                type="text"
-                [(ngModel)]="createForm.username"
-                placeholder="username"
-              />
-            </div>
-            <div class="form-group">
-              <label class="input-label">Phone</label>
-              <input
-                class="input-field"
-                type="tel"
-                [(ngModel)]="createForm.phone"
-                placeholder="+1234567890"
-              />
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="input-label"
-              >Email <span class="required">*</span></label
-            >
-            <input
-              class="input-field"
-              type="email"
-              [(ngModel)]="createForm.email"
-              placeholder="email@example.com"
-            />
-          </div>
-          <div class="form-group">
-            <label class="input-label"
-              >Temporary Password <span class="required">*</span></label
-            >
-            <input
-              class="input-field"
-              type="password"
-              [(ngModel)]="createForm.password"
-              placeholder="Min 8 characters"
-            />
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="input-label"
-                >Vehicle Type <span class="required">*</span></label
-              >
-              <select class="input-field" [(ngModel)]="createForm.vehicle_type">
-                <option value="">Select type</option>
-                <option value="bicycle">Bicycle</option>
-                <option value="motorcycle">Motorcycle</option>
-                <option value="car">Car</option>
-                <option value="van">Van</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="input-label">Vehicle Number</label>
-              <input
-                class="input-field"
-                type="text"
-                [(ngModel)]="createForm.vehicle_number"
-                placeholder="Plate number"
-              />
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="input-label"
-              >License Number <span class="required">*</span></label
-            >
-            <input
-              class="input-field"
-              type="text"
-              [(ngModel)]="createForm.license_number"
-              placeholder="Driver's license"
-            />
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" (click)="closeCreateModal()">
-            Cancel
-          </button>
-          <button
-            class="btn btn-primary"
-            [disabled]="creating()"
-            (click)="onCreatePartner()"
-          >
-            {{ creating() ? "Creating..." : "Create Partner" }}
-          </button>
-        </div>
-      </div>
-    </div>
-  }
 </div>

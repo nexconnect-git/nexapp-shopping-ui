@@ -13,6 +13,8 @@
   overflow: hidden;
   margin: 0.75rem 0;
   border: 1px solid #e0e0e0;
+  position: relative;
+  background: #e9eef3;
   z-index: 0;
 }
 
@@ -1020,5 +1022,3 @@
     transform: rotate(-405deg);
   }
 }
-
-

@@ -12,7 +12,8 @@
 }
 
 .register-container {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(320px, 0.78fr) minmax(0, 1.18fr);
   width: 100%;
   max-width: 1100px;
   min-height: min(700px, calc(100dvh - 4rem));
@@ -85,10 +86,11 @@
 /* ── LEFT PANEL (Branding & Steps) ── */
 .register-left {
   display: none;
-  width: 40%;
   background: var(--surface-alt);
-  padding: 3rem;
+  padding: clamp(2rem, 4vw, 3rem);
   flex-direction: column;
+  justify-content: space-between;
+  gap: 2.5rem;
   position: relative;
   overflow: hidden;
   border-right: 1px solid var(--border-light);
@@ -118,7 +120,7 @@
   gap: 0.75rem;
   position: relative;
   z-index: 10;
-  margin-bottom: auto;
+  margin-bottom: 0;
   .brand-icon {
     width: 44px;
     height: 44px;
@@ -141,9 +143,10 @@
 .left-content {
   position: relative;
   z-index: 10;
-  margin-top: 4rem;
+  max-width: 360px;
+  margin-top: 0;
   h1 {
-    font-size: 2.75rem;
+    font-size: clamp(2.25rem, 4vw, 2.75rem);
     font-weight: 900;
     color: var(--text-primary);
     line-height: 1.1;
@@ -154,7 +157,7 @@
     font-size: 1.125rem;
     color: var(--text-secondary);
     line-height: 1.6;
-    margin: 0 0 4rem 0;
+    margin: 0 0 3rem 0;
     font-weight: 500;
   }
 }
@@ -226,11 +229,10 @@
 /* ── RIGHT PANEL (Forms) ── */
 .register-right {
   min-width: 0;
-  flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: clamp(1.5rem, 4vw, 4rem);
+  padding: clamp(1.75rem, 4vw, 4rem);
   background: var(--nc-white);
   position: relative;
 }

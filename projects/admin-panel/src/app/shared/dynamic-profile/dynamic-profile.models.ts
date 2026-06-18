@@ -49,6 +49,7 @@ export interface ProfileHeroAction {
 export interface ProfileDisplayField {
   label: string;
   value: unknown;
+  href?: string;
   icon?: string;
   tone?: ProfileStatusTone;
   copyable?: boolean;
@@ -92,6 +93,7 @@ export interface DynamicProfileConfig {
   entityTypeLabel: string;
   subtitle?: string;
   avatarUrl?: string;
+  coverUrl?: string;
   avatarInitials?: string;
   avatarIcon?: string;
   badges?: ProfileBadge[];
@@ -179,6 +181,8 @@ export interface DynamicReviewConfig {
   warning?: ProfilePasswordNotice;
   sections: ReviewSection[];
   attentionItems?: ReviewAttentionItem[];
+  statusValue?: string;
+  statusOptions?: Array<{ label: string; value: string }>;
   submitLabel?: string;
   saveDraftLabel?: string;
 }

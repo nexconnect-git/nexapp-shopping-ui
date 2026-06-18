@@ -17,6 +17,16 @@
 .help-form label {
   font-weight: 900;
 }
+.form-error {
+  border: 1px solid rgba(239, 68, 68, 0.24);
+  border-radius: 12px;
+  background: #fff1f2;
+  color: #b91c1c;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.4;
+  padding: 10px 12px;
+}
 .help-form textarea {
   height: 150px;
   padding-top: 14px;
@@ -111,18 +121,18 @@
     font-size: 12px;
     font-weight: 900;
   }
-  
+
   .simple-head h1 {
     margin: 2px 0 0;
     font-size: 24px;
   }
-  
+
   .help-categories {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
   }
-  
+
   .help-categories button,
   .help-form,
   .thread-card {
@@ -133,13 +143,13 @@
     background: #fff;
     box-shadow: 0 12px 30px rgba(33, 22, 82, 0.07);
   }
-  
+
   .help-categories button {
     justify-items: start;
     color: var(--fd-color-primary);
     font-weight: 950;
   }
-  
+
   .help-form label {
     display: grid;
     gap: 6px;
@@ -147,7 +157,7 @@
     font-size: 12px;
     font-weight: 900;
   }
-  
+
   .help-form select,
   .help-form textarea,
   .reply-row input {
@@ -159,17 +169,17 @@
     padding: 0 12px;
     background: #fff;
   }
-  
+
   .help-form select,
   .reply-row input {
     min-height: 46px;
   }
-  
+
   .help-form textarea {
     min-height: 130px;
     padding-block: 12px;
   }
-  
+
   .photo-button {
     min-height: 44px;
     border-radius: 15px;
@@ -177,14 +187,14 @@
     background: #f1ecff;
     font-weight: 950;
   }
-  
+
   .issue-summary {
     display: grid;
     grid-template-columns: 44px minmax(0, 1fr);
     gap: 10px;
     align-items: center;
   }
-  
+
   .issue-summary > span {
     width: 44px;
     height: 44px;
@@ -194,12 +204,12 @@
     color: var(--fd-color-primary);
     background: #f1ecff;
   }
-  
+
   .messages {
     display: grid;
     gap: 8px;
   }
-  
+
   .message {
     justify-self: start;
     max-width: 86%;
@@ -207,25 +217,25 @@
     border-radius: 16px;
     background: #f4f1fb;
   }
-  
+
   .message.customer {
     justify-self: end;
     color: #fff;
     background: var(--fd-color-primary);
   }
-  
+
   .message p {
     margin: 0;
     font-size: 13px;
     line-height: 1.35;
   }
-  
+
   .reply-row {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 46px;
     gap: 8px;
   }
-  
+
   .reply-row button {
     display: grid;
     place-items: center;

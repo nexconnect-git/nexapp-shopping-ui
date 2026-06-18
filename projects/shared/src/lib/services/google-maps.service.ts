@@ -12,6 +12,7 @@ declare const google: any;
 declare global {
   interface Window {
     __nexconnectGoogleMapsReady?: () => void;
+    gm_authFailure?: () => void;
   }
 }
 
@@ -19,6 +20,8 @@ declare global {
 export class GoogleMapsService {
   private scriptPromise: Promise<void> | null = null;
   private missingApiKeyWarned = false;
+  private authFailureHandlerInstalled = false;
+  private authFailed = false;
 
   apiKey(fallback = ''): string {
     return getGoogleMapsApiKey(fallback);
@@ -42,6 +45,10 @@ export class GoogleMapsService {
   }
 
   loadJavaScriptApi(apiKey = this.apiKey()): Promise<void> {
+    this.installAuthFailureHandler();
+    if (this.authFailed) {
+      return Promise.reject(new Error('Google Maps JavaScript API authorization failed'));
+    }
     if (this.hasRuntime()) return Promise.resolve();
     if (!apiKey) {
       if (!this.missingApiKeyWarned) {
@@ -58,11 +65,31 @@ export class GoogleMapsService {
       const existing = document.getElementById(
         'google-maps-js',
       ) as HTMLScriptElement | null;
-      const fail = () => {
+      const authFailureEvent = 'nexconnect:google-maps-auth-failure';
+      const fail = (error = new Error('Google Maps JavaScript API could not be loaded')) => {
+        window.removeEventListener(authFailureEvent, failOnAuthFailure);
         this.scriptPromise = null;
-        reject(new Error('Google Maps JavaScript API could not be loaded'));
+        reject(error);
       };
-      const finish = () => (this.hasRuntime() ? resolve() : fail());
+      const failOnAuthFailure = () => {
+        fail(new Error('Google Maps JavaScript API authorization failed'));
+      };
+      const finish = () => {
+        window.removeEventListener(authFailureEvent, failOnAuthFailure);
+        if (this.authFailed) {
+          fail(new Error('Google Maps JavaScript API authorization failed'));
+          return;
+        }
+        if (this.hasRuntime()) {
+          resolve();
+        } else {
+          fail();
+        }
+      };
+
+      window.addEventListener(authFailureEvent, failOnAuthFailure, {
+        once: true,
+      });
 
       window.__nexconnectGoogleMapsReady = finish;
 
@@ -96,6 +123,21 @@ export class GoogleMapsService {
     });
 
     return this.scriptPromise;
+  }
+
+  private installAuthFailureHandler() {
+    if (this.authFailureHandlerInstalled || typeof window === 'undefined') {
+      return;
+    }
+
+    this.authFailureHandlerInstalled = true;
+    const previousHandler = window.gm_authFailure;
+
+    window.gm_authFailure = () => {
+      this.authFailed = true;
+      window.dispatchEvent(new CustomEvent('nexconnect:google-maps-auth-failure'));
+      previousHandler?.();
+    };
   }
 
   computeRoute(

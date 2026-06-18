@@ -6,7 +6,7 @@
 .home-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 24px;
+  gap: 16px;
   align-items: start;
   width: 100%;
 }
@@ -35,6 +35,14 @@
 .main-area {
   min-width: 0;
   overflow: hidden;
+}
+
+.promo-strip,
+.mobile-vibe-strip,
+.ad-container,
+.club-banner,
+.promo-row {
+  display: none;
 }
 
 .animate-in {
@@ -86,8 +94,8 @@
 }
 
 .insta-hero {
-  min-height: 320px;
-  border-radius: 16px;
+  min-height: 224px;
+  border-radius: 12px;
   background:
     radial-gradient(
       circle at 78% 36%,
@@ -98,9 +106,9 @@
   color: #fff;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
-  gap: 28px;
+  gap: 20px;
   align-items: center;
-  padding: 40px 46px;
+  padding: 24px 28px;
   overflow: hidden;
   position: relative;
   box-shadow: 0 20px 55px rgba(70, 48, 213, 0.2);
@@ -109,18 +117,18 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  font-size: 24px;
+  font-size: 18px;
   font-weight: 500;
   margin-bottom: 12px;
 }
 .speed-line span {
-  font-size: 34px;
+  font-size: 26px;
 }
 .hero-copy h1 {
-  font-size: 46px;
+  font-size: 32px;
   line-height: 1.08;
-  letter-spacing: -0.045em;
-  margin: 0 0 22px;
+  letter-spacing: 0;
+  margin: 0 0 14px;
   font-weight: 900;
 }
 
@@ -132,17 +140,17 @@
 }
 
 .hero-subtitle {
-  font-size: 17px;
+  font-size: 15px;
   line-height: 1.5;
   max-width: 520px;
-  margin: -8px 0 22px;
+  margin: 0 0 16px;
   color: rgba(255, 255, 255, 0.9);
 }
 .hero-offer {
   display: flex;
   align-items: center;
   gap: 13px;
-  margin-bottom: 22px;
+  margin-bottom: 16px;
 }
 .hero-offer b {
   background: var(--fd-color-warning-soft);
@@ -173,7 +181,7 @@
   box-shadow: 0 12px 24px rgba(25, 20, 60, 0.15);
 }
 .hero-visual {
-  height: 252px;
+  height: 178px;
   position: relative;
 }
 .hero-visual img {
@@ -311,7 +319,7 @@
 .banner-strip h2 {
   margin: 8px 0 4px;
   font-size: 28px;
-  letter-spacing: -0.04em;
+  letter-spacing: 0;
 }
 .banner-strip p {
   margin: 0;
@@ -390,6 +398,50 @@
 }
 .recommended-row {
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+.deal-shelf {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.32fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: stretch;
+  margin: 10px 0 18px;
+  padding: 16px;
+  overflow: hidden;
+  border: 1px solid var(--fd-color-primary-border);
+  border-radius: 14px;
+  background:
+    linear-gradient(135deg, var(--fd-color-primary-soft), #fff 48%),
+    #fff;
+  box-shadow: 0 12px 34px rgba(35, 17, 124, 0.06);
+}
+.deal-copy {
+  display: grid;
+  align-content: center;
+  gap: 6px;
+}
+.deal-copy small {
+  color: var(--fd-color-primary);
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+.deal-copy h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 26px;
+  line-height: 1.06;
+  font-weight: 950;
+}
+.deal-copy p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.4;
+}
+.deal-grid {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
 }
 .discovery-rails {
   display: grid;
@@ -600,10 +652,10 @@
     font-size: 22px;
   }
   .hero-copy h1 {
-    font-size: 28px;
+    font-size: 24px;
     line-height: 1.05;
     margin-bottom: 12px;
-    letter-spacing: -0.035em;
+    letter-spacing: 0;
   }
   .hero-subtitle {
     font-size: 13px;
@@ -759,6 +811,25 @@
     gap: 10px;
     overflow: visible;
     padding-right: 0;
+  }
+  .deal-shelf {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 13px;
+    border-radius: 18px;
+  }
+  .deal-copy {
+    gap: 3px;
+  }
+  .deal-copy h2 {
+    font-size: 20px;
+  }
+  .deal-copy p {
+    font-size: 12px;
+  }
+  .deal-grid,
+  .home-page .mobile-grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
   }
   .discovery-rails {
     display: none;
@@ -1080,6 +1151,14 @@
   .store-scroller fd-store-card {
     flex: 0 0 min(190px, 66vw);
   }
+}
+
+.promo-strip,
+.mobile-vibe-strip,
+.ad-container,
+.club-banner,
+.promo-row {
+  display: none;
 }
 
 

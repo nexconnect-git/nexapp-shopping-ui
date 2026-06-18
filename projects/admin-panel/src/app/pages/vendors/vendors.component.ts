@@ -46,35 +46,6 @@ export class VendorsComponent implements OnInit, OnDestroy {
   autoReload = signal(true);
   private reloadSub?: Subscription;
 
-  showModal = signal(false);
-  isCreating = signal(false);
-  editModel = signal<any>(null);
-  saving = signal(false);
-  modalError = signal('');
-
-  defaultNew() {
-    return {
-      username: '',
-      email: '',
-      password: '',
-      first_name: '',
-      last_name: '',
-      store_name: '',
-      description: '',
-      phone: '',
-      address: '',
-      city: '',
-      state: '',
-      postal_code: '',
-      opening_time: '09:00',
-      closing_time: '21:00',
-      min_order_amount: 0,
-      delivery_radius_km: 5,
-      is_open: true,
-      is_featured: false,
-    };
-  }
-
   vendorColor(name: string): string {
     const colors = [
       '#38268E',
@@ -95,7 +66,7 @@ export class VendorsComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.reloadSub = timer(0, 15000).subscribe(() => {
-      if (this.autoReload() && !this.showModal()) this.load();
+      if (this.autoReload()) this.load();
     });
   }
 
@@ -141,8 +112,13 @@ export class VendorsComponent implements OnInit, OnDestroy {
   }
 
   setStatus(v: any, newStatus: string) {
+    const reason =
+      newStatus === 'approved'
+        ? ''
+        : window.prompt(`Reason for setting vendor status to "${newStatus}"?`)?.trim();
+    if (newStatus !== 'approved' && !reason) return;
     this.actionId.set(v.id);
-    this.api.setVendorStatus(v.id, newStatus).subscribe({
+    this.api.setVendorStatus(v.id, newStatus, reason || '').subscribe({
       next: () => {
         this.actionId.set(null);
         this.load();
@@ -156,97 +132,21 @@ export class VendorsComponent implements OnInit, OnDestroy {
     this.api.deleteAdminVendor(v.id).subscribe({ next: () => this.load() });
   }
 
-  openCreate() {
-    this.isCreating.set(true);
-    this.editModel.set(this.defaultNew());
-    this.modalError.set('');
-    this.showModal.set(true);
-  }
-
-  openEdit(v: any) {
-    this.isCreating.set(false);
-    this.editModel.set(JSON.parse(JSON.stringify(v)));
-    this.modalError.set('');
-    this.showModal.set(true);
-  }
-
-  closeModal() {
-    this.showModal.set(false);
-    this.editModel.set(null);
-  }
-
-  saveVendor() {
-    if (this.isCreating()) {
-      this.saveCreate();
-    } else {
-      this.saveVendorEdit();
-    }
-  }
-
-  private saveCreate() {
-    if (!this.editModel() || this.saving()) return;
-    this.saving.set(true);
-    this.modalError.set('');
-    const payload = {
-      ...this.editModel(),
-      username: this.editModel().username?.trim(),
-      email: this.editModel().email?.trim(),
-      first_name: this.editModel().first_name?.trim(),
-      last_name: this.editModel().last_name?.trim(),
-      store_name: this.editModel().store_name?.trim(),
-      phone: this.editModel().phone?.trim(),
-      address: this.editModel().address?.trim(),
-      city: this.editModel().city?.trim(),
-      state: this.editModel().state?.trim(),
-      postal_code: this.editModel().postal_code?.trim(),
-    };
-    this.api.createAdminVendor(payload).subscribe({
-      next: () => {
-        this.saving.set(false);
-        this.closeModal();
-        this.load();
-      },
-      error: (err) => {
-        this.saving.set(false);
-        this.modalError.set(this.vendorCreateErrorMessage(err.error));
-      },
-    });
-  }
-
-  private saveVendorEdit() {
-    if (!this.editModel() || this.saving()) return;
-    this.saving.set(true);
-    this.api
-      .updateAdminVendor(this.editModel().id, this.editModel())
-      .subscribe({
-        next: () => {
-          this.saving.set(false);
-          this.closeModal();
-          this.load();
-        },
-        error: () => this.saving.set(false),
-      });
-  }
-
-  starsFor(r: number) {
-    const f = Math.round(r);
-    return 'â˜…'.repeat(f) + 'â˜†'.repeat(5 - f);
-  }
-
-  private vendorCreateErrorMessage(error: any): string {
-    const fieldErrors = ['username', 'email', 'phone', 'store_name']
-      .map((field) =>
-        error?.[field]?.[0] ? `${field}: ${error[field][0]}` : '',
-      )
-      .filter(Boolean);
-
-    return (
-      fieldErrors[0] ||
-      error?.non_field_errors?.[0] ||
-      error?.detail ||
-      error?.error ||
-      'Failed to create vendor.'
+  ratingIcons(rating: unknown): string[] {
+    const value = this.normalizedRating(rating);
+    return Array.from({ length: 5 }, (_, index) =>
+      index < value ? 'star' : 'star_border',
     );
   }
+
+  ratingLabel(rating: unknown): string {
+    return `${this.normalizedRating(rating)} out of 5`;
+  }
+
+  private normalizedRating(rating: unknown): number {
+    const value = Math.round(Number(rating) || 0);
+    return Math.max(0, Math.min(5, value));
+  }
+
 }
 

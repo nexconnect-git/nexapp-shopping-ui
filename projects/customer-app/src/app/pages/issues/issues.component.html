@@ -35,6 +35,19 @@
         >
         <a [routerLink]="['/issue', issue.id]">View ></a>
       </article>
+    } @empty {
+      <section class="empty-panel desktop-empty">
+        <span class="material-symbols-rounded">support_agent</span>
+        <h2>No issues found</h2>
+        <p>
+          @if (active() === 'All') {
+            You have not raised any support tickets yet.
+          } @else {
+            No {{ active().toLowerCase() }} issues right now.
+          }
+        </p>
+        <a routerLink="/help" class="fd-btn primary">Raise New Issue</a>
+      </section>
     }
   </section>
 </main>

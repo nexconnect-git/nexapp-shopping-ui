@@ -2,22 +2,24 @@
   <a [routerLink]="['/product', product.id]" class="image-wrap">
     <img
       [src]="product.image || placeholderImage"
-      [alt]="product.name"
+      [alt]="productName()"
       loading="lazy"
       (error)="onImageError($event)"
     />
     @if (product.discount) {
       <span class="discount">{{ product.discount }}</span>
     }
+    <span class="eta-chip">
+      <span class="material-symbols-rounded">bolt</span>
+      {{ deliveryBadge() }}
+    </span>
   </a>
   <div class="body">
+    <small class="category">{{ categoryLabel() }}</small>
     <a [routerLink]="['/product', product.id]" class="name">{{
-      product.name
+      productName()
     }}</a>
-    @if (product.storeName) {
-      <small class="store-name">{{ product.storeName }}</small>
-    }
-    <small>{{ product.unit }}</small>
+    <small class="unit">{{ productUnit() }}</small>
     @if (stockBadge(); as badge) {
       <span class="stock-badge" [class.warning]="badge.tone === 'warning'" [class.danger]="badge.tone === 'danger'">
         {{ badge.label }}
@@ -25,8 +27,10 @@
     }
     <div class="bottom">
       <div class="price">
-        <b>{{ product.price | appCurrency }}</b
-        ><del>{{ product.mrp | appCurrency }}</del>
+        <b>{{ productPrice() | appCurrency }}</b>
+        @if (showMrp()) {
+          <del>{{ product.mrp | appCurrency }}</del>
+        }
       </div>
       @if (quantity()) {
         <div class="qty">
@@ -46,10 +50,19 @@
             <span class="material-symbols-rounded">add</span>
           </button>
         </div>
+      } @else if (isUnavailable()) {
+        <button type="button" class="add closed" disabled>
+          {{ unavailableLabel() }}
+        </button>
       } @else if (storeClosed()) {
         <button type="button" class="add closed" disabled>Store closed</button>
       } @else {
-        <button type="button" class="add" (click)="state.addToCart(product)">
+        <button
+          type="button"
+          class="add"
+          [attr.aria-label]="'Add ' + productName() + ' to cart'"
+          (click)="state.addToCart(product)"
+        >
           Add
         </button>
       }

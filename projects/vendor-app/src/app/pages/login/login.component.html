@@ -53,10 +53,10 @@
       </div>
 
       @if (error()) {
-        <div class="error-msg">
-          <span class="material-icons-outlined">error_outline</span>
-          {{ error() }}
-        </div>
+      <div class="error-msg">
+        <span class="material-icons-outlined">error_outline</span>
+        {{ error() }}
+      </div>
       }
 
       <form (ngSubmit)="onLogin()">
@@ -101,21 +101,24 @@
             >Enter the password for this vendor account.</small
           >
         </div>
-        <button type="submit" class="signin-btn" [disabled]="loading()">
+        <button type="submit" class="signin-btn" [disabled]="!canSubmit()">
           @if (loading()) {
-            <span class="btn-spinner"></span>
-            Signing in...
-          } @else {
-            <span class="material-icons-outlined">login</span>
-            Sign In
-          }
+          <span class="btn-spinner"></span>
+          Signing in... } @else {
+          <span class="material-icons-outlined">login</span>
+          Sign In }
         </button>
       </form>
 
       <div class="form-footer">
         <p>
           Don't have an account?
-          <a routerLink="/register">Register your store</a>
+          <a
+            href="/register"
+            routerLink="/register"
+            (click)="goToRegister($event)"
+            >Register your store</a
+          >
         </p>
       </div>
     </div>

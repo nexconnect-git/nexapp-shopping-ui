@@ -29,7 +29,7 @@ export class TopbarComponent {
   currentUrl = signal('');
   showBackButton = computed(() => {
     const path = this.currentUrl().split('?')[0].split('#')[0];
-    return path !== '/' && path !== '/new-home';
+    return path !== '/';
   });
 
   constructor(
@@ -46,7 +46,7 @@ export class TopbarComponent {
       .pipe(filter((event) => event instanceof NavigationEnd))
       .subscribe(() => {
         this.currentUrl.set(this.router.url || '/');
-        if (this.router.url.startsWith('/search')) {
+        if (this.router.url.startsWith('/explore')) {
           const parsed = this.router.parseUrl(this.router.url);
           this.query.set((parsed.queryParams['q'] as string) ?? '');
         }
@@ -126,10 +126,16 @@ export class TopbarComponent {
       return;
     }
     this.closeSearch();
-    this.router.navigate(['/search'], { queryParams: { q } });
+    this.router.navigate(['/explore'], { queryParams: { q } });
   }
 
   canUseRoute(route: string): boolean {
+    if (route === '/explore') {
+      return (
+        this.features.isRouteEnabled('customer-app', '/explore') ||
+        this.features.isRouteEnabled('customer-app', '/search')
+      );
+    }
     return this.features.isRouteEnabled('customer-app', route);
   }
 

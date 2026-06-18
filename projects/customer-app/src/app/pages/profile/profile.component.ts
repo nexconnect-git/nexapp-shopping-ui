@@ -1,9 +1,7 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Router } from '@angular/router';
-import { ApiService } from '@shared/lib/services/api.service';
 import { AppCurrencyPipe } from '@shared/lib/pipes/currency.pipe';
-import { CurrencyService } from '@shared/lib/services/currency.service';
 import { UiService } from '../../services/ui.service';
 import { AppStateService } from '../../services/app-state.service';
 import { AuthService } from '../../services/auth.service';
@@ -20,74 +18,77 @@ export class ProfileComponent {
   quickLinks = [
     {
       icon: 'shopping_bag',
-      label: 'My Orders',
-      sub: 'View your order history',
+      label: 'Orders',
+      sub: 'History, reorder, invoices',
       path: '/orders',
+    },
+    {
+      icon: 'location_on',
+      label: 'Addresses',
+      sub: 'Manage delivery locations',
+      path: '/addresses',
     },
     {
       icon: 'favorite',
       label: 'Wishlist',
-      sub: 'Items you saved for later',
+      sub: 'Saved items',
       path: '/wishlist',
     },
     {
       icon: 'local_offer',
       label: 'Offers',
-      sub: 'Available offers and coupons',
+      sub: 'Coupons and deals',
       path: '/offers',
+    },
+    {
+      icon: 'account_balance_wallet',
+      label: 'Wallet',
+      sub: 'Balance and payment options',
+      path: '/wallet',
+    },
+    {
+      icon: 'group_add',
+      label: 'Referrals',
+      sub: 'Invite friends and rewards',
+      path: '/referral',
+    },
+    {
+      icon: 'notifications',
+      label: 'Notifications',
+      sub: 'Order and account alerts',
+      path: '/notifications',
     },
     {
       icon: 'support_agent',
       label: 'Help & Support',
-      sub: 'Get help and contact support',
+      sub: 'Get help with orders',
       path: '/help',
+    },
+    {
+      icon: 'sms_failed',
+      label: 'Issues',
+      sub: 'Your support tickets',
+      path: '/issues',
     },
   ];
 
-  walletBalance = signal(0);
-  walletActivity = signal<
-    Array<{ icon: string; title: string; sub: string; amount: string }>
-  >([]);
-  rewardAmount = signal(0);
   totalOrders = computed(
     () =>
       this.orders.orders().length ||
       this.auth.currentUser()?.ordersDelivered ||
       0,
   );
-  activities = computed(() => {
-    const orderActivity = this.orders
-      .orders()
-      .slice(0, 3)
-      .map((order) => ({
-        icon: order.status === 'Delivered' ? 'local_shipping' : 'shopping_bag',
-        title:
-          order.status === 'Delivered' ? 'Order Delivered' : 'Order Placed',
-        sub: [order.date, order.time].filter(Boolean).join(', '),
-        amount: this.currency.format(order.amount),
-      }));
-    return [...orderActivity, ...this.walletActivity()].slice(0, 4);
-  });
 
   constructor(
     public ui: UiService,
     public state: AppStateService,
     public auth: AuthService,
     public orders: OrderService,
-    private api: ApiService,
-    private currency: CurrencyService,
     private router: Router,
-  ) {
-    this.loadWallet();
-    this.loadReferral();
-  }
+  ) {}
 
   editAddress(): void {
     this.ui.openEdit('address');
-  }
-
-  manageMembership(): void {
-    this.state.showToast('Nextou One membership management is coming soon');
   }
 
   editProfile(): void {
@@ -98,44 +99,4 @@ export class ProfileComponent {
     this.router.navigate(['/orders']);
   }
 
-  private loadWallet(): void {
-    this.api.getWallet().subscribe({
-      next: (wallet) => {
-        this.walletBalance.set(Number(wallet.balance || wallet.amount || 0));
-        const txns = wallet.transactions || wallet.recent_transactions || [];
-        this.walletActivity.set(
-          txns.slice(0, 4).map((txn: any) => {
-            const amount = Number(txn.amount || 0);
-            return {
-              icon: 'account_balance_wallet',
-              title: txn.description || txn.type || 'Wallet transaction',
-              sub: txn.created_at
-                ? new Date(txn.created_at).toLocaleString()
-                : '',
-              amount: `${amount >= 0 ? '+' : ''}${this.currency.format(amount)}`,
-            };
-          }),
-        );
-      },
-      error: () => {
-        this.walletBalance.set(0);
-        this.walletActivity.set([]);
-      },
-    });
-  }
-
-  private loadReferral(): void {
-    this.api.getReferral().subscribe({
-      next: (referral) =>
-        this.rewardAmount.set(
-          Number(
-            referral.total_earned ||
-              referral.reward_balance ||
-              referral.rewards ||
-              0,
-          ),
-        ),
-      error: () => this.rewardAmount.set(0),
-    });
-  }
 }

@@ -7,14 +7,13 @@
       <div class="checkout-main">
         <h1 class="fd-title">Checkout</h1>
         <section class="checkout-flow fd-card">
-          <span class="active"><b>1</b><small>Address</small></span>
-          <span><b>2</b><small>Delivery Slot</small></span>
-          <span><b>3</b><small>Payment</small></span>
-          <span><b>4</b><small>Review</small></span>
+          <span class="active"><b>1</b><small>Deliver to</small></span>
+          <span><b>2</b><small>Payment</small></span>
+          <span><b>3</b><small>Review</small></span>
         </section>
 
         <section class="fd-card block">
-          <h2>1. Delivery Address</h2>
+          <h2>1. Deliver to</h2>
           @if (!hasAddresses()) {
             <section class="no-payment">
               <b>No delivery address found</b>
@@ -121,7 +120,7 @@
         </section>
 
         <section class="fd-card block">
-          <h2>2. Delivery Slot</h2>
+          <h2>Schedule delivery (optional)</h2>
           <div class="slot-grid">
             <button
               type="button"
@@ -178,7 +177,7 @@
         </section>
 
         <section class="fd-card block payment">
-          <h2>3. Payment Method</h2>
+          <h2>2. Payment Method</h2>
           <div class="pay-grid">
             <div class="pay-list">
               @for (method of state.paymentMethods(); track method.id) {
@@ -336,16 +335,20 @@
               type="button"
               class="address-card"
               [class.active]="isActiveAddress(address.id)"
-              [class.disabled]="addressDisabledReason(address)"
+              [class.disabled]="!!addressDisabledReason(address)"
+              [disabled]="!!addressDisabledReason(address)"
               (click)="selectAddress(address.id)"
             >
-              <span class="material-symbols-rounded">home_pin</span>
-              <span>
+              <span class="address-icon material-symbols-rounded">home_pin</span>
+              <span class="address-copy">
                 <b>{{ address.label || address.name || "Address" }}</b>
                 <small
                   >{{ address.line }}, {{ address.city }} {{ address.pincode }}</small
                 >
                 <em>{{ addressMessage(address) }}</em>
+              </span>
+              <span class="address-check material-symbols-rounded">
+                {{ isActiveAddress(address.id) ? "check" : "radio_button_unchecked" }}
               </span>
             </button>
           } @empty {
@@ -511,16 +514,6 @@
         <span class="material-symbols-rounded">expand_more</span>
       </button>
       @if (mobileSection() === 'review') {
-        <div class="review-items">
-          @for (item of state.cart(); track item.id) {
-            <div>
-              <img [src]="item.image" [alt]="item.name" />
-              <span><b>{{ item.name }}</b><small>Qty {{ item.quantity }}</small></span>
-              <strong>{{ item.price * item.quantity | appCurrency }}</strong>
-            </div>
-          }
-        </div>
-
         <fd-order-summary [showButton]="false" />
 
         @if (sameStoreSuggestions().length || otherStoreSuggestions().length) {

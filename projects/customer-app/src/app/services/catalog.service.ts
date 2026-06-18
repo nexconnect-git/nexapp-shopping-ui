@@ -24,6 +24,8 @@ import { finalize } from 'rxjs';
 import {
   Category,
   CustomerCoupon,
+  CustomerHomeHero,
+  CustomerHomeSection,
   PlatformBanner,
   Product,
   Store,
@@ -39,10 +41,13 @@ export class CatalogService {
   private readonly _categories = signal<Category[]>([]);
   private readonly _stores = signal<Store[]>([]);
   private readonly _products = signal<Product[]>([]);
+  private readonly _buyAgainProducts = signal<Product[]>([]);
   private readonly _recommendedProducts = signal<Product[]>([]);
   private readonly _storeProducts = signal<Record<string, Product[]>>({});
   private readonly _banners = signal<PlatformBanner[]>([]);
   private readonly _coupons = signal<CustomerCoupon[]>([]);
+  private readonly _homeHero = signal<CustomerHomeHero | null>(null);
+  private readonly _homeSections = signal<CustomerHomeSection[]>([]);
   private readonly _categoryLoadingRequests = signal(0);
   private readonly _storeLoadingRequests = signal(0);
   private readonly _productLoadingRequests = signal(0);
@@ -59,9 +64,12 @@ export class CatalogService {
   readonly categories = this._categories.asReadonly();
   readonly stores = this._stores.asReadonly();
   readonly products = this._products.asReadonly();
+  readonly buyAgainProducts = this._buyAgainProducts.asReadonly();
   readonly recommendedProducts = this._recommendedProducts.asReadonly();
   readonly banners = this._banners.asReadonly();
   readonly coupons = this._coupons.asReadonly();
+  readonly homeHero = this._homeHero.asReadonly();
+  readonly homeSections = this._homeSections.asReadonly();
   readonly categoriesLoading = computed(
     () => this._categoryLoadingRequests() > 0,
   );
@@ -102,6 +110,63 @@ export class CatalogService {
         ),
       error: () => this._coupons.set([]),
     });
+  }
+
+  loadHome(params: Record<string, any> = {}): void {
+    this.setCategoriesLoading(true);
+    this.setStoresLoading(true);
+    this.setProductsLoading(true);
+    this.api
+      .getHome(params)
+      .pipe(finalize(() => {
+        this.setCategoriesLoading(false);
+        this.setStoresLoading(false);
+        this.setProductsLoading(false);
+      }))
+      .subscribe({
+        next: (response) => {
+          const categories = this.unwrap<ApiCategory>(response?.categories || [])
+            .filter(
+              (category) =>
+                category.show_in_customer_ui !== false &&
+                category.is_active !== false,
+            )
+            .map((category, index) => this.mapCategory(category, index));
+          this._categories.set([
+            { id: 'all', label: 'All', icon: 'grid_view', bg: '#f8fafc' },
+            ...categories,
+          ]);
+          const stores = this.unwrap<ApiVendor>(response?.nearby_stores || []).map(
+            (vendor) => this.mapStore(vendor),
+          );
+          this._stores.set(stores);
+          const recommended = this.unwrap<ApiProduct>(
+            response?.recommended_products || [],
+          ).map((product) => this.mapProduct(product));
+          const flashDeals = this.unwrap<ApiProduct>(response?.flash_deals || []).map(
+            (product) => this.mapProduct(product),
+          );
+          const buyAgain = this.unwrap<ApiProduct>(response?.buy_again || []).map(
+            (product) => this.mapProduct(product),
+          );
+          this._buyAgainProducts.set(buyAgain);
+          this.mergeProducts([...recommended, ...flashDeals, ...buyAgain]);
+          this._recommendedProducts.set(recommended);
+          this._coupons.set(
+            this.unwrap<any>(response?.coupons || []).map((coupon) =>
+              this.mapCoupon(coupon),
+            ),
+          );
+          this._banners.set(
+            this.unwrap<any>(response?.banners || []).map((banner) =>
+              this.mapBanner(banner),
+            ),
+          );
+          this._homeHero.set(this.mapHomeHero(response?.hero));
+          this._homeSections.set(this.mapHomeSections(response?.sections));
+        },
+        error: () => {},
+      });
   }
 
   loadCategories(params: Record<string, any> = {}): void {
@@ -160,7 +225,7 @@ export class CatalogService {
         city: params['city'],
         postal_code: params['postal_code'],
       },
-      { page, pageSize, fallbackToState: options.allowFallback !== false },
+      { page, pageSize, fallbackToState: options.allowFallback === true },
     );
     this.lastStoreFilters = { ...params, page_size: pageSize };
     this.setStoresLoading(true);
@@ -253,6 +318,50 @@ export class CatalogService {
             ),
           ),
         error: () => this._products.set([]),
+      });
+  }
+
+  loadExplore(params: Record<string, any> = {}): void {
+    this.setProductsLoading(true);
+    this.setStoresLoading(true);
+    this.setCategoriesLoading(true);
+    this.api
+      .explore(params)
+      .pipe(finalize(() => {
+        this.setProductsLoading(false);
+        this.setStoresLoading(false);
+        this.setCategoriesLoading(false);
+      }))
+      .subscribe({
+        next: (response) => {
+          const categories = this.unwrap<ApiCategory>(response?.categories || [])
+            .filter(
+              (category) =>
+                category.show_in_customer_ui !== false &&
+                category.is_active !== false,
+            )
+            .map((category, index) => this.mapCategory(category, index));
+          this._categories.set([
+            { id: 'all', label: 'All', icon: 'grid_view', bg: '#f8fafc' },
+            ...categories,
+          ]);
+          this._stores.set(
+            this.unwrap<ApiVendor>(response?.stores || []).map((vendor) =>
+              this.mapStore(vendor),
+            ),
+          );
+          this.mergeProducts(
+            this.unwrap<ApiProduct>(response?.products || []).map((product) =>
+              this.mapProduct(product),
+            ),
+          );
+          this._coupons.set(
+            this.unwrap<any>(response?.offers || []).map((coupon) =>
+              this.mapCoupon(coupon),
+            ),
+          );
+        },
+        error: () => {},
       });
   }
 
@@ -367,6 +476,7 @@ export class CatalogService {
             q,
           ).map((store) => this.mapStore(store as ApiVendor)),
         )
+        .filter((store) => this.isServiceableStore(store))
         .filter(
           (store, index, all) =>
             all.findIndex((item) => item.id === store.id) === index,
@@ -391,7 +501,7 @@ export class CatalogService {
     };
   }
 
-  refreshSearch(query: string): void {
+  refreshSearch(query: string, params: Record<string, any> = {}): void {
     const q = parseMultiSearchQuery(query)
       .map((term) => term.value)
       .join(',');
@@ -416,14 +526,18 @@ export class CatalogService {
       });
     this.setStoresLoading(true);
     this.api
-      .getVendors({ search: q })
+      .getVendors({ ...params, search: q })
       .pipe(finalize(() => this.setStoresLoading(false)))
       .subscribe({
         next: (response) => {
           const vendors = this.unwrap<ApiVendor>(response);
-          this.mergeStores(vendors.map((vendor) => this.mapStore(vendor)));
+          const stores = vendors
+            .map((vendor) => this.mapStore(vendor))
+            .filter((store) => this.isServiceableStore(store));
+          const serviceableStoreIds = new Set(stores.map((store) => store.id));
+          this.mergeStores(stores);
           this.mergeProducts(
-            vendors.flatMap((vendor) =>
+            vendors.filter((vendor) => serviceableStoreIds.has(String(vendor.id))).flatMap((vendor) =>
               (vendor.products || []).map((product) =>
                 this.mapProduct(product, vendor),
               ),
@@ -454,6 +568,36 @@ export class CatalogService {
     return normalizeSharedCoupon(coupon) as CustomerCoupon;
   }
 
+  private mapHomeHero(hero: unknown): CustomerHomeHero | null {
+    if (!hero || typeof hero !== 'object') return null;
+    const heroRecord = hero as Record<string, unknown>;
+    return {
+      title: String(heroRecord['title'] || ''),
+      subtitle: String(heroRecord['subtitle'] || ''),
+      badge: String(heroRecord['badge'] || ''),
+      cta_label: String(heroRecord['cta_label'] || heroRecord['ctaLabel'] || 'Shop now'),
+      cta_url: String(heroRecord['cta_url'] || heroRecord['ctaUrl'] || '/explore'),
+      image: String(heroRecord['image'] || ''),
+      store: heroRecord['store'] || null,
+      coupon: heroRecord['coupon'] || null,
+    };
+  }
+
+  private mapHomeSections(sections: unknown): CustomerHomeSection[] {
+    if (!Array.isArray(sections)) return [];
+    return sections.map((section) => {
+      const sectionRecord = section && typeof section === 'object' ? (section as Record<string, unknown>) : {};
+      const items = Array.isArray(sectionRecord['items']) ? sectionRecord['items'] : [];
+      return {
+        key: String(sectionRecord['key'] || ''),
+        title: String(sectionRecord['title'] || ''),
+        layout: String(sectionRecord['layout'] || ''),
+        items,
+        count: Number(sectionRecord['count'] || items.length || 0),
+      };
+    });
+  }
+
   private mapStore(vendor: ApiVendor): Store {
     return normalizeSharedVendor(vendor as any, FALLBACK_STORE_IMAGE) as Store;
   }
@@ -473,12 +617,15 @@ export class CatalogService {
   }
 
   private applyStoreResponse(response: any, append: boolean): void {
-    const stores = this.unwrap<ApiVendor>(response).map((vendor) =>
-      this.mapStore(vendor),
-    );
+    const stores = this.unwrap<ApiVendor>(response)
+      .map((vendor) => this.mapStore(vendor))
+      .filter((store) => this.isServiceableStore(store));
     if (append) this.mergeStores(stores);
     else this._stores.set(stores);
-    const storeProducts = this.unwrap<ApiVendor>(response).flatMap((vendor) =>
+    const serviceableStoreIds = new Set(stores.map((store) => store.id));
+    const storeProducts = this.unwrap<ApiVendor>(response)
+      .filter((vendor) => serviceableStoreIds.has(String(vendor.id)))
+      .flatMap((vendor) =>
       (vendor.products || []).map((product) =>
         this.mapProduct(product, vendor),
       ),
@@ -486,6 +633,10 @@ export class CatalogService {
     if (storeProducts.length) this.mergeProducts(storeProducts);
     this.nextStorePage.set(this.readNextPage(response));
     this.loadBestDealRecommendations((append ? this._stores() : stores)[0]?.id);
+  }
+
+  private isServiceableStore(store: Store): boolean {
+    return (store.raw as any)?.is_serviceable !== false;
   }
 
   private readNextPage(response: any): number | null {

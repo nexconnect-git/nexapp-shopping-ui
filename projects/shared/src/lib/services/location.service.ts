@@ -2,6 +2,7 @@ import { inject, Injectable, signal } from '@angular/core';
 import { ApiService } from './api.service';
 import { AuthService } from './auth.service';
 import { CurrencyService } from './currency.service';
+import { NativePlatformService } from './native-platform.service';
 import { type SelectedLocation } from '../models';
 
 export type UserLocation = SelectedLocation;
@@ -13,6 +14,7 @@ export class LocationService {
   private api = inject(ApiService);
   private auth = inject(AuthService);
   private currency = inject(CurrencyService);
+  private nativePlatform = inject(NativePlatformService);
   private readonly guestLocationKey = 'customer_guest_location';
 
   // Expose the resolved location broadly
@@ -41,55 +43,54 @@ export class LocationService {
       }
     }
 
-    try {
-      // 1. Try Native GPS mapping via navigator
-      const pos = await this.getCurrentPosition();
-      const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+    if (forceRefresh) {
+      try {
+        const pos = await this.getCurrentPosition();
+        const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
 
-      // We got GPS! Try to match to an address name or give a generic name
-      const fallback = await this.resolveLocationMetadata(
-        coords.lat,
-        coords.lng,
-      );
-      const res: UserLocation = {
-        lat: coords.lat,
-        lng: coords.lng,
-        name: fallback.name,
-        city: fallback.city,
-        state: fallback.state,
-        postalCode: fallback.postalCode,
-        source: 'gps',
-      };
-      this.location.set(res);
-      this.locationDisplay.set(res.name);
-      this.persistGuestLocation(res);
-      this.currency.configureFromLocation(res);
-      this.loading.set(false);
-      return res;
-    } catch (e) {
-      // 2. GPS Failed or Denied. Fallback to API Address if logged in.
+        const fallback = await this.resolveLocationMetadata(
+          coords.lat,
+          coords.lng,
+        );
+        const res: UserLocation = {
+          lat: coords.lat,
+          lng: coords.lng,
+          name: fallback.name,
+          city: fallback.city,
+          state: fallback.state,
+          postalCode: fallback.postalCode,
+          source: 'gps',
+        };
+        this.location.set(res);
+        this.locationDisplay.set(res.name);
+        this.persistGuestLocation(res);
+        this.currency.configureFromLocation(res);
+        this.loading.set(false);
+        return res;
+      } catch {
+        // Fall through to saved-address fallback below.
+      }
+    }
+
+    try {
       if (this.auth.isLoggedIn()) {
-        try {
-          const fallback = await this.resolveFromAddress();
-          if (fallback) {
-            this.location.set(fallback);
-            this.locationDisplay.set(fallback.name);
-            this.persistGuestLocation(fallback);
-            this.currency.configureFromLocation(fallback);
-            this.loading.set(false);
-            return fallback;
-          }
-        } catch (addrErr) {
-          // ignore error to let it fallback below
+        const fallback = await this.resolveFromAddress();
+        if (fallback) {
+          this.location.set(fallback);
+          this.locationDisplay.set(fallback.name);
+          this.persistGuestLocation(fallback);
+          this.currency.configureFromLocation(fallback);
+          this.loading.set(false);
+          return fallback;
         }
       }
-
-      // 3. Complete failure (Guest without GPS or Error)
-      this.location.set(null);
-      this.locationDisplay.set('Location unknown');
-      this.loading.set(false);
-      return null;
+    } catch {
+      // Complete failure falls through to unknown location.
     }
+    this.location.set(null);
+    this.locationDisplay.set('Location unknown');
+    this.loading.set(false);
+    return null;
   }
 
   public setManualLocation(location: UserLocation) {
@@ -137,15 +138,9 @@ export class LocationService {
   }
 
   private getCurrentPosition(): Promise<GeolocationPosition> {
-    return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) {
-        reject(new Error('Geolocation not supported'));
-        return;
-      }
-      navigator.geolocation.getCurrentPosition(resolve, reject, {
-        timeout: 8000,
-        enableHighAccuracy: false,
-      });
+    return this.nativePlatform.getCurrentPosition({
+      timeout: 8000,
+      enableHighAccuracy: false,
     });
   }
 

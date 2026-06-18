@@ -59,6 +59,7 @@ export class StoresComponent {
   filteredStores = computed(() => {
     const query = this.normalizeSearch(this.searchQuery());
     const list = [...this.catalog.stores()].filter((store) => {
+      if ((store.raw as any)?.is_serviceable === false) return false;
       if (!query) return true;
       const raw = store.raw as any;
       return [
@@ -155,6 +156,7 @@ export class StoresComponent {
         },
         this.activeLocation(),
       ),
+      { allowFallback: false },
     );
   }
 

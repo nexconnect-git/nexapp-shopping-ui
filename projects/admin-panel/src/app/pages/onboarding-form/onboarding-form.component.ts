@@ -7,6 +7,7 @@ import {
   DynamicStepperComponent,
   StepperConfig,
   StepperField,
+  StepperSection,
   UniqueValidationResult,
 } from '../../shared/components/dynamic-stepper/dynamic-stepper.component';
 
@@ -17,6 +18,7 @@ const GSTIN_PATTERN = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][A-Z0-9]Z[A-Z0-9]$/;
 const IFSC_PATTERN = /^[A-Z]{4}0[A-Z0-9]{6}$/;
 const UPI_PATTERN = /^[a-zA-Z0-9._-]{2,256}@[a-zA-Z][a-zA-Z0-9._-]{2,64}$/;
 const VEHICLE_NUMBER_PATTERN = /^[A-Z]{2}[0-9]{1,2}[A-Z]{1,3}[0-9]{4}$/;
+const DOCUMENT_ACCEPT = 'application/pdf,image/jpeg,image/png,image/webp';
 
 const VENDOR_STORE_TYPE_OPTIONS = [
   { value: 'wholesale_store', label: 'Wholesale Store' },
@@ -79,7 +81,80 @@ export class OnboardingFormComponent implements OnInit {
       field: field.key,
       value,
       exclude_user_id: this.prefillData()?.['user_id'] || '',
+      role: this.mode === 'partner-onboard' ? 'delivery' : 'vendor',
     });
+  };
+
+  private readonly VENDOR_DOCUMENT_SECTION: StepperSection = {
+    title: 'Documents',
+    description: 'Upload the required licence and KYC files collected during onboarding.',
+    fields: [
+      {
+        key: 'license_document',
+        label: 'Business / Trade License',
+        type: 'file',
+        required: true,
+        accept: DOCUMENT_ACCEPT,
+        hint: 'PDF or image file.',
+      },
+      {
+        key: 'pan_card_document',
+        label: 'PAN Card',
+        type: 'file',
+        required: true,
+        accept: DOCUMENT_ACCEPT,
+      },
+      {
+        key: 'identity_proof_document',
+        label: 'Identity Proof',
+        type: 'file',
+        required: true,
+        accept: DOCUMENT_ACCEPT,
+      },
+      {
+        key: 'address_proof_document',
+        label: 'Address Proof',
+        type: 'file',
+        required: true,
+        accept: DOCUMENT_ACCEPT,
+      },
+      {
+        key: 'cancelled_cheque_document',
+        label: 'Cancelled Cheque',
+        type: 'file',
+        required: true,
+        accept: DOCUMENT_ACCEPT,
+      },
+      {
+        key: 'gstin_certificate_document',
+        label: 'GSTIN Certificate',
+        type: 'file',
+        optional: true,
+        accept: DOCUMENT_ACCEPT,
+        hint: 'Required when GST registration is enabled.',
+      },
+      {
+        key: 'fssai_license_document',
+        label: 'FSSAI License',
+        type: 'file',
+        optional: true,
+        accept: DOCUMENT_ACCEPT,
+      },
+      {
+        key: 'business_registration_document',
+        label: 'CIN / Udyam Certificate',
+        type: 'file',
+        optional: true,
+        accept: DOCUMENT_ACCEPT,
+      },
+      {
+        key: 'trademark_document',
+        label: 'Trademark Certificate',
+        type: 'file',
+        optional: true,
+        accept: DOCUMENT_ACCEPT,
+      },
+    ],
   };
 
   private readonly VENDOR_CONFIG: StepperConfig = {
@@ -750,30 +825,13 @@ export class OnboardingFormComponent implements OnInit {
                 maxLength: 30,
                 uppercase: true,
               },
-            ],
-          },
-        ],
-      },
-      {
-        label: 'Notes',
-        title: 'Assignment Notes',
-        subtitle: 'Optional notes about area or assignment.',
-        sections: [
-          {
-            fields: [
               {
-                key: 'assigned_area',
-                label: 'Assigned Area',
-                type: 'map',
-                fullWidth: true,
-                maxLength: 120,
-                hint: 'Search or pick the assigned delivery area on the map.',
-              },
-              {
-                key: 'notes',
-                label: 'Notes',
-                type: 'textarea',
-                placeholder: 'Any additional notes…',
+                key: 'id_proof',
+                label: 'ID / Licence Proof',
+                type: 'file',
+                required: true,
+                accept: DOCUMENT_ACCEPT,
+                hint: 'Upload a PDF or image collected during onboarding.',
               },
             ],
           },
@@ -801,8 +859,22 @@ export class OnboardingFormComponent implements OnInit {
       this.loadVendorData(id);
     } else {
       this.mode = 'vendor-onboard';
-      this.stepperConfig = this.VENDOR_CONFIG;
+      this.stepperConfig = this.withVendorDocumentSection(this.VENDOR_CONFIG);
     }
+  }
+
+  private withVendorDocumentSection(config: StepperConfig): StepperConfig {
+    return {
+      ...config,
+      steps: config.steps.map((step) =>
+        step.label === 'Compliance'
+          ? {
+              ...step,
+              sections: [...step.sections, this.VENDOR_DOCUMENT_SECTION],
+            }
+          : step,
+      ),
+    };
   }
 
   private loadVendorData(id: string) {
@@ -877,6 +949,15 @@ export class OnboardingFormComponent implements OnInit {
       payload.min_order_amount = Number(payload.min_order_amount || 0);
       payload.delivery_radius_km = Number(payload.delivery_radius_km || 0);
       payload.dispatch_sla_hours = Number(payload.dispatch_sla_hours || 0);
+    }
+    if (this.mode === 'partner-onboard') {
+      delete payload.latitude;
+      delete payload.longitude;
+      delete payload.address;
+      delete payload.city;
+      delete payload.state;
+      delete payload.postal_code;
+      delete payload.country;
     }
 
     let request$;
@@ -975,6 +1056,15 @@ export class OnboardingFormComponent implements OnInit {
       if (payload.gst_registered && !payload.gstin) {
         nextErrors['gstin'] =
           'GSTIN is required when the vendor is marked as GST registered.';
+      }
+      if (
+        this.mode === 'vendor-onboard' &&
+        payload.gst_registered &&
+        (typeof File === 'undefined' ||
+          !(payload.gstin_certificate_document instanceof File))
+      ) {
+        nextErrors['gstin_certificate_document'] =
+          'GSTIN certificate is required when the vendor is marked as GST registered.';
       }
       const latitude = Number(payload.latitude);
       const longitude = Number(payload.longitude);

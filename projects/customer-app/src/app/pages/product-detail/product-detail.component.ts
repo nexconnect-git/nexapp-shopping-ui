@@ -1,7 +1,6 @@
 import { Location } from '@angular/common';
 import { Component, computed, effect, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ApiService } from '@shared/lib/services/api.service';
 import { AppCurrencyPipe } from '@shared/lib/pipes/currency.pipe';
 import { CatalogService } from '../../services/catalog.service';
 import { AppStateService } from '../../services/app-state.service';
@@ -38,7 +37,6 @@ export class ProductDetailComponent {
     private route: ActivatedRoute,
     private router: Router,
     private location: Location,
-    private api: ApiService,
     public catalog: CatalogService,
     public state: AppStateService,
     public ui: UiService,
@@ -141,11 +139,13 @@ export class ProductDetailComponent {
     }
     return [{ label: product.unit, price: product.price, mrp: product.mrp }];
   });
-  highlights = computed(() =>
-    this.product().highlights?.length
-      ? this.product().highlights
-      : ['Details update when the store provides them'],
-  );
+  highlights = computed<string[]>(() => {
+    const highlights = this.product().highlights ?? [];
+    return highlights.length
+      ? highlights
+      : ['Details update when the store provides them'];
+  });
+  shortHighlights = computed(() => this.highlights().slice(0, 2));
   similarFromStore = computed(() => {
     const product = this.product();
     if (!product.storeId) return [];
@@ -296,18 +296,6 @@ export class ProductDetailComponent {
     }
     const storeId = this.store()?.id;
     this.router.navigate(storeId ? ['/store', storeId] : ['/']);
-  }
-
-  toggleWishlist(): void {
-    this.api
-      .toggleWishlist(this.product().apiId || this.product().id)
-      .subscribe({
-        next: (response) =>
-          this.state.showToast(
-            response.wishlisted ? 'Added to wishlist' : 'Removed from wishlist',
-          ),
-        error: () => this.state.showToast('Could not update wishlist'),
-      });
   }
 
   zoomImage(): void {

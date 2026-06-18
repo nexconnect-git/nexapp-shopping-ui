@@ -33,12 +33,13 @@ import { MobileProductRowComponent } from '../../mobile-ui/mobile-product-row/mo
 export class HomeComponent {
   private readonly defaultLocationLabel = 'Select location';
 
-  hasLocation = computed(() => {
+  private hasSelectedLocation = computed(() => {
     const selectedAddress = this.state.activeAddress();
     if (selectedAddress?.id) return true;
     const locationText = String(this.state.location() || '').trim();
     return !!locationText && locationText !== this.defaultLocationLabel;
   });
+  hasLocation = computed(() => true);
   serviceableStores = computed(() =>
     this.catalog
       .stores()
@@ -56,7 +57,7 @@ export class HomeComponent {
   );
   noServiceableStores = computed(
     () =>
-      this.hasLocation() &&
+      this.hasSelectedLocation() &&
       !this.catalog.storesLoading() &&
       !this.serviceableStores().length,
   );
@@ -70,6 +71,10 @@ export class HomeComponent {
       .slice(0, 8),
   );
   recentlyOrderedProducts = computed(() => {
+    const buyAgain = this.catalog
+      .buyAgainProducts()
+      .filter((product) => this.isServiceableProduct(product));
+    if (buyAgain.length) return buyAgain.slice(0, 6);
     const historyKeys = new Set(
       this.state
         .cart()
@@ -114,6 +119,15 @@ export class HomeComponent {
       .sort((a, b) => this.salesScore(b) - this.salesScore(a))
       .slice(0, 6),
   );
+  flashDealProducts = computed(() =>
+    this.homeProductPool()
+      .filter((product) => {
+        const mrp = Number(product.mrp || 0);
+        const price = Number(product.price || 0);
+        return !!product.discount || (mrp > 0 && price > 0 && mrp > price);
+      })
+      .slice(0, 8),
+  );
   heroBanner = computed(() => this.catalog.banners()[0] || null);
   heroStore = computed(
     () =>
@@ -124,16 +138,23 @@ export class HomeComponent {
   );
   heroImage = computed(
     () =>
+      this.catalog.homeHero()?.image ||
       this.heroBanner()?.image ||
       this.heroStore()?.hero ||
       this.catalog.topProducts()[0]?.image ||
-      this.content.home().fallbackHero.image,
+      this.content.home().fallbackHero.image ||
+      '/assets/placeholders/product.svg',
   );
   heroBackground = computed(() => this.heroBanner()?.bgGradient || null);
   heroTitle = computed(
-    () => this.heroBanner()?.title || this.content.home().fallbackHero.title,
+    () =>
+      this.catalog.homeHero()?.title ||
+      this.heroBanner()?.title ||
+      this.content.home().fallbackHero.title,
   );
   heroSubtitle = computed(() => {
+    const apiSubtitle = this.catalog.homeHero()?.subtitle;
+    if (apiSubtitle) return apiSubtitle;
     const bannerSubtitle = this.heroBanner()?.subtitle;
     if (bannerSubtitle) {
       return bannerSubtitle;
@@ -145,16 +166,21 @@ export class HomeComponent {
   });
   heroBadge = computed(
     () =>
+      this.catalog.homeHero()?.badge ||
       this.heroBanner()?.badgeText ||
       this.heroStore()?.eta ||
       this.content.home().fallbackHero.badge,
   );
   heroCtaLabel = computed(
     () =>
+      this.catalog.homeHero()?.cta_label ||
       this.heroBanner()?.ctaLabel || this.content.home().fallbackHero.ctaLabel,
   );
   heroCtaUrl = computed(
-    () => this.heroBanner()?.ctaUrl || this.content.home().fallbackHero.ctaUrl,
+    () =>
+      this.catalog.homeHero()?.cta_url ||
+      this.heroBanner()?.ctaUrl ||
+      this.content.home().fallbackHero.ctaUrl,
   );
   promoCoupons = computed(() => this.catalog.topCoupons().slice(0, 2));
   promoCategories = computed(() =>
@@ -197,27 +223,27 @@ export class HomeComponent {
   readonly quickActions = computed<MobileQuickAction[]>(() => [
     {
       id: 'deals',
-      label: "Today's deals",
+      label: 'Nearby deals',
       icon: 'local_offer',
-      route: '/offers',
+      route: '/explore',
     },
     {
       id: 'nearby',
       label: 'Nearby shops',
       icon: 'storefront',
-      route: '/stores',
+      route: '/explore',
     },
     {
       id: 'essentials',
       label: 'Daily essentials',
       icon: 'inventory_2',
-      route: '/stores',
+      route: '/explore',
     },
     {
       id: 'recommended',
       label: 'Recommended',
       icon: 'favorite',
-      route: '/search',
+      route: '/explore',
     },
   ]);
   constructor(
@@ -242,7 +268,7 @@ export class HomeComponent {
 
   openCategory(categoryId: string): void {
     const id = String(categoryId || '').trim();
-    this.router.navigate(['/stores'], {
+    this.router.navigate(['/explore'], {
       queryParams: id && id !== 'all' ? { category: id } : {},
     });
   }
@@ -260,14 +286,24 @@ export class HomeComponent {
     path: string;
     query: Record<string, string> | null;
   } {
-    const safeUrl = (url || '/search').trim() || '/search';
+    const safeUrl = (url || '/explore').trim() || '/explore';
     const [path, queryString] = safeUrl.split('?', 2);
+    const normalizedPath = [
+      '/offers',
+      '/wallet',
+      '/wishlist',
+      '/referral',
+      '/help',
+      '/issues',
+    ].includes(path)
+      ? '/explore'
+      : path;
     const query: Record<string, string> = {};
     new URLSearchParams(queryString || '').forEach((value, key) => {
       query[key] = value;
     });
     return {
-      path: path || '/search',
+      path: normalizedPath || '/explore',
       query: Object.keys(query).length ? query : null,
     };
   }

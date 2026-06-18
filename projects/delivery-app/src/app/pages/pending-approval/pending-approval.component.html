@@ -1,0 +1,39 @@
+<div class="pending-page delivery-auth-page">
+  <section class="pending-card delivery-auth-card">
+    <div class="brand">
+      <span class="material-icons-outlined brand-icon">local_shipping</span>
+      <span class="brand-name">Nextou Delivery</span>
+    </div>
+
+    @if (loading()) {
+      <div class="spinner-wrap"><div class="spinner"></div></div>
+    } @else {
+      <div class="status-icon">
+        <span class="material-icons-outlined">hourglass_top</span>
+      </div>
+      <h1>Approval Pending</h1>
+      <p>
+        Your delivery partner account has been created, but an administrator
+        still needs to approve it before you can receive delivery requests.
+      </p>
+
+      @if (error()) {
+        <div class="error-msg">{{ error() }}</div>
+      }
+
+      <div class="status-row">
+        <span>Current status</span>
+        <strong>{{ status() }}</strong>
+      </div>
+
+      <p class="poll-note">
+        This page checks for updates automatically every 30 seconds.
+      </p>
+
+      <button type="button" class="btn-logout" (click)="auth.logout()">
+        <span class="material-icons-outlined">logout</span>
+        Sign Out
+      </button>
+    }
+  </section>
+</div>

@@ -20,10 +20,21 @@
       >
         {{ config.saveDraftLabel || "Save Draft" }}
       </button>
+      <label *ngIf="config.statusOptions?.length" class="nc-status-select">
+        <span>Status</span>
+        <select [(ngModel)]="selectedStatus">
+          <option
+            *ngFor="let option of config.statusOptions"
+            [ngValue]="option.value"
+          >
+            {{ option.label }}
+          </option>
+        </select>
+      </label>
       <button
         type="button"
         class="nc-review-btn nc-review-btn-primary"
-        (click)="submitForApproval.emit()"
+        (click)="submitStatus()"
       >
         {{ config.submitLabel || "Submit for Approval" }}
       </button>
@@ -108,9 +119,21 @@
           [class.full]="isWideField(field.value)"
         >
           <span>{{ field.label }}</span>
-          <strong [attr.data-tone]="field.tone || 'neutral'">{{
-            field.value | displayValue
-          }}</strong>
+          <a
+            *ngIf="field.href; else visiblePlain"
+            [href]="field.href"
+            target="_blank"
+            rel="noopener"
+            class="nc-review-link"
+            [attr.data-tone]="field.tone || 'neutral'"
+          >
+            {{ field.value | displayValue }}
+          </a>
+          <ng-template #visiblePlain>
+            <strong [attr.data-tone]="field.tone || 'neutral'">{{
+              field.value | displayValue
+            }}</strong>
+          </ng-template>
         </div>
       </div>
 
@@ -128,9 +151,21 @@
             [class.full]="isWideField(field.value)"
           >
             <span>{{ field.label }}</span>
-            <strong [attr.data-tone]="field.tone || 'neutral'">{{
-              field.value | displayValue
-            }}</strong>
+            <a
+              *ngIf="field.href; else hiddenPlain"
+              [href]="field.href"
+              target="_blank"
+              rel="noopener"
+              class="nc-review-link"
+              [attr.data-tone]="field.tone || 'neutral'"
+            >
+              {{ field.value | displayValue }}
+            </a>
+            <ng-template #hiddenPlain>
+              <strong [attr.data-tone]="field.tone || 'neutral'">{{
+                field.value | displayValue
+              }}</strong>
+            </ng-template>
           </div>
         </div>
       </details>
@@ -166,9 +201,43 @@
     <button
       type="button"
       class="nc-review-btn nc-review-btn-primary"
-      (click)="submitForApproval.emit()"
+      (click)="submitStatus()"
     >
       {{ config.submitLabel || "Submit for Approval" }}
     </button>
   </footer>
+
+  <section
+    *ngIf="reasonModalOpen"
+    class="nc-status-modal"
+    role="dialog"
+    aria-modal="true"
+  >
+    <div class="nc-status-dialog">
+      <h2>Status Reason</h2>
+      <p>Enter the reason shown to the vendor while this status is active.</p>
+      <textarea
+        rows="5"
+        [(ngModel)]="statusReason"
+        placeholder="Reason"
+      ></textarea>
+      <div class="nc-status-dialog-actions">
+        <button
+          type="button"
+          class="nc-review-btn nc-review-btn-secondary"
+          (click)="closeReasonModal()"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="nc-review-btn nc-review-btn-primary"
+          [disabled]="!statusReason.trim()"
+          (click)="confirmStatusReason()"
+        >
+          Save Status
+        </button>
+      </div>
+    </div>
+  </section>
 </main>

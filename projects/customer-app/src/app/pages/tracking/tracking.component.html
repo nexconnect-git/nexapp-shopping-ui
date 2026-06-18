@@ -28,25 +28,27 @@
       }
 
       <section class="status-card fd-card">
-        <div>
+        <div class="order-panel">
           <small>ORDER ID</small>
           <h2>#{{ order() | displayOrderId }}</h2>
           <p>Placed on<br />{{ order().date }}, {{ order().time }}</p>
-          <a [routerLink]="['/orders']" class="fd-btn outline">View Orders</a>
-          <button
-            type="button"
-            class="fd-btn outline"
-            (click)="downloadInvoice()"
-            [disabled]="invoiceDownloading()"
-          >
-            {{ invoiceDownloading() ? 'Preparing...' : 'Receipt' }}
-          </button>
+          <div class="order-actions">
+            <a [routerLink]="['/orders']" class="fd-btn outline">View Orders</a>
+            <button
+              type="button"
+              class="fd-btn outline"
+              (click)="downloadInvoice()"
+              [disabled]="invoiceDownloading()"
+            >
+              {{ invoiceDownloading() ? 'Preparing...' : 'Receipt' }}
+            </button>
+          </div>
         </div>
-        <div>
+        <div class="eta-panel">
           <small>Estimated Arrival</small>
           <h2>{{ estimatedArrivalLabel() }}</h2>
           <p>Today</p>
-          <span>{{ statusLabel() }}</span>
+          <span class="status-pill">{{ statusLabel() }}</span>
           <small class="refresh-note">{{ trackingFreshnessLabel() }}</small>
         </div>
         <div class="progress">
@@ -138,9 +140,9 @@
           <section class="help">
             Need help with your order?<button
               type="button"
-              [routerLink]="['/order', order().id, 'help']"
+              routerLink="/orders"
             >
-              Chat with us
+              View orders
             </button>
           </section>
         </aside>
@@ -150,16 +152,16 @@
         <section>
           <div class="promo-copy">
             <b>Enjoying fast deliveries?</b>
-            <span>View wallet and membership details</span>
+            <span>Review your account details</span>
           </div>
-          <button type="button" (click)="joinOne()">Open Wallet</button>
+          <button type="button" (click)="joinOne()">Open Account</button>
         </section>
         <section>
           <div class="promo-copy">
-            <b>Refer friends and get rewards</b>
-            <span>Invite your friends and earn rewards</span>
+            <b>Need more essentials?</b>
+            <span>Browse nearby stores while this order moves.</span>
           </div>
-          <button type="button" routerLink="/referral">Refer Now</button>
+          <button type="button" routerLink="/explore">Browse Stores</button>
         </section>
       </div>
     </div>
@@ -167,7 +169,7 @@
     <aside class="summary fd-card">
       <div class="head">
         <h2>Order Summary</h2>
-        <button type="button" (click)="downloadInvoice()">
+        <button type="button" class="invoice-link" (click)="downloadInvoice()">
           Download Invoice
         </button>
       </div>
@@ -188,7 +190,7 @@
           <small>Item details will appear in a moment.</small>
         </section>
       }
-      <button type="button" (click)="downloadInvoice()">
+      <button type="button" class="invoice-copy" (click)="downloadInvoice()">
         Download invoice copy
       </button>
       <hr />
@@ -315,7 +317,7 @@
     @if (directionsUrl()) {
       <a [href]="directionsUrl()" target="_blank" rel="noopener" class="mobile-cta secondary">Open route</a>
     } @else {
-      <a [routerLink]="supportLink()" class="mobile-cta secondary">Get help</a>
+      <a [routerLink]="ordersLink()" class="mobile-cta secondary">View orders</a>
     }
     <button type="button" class="mobile-cta" [disabled]="invoiceDownloading()" (click)="downloadInvoice()">
       {{ invoiceDownloading() ? 'Preparing...' : 'Invoice' }}

@@ -26,27 +26,16 @@
       <div>
         <h3>{{ banner.title }}</h3>
         <p>{{ banner.subtitle || banner.badgeText }}</p>
-        <a [routerLink]="banner.ctaUrl">{{ banner.ctaLabel }}</a>
+        <a routerLink="/explore">{{ banner.ctaLabel }}</a>
       </div>
       <span class="material-symbols-rounded">campaign</span>
-    </section>
-  }
-
-  @if (state.walletEnabled()) {
-    <section class="one fd-card">
-      <div>
-        <h3>Wallet</h3>
-        <p>View live balance<br />and transaction history</p>
-        <a routerLink="/wallet" class="join">Open Wallet</a>
-      </div>
-      <b>💳</b>
     </section>
   }
 
   <section class="deals fd-card">
     <div class="head">
       <h3>Best Deals for You</h3>
-      <a routerLink="/offers">See all</a>
+      <a routerLink="/explore">See all</a>
     </div>
     @for (p of featuredProducts(); track p.id) {
       <div class="deal">

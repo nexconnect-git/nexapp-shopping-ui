@@ -1,6 +1,5 @@
-import { Component, computed } from '@angular/core';
+import { Component, computed, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { ApiService } from '@shared/lib/services/api.service';
 import { AppCurrencyPipe } from '@shared/lib/pipes/currency.pipe';
 import { AppStateService } from '../../services/app-state.service';
 import { ProductCardComponent } from '../../components/product-card/product-card.component';
@@ -8,6 +7,7 @@ import { CatalogService } from '../../services/catalog.service';
 import { UiService } from '../../services/ui.service';
 import { CustomerContentConfigService } from '../../services/customer-content-config.service';
 import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
+import { CustomerCartApiService } from '../../services/customer-cart-api.service';
 
 @Component({
   standalone: true,
@@ -20,8 +20,10 @@ import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.compo
   templateUrl: './cart.component.html',
   styleUrls: ['./cart.component.scss'],
 })
-export class CartComponent {
+export class CartComponent implements OnInit {
   Math = Math;
+  cartSuggestions = signal<any[]>([]);
+  bestCoupon = signal<any | null>(null);
   cartStoreName = computed(() => {
     const first = this.state.cart()[0];
     return first?.storeName || 'Selected store';
@@ -45,18 +47,16 @@ export class CartComponent {
     return stores.size > 1;
   });
   constructor(
-    private api: ApiService,
     public state: AppStateService,
     public catalog: CatalogService,
     public ui: UiService,
     public content: CustomerContentConfigService,
+    private cartApi: CustomerCartApiService,
   ) {}
 
-  saveForLater(productId: string): void {
-    this.api.toggleWishlist(productId).subscribe({
-      next: () => this.state.showToast('Saved to wishlist'),
-      error: () => this.state.showToast('Could not save item'),
-    });
+  ngOnInit(): void {
+    this.loadSuggestions();
+    this.loadBestCoupon();
   }
 
   applyCoupon(code: string): void {
@@ -65,5 +65,35 @@ export class CartComponent {
       return;
     }
     this.state.applyCoupon(code);
+  }
+
+  applyBestCoupon(): void {
+    const code = this.bestCoupon()?.best_coupon?.code;
+    if (!code) {
+      this.state.showToast('No eligible coupon found for this basket.');
+      return;
+    }
+    this.state.applyCoupon(code);
+  }
+
+  private loadSuggestions(): void {
+    this.cartApi.getSuggestions().subscribe({
+      next: (response) =>
+        this.cartSuggestions.set(
+          (
+            response?.same_store_add_ons ||
+            response?.frequently_bought_together ||
+            []
+          ).map((product: any) => this.catalog.mapProduct(product)),
+        ),
+      error: () => this.cartSuggestions.set([]),
+    });
+  }
+
+  private loadBestCoupon(): void {
+    this.cartApi.getBestCoupon().subscribe({
+      next: (response) => this.bestCoupon.set(response || null),
+      error: () => this.bestCoupon.set(null),
+    });
   }
 }

@@ -30,14 +30,6 @@ export class FilterSliderComponent {
     ).slice(0, 6),
   ]);
   sort = computed(() => this.content.filters().sortOptions);
-  offers = computed(() => [
-    'All',
-    ...this.catalog
-      .topCoupons()
-      .map((coupon) => coupon.code)
-      .filter(Boolean)
-      .slice(0, 8),
-  ]);
   categories = computed(() => [
     'All',
     ...this.catalog
@@ -48,7 +40,6 @@ export class FilterSliderComponent {
   ]);
   selectedDelivery = signal('Any');
   selectedSort = signal('Relevance');
-  selectedOffer = signal('All');
   selectedCategory = signal('All');
   price = signal(1000);
 
@@ -63,7 +54,6 @@ export class FilterSliderComponent {
   reset(): void {
     this.selectedDelivery.set('Any');
     this.selectedSort.set(this.sort()[0] || 'Relevance');
-    this.selectedOffer.set('All');
     this.selectedCategory.set('All');
     this.price.set(1000);
   }
@@ -91,7 +81,7 @@ export class FilterSliderComponent {
               ? categoryFilterKey(category as any)
               : selectedCategory,
         maxPrice: this.price(),
-        offersOnly: this.selectedOffer() !== 'All',
+        offersOnly: false,
         sort,
       },
       buildCustomerLocationQuery({
@@ -102,7 +92,7 @@ export class FilterSliderComponent {
       }),
     );
     this.catalog.loadStores(params);
-    this.router.navigate(['/stores'], {
+    this.router.navigate(['/explore'], {
       queryParams:
         selectedCategory === 'All' ? {} : { category: params['category'] },
     });

@@ -1,5 +1,11 @@
 <main class="profile-page">
-  <section class="profile-hero">
+  <section class="profile-hero" [class.has-cover]="config.coverUrl">
+    <div
+      *ngIf="config.coverUrl"
+      class="cover"
+      [style.background-image]="'url(' + config.coverUrl + ')'"
+    ></div>
+
     <div class="avatar">
       <img
         *ngIf="config.avatarUrl"
@@ -162,9 +168,21 @@
         <div class="field-grid" [attr.data-columns]="section.columns || 2">
           <article *ngFor="let field of section.fields">
             <small>{{ field.label }}</small>
-            <b [attr.data-tone]="field.tone || 'neutral'">{{
-              field.value | displayValue
-            }}</b>
+            <a
+              *ngIf="field.href; else plainField"
+              [href]="field.href"
+              target="_blank"
+              rel="noopener"
+              class="field-link"
+              [attr.data-tone]="field.tone || 'neutral'"
+            >
+              {{ field.value | displayValue }}
+            </a>
+            <ng-template #plainField>
+              <b [attr.data-tone]="field.tone || 'neutral'">{{
+                field.value | displayValue
+              }}</b>
+            </ng-template>
           </article>
         </div>
       </section>

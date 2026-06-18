@@ -6,32 +6,49 @@
 >
   <fd-app-loader />
   <fd-topbar class="desktop-shell-only" [homeMode]="isHomeRoute()" />
+  @if (showMobileTopbar()) {
   <fd-mobile-topbar class="mobile-shell-only" />
+  }
   @if (loading()) {
-    <fd-mobile-loader label="Loading page" />
+  <fd-mobile-loader label="Loading page" />
   }
   <router-outlet />
   @defer (when ui.loginSliderOpen()) {
-    <fd-login-slider />
-  }
-  @defer (when showCartAssist() && (state.miniCartOpen() || ui.miniCartOpen())) {
-    <fd-mini-cart />
-  }
-  @defer (when ui.filterSliderOpen()) {
-    <fd-filter-slider />
-  }
-  @defer (when ui.locationModalOpen()) {
-    <fd-location-modal />
-  }
-  @defer (when ui.editModal()) {
-    <fd-edit-modal />
-  }
-  @defer (when ui.confirmDialog()) {
-    <fd-confirm-dialog />
+  <fd-login-slider />
+  } @defer (when showCartAssist() && (state.miniCartOpen() ||
+  ui.miniCartOpen())) {
+  <fd-mini-cart />
+  } @defer (when ui.filterSliderOpen()) {
+  <fd-filter-slider />
+  } @defer (when ui.locationModalOpen()) {
+  <fd-location-modal />
+  } @defer (when ui.editModal()) {
+  <fd-edit-modal />
+  } @defer (when ui.confirmDialog()) {
+  <fd-confirm-dialog />
+  } @if (showActiveOrderCard() && state.activeOrder(); as activeOrder) {
+  <a class="active-order-card" [routerLink]="['/tracking', activeOrder.id]">
+    <span class="material-symbols-rounded" aria-hidden="true">near_me</span>
+    <div>
+      <b>Track active order</b>
+      <small>
+        {{
+          activeOrder.store?.store_name ||
+            activeOrder.store?.name ||
+            "Your order"
+        }}
+        @if (activeOrder.eta_label) {
+        <span> • {{ activeOrder.eta_label }}</span>
+        }
+      </small>
+    </div>
+    <em>{{ activeOrder.status }}</em>
+  </a>
   }
   <fd-mobile-sticky-cart-bar [visible]="showCartAssist()" />
   <fd-mobile-bottom-nav class="mobile-shell-only" />
   <app-global-loading />
   <app-page-feature-loading />
+  <app-toast />
   <fd-mobile-toast [toast]="state.toast()" />
 </div>

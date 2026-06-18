@@ -21,7 +21,7 @@ export class LoginSliderComponent {
   constructor(
     public ui: UiService,
     public auth: AuthService,
-    private state: AppStateService,
+    private state: AppStateService
   ) {
     effect(() => {
       if (this.auth.isLoggedIn() && this.ui.loginSliderOpen()) {
@@ -47,7 +47,7 @@ export class LoginSliderComponent {
       this.auth.verifyOtp(mobile, this.otp.trim(), email);
     } else {
       this.auth.requestOtp(mobile, email, () =>
-        this.state.showToast('OTP sent. Please enter the code to continue.'),
+        this.state.showToast('OTP sent. Please enter the code to continue.')
       );
     }
   }
@@ -79,7 +79,21 @@ export class LoginSliderComponent {
     this.fieldErrors.set(errors);
     if (Object.keys(errors).length || this.auth.loading()) return;
     this.auth.requestOtp(this.normalizedMobile(), this.email.trim(), () =>
-      this.state.showToast('OTP resent. Please check your email.'),
+      this.state.showToast('OTP resent. Please check your email.')
+    );
+  }
+
+  canSubmit(): boolean {
+    return (
+      !this.auth.loading() &&
+      Object.keys(this.validate()).length === 0 &&
+      Object.keys(this.fieldErrors()).length === 0
+    );
+  }
+
+  canResendOtp(): boolean {
+    return (
+      !this.auth.loading() && Object.keys(this.validate(false)).length === 0
     );
   }
 

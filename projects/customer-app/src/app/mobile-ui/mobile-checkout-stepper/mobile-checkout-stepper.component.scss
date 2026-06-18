@@ -4,26 +4,26 @@
 
 .checkout-stepper {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
 }
 
 span {
   min-width: 0;
-  min-height: 56px;
+  min-height: 42px;
   display: grid;
   justify-items: center;
   align-content: center;
-  gap: 6px;
-  padding: 8px;
+  gap: 4px;
+  padding: 6px 8px;
   border: 1px solid rgba(56, 38, 142, 0.12);
-  border-radius: 14px;
+  border-radius: 12px;
   background: #fff;
 }
 
 i {
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
   border-radius: 999px;
   border: 2px solid #d7d2ec;
   background: #fff;
@@ -31,8 +31,10 @@ i {
 
 b {
   color: #3f3f46;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 900;
+  line-height: 1.1;
+  text-align: center;
 }
 
 span.active {
@@ -48,4 +50,3 @@ span.active i {
 span.active b {
   color: #23117c;
 }
-

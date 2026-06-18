@@ -46,21 +46,6 @@ export class DeliveryPartnersComponent implements OnInit, OnDestroy {
   editModel = signal<any>(null);
   saving = signal(false);
 
-  showCreateModal = signal(false);
-  createError = signal('');
-  creating = signal(false);
-  createForm = {
-    username: '',
-    email: '',
-    password: '',
-    first_name: '',
-    last_name: '',
-    phone: '',
-    vehicle_type: '',
-    vehicle_number: '',
-    license_number: '',
-  };
-
   private timer: any;
   lastRefreshed = signal<Date | null>(null);
   autoReload = signal(true);
@@ -68,8 +53,7 @@ export class DeliveryPartnersComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.reloadSub = timer(0, 15000).subscribe(() => {
-      if (this.autoReload() && !this.showModal() && !this.showCreateModal())
-        this.load();
+      if (this.autoReload() && !this.showModal()) this.load();
     });
   }
 
@@ -179,78 +163,20 @@ export class DeliveryPartnersComponent implements OnInit, OnDestroy {
       });
   }
 
-  openCreateModal() {
-    this.createForm = {
-      username: '',
-      email: '',
-      password: '',
-      first_name: '',
-      last_name: '',
-      phone: '',
-      vehicle_type: '',
-      vehicle_number: '',
-      license_number: '',
-    };
-    this.createError.set('');
-    this.showCreateModal.set(true);
-  }
-
-  closeCreateModal() {
-    this.showCreateModal.set(false);
-  }
-
-  onCreatePartner() {
-    if (
-      !this.createForm.username ||
-      !this.createForm.email ||
-      !this.createForm.password ||
-      !this.createForm.vehicle_type ||
-      !this.createForm.license_number
-    ) {
-      this.createError.set('Please fill in all required fields.');
-      return;
-    }
-    this.creating.set(true);
-    this.createError.set('');
-    const payload = {
-      ...this.createForm,
-      username: this.createForm.username.trim(),
-      email: this.createForm.email.trim(),
-      first_name: this.createForm.first_name.trim(),
-      last_name: this.createForm.last_name.trim(),
-      phone: this.createForm.phone.trim(),
-      vehicle_number: this.createForm.vehicle_number.trim(),
-      license_number: this.createForm.license_number.trim(),
-    };
-    this.api.createAdminDeliveryPartner(payload).subscribe({
-      next: () => {
-        this.creating.set(false);
-        this.closeCreateModal();
-        this.load();
-      },
-      error: (err) => {
-        this.createError.set(this.createPartnerErrorMessage(err.error));
-        this.creating.set(false);
-      },
-    });
-  }
-
-  starsFor(r: number) {
-    const f = Math.round(r);
-    return '★'.repeat(f) + '☆'.repeat(5 - f);
-  }
-
-  private createPartnerErrorMessage(error: any): string {
-    return (
-      error?.username?.[0] ||
-      error?.email?.[0] ||
-      error?.phone?.[0] ||
-      error?.license_number?.[0] ||
-      error?.vehicle_type?.[0] ||
-      error?.non_field_errors?.[0] ||
-      error?.detail ||
-      error?.error ||
-      'Failed to create partner.'
+  ratingIcons(rating: unknown): string[] {
+    const value = this.normalizedRating(rating);
+    return Array.from({ length: 5 }, (_, index) =>
+      index < value ? 'star' : 'star_border',
     );
   }
+
+  ratingLabel(rating: unknown): string {
+    return `${this.normalizedRating(rating)} out of 5`;
+  }
+
+  private normalizedRating(rating: unknown): number {
+    const value = Math.round(Number(rating) || 0);
+    return Math.max(0, Math.min(5, value));
+  }
+
 }

@@ -9,11 +9,6 @@
           <span class="item-count">
             {{ state.itemCount() }} {{ state.itemCount() === 1 ? 'Item' : 'Items' }} &bull; <b>{{ state.total() | appCurrency }}</b>
           </span>
-          @if (savings() > 0) {
-            <span class="savings-tag">Saved {{ savings() | appCurrency }}!</span>
-          } @else {
-            <span class="delivery-badge">Fast delivery in 10 mins</span>
-          }
         </div>
       </div>
       <div class="cta-right">

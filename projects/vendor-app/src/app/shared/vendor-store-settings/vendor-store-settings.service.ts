@@ -158,7 +158,7 @@ export class VendorStoreSettingsService {
       () => {
         this.selectLocation(this.locationSuggestions[0]);
       },
-      { enableHighAccuracy: true, timeout: 10000 },
+      { enableHighAccuracy: true, timeout: 10000 }
     );
   }
 
@@ -173,7 +173,7 @@ export class VendorStoreSettingsService {
     this.saving.set(true);
     try {
       const dto = await firstValueFrom(
-        this.api.updateVendorStoreSettings(this.toApiPayload(this.settings())),
+        this.api.updateVendorStoreSettings(this.toApiPayload(this.settings()))
       );
       const settings = this.fromApiDto(dto);
       this.settings.set(settings);
@@ -254,6 +254,8 @@ export class VendorStoreSettingsService {
     const errors: Record<string, string> = {};
     if (!settings.storeName.trim())
       errors['storeName'] = 'Store name is required.';
+    if (!settings.description.trim())
+      errors['description'] = 'Description is required.';
     if (!settings.phone.trim()) errors['phone'] = 'Phone is required.';
     if (
       settings.email &&
@@ -354,6 +356,7 @@ export class VendorStoreSettingsService {
       latitude: 'Pick the store location on the map or enter latitude.',
       longitude: 'Pick the store location on the map or enter longitude.',
       store_name: 'Store name is required.',
+      description: 'Description is required.',
       phone: 'Enter a valid business phone number.',
       email: 'Enter a valid business email address.',
     };
@@ -366,6 +369,7 @@ export class VendorStoreSettingsService {
 
   private readonly apiFieldMap: Record<string, keyof VendorStoreSettings> = {
     store_name: 'storeName',
+    description: 'description',
     is_open: 'storeOpen',
     is_accepting_orders: 'acceptingOrders',
     auto_order_acceptance: 'autoAcceptOrders',
@@ -382,7 +386,7 @@ export class VendorStoreSettingsService {
 
   private showToast(
     message: string,
-    type: 'success' | 'error' = 'success',
+    type: 'success' | 'error' = 'success'
   ): void {
     this.toast.set(message);
     this.toastService.show(message, type);

@@ -58,51 +58,8 @@
     #mapContainer
     class="map-container"
     [style.height]="height"
-    [class.hidden]="mapUnavailable() || fallbackMapReady()"
+    [class.hidden]="mapUnavailable()"
   ></div>
-
-  @if (fallbackMapReady()) {
-    <div
-      class="fallback-map"
-      [style.height]="height"
-      role="application"
-      aria-label="Location picker map"
-      (click)="onFallbackMapClick($event)"
-    >
-      @for (tile of fallbackTiles(); track tile.key) {
-        <img
-          class="fallback-map-tile"
-          [src]="tile.url"
-          [style.left.px]="tile.left"
-          [style.top.px]="tile.top"
-          alt=""
-          draggable="false"
-        />
-      }
-      <span class="fallback-map-pin material-symbols-rounded" aria-hidden="true"
-        >location_on</span
-      >
-      <div class="fallback-map-controls">
-        <button
-          type="button"
-          aria-label="Zoom in"
-          (click)="zoomFallbackMap($event, 1)"
-        >
-          +
-        </button>
-        <button
-          type="button"
-          aria-label="Zoom out"
-          (click)="zoomFallbackMap($event, -1)"
-        >
-          -
-        </button>
-      </div>
-    </div>
-    <p class="map-hint fallback-map-notice">
-      {{ fallbackNotice() }} Tap the map to move the pin.
-    </p>
-  }
 
   @if (mapUnavailable()) {
     <div class="map-unavailable" role="status" aria-live="polite">

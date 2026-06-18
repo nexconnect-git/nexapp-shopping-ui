@@ -1,7 +1,8 @@
 import { Component, OnDestroy, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService } from '@shared/lib/services/api.service';
+import { formatFormErrors } from '@shared/lib/utils/form-field-errors';
 import { openAuthenticatedWebSocket } from '@shared/lib/services/websocket-auth';
 import { AuthService as SharedAuthService } from '@shared/lib/services/auth.service';
 import { AppStateService } from '../../services/app-state.service';
@@ -10,7 +11,7 @@ import { displayOrderId } from '../../shared/display-order-id.pipe';
 
 @Component({
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink],
   templateUrl: './help.component.html',
   styleUrls: ['./help.component.scss'],
 })
@@ -24,6 +25,8 @@ export class HelpComponent implements OnDestroy {
   issue = signal<any>(null);
   submitting = signal(false);
   sending = signal(false);
+  formError = signal('');
+  fieldErrors = signal<Record<string, string>>({});
   private ws: WebSocket | null = null;
 
   constructor(
@@ -31,7 +34,7 @@ export class HelpComponent implements OnDestroy {
     private api: ApiService,
     private sharedAuth: SharedAuthService,
     public state: AppStateService,
-    public content: CustomerContentConfigService,
+    public content: CustomerContentConfigService
   ) {
     const issueId = this.route.snapshot.paramMap.get('issueId');
     if (issueId) {
@@ -67,6 +70,8 @@ export class HelpComponent implements OnDestroy {
 
   submit(event: Event): void {
     event.preventDefault();
+    this.formError.set('');
+    this.fieldErrors.set({});
     const order = this.orderId();
     if (!this.sharedAuth.isLoggedIn()) {
       this.state.showToast('Sign in to raise an order support ticket.');
@@ -77,6 +82,8 @@ export class HelpComponent implements OnDestroy {
       return;
     }
     if (!this.message.trim()) {
+      this.fieldErrors.set({ message: 'Description is required.' });
+      this.formError.set('Please describe the issue before submitting.');
       this.state.showToast('Please describe the issue');
       return;
     }
@@ -96,13 +103,46 @@ export class HelpComponent implements OnDestroy {
         },
         error: (error) => {
           this.submitting.set(false);
-          this.state.showToast(
-            error?.error?.detail ||
-              error?.error?.error ||
-              'Could not submit issue',
+          const message = formatFormErrors(
+            error?.error,
+            'Could not submit issue',
+            { description: 'Description', issue_type: 'Issue type' }
           );
+          if (error?.error?.description) {
+            this.fieldErrors.set({
+              message: Array.isArray(error.error.description)
+                ? error.error.description.join(' ')
+                : String(error.error.description),
+            });
+          }
+          this.formError.set(message);
+          this.state.showToast(message);
         },
       });
+  }
+
+  clearFieldError(field: string): void {
+    if (!this.fieldErrors()[field]) return;
+    this.fieldErrors.update((current) => {
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+    this.formError.set('');
+  }
+
+  fieldError(field: string): string {
+    return this.fieldErrors()[field] || '';
+  }
+
+  canSubmitIssue(): boolean {
+    return (
+      !this.submitting() &&
+      this.sharedAuth.isLoggedIn() &&
+      !!this.orderId() &&
+      !!this.message.trim() &&
+      !this.fieldError('message')
+    );
   }
 
   sendReply(): void {
@@ -115,7 +155,7 @@ export class HelpComponent implements OnDestroy {
         this.issue.update((current) =>
           current
             ? { ...current, messages: [...(current.messages || []), message] }
-            : current,
+            : current
         );
         this.reply = '';
         this.sending.set(false);
@@ -151,7 +191,7 @@ export class HelpComponent implements OnDestroy {
         this.message = issue.description || '';
         this.orderId.set(issue.order || '');
         this.orderNumber.set(
-          displayOrderId(issue.order_number || issue.order || ''),
+          displayOrderId(issue.order_number || issue.order || '')
         );
         this.connectWebSocket(issue.id);
       },
@@ -163,7 +203,7 @@ export class HelpComponent implements OnDestroy {
     this.ws?.close();
     this.ws = openAuthenticatedWebSocket(
       `/ws/issues/${issueId}/`,
-      this.sharedAuth.getToken(),
+      this.sharedAuth.getToken()
     );
     this.ws.onmessage = (event) => {
       const data = JSON.parse(event.data);

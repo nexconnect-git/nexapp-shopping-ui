@@ -57,7 +57,7 @@ export class NotificationsComponent {
       this.router.navigate(['/tracking', item.orderId]);
       return;
     }
-    this.router.navigate(['/issues']);
+    this.router.navigate(['/orders']);
   }
 
   private loadNotifications(): void {

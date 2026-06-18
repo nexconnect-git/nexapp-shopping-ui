@@ -5,85 +5,117 @@
     aria-label="Close editor"
     (click)="ui.closeEdit()"
   ></button>
-  <form class="edit-modal fd-card animate-scale" (submit)="save($event)">
+  <form class="edit-modal fd-card" (submit)="save($event)">
     <header>
-      <h2>{{ title() }}</h2>
+      <div>
+        <small>{{ subtitle() }}</small>
+        <h2>{{ title() }}</h2>
+      </div>
       <button type="button" aria-label="Close editor" (click)="ui.closeEdit()">
         <span class="material-symbols-rounded">close</span>
       </button>
     </header>
 
     @if (ui.editModal() === "profile") {
-      <label for="edit-name">Name</label
-      ><input
-        id="edit-name"
-        class="fd-input"
-        [(ngModel)]="name"
-        name="name"
-        placeholder="Full name"
-      />
-      <label for="edit-email">Email</label
-      ><input
-        id="edit-email"
-        class="fd-input"
-        [(ngModel)]="email"
-        name="email"
-        placeholder="Email address"
-      />
-      <label for="edit-phone">Phone</label
-      ><input
-        id="edit-phone"
-        class="fd-input"
-        [(ngModel)]="phone"
-        name="phone"
-        placeholder="Mobile number"
-      />
+      <section class="edit-summary">
+        <span>{{ (name || "N").slice(0, 1).toUpperCase() }}</span>
+        <div>
+          <b>{{ name || "Nextou customer" }}</b>
+          <small>{{ email || phone || "Profile details" }}</small>
+        </div>
+      </section>
+      <section class="field-group">
+        <label for="edit-name">
+          <span>Name</span>
+          <input
+            id="edit-name"
+            class="fd-input"
+            [(ngModel)]="name"
+            name="name"
+            placeholder="Full name"
+          />
+        </label>
+        <label for="edit-email">
+          <span>Email</span>
+          <input
+            id="edit-email"
+            class="fd-input"
+            [(ngModel)]="email"
+            name="email"
+            placeholder="Email address"
+          />
+        </label>
+        <label for="edit-phone">
+          <span>Phone</span>
+          <input
+            id="edit-phone"
+            class="fd-input"
+            [(ngModel)]="phone"
+            name="phone"
+            placeholder="Mobile number"
+          />
+        </label>
+      </section>
     }
 
     @if (ui.editModal() === "address") {
-      <label for="edit-address-label">Address Label</label
-      ><input
-        id="edit-address-label"
-        class="fd-input"
-        [(ngModel)]="addressLabel"
-        name="addressLabel"
-        placeholder="Home, Office, Parents Home"
-      />
-      <label for="edit-address-line">Full Address</label
-      ><textarea
-        id="edit-address-line"
-        class="fd-input"
-        [(ngModel)]="addressLine"
-        name="addressLine"
-        placeholder="House number, building, street, landmark"
-      ></textarea>
-      <label for="edit-address-phone">Contact Number</label
-      ><input
-        id="edit-address-phone"
-        class="fd-input"
-        [(ngModel)]="phone"
-        name="addressPhone"
-        placeholder="Receiver phone number"
-      />
+      <section class="field-group">
+        <label for="edit-address-label">
+          <span>Address Label</span>
+          <input
+            id="edit-address-label"
+            class="fd-input"
+            [(ngModel)]="addressLabel"
+            name="addressLabel"
+            placeholder="Home, Office, Parents Home"
+          />
+        </label>
+        <label for="edit-address-line">
+          <span>Full Address</span>
+          <textarea
+            id="edit-address-line"
+            class="fd-input"
+            [(ngModel)]="addressLine"
+            name="addressLine"
+            placeholder="House number, building, street, landmark"
+          ></textarea>
+        </label>
+        <label for="edit-address-phone">
+          <span>Contact Number</span>
+          <input
+            id="edit-address-phone"
+            class="fd-input"
+            [(ngModel)]="phone"
+            name="addressPhone"
+            placeholder="Receiver phone number"
+          />
+        </label>
+      </section>
     }
 
     @if (ui.editModal() === "payment") {
-      <label for="edit-payment-name">Card / UPI Name</label
-      ><input
-        id="edit-payment-name"
-        class="fd-input"
-        [(ngModel)]="paymentName"
-        name="paymentName"
-        placeholder="Payment method name"
-      />
-      <label for="edit-payment-id">Payment ID</label
-      ><input
-        id="edit-payment-id"
-        class="fd-input"
-        [(ngModel)]="paymentId"
-        name="paymentId"
-        placeholder="UPI ID or payment reference"
-      />
+      <section class="field-group">
+        <label for="edit-payment-name">
+          <span>Card / UPI Name</span>
+          <input
+            id="edit-payment-name"
+            class="fd-input"
+            [(ngModel)]="paymentName"
+            name="paymentName"
+            placeholder="Payment method name"
+          />
+        </label>
+        <label for="edit-payment-id">
+          <span>Payment ID</span>
+          <input
+            id="edit-payment-id"
+            class="fd-input"
+            [(ngModel)]="paymentId"
+            name="paymentId"
+            placeholder="UPI ID or payment reference"
+          />
+        </label>
+      </section>
     }
 
     <footer>

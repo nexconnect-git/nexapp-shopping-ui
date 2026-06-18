@@ -1,22 +1,22 @@
 <div class="desktop-customer-view">
-<main class="fd-content">
-  <fd-breadcrumbs [items]="[{ label: 'Addresses' }]" />
-  <div class="fd-page-header">
-    <div>
-      <h1 class="fd-title">Saved Addresses</h1>
-      <p class="fd-subtitle">Manage your delivery locations</p>
+  <main class="fd-content">
+    <fd-breadcrumbs [items]="[{ label: 'Addresses' }]" />
+    <div class="fd-page-header">
+      <div>
+        <h1 class="fd-title">Saved Addresses</h1>
+        <p class="fd-subtitle">Manage your delivery locations</p>
+      </div>
+      <button type="button" class="fd-btn primary" (click)="openModal()">
+        <span class="material-symbols-rounded">add</span> Add Address
+      </button>
     </div>
-    <button type="button" class="fd-btn primary" (click)="openModal()">
-      <span class="material-symbols-rounded">add</span> Add Address
-    </button>
-  </div>
-  <section class="address-grid">
-    @for (address of addresses(); track address.id) {
+    <section class="address-grid">
+      @for (address of addresses(); track address.id) {
       <article class="fd-card">
         <div class="top">
           <span>{{ address.label }}</span>
           @if (address.isDefault) {
-            <b>Default</b>
+          <b>Default</b>
           }
         </div>
         <h3>{{ address.name }}</h3>
@@ -30,15 +30,15 @@
           </button>
         </div>
       </article>
-    } @empty {
+      } @empty {
       <section class="fd-card">
         <h2>No addresses yet</h2>
         <p>Add a delivery address to checkout faster.</p>
       </section>
-    }
-  </section>
+      }
+    </section>
 
-  @if (showModal()) {
+    @if (showModal()) {
     <div class="modal">
       <form class="fd-card" (submit)="save($event)">
         <header class="modal-head">
@@ -53,118 +53,327 @@
             type="button"
             class="modal-close"
             aria-label="Close address form"
-            (click)="showModal.set(false)"
+            (click)="closeModal()"
           >
             <span class="material-symbols-rounded">close</span>
           </button>
         </header>
-        <input
-          class="fd-input"
-          placeholder="Address label, e.g. Home or Office"
-          [value]="form.label"
-          (input)="form.label = $any($event.target).value"
-        />
-        <input
-          class="fd-input"
-          placeholder="Receiver name"
-          [value]="form.name"
-          (input)="form.name = $any($event.target).value"
-        />
+        @if (formError()) {
+        <div class="form-error">{{ formError() }}</div>
+        }
+        <label class="address-field">
+          <span>Address label</span>
+          <input
+            class="fd-input"
+            [class.has-error]="fieldError('label')"
+            placeholder="Home, Work, Other"
+            [value]="form.label"
+            (input)="
+              form.label = $any($event.target).value; clearFieldError('label')
+            "
+          />
+          @if (fieldError("label")) {
+          <small class="field-error">{{ fieldError("label") }}</small>
+          }
+        </label>
+        <label class="address-field">
+          <span>Receiver name</span>
+          <input
+            class="fd-input"
+            [class.has-error]="fieldError('name')"
+            placeholder="Who will receive the order?"
+            [value]="form.name"
+            (input)="
+              form.name = $any($event.target).value; clearFieldError('name')
+            "
+          />
+          @if (fieldError("name")) {
+          <small class="field-error">{{ fieldError("name") }}</small>
+          }
+        </label>
         <app-map-picker
           [initialLat]="form.latitude || 28.6139"
           [initialLng]="form.longitude || 77.209"
           height="220px"
           (locationPicked)="onMapLocationPicked($event)"
         />
-        <textarea
-          class="fd-input"
-          placeholder="House number, building, street, landmark"
-          [value]="form.line"
-          (input)="form.line = $any($event.target).value"
-        ></textarea>
-        <input
-          class="fd-input"
-          placeholder="City"
-          [value]="form.city || ''"
-          (input)="form.city = $any($event.target).value"
-        />
-        <input
-          class="fd-input"
-          placeholder="State"
-          [value]="form.state || ''"
-          (input)="form.state = $any($event.target).value"
-        />
-        <input
-          class="fd-input"
-          placeholder="PIN code"
-          [value]="form.pincode || ''"
-          (input)="form.pincode = $any($event.target).value"
-        />
-        <input
-          class="fd-input"
-          placeholder="Receiver phone number"
-          [value]="form.phone"
-          (input)="form.phone = $any($event.target).value"
-        />
+        <label class="address-field full">
+          <span>Full address</span>
+          <textarea
+            class="fd-input"
+            [class.has-error]="fieldError('line')"
+            placeholder="House number, building, street, landmark"
+            [value]="form.line"
+            (input)="
+              form.line = $any($event.target).value; clearFieldError('line')
+            "
+          ></textarea>
+          @if (fieldError("line")) {
+          <small class="field-error">{{ fieldError("line") }}</small>
+          }
+        </label>
+        <label class="address-field">
+          <span>City</span>
+          <input
+            class="fd-input"
+            [class.has-error]="fieldError('city')"
+            placeholder="City"
+            [value]="form.city || ''"
+            (input)="
+              form.city = $any($event.target).value; clearFieldError('city')
+            "
+          />
+          @if (fieldError("city")) {
+          <small class="field-error">{{ fieldError("city") }}</small>
+          }
+        </label>
+        <label class="address-field">
+          <span>State</span>
+          <input
+            class="fd-input"
+            [class.has-error]="fieldError('state')"
+            placeholder="State"
+            [value]="form.state || ''"
+            (input)="
+              form.state = $any($event.target).value; clearFieldError('state')
+            "
+          />
+          @if (fieldError("state")) {
+          <small class="field-error">{{ fieldError("state") }}</small>
+          }
+        </label>
+        <label class="address-field">
+          <span>PIN code</span>
+          <input
+            class="fd-input"
+            [class.has-error]="fieldError('pincode')"
+            placeholder="PIN code"
+            [value]="form.pincode || ''"
+            (input)="onPincodeInput($any($event.target).value)"
+          />
+          @if (fieldError("pincode")) {
+          <small class="field-error">{{ fieldError("pincode") }}</small>
+          }
+        </label>
+        <label class="address-field">
+          <span>Receiver phone</span>
+          <input
+            class="fd-input"
+            [class.has-error]="fieldError('phone')"
+            placeholder="Receiver phone number"
+            [value]="form.phone"
+            (input)="onPhoneInput($any($event.target).value)"
+          />
+          @if (fieldError("phone")) {
+          <small class="field-error">{{ fieldError("phone") }}</small>
+          }
+        </label>
         <div class="modal-actions">
-          <button
-            type="button"
-            class="fd-btn outline"
-            (click)="showModal.set(false)"
-          >
+          <button type="button" class="fd-btn outline" (click)="closeModal()">
             Cancel</button
-          ><button type="submit" class="fd-btn primary">Save</button>
+          ><button
+            type="submit"
+            class="fd-btn primary"
+            [disabled]="!isAddressFormValid()"
+          >
+            Save
+          </button>
         </div>
       </form>
     </div>
-  }
-</main>
+    }
+  </main>
 </div>
 
 <div class="mobile-customer-view">
-<main class="mobile-page addresses-page">
-  <header class="simple-head">
-    <div><small>Delivery locations</small><h1>Addresses</h1></div>
-    <button type="button" (click)="openModal()"><span class="material-symbols-rounded">add</span></button>
-  </header>
+  <main class="mobile-page addresses-page">
+    <header class="simple-head">
+      <div>
+        <small>Delivery locations</small>
+        <h1>Addresses</h1>
+      </div>
+      <button type="button" (click)="openModal()">
+        <span class="material-symbols-rounded">add</span>
+      </button>
+    </header>
 
-  <section class="mobile-list">
-    @for (address of addresses(); track address.id) {
+    <section class="mobile-list">
+      @for (address of addresses(); track address.id) {
       <article class="address-card">
         <span class="material-symbols-rounded">home_pin</span>
         <div>
-          <b>{{ address.label || address.name || 'Address' }}</b>
+          <b>{{ address.label || address.name || "Address" }}</b>
           <p>{{ address.line }}, {{ address.city }} {{ address.pincode }}</p>
           <small>{{ address.phone }}</small>
         </div>
         <footer>
-          <button type="button" (click)="makeDefault(address.id)">Default</button>
+          <button type="button" (click)="makeDefault(address.id)">
+            Default
+          </button>
           <button type="button" (click)="edit(address)">Edit</button>
-          <button type="button" class="danger" (click)="remove(address.id)">Delete</button>
+          <button type="button" class="danger" (click)="remove(address.id)">
+            Delete
+          </button>
         </footer>
       </article>
-    } @empty {
+      } @empty {
       <section class="empty-panel">
         <span class="material-symbols-rounded">location_off</span>
         <h2>No addresses yet</h2>
         <p>Add a delivery address to checkout faster.</p>
-        <button type="button" class="mobile-cta" (click)="openModal()">Add address</button>
+        <button type="button" class="mobile-cta" (click)="openModal()">
+          Add address
+        </button>
       </section>
-    }
-  </section>
-</main>
+      }
+    </section>
+  </main>
 
-<fd-mobile-bottom-sheet [open]="showModal()" [title]="editing() ? 'Edit address' : 'Add address'" (closed)="showModal.set(false)">
-  <form class="mobile-form" (submit)="save($event)">
-    <label>Label <input name="label" [(ngModel)]="form.label" placeholder="Home, Work" /></label>
-    <label>Name <input name="name" [(ngModel)]="form.name" placeholder="Receiver name" /></label>
-    <label>Phone <input name="phone" [(ngModel)]="form.phone" placeholder="Phone number" /></label>
-    <label>Address <textarea name="line" [(ngModel)]="form.line" placeholder="House, street, area"></textarea></label>
-    <label>City <input name="city" [(ngModel)]="form.city" /></label>
-    <label>State <input name="state" [(ngModel)]="form.state" /></label>
-    <label>Pincode <input name="pincode" [(ngModel)]="form.pincode" /></label>
-    <app-map-picker (locationPicked)="onMapLocationPicked($event)" />
-    <button type="submit" class="mobile-cta">Save address</button>
-  </form>
-</fd-mobile-bottom-sheet>
+  <fd-mobile-bottom-sheet
+    [open]="showModal()"
+    [title]="editing() ? 'Edit address' : 'Add address'"
+    (closed)="closeModal()"
+  >
+    <form class="mobile-form" (submit)="save($event)">
+      @if (formError()) {
+      <div class="form-error">{{ formError() }}</div>
+      }
+      <section class="form-section">
+        <div class="form-section-head">
+          <span class="material-symbols-rounded">person_pin_circle</span>
+          <div>
+            <b>Receiver details</b>
+            <small>Who should we contact at delivery?</small>
+          </div>
+        </div>
+        <label>
+          <span>Label</span>
+          <input
+            name="label"
+            [class.has-error]="fieldError('label')"
+            [(ngModel)]="form.label"
+            (ngModelChange)="clearFieldError('label')"
+            placeholder="Home, Work"
+          />
+          @if (fieldError("label")) {
+          <small class="field-error">{{ fieldError("label") }}</small> }</label
+        >
+        <div class="field-pair">
+          <label>
+            <span>Name</span>
+            <input
+              name="name"
+              [class.has-error]="fieldError('name')"
+              [(ngModel)]="form.name"
+              (ngModelChange)="clearFieldError('name')"
+              placeholder="Receiver name"
+            />
+            @if (fieldError("name")) {
+            <small class="field-error">{{ fieldError("name") }}</small> }</label
+          >
+          <label>
+            <span>Phone</span>
+            <input
+              name="phone"
+              [class.has-error]="fieldError('phone')"
+              [(ngModel)]="form.phone"
+              (ngModelChange)="onPhoneInput($event)"
+              placeholder="Phone number"
+              inputmode="tel"
+            />
+            @if (fieldError("phone")) {
+            <small class="field-error">{{ fieldError("phone") }}</small> }</label
+          >
+        </div>
+      </section>
+
+      <section class="form-section">
+        <div class="form-section-head">
+          <span class="material-symbols-rounded">home_pin</span>
+          <div>
+            <b>Address details</b>
+            <small>Flat, street, city and PIN code</small>
+          </div>
+        </div>
+        <label>
+          <span>Address</span>
+          <textarea
+            name="line"
+            [class.has-error]="fieldError('line')"
+            [(ngModel)]="form.line"
+            (ngModelChange)="clearFieldError('line')"
+            placeholder="House, street, area"
+          ></textarea>
+          @if (fieldError("line")) {
+          <small class="field-error">{{ fieldError("line") }}</small> }</label
+        >
+        <div class="field-pair">
+          <label>
+            <span>City</span>
+            <input
+              name="city"
+              [class.has-error]="fieldError('city')"
+              [(ngModel)]="form.city"
+              (ngModelChange)="clearFieldError('city')"
+              placeholder="City"
+            />
+            @if (fieldError("city")) {
+            <small class="field-error">{{ fieldError("city") }}</small> }</label
+          >
+          <label>
+            <span>State</span>
+            <input
+              name="state"
+              [class.has-error]="fieldError('state')"
+              [(ngModel)]="form.state"
+              (ngModelChange)="clearFieldError('state')"
+              placeholder="State"
+            />
+            @if (fieldError("state")) {
+            <small class="field-error">{{ fieldError("state") }}</small> }</label
+          >
+        </div>
+        <label>
+          <span>PIN code</span>
+          <input
+            name="pincode"
+            [class.has-error]="fieldError('pincode')"
+            [(ngModel)]="form.pincode"
+            (ngModelChange)="onPincodeInput($event)"
+            placeholder="6 digit PIN"
+            inputmode="numeric"
+          />
+          @if (fieldError("pincode")) {
+          <small class="field-error">{{ fieldError("pincode") }}</small> }</label
+        >
+      </section>
+
+      <section class="form-section map-section">
+        <div class="form-section-head">
+          <span class="material-symbols-rounded">my_location</span>
+          <div>
+            <b>Pin delivery spot</b>
+            <small>Move the map pin if needed</small>
+          </div>
+        </div>
+        <app-map-picker
+          height="132px"
+          (locationPicked)="onMapLocationPicked($event)"
+        />
+      </section>
+
+      <div class="mobile-form-actions">
+        <button type="button" class="mobile-cta secondary" (click)="closeModal()">
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="mobile-cta"
+          [disabled]="!isAddressFormValid()"
+        >
+          Save address
+        </button>
+      </div>
+    </form>
+  </fd-mobile-bottom-sheet>
 </div>

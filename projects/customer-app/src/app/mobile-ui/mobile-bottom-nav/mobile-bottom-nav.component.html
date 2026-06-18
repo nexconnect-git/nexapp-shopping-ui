@@ -1,5 +1,5 @@
 <nav class="mobile-bottom-nav" aria-label="Nextou navigation">
-  @for (item of items; track item.route) {
+  @for (item of visibleItems(); track item.route) {
     <a
       [routerLink]="item.route"
       routerLinkActive="active"

@@ -39,23 +39,27 @@
       </div>
       <div class="card-body">
         @if (createdMessage()) {
-          <div class="support-alert success">{{ createdMessage() }}</div>
-        }
-        @if (formError()) {
-          <div class="support-alert error">{{ formError() }}</div>
+        <div class="support-alert success">{{ createdMessage() }}</div>
+        } @if (formError()) {
+        <div class="support-alert error">{{ formError() }}</div>
         }
         <form (ngSubmit)="submitTicket()">
           <div class="form-group">
             <label class="form-label">Category</label>
             <select
               class="form-select w-100"
+              [class.has-error]="fieldError('category')"
               [(ngModel)]="form.category"
               name="category"
+              (ngModelChange)="clearFieldError('category')"
             >
               @for (category of categories; track category.value) {
-                <option [value]="category.value">{{ category.label }}</option>
+              <option [value]="category.value">{{ category.label }}</option>
               }
             </select>
+            @if (fieldError("category")) {
+            <small class="field-error">{{ fieldError("category") }}</small>
+            }
             <small class="field-hint"
               >Pick the closest topic so admin can route the ticket
               faster.</small
@@ -68,11 +72,16 @@
             <input
               type="text"
               class="form-input w-100"
+              [class.has-error]="fieldError('subject')"
               [(ngModel)]="form.subject"
               name="subject"
               required
               placeholder="Brief description of the issue"
+              (ngModelChange)="clearFieldError('subject')"
             />
+            @if (fieldError("subject")) {
+            <small class="field-error">{{ fieldError("subject") }}</small>
+            }
             <small class="field-hint"
               >One clear line, for example "Payout missing for Apr 12".</small
             >
@@ -83,12 +92,17 @@
             >
             <textarea
               class="form-input w-100"
+              [class.has-error]="fieldError('message')"
               [(ngModel)]="form.message"
               name="message"
               rows="5"
               required
               placeholder="Explain your issue in detail..."
+              (ngModelChange)="clearFieldError('message')"
             ></textarea>
+            @if (fieldError("message")) {
+            <small class="field-error">{{ fieldError("message") }}</small>
+            }
             <small class="field-hint"
               >Include order ID, payout period, screenshots notes, or steps to
               reproduce if relevant.</small
@@ -97,13 +111,11 @@
           <button
             type="submit"
             class="btn-primary w-100"
-            [disabled]="creating()"
+            [disabled]="!canSubmitTicket()"
           >
             @if (creating()) {
-              <span class="spinner-inline"></span> Submitting...
-            } @else {
-              <span class="material-icons-outlined">send</span> Submit Ticket
-            }
+            <span class="spinner-inline"></span> Submitting... } @else {
+            <span class="material-icons-outlined">send</span> Submit Ticket }
           </button>
         </form>
       </div>
@@ -119,44 +131,44 @@
       </div>
       <div class="card-body p-0">
         @if (loading()) {
-          <div class="p-4 text-center text-muted">Loading tickets...</div>
+        <div class="p-4 text-center text-muted">Loading tickets...</div>
         } @else if (!tickets().length) {
-          <div class="p-4 text-center text-muted">
-            You haven't submitted any support tickets yet.
-          </div>
+        <div class="p-4 text-center text-muted">
+          You haven't submitted any support tickets yet.
+        </div>
         } @else {
-          <div class="ticket-list">
-            @for (ticket of tickets(); track ticket.id) {
-              <div class="ticket-item">
-                <div class="ticket-content">
-                  <div class="ticket-title-row">
-                    <span class="badge" [class]="'badge-' + ticket.status">{{
-                      ticket.status | uppercase
-                    }}</span>
-                    <span class="ticket-cat"
-                      >[{{ ticket.category | uppercase }}]</span
-                    >
-                    <strong class="ticket-subj">{{ ticket.subject }}</strong>
-                  </div>
-                  <p class="ticket-desc">{{ ticket.message }}</p>
-                  @if (ticket.admin_response) {
-                    <div class="admin-reply">
-                      <strong>Admin Reply:</strong>
-                      <p>{{ ticket.admin_response }}</p>
-                    </div>
-                  }
-                </div>
-                <div class="ticket-meta">
-                  <span
-                    class="material-icons-outlined text-muted"
-                    style="font-size: 16px"
-                    >schedule</span
-                  >
-                  <span>{{ ticket.created_at | date: "medium" }}</span>
-                </div>
+        <div class="ticket-list">
+          @for (ticket of tickets(); track ticket.id) {
+          <div class="ticket-item">
+            <div class="ticket-content">
+              <div class="ticket-title-row">
+                <span class="badge" [class]="'badge-' + ticket.status">{{
+                  ticket.status | uppercase
+                }}</span>
+                <span class="ticket-cat"
+                  >[{{ ticket.category | uppercase }}]</span
+                >
+                <strong class="ticket-subj">{{ ticket.subject }}</strong>
               </div>
-            }
+              <p class="ticket-desc">{{ ticket.message }}</p>
+              @if (ticket.admin_response) {
+              <div class="admin-reply">
+                <strong>Admin Reply:</strong>
+                <p>{{ ticket.admin_response }}</p>
+              </div>
+              }
+            </div>
+            <div class="ticket-meta">
+              <span
+                class="material-icons-outlined text-muted"
+                style="font-size: 16px"
+                >schedule</span
+              >
+              <span>{{ ticket.created_at | date : "medium" }}</span>
+            </div>
           </div>
+          }
+        </div>
         }
       </div>
     </div>

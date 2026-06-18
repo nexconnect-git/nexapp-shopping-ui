@@ -29,7 +29,7 @@
         <span class="material-symbols-rounded">search</span>
         <input
           type="search"
-          placeholder="Search stores, categories, city, or offers"
+          placeholder="Search stores, categories, or city"
           [value]="searchQuery()"
           (input)="setSearchQuery($event)"
           aria-label="Search stores"
@@ -74,10 +74,10 @@
         />
       </div>
 
-      <section class="store-offer-strip" aria-label="Store offers">
+      <section class="store-offer-strip" aria-label="Store savings">
         @for (promo of storePromos(); track promo.id) {
           <a
-            [routerLink]="promo.ctaUrl || '/stores'"
+            routerLink="/stores"
             class="store-offer"
             [class.green]="promo.tone === 'green'"
             [class.orange]="promo.tone === 'orange'"

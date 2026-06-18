@@ -2,6 +2,7 @@ import { Location } from '@angular/common';
 import { Component, computed, effect, OnDestroy, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { buildStoreSelectionTarget } from '@nexconnect/customer-search';
+import { buildCustomerLocationQuery } from '@nexconnect/customer-location';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { AppCurrencyPipe } from '@shared/lib/pipes/currency.pipe';
@@ -35,6 +36,11 @@ import {
 export class SearchComponent implements OnDestroy {
   private readonly recentSearchStorageKey = 'nextou.customer.recent_searches';
   query = signal(this.route.snapshot.queryParamMap.get('q') ?? '');
+  category = signal(
+    this.route.snapshot.paramMap.get('categoryId') ||
+      this.route.snapshot.queryParamMap.get('category') ||
+      '',
+  );
   activeTab = signal<'All' | 'Stores' | 'Products' | 'Categories'>('All');
   sortBy = signal(
     `Sort by: ${this.content.filters().sortOptions[0] || 'Relevance'}`,
@@ -88,16 +94,55 @@ export class SearchComponent implements OnDestroy {
       const q = this.query();
       if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer);
       this.searchDebounceTimer = setTimeout(() => {
-        this.catalog.refreshSearch(q);
+        this.catalog.loadExplore({
+          ...this.activeLocation(),
+          q,
+          category: this.category(),
+          sort: this.sortValue(),
+        });
       }, 250);
     });
     this.routeSub = this.route.queryParamMap.subscribe((params) => {
       const next = params.get('q') ?? '';
       if (next !== this.query()) this.query.set(next);
+      const category = params.get('category') || this.route.snapshot.paramMap.get('categoryId') || '';
+      if (category !== this.category()) this.category.set(category);
     });
+    this.routeSub.add(
+      this.route.paramMap.subscribe((params) => {
+        const category = params.get('categoryId') || this.route.snapshot.queryParamMap.get('category') || '';
+        if (category !== this.category()) this.category.set(category);
+      }),
+    );
   }
 
   results = computed(() => this.catalog.search(this.query()));
+  browseStores = computed(() =>
+    this.catalog
+      .stores()
+      .filter((store) => (store.raw as any)?.is_serviceable !== false)
+      .slice(0, 8),
+  );
+  browseProducts = computed(() => {
+    const source = this.category()
+      ? this.catalog.productsByCategory(this.category())
+      : this.catalog.recommendedProducts().length
+        ? this.catalog.recommendedProducts()
+        : this.catalog.topProducts();
+    const storeIds = new Set(this.browseStores().map((store) => store.id));
+    return source
+      .filter((product) => !product.storeId || storeIds.has(product.storeId))
+      .slice(0, 12);
+  });
+  visibleResults = computed(() =>
+    this.hasQuery()
+      ? this.results()
+      : {
+          stores: this.browseStores(),
+          products: this.browseProducts(),
+          categories: this.recommendedCategories(),
+        },
+  );
   noVisibleResults = computed(
     () =>
       !this.catalog.productsLoading() &&
@@ -106,7 +151,7 @@ export class SearchComponent implements OnDestroy {
   );
 
   count(tab: string): number {
-    const r = this.results();
+    const r = this.visibleResults();
     if (tab === 'Stores') return r.stores.length;
     if (tab === 'Products') return r.products.length;
     if (tab === 'Categories') return r.categories.length;
@@ -118,11 +163,6 @@ export class SearchComponent implements OnDestroy {
     this.activeFilters.update((current) =>
       current.includes(label) ? current : [...current, label],
     );
-    if (filter.action === 'offers') {
-      this.updateQuery(this.query() ? `${this.query()} offers` : 'offers');
-      this.syncUrl();
-      return;
-    }
     if (filter.action === 'fast_delivery') {
       this.activeTab.set('Stores');
       return;
@@ -219,7 +259,31 @@ export class SearchComponent implements OnDestroy {
   private syncUrl(): void {
     const q = this.query().trim();
     this.query.set(q);
-    this.router.navigate(['/search'], { queryParams: q ? { q } : {} });
+    this.router.navigate(['/explore'], {
+      queryParams: {
+        ...(q ? { q } : {}),
+        ...(this.category() ? { category: this.category() } : {}),
+      },
+    });
+  }
+
+  private sortValue(): string {
+    const value = this.sortBy().toLowerCase();
+    if (value.includes('price') && value.includes('low')) return 'price_low_high';
+    if (value.includes('rating')) return 'rating';
+    if (value.includes('offer')) return 'offers';
+    return 'relevance';
+  }
+
+  private activeLocation(): Record<string, any> {
+    const address = this.state.activeAddress();
+    return buildCustomerLocationQuery({
+      lat: address?.latitude ?? undefined,
+      lng: address?.longitude ?? undefined,
+      state: address?.state || undefined,
+      city: address?.city || undefined,
+      postal_code: address?.pincode || undefined,
+    });
   }
 
   private normalizeKey(value: string | null | undefined): string {

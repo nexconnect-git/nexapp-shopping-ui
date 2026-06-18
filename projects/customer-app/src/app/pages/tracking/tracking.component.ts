@@ -301,8 +301,8 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
       );
   }
 
-  supportLink(): string[] {
-    return ['/order', this.order().id, 'help'];
+  ordersLink(): string[] {
+    return ['/orders'];
   }
 
   private initGoogleMap(): void {
@@ -402,7 +402,7 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
   }
 
   joinOne(): void {
-    this.router.navigate(['/wallet']);
+    this.router.navigate(['/profile']);
   }
 
   downloadInvoice(): void {

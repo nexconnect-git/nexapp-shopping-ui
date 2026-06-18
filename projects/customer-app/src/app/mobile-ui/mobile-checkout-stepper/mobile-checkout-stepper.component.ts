@@ -12,10 +12,8 @@ export class MobileCheckoutStepperComponent {
   @Input() active: CheckoutStepKey = 'address';
 
   readonly steps: Array<{ key: CheckoutStepKey; label: string }> = [
-    { key: 'address', label: 'Address' },
-    { key: 'slot', label: 'Slot' },
+    { key: 'address', label: 'Deliver to' },
     { key: 'payment', label: 'Payment' },
     { key: 'review', label: 'Review' },
   ];
 }
-

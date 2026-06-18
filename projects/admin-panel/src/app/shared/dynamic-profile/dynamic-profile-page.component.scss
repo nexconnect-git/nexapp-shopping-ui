@@ -42,6 +42,21 @@
   align-items: center;
   padding: 18px 20px;
   margin-bottom: 16px;
+  overflow: hidden;
+
+  &.has-cover {
+    padding-top: 0;
+  }
+}
+
+.cover {
+  grid-column: 1 / -1;
+  height: clamp(150px, 24vw, 260px);
+  margin: 0 -20px;
+  background-color: #f2f4f8;
+  background-position: center;
+  background-size: cover;
+  border-bottom: 1px solid #e9eaf3;
 }
 
 .avatar {
@@ -383,6 +398,19 @@
     color: #22283a;
     overflow-wrap: break-word;
     word-break: normal;
+  }
+}
+
+.field-link {
+  display: inline-flex;
+  max-width: 100%;
+  color: var(--fd-color-primary);
+  font-weight: 900;
+  overflow-wrap: anywhere;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
   }
 }
 

@@ -85,7 +85,7 @@ export class CatalogRequestsComponent implements OnInit {
       .map((item, index) => ({ item, index }))
       .filter(({ item, index }) => {
         const hasAnyValue = Object.values(item).some((value) =>
-          String(value || '').trim(),
+          String(value || '').trim()
         );
         if (hasAnyValue && !item.name.trim()) {
           errors[this.itemErrorKey(index, 'name')] =
@@ -122,7 +122,7 @@ export class CatalogRequestsComponent implements OnInit {
       error: (err) => {
         this.toast.show(
           err.error?.error || 'Failed to submit request.',
-          'error',
+          'error'
         );
         this.saving.set(false);
       },
@@ -153,6 +153,14 @@ export class CatalogRequestsComponent implements OnInit {
       delete next[key];
       return next;
     });
+  }
+
+  canSubmitRequest(): boolean {
+    return (
+      !this.saving() &&
+      Object.keys(this.draftErrors()).length === 0 &&
+      this.draftItems().some((item) => item.name.trim())
+    );
   }
 
   private itemErrorKey(index: number, field: string): string {

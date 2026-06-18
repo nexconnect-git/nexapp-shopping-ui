@@ -15,6 +15,7 @@ import {
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { GoogleMapsService } from '../../services/google-maps.service';
+import { NativePlatformService } from '../../services/native-platform.service';
 
 export interface MapLocation {
   lat: number;
@@ -27,12 +28,6 @@ export interface MapLocation {
   country_code?: string;
 }
 
-interface FallbackMapTile {
-  key: string;
-  url: string;
-  left: number;
-  top: number;
-}
 interface PlaceSuggestionItem {
   placeId: string;
   text: string;
@@ -63,6 +58,9 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
   private platformId = inject(PLATFORM_ID);
   private ngZone = inject(NgZone);
   private googleMaps = inject(GoogleMapsService);
+  private nativePlatform = inject(NativePlatformService);
+  private googleMapsAuthFailureHandler = () =>
+    this.ngZone.run(() => this.handleGoogleMapsAuthFailure());
   private map: any = null;
   private marker: any = null;
   private geocoder: any = null;
@@ -78,9 +76,6 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
   locating = signal(false);
   mapReady = signal(false);
   mapUnavailable = signal(false);
-  fallbackMapReady = signal(false);
-  fallbackNotice = signal('');
-  fallbackTiles = signal<FallbackMapTile[]>([]);
   currentLat = signal(this.initialLat);
   currentLng = signal(this.initialLng);
   searchQuery = signal('');
@@ -99,16 +94,25 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
   }
 
   private get effectiveMapId() {
-    const configured = this.resolvedMapId;
-    return configured || 'DEMO_MAP_ID';
+    return this.resolvedMapId;
   }
 
   ngAfterViewInit() {
     if (!isPlatformBrowser(this.platformId)) return;
+    window.addEventListener(
+      'nexconnect:google-maps-auth-failure',
+      this.googleMapsAuthFailureHandler,
+    );
     this.loadGoogleMaps();
   }
 
   ngOnDestroy() {
+    if (isPlatformBrowser(this.platformId)) {
+      window.removeEventListener(
+        'nexconnect:google-maps-auth-failure',
+        this.googleMapsAuthFailureHandler,
+      );
+    }
     this.map = null;
     this.marker = null;
     this.geocoder = null;
@@ -118,7 +122,7 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
   private loadGoogleMaps() {
     const apiKey = this.resolvedApiKey;
     if (!apiKey) {
-      this.initFallbackMap('Using OpenStreetMap because Google Maps API key is not configured.');
+      this.setMapUnavailable('Google Maps API key is not configured.');
       return;
     }
 
@@ -127,7 +131,7 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
       .then(() => this.ngZone.run(() => this.initMap()))
       .catch(() =>
         this.ngZone.run(() =>
-          this.initFallbackMap('Using OpenStreetMap because Google Maps could not be loaded.'),
+          this.setMapUnavailable('Google Maps could not be loaded.'),
         ),
       );
   }
@@ -137,7 +141,7 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
     if (!container || this.map) return;
 
     this.createMap(container).catch(() =>
-      this.initFallbackMap('Using OpenStreetMap because Google Maps could not initialize.'),
+      this.setMapUnavailable('Google Maps could not initialize.'),
     );
   }
 
@@ -152,15 +156,16 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
     }
 
     const mapId = this.effectiveMapId;
-    this.map = new MapCtor(container, {
+    const mapOptions: Record<string, unknown> = {
       center,
       zoom: 13,
       mapTypeControl: false,
       streetViewControl: false,
       fullscreenControl: false,
       gestureHandling: 'greedy',
-      mapId,
-    });
+    };
+    if (mapId) mapOptions['mapId'] = mapId;
+    this.map = new MapCtor(container, mapOptions);
 
     await this.createMarker(center);
 
@@ -184,6 +189,7 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
     });
 
     this.mapReady.set(true);
+    this.mapUnavailable.set(false);
     this.refreshMapCanvas(center);
 
     const lat = +this.initialLat;
@@ -213,32 +219,60 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
   }
 
   private async createMarker(position: { lat: number; lng: number }) {
-    const markerLibrary = await this.importGoogleLibrary('marker').catch(
-      () => null,
-    );
-    const AdvancedMarkerElement =
-      markerLibrary?.AdvancedMarkerElement ||
-      google?.maps?.marker?.AdvancedMarkerElement;
-    if (typeof AdvancedMarkerElement !== 'function') {
-      throw new Error('Google Maps AdvancedMarkerElement unavailable');
+    if (this.effectiveMapId) {
+      const markerLibrary = await this.importGoogleLibrary('marker').catch(
+        () => null,
+      );
+      const AdvancedMarkerElement =
+        markerLibrary?.AdvancedMarkerElement ||
+        google?.maps?.marker?.AdvancedMarkerElement;
+      if (typeof AdvancedMarkerElement === 'function') {
+        this.marker = new AdvancedMarkerElement({
+          position,
+          map: this.map,
+          gmpDraggable: true,
+        });
+        return;
+      }
     }
 
-    this.marker = new AdvancedMarkerElement({
+    const Marker = google?.maps?.Marker;
+    if (typeof Marker !== 'function') {
+      throw new Error('Google Maps marker constructor unavailable');
+    }
+
+    this.marker = new Marker({
       position,
       map: this.map,
-      gmpDraggable: true,
+      draggable: true,
     });
+  }
+
+  private handleGoogleMapsAuthFailure() {
+    this.map = null;
+    this.marker = null;
+    this.geocoder = null;
+    this.setMapUnavailable(
+      'Google Maps rejected the API key, billing, or website referrer.',
+    );
   }
 
   private setMarkerPosition(position: { lat: number; lng: number }) {
     this.currentLat.set(position.lat);
     this.currentLng.set(position.lng);
+    if (typeof this.marker?.setPosition === 'function') {
+      this.marker.setPosition(position);
+      return;
+    }
     this.marker.position = position;
   }
 
   private getMarkerPosition(): { lat: number; lng: number } | null {
     if (!this.marker) return null;
-    const pos = this.marker.position;
+    const pos =
+      typeof this.marker.getPosition === 'function'
+        ? this.marker.getPosition()
+        : this.marker.position;
     if (!pos) return null;
     const lat = typeof pos.lat === 'function' ? pos.lat() : pos.lat;
     const lng = typeof pos.lng === 'function' ? pos.lng() : pos.lng;
@@ -621,97 +655,50 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
     );
   }
 
-  useMyLocation() {
-    if (!navigator.geolocation) return;
+  async useMyLocation() {
     this.locating.set(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude: lat, longitude: lng } = pos.coords;
+
+    try {
+      const hasPermission = await this.nativePlatform.requestLocationPermissions();
+      if (!hasPermission) {
         this.ngZone.run(() => {
           this.locating.set(false);
-          this.currentLat.set(Number(lat.toFixed(6)));
-          this.currentLng.set(Number(lng.toFixed(6)));
-          if (this.fallbackMapReady()) {
-            this.setFallbackPosition({ lat, lng }, true);
-          } else if (this.map && this.marker) {
-            this.map.setCenter({ lat, lng });
-            this.map.setZoom(16);
-            this.setMarkerPosition({ lat, lng });
-            this.reverseGeocode(lat, lng);
-          } else {
-            this.pickedAddress.set(
-              `Pinned location: ${lat.toFixed(6)}, ${lng.toFixed(6)}`,
-            );
-            this.locationPicked.emit({
-              lat: Number(lat.toFixed(6)),
-              lng: Number(lng.toFixed(6)),
-              address: '',
-              city: '',
-              state: '',
-              postal_code: '',
-            });
-          }
+          this.placesError.set('Location permission was denied.');
         });
-      },
-      () => this.ngZone.run(() => this.locating.set(false)),
-      { timeout: 8000, enableHighAccuracy: true },
-    );
+        return;
+      }
+
+      const pos = await this.nativePlatform.getCurrentPosition({
+        timeout: 12000,
+        enableHighAccuracy: true,
+        maximumAge: 30000,
+      });
+      const { latitude: lat, longitude: lng } = pos.coords;
+      this.ngZone.run(() => this.applyCurrentLocation(lat, lng));
+    } catch {
+      this.ngZone.run(() => {
+        this.locating.set(false);
+        this.placesError.set('Could not detect your location. Check location permission and GPS.');
+      });
+    }
   }
 
-  onFallbackMapClick(event: MouseEvent) {
-    const target = event.target as HTMLElement | null;
-    if (target?.closest('button')) return;
-
-    const host = event.currentTarget as HTMLElement;
-    const rect = host.getBoundingClientRect();
-    const center = this.latLngToWorldPoint(
-      this.currentLat(),
-      this.currentLng(),
-      this.fallbackZoom,
-    );
-    const worldX = center.x - rect.width / 2 + (event.clientX - rect.left);
-    const worldY = center.y - rect.height / 2 + (event.clientY - rect.top);
-    const position = this.worldPointToLatLng(worldX, worldY, this.fallbackZoom);
-    this.setFallbackPosition(position, true);
-  }
-
-  zoomFallbackMap(event: MouseEvent, delta: number) {
-    event.stopPropagation();
-    this.fallbackZoom = Math.min(18, Math.max(3, this.fallbackZoom + delta));
-    this.updateFallbackTiles();
-  }
-
-  private fallbackZoom = 15;
-  private readonly fallbackTileSize = 256;
-
-  private initFallbackMap(message: string) {
-    const lat = Number(this.initialLat) || 28.6139;
-    const lng = Number(this.initialLng) || 77.209;
-    this.mapReady.set(false);
-    this.mapUnavailable.set(false);
-    this.fallbackNotice.set(message);
-    this.fallbackMapReady.set(true);
-    this.currentLat.set(lat);
-    this.currentLng.set(lng);
-    this.updateFallbackTiles();
-    window.setTimeout(() => this.updateFallbackTiles(), 100);
-  }
-
-  private setFallbackPosition(
-    position: { lat: number; lng: number },
-    emitLocation: boolean,
-  ) {
-    const lat = Number(position.lat.toFixed(6));
-    const lng = Number(position.lng.toFixed(6));
-    this.currentLat.set(lat);
-    this.currentLng.set(lng);
-    this.pickedAddress.set(`Pinned location: ${lat.toFixed(6)}, ${lng.toFixed(6)}`);
-    this.updateFallbackTiles();
-
-    if (emitLocation) {
+  private applyCurrentLocation(lat: number, lng: number) {
+    this.locating.set(false);
+    this.currentLat.set(Number(lat.toFixed(6)));
+    this.currentLng.set(Number(lng.toFixed(6)));
+    if (this.map && this.marker) {
+      this.map.setCenter({ lat, lng });
+      this.map.setZoom(16);
+      this.setMarkerPosition({ lat, lng });
+      this.reverseGeocode(lat, lng);
+    } else {
+      this.pickedAddress.set(
+        `Pinned location: ${lat.toFixed(6)}, ${lng.toFixed(6)}`,
+      );
       this.locationPicked.emit({
-        lat,
-        lng,
+        lat: Number(lat.toFixed(6)),
+        lng: Number(lng.toFixed(6)),
         address: '',
         city: '',
         state: '',
@@ -720,71 +707,10 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  private updateFallbackTiles() {
-    if (!isPlatformBrowser(this.platformId)) return;
-
-    const container = this.mapContainerRef?.nativeElement as HTMLElement | null;
-    const width = Math.max(container?.clientWidth || 360, 320);
-    const height = Math.max(this.parseHeight(this.height), 220);
-    const center = this.latLngToWorldPoint(
-      this.currentLat(),
-      this.currentLng(),
-      this.fallbackZoom,
-    );
-    const halfWidth = width / 2;
-    const halfHeight = height / 2;
-    const startTileX = Math.floor((center.x - halfWidth) / this.fallbackTileSize);
-    const endTileX = Math.floor((center.x + halfWidth) / this.fallbackTileSize);
-    const startTileY = Math.floor((center.y - halfHeight) / this.fallbackTileSize);
-    const endTileY = Math.floor((center.y + halfHeight) / this.fallbackTileSize);
-    const maxTile = 2 ** this.fallbackZoom;
-    const tiles: FallbackMapTile[] = [];
-
-    for (let x = startTileX; x <= endTileX; x += 1) {
-      for (let y = startTileY; y <= endTileY; y += 1) {
-        if (y < 0 || y >= maxTile) continue;
-        const wrappedX = ((x % maxTile) + maxTile) % maxTile;
-        tiles.push({
-          key: `${this.fallbackZoom}-${wrappedX}-${y}`,
-          url: `https://tile.openstreetmap.org/${this.fallbackZoom}/${wrappedX}/${y}.png`,
-          left: Math.round(x * this.fallbackTileSize - (center.x - halfWidth)),
-          top: Math.round(y * this.fallbackTileSize - (center.y - halfHeight)),
-        });
-      }
-    }
-
-    this.fallbackTiles.set(tiles);
-  }
-
-  private latLngToWorldPoint(lat: number, lng: number, zoom: number) {
-    const sinLat = Math.sin((Math.max(Math.min(lat, 85.05112878), -85.05112878) * Math.PI) / 180);
-    const scale = this.fallbackTileSize * 2 ** zoom;
-    return {
-      x: ((lng + 180) / 360) * scale,
-      y:
-        (0.5 - Math.log((1 + sinLat) / (1 - sinLat)) / (4 * Math.PI)) *
-        scale,
-    };
-  }
-
-  private worldPointToLatLng(x: number, y: number, zoom: number) {
-    const scale = this.fallbackTileSize * 2 ** zoom;
-    const lng = (x / scale) * 360 - 180;
-    const lat =
-      (Math.atan(Math.sinh(Math.PI * (1 - (2 * y) / scale))) * 180) /
-      Math.PI;
-    return { lat, lng };
-  }
-
-  private parseHeight(value: string): number {
-    const parsed = Number.parseFloat(value);
-    return Number.isFinite(parsed) ? parsed : 300;
-  }
-
   private setMapUnavailable(message = 'Google Maps could not be loaded.') {
     this.currentLat.set(+this.initialLat);
     this.currentLng.set(+this.initialLng);
-    this.fallbackMapReady.set(false);
+    this.mapReady.set(false);
     this.mapUnavailable.set(true);
     this.placesError.set(message);
   }

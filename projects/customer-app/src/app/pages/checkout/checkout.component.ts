@@ -23,6 +23,14 @@ import { CurrencyService } from '@shared/lib/services/currency.service';
 import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
 import { MobileCheckoutStepperComponent } from '../../mobile-ui/mobile-checkout-stepper/mobile-checkout-stepper.component';
 
+interface AddressPreviewState {
+  loading?: boolean;
+  preview?: any;
+  error?: string;
+  details?: any;
+  code?: string;
+}
+
 @Component({
   standalone: true,
   imports: [
@@ -46,9 +54,7 @@ export class CheckoutComponent {
   scheduledDate = signal(this.defaultScheduleDate());
   scheduledTime = signal(this.defaultScheduleTime());
   selectedPayment = signal('');
-  addressPreviews = signal<
-    Record<string, { loading?: boolean; preview?: any; error?: string }>
-  >({});
+  addressPreviews = signal<Record<string, AddressPreviewState>>({});
   maxScheduleDate = this.offsetDateValue(7);
   readonly upiApps = [
     { name: 'Google Pay', logo: 'G', className: 'gpay' },
@@ -162,7 +168,7 @@ export class CheckoutComponent {
     if (section === 'address') {
       return {
         label: this.hasAddresses()
-          ? 'Continue to delivery slot'
+          ? 'Continue to payment'
           : 'Add delivery address',
         disabled: false,
       };
@@ -369,9 +375,11 @@ export class CheckoutComponent {
         scheduledFor: this.scheduledFor(),
       })
       .subscribe({
-        next: (order) => this.router.navigate(['/tracking', order.id]),
-        error: (error) =>
-          this.state.showToast(error?.message || 'Could not place order'),
+        next: (order) => this.router.navigate(['/order-confirmed', order.id]),
+        error: (error) => {
+          this.applyCheckoutError(error);
+          this.state.showToast(this.checkoutErrorMessage(error));
+        },
       });
   }
 
@@ -407,7 +415,7 @@ export class CheckoutComponent {
         this.state.showToast(this.addressDisabledReason(this.state.activeAddress()!));
         return;
       }
-      this.mobileSection.set('slot');
+      this.mobileSection.set('payment');
       return;
     }
     if (this.mobileSection() === 'slot') {
@@ -435,9 +443,10 @@ export class CheckoutComponent {
     const state = this.addressPreviews()[address.id];
     if (state?.error) return state.error;
     const preview = state?.preview;
-    if (preview?.is_serviceable === false)
+    const blockingQuote = this.blockingDeliveryQuote(preview);
+    if (blockingQuote)
       return (
-        preview.serviceability_error ||
+        blockingQuote.serviceability_error ||
         'This address is outside the selected store delivery area.'
       );
     if (preview?.same_state === false)
@@ -449,7 +458,8 @@ export class CheckoutComponent {
     const reason = this.addressDisabledReason(address);
     if (reason) return reason;
     const preview = this.addressPreviews()[address.id]?.preview;
-    if (preview?.requires_far_delivery_confirmation)
+    const quote = this.primaryDeliveryQuote(preview);
+    if (quote?.requires_far_delivery_confirmation)
       return 'Changing to this address may change delivery fee and ETA.';
     const fee = this.previewFee(address.id);
     return fee > 0
@@ -511,6 +521,68 @@ export class CheckoutComponent {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
+  private blockingDeliveryQuote(preview: any): any | null {
+    return this.deliveryQuotes(preview).find((quote) => quote?.is_serviceable === false) || null;
+  }
+
+  private primaryDeliveryQuote(preview: any): any | null {
+    const quotes = this.deliveryQuotes(preview);
+    return (
+      quotes.find((quote) => quote?.is_serviceable === false) ||
+      quotes.find((quote) => quote?.requires_far_delivery_confirmation) ||
+      quotes.find((quote) => quote?.is_far_delivery) ||
+      quotes[0] ||
+      null
+    );
+  }
+
+  private deliveryQuotes(preview: any): any[] {
+    if (!preview) return [];
+    if (Array.isArray(preview.fees)) return preview.fees;
+    if (Array.isArray(preview.delivery_quotes)) return preview.delivery_quotes;
+    if (preview.vendor_id || preview.serviceability_error) return [preview];
+    return [];
+  }
+
+  private previewErrorState(error: any): AddressPreviewState {
+    const payload = error?.error || {};
+    return {
+      error:
+        payload.error ||
+        payload.detail ||
+        'This address cannot be used for this order.',
+      details: payload.details || null,
+      code: payload.code || '',
+    };
+  }
+
+  private applyCheckoutError(error: any): void {
+    const payload = error?.error || {};
+    const address = this.state.activeAddress();
+    if (!address?.id || payload.code !== 'delivery_not_serviceable') return;
+    this.addressPreviews.update((current) => ({
+      ...current,
+      [address.id]: {
+        error:
+          payload.error ||
+          payload.detail ||
+          'This address cannot be used for this order.',
+        details: payload.details || null,
+        code: payload.code,
+      },
+    }));
+  }
+
+  private checkoutErrorMessage(error: any): string {
+    const payload = error?.error || {};
+    return (
+      payload.error ||
+      payload.detail ||
+      error?.message ||
+      'Could not place order'
+    );
+  }
+
   private refreshAddressPreviews(): void {
     const addresses = this.state.addresses();
     if (!this.state.itemCount() || !addresses.length) {
@@ -541,12 +613,7 @@ export class CheckoutComponent {
         error: (error) =>
           this.addressPreviews.update((current) => ({
             ...current,
-            [address.id]: {
-              error:
-                error?.error?.error ||
-                error?.error?.detail ||
-                'This address cannot be used for this order.',
-            },
+            [address.id]: this.previewErrorState(error),
           })),
       });
     }

@@ -3,7 +3,7 @@ import { type CanActivateFn, Router } from '@angular/router';
 import { AuthService as SharedAuthService } from '@shared/lib/services/auth.service';
 import { UiService } from './ui.service';
 
-export const customerAuthGuard: CanActivateFn = () => {
+export const customerAuthGuard: CanActivateFn = (_route, state) => {
   const auth = inject(SharedAuthService);
   const ui = inject(UiService);
   const router = inject(Router);
@@ -12,6 +12,7 @@ export const customerAuthGuard: CanActivateFn = () => {
     auth.clearInvalidSession();
   }
   ui.openLogin();
-  router.navigate(['/']);
+  const targetPath = state.url.split('?')[0].split('#')[0];
+  router.navigate(targetPath === '/checkout' ? ['/cart'] : ['/']);
   return false;
 };

@@ -1,7 +1,12 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService, ToastService } from '@shared/public-api';
+import {
+  ApiService,
+  formatFormErrors,
+  parseFormErrors,
+  ToastService,
+} from '@shared/public-api';
 
 @Component({
   selector: 'app-support',
@@ -19,6 +24,7 @@ export class SupportComponent implements OnInit {
   creating = signal(false);
   createdMessage = signal('');
   formError = signal('');
+  fieldErrors = signal<Record<string, string>>({});
 
   readonly categories = [
     { value: 'other', label: 'General Support' },
@@ -51,8 +57,12 @@ export class SupportComponent implements OnInit {
   submitTicket() {
     this.createdMessage.set('');
     this.formError.set('');
-    if (!this.form.subject.trim() || !this.form.message.trim()) {
-      this.formError.set('Please fill out subject and message.');
+    const validationErrors = this.validateForm();
+    this.fieldErrors.set(validationErrors);
+    if (Object.keys(validationErrors).length) {
+      this.formError.set(
+        'Please fix the highlighted fields before submitting.'
+      );
       return;
     }
     this.creating.set(true);
@@ -65,7 +75,7 @@ export class SupportComponent implements OnInit {
     this.api.createSupportTicket(payload).subscribe({
       next: () => {
         this.createdMessage.set(
-          'Support ticket created successfully. Admin replies will appear in conversation history.',
+          'Support ticket created successfully. Admin replies will appear in conversation history.'
         );
         this.toast.show('Support ticket created successfully.', 'success');
         this.creating.set(false);
@@ -73,9 +83,13 @@ export class SupportComponent implements OnInit {
         this.loadTickets();
       },
       error: (err) => {
-        const message =
-          this.formatError(err?.error) ||
-          'Failed to create ticket. Please try again.';
+        const parsed = parseFormErrors(err?.error, { description: 'message' });
+        this.fieldErrors.set(parsed.fieldErrors);
+        const message = formatFormErrors(
+          err?.error,
+          'Failed to create ticket. Please try again.',
+          { description: 'Message' }
+        );
         this.formError.set(message);
         this.toast.show(message, 'error');
         this.creating.set(false);
@@ -83,25 +97,33 @@ export class SupportComponent implements OnInit {
     });
   }
 
-  private formatError(error: any): string {
-    if (!error) return '';
-    if (typeof error === 'string') return error;
-    if (error.error || error.detail) return error.error || error.detail;
-    return Object.entries(error)
-      .map(([field, value]) => {
-        const text = Array.isArray(value) ? value.join(' ') : String(value);
-        return `${this.fieldLabel(field)}: ${text}`;
-      })
-      .join(' ');
+  clearFieldError(field: string): void {
+    if (!this.fieldErrors()[field]) return;
+    this.fieldErrors.update((current) => {
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+    this.formError.set('');
   }
 
-  private fieldLabel(field: string): string {
-    const labels: Record<string, string> = {
-      subject: 'Subject',
-      message: 'Message',
-      category: 'Category',
-      priority: 'Priority',
-    };
-    return labels[field] || field;
+  fieldError(field: string): string {
+    return this.fieldErrors()[field] || '';
+  }
+
+  canSubmitTicket(): boolean {
+    return (
+      !this.creating() &&
+      Object.keys(this.validateForm()).length === 0 &&
+      Object.keys(this.fieldErrors()).length === 0
+    );
+  }
+
+  private validateForm(): Record<string, string> {
+    const errors: Record<string, string> = {};
+    if (!this.form.category) errors['category'] = 'Category is required.';
+    if (!this.form.subject.trim()) errors['subject'] = 'Subject is required.';
+    if (!this.form.message.trim()) errors['message'] = 'Message is required.';
+    return errors;
   }
 }

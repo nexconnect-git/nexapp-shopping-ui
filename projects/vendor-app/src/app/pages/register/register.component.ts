@@ -5,8 +5,19 @@ import { Router, RouterLink } from '@angular/router';
 import {
   ApiService,
   AuthService,
+  formatFormErrors,
+  INDIA_PINCODE_PATTERN,
+  isValidEmail,
+  isValidIndianPhone,
   MapLocation,
   MapPickerComponent,
+  normalizeIndianPhone,
+  parseFormErrors,
+  sanitizeDigits,
+  sanitizeEmail,
+  sanitizeUsername,
+  stripControlCharacters,
+  USERNAME_PATTERN,
 } from '@shared/public-api';
 import { Subscription } from 'rxjs';
 
@@ -17,11 +28,6 @@ interface AvailabilityState {
   suggestions: string[];
   value: string;
 }
-
-const USERNAME_PATTERN = /^[a-zA-Z0-9_.-]{3,30}$/;
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PHONE_PATTERN = /^\+?[0-9][0-9\s-]{8,18}$/;
-const PINCODE_PATTERN = /^[1-9][0-9]{5}$/;
 
 const VENDOR_STORE_TYPE_OPTIONS = [
   { value: 'wholesale_store', label: 'Wholesale Store' },
@@ -104,13 +110,17 @@ export class RegisterComponent {
     if (loc.state && !this.form.state) this.form.state = loc.state;
     if (loc.postal_code && !this.form.postal_code)
       this.form.postal_code = loc.postal_code;
+    ['address', 'city', 'state', 'postal_code', 'location'].forEach((field) =>
+      this.clearFieldError(field)
+    );
   }
 
   onImageSelected(kind: 'logo' | 'banner', event: Event) {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] || null;
     const fileSignal = kind === 'logo' ? this.logoFile : this.bannerFile;
-    const previewSignal = kind === 'logo' ? this.logoPreview : this.bannerPreview;
+    const previewSignal =
+      kind === 'logo' ? this.logoPreview : this.bannerPreview;
 
     fileSignal.set(file);
     previewSignal.set('');
@@ -132,8 +142,23 @@ export class RegisterComponent {
   }
 
   onIdentityInput(field: 'username' | 'email' | 'phone') {
+    if (field === 'username')
+      this.form.username = sanitizeUsername(this.form.username);
+    if (field === 'email') this.form.email = sanitizeEmail(this.form.email);
+    if (field === 'phone')
+      this.form.phone = normalizeIndianPhone(this.form.phone);
     this.clearFieldError(field);
     this.scheduleAvailabilityCheck(field);
+  }
+
+  onPublicEmailInput() {
+    this.form.vendor_email = sanitizeEmail(this.form.vendor_email);
+    this.clearFieldError('vendor_email');
+  }
+
+  onPostalCodeInput() {
+    this.form.postal_code = sanitizeDigits(this.form.postal_code, 6);
+    this.clearFieldError('postal_code');
   }
 
   fieldError(field: string): string {
@@ -151,25 +176,30 @@ export class RegisterComponent {
   }
 
   onSubmit() {
-    if (!this.validateStep(1) || !this.validateStep(2) || !this.validateStep(3))
-      return;
+    for (const step of [1, 2, 3]) {
+      if (!this.validateStep(step)) {
+        this.step.set(step);
+        this.error.set('Please fix the highlighted fields before continuing.');
+        return;
+      }
+    }
 
     this.loading.set(true);
     this.error.set('');
 
     const payload = {
       username: this.form.username.trim(),
-      email: this.form.email.trim(),
+      email: sanitizeEmail(this.form.email),
       password: this.form.password,
-      phone: this.form.phone.trim(),
-      store_name: this.form.store_name.trim(),
+      phone: normalizeIndianPhone(this.form.phone),
+      store_name: stripControlCharacters(this.form.store_name),
       vendor_type: this.form.vendor_type || 'retail_store',
-      description: this.form.description.trim(),
-      vendor_email: (this.form.vendor_email || this.form.email).trim(),
-      address: this.form.address.trim(),
-      city: this.form.city.trim(),
-      state: this.form.state.trim(),
-      postal_code: this.form.postal_code.trim(),
+      description: stripControlCharacters(this.form.description),
+      vendor_email: sanitizeEmail(this.form.vendor_email || this.form.email),
+      address: stripControlCharacters(this.form.address),
+      city: stripControlCharacters(this.form.city),
+      state: stripControlCharacters(this.form.state),
+      postal_code: sanitizeDigits(this.form.postal_code, 6),
       latitude: this.form.latitude,
       longitude: this.form.longitude,
       ...(this.logoFile() ? { logo: this.logoFile() } : {}),
@@ -185,27 +215,28 @@ export class RegisterComponent {
         }
         localStorage.setItem(
           this.auth.vendorKey,
-          res.vendor_status || 'pending',
+          res.vendor_status || 'pending'
         );
         void this.router
           .navigate(['/pending-approval'])
           .finally(() => this.loading.set(false));
       },
       error: (err) => {
-        const msg = this.registrationErrorMessage(err.error);
+        const msg = this.applyRegistrationErrors(err?.error || err);
         this.error.set(msg);
         this.loading.set(false);
       },
     });
   }
 
-  private registrationErrorMessage(error: any): string {
+  private applyRegistrationErrors(error: any): string {
     const fieldLabels: Record<string, string> = {
       username: 'Username',
       email: 'Email',
       phone: 'Phone',
       password: 'Password',
       store_name: 'Store name',
+      description: 'Description',
       vendor_email: 'Public contact email',
       address: 'Street address',
       city: 'City',
@@ -215,15 +246,19 @@ export class RegisterComponent {
       longitude: 'Longitude',
       location: 'Location',
     };
-    for (const [field, label] of Object.entries(fieldLabels)) {
-      const message = error?.[field]?.[0] || error?.[field];
-      if (message) return `${label}: ${message}`;
-    }
-    return (
-      error?.non_field_errors?.[0] ||
-      error?.detail ||
-      error?.error ||
-      'Registration failed. Please try again.'
+    const parsed = parseFormErrors(error);
+    this.fieldErrors.update((current) => ({
+      ...current,
+      ...parsed.fieldErrors,
+    }));
+    const firstStepWithError = [1, 2, 3].find((step) =>
+      this.stepFieldKeys(step).some((field) => !!parsed.fieldErrors[field])
+    );
+    if (firstStepWithError) this.step.set(firstStepWithError);
+    return formatFormErrors(
+      error,
+      'Registration failed. Please try again.',
+      fieldLabels
     );
   }
 
@@ -244,13 +279,15 @@ export class RegisterComponent {
         errors['username'] =
           'Use 3-30 letters, numbers, dots, dashes, or underscores.';
       }
-      const email = this.form.email.trim();
-      if (email && !EMAIL_PATTERN.test(email)) {
+      const email = sanitizeEmail(this.form.email);
+      this.form.email = email;
+      if (email && !isValidEmail(email)) {
         errors['email'] = 'Enter a valid email address.';
       }
-      const phone = this.form.phone.trim();
-      if (phone && !PHONE_PATTERN.test(phone)) {
-        errors['phone'] = 'Enter a valid phone number.';
+      const phone = normalizeIndianPhone(this.form.phone);
+      this.form.phone = phone;
+      if (phone && !isValidIndianPhone(phone)) {
+        errors['phone'] = 'Enter a valid 10-digit Indian mobile number.';
       }
       if (this.form.password && this.form.password.length < 8) {
         errors['password'] = 'Password must be at least 8 characters.';
@@ -273,10 +310,8 @@ export class RegisterComponent {
 
     if (step === 2) {
       this.validateRequired('store_name', 'Store name', errors);
-      if (
-        this.form.vendor_email &&
-        !EMAIL_PATTERN.test(this.form.vendor_email.trim())
-      ) {
+      this.validateRequired('description', 'Description', errors);
+      if (this.form.vendor_email && !isValidEmail(this.form.vendor_email)) {
         errors['vendor_email'] = 'Enter a valid public contact email.';
       }
     }
@@ -285,13 +320,14 @@ export class RegisterComponent {
       this.validateRequired('address', 'Street address', errors);
       this.validateRequired('city', 'City', errors);
       this.validateRequired('state', 'State', errors);
+      this.validateRequired('postal_code', 'Postal code', errors);
       if (
         this.form.postal_code &&
-        !PINCODE_PATTERN.test(this.form.postal_code.trim())
+        !INDIA_PINCODE_PATTERN.test(sanitizeDigits(this.form.postal_code, 6))
       ) {
         errors['postal_code'] = 'Enter a valid 6-digit pincode.';
       }
-      if (!this.form.latitude || !this.form.longitude) {
+      if (this.form.latitude === null || this.form.longitude === null) {
         errors['location'] = 'Please pick your store location on the map.';
       }
     }
@@ -304,7 +340,7 @@ export class RegisterComponent {
   private validateRequired(
     field: string,
     label: string,
-    errors: Record<string, string>,
+    errors: Record<string, string>
   ) {
     if (!String(this.form[field] ?? '').trim()) {
       errors[field] = `${label} is required.`;
@@ -313,7 +349,7 @@ export class RegisterComponent {
 
   private stepFieldKeys(step: number): string[] {
     if (step === 1) return ['username', 'email', 'phone', 'password'];
-    if (step === 2) return ['store_name', 'vendor_email'];
+    if (step === 2) return ['store_name', 'description', 'vendor_email'];
     return ['address', 'city', 'state', 'postal_code', 'location'];
   }
 
@@ -328,7 +364,7 @@ export class RegisterComponent {
 
   private scheduleAvailabilityCheck(
     field: 'username' | 'email' | 'phone',
-    delay = 450,
+    delay = 450
   ) {
     const value = String(this.form[field] || '').trim();
     if (this.availabilityTimers[field])
@@ -339,8 +375,8 @@ export class RegisterComponent {
     if (
       !value ||
       (field === 'username' && !USERNAME_PATTERN.test(value)) ||
-      (field === 'email' && !EMAIL_PATTERN.test(value)) ||
-      (field === 'phone' && !PHONE_PATTERN.test(value))
+      (field === 'email' && !isValidEmail(value)) ||
+      (field === 'phone' && !isValidIndianPhone(value))
     ) {
       this.availability.update((states) => {
         const next = { ...states };
@@ -400,5 +436,60 @@ export class RegisterComponent {
           },
         });
     }, delay);
+  }
+
+  canContinueStep(step = this.step()): boolean {
+    return this.stepIsComplete(step) && !this.stepHasErrors(step);
+  }
+
+  canSubmitRegistration(): boolean {
+    return (
+      !this.loading() &&
+      this.canContinueStep(1) &&
+      this.canContinueStep(2) &&
+      this.canContinueStep(3)
+    );
+  }
+
+  private stepHasErrors(step: number): boolean {
+    const errors = this.fieldErrors();
+    return this.stepFieldKeys(step).some((field) => !!errors[field]);
+  }
+
+  private stepIsComplete(step: number): boolean {
+    if (step === 1) {
+      const username = this.form.username.trim();
+      const email = sanitizeEmail(this.form.email);
+      const phone = normalizeIndianPhone(this.form.phone);
+      if (!USERNAME_PATTERN.test(username)) return false;
+      if (!isValidEmail(email)) return false;
+      if (!isValidIndianPhone(phone)) return false;
+      if (!this.form.password || this.form.password.length < 8) return false;
+
+      return (['username', 'email', 'phone'] as const).every((field) => {
+        const state = this.availability()[field];
+        return (
+          state?.value === this.form[field].trim() &&
+          state.checking === false &&
+          state.unique === true
+        );
+      });
+    }
+
+    if (step === 2) {
+      if (!this.form.store_name.trim()) return false;
+      if (!this.form.description.trim()) return false;
+      if (this.form.vendor_email && !isValidEmail(this.form.vendor_email)) {
+        return false;
+      }
+      return true;
+    }
+
+    if (!this.form.address.trim()) return false;
+    if (!this.form.city.trim()) return false;
+    if (!this.form.state.trim()) return false;
+    if (!INDIA_PINCODE_PATTERN.test(sanitizeDigits(this.form.postal_code, 6)))
+      return false;
+    return this.form.latitude !== null && this.form.longitude !== null;
   }
 }
