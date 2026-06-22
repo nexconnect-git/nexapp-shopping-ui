@@ -1,11 +1,12 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, map, Observable, of, shareReplay, tap } from 'rxjs';
-import { ApiService } from './api.service';
+import { AuthApi } from '../api/auth-api.service';
 import { AuthResponse, User } from '../models';
 import { AUTH_PREFIX } from '../tokens/auth-prefix.token';
 import { CurrencyService } from './currency.service';
 import { NativePlatformService } from './native-platform.service';
+import { SessionStore } from './session-store.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -18,6 +19,7 @@ export class AuthService {
   };
   private readonly currentUser = signal<User | null>(null);
   private readonly accessToken = signal<string | null>(null);
+  private readonly session = inject(SessionStore);
   private refreshRequest$?: Observable<boolean>;
 
   readonly user = this.currentUser.asReadonly();
@@ -52,7 +54,7 @@ export class AuthService {
   }
 
   constructor(
-    private api: ApiService,
+    private api: AuthApi,
     private router: Router,
     private currency: CurrencyService,
     private nativePlatform: NativePlatformService,
@@ -61,16 +63,13 @@ export class AuthService {
   }
 
   private loadSession() {
-    const token =
-      sessionStorage.getItem(this.tokenKey) ||
-      localStorage.getItem(this.tokenKey);
-    const userData =
-      localStorage.getItem(this.userKey) ||
-      sessionStorage.getItem(this.userKey);
+    this.session.migrateLegacySession();
+    const token = this.session.getAccessToken();
+    const userData = this.session.getUserRaw();
 
     if (token) {
       this.accessToken.set(token);
-      sessionStorage.setItem(this.tokenKey, token);
+      this.session.setAccessToken(token);
     }
 
     if (token && !userData) {
@@ -88,27 +87,20 @@ export class AuthService {
         this.currentUser.set(user);
         this.currency.configureFromLocation(user);
       } catch {
-        sessionStorage.removeItem(this.userKey);
-        localStorage.removeItem(this.userKey);
+        this.session.clearUser();
       }
     }
 
-    localStorage.removeItem(this.refreshTokenKey);
+    this.session.setRefreshToken(null);
 
-    if (!token && (userData || localStorage.getItem(this.refreshSessionKey))) {
+    if (!token && (userData || this.session.hasRefreshSession())) {
       this.refreshAccessToken().subscribe({ error: () => this.clearSession() });
     }
   }
 
   private setAccessToken(token: string | null) {
     this.accessToken.set(token);
-    if (token) {
-      sessionStorage.setItem(this.tokenKey, token);
-      localStorage.setItem(this.tokenKey, token);
-    } else {
-      sessionStorage.removeItem(this.tokenKey);
-      localStorage.removeItem(this.tokenKey);
-    }
+    this.session.setAccessToken(token);
   }
 
   getToken(): string | null {
@@ -116,7 +108,7 @@ export class AuthService {
   }
 
   getRefreshToken(): string | null {
-    return null;
+    return this.session.getRefreshToken();
   }
 
   async setTokens(tokens: {
@@ -125,7 +117,7 @@ export class AuthService {
   }): Promise<void> {
     if (tokens.access !== undefined) this.setAccessToken(tokens.access);
     if (tokens.refresh !== undefined) {
-      localStorage.removeItem(this.refreshTokenKey);
+      this.session.setRefreshToken(tokens.refresh);
     }
   }
 
@@ -166,9 +158,8 @@ export class AuthService {
     }
 
     this.setAccessToken(response.tokens.access);
-    localStorage.setItem(this.userKey, JSON.stringify(response.user));
-    localStorage.setItem(this.refreshSessionKey, '1');
-    sessionStorage.setItem(this.userKey, JSON.stringify(response.user));
+    this.session.setUser(response.user);
+    this.session.markRefreshSession();
     this.currentUser.set(response.user);
     this.currency.configureFromLocation(response.user);
     this.initializePushNotifications();
@@ -184,15 +175,14 @@ export class AuthService {
       tap((response) => {
         const tokens = response.tokens || response;
         this.setAccessToken(tokens.access);
-        localStorage.removeItem(this.refreshTokenKey);
-        localStorage.setItem(this.refreshSessionKey, '1');
+        this.session.setRefreshToken(tokens.refresh || null);
+        this.session.markRefreshSession();
         if (response.user) {
           if (!this.isPortalUser(response.user as User)) {
             this.clearSession();
             throw new Error('Portal role mismatch');
           }
-          localStorage.setItem(this.userKey, JSON.stringify(response.user));
-          sessionStorage.setItem(this.userKey, JSON.stringify(response.user));
+          this.session.setUser(response.user);
           this.currentUser.set(response.user);
           this.currency.configureFromLocation(response.user);
         }
@@ -219,13 +209,7 @@ export class AuthService {
   }
 
   private clearSession() {
-    sessionStorage.removeItem(this.tokenKey);
-    sessionStorage.removeItem(this.userKey);
-    localStorage.removeItem(this.tokenKey);
-    localStorage.removeItem(this.refreshTokenKey);
-    localStorage.removeItem(this.refreshSessionKey);
-    localStorage.removeItem(this.userKey);
-    localStorage.removeItem(this.vendorKey);
+    this.session.clear();
     this.accessToken.set(null);
     this.currentUser.set(null);
     this.currency.resetToDefault();
@@ -258,8 +242,7 @@ export class AuthService {
       this.clearSession();
       return;
     }
-    sessionStorage.setItem(this.userKey, JSON.stringify(user));
-    localStorage.setItem(this.userKey, JSON.stringify(user));
+    this.session.setUser(user);
     this.currentUser.set(user);
     this.currency.configureFromLocation(user);
   }

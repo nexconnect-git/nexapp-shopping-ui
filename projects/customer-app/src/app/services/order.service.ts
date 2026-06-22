@@ -4,14 +4,14 @@ import {
   normalizeOrder as normalizeSharedOrder,
 } from '@nexconnect/customer-core';
 import { map, Observable } from 'rxjs';
-import { ApiService } from '@shared/lib/services/api.service';
 import { AuthService as SharedAuthService } from '@shared/lib/services/auth.service';
 import { AppStateService } from './app-state.service';
 import { Order } from '../models';
+import { CustomerOrderApiService } from './customer-order-api.service';
 
 @Injectable({ providedIn: 'root' })
 export class OrderService {
-  private readonly api = inject(ApiService);
+  private readonly orderApi = inject(CustomerOrderApiService);
   private readonly auth = inject(SharedAuthService);
   private readonly state = inject(AppStateService);
   private readonly _orders = signal<Order[]>([]);
@@ -40,7 +40,7 @@ export class OrderService {
   loadOrders(): void {
     this._loading.set(true);
     this._error.set('');
-    this.api.getOrders().subscribe({
+    this.orderApi.getOrders().subscribe({
       next: (response) => {
         const orders = listFromResponse<any>(response).map((order) =>
           this.mapOrder(order),
@@ -66,7 +66,7 @@ export class OrderService {
       );
     if (key && !cached && !this.pendingOrderRequests.has(key)) {
       this.pendingOrderRequests.add(key);
-      this.api.getOrder(key).subscribe({
+      this.orderApi.getOrder(key).subscribe({
         next: (raw) => {
           const order = this.mapOrder(raw);
           this.orderCache.set(order.id, order);
@@ -102,7 +102,7 @@ export class OrderService {
 
   reorder(order: Order): void {
     if (!order?.id) return;
-    this.api.reorder(order.id).subscribe({
+    this.orderApi.reorder(order.id).subscribe({
       next: () => {
         this.state.loadCart();
         this.state.openMiniCart();
@@ -114,7 +114,7 @@ export class OrderService {
 
   cancelOrder(order: Order): void {
     if (!order?.id) return;
-    this.api.cancelOrder(order.id).subscribe({
+    this.orderApi.cancelOrder(order.id).subscribe({
       next: (raw) => {
         const updated = this.mapOrder(raw);
         this.orderCache.set(updated.id, updated);
@@ -135,7 +135,7 @@ export class OrderService {
       delivery_comment?: string;
     },
   ): Observable<any> {
-    return this.api.submitOrderRating(orderId, payload);
+    return this.orderApi.submitOrderRating(orderId, payload);
   }
 
   private mapOrder(raw: any): Order {

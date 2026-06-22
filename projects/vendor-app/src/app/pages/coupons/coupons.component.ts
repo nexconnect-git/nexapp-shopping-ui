@@ -2,7 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
-  ApiService,
+  VendorApi,
   AppCurrencyPipe,
   formatFormErrors,
   parseFormErrors,
@@ -33,7 +33,7 @@ interface CouponForm {
   styleUrl: './coupons.component.scss',
 })
 export class CouponsComponent implements OnInit {
-  private api = inject(ApiService);
+  private api = inject(VendorApi);
   private toast = inject(ToastService);
 
   coupons = signal<any[]>([]);

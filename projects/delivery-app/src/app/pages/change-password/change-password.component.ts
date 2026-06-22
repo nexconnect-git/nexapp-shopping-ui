@@ -1,7 +1,8 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { ApiService, AuthService } from '@shared/public-api';
+import { AuthService, DeliveryApi } from '@shared/public-api';
+import { DeliveryWorkflowFacade } from '../../services/delivery-workflow.facade';
 
 @Component({
   selector: 'app-change-password',
@@ -11,7 +12,8 @@ import { ApiService, AuthService } from '@shared/public-api';
   styleUrl: './change-password.component.scss',
 })
 export class ChangePasswordComponent {
-  private api = inject(ApiService);
+  private api = inject(DeliveryApi);
+  private workflow = inject(DeliveryWorkflowFacade);
   private auth = inject(AuthService);
   private router = inject(Router);
 
@@ -57,7 +59,7 @@ export class ChangePasswordComponent {
           if (user) {
             this.auth.updateUserData({ ...user, force_password_change: false });
           }
-          this.api.getDeliveryDashboard().subscribe({
+          this.workflow.loadDashboard().subscribe({
             next: (profile) => {
               setTimeout(
                 () =>

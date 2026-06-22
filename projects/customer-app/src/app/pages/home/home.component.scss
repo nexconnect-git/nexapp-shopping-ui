@@ -147,21 +147,45 @@
   color: rgba(255, 255, 255, 0.9);
 }
 .hero-offer {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 13px;
+  flex-wrap: wrap;
+  gap: 7px;
+  width: fit-content;
+  max-width: min(100%, 620px);
   margin-bottom: 16px;
+  padding: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.13);
+  backdrop-filter: blur(10px);
 }
 .hero-offer b {
-  background: var(--fd-color-warning-soft);
-  color: #854d0e;
-  border: 1px solid var(--fd-color-warning-border);
+  max-width: min(320px, 100%);
+  overflow: hidden;
+  background: #fff7c2;
+  color: #5c3604;
+  border: 1px solid rgba(255, 244, 180, 0.9);
   border-radius: 8px;
-  padding: 10px 14px;
-  font-size: 17px;
+  padding: 8px 12px;
+  font-size: 15px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .hero-offer span {
-  font-size: 16px;
+  max-width: min(260px, 100%);
+  overflow: hidden;
+  padding: 8px 12px;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .hero-offer i {
   font-style: normal;
@@ -1074,8 +1098,11 @@
     overflow: hidden;
     font-size: 12px;
     text-align: center;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    line-height: 1.2;
+    min-height: 29px;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
     font-weight: 800;
   }
   

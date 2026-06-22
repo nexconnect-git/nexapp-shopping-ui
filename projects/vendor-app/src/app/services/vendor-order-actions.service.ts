@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { type Observable } from 'rxjs';
-import { ApiService, type Order } from '@shared/public-api';
+import { apiErrorMessage, VendorApi, type Order } from '@shared/public-api';
 
 export type VendorOrderAction =
   | 'accept'
@@ -15,7 +15,7 @@ export type VendorOrderAction =
 
 @Injectable({ providedIn: 'root' })
 export class VendorOrderActionsService {
-  private api = inject(ApiService);
+  private api = inject(VendorApi);
 
   run(
     orderId: string,
@@ -49,6 +49,6 @@ export class VendorOrderActionsService {
   }
 
   errorMessage(error: any, fallback = 'Order action failed.'): string {
-    return error?.error?.error || error?.error?.detail || fallback;
+    return apiErrorMessage(error, fallback);
   }
 }

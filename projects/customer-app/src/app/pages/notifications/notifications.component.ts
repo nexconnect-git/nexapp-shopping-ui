@@ -1,6 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { ApiService } from '@shared/lib/services/api.service';
+import { NotificationApi } from '@shared/lib/api/notification-api.service';
+import { NotificationStateService } from '@shared/lib/services/notification-state.service';
 
 type NotificationItem = {
   id: string;
@@ -22,7 +23,8 @@ export class NotificationsComponent {
   notifications = signal<NotificationItem[]>([]);
 
   constructor(
-    private api: ApiService,
+    private api: NotificationApi,
+    private notificationState: NotificationStateService,
     private router: Router,
   ) {
     this.loadNotifications();
@@ -34,7 +36,7 @@ export class NotificationsComponent {
         this.notifications.update((items) =>
           items.map((item) => ({ ...item, read: true })),
         );
-        this.api.refreshUnreadCount();
+        this.notificationState.unreadNotifications.set(0);
       },
     });
   }
@@ -48,7 +50,7 @@ export class NotificationsComponent {
               entry.id === item.id ? { ...entry, read: true } : entry,
             ),
           );
-          this.api.refreshUnreadCount();
+          this.refreshUnreadCount();
         },
       });
     }
@@ -72,6 +74,15 @@ export class NotificationsComponent {
         this.notifications.set([]);
         this.loading.set(false);
       },
+    });
+  }
+
+  private refreshUnreadCount(): void {
+    this.api.getUnreadCount().subscribe({
+      next: (r) =>
+        this.notificationState.unreadNotifications.set(
+          r.unread_count ?? r.count ?? 0,
+        ),
     });
   }
 

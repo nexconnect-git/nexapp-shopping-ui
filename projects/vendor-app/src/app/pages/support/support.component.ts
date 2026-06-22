@@ -2,7 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
-  ApiService,
+  VendorApi,
   formatFormErrors,
   parseFormErrors,
   ToastService,
@@ -16,7 +16,7 @@ import {
   styleUrl: './support.component.scss',
 })
 export class SupportComponent implements OnInit {
-  private api = inject(ApiService);
+  private api = inject(VendorApi);
   private toast = inject(ToastService);
 
   tickets = signal<any[]>([]);

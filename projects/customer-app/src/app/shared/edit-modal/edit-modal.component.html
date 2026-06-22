@@ -17,6 +17,9 @@
     </header>
 
     @if (ui.editModal() === "profile") {
+      @if (formError()) {
+        <div class="form-error">{{ formError() }}</div>
+      }
       <section class="edit-summary">
         <span>{{ (name || "N").slice(0, 1).toUpperCase() }}</span>
         <div>
@@ -30,30 +33,52 @@
           <input
             id="edit-name"
             class="fd-input"
+            [class.has-error]="fieldError('name')"
             [(ngModel)]="name"
+            (ngModelChange)="clearFieldError('name')"
             name="name"
-            placeholder="Full name"
+            placeholder="Nikhil Pradeep"
           />
+          @if (fieldError("name")) {
+            <small class="field-error">{{ fieldError("name") }}</small>
+          }
         </label>
         <label for="edit-email">
           <span>Email</span>
           <input
             id="edit-email"
             class="fd-input"
-            [(ngModel)]="email"
+            [class.has-error]="fieldError('email')"
+            [ngModel]="email"
+            (ngModelChange)="onEmailInput($event)"
             name="email"
-            placeholder="Email address"
+            type="email"
+            autocomplete="email"
+            placeholder="name@example.com"
           />
+          @if (fieldError("email")) {
+            <small class="field-error">{{ fieldError("email") }}</small>
+          }
         </label>
         <label for="edit-phone">
           <span>Phone</span>
           <input
             id="edit-phone"
             class="fd-input"
-            [(ngModel)]="phone"
+            [class.has-error]="fieldError('phone')"
+            [ngModel]="phone"
+            (ngModelChange)="onPhoneInput($event)"
             name="phone"
-            placeholder="Mobile number"
+            type="tel"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            maxlength="10"
+            autocomplete="tel"
+            placeholder="9876543210"
           />
+          @if (fieldError("phone")) {
+            <small class="field-error">{{ fieldError("phone") }}</small>
+          }
         </label>
       </section>
     }
@@ -122,7 +147,9 @@
       <button type="button" class="fd-btn outline" (click)="ui.closeEdit()">
         Cancel
       </button>
-      <button class="fd-btn primary">Save Changes</button>
+      <button class="fd-btn primary" [disabled]="!canSave()">
+        {{ saving() ? "Saving..." : "Save Changes" }}
+      </button>
     </footer>
   </form>
 }

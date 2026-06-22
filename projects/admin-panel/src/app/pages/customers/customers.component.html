@@ -154,11 +154,36 @@
       </div>
       <div class="form-group">
         <label class="form-label">Email</label>
-        <input class="form-input" type="email" [(ngModel)]="form.email" />
+        <input
+          class="form-input"
+          [class.has-error]="fieldError('email')"
+          type="email"
+          [ngModel]="form.email"
+          (ngModelChange)="onEmailInput($event)"
+          placeholder="customer@example.com"
+          autocomplete="email"
+        />
+        @if (fieldError("email")) {
+          <small class="field-error">{{ fieldError("email") }}</small>
+        }
       </div>
       <div class="form-group">
         <label class="form-label">Phone</label>
-        <input class="form-input" [(ngModel)]="form.phone" />
+        <input
+          class="form-input"
+          [class.has-error]="fieldError('phone')"
+          type="tel"
+          [ngModel]="form.phone"
+          (ngModelChange)="onPhoneInput($event)"
+          placeholder="9876543210"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          maxlength="10"
+          autocomplete="tel"
+        />
+        @if (fieldError("phone")) {
+          <small class="field-error">{{ fieldError("phone") }}</small>
+        }
       </div>
       <div class="form-check">
         <input
@@ -175,7 +200,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" (click)="closeModal()">Cancel</button>
-      <button class="btn-primary" [disabled]="saving()" (click)="save()">
+      <button class="btn-primary" [disabled]="!canSave()" (click)="save()">
         {{ saving() ? "Saving..." : "Update" }}
       </button>
     </div>

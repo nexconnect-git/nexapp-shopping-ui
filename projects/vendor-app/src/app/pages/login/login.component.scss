@@ -12,7 +12,9 @@
   display: grid;
   grid-template-columns: minmax(0, 1.04fr) minmax(440px, 0.96fr);
   padding: clamp(1rem, 2.5vw, 2rem);
-  background: var(--nc-surface-alt);
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--login-accent) 8%, transparent), transparent 42%),
+    var(--nc-surface-alt);
 }
 
 :host .login-left {
@@ -25,7 +27,8 @@
   padding: clamp(2rem, 5vw, 5rem);
   border-radius: 8px 0 0 8px;
   color: var(--nc-white);
-  background: var(--primary);
+  background:
+    linear-gradient(135deg, #211827 0%, var(--primary) 58%, #3f1d2d 100%);
 }
 
 :host .login-left::before {
@@ -161,6 +164,16 @@
     color-mix(in srgb, var(--nc-text-primary) 12%, transparent);
 }
 
+:host .login-form-card::before {
+  content: "";
+  display: block;
+  width: 48px;
+  height: 4px;
+  margin: 0 auto 1.35rem;
+  border-radius: 999px;
+  background: var(--login-accent);
+}
+
 :host .form-card-header {
   margin-bottom: 2rem;
   text-align: center;
@@ -183,6 +196,12 @@
 
 :host .form-group {
   margin-bottom: 1.2rem;
+}
+
+:host .form-group.invalid .form-input {
+  border-color: var(--nc-danger);
+  background: var(--nc-danger-soft);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--nc-danger) 12%, transparent);
 }
 
 :host .form-label {
@@ -297,6 +316,15 @@
   color: var(--nc-danger);
   font-size: 0.86rem;
   font-weight: 850;
+}
+
+:host .field-error {
+  display: block;
+  margin-top: 0.42rem;
+  color: var(--nc-danger);
+  font-size: 0.78rem;
+  line-height: 1.35;
+  font-weight: 800;
 }
 
 :host .form-footer {

@@ -16,7 +16,6 @@ const config: CapacitorConfig = {
       'maps.gstatic.com',
       'fonts.googleapis.com',
       'fonts.gstatic.com',
-      'tile.openstreetmap.org',
       'www.google.com',
       'google.com',
     ],

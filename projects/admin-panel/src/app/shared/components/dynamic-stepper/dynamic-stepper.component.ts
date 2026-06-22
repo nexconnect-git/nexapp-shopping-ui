@@ -240,11 +240,15 @@ export class DynamicStepperComponent implements OnChanges {
   }
 
   goTo(n: number) {
-    if (
-      this.isEditMode ||
-      n < this.step() ||
-      (n === this.step() + 1 && this.validateCurrentStep())
-    ) {
+    if (n < this.step()) {
+      this.step.set(n);
+      this.clearErrors();
+      return;
+    }
+
+    if (n === this.step()) return;
+
+    if (this.validateStepsBefore(n)) {
       this.step.set(n);
       this.clearErrors();
     }
@@ -293,6 +297,22 @@ export class DynamicStepperComponent implements OnChanges {
     if (firstInvalidStep >= 0) {
       this.step.set(firstInvalidStep + 1);
     }
+    return false;
+  }
+
+  private validateStepsBefore(targetStep: number): boolean {
+    if (targetStep >= this.totalSteps) return this.validateAllSteps();
+    const newErrors: Record<string, string> = {};
+    for (const stepConfig of this.config.steps.slice(0, targetStep - 1)) {
+      this.validateStepFields(stepConfig, newErrors);
+    }
+    this.errors.set(newErrors);
+    if (Object.keys(newErrors).length === 0) return true;
+
+    const firstInvalidStep = this.config.steps.findIndex((stepConfig) =>
+      this.stepHasError(stepConfig, newErrors),
+    );
+    if (firstInvalidStep >= 0) this.step.set(firstInvalidStep + 1);
     return false;
   }
 

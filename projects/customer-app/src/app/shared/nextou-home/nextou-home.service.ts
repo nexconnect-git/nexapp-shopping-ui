@@ -220,7 +220,7 @@ export class NextouHomeService {
       categories: '/stores',
       cart: '/cart',
       orders: '/orders',
-      account: '/profile',
+      account: '/account',
     };
     this.router.navigateByUrl(routes[tab]);
   }
@@ -335,7 +335,7 @@ export class NextouHomeService {
     if (url.startsWith('/orders') || url.startsWith('/tracking'))
       return 'orders';
     if (
-      url.startsWith('/profile') ||
+      url.startsWith('/account') ||
       url.startsWith('/addresses')
     )
       return 'account';

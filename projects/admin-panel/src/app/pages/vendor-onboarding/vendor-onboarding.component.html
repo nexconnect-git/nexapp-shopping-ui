@@ -192,6 +192,9 @@
           (ngModelChange)="onBusinessPhoneInput($event)"
           name="phone"
           placeholder="9876543210"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          maxlength="10"
         />
         @if (fieldErr("phone")) {
         <span class="field-error">{{ fieldErr("phone") }}</span>
@@ -253,6 +256,9 @@
           (ngModelChange)="onPostalCodeInput($event)"
           name="postal_code"
           placeholder="560001"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          maxlength="6"
         />
       </div>
       <div class="form-group"></div>
@@ -265,6 +271,7 @@
           name="latitude"
           step="0.000001"
           placeholder="6.451000"
+          (keydown)="blockInvalidNumberKey($event)"
         />
       </div>
       <div class="form-group">
@@ -276,6 +283,7 @@
           name="longitude"
           step="0.000001"
           placeholder="3.395000"
+          (keydown)="blockInvalidNumberKey($event)"
         />
       </div>
 
@@ -339,6 +347,9 @@
           (ngModelChange)="onContactPhoneInput($event)"
           name="cp_phone"
           placeholder="9876543210"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          maxlength="10"
         />
       </div>
       <div class="form-group span-2">
@@ -469,8 +480,12 @@
               class="form-input"
               type="text"
               [(ngModel)]="addr.pincode"
+              (ngModelChange)="onBusinessAddressPincodeInput(addr, $event)"
               [name]="'addr_pin_' + $index"
-              placeholder="Pincode"
+              placeholder="560001"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              maxlength="6"
             />
           </div>
         </div>
@@ -521,9 +536,13 @@
           class="form-input"
           type="password"
           [(ngModel)]="s4.account_number"
+          (ngModelChange)="onAccountNumberInput($event)"
           name="account_number"
-          placeholder="Enter account number"
+          placeholder="9 to 18 digit account number"
           autocomplete="off"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          maxlength="18"
         />
       </div>
       <div class="form-group">
@@ -532,9 +551,13 @@
           class="form-input"
           type="password"
           [(ngModel)]="s4.confirm_account_number"
+          (ngModelChange)="onConfirmAccountNumberInput($event)"
           name="confirm_acct"
           placeholder="Re-enter account number"
           autocomplete="off"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          maxlength="18"
         />
       </div>
       <div class="form-group" [class.has-error]="fieldErr('ifsc_code')">
@@ -622,6 +645,7 @@
           max="50"
           step="0.5"
           placeholder="0"
+          (keydown)="blockInvalidNumberKey($event)"
         />
       </div>
     </div>
@@ -660,6 +684,7 @@
           min="1"
           max="168"
           placeholder="24"
+          (keydown)="blockInvalidNumberKey($event)"
         />
       </div>
       <div class="form-group span-2">
@@ -693,9 +718,12 @@
           class="form-input"
           type="text"
           [(ngModel)]="s5.new_pincode"
+          (ngModelChange)="onNewServiceablePincodeInput($event)"
           name="new_pincode"
-          placeholder="Pincode"
-          maxlength="10"
+          placeholder="560001"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          maxlength="6"
           style="flex: 1"
         />
         <input
@@ -789,6 +817,8 @@
           name="min_order"
           min="0"
           step="50"
+          placeholder="250"
+          (keydown)="blockInvalidNumberKey($event)"
         />
       </div>
       <div class="form-group">
@@ -800,6 +830,8 @@
           name="radius"
           min="0"
           step="0.5"
+          placeholder="10"
+          (keydown)="blockInvalidNumberKey($event)"
         />
       </div>
       <div class="form-group span-2">

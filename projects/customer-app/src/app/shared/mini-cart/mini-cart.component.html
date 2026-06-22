@@ -16,20 +16,30 @@
       </button>
     </header>
 
-    @if (state.freeDeliveryUnlocked()) {
-      <section class="progress unlocked">
-        <span class="material-symbols-rounded">celebration</span> Free delivery
-        unlocked
-      </section>
-    } @else if (state.freeDeliveryRemaining() > 0) {
-      <section class="progress">
+    <section
+      class="progress"
+      [class.unlocked]="state.freeDeliveryUnlocked()"
+      [class.pending]="!state.deliveryFeeKnown() && state.freeDeliveryRemaining() <= 0"
+    >
+      <span class="progress-icon material-symbols-rounded">{{
+        state.freeDeliveryUnlocked() ? "celebration" : "local_shipping"
+      }}</span>
+      <div>
         <b>{{ state.deliveryPromotion().title }}</b>
-        <div><span [style.width.%]="state.freeDeliveryProgress()"></span></div>
-      </section>
-    } @else {
-      <section class="progress">
-        <b>{{ state.deliveryPromotion().title }}</b>
-        <div><span [style.width.%]="100"></span></div>
+        <small>{{ state.deliveryPromotion().description }}</small>
+        <div class="progress-track">
+          <span [style.width.%]="state.freeDeliveryProgress()"></span>
+        </div>
+      </div>
+    </section>
+
+    @if (state.cartMinimumOrderRemaining() > 0) {
+      <section class="cart-rule">
+        <span class="material-symbols-rounded">shopping_bag</span>
+        <div>
+          <b>Minimum order not met</b>
+          <small>{{ state.cartCheckoutBlockReason() }}</small>
+        </div>
       </section>
     }
 
@@ -81,9 +91,14 @@
         <a routerLink="/cart" (click)="close()" class="fd-btn outline"
           >View Cart</a
         >
-        <a routerLink="/checkout" (click)="close()" class="fd-btn primary"
-          >Checkout</a
+        <button
+          type="button"
+          class="fd-btn primary"
+          [disabled]="!state.canCheckoutCart()"
+          (click)="checkout()"
         >
+          Checkout
+        </button>
       } @else {
         <a routerLink="/explore" (click)="close()" class="fd-btn primary">{{
           content.cart().browseCta

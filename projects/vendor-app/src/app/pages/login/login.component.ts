@@ -1,7 +1,13 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { ApiService, AuthService } from '@shared/public-api';
+import {
+  apiErrorMessage,
+  AuthService,
+  sanitizeUsername,
+  USERNAME_PATTERN,
+  VendorApi,
+} from '@shared/public-api';
 
 @Component({
   selector: 'app-login',
@@ -12,16 +18,28 @@ import { ApiService, AuthService } from '@shared/public-api';
 })
 export class LoginComponent {
   private auth = inject(AuthService);
-  private api = inject(ApiService);
+  private api = inject(VendorApi);
   private router = inject(Router);
 
   username = '';
   password = '';
   loading = signal(false);
   error = signal('');
+  submitted = signal(false);
+  fieldErrors = signal<{ username?: string; password?: string }>({});
 
   canSubmit(): boolean {
-    return !this.loading() && !!this.username.trim() && !!this.password;
+    return !this.loading();
+  }
+
+  onUsernameInput(value: string): void {
+    this.username = sanitizeUsername(value);
+    this.clearFieldError('username');
+  }
+
+  onPasswordInput(value: string): void {
+    this.password = value;
+    this.clearFieldError('password');
   }
 
   goToRegister(event?: MouseEvent) {
@@ -42,8 +60,10 @@ export class LoginComponent {
   }
 
   onLogin() {
-    if (!this.username || !this.password) {
-      this.error.set('Please enter both username and password.');
+    this.submitted.set(true);
+    const errors = this.validate();
+    this.fieldErrors.set(errors);
+    if (Object.keys(errors).length) {
       return;
     }
 
@@ -96,13 +116,30 @@ export class LoginComponent {
         });
       },
       error: (err) => {
-        this.error.set(
-          err.error?.detail ||
-            err.error?.error ||
-            'Invalid credentials. Please try again.'
-        );
+        this.error.set(apiErrorMessage(err, 'Invalid credentials. Please try again.'));
         this.loading.set(false);
       },
     });
+  }
+
+  private validate(): { username?: string; password?: string } {
+    const errors: { username?: string; password?: string } = {};
+    const username = this.username.trim();
+    if (!username) {
+      errors.username = 'Username is required.';
+    } else if (!USERNAME_PATTERN.test(username)) {
+      errors.username = 'Use 3-30 letters, numbers, dots, hyphens, or underscores.';
+    }
+    if (!this.password) {
+      errors.password = 'Password is required.';
+    }
+    return errors;
+  }
+
+  private clearFieldError(field: 'username' | 'password'): void {
+    const current = { ...this.fieldErrors() };
+    delete current[field];
+    this.fieldErrors.set(current);
+    this.error.set('');
   }
 }

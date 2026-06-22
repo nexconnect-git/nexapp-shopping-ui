@@ -65,10 +65,10 @@
   <hr />
   <nav class="account">
     <small>ACCOUNT</small>
-    @if (canUseRoute("/profile")) {
+    @if (canUseRoute("/account")) {
       <a
         routerLink="/account"
-        [class.active]="isRouteActive('/account') || isRouteActive('/profile')"
+        [class.active]="isRouteActive('/account')"
         (click)="ui.closeMobileSidebar()"
         ><span class="nav-emoji nav-badge" aria-hidden="true">ME</span>My
         Account</a

@@ -1,7 +1,5 @@
 import {
   Component,
-  DestroyRef,
-  effect,
   HostListener,
   inject,
   OnInit,
@@ -19,17 +17,18 @@ import {
 import {
   AlertHostComponent,
   AlertService,
-  ApiService,
   AuthService,
   GlobalLoadingComponent,
-  NativePlatformService,
   Notification,
-  NotificationPollingService,
+  NotificationApi,
+  NotificationStateService,
   PageFeatureAccessService,
   PageFeatureLoadingComponent,
   ToastComponent,
 } from '@shared/public-api';
 import { filter } from 'rxjs';
+import { DELIVERY_NAV_ITEMS } from './config/delivery-navigation';
+import { DeliveryAppStartupService } from './services/delivery-app-startup.service';
 
 @Component({
   selector: 'app-root',
@@ -48,35 +47,21 @@ import { filter } from 'rxjs';
 })
 export class AppComponent implements OnInit {
   auth = inject(AuthService);
-  api = inject(ApiService);
+  private notificationApi = inject(NotificationApi);
+  private notificationState = inject(NotificationStateService);
   private alerts = inject(AlertService);
   private router = inject(Router);
   private location = inject(Location);
-  private notifPolling = inject(NotificationPollingService);
   private featureAccess = inject(PageFeatureAccessService);
-  private nativePlatform = inject(NativePlatformService);
-  private destroyRef = inject(DestroyRef);
-  private splashHidden = false;
+  private startup = inject(DeliveryAppStartupService);
 
   profileOpen = signal(false);
   notifOpen = signal(false);
   notifications = signal<Notification[]>([]);
   notifLoading = signal(false);
-  unreadCount = signal(0);
+  unreadCount = this.startup.unreadCount;
   currentUrl = signal('/');
-  private readonly authPollingEffect = effect(
-    () => {
-      const loggedIn = this.auth.isLoggedIn();
-      if (!loggedIn) {
-        this.notifPolling.stop();
-        this.unreadCount.set(0);
-        this.notifications.set([]);
-        return;
-      }
-      this.notifPolling.start();
-    },
-    { allowSignalWrites: true }
-  );
+  readonly navItems = DELIVERY_NAV_ITEMS;
 
   ngOnInit() {
     this.currentUrl.set(this.router.url || '/');
@@ -89,20 +74,7 @@ export class AppComponent implements OnInit {
       .subscribe((event) =>
         this.currentUrl.set(event.urlAfterRedirects || event.url || '/')
       );
-    this.featureAccess.loadConfig(!this.featureAccess.hasResolved()).subscribe({
-      complete: () => this.hideInitialSplash(),
-    });
-    this.featureAccess.startPolling('delivery-app');
-    window.setTimeout(() => this.hideInitialSplash(), 8000);
-
-    this.notifPolling.onUnreadChange((count) => this.unreadCount.set(count));
-    this.destroyRef.onDestroy(() => this.notifPolling.stop());
-  }
-
-  private hideInitialSplash(): void {
-    if (this.splashHidden) return;
-    this.splashHidden = true;
-    window.setTimeout(() => void this.nativePlatform.hideSplashScreen(), 700);
+    this.startup.start();
   }
 
   toggleProfile(event?: Event) {
@@ -121,7 +93,7 @@ export class AppComponent implements OnInit {
 
   fetchNotifications() {
     this.notifLoading.set(true);
-    this.api.getNotifications().subscribe({
+    this.notificationApi.getNotifications().subscribe({
       next: (r) => {
         this.notifications.set(
           ((r.results || r) as Notification[]).slice(0, 8)
@@ -136,8 +108,9 @@ export class AppComponent implements OnInit {
   }
 
   markAllRead() {
-    this.api.markAllNotificationsRead().subscribe({
+    this.notificationApi.markAllNotificationsRead().subscribe({
       next: () => {
+        this.notificationState.unreadNotifications.set(0);
         this.unreadCount.set(0);
         this.notifications.update((list) =>
           list.map((n) => ({ ...n, is_read: true }))
@@ -185,9 +158,12 @@ export class AppComponent implements OnInit {
 
   handleNotificationClick(n: Notification) {
     if (!n.is_read) {
-      this.api.markNotificationRead(n.id).subscribe({
+      this.notificationApi.markNotificationRead(n.id).subscribe({
         next: () => {
           this.unreadCount.update((c) => Math.max(0, c - 1));
+          this.notificationState.unreadNotifications.update((c) =>
+            Math.max(0, c - 1),
+          );
           this.notifications.update((list) =>
             list.map((item) =>
               item.id === n.id ? { ...item, is_read: true } : item
@@ -212,6 +188,10 @@ export class AppComponent implements OnInit {
 
   canUseRoute(route: string): boolean {
     return this.featureAccess.isRouteEnabled('delivery-app', route);
+  }
+
+  visibleNavItems() {
+    return this.navItems.filter((item) => this.canUseRoute(item.route));
   }
 
   showBackButton(): boolean {

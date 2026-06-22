@@ -1,11 +1,11 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import {
-  ApiService,
   FieldErrors,
   firstFieldError,
   parseFormErrors,
   ToastService,
+  VendorApi,
 } from '@shared/public-api';
 import {
   ProductEditSaveEvent,
@@ -57,7 +57,7 @@ const EMPTY_PRODUCT: VendorProductEdit = {
 
 @Injectable({ providedIn: 'root' })
 export class VendorProductEditService {
-  private readonly api = inject(ApiService);
+  private readonly api = inject(VendorApi);
   private readonly globalToast = inject(ToastService);
 
   readonly product = signal<VendorProductEdit>({ ...EMPTY_PRODUCT });

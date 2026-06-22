@@ -36,8 +36,8 @@
           <h1>{{ heroTitle() }}</h1>
           <p class="hero-subtitle">{{ heroSubtitle() }}</p>
           @if (heroStore(); as store) {
-            <div class="hero-offer glass-nav">
-              <b class="gradient-accent">{{ store.name }}</b>
+            <div class="hero-offer">
+              <b>{{ store.name }}</b>
               <span>{{ store.category }}</span>
             </div>
           }

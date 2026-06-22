@@ -14,7 +14,12 @@ import {
   TitleCasePipe,
 } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService, AppCurrencyPipe, ToastService } from '@shared/public-api';
+import {
+  ApiService,
+  apiErrorMessage,
+  AppCurrencyPipe,
+  ToastService,
+} from '@shared/public-api';
 import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
 
 @Component({
@@ -488,7 +493,7 @@ export class PayoutsComponent implements OnInit, OnDestroy {
         this.loadPayouts();
       },
       error: (e: any) =>
-        this.toast.show(e.error?.error || 'Failed to schedule.', 'error'),
+        this.toast.show(apiErrorMessage(e, 'Failed to schedule.'), 'error'),
     });
   }
 
@@ -523,7 +528,7 @@ export class PayoutsComponent implements OnInit, OnDestroy {
         this.loadPayouts();
       },
       error: (e: any) => {
-        this.toast.show(e.error?.error || 'Failed to send payment.', 'error');
+        this.toast.show(apiErrorMessage(e, 'Failed to send payment.'), 'error');
         this.sendingPayment.set(false);
       },
     });
@@ -555,7 +560,7 @@ export class PayoutsComponent implements OnInit, OnDestroy {
         this.loadPayouts();
       },
       error: (e: any) => {
-        this.toast.show(e.error?.error || 'Override failed.', 'error');
+        this.toast.show(apiErrorMessage(e, 'Override failed.'), 'error');
         this.forcingPaid.set(false);
       },
     });

@@ -1,7 +1,7 @@
 import { Component, computed, Input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AppCurrencyPipe } from '@shared/lib/pipes/currency.pipe';
-import { AppStateService } from '../../services/app-state.service';
+import { CustomerCartFacade } from '../../services/facades/customer-cart.facade';
 
 @Component({
   selector: 'fd-mobile-sticky-cart-bar',
@@ -12,7 +12,7 @@ import { AppStateService } from '../../services/app-state.service';
 })
 export class MobileStickyCartBarComponent {
   @Input() visible = true;
-  savings = computed(() => Math.max(0, this.state.discount()));
+  savings = computed(() => Math.max(0, this.cart.discount()));
 
-  constructor(public state: AppStateService) {}
+  constructor(public cart: CustomerCartFacade) {}
 }

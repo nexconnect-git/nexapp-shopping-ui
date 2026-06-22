@@ -94,41 +94,6 @@ export interface CustomerContentConfig {
     browseCta: string;
     securePayment: string;
   };
-  offers: {
-    title: string;
-    subtitle: string;
-    emptyTitle: string;
-    emptyDescription: string;
-    emptyCta: string;
-    shopBanners: CustomerPromoCard[];
-  };
-  referral: {
-    title: string;
-    subtitle: string;
-    ctaLabel: string;
-    codeTitle: string;
-    rewardsTitle: string;
-    rewardsSubtitle: string;
-    unavailableCode: string;
-    copiedMessage: string;
-  };
-  help: {
-    title: string;
-    subtitle: string;
-    formLabel: string;
-    messageLabel: string;
-    messagePlaceholder: string;
-    replyPlaceholder: string;
-    submitLabel: string;
-    submittingLabel: string;
-    sendLabel: string;
-    sendingLabel: string;
-    ratingTitle: string;
-    ratingPositive: string;
-    ratingNegative: string;
-    faqTitle: string;
-    fallbackTopics: string[];
-  };
   messages: {
     locationPrompt: string;
     loginPrompt: string;
@@ -139,8 +104,8 @@ export const DEFAULT_CUSTOMER_CONTENT_CONFIG: CustomerContentConfig = {
   navigation: {
     bottomNav: [
       { label: 'Home', icon: 'home', route: '/', exact: true },
-      { label: 'Categories', icon: 'category', route: '/categories' },
-      { label: 'Explore', icon: 'travel_explore', route: '/explore' },
+      { label: 'Stores', icon: 'storefront', route: '/stores' },
+      { label: 'Search', icon: 'search', route: '/search' },
       { label: 'Cart', icon: 'shopping_cart', route: '/cart', badge: 'cart' },
       { label: 'Account', icon: 'person', route: '/account' },
     ],
@@ -221,47 +186,6 @@ export const DEFAULT_CUSTOMER_CONTENT_CONFIG: CustomerContentConfig = {
     browseCta: 'Browse products',
     securePayment: 'Safe and secure payments',
   },
-  offers: {
-    title: 'Offers & Coupons',
-    subtitle: 'Live coupons from the active catalog',
-    emptyTitle: 'No active coupons right now',
-    emptyDescription:
-      'Available offers will appear here as soon as the catalog has active coupons.',
-    emptyCta: 'Explore products',
-    shopBanners: [],
-  },
-  referral: {
-    title: 'Refer and Earn',
-    subtitle: 'For every friend who places their first Nextou order.',
-    ctaLabel: 'Copy referral link',
-    codeTitle: 'Your Referral Code',
-    rewardsTitle: 'Your Rewards',
-    rewardsSubtitle: 'Total Earned',
-    unavailableCode: 'Referral code is not available',
-    copiedMessage: 'Referral code copied',
-  },
-  help: {
-    title: 'Order Help',
-    subtitle: 'Tell us what went wrong with your order.',
-    formLabel: 'Need Help?',
-    messageLabel: 'Tell us more',
-    messagePlaceholder: 'Describe the issue, item name, and what went wrong...',
-    replyPlaceholder: 'Write your reply to support...',
-    submitLabel: 'Submit',
-    submittingLabel: 'Submitting...',
-    sendLabel: 'Send Message',
-    sendingLabel: 'Sending...',
-    ratingTitle: 'Rate your experience',
-    ratingPositive: 'Excellent',
-    ratingNegative: 'Needs improvement',
-    faqTitle: 'Common help topics',
-    fallbackTopics: [
-      'Order delayed',
-      'Wrong or missing item',
-      'Payment issue',
-      'Refund status',
-    ],
-  },
   messages: {
     locationPrompt:
       'Set your delivery location to see available stores near you.',
@@ -288,33 +212,37 @@ function mergeConfig<T>(base: T, incoming: Partial<T> | null | undefined): T {
 }
 
 function normalizeBottomNav(items: CustomerNavItem[]): CustomerNavItem[] {
+  const removedRoutes = new Set([
+    '/offers',
+    '/wallet',
+    '/wishlist',
+    '/favorites',
+    '/referral',
+    '/help',
+    '/issues',
+    '/my-issues',
+    '/notifications',
+    '/payments',
+    '/orders',
+    '/categories',
+  ]);
   const seenRoutes = new Set<string>();
-  const nav = items
-    .map((item) =>
-      item.route === '/stores' || item.route === '/search'
-        ? {
-            ...item,
-            label: item.route === '/search' ? 'Explore' : 'Categories',
-            icon: item.route === '/search' ? 'travel_explore' : 'category',
-            route: item.route === '/search' ? '/explore' : '/categories',
-          }
-        : item,
-    )
-    .filter((item) => {
-      if (seenRoutes.has(item.route)) return false;
-      seenRoutes.add(item.route);
-      return true;
-    });
-  if (!nav.some((item) => item.route === '/explore')) {
-    const cartIndex = nav.findIndex((item) => item.route === '/cart');
-    const insertAt = cartIndex >= 0 ? cartIndex : Math.min(2, nav.length);
-    nav.splice(insertAt, 0, {
-      label: 'Explore',
-      icon: 'travel_explore',
-      route: '/explore',
-    });
+  const nav = items.filter((item) => {
+    if (removedRoutes.has(item.route) || seenRoutes.has(item.route)) return false;
+    seenRoutes.add(item.route);
+    return true;
+  });
+  const required: CustomerNavItem[] = [
+    { label: 'Home', icon: 'home', route: '/', exact: true },
+    { label: 'Stores', icon: 'storefront', route: '/stores' },
+    { label: 'Search', icon: 'search', route: '/search' },
+    { label: 'Cart', icon: 'shopping_cart', route: '/cart', badge: 'cart' },
+    { label: 'Account', icon: 'person', route: '/account' },
+  ];
+  for (const item of required) {
+    if (!seenRoutes.has(item.route)) nav.push(item);
   }
-  return nav.filter((item) => item.route !== '/orders');
+  return nav.slice(0, 5);
 }
 
 @Injectable({ providedIn: 'root' })
@@ -337,9 +265,6 @@ export class CustomerContentConfigService {
   readonly search = computed(() => this._config().search);
   readonly filters = computed(() => this._config().filters);
   readonly cart = computed(() => this._config().cart);
-  readonly offers = computed(() => this._config().offers);
-  readonly referral = computed(() => this._config().referral);
-  readonly help = computed(() => this._config().help);
   readonly messages = computed(() => this._config().messages);
 
   load(): void {

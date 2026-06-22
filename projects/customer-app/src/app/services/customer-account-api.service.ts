@@ -5,6 +5,14 @@ import { CustomerApiClientService } from './customer-api-client.service';
 export class CustomerAccountApiService {
   private api = inject(CustomerApiClientService);
 
+  getProfile() {
+    return this.api.toObservable<any>(this.api.client.auth.profile());
+  }
+
+  updateProfile(payload: Record<string, any>) {
+    return this.api.toObservable<any>(this.api.client.auth.updateProfile(payload));
+  }
+
   getAddresses() {
     return this.api.toObservable<any>(this.api.client.account.addresses());
   }

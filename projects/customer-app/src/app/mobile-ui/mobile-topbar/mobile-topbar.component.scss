@@ -34,19 +34,26 @@
   gap: 6px;
   font-size: 17px;
   font-weight: 950;
+  min-width: 0;
 }
 
 .top-actions span {
   font-family: "Material Symbols Rounded";
-  font-size: 20px;
+  font-size: 22px;
 }
 
 .brand-logo {
-  width: 26px;
-  height: 26px;
-  display: block;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
   border-radius: 12px;
-  object-fit: contain;
+  background: #fff;
+  color: #38268e;
+  font-size: 18px;
+  font-weight: 950;
+  line-height: 1;
+  box-shadow: 0 8px 18px rgba(16, 10, 54, 0.12);
 }
 
 .top-actions {
@@ -57,26 +64,31 @@
 .top-actions a,
 .top-actions button {
   position: relative;
-  width: 30px;
-  height: 30px;
+  width: 40px;
+  height: 40px;
   display: grid;
   place-items: center;
-  border-radius: 10px;
+  border-radius: 12px;
   color: #fff;
   background: rgba(255, 255, 255, 0.16);
 }
 
 .brand-wordmark {
-  height: 16px;
-  width: auto;
+  overflow: hidden;
   display: block;
-  object-fit: contain;
+  max-width: 118px;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 950;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 i {
   position: absolute;
-  top: -3px;
-  right: -3px;
+  top: -4px;
+  right: -4px;
   min-width: 18px;
   height: 18px;
   display: grid;

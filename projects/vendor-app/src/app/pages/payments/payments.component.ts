@@ -1,7 +1,12 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService, AppCurrencyPipe, ToastService } from '@shared/public-api';
+import {
+  apiErrorMessage,
+  VendorApi,
+  AppCurrencyPipe,
+  ToastService,
+} from '@shared/public-api';
 
 @Component({
   selector: 'app-payments',
@@ -11,7 +16,7 @@ import { ApiService, AppCurrencyPipe, ToastService } from '@shared/public-api';
   styleUrl: './payments.component.scss',
 })
 export class PaymentsComponent implements OnInit {
-  private api = inject(ApiService);
+  private api = inject(VendorApi);
   private toast = inject(ToastService);
 
   loading = signal(true);
@@ -104,7 +109,7 @@ export class PaymentsComponent implements OnInit {
       },
       error: (e: any) => {
         this.actionId.set(null);
-        this.toast.show(e.error?.error || 'Failed to approve payout.', 'error');
+        this.toast.show(apiErrorMessage(e, 'Failed to approve payout.'), 'error');
       },
     });
   }
@@ -138,7 +143,7 @@ export class PaymentsComponent implements OnInit {
       },
       error: (e: any) => {
         this.actionId.set(null);
-        this.toast.show(e.error?.error || 'Failed to decline payout.', 'error');
+        this.toast.show(apiErrorMessage(e, 'Failed to decline payout.'), 'error');
       },
     });
   }
@@ -156,7 +161,7 @@ export class PaymentsComponent implements OnInit {
       },
       error: (e: any) => {
         this.actionId.set(null);
-        this.toast.show(e.error?.error || 'Failed to verify credit.', 'error');
+        this.toast.show(apiErrorMessage(e, 'Failed to verify credit.'), 'error');
       },
     });
   }

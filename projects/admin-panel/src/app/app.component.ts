@@ -13,9 +13,14 @@ import {
   ApiService,
   AuthService,
   GlobalLoadingComponent,
-  NotificationPollingService,
   ToastComponent,
 } from '@shared/public-api';
+import {
+  ADMIN_BASE_NAV_SECTIONS,
+  ADMIN_GOVERN_NAV_ITEMS,
+  ADMIN_QUICK_LINKS,
+} from './config/admin-navigation';
+import { AdminAppStartupService } from './services/admin-app-startup.service';
 
 @Component({
   selector: 'app-root',
@@ -36,7 +41,7 @@ export class AppComponent implements OnInit {
   api = inject(ApiService);
   private router = inject(Router);
   private location = inject(Location);
-  private notifPolling = inject(NotificationPollingService);
+  private startup = inject(AdminAppStartupService);
 
   sidebarCollapsed = signal(false);
   mobileMenuOpen = signal(false);
@@ -44,92 +49,13 @@ export class AppComponent implements OnInit {
   notifOpen = signal(false);
   notifications = signal<any[]>([]);
   notifLoading = signal(false);
-  unreadCount = signal(0);
+  unreadCount = this.startup.unreadCount;
   navQuery = signal('');
   breadcrumbs = signal<Array<{ label: string; url?: string }>>([]);
   currentUrl = signal('/');
-  readonly quickLinks = [
-    { route: '/orders', icon: 'receipt_long', label: 'Orders' },
-    { route: '/dispatch', icon: 'route', label: 'Dispatch' },
-    { route: '/vendors/onboard', icon: 'storefront', label: 'Vendor' },
-  ];
-  private readonly baseNavSections = [
-    {
-      label: 'Operate',
-      items: [
-        { route: '/', icon: 'speed', label: 'Command Center' },
-        { route: '/orders', icon: 'receipt_long', label: 'Live Orders' },
-        { route: '/dispatch', icon: 'route', label: 'Dispatch Board' },
-        {
-          route: '/delivery-partners',
-          icon: 'two_wheeler',
-          label: 'Dispatch Fleet',
-        },
-        { route: '/issues', icon: 'support_agent', label: 'Exceptions' },
-      ],
-    },
-    {
-      label: 'Marketplace',
-      items: [
-        { route: '/vendors', icon: 'storefront', label: 'Stores' },
-        { route: '/catalog', icon: 'inventory_2', label: 'Master Catalog' },
-        {
-          route: '/catalog-requests',
-          icon: 'playlist_add_check',
-          label: 'Catalog Requests',
-        },
-        {
-          route: '/vendor-variant-approvals',
-          icon: 'rule',
-          label: 'Product Approvals',
-        },
-        { route: '/products', icon: 'store', label: 'Vendor Products' },
-        { route: '/categories', icon: 'category', label: 'Categories' },
-        { route: '/customers', icon: 'groups', label: 'Customers' },
-      ],
-    },
-    {
-      label: 'Growth',
-      items: [
-        { route: '/coupons', icon: 'local_activity', label: 'Promotions' },
-        { route: '/banners', icon: 'view_carousel', label: 'Home Banners' },
-        {
-          route: '/customer-content',
-          icon: 'dashboard_customize',
-          label: 'Customer Templates',
-        },
-        { route: '/notifications', icon: 'campaign', label: 'Notifications' },
-        { route: '/assets', icon: 'handyman', label: 'Assets' },
-      ],
-    },
-    {
-      label: 'Money',
-      items: [
-        { route: '/payments', icon: 'credit_card', label: 'Payments' },
-        { route: '/payouts', icon: 'account_balance_wallet', label: 'Payouts' },
-        {
-          route: '/reconciliation',
-          icon: 'fact_check',
-          label: 'Reconciliation',
-        },
-        {
-          route: '/scheduled-tasks',
-          icon: 'event_repeat',
-          label: 'Automation',
-        },
-      ],
-    },
-  ];
-  private readonly governNavItems = [
-    { route: '/platform-settings', icon: 'tune', label: 'Platform Settings' },
-    {
-      route: '/settings/page-feature-management',
-      icon: 'toggle_on',
-      label: 'Page & Feature Mgmt',
-    },
-    { route: '/audit-logs', icon: 'manage_search', label: 'Audit Logs' },
-    { route: '/production-readiness', icon: 'verified', label: 'Readiness' },
-  ];
+  readonly quickLinks = ADMIN_QUICK_LINKS;
+  private readonly baseNavSections = ADMIN_BASE_NAV_SECTIONS;
+  private readonly governNavItems = ADMIN_GOVERN_NAV_ITEMS;
 
   get navSections() {
     const access = [...this.governNavItems];
@@ -165,9 +91,7 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit() {
-    if (this.auth.isLoggedIn()) {
-      this.startPolling();
-    }
+    this.startup.start();
     this.currentUrl.set(this.router.url);
     this.redirectAuthenticatedAuthRoute(this.router.url);
     this.setBreadcrumbs(this.router.url);
@@ -264,25 +188,6 @@ export class AppComponent implements OnInit {
       products: 'Product Detail',
     };
     return parent ? map[parent] || 'Detail' : 'Detail';
-  }
-
-  private startPolling() {
-    // notifPolling drives both badges and toasts — no separate timer needed
-    this.notifPolling.onUnreadChange((count) => this.unreadCount.set(count));
-
-    // Live toast notifications via polling service
-    this.notifPolling.start((n) => {
-      if (n.notification_type === 'order' && n.related_entity_id) {
-        return { label: 'View Order', url: `/orders/${n.related_entity_id}` };
-      }
-      if (n.notification_type === 'delivery' && n.related_entity_id) {
-        return {
-          label: 'View Partner',
-          url: `/delivery-partners/${n.related_entity_id}`,
-        };
-      }
-      return { label: 'View', url: '/notifications' };
-    });
   }
 
   toggleProfile(event: Event) {

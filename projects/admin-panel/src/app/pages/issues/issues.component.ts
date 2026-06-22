@@ -3,6 +3,7 @@ import { Subscription, timer } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
+  API_BASE_URL,
   ApiService,
   AppCurrencyPipe,
   AuthService,
@@ -26,6 +27,7 @@ import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
 export class IssuesComponent implements OnInit, OnDestroy {
   private api = inject(ApiService);
   private auth = inject(AuthService);
+  private apiBaseUrl = inject(API_BASE_URL);
 
   issues = signal<any[]>([]);
   loading = signal(true);
@@ -145,6 +147,7 @@ export class IssuesComponent implements OnInit, OnDestroy {
     this.ws = openAuthenticatedWebSocket(
       `/ws/issues/${issueId}/`,
       this.auth.getToken(),
+      this.apiBaseUrl,
     );
 
     this.ws.onmessage = (event) => {

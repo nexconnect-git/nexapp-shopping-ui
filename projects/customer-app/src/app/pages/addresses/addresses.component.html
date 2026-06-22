@@ -150,6 +150,10 @@
             placeholder="PIN code"
             [value]="form.pincode || ''"
             (input)="onPincodeInput($any($event.target).value)"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            maxlength="6"
+            (keydown)="blockInvalidNumberKey($event)"
           />
           @if (fieldError("pincode")) {
           <small class="field-error">{{ fieldError("pincode") }}</small>
@@ -163,6 +167,10 @@
             placeholder="Receiver phone number"
             [value]="form.phone"
             (input)="onPhoneInput($any($event.target).value)"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            maxlength="10"
+            (keydown)="blockInvalidNumberKey($event)"
           />
           @if (fieldError("phone")) {
           <small class="field-error">{{ fieldError("phone") }}</small>
@@ -174,9 +182,9 @@
           ><button
             type="submit"
             class="fd-btn primary"
-            [disabled]="!isAddressFormValid()"
+            [disabled]="saving() || !isAddressFormValid()"
           >
-            Save
+            {{ saving() ? "Saving..." : "Save" }}
           </button>
         </div>
       </form>
@@ -278,8 +286,11 @@
               [class.has-error]="fieldError('phone')"
               [(ngModel)]="form.phone"
               (ngModelChange)="onPhoneInput($event)"
-              placeholder="Phone number"
-              inputmode="tel"
+              placeholder="10-digit mobile number"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              maxlength="10"
+              (keydown)="blockInvalidNumberKey($event)"
             />
             @if (fieldError("phone")) {
             <small class="field-error">{{ fieldError("phone") }}</small> }</label
@@ -342,6 +353,9 @@
             (ngModelChange)="onPincodeInput($event)"
             placeholder="6 digit PIN"
             inputmode="numeric"
+            pattern="[0-9]*"
+            maxlength="6"
+            (keydown)="blockInvalidNumberKey($event)"
           />
           @if (fieldError("pincode")) {
           <small class="field-error">{{ fieldError("pincode") }}</small> }</label
@@ -369,9 +383,9 @@
         <button
           type="submit"
           class="mobile-cta"
-          [disabled]="!isAddressFormValid()"
+          [disabled]="saving() || !isAddressFormValid()"
         >
-          Save address
+          {{ saving() ? "Saving..." : "Save address" }}
         </button>
       </div>
     </form>

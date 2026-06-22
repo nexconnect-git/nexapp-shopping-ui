@@ -1,7 +1,12 @@
 import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService, AppCurrencyPipe, ToastService } from '@shared/public-api';
+import {
+  ApiService,
+  apiErrorMessage,
+  AppCurrencyPipe,
+  ToastService,
+} from '@shared/public-api';
 import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
 
 interface TaskDef {
@@ -227,8 +232,7 @@ export class ScheduledTasksComponent implements OnInit, OnDestroy {
         setTimeout(() => this.loadJobs(), 1000);
       },
       error: (err) => {
-        const msg = err.error?.error || 'Failed to schedule task.';
-        this.toast.show(msg, 'error');
+        this.toast.show(apiErrorMessage(err, 'Failed to schedule task.'), 'error');
         this.submitting.set(false);
       },
     });

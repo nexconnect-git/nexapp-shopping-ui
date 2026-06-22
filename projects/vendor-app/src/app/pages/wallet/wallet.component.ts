@@ -1,6 +1,6 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { ApiService, AppCurrencyPipe, ToastService } from '@shared/public-api';
+import { VendorApi, AppCurrencyPipe, ToastService } from '@shared/public-api';
 
 @Component({
   selector: 'app-wallet',
@@ -10,7 +10,7 @@ import { ApiService, AppCurrencyPipe, ToastService } from '@shared/public-api';
   styleUrl: './wallet.component.scss',
 })
 export class WalletComponent implements OnInit {
-  private api = inject(ApiService);
+  private api = inject(VendorApi);
   private toast = inject(ToastService);
 
   loading = signal(true);

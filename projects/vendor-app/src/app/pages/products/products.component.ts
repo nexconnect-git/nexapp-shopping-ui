@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import {
-  ApiService,
+  VendorApi,
   AppCurrencyPipe,
   DynamicTableColumn,
   DynamicTableComponent,
@@ -28,7 +28,7 @@ import { Subscription, timer } from 'rxjs';
   styleUrl: './products.component.scss',
 })
 export class ProductsComponent implements OnInit, OnDestroy {
-  private api = inject(ApiService);
+  private api = inject(VendorApi);
   private toast = inject(ToastService);
 
   readonly columns: DynamicTableColumn[] = [

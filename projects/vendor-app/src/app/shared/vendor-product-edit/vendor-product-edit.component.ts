@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { ApiService, AppCurrencyPipe, AuthService } from '@shared/public-api';
+import { AppCurrencyPipe, AuthService, VendorApi } from '@shared/public-api';
 import {
   ProductEditSaveEvent,
   VendorProductEdit,
@@ -26,7 +26,7 @@ export class VendorProductEditComponent {
   @Output() cancelEdit = new EventEmitter<void>();
   @Output() saved = new EventEmitter<ProductEditSaveEvent>();
   readonly auth = inject(AuthService);
-  readonly api = inject(ApiService);
+  readonly api = inject(VendorApi);
 
   readonly readiness = computed(() => this.service.readinessItems());
   readonly readinessScore = computed(() => this.service.readinessScore());

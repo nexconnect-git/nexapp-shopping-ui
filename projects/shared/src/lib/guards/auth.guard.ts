@@ -3,28 +3,15 @@ import { type CanActivateFn, Router } from '@angular/router';
 import { catchError, map, of } from 'rxjs';
 import { ApiService } from '../services/api.service';
 import { AuthService } from '../services/auth.service';
-import { AUTH_PREFIX } from '../tokens/auth-prefix.token';
+import { SessionStore } from '../services/session-store.service';
 
 /** Read the portal-scoped token from durable storage. */
 function getScopedToken(): string | null {
-  const prefix = inject(AUTH_PREFIX);
-  return (
-    sessionStorage.getItem(`${prefix}_access_token`) ||
-    localStorage.getItem(`${prefix}_access_token`)
-  );
+  return inject(SessionStore).getAccessToken();
 }
 
 function getScopedUser(): any | null {
-  const prefix = inject(AUTH_PREFIX);
-  const raw =
-    sessionStorage.getItem(`${prefix}_user`) ||
-    localStorage.getItem(`${prefix}_user`);
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
+  return inject(SessionStore).getUser();
 }
 
 /**
@@ -104,23 +91,18 @@ export const approvedVendorGuard: CanActivateFn = () => {
   const router = inject(Router);
   const api = inject(ApiService);
   const auth = inject(AuthService);
-  const prefix = inject(AUTH_PREFIX);
+  const session = inject(SessionStore);
 
-  const token =
-    sessionStorage.getItem(`${prefix}_access_token`) ||
-    localStorage.getItem(`${prefix}_access_token`);
-  const userData =
-    sessionStorage.getItem(`${prefix}_user`) ||
-    localStorage.getItem(`${prefix}_user`);
+  const token = session.getAccessToken();
+  const user = session.getUser<any>();
 
-  if (!token || !userData) {
+  if (!token || !user) {
     router.navigate(['/login']);
     return false;
   }
 
-  const user = JSON.parse(userData);
-  sessionStorage.setItem(`${prefix}_access_token`, token);
-  sessionStorage.setItem(`${prefix}_user`, userData);
+  session.setAccessToken(token);
+  session.setUser(user);
   if (user.role !== 'vendor') {
     router.navigate(['/login']);
     return false;
@@ -128,7 +110,7 @@ export const approvedVendorGuard: CanActivateFn = () => {
 
   return api.getVendorProfile().pipe(
     map((profile: any) => {
-      localStorage.setItem(`${prefix}_vendor_status`, profile.status);
+      session.setVendorStatus(profile.status);
       if (profile.status === 'approved') {
         if (user.force_password_change) {
           router.navigate(['/change-password']);
@@ -140,7 +122,7 @@ export const approvedVendorGuard: CanActivateFn = () => {
       return false;
     }),
     catchError((err) => {
-      localStorage.removeItem(`${prefix}_vendor_status`);
+      session.clearVendorStatus();
       if (err?.status === 401 || err?.status === 403 || err?.status === 404) {
         auth.clearInvalidSession();
         router.navigate(['/login']);

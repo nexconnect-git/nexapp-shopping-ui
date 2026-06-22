@@ -35,10 +35,6 @@ export class CustomerCatalogApiService {
     return this.api.toObservable<any>(this.api.client.catalog.coupons());
   }
 
-  getIssueOptions() {
-    return this.api.toObservable<any>(this.api.client.support.issueOptions());
-  }
-
   getCategories(params?: Record<string, any>) {
     return this.api.toObservable<any>(
       this.api.client.catalog.categories(params),

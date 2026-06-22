@@ -11,7 +11,6 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import {
-  ApiService,
   AppCurrencyPipe,
   AuthService,
   decodeGooglePolyline,
@@ -23,6 +22,7 @@ import { Subscription, timer } from 'rxjs';
 import { GoogleMapsModule } from '@angular/google-maps';
 import { environment } from '../../../environments/environment';
 import { VendorOrderActionsService } from '../../services/vendor-order-actions.service';
+import { VendorOrderFacade } from '../../services/vendor-order.facade';
 
 @Component({
   selector: 'app-order-detail',
@@ -32,11 +32,11 @@ import { VendorOrderActionsService } from '../../services/vendor-order-actions.s
   styleUrl: './order-detail.component.scss',
 })
 export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
-  private api = inject(ApiService);
   private auth = inject(AuthService);
   private route = inject(ActivatedRoute);
   private zone = inject(NgZone);
   private orderActions = inject(VendorOrderActionsService);
+  private orderFacade = inject(VendorOrderFacade);
   private googleMaps = inject(GoogleMapsService);
 
   order = signal<Order | null>(null);
@@ -227,7 +227,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   loadOrder() {
-    this.api.getVendorOrder(this.orderId).subscribe({
+    this.orderFacade.loadOrder(this.orderId).subscribe({
       next: (o) => {
         this.order.set(o);
         this.loading.set(false);
@@ -238,10 +238,10 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private connectWebSocket(orderId: string) {
-    const wsPrefix = environment.apiBaseUrl.replace(/\/api$/, '');
     this.ws = openAuthenticatedWebSocket(
-      `${wsPrefix}/ws/delivery/${orderId}/tracking/`,
+      `/ws/delivery/${orderId}/tracking/`,
       this.auth.getToken(),
+      environment.apiBaseUrl,
     );
     this.ws.onmessage = (msg) => {
       const data = JSON.parse(msg.data);
@@ -431,27 +431,18 @@ export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   downloadInvoice() {
     const o = this.order();
     if (!o) return;
-    this.api
-      .generateInvoice({
-        invoice_type: 'customer_receipt',
-        order: o.id,
-        amount: o.total,
-        notes: `Receipt for Order #${o.order_number}`,
-      })
+    this.orderFacade
+      .downloadCustomerInvoice(o)
       .subscribe({
-        next: (inv) =>
-          this.api.downloadInvoice(inv.id).subscribe({
-            next: (blob) => {
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = `invoice-${o.order_number}.pdf`;
-              a.click();
-              URL.revokeObjectURL(url);
-            },
-            error: () => alert('Failed to download invoice.'),
-          }),
-        error: () => alert('Failed to generate invoice.'),
+        next: (blob) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `invoice-${o.order_number}.pdf`;
+          a.click();
+          URL.revokeObjectURL(url);
+        },
+        error: () => alert('Failed to download invoice.'),
       });
   }
 

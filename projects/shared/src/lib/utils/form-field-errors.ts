@@ -52,7 +52,7 @@ export function parseFormErrors(
 
     Object.entries(value).forEach(([field, fieldValue]) => {
       if (
-        field === 'error' &&
+        (field === 'error' || field === 'errors') &&
         typeof fieldValue === 'object' &&
         !Array.isArray(fieldValue)
       ) {

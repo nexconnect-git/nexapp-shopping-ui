@@ -9,6 +9,7 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
+  API_BASE_URL,
   ApiService,
   AppCurrencyPipe,
   AuthService,
@@ -41,6 +42,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
   private auth = inject(AuthService);
   private zone = inject(NgZone);
   private googleMaps = inject(GoogleMapsService);
+  private apiBaseUrl = inject(API_BASE_URL);
 
   orders = signal<Order[]>([]);
   loading = signal(true);
@@ -310,8 +312,9 @@ export class OrdersComponent implements OnInit, OnDestroy {
   private connectWebSocket(orderId: string) {
     this.closeWs();
     this.ws = openAuthenticatedWebSocket(
-      `/sa/ws/delivery/${orderId}/tracking/`,
+      `/ws/delivery/${orderId}/tracking/`,
       this.auth.getToken(),
+      this.apiBaseUrl,
     );
     this.ws.onmessage = (msg) => {
       const data = JSON.parse(msg.data);

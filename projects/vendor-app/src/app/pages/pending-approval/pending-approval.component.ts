@@ -1,7 +1,7 @@
 import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { ApiService, AuthService } from '@shared/public-api';
+import { VendorApi, AuthService } from '@shared/public-api';
 
 @Component({
   selector: 'app-pending-approval',
@@ -11,7 +11,7 @@ import { ApiService, AuthService } from '@shared/public-api';
   styleUrl: './pending-approval.component.scss',
 })
 export class PendingApprovalComponent implements OnInit, OnDestroy {
-  private api = inject(ApiService);
+  private api = inject(VendorApi);
   private auth = inject(AuthService);
   private router = inject(Router);
 

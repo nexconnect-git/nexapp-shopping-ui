@@ -1,7 +1,7 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { ApiService } from '@shared/public-api';
+import { VendorApi } from '@shared/public-api';
 import { forkJoin } from 'rxjs';
 
 @Component({
@@ -12,7 +12,7 @@ import { forkJoin } from 'rxjs';
   styleUrl: './reviews.component.scss',
 })
 export class ReviewsComponent implements OnInit {
-  private api = inject(ApiService);
+  private api = inject(VendorApi);
   private router = inject(Router);
 
   loading = signal(true);

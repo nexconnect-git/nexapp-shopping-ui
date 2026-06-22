@@ -1,7 +1,13 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { ApiService, AuthService } from '@shared/public-api';
+import {
+  apiErrorMessage,
+  AuthService,
+  sanitizeUsername,
+  USERNAME_PATTERN,
+} from '@shared/public-api';
+import { DeliveryWorkflowFacade } from '../../services/delivery-workflow.facade';
 
 @Component({
   selector: 'app-login',
@@ -11,21 +17,35 @@ import { ApiService, AuthService } from '@shared/public-api';
 })
 export class LoginComponent {
   private auth = inject(AuthService);
-  private api = inject(ApiService);
+  private workflow = inject(DeliveryWorkflowFacade);
   private router = inject(Router);
 
   username = '';
   password = '';
   loading = signal(false);
   error = signal('');
+  submitted = signal(false);
+  fieldErrors = signal<{ username?: string; password?: string }>({});
 
   canSubmit(): boolean {
-    return !this.loading() && !!this.username.trim() && !!this.password;
+    return !this.loading();
+  }
+
+  onUsernameInput(value: string): void {
+    this.username = sanitizeUsername(value);
+    this.clearFieldError('username');
+  }
+
+  onPasswordInput(value: string): void {
+    this.password = value;
+    this.clearFieldError('password');
   }
 
   onLogin() {
-    if (!this.username || !this.password) {
-      this.error.set('Please enter username and password');
+    this.submitted.set(true);
+    const errors = this.validate();
+    this.fieldErrors.set(errors);
+    if (Object.keys(errors).length) {
       return;
     }
     this.loading.set(true);
@@ -51,7 +71,7 @@ export class LoginComponent {
           this.loading.set(false);
           return;
         }
-        this.api.getDeliveryDashboard().subscribe({
+        this.workflow.loadDashboard().subscribe({
           next: (profile) => {
             this.router.navigate([
               profile?.is_approved ? '/' : '/pending-approval',
@@ -65,9 +85,30 @@ export class LoginComponent {
         });
       },
       error: (err) => {
-        this.error.set(err.error?.detail || 'Login failed. Please try again.');
+        this.error.set(apiErrorMessage(err, 'Login failed. Please try again.'));
         this.loading.set(false);
       },
     });
+  }
+
+  private validate(): { username?: string; password?: string } {
+    const errors: { username?: string; password?: string } = {};
+    const username = this.username.trim();
+    if (!username) {
+      errors.username = 'Username is required.';
+    } else if (!USERNAME_PATTERN.test(username)) {
+      errors.username = 'Use 3-30 letters, numbers, dots, hyphens, or underscores.';
+    }
+    if (!this.password) {
+      errors.password = 'Password is required.';
+    }
+    return errors;
+  }
+
+  private clearFieldError(field: 'username' | 'password'): void {
+    const current = { ...this.fieldErrors() };
+    delete current[field];
+    this.fieldErrors.set(current);
+    this.error.set('');
   }
 }

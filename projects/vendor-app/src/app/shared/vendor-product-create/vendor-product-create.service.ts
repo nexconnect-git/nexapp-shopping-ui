@@ -1,12 +1,12 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom, forkJoin } from 'rxjs';
 import {
-  ApiService,
   CurrencyService,
   FieldErrors,
   firstFieldError,
   parseFormErrors,
   ToastService,
+  VendorApi,
 } from '@shared/public-api';
 import {
   ApprovedCatalogItem,
@@ -22,7 +22,7 @@ import {
 
 @Injectable({ providedIn: 'root' })
 export class VendorProductCreateService {
-  private readonly api = inject(ApiService);
+  private readonly api = inject(VendorApi);
   private readonly globalToast = inject(ToastService);
   private readonly currency = inject(CurrencyService);
 

@@ -2,7 +2,7 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { ApiService, Product, ToastService } from '@shared/public-api';
+import { Product, ToastService, VendorApi } from '@shared/public-api';
 
 type InventoryFilter =
   | 'all'
@@ -21,7 +21,7 @@ type InventoryFilter =
   styleUrl: './inventory.component.scss',
 })
 export class InventoryComponent implements OnInit {
-  private api = inject(ApiService);
+  private api = inject(VendorApi);
   private toast = inject(ToastService);
 
   products = signal<Product[]>([]);

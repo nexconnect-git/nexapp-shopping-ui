@@ -10,12 +10,12 @@ import {
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import {
-  ApiService,
   AppCurrencyPipe,
   AuthService,
   openAuthenticatedWebSocket,
   Order,
   ToastService,
+  VendorApi,
 } from '@shared/public-api';
 import { environment } from '../../../environments/environment';
 import {
@@ -38,7 +38,7 @@ type BoardColumn = {
   styleUrl: './live-orders.component.scss',
 })
 export class LiveOrdersComponent implements OnInit {
-  private api = inject(ApiService);
+  private api = inject(VendorApi);
   private auth = inject(AuthService);
   private toast = inject(ToastService);
   private orderActions = inject(VendorOrderActionsService);
@@ -176,10 +176,10 @@ export class LiveOrdersComponent implements OnInit {
   }
 
   private connectOperationsSocket() {
-    const wsPrefix = environment.apiBaseUrl.replace(/\/api$/, '');
     this.ws = openAuthenticatedWebSocket(
-      `${wsPrefix}/ws/vendor/operations/`,
+      `/ws/vendor/operations/`,
       this.auth.getToken(),
+      environment.apiBaseUrl,
     );
     this.ws.onopen = () =>
       this.zone.run(() => {

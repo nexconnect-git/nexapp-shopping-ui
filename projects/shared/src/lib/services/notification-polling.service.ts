@@ -1,7 +1,8 @@
 import { inject, Injectable } from '@angular/core';
 import { Notification } from '../models';
+import { NotificationApi } from '../api/notification-api.service';
 import { AlertService } from './alert.service';
-import { ApiService } from './api.service';
+import { NotificationStateService } from './notification-state.service';
 
 export type NotifRouteMapper = (
   n: Notification,
@@ -9,8 +10,9 @@ export type NotifRouteMapper = (
 
 @Injectable({ providedIn: 'root' })
 export class NotificationPollingService {
-  private api = inject(ApiService);
+  private api = inject(NotificationApi);
   private alerts = inject(AlertService);
+  private state = inject(NotificationStateService);
 
   private seenIds = new Set<string>();
   private consecutiveErrors = 0;
@@ -62,7 +64,7 @@ export class NotificationPollingService {
     this.consecutiveErrors = 0;
     this.isOnline = true;
     this.unreadCount = 0;
-    this.api.unreadNotifications.set(0);
+    this.state.unreadNotifications.set(0);
     window.removeEventListener('online', this.onOnline);
     window.removeEventListener('offline', this.onOffline);
     document.removeEventListener('visibilitychange', this.onVisibility);
@@ -90,7 +92,7 @@ export class NotificationPollingService {
 
         const count = r.unread_count ?? r.count ?? 0;
         this.unreadCount = count;
-        this.api.unreadNotifications.set(count);
+        this.state.unreadNotifications.set(count);
         this.onUnread?.(count);
 
         if (wasOffline) {

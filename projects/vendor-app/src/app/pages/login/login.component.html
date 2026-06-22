@@ -59,8 +59,8 @@
       </div>
       }
 
-      <form (ngSubmit)="onLogin()">
-        <div class="form-group">
+      <form (ngSubmit)="onLogin()" novalidate>
+        <div class="form-group" [class.invalid]="fieldErrors().username">
           <label class="form-label" for="username">Username</label>
           <div class="input-icon-wrapper">
             <span class="material-icons-outlined input-icon"
@@ -70,19 +70,27 @@
               id="username"
               class="form-input"
               type="text"
-              [(ngModel)]="username"
+              [ngModel]="username"
+              (ngModelChange)="onUsernameInput($event)"
               name="username"
-              placeholder="Enter your username"
+              placeholder="testvendor"
               required
               autocomplete="username"
+              [attr.aria-invalid]="!!fieldErrors().username"
+              aria-describedby="vendor-username-error"
             />
           </div>
+          @if (fieldErrors().username) {
+          <small id="vendor-username-error" class="field-error">{{
+            fieldErrors().username
+          }}</small>
+          }
           <small class="field-hint"
             >Use the vendor username created during registration or by
             admin.</small
           >
         </div>
-        <div class="form-group">
+        <div class="form-group" [class.invalid]="fieldErrors().password">
           <label class="form-label" for="password">Password</label>
           <div class="input-icon-wrapper">
             <span class="material-icons-outlined input-icon">lock_outline</span>
@@ -90,13 +98,21 @@
               id="password"
               class="form-input"
               type="password"
-              [(ngModel)]="password"
+              [ngModel]="password"
+              (ngModelChange)="onPasswordInput($event)"
               name="password"
               placeholder="Enter your password"
               required
               autocomplete="current-password"
+              [attr.aria-invalid]="!!fieldErrors().password"
+              aria-describedby="vendor-password-error"
             />
           </div>
+          @if (fieldErrors().password) {
+          <small id="vendor-password-error" class="field-error">{{
+            fieldErrors().password
+          }}</small>
+          }
           <small class="field-hint"
             >Enter the password for this vendor account.</small
           >

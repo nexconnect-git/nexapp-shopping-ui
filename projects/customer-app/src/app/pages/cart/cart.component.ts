@@ -76,6 +76,10 @@ export class CartComponent implements OnInit {
     this.state.applyCoupon(code);
   }
 
+  checkout(): void {
+    this.state.proceedToCheckout();
+  }
+
   private loadSuggestions(): void {
     this.cartApi.getSuggestions().subscribe({
       next: (response) =>

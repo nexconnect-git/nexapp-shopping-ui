@@ -1,13 +1,14 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { mapCustomerError } from '@nexconnect/customer-errors';
-import { ApiService } from '@shared/lib/services/api.service';
 import { AuthService as SharedAuthService } from '@shared/lib/services/auth.service';
+import { apiErrorMessage } from '@shared/lib/api/api-error';
 import { type UserProfile } from '../models';
+import { CustomerAccountApiService } from './customer-account-api.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly sharedAuth = inject(SharedAuthService);
-  private readonly api = inject(ApiService);
+  private readonly accountApi = inject(CustomerAccountApiService);
 
   readonly otpRequested = signal(false);
   readonly loading = signal(false);
@@ -98,7 +99,7 @@ export class AuthService {
     onError?: (message: string) => void,
   ): void {
     const [firstName, ...rest] = data.name.trim().split(/\s+/).filter(Boolean);
-    this.api
+    this.accountApi
       .updateProfile({
         first_name: firstName || data.name,
         last_name: rest.join(' '),
@@ -117,6 +118,9 @@ export class AuthService {
 
   private explain(error: any, fallback: string): string {
     const body = error?.error;
-    return mapCustomerError(body || error, fallback).message;
+    return mapCustomerError(
+      body || error,
+      apiErrorMessage(error, fallback)
+    ).message;
   }
 }

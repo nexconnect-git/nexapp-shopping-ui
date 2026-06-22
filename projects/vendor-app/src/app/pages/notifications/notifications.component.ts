@@ -1,7 +1,7 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { ApiService, Notification, ToastService } from '@shared/public-api';
+import { Notification, ToastService, VendorApi } from '@shared/public-api';
 
 @Component({
   selector: 'app-notifications',
@@ -11,7 +11,7 @@ import { ApiService, Notification, ToastService } from '@shared/public-api';
   styleUrl: './notifications.component.scss',
 })
 export class NotificationsComponent implements OnInit {
-  private api = inject(ApiService);
+  private api = inject(VendorApi);
   private toast = inject(ToastService);
 
   notifications = signal<Notification[]>([]);

@@ -11,9 +11,6 @@
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { shouldShowDeliveryPartner } from '@nexconnect/customer-checkout';
-import {
-  ApiService,
-} from '@shared/lib/services/api.service';
 import { AppCurrencyPipe } from '@shared/lib/pipes/currency.pipe';
 import { GoogleMapsService } from '@shared/lib/services/google-maps.service';
 import { normalizeOrderStatus } from '@shared/lib/models/adapters';
@@ -21,6 +18,7 @@ import { Subscription } from 'rxjs';
 import { OrderService } from '../../services/order.service';
 import { AppStateService } from '../../services/app-state.service';
 import { DisplayOrderIdPipe } from '../../shared/display-order-id.pipe';
+import { CustomerOrderApiService } from '../../services/customer-order-api.service';
 
 declare const google: any;
 
@@ -67,7 +65,7 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private api: ApiService,
+    private orderApi: CustomerOrderApiService,
     public orders: OrderService,
     private state: AppStateService,
     private googleMaps: GoogleMapsService,
@@ -259,7 +257,7 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
 
   private loadTracking(id: string): void {
     this.trackingError.set('');
-    this.api.getOrderTracking(id).subscribe({
+    this.orderApi.getOrderTracking(id).subscribe({
       next: (response) => {
         this.tracking.set(
           Array.isArray(response)
@@ -402,7 +400,7 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
   }
 
   joinOne(): void {
-    this.router.navigate(['/profile']);
+    this.router.navigate(['/account']);
   }
 
   downloadInvoice(): void {
@@ -419,7 +417,7 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
     this.state.showToast('Preparing your receipt', 'info');
 
     const downloadById = (invoiceId: string): void => {
-      this.api.downloadInvoice(invoiceId).subscribe({
+      this.orderApi.downloadInvoice(invoiceId).subscribe({
         next: (blob) => {
           this.triggerFileDownload(
             blob,
@@ -440,10 +438,10 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
-    this.api
+    this.orderApi
       .generateInvoice({ order: orderId, invoice_type: 'customer_receipt' })
       .subscribe({
-        next: (invoice) => {
+        next: (invoice: any) => {
           const invoiceId = String(invoice?.id || '').trim();
           if (!invoiceId) {
             this.state.showToast('Receipt is not ready yet', 'warning');

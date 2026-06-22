@@ -59,8 +59,8 @@
       </div>
       }
 
-      <form (ngSubmit)="onLogin()">
-        <div class="form-group">
+      <form (ngSubmit)="onLogin()" novalidate>
+        <div class="form-group" [class.invalid]="fieldErrors().username">
           <label class="form-label" for="username">Username</label>
           <div class="input-icon-wrapper">
             <span class="material-icons-outlined input-icon"
@@ -70,15 +70,24 @@
               id="username"
               class="form-input"
               type="text"
-              [(ngModel)]="username"
+              [ngModel]="username"
+              (ngModelChange)="onUsernameInput($event)"
               name="username"
-              placeholder="Enter your username"
+              placeholder="delivery_partner"
               required
               autocomplete="username"
+              [attr.aria-invalid]="!!fieldErrors().username"
+              aria-describedby="delivery-username-error"
             />
           </div>
+          @if (fieldErrors().username) {
+          <small id="delivery-username-error" class="field-error">{{
+            fieldErrors().username
+          }}</small>
+          }
+          <small class="field-hint">Use the username assigned by admin.</small>
         </div>
-        <div class="form-group">
+        <div class="form-group" [class.invalid]="fieldErrors().password">
           <label class="form-label" for="password">Password</label>
           <div class="input-icon-wrapper">
             <span class="material-icons-outlined input-icon">lock_outline</span>
@@ -86,13 +95,22 @@
               id="password"
               class="form-input"
               type="password"
-              [(ngModel)]="password"
+              [ngModel]="password"
+              (ngModelChange)="onPasswordInput($event)"
               name="password"
-              placeholder="Enter your password"
+              placeholder="Enter your account password"
               required
               autocomplete="current-password"
+              [attr.aria-invalid]="!!fieldErrors().password"
+              aria-describedby="delivery-password-error"
             />
           </div>
+          @if (fieldErrors().password) {
+          <small id="delivery-password-error" class="field-error">{{
+            fieldErrors().password
+          }}</small>
+          }
+          <small class="field-hint">Use the temporary or updated password for this account.</small>
         </div>
         <button type="submit" class="signin-btn" [disabled]="!canSubmit()">
           @if (loading()) {

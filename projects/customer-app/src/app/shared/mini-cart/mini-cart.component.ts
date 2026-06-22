@@ -23,4 +23,8 @@ export class MiniCartComponent {
     this.state.closeMiniCart();
     this.ui.closeMiniCart();
   }
+
+  checkout(): void {
+    if (this.state.proceedToCheckout()) this.close();
+  }
 }

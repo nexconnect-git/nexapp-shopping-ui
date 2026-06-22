@@ -10,7 +10,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import {
-  ApiService,
+  VendorApi,
   AppCurrencyPipe,
   AuthService,
   DashboardStats,
@@ -28,7 +28,7 @@ import { Subscription, timer } from 'rxjs';
   styleUrl: './dashboard.component.scss',
 })
 export class DashboardComponent implements OnInit, OnDestroy {
-  private api = inject(ApiService);
+  private api = inject(VendorApi);
   private toast = inject(ToastService);
   private router = inject(Router);
   auth = inject(AuthService);

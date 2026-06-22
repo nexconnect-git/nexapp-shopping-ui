@@ -39,7 +39,6 @@ import {
   type Cart as ApiCart,
   type CartItem as ApiCartItem,
 } from '@shared/lib/models';
-import { ApiService } from '@shared/lib/services/api.service';
 import { CurrencyService } from '@shared/lib/services/currency.service';
 import { LocationService } from '@shared/lib/services/location.service';
 import { AuthService as SharedAuthService } from '@shared/lib/services/auth.service';
@@ -80,7 +79,6 @@ interface GuestCartPayload {
 @Injectable({ providedIn: 'root' })
 export class AppStateService {
   private readonly accountApi = inject(CustomerAccountApiService);
-  private readonly api = inject(ApiService);
   private readonly cartApi = inject(CustomerCartApiService);
   private readonly catalogApi = inject(CustomerCatalogApiService);
   private readonly customerApi = inject(CustomerApiClientService);
@@ -102,9 +100,6 @@ export class AppStateService {
   readonly paymentMethods = signal<PaymentMethod[]>([]);
   readonly activeAddress = signal<Address | null>(null);
   readonly selectedPaymentMethod = signal('');
-  readonly issueOptions = signal<
-    Array<{ value: string; label: string; description?: string }>
-  >([]);
   readonly coupon = signal('');
   readonly couponDiscount = signal(0);
   readonly toast = signal<AppToast | null>(null);
@@ -127,14 +122,33 @@ export class AppStateService {
   readonly discount = computed(() =>
     cartSavings(this.cart(), this.couponDiscount())
   );
+  readonly deliveryFeeKnown = computed(() => {
+    const address = this.activeAddress();
+    if (!this.cart().length) return true;
+    return !!address?.id && this.deliveryFeePreviewReadyAddressId() === address.id;
+  });
   readonly deliveryFee = computed(() =>
-    deliveryFeeFromPreview(this.deliveryFeePreview(), !!this.cart().length)
+    this.deliveryFeeKnown()
+      ? deliveryFeeFromPreview(this.deliveryFeePreview(), !!this.cart().length)
+      : 0
   );
+  readonly freeDeliveryThreshold = computed(() => {
+    const previewThreshold = this.moneyValue(
+      this.deliveryFeePreview()?.free_delivery_above
+    );
+    if (previewThreshold > 0) return previewThreshold;
+    const breakupThreshold = this.moneyValue(
+      this.checkoutPriceBreakup()?.['free_delivery_above']
+    );
+    if (breakupThreshold > 0) return breakupThreshold;
+    return 300;
+  });
   readonly deliveryPromotion = computed(() =>
     getDeliveryPromotion({
       subtotal: this.subtotal(),
-      deliveryFee: this.deliveryFee(),
+      deliveryFee: this.deliveryFeeKnown() ? this.deliveryFee() : 1,
       hasItems: !!this.cart().length,
+      threshold: this.freeDeliveryThreshold(),
     })
   );
   readonly freeDeliveryUnlocked = computed(
@@ -146,11 +160,46 @@ export class AppStateService {
   readonly freeDeliveryProgress = computed(
     () => this.deliveryPromotion().progress
   );
-  readonly deliveryFeeLabel = computed(() =>
-    this.deliveryFee() > 0
+  readonly deliveryFeeLabel = computed(() => {
+    if (!this.cart().length) return formatDeliveryFeeLabel(0);
+    if (!this.deliveryFeeKnown()) {
+      return this.activeAddress()?.id ? 'Calculating' : 'At checkout';
+    }
+    return this.deliveryFee() > 0
       ? this.currency.format(this.deliveryFee())
-      : formatDeliveryFeeLabel(this.deliveryFee())
+      : formatDeliveryFeeLabel(this.deliveryFee());
+  });
+  readonly cartStore = computed(() => this.resolveCartStore());
+  readonly cartMinimumOrderAmount = computed(() =>
+    this.moneyValue(this.cartStore()?.['min_order_amount'])
   );
+  readonly cartMinimumOrderRemaining = computed(() =>
+    Math.max(0, this.cartMinimumOrderAmount() - this.subtotal())
+  );
+  readonly hasMixedStoreItems = computed(() => {
+    const stores = new Set(
+      this.cart()
+        .map((item) => item.storeId || item.storeName)
+        .filter(Boolean)
+    );
+    return stores.size > 1;
+  });
+  readonly cartCheckoutBlockReason = computed(() => {
+    if (!this.cart().length) return 'Your cart is empty.';
+    if (this.hasMixedStoreItems()) {
+      return 'Your cart has items from more than one store. Please keep one store per order.';
+    }
+    const remaining = this.cartMinimumOrderRemaining();
+    if (remaining > 0) {
+      const storeName =
+        this.cartStore()?.['store_name'] || this.cart()[0]?.storeName || 'this store';
+      return `Add ${this.currency.format(remaining)} more to meet ${storeName}'s minimum order.`;
+    }
+    const storeIssue = this.cartStoreAvailabilityIssue();
+    if (storeIssue) return storeIssue;
+    return '';
+  });
+  readonly canCheckoutCart = computed(() => !this.cartCheckoutBlockReason());
   readonly platformFee = computed(() =>
     this.priceBreakupAmount('platform_fee')
   );
@@ -200,7 +249,6 @@ export class AppStateService {
         this.paymentMethods.set([]);
         this.activeAddress.set(null);
         this.selectedPaymentMethod.set('');
-        this.issueOptions.set([]);
         this.activeOrder.set(null);
       }
     });
@@ -217,13 +265,12 @@ export class AppStateService {
   private bootstrapAuthenticatedState(): void {
     if (this.authenticatedBootstrapComplete) return;
     this.authenticatedBootstrapComplete = true;
-    this.api.getProfile().subscribe({
+    this.accountApi.getProfile().subscribe({
       next: (user) => {
         this.auth.updateUserData(user);
         this.mergeGuestCartIntoBackend(() => this.loadCart());
         this.loadAddresses();
         this.loadPaymentMethods();
-        this.loadIssueOptions();
         this.loadActiveOrder();
       },
       error: () => {
@@ -234,7 +281,6 @@ export class AppStateService {
         this.paymentMethods.set([]);
         this.activeAddress.set(null);
         this.selectedPaymentMethod.set('');
-        this.issueOptions.set([]);
         this.activeOrder.set(null);
       },
     });
@@ -600,7 +646,10 @@ export class AppStateService {
     });
   }
 
-  createAddress(address: Address): void {
+  createAddress(
+    address: Address,
+    callbacks: { next?: () => void; error?: (error: any) => void } = {}
+  ): void {
     if (!this.auth.isLoggedIn()) {
       this.ui.openLogin();
       return;
@@ -609,13 +658,19 @@ export class AppStateService {
       next: () => {
         this.loadAddresses();
         this.showToast('Address saved');
+        callbacks.next?.();
       },
-      error: (error) =>
-        this.showToast(this.explainApiError(error, 'Could not save address')),
+      error: (error) => {
+        this.showToast(this.explainApiError(error, 'Could not save address'));
+        callbacks.error?.(error);
+      },
     });
   }
 
-  updateAddress(address: Address): void {
+  updateAddress(
+    address: Address,
+    callbacks: { next?: () => void; error?: (error: any) => void } = {}
+  ): void {
     if (!address.id) return;
     this.accountApi
       .updateAddress(address.id, this.addressPayload(address))
@@ -623,11 +678,14 @@ export class AppStateService {
         next: () => {
           this.loadAddresses();
           this.showToast('Address updated');
+          callbacks.next?.();
         },
-        error: (error) =>
+        error: (error) => {
           this.showToast(
             this.explainApiError(error, 'Could not update address')
-          ),
+          );
+          callbacks.error?.(error);
+        },
       });
   }
 
@@ -715,22 +773,6 @@ export class AppStateService {
     });
   }
 
-  loadIssueOptions(): void {
-    this.catalogApi.getIssueOptions().subscribe({
-      next: (response) => {
-        const options = Array.isArray(response)
-          ? response
-          : Array.isArray(response?.issue_types)
-          ? response.issue_types
-          : Array.isArray(response?.results)
-          ? response.results
-          : [];
-        this.issueOptions.set(options);
-      },
-      error: () => this.issueOptions.set([]),
-    });
-  }
-
   checkServiceability(params?: Record<string, any>): void {
     this.serviceabilityLoading.set(true);
     this.catalogApi.checkServiceability(params).subscribe({
@@ -786,6 +828,8 @@ export class AppStateService {
     }
     if (!this.cart().length)
       return throwError(() => new Error('Your cart is empty.'));
+    const cartIssue = this.cartCheckoutBlockReason();
+    if (cartIssue) return throwError(() => new Error(cartIssue));
     const address = this.activeAddress();
     if (!address?.id)
       return throwError(
@@ -960,8 +1004,21 @@ export class AppStateService {
   }
 
   private priceBreakupAmount(key: string): number {
-    const value = Number(this.checkoutPriceBreakup()?.[key] ?? 0);
-    return Number.isFinite(value) ? value : 0;
+    return this.moneyValue(this.checkoutPriceBreakup()?.[key]);
+  }
+
+  proceedToCheckout(): boolean {
+    if (!this.auth.isLoggedIn()) {
+      this.ui.openLogin();
+      return false;
+    }
+    const reason = this.cartCheckoutBlockReason();
+    if (reason) {
+      this.showToast(reason, 'warning');
+      return false;
+    }
+    this.router.navigate(['/checkout']);
+    return true;
   }
 
   private mapCartItem(item: ApiCartItem): CartItem {
@@ -974,6 +1031,39 @@ export class AppStateService {
       subtotal: Number(item.subtotal || 0),
       rawCartItem: item,
     };
+  }
+
+  private resolveCartStore(): Record<string, any> | null {
+    const first = this.cart()[0];
+    if (!first) return null;
+    const raw = (first.raw || {}) as Record<string, any>;
+    const rawCartProduct = (first.rawCartItem as any)?.product || {};
+    const productVendor =
+      typeof rawCartProduct?.vendor === 'object' ? rawCartProduct.vendor : null;
+    const rawVendor = typeof raw['vendor'] === 'object' ? raw['vendor'] : null;
+    const loadedStore = first.storeId
+      ? this.catalog.stores().find((store) => store.id === first.storeId)
+      : null;
+    return rawVendor || raw['store'] || productVendor || loadedStore?.raw || null;
+  }
+
+  private cartStoreAvailabilityIssue(): string {
+    const vendor = this.cartStore();
+    if (!vendor) return '';
+    const isOpen = (vendor?.['is_open_now'] ?? vendor?.['is_open']) !== false;
+    const acceptingOrders = vendor?.['is_accepting_orders'] !== false;
+    const storeName = vendor?.['store_name'] || this.cart()[0]?.storeName || 'Store';
+    if (!isOpen) {
+      const first = this.cart()[0];
+      return first ? this.storeClosedMessage(first) : `${storeName} is closed right now.`;
+    }
+    if (!acceptingOrders) return `${storeName} is temporarily not accepting orders.`;
+    return '';
+  }
+
+  private moneyValue(value: unknown): number {
+    const amount = Number(value ?? 0);
+    return Number.isFinite(amount) ? amount : 0;
   }
 
   private addToGuestCart(product: Product, quantity: number): void {
@@ -1275,13 +1365,24 @@ export class AppStateService {
   }
 
   private isStoreOpenForProduct(product: Product): boolean {
-    const vendor = (product?.raw as any)?.vendor;
+    const raw = (product?.raw || {}) as Record<string, any>;
+    const loadedStore = product?.storeId
+      ? this.catalog.stores().find((store) => store.id === product.storeId)
+      : null;
+    const vendor = raw['vendor'] || raw['store'] || loadedStore?.raw;
     if (!vendor) return true;
-    return (vendor?.is_open_now ?? vendor?.is_open) !== false;
+    return (
+      (vendor?.is_open_now ?? vendor?.is_open) !== false &&
+      vendor?.is_accepting_orders !== false
+    );
   }
 
   private storeClosedMessage(product: Product): string {
-    const vendor = (product?.raw as any)?.vendor || {};
+    const raw = (product?.raw || {}) as Record<string, any>;
+    const loadedStore = product?.storeId
+      ? this.catalog.stores().find((store) => store.id === product.storeId)
+      : null;
+    const vendor = raw['vendor'] || raw['store'] || loadedStore?.raw || {};
     const storeName = vendor?.store_name || product.storeName || 'Store';
     const opening = this.formatClockTime(vendor?.opening_time);
     const closing = this.formatClockTime(vendor?.closing_time);

@@ -1,6 +1,12 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ApiService, AuthService, ToastService } from '@shared/public-api';
+import {
+  ApiService,
+  apiErrorMessage,
+  AuthService,
+  parseFormErrors,
+  ToastService,
+} from '@shared/public-api';
 import { DynamicEditPageComponent } from '../../shared/dynamic-profile/dynamic-edit-page.component';
 import {
   DynamicEditConfig,
@@ -27,6 +33,8 @@ export class DynamicEntityEditComponent implements OnInit {
   readonly entityType = signal('vendor');
   readonly entityId = signal('');
   readonly initialStepId = signal<string | undefined>(undefined);
+  readonly saveError = signal('');
+  readonly fieldErrors = signal<Record<string, string>>({});
 
   readonly editConfig = computed<DynamicEditConfig | null>(() => {
     const dto = this.entityDto();
@@ -111,6 +119,8 @@ export class DynamicEntityEditComponent implements OnInit {
 
     request.subscribe({
       next: (dto: unknown) => {
+        this.saveError.set('');
+        this.fieldErrors.set({});
         this.entityDto.set(
           this.normalizeLoadedDto(dto) || {
             ...(this.entityDto() as Record<string, unknown>),
@@ -127,7 +137,13 @@ export class DynamicEntityEditComponent implements OnInit {
           this.router.navigate([this.reviewUrl()]);
         }
       },
-      error: () => this.toast.show('Unable to save changes.', 'error'),
+      error: (error: unknown) => {
+        const parsed = parseFormErrors(error);
+        const message = apiErrorMessage(error, 'Unable to save changes.');
+        this.fieldErrors.set(parsed.fieldErrors);
+        this.saveError.set(message);
+        this.toast.show(message, 'error');
+      },
     });
   }
 

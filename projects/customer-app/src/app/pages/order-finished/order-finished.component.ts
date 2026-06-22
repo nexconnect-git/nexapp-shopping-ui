@@ -1,12 +1,12 @@
 import { Component, computed, effect, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { ApiService } from '@shared/lib/services/api.service';
 import { AppCurrencyPipe } from '@shared/lib/pipes/currency.pipe';
 import { AuthService as SharedAuthService } from '@shared/lib/services/auth.service';
 import { OrderService } from '../../services/order.service';
 import { AppStateService } from '../../services/app-state.service';
 import { DisplayOrderIdPipe } from '../../shared/display-order-id.pipe';
 import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
+import { CustomerOrderApiService } from '../../services/customer-order-api.service';
 
 @Component({
   standalone: true,
@@ -31,7 +31,7 @@ export class OrderFinishedComponent {
 
   constructor(
     private route: ActivatedRoute,
-    private api: ApiService,
+    private orderApi: CustomerOrderApiService,
     private auth: SharedAuthService,
     public orders: OrderService,
     public state: AppStateService,
@@ -44,7 +44,7 @@ export class OrderFinishedComponent {
       }
       if (this.couponsLoaded) return;
       this.couponsLoaded = true;
-      this.api.getCoupons().subscribe({
+      this.orderApi.getCoupons().subscribe({
         next: (response) => this.coupons.set(this.unwrap(response)),
         error: () => this.coupons.set([]),
       });
@@ -142,7 +142,7 @@ export class OrderFinishedComponent {
     this.state.showToast('Preparing your invoice', 'info');
 
     const downloadById = (invoiceId: string): void => {
-      this.api.downloadInvoice(invoiceId).subscribe({
+      this.orderApi.downloadInvoice(invoiceId).subscribe({
         next: (blob) => {
           this.triggerFileDownload(
             blob,
@@ -163,10 +163,10 @@ export class OrderFinishedComponent {
       return;
     }
 
-    this.api
+    this.orderApi
       .generateInvoice({ order: orderId, invoice_type: 'customer_receipt' })
       .subscribe({
-        next: (invoice) => {
+        next: (invoice: any) => {
           const invoiceId = String(invoice?.id || '').trim();
           if (!invoiceId) {
             this.state.showToast('Invoice is not ready yet', 'warning');

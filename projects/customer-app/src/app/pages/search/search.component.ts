@@ -117,15 +117,25 @@ export class SearchComponent implements OnDestroy {
   }
 
   results = computed(() => this.catalog.search(this.query()));
-  browseStores = computed(() =>
-    this.catalog
-      .stores()
-      .filter((store) => (store.raw as any)?.is_serviceable !== false)
-      .slice(0, 8),
+  categoryProducts = computed(() =>
+    this.category() ? this.catalog.productsByCategory(this.category()) : [],
   );
+  browseStores = computed(() => {
+    const stores = this.catalog
+      .stores()
+      .filter((store) => (store.raw as any)?.is_serviceable !== false);
+    if (!this.category()) return stores.slice(0, 8);
+    const storeIds = new Set(
+      this.categoryProducts()
+        .map((product) => product.storeId)
+        .filter(Boolean),
+    );
+    if (!storeIds.size) return [];
+    return stores.filter((store) => storeIds.has(store.id)).slice(0, 8);
+  });
   browseProducts = computed(() => {
     const source = this.category()
-      ? this.catalog.productsByCategory(this.category())
+      ? this.categoryProducts()
       : this.catalog.recommendedProducts().length
         ? this.catalog.recommendedProducts()
         : this.catalog.topProducts();

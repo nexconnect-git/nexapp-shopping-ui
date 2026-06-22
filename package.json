@@ -12,6 +12,8 @@
     "watch": "ng build --watch --configuration development",
     "lint": "eslint \"src/**/*.{ts,html}\" \"projects/customer-app/src/**/*.{ts,html}\" \"projects/vendor-app/src/**/*.{ts,html}\" \"projects/delivery-app/src/**/*.{ts,html}\" \"projects/admin-panel/src/**/*.{ts,html}\" \"projects/shared/src/**/*.{ts,html}\"",
     "lint:fix": "npm run lint -- --fix",
+    "e2e:customer": "playwright test --config playwright.customer.config.ts",
+    "e2e:vendor": "playwright test --config playwright.vendor.config.ts",
     "mobile:customer:build": "ng build customer-app --configuration mobile",
     "mobile:customer:sync": "npm run mobile:customer:build && cd mobile-apps/customer-mobile && npx cap sync",
     "mobile:customer:android": "cd mobile-apps/customer-mobile && npx cap run android",

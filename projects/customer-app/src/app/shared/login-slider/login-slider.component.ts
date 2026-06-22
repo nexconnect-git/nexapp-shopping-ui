@@ -4,6 +4,13 @@ import { AuthService } from '../../services/auth.service';
 import { UiService } from '../../services/ui.service';
 import { AppStateService } from '../../services/app-state.service';
 import { NxButtonComponent } from '../ui/nx-button/nx-button.component';
+import {
+  isValidEmail,
+  isValidIndianPhone,
+  normalizeIndianPhone,
+  sanitizeDigits,
+  sanitizeEmail,
+} from '@shared/lib/utils/input-validation';
 
 @Component({
   selector: 'fd-login-slider',
@@ -17,6 +24,8 @@ export class LoginSliderComponent {
   email = '';
   otp = '';
   fieldErrors = signal<{ mobile?: string; email?: string; otp?: string }>({});
+  touched = signal<{ mobile?: boolean; email?: boolean; otp?: boolean }>({});
+  submitted = signal(false);
 
   constructor(
     public ui: UiService,
@@ -35,6 +44,7 @@ export class LoginSliderComponent {
     event.preventDefault();
     if (this.auth.loading()) return;
     this.auth.error.set('');
+    this.submitted.set(true);
     const errors = this.validate();
     this.fieldErrors.set(errors);
     if (Object.keys(errors).length) {
@@ -53,17 +63,20 @@ export class LoginSliderComponent {
   }
 
   updateMobile(value: string): void {
-    this.mobile = value;
+    this.mobile = normalizeIndianPhone(value);
+    this.markTouched('mobile');
     this.clearFieldError('mobile');
   }
 
   updateEmail(value: string): void {
-    this.email = value;
+    this.email = sanitizeEmail(value);
+    this.markTouched('email');
     this.clearFieldError('email');
   }
 
   updateOtp(value: string): void {
-    this.otp = value;
+    this.otp = sanitizeDigits(value, 8);
+    this.markTouched('otp');
     this.clearFieldError('otp');
   }
 
@@ -72,6 +85,8 @@ export class LoginSliderComponent {
     this.otp = '';
     this.auth.error.set('');
     this.fieldErrors.set({});
+    this.touched.set({});
+    this.submitted.set(false);
   }
 
   resendOtp(): void {
@@ -84,11 +99,7 @@ export class LoginSliderComponent {
   }
 
   canSubmit(): boolean {
-    return (
-      !this.auth.loading() &&
-      Object.keys(this.validate()).length === 0 &&
-      Object.keys(this.fieldErrors()).length === 0
-    );
+    return !this.auth.loading();
   }
 
   canResendOtp(): boolean {
@@ -107,11 +118,11 @@ export class LoginSliderComponent {
     const email = this.email.trim();
 
     if (!mobile) errors.mobile = 'Mobile number is required.';
-    else if (!/^[6-9]\d{9}$/.test(mobile))
+    else if (!isValidIndianPhone(mobile))
       errors.mobile = 'Enter a valid mobile number.';
 
     if (!email) errors.email = 'Email is required.';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+    else if (!isValidEmail(email))
       errors.email = 'Enter a valid email address.';
 
     if (includeOtp) {
@@ -123,7 +134,7 @@ export class LoginSliderComponent {
   }
 
   private normalizedMobile(): string {
-    return this.mobile.replace(/\D/g, '').slice(-10);
+    return normalizeIndianPhone(this.mobile);
   }
 
   private clearFieldError(field: 'mobile' | 'email' | 'otp'): void {
@@ -131,5 +142,13 @@ export class LoginSliderComponent {
     delete current[field];
     this.fieldErrors.set(current);
     this.auth.error.set('');
+  }
+
+  markTouched(field: 'mobile' | 'email' | 'otp'): void {
+    this.touched.update((current) => ({ ...current, [field]: true }));
+  }
+
+  showFieldError(field: 'mobile' | 'email' | 'otp'): boolean {
+    return !!this.fieldErrors()[field] && (!!this.touched()[field] || this.submitted());
   }
 }

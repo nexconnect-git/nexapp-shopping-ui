@@ -2,6 +2,7 @@ import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import {
+  API_BASE_URL,
   ApiService,
   AppCurrencyPipe,
   AuthService,
@@ -19,6 +20,7 @@ import { Subscription, timer } from 'rxjs';
 export class DashboardComponent implements OnInit, OnDestroy {
   private api = inject(ApiService);
   private auth = inject(AuthService);
+  private apiBaseUrl = inject(API_BASE_URL);
 
   stats = signal<any>(null);
   recentOrders = signal<any[]>([]);
@@ -106,8 +108,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   connectWebSocket() {
     this.ws = openAuthenticatedWebSocket(
-      '/sa/ws/admin/stats/',
+      '/ws/admin/stats/',
       this.auth.getToken(),
+      this.apiBaseUrl,
     );
 
     this.ws.onmessage = (msg) => {

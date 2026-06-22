@@ -8,6 +8,8 @@
     [config]="editConfig()!"
     [entity]="entity()!"
     [initialStepId]="initialStepId()"
+    [submitError]="saveError()"
+    [fieldErrors]="fieldErrors()"
     (cancelEdit)="cancel()"
     (saveDraft)="saveDraft($event)"
     (finalSubmit)="finalSubmit($event)"

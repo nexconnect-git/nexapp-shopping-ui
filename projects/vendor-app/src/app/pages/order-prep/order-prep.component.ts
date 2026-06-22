@@ -3,10 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
-  ApiService,
   AppCurrencyPipe,
   Order,
   ToastService,
+  VendorApi,
 } from '@shared/public-api';
 import {
   VendorOrderAction,
@@ -21,7 +21,7 @@ import {
   styleUrl: './order-prep.component.scss',
 })
 export class OrderPrepComponent implements OnInit {
-  private api = inject(ApiService);
+  private api = inject(VendorApi);
   private route = inject(ActivatedRoute);
   private toast = inject(ToastService);
   private orderActions = inject(VendorOrderActionsService);

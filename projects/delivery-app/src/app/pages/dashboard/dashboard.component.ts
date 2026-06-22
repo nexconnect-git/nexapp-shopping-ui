@@ -4,7 +4,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import {
   AlertService,
-  ApiService,
   AppCurrencyPipe,
   AuthService,
   DeliveryDashboard,
@@ -12,6 +11,8 @@ import {
   type NativeWatchId,
 } from '@shared/public-api';
 import { Subscription, timer } from 'rxjs';
+import { DeliveryWorkflowFacade } from '../../services/delivery-workflow.facade';
+import { DriverLocationService } from '../../services/driver-location.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -22,9 +23,10 @@ import { Subscription, timer } from 'rxjs';
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   auth = inject(AuthService);
-  private api = inject(ApiService);
+  private workflow = inject(DeliveryWorkflowFacade);
   private alerts = inject(AlertService);
   private nativePlatform = inject(NativePlatformService);
+  private driverLocation = inject(DriverLocationService);
 
   stats = signal<DeliveryDashboard | null>(null);
   loading = signal(true);
@@ -51,7 +53,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     this.dashSub = timer(0, 10000).subscribe(() => {
       if (document.hidden) return;
-      this.api.getDeliveryDashboard().subscribe({
+      this.workflow.loadDashboard().subscribe({
         next: (d: DeliveryDashboard) => {
           this.stats.set(d);
           this.loading.set(false);
@@ -92,7 +94,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.isAvailable.set(goOnline);
     this.availabilityUpdating.set(true);
 
-    this.api.setAvailability(goOnline).subscribe({
+    this.workflow.setAvailability(goOnline).subscribe({
       next: () => {
         this.availabilityUpdating.set(false);
         this.alerts.success(
@@ -201,7 +203,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
       return;
     }
     this.lastLocationPushAt = now;
-    this.api.updateLocation(lat, lng, this._activeTrackingOrderId()).subscribe({
+    this.driverLocation
+      .updateBackend(lat, lng, this._activeTrackingOrderId())
+      .subscribe({
       next: () => {
         this.locationStatus.set('watching');
         this.locationRetryDelayMs = 5000;

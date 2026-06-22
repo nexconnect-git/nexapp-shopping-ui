@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { ApiService, AuthService } from '@shared/public-api';
+import { VendorApi, AuthService } from '@shared/public-api';
 
 @Component({
   selector: 'app-change-password',
@@ -11,7 +11,7 @@ import { ApiService, AuthService } from '@shared/public-api';
   styleUrl: './change-password.component.scss',
 })
 export class ChangePasswordComponent {
-  private api = inject(ApiService);
+  private api = inject(VendorApi);
   private auth = inject(AuthService);
   private router = inject(Router);
 

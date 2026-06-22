@@ -177,8 +177,8 @@
           }}</small>
         </header>
         @if (auth.isLoggedIn()) {
-          @if (canUseRoute("/profile")) {
-            <a routerLink="/profile" (click)="ui.closeMenus()"
+          @if (canUseRoute("/account")) {
+            <a routerLink="/account" (click)="ui.closeMenus()"
               ><span class="material-symbols-rounded">person</span>Profile /
               Account</a
             >

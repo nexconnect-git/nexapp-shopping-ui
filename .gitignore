@@ -52,6 +52,8 @@ testem.log
 **/test/
 **/tests/
 **/*.spec.ts
+!e2e/
+!e2e/*.spec.ts
 **/*.test.ts
 **/*.test.js
 **/*.test.jsx

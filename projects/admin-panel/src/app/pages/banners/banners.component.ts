@@ -1,7 +1,7 @@
 ﻿import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ApiService } from '@shared/public-api';
+import { ApiService, apiErrorMessage } from '@shared/public-api';
 
 interface PlatformBanner {
   id: string;
@@ -101,9 +101,7 @@ export class BannersComponent implements OnInit {
       },
       error: (err: any) => {
         this.saving.set(false);
-        this.error.set(
-          err.error?.title?.[0] || err.error?.detail || 'Save failed.',
-        );
+        this.error.set(apiErrorMessage(err, 'Save failed.'));
       },
     });
   }

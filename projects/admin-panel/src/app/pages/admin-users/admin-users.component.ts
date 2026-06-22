@@ -6,7 +6,12 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { ApiService, AuthService, ToastService } from '@shared/public-api';
+import {
+  ApiService,
+  apiErrorMessage,
+  AuthService,
+  ToastService,
+} from '@shared/public-api';
 import { NgClass, NgFor, NgIf } from '@angular/common';
 import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
 
@@ -109,13 +114,7 @@ export class AdminUsersComponent implements OnInit {
         this.loadUsers();
       },
       error: (err) => {
-        let msg = 'Failed to create user.';
-        if (err.error && typeof err.error === 'object') {
-          msg = Object.values(err.error)
-            .map((e: any) => (Array.isArray(e) ? e[0] : e))
-            .join(', ');
-        }
-        this.toast.show(msg, 'error');
+        this.toast.show(apiErrorMessage(err, 'Failed to create user.'), 'error');
         this.isSubmitting = false;
         console.error(err);
       },

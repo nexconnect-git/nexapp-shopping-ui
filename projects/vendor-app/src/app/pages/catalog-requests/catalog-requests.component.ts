@@ -2,7 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
-  ApiService,
+  apiErrorMessage,
+  VendorApi,
   CatalogProposal,
   Category,
   ToastService,
@@ -26,7 +27,7 @@ interface ProposalDraftItem {
   styleUrl: './catalog-requests.component.scss',
 })
 export class CatalogRequestsComponent implements OnInit {
-  private api = inject(ApiService);
+  private api = inject(VendorApi);
   private toast = inject(ToastService);
 
   categories = signal<Category[]>([]);
@@ -120,10 +121,7 @@ export class CatalogRequestsComponent implements OnInit {
         this.load();
       },
       error: (err) => {
-        this.toast.show(
-          err.error?.error || 'Failed to submit request.',
-          'error'
-        );
+        this.toast.show(apiErrorMessage(err, 'Failed to submit request.'), 'error');
         this.saving.set(false);
       },
     });

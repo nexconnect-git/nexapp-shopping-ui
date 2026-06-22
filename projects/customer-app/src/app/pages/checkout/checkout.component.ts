@@ -138,6 +138,7 @@ export class CheckoutComponent {
         !!activeAddress && !this.addressDisabledReason(activeAddress);
       return (
         !this.state.checkoutSubmitting() &&
+        !this.state.cartCheckoutBlockReason() &&
         this.hasPaymentMethods() &&
         this.activeStoreAvailability().isOpen &&
         !this.scheduleError() &&
@@ -146,6 +147,8 @@ export class CheckoutComponent {
     },
   );
   checkoutBlockingReason = computed(() => {
+    const cartIssue = this.state.cartCheckoutBlockReason();
+    if (cartIssue) return cartIssue;
     if (!this.hasAddresses()) return 'Add a delivery address to continue.';
     const activeAddress = this.state.activeAddress();
     if (!activeAddress) return 'Select a delivery address to continue.';
@@ -264,6 +267,12 @@ export class CheckoutComponent {
         this.router.navigate(['/cart']);
         return;
       }
+      const cartIssue = this.state.cartCheckoutBlockReason();
+      if (this.state.cartLoaded() && this.state.itemCount() && cartIssue) {
+        this.state.showToast(cartIssue, 'warning');
+        this.router.navigate(['/cart']);
+        return;
+      }
       const key = `${this.state.itemCount()}::${this.state
         .addresses()
         .map((address) => address.id)
@@ -338,6 +347,12 @@ export class CheckoutComponent {
   }
 
   placeOrder(): void {
+    const cartIssue = this.state.cartCheckoutBlockReason();
+    if (cartIssue) {
+      this.state.showToast(cartIssue, 'warning');
+      this.router.navigate(['/cart']);
+      return;
+    }
     const availability = this.activeStoreAvailability();
     if (!availability.isOpen) {
       this.state.showToast(

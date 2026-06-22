@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import {
   AlertService,
-  ApiService,
+  DeliveryApi,
   AuthService,
   formatFormErrors,
   isValidEmail,
@@ -31,7 +31,7 @@ import {
   styleUrls: ['./profile.component.scss'],
 })
 export class ProfileComponent implements OnInit {
-  private api = inject(ApiService);
+  private api = inject(DeliveryApi);
   private auth = inject(AuthService);
   private alerts = inject(AlertService);
 

@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import {
-  ApiService,
+  VendorApi,
   AppCurrencyPipe,
   Order,
   ToastService,
@@ -19,7 +19,7 @@ import { VendorOrderActionsService } from '../../services/vendor-order-actions.s
   styleUrl: './orders.component.scss',
 })
 export class OrdersComponent implements OnInit, OnDestroy {
-  private api = inject(ApiService);
+  private api = inject(VendorApi);
   private toast = inject(ToastService);
   private orderActions = inject(VendorOrderActionsService);
 

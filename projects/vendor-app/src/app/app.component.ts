@@ -1,7 +1,5 @@
 import {
   Component,
-  DestroyRef,
-  effect,
   HostListener,
   inject,
   OnInit,
@@ -17,15 +15,18 @@ import {
 } from '@angular/router';
 import { CommonModule, Location } from '@angular/common';
 import {
-  ApiService,
+  VendorApi,
   AuthService,
-  CurrencyService,
   GlobalLoadingComponent,
-  NotificationPollingService,
   PageFeatureAccessService,
   PageFeatureLoadingComponent,
   ToastComponent,
 } from '@shared/public-api';
+import {
+  VENDOR_MOBILE_NAV_ITEMS,
+  VENDOR_NAV_GROUPS,
+} from './config/vendor-navigation';
+import { VendorAppStartupService } from './services/vendor-app-startup.service';
 
 @Component({
   selector: 'app-root',
@@ -44,85 +45,20 @@ import {
 })
 export class AppComponent implements OnInit {
   auth = inject(AuthService);
-  api = inject(ApiService);
+  api = inject(VendorApi);
   private router = inject(Router);
   private location = inject(Location);
-  private destroyRef = inject(DestroyRef);
-  private notifPolling = inject(NotificationPollingService);
-  private currency = inject(CurrencyService);
   private featureAccess = inject(PageFeatureAccessService);
+  private startup = inject(VendorAppStartupService);
   sidebarCollapsed = signal(true);
   profileOpen = signal(false);
   notifOpen = signal(false);
   notifications = signal<any[]>([]);
   notifLoading = signal(false);
-  unreadCount = signal(0);
+  unreadCount = this.startup.unreadCount;
   currentUrl = signal('/');
-  private pollingStarted = false;
-  private currencyConfiguredForUserId = '';
-  readonly navGroups = [
-    {
-      label: 'Operate',
-      items: [
-        {
-          label: 'Dashboard',
-          icon: 'space_dashboard',
-          route: '/',
-          exact: true,
-        },
-        { label: 'Live Orders', icon: 'view_kanban', route: '/live-orders' },
-        { label: 'Inventory', icon: 'inventory', route: '/inventory' },
-      ],
-    },
-    {
-      label: 'Catalog',
-      items: [
-        { label: 'Products', icon: 'inventory_2', route: '/products' },
-        {
-          label: 'Catalog Requests',
-          icon: 'playlist_add',
-          route: '/catalog-requests',
-        },
-        { label: 'Orders', icon: 'receipt_long', route: '/orders' },
-        {
-          label: 'Promotions',
-          icon: 'confirmation_number',
-          route: '/promotions',
-        },
-      ],
-    },
-    {
-      label: 'Growth',
-      items: [
-        { label: 'Analytics', icon: 'monitoring', route: '/analytics' },
-        { label: 'Payouts', icon: 'payments', route: '/payouts' },
-        { label: 'Reviews', icon: 'reviews', route: '/reviews' },
-      ],
-    },
-    {
-      label: 'Account',
-      items: [
-        { label: 'Support', icon: 'support_agent', route: '/support' },
-        {
-          label: 'Notifications',
-          icon: 'notifications',
-          route: '/notifications',
-        },
-        {
-          label: 'Store Settings',
-          icon: 'manage_accounts',
-          route: '/store-settings',
-        },
-      ],
-    },
-  ];
-  readonly mobileNavItems = [
-    { label: 'Home', icon: 'space_dashboard', route: '/', exact: true },
-    { label: 'Orders', icon: 'view_kanban', route: '/live-orders' },
-    { label: 'Stock', icon: 'inventory', route: '/inventory' },
-    { label: 'Inbox', icon: 'notifications', route: '/notifications' },
-    { label: 'Store', icon: 'settings', route: '/store-settings' },
-  ];
+  readonly navGroups = VENDOR_NAV_GROUPS;
+  readonly mobileNavItems = VENDOR_MOBILE_NAV_ITEMS;
 
   constructor() {
     this.currentUrl.set(this.router.url || '/');
@@ -131,46 +67,10 @@ export class AppComponent implements OnInit {
         this.currentUrl.set(event.urlAfterRedirects || event.url || '/');
       }
     });
-    effect(() => {
-      if (this.auth.isLoggedIn()) {
-        this.startPolling();
-        const userId = this.auth.user()?.id || 'vendor';
-        if (this.currencyConfiguredForUserId !== userId) {
-          this.currencyConfiguredForUserId = userId;
-          this.configureVendorCurrency();
-        }
-      } else if (this.pollingStarted) {
-        this.notifPolling.stop();
-        this.pollingStarted = false;
-        this.currencyConfiguredForUserId = '';
-        this.unreadCount.set(0);
-        this.notifications.set([]);
-      }
-    });
   }
 
   ngOnInit() {
-    if (this.auth.isLoggedIn()) {
-      this.startPolling();
-      this.configureVendorCurrency();
-    }
-    this.featureAccess.startPolling('vendor-app');
-  }
-
-  private startPolling() {
-    if (this.pollingStarted) return;
-    this.pollingStarted = true;
-    // notifPolling drives both badges and toasts — no separate timer needed
-    this.notifPolling.onUnreadChange((count) => this.unreadCount.set(count));
-    this.notifPolling.start((n) => {
-      if (n.notification_type === 'order' && n.related_entity_id) {
-        return { label: 'View', url: `/orders/${n.related_entity_id}` };
-      }
-      if (n.notification_type === 'order' && n.data?.order_id) {
-        return { label: 'View', url: `/orders/${n.data.order_id}` };
-      }
-      return null;
-    });
+    this.startup.start();
   }
 
   toggleProfile(event?: Event) {
@@ -274,31 +174,6 @@ export class AppComponent implements OnInit {
     const initials =
       `${user?.first_name?.[0] || ''}${user?.last_name?.[0] || ''}`.trim();
     return initials || user?.username?.[0]?.toUpperCase() || '?';
-  }
-
-  private configureVendorCurrency() {
-    this.api.getVendorProfile().subscribe({
-      next: (vendor) => {
-        this.currency.configureFromLocation({
-          country:
-            vendor?.country ||
-            vendor?.country_code ||
-            vendor?.user_info?.country,
-          latitude: vendor?.latitude,
-          longitude: vendor?.longitude,
-          address: vendor?.address,
-          city: vendor?.city,
-          state: vendor?.state,
-          postalCode: vendor?.postal_code,
-          name: vendor?.store_name,
-        });
-      },
-      error: () => {
-        const userCountry = this.auth.user()?.country;
-        if (userCountry)
-          this.currency.configureFromLocation({ country: userCountry });
-      },
-    });
   }
 
   showBackButton(): boolean {

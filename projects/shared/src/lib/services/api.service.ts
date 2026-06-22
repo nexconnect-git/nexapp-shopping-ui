@@ -4,6 +4,12 @@ import { Observable, shareReplay } from 'rxjs';
 import { API_BASE_URL } from '../tokens/api-url.token';
 import { UploadedFile } from '../models';
 
+/**
+ * Deprecated compatibility wrapper. Use role/domain API clients.
+ *
+ * This class remains while the apps migrate to focused API clients. Avoid adding
+ * new role-specific methods here unless they are temporary delegations.
+ */
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private baseUrl = inject(API_BASE_URL);

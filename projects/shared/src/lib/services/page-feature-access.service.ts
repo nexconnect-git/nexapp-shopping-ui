@@ -7,8 +7,9 @@ import {
   of,
   shareReplay,
   tap,
+  timeout,
 } from 'rxjs';
-import { ApiService } from './api.service';
+import { FeatureConfigApi } from '../api/feature-config-api.service';
 
 export type ManagedAppId =
   | 'vendor-app'
@@ -16,6 +17,14 @@ export type ManagedAppId =
   | 'customer-app'
   | 'mobile-customer';
 export type PageStatus = 'enabled' | 'disabled' | 'partial';
+export type PageFeatureFailMode = 'open' | 'closed';
+export type PageFeatureLoadState = 'idle' | 'loading' | 'ready' | 'error';
+
+export interface PageFeatureInitializeOptions {
+  pollIntervalMs?: number;
+  failMode?: PageFeatureFailMode;
+  enableFocusRefresh?: boolean;
+}
 
 export interface ManagedFeatureConfig {
   id: string;
@@ -50,19 +59,24 @@ export interface PageFeatureConfig {
 @Injectable({ providedIn: 'root' })
 export class PageFeatureAccessService {
   private readonly pollers = new Map<ManagedAppId, number>();
+  private readonly appOptions = new Map<ManagedAppId, PageFeatureInitializeOptions>();
   private readonly config = signal<PageFeatureConfig>({ applications: [] });
   private readonly resolved = signal(false);
   private readonly loading = signal(false);
+  private readonly state = signal<PageFeatureLoadState>('idle');
+  private readonly loadFailed = signal(false);
   private readonly minRefreshIntervalMs = 30_000;
   private lastLoadedAt = 0;
-  private focusRefreshBound = false;
+  private focusHandler?: () => void;
+  private visibilityHandler?: () => void;
   private loading$?: Observable<PageFeatureConfig>;
 
   readonly applications = this.config.asReadonly();
   readonly hasResolved = this.resolved.asReadonly();
   readonly isLoading = this.loading.asReadonly();
+  readonly loadState = this.state.asReadonly();
 
-  constructor(private api: ApiService) {}
+  constructor(private api: FeatureConfigApi) {}
 
   loadConfig(force = false): Observable<PageFeatureConfig> {
     if (this.loading$) return this.loading$;
@@ -76,15 +90,21 @@ export class PageFeatureAccessService {
     }
 
     this.loading.set(true);
+    this.state.set('loading');
     this.loading$ = this.api.getPageFeatureConfig().pipe(
+      timeout({ first: 6000 }),
       map((response) => this.normalizeConfig(response)),
       tap((config) => {
         this.config.set(config);
         this.resolved.set(true);
+        this.loadFailed.set(false);
+        this.state.set('ready');
         this.lastLoadedAt = Date.now();
       }),
       catchError(() => {
         this.resolved.set(true);
+        this.loadFailed.set(true);
+        this.state.set('error');
         this.lastLoadedAt = Date.now();
         return of(this.config());
       }),
@@ -98,33 +118,84 @@ export class PageFeatureAccessService {
     return this.loading$;
   }
 
-  startPolling(appId: ManagedAppId): void {
-    if (this.pollers.has(appId) || typeof window === 'undefined') return;
-    this.pollers.set(appId, -1);
+  initialize(
+    appId: ManagedAppId,
+    options: PageFeatureInitializeOptions = {},
+  ): void {
+    if (typeof window === 'undefined') return;
+
+    const normalizedOptions: PageFeatureInitializeOptions = {
+      failMode: options.failMode || 'open',
+      enableFocusRefresh: options.enableFocusRefresh !== false,
+      pollIntervalMs: options.pollIntervalMs,
+    };
+    this.appOptions.set(appId, normalizedOptions);
+
     this.loadConfig(!this.resolved()).subscribe();
-    this.bindFocusRefresh();
+
+    const existingPoller = this.pollers.get(appId);
+    if (existingPoller && existingPoller > 0) {
+      window.clearInterval(existingPoller);
+    }
+
+    const intervalMs = normalizedOptions.pollIntervalMs;
+    if (intervalMs && intervalMs > 0) {
+      const id = window.setInterval(() => {
+        this.refresh().subscribe();
+      }, intervalMs);
+      this.pollers.set(appId, id);
+    } else {
+      this.pollers.set(appId, -1);
+    }
+
+    if (normalizedOptions.enableFocusRefresh) {
+      this.bindFocusRefresh();
+    }
+  }
+
+  startPolling(appId: ManagedAppId): void {
+    if (this.pollers.has(appId)) return;
+    this.initialize(appId, {
+      pollIntervalMs: this.minRefreshIntervalMs,
+      failMode: 'open',
+      enableFocusRefresh: true,
+    });
   }
 
   stopPolling(appId: ManagedAppId): void {
     const id = this.pollers.get(appId);
     if (id && id > 0 && typeof window !== 'undefined') window.clearInterval(id);
     this.pollers.delete(appId);
+    this.appOptions.delete(appId);
+    if (!this.pollers.size) this.unbindFocusRefresh();
+  }
+
+  stop(appId: ManagedAppId): void {
+    this.stopPolling(appId);
   }
 
   refresh(): Observable<PageFeatureConfig> {
     return this.loadConfig(true);
   }
 
-  isPageEnabled(appId: ManagedAppId, pageId: string): boolean {
-    if (!this.resolved()) return false;
+  isPageEnabled(
+    appId: ManagedAppId,
+    pageId: string,
+    failMode: PageFeatureFailMode = this.failModeFor(appId),
+  ): boolean {
+    if (!this.resolved() || this.loadFailed()) return failMode === 'open';
     const app = this.config().applications.find((item) => item.id === appId);
     if (!app) return true;
     const page = app.pages.find((item) => item.id === pageId);
     return page ? page.status !== 'disabled' : true;
   }
 
-  isRouteEnabled(appId: ManagedAppId, route: string): boolean {
-    if (!this.resolved()) return false;
+  isRouteEnabled(
+    appId: ManagedAppId,
+    route: string,
+    failMode: PageFeatureFailMode = this.failModeFor(appId),
+  ): boolean {
+    if (!this.resolved() || this.loadFailed()) return failMode === 'open';
     const app = this.config().applications.find((item) => item.id === appId);
     if (!app) return true;
 
@@ -141,8 +212,9 @@ export class PageFeatureAccessService {
     appId: ManagedAppId,
     pageId: string,
     featureId: string,
+    failMode: PageFeatureFailMode = this.failModeFor(appId),
   ): boolean {
-    if (!this.resolved()) return false;
+    if (!this.resolved() || this.loadFailed()) return failMode === 'open';
     const app = this.config().applications.find((item) => item.id === appId);
     const page = app?.pages.find((item) => item.id === pageId);
     const feature = page?.features?.find(
@@ -165,14 +237,30 @@ export class PageFeatureAccessService {
   }
 
   private bindFocusRefresh(): void {
-    if (this.focusRefreshBound || typeof window === 'undefined') return;
-    this.focusRefreshBound = true;
-    window.addEventListener('focus', () => this.refresh().subscribe());
+    if (this.focusHandler || typeof window === 'undefined') return;
+    this.focusHandler = () => this.refresh().subscribe();
+    window.addEventListener('focus', this.focusHandler);
     if (typeof document !== 'undefined') {
-      document.addEventListener('visibilitychange', () => {
+      this.visibilityHandler = () => {
         if (!document.hidden) this.refresh().subscribe();
-      });
+      };
+      document.addEventListener('visibilitychange', this.visibilityHandler);
     }
+  }
+
+  private unbindFocusRefresh(): void {
+    if (typeof window !== 'undefined' && this.focusHandler) {
+      window.removeEventListener('focus', this.focusHandler);
+    }
+    if (typeof document !== 'undefined' && this.visibilityHandler) {
+      document.removeEventListener('visibilitychange', this.visibilityHandler);
+    }
+    this.focusHandler = undefined;
+    this.visibilityHandler = undefined;
+  }
+
+  private failModeFor(appId: ManagedAppId): PageFeatureFailMode {
+    return this.appOptions.get(appId)?.failMode || 'open';
   }
 
   private normalizeRoute(route: string): string {

@@ -1,10 +1,10 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import {
-  ApiService,
   CurrencyService,
   MapLocation,
   ToastService,
+  VendorApi,
 } from '@shared/public-api';
 import {
   StoreLocationSuggestion,
@@ -38,7 +38,7 @@ const EMPTY_SETTINGS: VendorStoreSettings = {
 
 @Injectable({ providedIn: 'root' })
 export class VendorStoreSettingsService {
-  private readonly api = inject(ApiService);
+  private readonly api = inject(VendorApi);
   private readonly toastService = inject(ToastService);
   private readonly currency = inject(CurrencyService);
 

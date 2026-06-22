@@ -151,6 +151,16 @@
           </div>
         </section>
 
+        @if (state.cartCheckoutBlockReason()) {
+          <section class="checkout-rule">
+            <span class="material-symbols-rounded">rule</span>
+            <div>
+              <b>Checkout requirement</b>
+              <p>{{ state.cartCheckoutBlockReason() }}</p>
+            </div>
+          </section>
+        }
+
         <section class="fd-card price">
           <h3>Price Details</h3>
           <p>
@@ -179,9 +189,14 @@
             <span class="material-symbols-rounded">sync</span>
             Final stock, price, and coupon checks are revalidated at checkout.
           </p>
-          <a routerLink="/checkout" class="fd-btn primary"
-            >Proceed to Checkout</a
+          <button
+            type="button"
+            class="fd-btn primary"
+            [disabled]="!state.canCheckoutCart()"
+            (click)="checkout()"
           >
+            Proceed to Checkout
+          </button>
           <small
             ><span class="material-symbols-rounded">verified_user</span>
             {{ content.cart().securePayment }}</small
@@ -259,6 +274,28 @@
       </section>
     }
 
+    @if (state.cartCheckoutBlockReason()) {
+      <section class="mobile-rule-card">
+        <span class="material-symbols-rounded">rule</span>
+        <div>
+          <b>Checkout requirement</b>
+          <small>{{ state.cartCheckoutBlockReason() }}</small>
+        </div>
+      </section>
+    }
+
+    <section class="mobile-checkout-card">
+      <button
+        type="button"
+        class="mobile-cta"
+        [disabled]="!state.canCheckoutCart()"
+        (click)="checkout()"
+      >
+        Checkout - {{ state.total() | appCurrency }}
+        <small>{{ state.itemCount() }} {{ state.itemCount() === 1 ? 'item' : 'items' }}</small>
+      </button>
+    </section>
+
     <section class="mobile-order-details">
       <div class="mobile-section-head">
         <h2>Order details</h2>
@@ -298,13 +335,6 @@
         <span class="material-symbols-rounded">verified_user</span>
         Final stock, price, and coupon checks are revalidated at checkout.
       </small>
-    </section>
-
-    <section class="mobile-checkout-card">
-      <a routerLink="/checkout" class="mobile-cta">
-        Checkout - {{ state.total() | appCurrency }}
-        <small>{{ state.itemCount() }} {{ state.itemCount() === 1 ? 'item' : 'items' }}</small>
-      </a>
     </section>
 
     <section class="mobile-section">

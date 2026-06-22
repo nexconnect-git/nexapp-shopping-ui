@@ -77,6 +77,12 @@
   &.outline {
     background: #fff;
   }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+    box-shadow: none;
+  }
 }
 
 .edit-header > div:last-child,
@@ -152,6 +158,17 @@
   align-items: start;
 }
 
+.form-error {
+  grid-column: 1 / -1;
+  border: 1px solid #ffc6cc;
+  background: #fff1f2;
+  color: #b4232f;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
 .form-card {
   padding: 16px;
 
@@ -215,6 +232,22 @@ label {
   > small {
     color: #697089;
     line-height: 1.4;
+  }
+
+  &.has-error {
+    input,
+    select,
+    textarea {
+      border-color: #ff4d5e;
+      background: #fff6f7;
+      box-shadow: 0 0 0 3px rgba(255, 77, 94, 0.1);
+    }
+  }
+
+  .field-error {
+    color: #ff3048;
+    font-size: 12px;
+    font-weight: 800;
   }
 }
 

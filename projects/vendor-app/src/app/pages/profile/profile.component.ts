@@ -2,7 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
-  ApiService,
+  VendorApi,
   AppCurrencyPipe,
   AuthService,
   MapLocation,
@@ -18,7 +18,7 @@ import {
   styleUrl: './profile.component.scss',
 })
 export class ProfileComponent implements OnInit {
-  private api = inject(ApiService);
+  private api = inject(VendorApi);
   private auth = inject(AuthService);
   private toastService = inject(ToastService);
 

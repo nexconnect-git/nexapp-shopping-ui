@@ -12,7 +12,6 @@ import { Subscription, timer } from 'rxjs';
 import {
   AlertService,
   API_BASE_URL,
-  ApiService,
   AppCurrencyPipe,
   AuthService,
   GoogleMapsService,
@@ -22,6 +21,7 @@ import {
   Order,
   PaymentQR,
 } from '@shared/public-api';
+import { DeliveryWorkflowFacade } from '../../services/delivery-workflow.facade';
 
 declare const google: unknown;
 
@@ -52,7 +52,7 @@ interface RouteMapState {
 export class ActiveDeliveryComponent
   implements OnInit, OnDestroy, AfterViewChecked
 {
-  private api = inject(ApiService);
+  private workflow = inject(DeliveryWorkflowFacade);
   private auth = inject(AuthService);
   private googleMaps = inject(GoogleMapsService);
   private nativePlatform = inject(NativePlatformService);
@@ -390,7 +390,7 @@ export class ActiveDeliveryComponent
 
   load(showActionError = false) {
     this.loading.set(true);
-    this.api.getDeliveryDashboard().subscribe({
+    this.workflow.loadDashboard().subscribe({
       next: (d) => {
         this.orders.set(d.active_orders || []);
         this.loading.set(false);
@@ -446,7 +446,7 @@ export class ActiveDeliveryComponent
     const key = this.actionKey(order.id, 'on_the_way');
     if (this.isActionLoading(key)) return;
     this.setActionLoading(key, true);
-    this.api.setDeliveryOnTheWay(order.id).subscribe({
+    this.workflow.setOnTheWay(order.id).subscribe({
       next: () => {
         this.setActionLoading(key, false);
         this.alerts.success(`Order #${order.order_number} marked as on the way.`);
@@ -475,7 +475,7 @@ export class ActiveDeliveryComponent
     if (this.isActionLoading(key)) return;
     this.setActionLoading(key, true);
 
-    this.api.cancelDeliveryAssignment(order.id).subscribe({
+    this.workflow.cancelAssignment(order.id).subscribe({
       next: () => {
         this.setActionLoading(key, false);
         this.closeCancelModal();
@@ -497,7 +497,7 @@ export class ActiveDeliveryComponent
     this.paymentQR.set(null);
 
     this.loadingQR.set(true);
-    this.api.getPaymentQR(order.id).subscribe({
+    this.workflow.getPaymentQR(order.id).subscribe({
       next: (qr) => {
         this.paymentQR.set(qr);
         this.loadingQR.set(false);
@@ -559,7 +559,7 @@ export class ActiveDeliveryComponent
 
     this.confirming.set(true);
     this.confirmError.set('');
-    this.api.confirmDelivery(order.id, otp, this.confirmPhoto()!).subscribe({
+    this.workflow.confirmDelivery(order.id, otp, this.confirmPhoto()!).subscribe({
       next: () => {
         this.confirming.set(false);
         this.deliverySuccess.set(true);

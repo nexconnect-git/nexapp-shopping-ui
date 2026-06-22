@@ -2,10 +2,10 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   AlertService,
-  ApiService,
   AppCurrencyPipe,
   Order,
 } from '@shared/public-api';
+import { DeliveryWorkflowFacade } from '../../services/delivery-workflow.facade';
 
 @Component({
   selector: 'app-history',
@@ -15,7 +15,7 @@ import {
   styleUrls: ['./history.component.scss'],
 })
 export class HistoryComponent implements OnInit {
-  private api = inject(ApiService);
+  private workflow = inject(DeliveryWorkflowFacade);
   private alerts = inject(AlertService);
   orders = signal<Order[]>([]);
   loading = signal(true);
@@ -25,7 +25,7 @@ export class HistoryComponent implements OnInit {
   );
 
   ngOnInit() {
-    this.api.getDeliveryHistory({ status: ['delivered', 'cancelled'] }).subscribe({
+    this.workflow.getHistory({ status: ['delivered', 'cancelled'] }).subscribe({
       next: (r) => {
         this.orders.set(r.results || r);
         this.loading.set(false);

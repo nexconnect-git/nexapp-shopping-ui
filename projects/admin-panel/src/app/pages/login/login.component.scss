@@ -13,7 +13,9 @@
   display: grid;
   grid-template-columns: minmax(0, 1.04fr) minmax(440px, 0.96fr);
   padding: clamp(1rem, 2.5vw, 2rem);
-  background: #f6f7f9;
+  background:
+    linear-gradient(90deg, rgba(56, 38, 142, 0.08), transparent 42%),
+    #f6f7f9;
 }
 
 :host .login-left {
@@ -26,7 +28,8 @@
   padding: clamp(2rem, 5vw, 5rem);
   border-radius: 8px 0 0 8px;
   color: #fff;
-  background: var(--primary);
+  background:
+    linear-gradient(135deg, #16132f 0%, #38268e 58%, #0f172a 100%);
 }
 
 :host .login-left::before {
@@ -161,6 +164,16 @@
   box-shadow: 0 28px 70px rgba(16, 24, 40, 0.13);
 }
 
+:host .login-form-card::before {
+  content: "";
+  display: block;
+  width: 48px;
+  height: 4px;
+  margin: 0 auto 1.35rem;
+  border-radius: 999px;
+  background: #06b6d4;
+}
+
 :host .form-card-header {
   margin-bottom: 2rem;
   text-align: center;
@@ -183,6 +196,12 @@
 
 :host .form-group {
   margin-bottom: 1.2rem;
+}
+
+:host .form-group.invalid .form-input {
+  border-color: var(--login-danger);
+  background: #fff7f7;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.12);
 }
 
 :host .form-label {
@@ -296,6 +315,15 @@
   color: #ef4444;
   font-size: 0.86rem;
   font-weight: 850;
+}
+
+:host .field-error {
+  display: block;
+  margin-top: 0.42rem;
+  color: var(--login-danger);
+  font-size: 0.78rem;
+  line-height: 1.35;
+  font-weight: 800;
 }
 
 :host .checking-setup {

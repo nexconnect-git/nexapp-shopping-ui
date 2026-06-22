@@ -19,10 +19,7 @@ export const routes: Routes = [
     path: 'login',
     loadComponent: () =>
       import('./pages/login/login.component').then((m) => m.LoginComponent),
-    canActivate: [
-      pageFeatureGuard('delivery-app', 'delivery-login'),
-      portalUnauthGuard('delivery'),
-    ],
+    canActivate: [portalUnauthGuard('delivery')],
   },
   {
     path: 'change-password',
@@ -30,10 +27,7 @@ export const routes: Routes = [
       import('./pages/change-password/change-password.component').then(
         (m) => m.ChangePasswordComponent,
       ),
-    canActivate: [
-      authGuard,
-      pageFeatureGuard('delivery-app', 'delivery-change-password'),
-    ],
+    canActivate: [authGuard],
   },
   {
     path: 'pending-approval',
@@ -57,7 +51,7 @@ export const routes: Routes = [
       import('./pages/dashboard/dashboard.component').then(
         (m) => m.DashboardComponent,
       ),
-    canActivate: deliveryPageGuard('delivery-dashboard'),
+    canActivate: approvedDeliveryGuardStack,
   },
   {
     path: 'available',

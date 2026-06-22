@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { ApiService, AuthService } from '@shared/public-api';
+import { AuthService } from '@shared/public-api';
+import { DeliveryWorkflowFacade } from '../../services/delivery-workflow.facade';
 
 @Component({
   selector: 'app-pending-approval',
@@ -11,7 +12,7 @@ import { ApiService, AuthService } from '@shared/public-api';
   styleUrl: './pending-approval.component.scss',
 })
 export class PendingApprovalComponent implements OnInit, OnDestroy {
-  private api = inject(ApiService);
+  private workflow = inject(DeliveryWorkflowFacade);
   private router = inject(Router);
   auth = inject(AuthService);
 
@@ -30,7 +31,7 @@ export class PendingApprovalComponent implements OnInit, OnDestroy {
   }
 
   checkStatus() {
-    this.api.getDeliveryDashboard().subscribe({
+    this.workflow.loadDashboard().subscribe({
       next: (profile) => {
         this.status.set(profile?.partner_status || 'offline');
         this.loading.set(false);

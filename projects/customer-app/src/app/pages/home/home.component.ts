@@ -292,9 +292,13 @@ export class HomeComponent {
       '/offers',
       '/wallet',
       '/wishlist',
+      '/favorites',
       '/referral',
       '/help',
       '/issues',
+      '/my-issues',
+      '/notifications',
+      '/payments',
     ].includes(path)
       ? '/explore'
       : path;

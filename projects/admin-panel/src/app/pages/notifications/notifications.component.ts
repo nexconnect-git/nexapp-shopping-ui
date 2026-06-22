@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService } from '@shared/public-api';
+import { ApiService, apiErrorMessage } from '@shared/public-api';
 
 interface AdminNotification {
   id: string;
@@ -133,7 +133,7 @@ export class NotificationsComponent implements OnInit {
         setTimeout(() => this.closeModal(), 1800);
       },
       error: (err: any) => {
-        this.sendError.set(err.error?.error || 'Failed to send notification.');
+        this.sendError.set(apiErrorMessage(err, 'Failed to send notification.'));
         this.sending.set(false);
       },
     });

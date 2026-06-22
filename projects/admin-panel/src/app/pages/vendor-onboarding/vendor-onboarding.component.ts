@@ -5,10 +5,12 @@ import { Router, RouterLink } from '@angular/router';
 import {
   ApiService,
   AppCurrencyPipe,
+  formatFormErrors,
   INDIA_PINCODE_PATTERN,
   isValidEmail,
   isValidIndianPhone,
   normalizeIndianPhone,
+  parseFormErrors,
   sanitizeDigits,
   sanitizeEmail,
   sanitizeUsername,
@@ -217,6 +219,11 @@ export class VendorOnboardingComponent {
           return 'Invalid PAN format. Must be 5 letters, 4 digits, 1 letter.';
         break;
       case 4:
+        this.s4.account_number = sanitizeDigits(this.s4.account_number, 18);
+        this.s4.confirm_account_number = sanitizeDigits(
+          this.s4.confirm_account_number,
+          18
+        );
         if (
           this.s4.account_number &&
           this.s4.account_number !== this.s4.confirm_account_number
@@ -228,14 +235,37 @@ export class VendorOnboardingComponent {
         )
           return 'Invalid IFSC code format (e.g. SBIN0001234).';
         break;
+      case 5:
+        this.s5.new_pincode = sanitizeDigits(this.s5.new_pincode, 6);
+        if (
+          this.s5.new_pincode &&
+          !INDIA_PINCODE_PATTERN.test(this.s5.new_pincode)
+        )
+          return 'Enter a valid 6-digit serviceable pincode.';
+        if (
+          Number(this.s5.dispatch_sla_hours) < 1 ||
+          Number(this.s5.dispatch_sla_hours) > 168
+        )
+          return 'Dispatch SLA must be between 1 and 168 hours.';
+        break;
+      case 6:
+        if (Number(this.s6.min_order_amount) < 0)
+          return 'Minimum order amount cannot be negative.';
+        if (Number(this.s6.delivery_radius_km) < 0)
+          return 'Delivery radius cannot be negative.';
+        break;
     }
     return '';
   }
 
   // ── Serviceable areas ─────────────────────────────────────────────────────
   addPincode() {
-    const p = this.s5.new_pincode.trim();
+    const p = sanitizeDigits(this.s5.new_pincode, 6);
     if (!p) return;
+    if (!INDIA_PINCODE_PATTERN.test(p)) {
+      this.error.set('Enter a valid 6-digit serviceable pincode.');
+      return;
+    }
     if (this.s5.serviceable_pincodes.some((a) => a.pincode === p)) return;
     this.s5.serviceable_pincodes.push({
       pincode: p,
@@ -370,58 +400,52 @@ export class VendorOnboardingComponent {
       },
       error: (err: any) => {
         this.saving.set(false);
-        const e = err.error || err;
-        if (typeof e === 'object' && !Array.isArray(e)) {
-          const flat: Record<string, string> = {};
-          for (const [k, v] of Object.entries(e)) {
-            flat[k] = Array.isArray(v) ? (v as string[]).join(' ') : String(v);
+        const parsed = parseFormErrors(err?.error || err);
+        this.fieldErrors.set(parsed.fieldErrors);
+        const stepFields: Record<number, string[]> = {
+          1: ['username', 'password', 'first_name', 'last_name'],
+          2: [
+            'store_name',
+            'vendor_type',
+            'description',
+            'phone',
+            'email',
+            'address',
+            'city',
+            'state',
+            'postal_code',
+          ],
+          3: [
+            'legal_name',
+            'pan_number',
+            'gstin',
+            'cin_udyam',
+            'fssai_license',
+            'contact_person_email',
+            'contact_person_phone',
+          ],
+          4: [
+            'account_holder_name',
+            'account_number',
+            'ifsc_code',
+            'bank_name',
+            'settlement_cycle',
+          ],
+          5: ['fulfillment_type', 'dispatch_sla_hours', 'return_policy'],
+          6: ['opening_time', 'closing_time', 'vendor_tier'],
+        };
+        for (let i = 1; i <= 6; i++) {
+          if (stepFields[i].some((f) => parsed.fieldErrors[f])) {
+            this.currentStep.set(i);
+            break;
           }
-          this.fieldErrors.set(flat);
-          // navigate to earliest step with error
-          const stepFields: Record<number, string[]> = {
-            1: ['username', 'password', 'first_name', 'last_name'],
-            2: [
-              'store_name',
-              'vendor_type',
-              'description',
-              'phone',
-              'email',
-              'address',
-              'city',
-              'state',
-              'postal_code',
-            ],
-            3: [
-              'legal_name',
-              'pan_number',
-              'gstin',
-              'cin_udyam',
-              'fssai_license',
-            ],
-            4: [
-              'account_holder_name',
-              'account_number',
-              'ifsc_code',
-              'bank_name',
-              'settlement_cycle',
-            ],
-            5: ['fulfillment_type', 'dispatch_sla_hours', 'return_policy'],
-            6: ['opening_time', 'closing_time', 'vendor_tier'],
-          };
-          for (let i = 1; i <= 6; i++) {
-            if (stepFields[i].some((f) => flat[f])) {
-              this.currentStep.set(i);
-              break;
-            }
-          }
-          this.error.set('Please fix the errors below and try again.');
-        } else {
-          this.error.set(
-            typeof e === 'string'
-              ? e
-              : 'Failed to create vendor. Please try again.'
-          );
         }
+        this.error.set(
+          formatFormErrors(
+            err?.error || err,
+            'Failed to create vendor. Please fix the highlighted fields.'
+          )
+        );
       },
     });
   }
@@ -458,6 +482,33 @@ export class VendorOnboardingComponent {
   onContactEmailInput(value: string): void {
     this.s3.contact_person_email = sanitizeEmail(value);
     this.clearErrors();
+  }
+
+  onBusinessAddressPincodeInput(
+    addr: { pincode: string },
+    value: string
+  ): void {
+    addr.pincode = sanitizeDigits(value, 6);
+    this.clearErrors();
+  }
+
+  onAccountNumberInput(value: string): void {
+    this.s4.account_number = sanitizeDigits(value, 18);
+    this.clearErrors();
+  }
+
+  onConfirmAccountNumberInput(value: string): void {
+    this.s4.confirm_account_number = sanitizeDigits(value, 18);
+    this.clearErrors();
+  }
+
+  onNewServiceablePincodeInput(value: string): void {
+    this.s5.new_pincode = sanitizeDigits(value, 6);
+    this.clearErrors();
+  }
+
+  blockInvalidNumberKey(event: KeyboardEvent): void {
+    if (['e', 'E', '+', '-'].includes(event.key)) event.preventDefault();
   }
 
   canContinueCurrentStep(): boolean {

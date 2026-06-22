@@ -157,48 +157,18 @@
 
   <!-- Nav items -->
   <nav class="sidebar-nav">
-    @if (canUseRoute("/")) {
-    <a
-      routerLink="/"
-      routerLinkActive="active"
-      [routerLinkActiveOptions]="{ exact: true }"
-      class="sidebar-menu-item"
-    >
-      <span class="material-icons-outlined">dashboard</span>
-      <span>Dashboard</span>
-    </a>
-    } @if (canUseRoute("/available")) {
-    <a
-      routerLink="/available"
-      routerLinkActive="active"
-      class="sidebar-menu-item"
-    >
-      <span class="material-icons-outlined">local_shipping</span>
-      <span>Available Orders</span>
-    </a>
-    } @if (canUseRoute("/active")) {
-    <a routerLink="/active" routerLinkActive="active" class="sidebar-menu-item">
-      <span class="material-icons-outlined">delivery_dining</span>
-      <span>Active Delivery</span>
-    </a>
-    } @if (canUseRoute("/history")) {
-    <a
-      routerLink="/history"
-      routerLinkActive="active"
-      class="sidebar-menu-item"
-    >
-      <span class="material-icons-outlined">history</span>
-      <span>History</span>
-    </a>
-    } @if (canUseRoute("/earnings")) {
-    <a
-      routerLink="/earnings"
-      routerLinkActive="active"
-      class="sidebar-menu-item"
-    >
-      <span class="material-icons-outlined">payments</span>
-      <span>Earnings</span>
-    </a>
+    @for (item of visibleNavItems(); track item.route) {
+      @if (item.route !== '/profile') {
+        <a
+          [routerLink]="item.route"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: item.exact === true }"
+          class="sidebar-menu-item"
+        >
+          <span class="material-icons-outlined">{{ item.icon }}</span>
+          <span>{{ item.label }}</span>
+        </a>
+      }
     }
   </nav>
 
@@ -233,41 +203,16 @@
 <!-- Mobile bottom nav (shown ≤768px, only when logged in) -->
 @if (auth.isLoggedIn() && !isAuthRoute()) {
 <nav class="bottom-nav">
-  @if (canUseRoute("/")) {
-  <a
-    routerLink="/"
-    routerLinkActive="active"
-    [routerLinkActiveOptions]="{ exact: true }"
-    class="bottom-menu-item"
-  >
-    <span class="material-icons-outlined">dashboard</span>
-    <span>Dashboard</span>
-  </a>
-  } @if (canUseRoute("/available")) {
-  <a routerLink="/available" routerLinkActive="active" class="bottom-menu-item">
-    <span class="material-icons-outlined">local_shipping</span>
-    <span>Available</span>
-  </a>
-  } @if (canUseRoute("/active")) {
-  <a routerLink="/active" routerLinkActive="active" class="bottom-menu-item">
-    <span class="material-icons-outlined">delivery_dining</span>
-    <span>Active</span>
-  </a>
-  } @if (canUseRoute("/history")) {
-  <a routerLink="/history" routerLinkActive="active" class="bottom-menu-item">
-    <span class="material-icons-outlined">history</span>
-    <span>History</span>
-  </a>
-  } @if (canUseRoute("/earnings")) {
-  <a routerLink="/earnings" routerLinkActive="active" class="bottom-menu-item">
-    <span class="material-icons-outlined">payments</span>
-    <span>Earnings</span>
-  </a>
-  } @if (canUseRoute("/profile")) {
-  <a routerLink="/profile" routerLinkActive="active" class="bottom-menu-item">
-    <span class="material-icons-outlined">person</span>
-    <span>Profile</span>
-  </a>
+  @for (item of visibleNavItems(); track item.route) {
+    <a
+      [routerLink]="item.route"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: item.exact === true }"
+      class="bottom-menu-item"
+    >
+      <span class="material-icons-outlined">{{ item.icon }}</span>
+      <span>{{ item.mobileLabel || item.label }}</span>
+    </a>
   }
 </nav>
 }

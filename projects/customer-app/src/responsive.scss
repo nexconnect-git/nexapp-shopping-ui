@@ -34,9 +34,6 @@ a {
 .tracking-layout,
 .finished-layout,
 .profile-layout,
-.wallet-layout,
-.help-layout,
-.issues-layout,
 .orders-layout,
 .product-layout,
 .store-list,
@@ -46,7 +43,6 @@ a {
 .category-grid,
 .address-grid,
 .offer-grid,
-.wishlist-grid,
 .share-grid,
 .bottom-grid {
   min-width: 0;
@@ -59,9 +55,6 @@ a {
 .tracking-layout,
 .finished-layout,
 .profile-layout,
-.wallet-layout,
-.help-layout,
-.issues-layout,
 .orders-layout,
 .product-layout {
   display: grid;
@@ -89,9 +82,6 @@ a {
   .tracking-layout,
   .finished-layout,
   .profile-layout,
-  .wallet-layout,
-  .help-layout,
-  .issues-layout,
   .orders-layout,
   .product-layout {
     grid-template-columns: minmax(0, 1fr);
@@ -242,9 +232,7 @@ a {
   .store-head h1,
   .cart-page h1,
   .checkout-page h1,
-  .profile-hero h1,
-  .wallet-hero h1,
-  .help-form h1 {
+  .profile-hero h1 {
     font-size: clamp(22px, 6vw, 28px);
     line-height: 1.12;
     letter-spacing: 0;
@@ -260,9 +248,6 @@ a {
   .fd-section-title h2,
   .compact h2,
   .section-head h2,
-  .help-form h2,
-  .faq h2,
-  .rating h2,
   .summary h2,
   .summary-col h2,
   .checkout-card h2,
@@ -279,8 +264,6 @@ a {
   .hero-subtitle,
   .store-card p,
   .product-card p,
-  .help-form p,
-  .faq p,
   .summary p,
   .checkout-card p {
     line-height: 1.38;
@@ -296,16 +279,13 @@ a {
   .status-card,
   .map-block,
   .profile-hero,
-  .wallet-hero,
   .success-card,
   .mini-store,
   .store-card,
   .product-card,
   .address-card,
   .offer-card,
-  .issue-card,
-  .faq-card,
-  .support-card {
+  .faq-card {
     border-radius: 18px;
   }
 
@@ -313,16 +293,11 @@ a {
   .nx-card,
   .summary,
   .summary-col,
-  .help-form,
-  .rating,
-  .faq,
   .checkout-card,
   .address-grid article,
   .offer-grid article,
-  .wallet-card,
   .profile-card,
   .order-card,
-  .issue-list article,
   .cart-row,
   .item-row,
   .modal form {
@@ -332,10 +307,8 @@ a {
   .fd-content > * + *,
   .main-area > * + *,
   .profile-layout,
-  .wallet-layout,
   .cart-layout,
   .checkout-layout,
-  .help-layout,
   .tracking-layout,
   .finished-layout,
   .search-wrap,
@@ -351,10 +324,7 @@ a {
   .checkout-layout,
   .tracking-layout,
   .profile-layout,
-  .wallet-layout,
   .finished-layout,
-  .help-layout,
-  .issues-layout,
   .orders-layout,
   .product-layout {
     grid-template-columns: minmax(0, 1fr);
@@ -364,7 +334,6 @@ a {
   .store-mini-grid,
   .address-grid,
   .offer-grid,
-  .issue-list,
   .faq-list,
   .quick-grid,
   .share-grid,
@@ -383,7 +352,6 @@ a {
   .product-grid,
   .suggestions,
   .top-store-row,
-  .wishlist-grid,
   .checkout-products {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -644,7 +612,6 @@ a {
   }
 
   .profile-hero,
-  .wallet-hero,
   .hero:not(.insta-hero),
   .category-head,
   .store-head,
@@ -729,7 +696,6 @@ a {
   .product-grid,
   .suggestions,
   .top-store-row,
-  .wishlist-grid,
   .checkout-products {
     gap: 9px;
   }
@@ -759,7 +725,6 @@ a {
   .product-grid,
   .suggestions,
   .top-store-row,
-  .wishlist-grid,
   .checkout-products {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;

@@ -3,7 +3,15 @@ import { Subscription, timer } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { ApiService } from '@shared/public-api';
+import {
+  ApiService,
+  apiErrorMessage,
+  isValidEmail,
+  isValidIndianPhone,
+  normalizeIndianPhone,
+  parseFormErrors,
+  sanitizeEmail,
+} from '@shared/public-api';
 import {
   DynamicTableColumn,
   DynamicTableComponent,
@@ -34,6 +42,7 @@ export class CustomersComponent implements OnInit, OnDestroy {
   search = '';
   verifiedFilter = '';
   error = signal('');
+  fieldErrors = signal<Record<string, string>>({});
   private timer: any;
 
   tableColumns: DynamicTableColumn[] = [
@@ -122,6 +131,7 @@ export class CustomersComponent implements OnInit, OnDestroy {
       is_active: c.is_active !== false,
     };
     this.error.set('');
+    this.fieldErrors.set({});
     this.showModal.set(true);
   }
 
@@ -131,6 +141,14 @@ export class CustomersComponent implements OnInit, OnDestroy {
 
   save() {
     if (!this.editTarget()) return;
+    this.form.email = sanitizeEmail(this.form.email);
+    this.form.phone = normalizeIndianPhone(this.form.phone);
+    const errors = this.validateForm();
+    this.fieldErrors.set(errors);
+    if (Object.keys(errors).length) {
+      this.error.set('Please fix the highlighted customer fields.');
+      return;
+    }
     this.saving.set(true);
     this.error.set('');
     this.api.updateAdminCustomer(this.editTarget().id, this.form).subscribe({
@@ -141,9 +159,48 @@ export class CustomersComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.saving.set(false);
-        this.error.set(err.error?.detail || 'Update failed.');
+        const parsed = parseFormErrors(err?.error || err);
+        this.fieldErrors.set(parsed.fieldErrors);
+        this.error.set(apiErrorMessage(err, 'Update failed.'));
       },
     });
+  }
+
+  onEmailInput(value: string) {
+    this.form.email = sanitizeEmail(value);
+    this.clearFieldError('email');
+  }
+
+  onPhoneInput(value: string) {
+    this.form.phone = normalizeIndianPhone(value);
+    this.clearFieldError('phone');
+  }
+
+  fieldError(field: string): string {
+    return this.fieldErrors()[field] || '';
+  }
+
+  clearFieldError(field: string): void {
+    if (!this.fieldErrors()[field]) return;
+    this.fieldErrors.update((current) => {
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+    this.error.set('');
+  }
+
+  canSave(): boolean {
+    return !this.saving() && Object.keys(this.validateForm()).length === 0;
+  }
+
+  private validateForm(): Record<string, string> {
+    const errors: Record<string, string> = {};
+    if (this.form.email && !isValidEmail(this.form.email))
+      errors['email'] = 'Enter a valid email address, e.g. user@example.com.';
+    if (this.form.phone && !isValidIndianPhone(this.form.phone))
+      errors['phone'] = 'Enter a valid 10-digit Indian mobile number.';
+    return errors;
   }
 
   deleteCustomer(c: any) {

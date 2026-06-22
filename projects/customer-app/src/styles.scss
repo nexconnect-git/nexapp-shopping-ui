@@ -687,7 +687,6 @@ fd-right-rail {
   .recommended-row,
   .product-grid,
   .browse-grid,
-  .wishlist-grid,
   .suggestions,
   .store-list {
     grid-template-columns: minmax(0, 1fr) !important;
@@ -835,17 +834,12 @@ body *:not(.material-icons):not(.material-icons-outlined):not(.material-icons-tw
 .cart-table,
 .orders-table,
 .transactions,
-.help-form,
-.faq,
-.rating,
 .profile-card,
-.wallet-card,
 .success-card,
 .status-card,
 .map-block,
 .address-grid article,
 .offer-grid article,
-.issue-list article,
 .modal form {
   border: 1px solid var(--customer-app-border) !important;
   border-radius: var(--customer-app-card-radius) !important;
@@ -969,10 +963,7 @@ textarea {
   .address-card,
   .order-card,
   .notify-card,
-  .issue-card,
   .offer-card,
-  .faq-card,
-  .support-card,
   .checkout-card,
   .map-card,
   .store-card,
@@ -1339,12 +1330,6 @@ textarea:focus {
   .profile-page,
   .addresses-page,
   .notifications-page,
-  .wishlist-page,
-  .wallet-page,
-  .offers-page,
-  .referral-page,
-  .help-page,
-  .issues-page,
   .cart-page,
   .checkout-page,
   .product-detail-page,
@@ -1378,11 +1363,6 @@ textarea:focus {
   .notify-card,
   .transaction,
   .offer-card,
-  .issue-card,
-  .thread-card,
-  .help-form,
-  .share-card,
-  .topup-card,
   .checkout-card,
   .cart-item,
   .summary-card,
@@ -1401,7 +1381,6 @@ textarea:focus {
   .notify-card *,
   .transaction *,
   .offer-card *,
-  .issue-card *,
   .checkout-card *,
   .cart-item *,
   .product-card *,
@@ -1409,7 +1388,6 @@ textarea:focus {
     min-width: 0;
   }
 
-  .wishlist-page .mobile-grid-2,
   .product-detail-page .mobile-grid-2,
   .category-page .mobile-grid-2,
   .categories-page .mobile-grid-2,

@@ -29,46 +29,10 @@ export class ProfileComponent {
       path: '/addresses',
     },
     {
-      icon: 'favorite',
-      label: 'Wishlist',
-      sub: 'Saved items',
-      path: '/wishlist',
-    },
-    {
-      icon: 'local_offer',
-      label: 'Offers',
-      sub: 'Coupons and deals',
-      path: '/offers',
-    },
-    {
-      icon: 'account_balance_wallet',
-      label: 'Wallet',
-      sub: 'Balance and payment options',
-      path: '/wallet',
-    },
-    {
-      icon: 'group_add',
-      label: 'Referrals',
-      sub: 'Invite friends and rewards',
-      path: '/referral',
-    },
-    {
-      icon: 'notifications',
-      label: 'Notifications',
-      sub: 'Order and account alerts',
-      path: '/notifications',
-    },
-    {
-      icon: 'support_agent',
-      label: 'Help & Support',
-      sub: 'Get help with orders',
-      path: '/help',
-    },
-    {
-      icon: 'sms_failed',
-      label: 'Issues',
-      sub: 'Your support tickets',
-      path: '/issues',
+      icon: 'shopping_cart',
+      label: 'Cart',
+      sub: 'Review your current basket',
+      path: '/cart',
     },
   ];
 

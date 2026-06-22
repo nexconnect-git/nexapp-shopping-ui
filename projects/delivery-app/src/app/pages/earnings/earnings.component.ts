@@ -1,6 +1,11 @@
 import { Component, HostListener, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AlertService, ApiService, AppCurrencyPipe } from '@shared/public-api';
+import {
+  AlertService,
+  apiErrorMessage,
+  AppCurrencyPipe,
+  DeliveryApi,
+} from '@shared/public-api';
 import { forkJoin } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 
@@ -30,7 +35,7 @@ interface PayoutItem {
   styleUrls: ['./earnings.component.scss'],
 })
 export class EarningsComponent implements OnInit {
-  private api = inject(ApiService);
+  private api = inject(DeliveryApi);
   private alerts = inject(AlertService);
 
   earnings = signal<EarningItem[]>([]);
@@ -98,7 +103,7 @@ export class EarningsComponent implements OnInit {
         this.loadData();
       },
       error: (e: { error?: { error?: string } }) =>
-        this.alerts.error(e.error?.error || 'Failed to approve payout.'),
+        this.alerts.error(apiErrorMessage(e, 'Failed to approve payout.')),
     });
   }
 
@@ -124,7 +129,7 @@ export class EarningsComponent implements OnInit {
         this.loadData();
       },
       error: (e: { error?: { error?: string } }) =>
-        this.alerts.error(e.error?.error || 'Failed to decline payout.'),
+        this.alerts.error(apiErrorMessage(e, 'Failed to decline payout.')),
     });
   }
 
@@ -145,7 +150,7 @@ export class EarningsComponent implements OnInit {
         this.loadData();
       },
       error: (e: { error?: { error?: string } }) =>
-        this.alerts.error(e.error?.error || 'Failed to verify credit.'),
+        this.alerts.error(apiErrorMessage(e, 'Failed to verify credit.')),
     });
   }
 

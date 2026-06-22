@@ -1,19 +1,19 @@
-@if (visible && state.itemCount() > 0) {
+@if (visible && cart.itemCount() > 0) {
   <aside class="mobile-sticky-cart" aria-label="Checkout shortcut">
     <a routerLink="/cart" class="checkout-cta-wrap">
       <div class="cta-left">
         <div class="bag-icon-container">
-          <span class="material-symbols-rounded">shopping_bag</span>
+          <span class="material-symbols-rounded" aria-hidden="true">shopping_bag</span>
         </div>
         <div class="cart-summary">
           <span class="item-count">
-            {{ state.itemCount() }} {{ state.itemCount() === 1 ? 'Item' : 'Items' }} &bull; <b>{{ state.total() | appCurrency }}</b>
+            {{ cart.itemCount() }} {{ cart.itemCount() === 1 ? 'Item' : 'Items' }} &bull; <b>{{ cart.total() | appCurrency }}</b>
           </span>
         </div>
       </div>
       <div class="cta-right">
         <span class="view-cart-label">View Cart</span>
-        <span class="material-symbols-rounded chevron">arrow_right_alt</span>
+        <span class="material-symbols-rounded chevron" aria-hidden="true">arrow_right_alt</span>
       </div>
     </a>
   </aside>

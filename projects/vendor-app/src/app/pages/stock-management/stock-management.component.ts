@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService, AppCurrencyPipe, ToastService } from '@shared/public-api';
+import { VendorApi, AppCurrencyPipe, ToastService } from '@shared/public-api';
 
 @Component({
   selector: 'app-stock-management',
@@ -11,7 +11,7 @@ import { ApiService, AppCurrencyPipe, ToastService } from '@shared/public-api';
   styleUrl: './stock-management.component.scss',
 })
 export class StockManagementComponent implements OnInit {
-  private api = inject(ApiService);
+  private api = inject(VendorApi);
   private toast = inject(ToastService);
 
   loading = signal(true);

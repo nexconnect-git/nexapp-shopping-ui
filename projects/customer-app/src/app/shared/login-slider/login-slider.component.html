@@ -56,7 +56,7 @@
   </section>
 
   <form (submit)="login($event)" class="login-form" novalidate>
-    <label class="auth-field" [class.invalid]="fieldErrors().mobile">
+    <label class="auth-field" [class.invalid]="showFieldError('mobile')">
       <span>Mobile Number <b>*</b></span>
       <span class="input-shell">
         <span class="material-symbols-rounded">phone</span>
@@ -65,20 +65,25 @@
           name="mobile"
           autocomplete="tel"
           inputmode="numeric"
+          pattern="[0-9]*"
+          maxlength="10"
           [ngModel]="mobile"
           (ngModelChange)="updateMobile($event)"
-          placeholder="Enter 10-digit mobile number"
+          (blur)="markTouched('mobile')"
+          placeholder="9876543210"
           aria-describedby="mobile-error"
+          [attr.aria-invalid]="showFieldError('mobile')"
         />
       </span>
-      @if (fieldErrors().mobile) {
+      <small class="field-hint">Enter a 10-digit Indian mobile number.</small>
+      @if (showFieldError('mobile')) {
       <small id="mobile-error" class="field-error">{{
         fieldErrors().mobile
       }}</small>
       }
     </label>
 
-    <label class="auth-field" [class.invalid]="fieldErrors().email">
+    <label class="auth-field" [class.invalid]="showFieldError('email')">
       <span>Email Address <b>*</b></span>
       <span class="input-shell">
         <span class="material-symbols-rounded">mail</span>
@@ -88,11 +93,14 @@
           autocomplete="email"
           [ngModel]="email"
           (ngModelChange)="updateEmail($event)"
-          placeholder="Enter email address for OTP"
+          (blur)="markTouched('email')"
+          placeholder="name@example.com"
           aria-describedby="email-error"
+          [attr.aria-invalid]="showFieldError('email')"
         />
       </span>
-      @if (fieldErrors().email) {
+      <small class="field-hint">We send the login OTP to this email.</small>
+      @if (showFieldError('email')) {
       <small id="email-error" class="field-error">{{
         fieldErrors().email
       }}</small>
@@ -107,7 +115,7 @@
         >. Keep this drawer open while you enter the code.
       </p>
     </div>
-    <label class="auth-field" [class.invalid]="fieldErrors().otp">
+    <label class="auth-field" [class.invalid]="showFieldError('otp')">
       <span>One-Time Passcode <b>*</b></span>
       <span class="input-shell">
         <span class="material-symbols-rounded">key</span>
@@ -116,13 +124,17 @@
           name="otp"
           autocomplete="one-time-code"
           inputmode="numeric"
+          pattern="[0-9]*"
+          maxlength="8"
           [ngModel]="otp"
           (ngModelChange)="updateOtp($event)"
-          placeholder="Enter OTP"
+          (blur)="markTouched('otp')"
+          placeholder="6-digit OTP"
           aria-describedby="otp-error"
+          [attr.aria-invalid]="showFieldError('otp')"
         />
       </span>
-      @if (fieldErrors().otp) {
+      @if (showFieldError('otp')) {
       <small id="otp-error" class="field-error">{{ fieldErrors().otp }}</small>
       }
     </label>

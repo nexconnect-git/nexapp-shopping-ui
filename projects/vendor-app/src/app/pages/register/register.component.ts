@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import {
-  ApiService,
+  VendorApi,
   AuthService,
   formatFormErrors,
   INDIA_PINCODE_PATTERN,
@@ -55,7 +55,7 @@ const VENDOR_STORE_TYPE_OPTIONS = [
   styleUrl: './register.component.scss',
 })
 export class RegisterComponent {
-  private api = inject(ApiService);
+  private api = inject(VendorApi);
   private auth = inject(AuthService);
   private router = inject(Router);
   readonly storeTypeOptions = VENDOR_STORE_TYPE_OPTIONS;

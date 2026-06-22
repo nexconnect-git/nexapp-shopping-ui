@@ -2,7 +2,7 @@ import { NgFor, NgIf } from '@angular/common';
 import { Component, EventEmitter, inject, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { ApiService, AppCurrencyPipe, AuthService } from '@shared/public-api';
+import { AppCurrencyPipe, AuthService, VendorApi } from '@shared/public-api';
 import {
   CreateProductSubmitPayload,
   VendorVariantDraft,
@@ -20,7 +20,7 @@ export class VendorProductCreateComponent {
   @Output() cancelCreate = new EventEmitter<void>();
   @Output() submitted = new EventEmitter<CreateProductSubmitPayload>();
   readonly auth = inject(AuthService);
-  readonly api = inject(ApiService);
+  readonly api = inject(VendorApi);
 
   constructor(public service: VendorProductCreateService) {}
 

@@ -2,7 +2,8 @@ import { Component, Input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AppCurrencyPipe } from '@shared/lib/pipes/currency.pipe';
 import { Product } from '../../models';
-import { AppStateService } from '../../services/app-state.service';
+import { CustomerCartFacade } from '../../services/facades/customer-cart.facade';
+import { CatalogService } from '../../services/catalog.service';
 
 type ProductMeta = Record<string, unknown> & {
   stock?: number | string;
@@ -30,7 +31,10 @@ export class ProductCardComponent {
   @Input() compact = false;
   readonly placeholderImage = '/assets/placeholders/product.svg';
 
-  constructor(public state: AppStateService) {}
+  constructor(
+    public cart: CustomerCartFacade,
+    private catalog: CatalogService,
+  ) {}
 
   productName(): string {
     return this.product?.name?.trim() || 'Product unavailable';
@@ -69,7 +73,7 @@ export class ProductCardComponent {
 
   quantity(): number {
     return (
-      this.state
+      this.cart
         .cart()
         .find(
           (item) =>
@@ -98,8 +102,16 @@ export class ProductCardComponent {
   }
 
   storeClosed(): boolean {
-    const vendor = ((this.product?.raw || {}) as ProductMeta).vendor;
-    return vendor ? (vendor?.is_open_now ?? vendor?.is_open) === false : false;
+    const raw = (this.product?.raw || {}) as ProductMeta & Record<string, any>;
+    const loadedStore = this.product?.storeId
+      ? this.catalog.stores().find((store) => store.id === this.product.storeId)
+      : null;
+    const vendor = raw.vendor || raw['store'] || loadedStore?.raw;
+    if (!vendor) return false;
+    return (
+      (vendor?.is_open_now ?? vendor?.is_open) === false ||
+      vendor?.is_accepting_orders === false
+    );
   }
 
   isUnavailable(): boolean {

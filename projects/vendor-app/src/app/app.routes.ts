@@ -19,10 +19,7 @@ export const routes: Routes = [
     path: 'login',
     loadComponent: () =>
       import('./pages/login/login.component').then((m) => m.LoginComponent),
-    canActivate: [
-      pageFeatureGuard('vendor-app', 'vendor-login'),
-      portalUnauthGuard('vendor'),
-    ],
+    canActivate: [portalUnauthGuard('vendor')],
   },
   {
     path: 'register',
@@ -30,10 +27,7 @@ export const routes: Routes = [
       import('./pages/register/register.component').then(
         (m) => m.RegisterComponent,
       ),
-    canActivate: [
-      pageFeatureGuard('vendor-app', 'vendor-register'),
-      unauthGuard,
-    ],
+    canActivate: [unauthGuard],
   },
   {
     path: 'change-password',
@@ -41,10 +35,7 @@ export const routes: Routes = [
       import('./pages/change-password/change-password.component').then(
         (m) => m.ChangePasswordComponent,
       ),
-    canActivate: [
-      authGuard,
-      pageFeatureGuard('vendor-app', 'vendor-change-password'),
-    ],
+    canActivate: [authGuard],
   },
   {
     path: 'pending-approval',
@@ -52,11 +43,7 @@ export const routes: Routes = [
       import('./pages/pending-approval/pending-approval.component').then(
         (m) => m.PendingApprovalComponent,
       ),
-    canActivate: [
-      authGuard,
-      roleGuard('vendor'),
-      pageFeatureGuard('vendor-app', 'vendor-pending-approval'),
-    ],
+    canActivate: [authGuard, roleGuard('vendor')],
   },
   {
     path: 'feature-unavailable',
@@ -72,7 +59,7 @@ export const routes: Routes = [
       import('./pages/dashboard/dashboard.component').then(
         (m) => m.DashboardComponent,
       ),
-    canActivate: vendorPageGuard('vendor-dashboard'),
+    canActivate: vendorGuard,
   },
   {
     path: 'live-orders',

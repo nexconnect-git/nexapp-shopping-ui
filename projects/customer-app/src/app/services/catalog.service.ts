@@ -444,12 +444,10 @@ export class CatalogService {
   }
 
   productsByCategory(category: string): Product[] {
-    const key = this.normalize(category);
-    if (!key || key === 'all') return this._products();
-    return this._products().filter(
-      (product) =>
-        this.normalize(product.category) === key ||
-        this.normalize(product.raw?.category?.slug) === key,
+    const keys = this.categoryKeys(category);
+    if (!keys.size || keys.has('all')) return this._products();
+    return this._products().filter((product) =>
+      this.productCategoryKeys(product).some((key) => keys.has(key)),
     );
   }
 
@@ -665,6 +663,64 @@ export class CatalogService {
 
   private normalize(value: string | null | undefined): string {
     return normalizeKey(value);
+  }
+
+  private categoryKeys(value: string | null | undefined): Set<string> {
+    const key = this.normalize(value);
+    const keys = new Set<string>();
+    if (!key) return keys;
+    keys.add(key);
+
+    for (const category of this._categories()) {
+      const raw = (category.raw || {}) as Record<string, unknown>;
+      const candidates = [
+        category.id,
+        category.label,
+        raw['id'],
+        raw['slug'],
+        raw['name'],
+        raw['title'],
+      ];
+      if (!candidates.some((candidate) => this.normalizeValue(candidate) === key)) {
+        continue;
+      }
+      for (const candidate of candidates) {
+        const normalized = this.normalizeValue(candidate);
+        if (normalized) keys.add(normalized);
+      }
+    }
+
+    return keys;
+  }
+
+  private productCategoryKeys(product: Product): string[] {
+    const raw = (product.raw || {}) as Record<string, any>;
+    const category = raw['category'];
+    const candidates = [
+      product.category,
+      raw['category_name'],
+      raw['categoryName'],
+      raw['category_slug'],
+      raw['categorySlug'],
+      raw['category_id'],
+      raw['categoryId'],
+      typeof category === 'string' ? category : undefined,
+      category?.id,
+      category?.slug,
+      category?.name,
+      category?.title,
+    ];
+    return [
+      ...new Set(
+        candidates
+          .map((candidate) => this.normalizeValue(candidate))
+          .filter(Boolean),
+      ),
+    ];
+  }
+
+  private normalizeValue(value: unknown): string {
+    return this.normalize(String(value ?? ''));
   }
 
   private requestKey(params: Record<string, any>): string {

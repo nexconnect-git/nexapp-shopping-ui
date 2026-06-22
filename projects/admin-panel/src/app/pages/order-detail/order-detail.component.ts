@@ -10,7 +10,9 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import {
+  API_BASE_URL,
   ApiService,
+  apiErrorMessage,
   AppCurrencyPipe,
   AuthService,
   decodeGooglePolyline,
@@ -37,6 +39,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private zone = inject(NgZone);
   private googleMaps = inject(GoogleMapsService);
+  private apiBaseUrl = inject(API_BASE_URL);
 
   order = signal<Order | null>(null);
   loading = signal(true);
@@ -107,7 +110,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
         this.loadOrder();
       },
       error: (err) => {
-        this.updateError.set(err.error?.error || 'Failed to update status.');
+        this.updateError.set(apiErrorMessage(err, 'Failed to update status.'));
         this.updating.set(false);
       },
     });
@@ -233,8 +236,9 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
   private connectWebSocket() {
     this.closeWs();
     this.ws = openAuthenticatedWebSocket(
-      `/sa/ws/delivery/${this.orderId}/tracking/`,
+      `/ws/delivery/${this.orderId}/tracking/`,
       this.auth.getToken(),
+      this.apiBaseUrl,
     );
     this.ws.onmessage = (msg) => {
       const data = JSON.parse(msg.data);

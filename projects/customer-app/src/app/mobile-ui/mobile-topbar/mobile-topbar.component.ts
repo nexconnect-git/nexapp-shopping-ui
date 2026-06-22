@@ -4,8 +4,6 @@ import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { CatalogService } from '../../services/catalog.service';
 import { AppStateService } from '../../services/app-state.service';
 import { UiService } from '../../services/ui.service';
-import { AuthService } from '../../services/auth.service';
-import { ApiService } from '@shared/lib/services/api.service';
 import { PageFeatureAccessService } from '@shared/lib/services/page-feature-access.service';
 import { filter } from 'rxjs';
 
@@ -49,8 +47,6 @@ export class MobileTopbarComponent implements OnInit, OnDestroy {
   constructor(
     public state: AppStateService,
     public ui: UiService,
-    public auth: AuthService,
-    public api: ApiService,
     private catalog: CatalogService,
     private router: Router,
     private location: Location,
@@ -60,10 +56,7 @@ export class MobileTopbarComponent implements OnInit, OnDestroy {
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
       .subscribe((event) => {
         this.currentUrl.set(event.urlAfterRedirects || event.url || '/');
-      });
-    if (this.auth.isLoggedIn()) {
-      this.api.refreshUnreadCount();
-    }
+    });
   }
 
   ngOnInit(): void {

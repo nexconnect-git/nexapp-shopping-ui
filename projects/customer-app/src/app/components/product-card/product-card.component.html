@@ -1,11 +1,12 @@
 <article class="product-card" [class.compact]="compact">
   <a [routerLink]="['/product', product.id]" class="image-wrap">
-    <img
-      [src]="product.image || placeholderImage"
-      [alt]="productName()"
-      loading="lazy"
-      (error)="onImageError($event)"
-    />
+          <img
+            [src]="product.image || placeholderImage"
+            [alt]="productName()"
+            [attr.loading]="product.image ? 'lazy' : 'eager'"
+            [attr.fetchpriority]="product.image ? null : 'high'"
+            (error)="onImageError($event)"
+          />
     @if (product.discount) {
       <span class="discount">{{ product.discount }}</span>
     }
@@ -37,7 +38,7 @@
           <button
             type="button"
             aria-label="Decrease quantity"
-            (click)="state.updateQuantity(product.id, -1)"
+            (click)="cart.updateQuantity(product.id, -1)"
           >
             <span class="material-symbols-rounded">remove</span>
           </button>
@@ -45,7 +46,7 @@
           <button
             type="button"
             aria-label="Increase quantity"
-            (click)="state.updateQuantity(product.id, 1)"
+            (click)="cart.updateQuantity(product.id, 1)"
           >
             <span class="material-symbols-rounded">add</span>
           </button>
@@ -61,7 +62,7 @@
           type="button"
           class="add"
           [attr.aria-label]="'Add ' + productName() + ' to cart'"
-          (click)="state.addToCart(product)"
+          (click)="cart.addToCart(product)"
         >
           Add
         </button>

@@ -12,6 +12,10 @@ import {
   sanitizeDigits,
   stripControlCharacters,
 } from '@shared/lib/utils/input-validation';
+import {
+  formatFormErrors,
+  parseFormErrors,
+} from '@shared/lib/utils/form-field-errors';
 import { Address } from '../../models';
 import { AppStateService } from '../../services/app-state.service';
 import { MobileBottomSheetComponent } from '../../mobile-ui/mobile-bottom-sheet/mobile-bottom-sheet.component';
@@ -32,6 +36,7 @@ export class AddressesComponent {
   addresses = computed(() => this.state.addresses());
   showModal = signal(false);
   editing = signal<string | null>(null);
+  saving = signal(false);
   formError = signal('');
   fieldErrors = signal<Record<string, string>>({});
   form: Address = { id: '', label: '', name: '', line: '', phone: '' };
@@ -77,9 +82,19 @@ export class AddressesComponent {
       return;
     }
     this.formError.set('');
-    if (this.editing()) this.state.updateAddress(this.form);
-    else this.state.createAddress(this.form);
-    this.showModal.set(false);
+    this.saving.set(true);
+    const callbacks = {
+      next: () => {
+        this.saving.set(false);
+        this.showModal.set(false);
+      },
+      error: (error: any) => {
+        this.saving.set(false);
+        this.applyBackendErrors(error);
+      },
+    };
+    if (this.editing()) this.state.updateAddress(this.form, callbacks);
+    else this.state.createAddress(this.form, callbacks);
   }
 
   remove(id: string): void {
@@ -93,6 +108,7 @@ export class AddressesComponent {
 
   closeModal(): void {
     this.showModal.set(false);
+    this.saving.set(false);
     this.formError.set('');
     this.fieldErrors.set({});
   }
@@ -126,6 +142,10 @@ export class AddressesComponent {
   onPincodeInput(value: string): void {
     this.form.pincode = sanitizeDigits(value, 6);
     this.clearFieldError('pincode');
+  }
+
+  blockInvalidNumberKey(event: KeyboardEvent): void {
+    if (['e', 'E', '+', '-', '.'].includes(event.key)) event.preventDefault();
   }
 
   onMapLocationPicked(location: MapLocation): void {
@@ -162,5 +182,27 @@ export class AddressesComponent {
       errors['pincode'] = 'Enter a valid 6-digit PIN code.';
 
     return errors;
+  }
+
+  private applyBackendErrors(error: any): void {
+    const parsed = parseFormErrors(error?.error || error, {
+      postal_code: 'pincode',
+      postalCode: 'pincode',
+      zip_code: 'pincode',
+      receiver_phone: 'phone',
+      recipient_phone: 'phone',
+      receiver_name: 'name',
+      recipient_name: 'name',
+      address: 'line',
+      address_line: 'line',
+      line1: 'line',
+    });
+    this.fieldErrors.set(parsed.fieldErrors);
+    this.formError.set(
+      formatFormErrors(
+        error?.error || error,
+        'Could not save address. Please check the highlighted fields.'
+      )
+    );
   }
 }

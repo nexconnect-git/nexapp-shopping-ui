@@ -2,7 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
-  ApiService,
+  VendorApi,
   AppCurrencyPipe,
   ToastService,
   VendorAnalytics,
@@ -17,7 +17,7 @@ import { forkJoin } from 'rxjs';
   styleUrl: './sales-report.component.scss',
 })
 export class SalesReportComponent implements OnInit {
-  private api = inject(ApiService);
+  private api = inject(VendorApi);
   private toast = inject(ToastService);
 
   loading = signal(true);
