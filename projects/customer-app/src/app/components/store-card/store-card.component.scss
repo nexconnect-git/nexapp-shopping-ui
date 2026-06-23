@@ -4,10 +4,10 @@
   overflow: hidden;
   display: grid;
   grid-template-rows: auto 1fr;
-  border: 1px solid var(--line);
-  border-radius: 12px;
+  border: 1px solid rgba(56, 38, 142, 0.13);
+  border-radius: 8px;
   background: #fff;
-  box-shadow: 0 8px 22px rgba(23, 18, 61, 0.04);
+  box-shadow: 0 12px 28px rgba(23, 18, 61, 0.06);
   transition:
     transform 0.18s ease,
     box-shadow 0.18s ease,
@@ -15,9 +15,9 @@
 }
 
 .store-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px);
   border-color: var(--fd-color-primary-border);
-  box-shadow: 0 18px 42px rgba(23, 18, 61, 0.08);
+  box-shadow: 0 20px 48px rgba(23, 18, 61, 0.12);
 }
 
 .store-img {
@@ -25,7 +25,9 @@
   display: block;
   height: 138px;
   overflow: hidden;
-  background: #f8f6ff;
+  background:
+    linear-gradient(135deg, rgba(56, 38, 142, 0.12), rgba(248, 194, 28, 0.12)),
+    #f8f6ff;
 }
 
 .store-img img {
@@ -66,9 +68,10 @@
 
 .offer-badge {
   top: 10px;
-  color: #854d0e;
-  background: var(--fd-color-warning-soft);
-  border: 1px solid var(--fd-color-warning-border);
+  color: #fff;
+  background: linear-gradient(135deg, var(--fd-color-orange), var(--fd-color-warning));
+  border: 0;
+  box-shadow: 0 10px 20px rgba(249, 121, 40, 0.2);
 }
 
 .info {

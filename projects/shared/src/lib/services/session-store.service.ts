@@ -128,6 +128,10 @@ export class SessionStore {
     localStorage.setItem(this.vendorStatusKey, status);
   }
 
+  getVendorStatus(): string {
+    return localStorage.getItem(this.vendorStatusKey) || '';
+  }
+
   clearVendorStatus(): void {
     localStorage.removeItem(this.vendorStatusKey);
   }

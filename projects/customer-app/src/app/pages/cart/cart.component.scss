@@ -576,11 +576,11 @@ del {
     border: 1px solid #f1ecff;
   }
   
-  .cart-item div {
+  .cart-item > div:not(.cart-actions) {
     min-width: 0;
   }
   
-  .cart-item b {
+  .cart-item > div:not(.cart-actions) > b {
     display: block;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -590,7 +590,7 @@ del {
     color: #12095f;
   }
   
-  .cart-item small {
+  .cart-item > div:not(.cart-actions) > small {
     display: block;
     margin-top: 2px;
     color: #77708d;
@@ -600,7 +600,7 @@ del {
     white-space: nowrap;
   }
   
-  .cart-item span {
+  .cart-item > div:not(.cart-actions) > span {
     display: inline-flex;
     margin-top: 4px;
     font-weight: 950;
@@ -611,8 +611,9 @@ del {
   .cart-actions {
     grid-column: 1 / -1;
     display: grid;
-    grid-template-columns: 34px 34px minmax(0, 1fr);
+    grid-template-columns: 34px minmax(112px, 128px) minmax(0, 1fr);
     gap: 7px;
+    align-items: center;
     margin-top: 5px;
     padding-top: 7px;
     border-top: 1px solid #fbfaff;
@@ -638,6 +639,8 @@ del {
   
   .qty {
     height: 34px;
+    min-width: 112px;
+    max-width: 128px;
     border-radius: 10px;
     border: 1px solid rgba(56, 38, 142, 0.16);
     background: #fff;
@@ -647,12 +650,31 @@ del {
     text-align: center;
     font-weight: 950;
     color: var(--fd-color-primary);
+
+    b {
+      display: grid;
+      place-items: center;
+      min-width: 28px;
+      color: #12095f;
+      font-size: 14px;
+      font-weight: 950;
+      line-height: 1;
+    }
     
     button {
+      width: 32px;
       height: 100%;
       display: grid;
       place-items: center;
       color: var(--fd-color-primary);
+
+      .material-symbols-rounded {
+        margin: 0;
+        color: inherit;
+        font-size: 18px;
+        line-height: 1;
+      }
+
       &:active {
         background: rgba(56, 38, 142, 0.06);
       }

@@ -19,9 +19,7 @@
   min-height: min(700px, calc(100dvh - 4rem));
   background: var(--nc-white);
   border-radius: 8px;
-  box-shadow:
-    0 25px 50px -12px
-      color-mix(in srgb, var(--nc-text-primary) 10%, transparent),
+  box-shadow: 0 25px 50px -12px color-mix(in srgb, var(--nc-text-primary) 10%, transparent),
     0 0 0 1px color-mix(in srgb, var(--nc-text-primary) 5%, transparent);
   overflow: hidden;
 }
@@ -38,8 +36,8 @@
   border: 1px solid var(--border-color);
   border-radius: 8px;
   background: var(--nc-white);
-  box-shadow:
-    0 24px 48px color-mix(in srgb, var(--nc-text-primary) 6%, transparent),
+  box-shadow: 0 24px 48px
+      color-mix(in srgb, var(--nc-text-primary) 6%, transparent),
     0 0 0 1px color-mix(in srgb, var(--nc-text-primary) 4%, transparent);
   text-align: center;
 
@@ -264,13 +262,19 @@
   margin-bottom: 1.5rem;
 }
 label {
-  display: block;
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
   font-size: 0.8125rem;
   font-weight: 700;
   color: var(--text-secondary);
   margin-bottom: 0.5rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+.required {
+  color: var(--danger);
+  font-weight: 900;
 }
 .form-input {
   width: 100%;
@@ -300,15 +304,15 @@ select.form-input {
   height: 48px;
   line-height: 1.2;
   padding-right: 2.5rem;
-  background-image: linear-gradient(45deg, transparent 50%, var(--text-secondary) 50%),
+  background-image: linear-gradient(
+      45deg,
+      transparent 50%,
+      var(--text-secondary) 50%
+    ),
     linear-gradient(135deg, var(--text-secondary) 50%, transparent 50%);
-  background-position:
-    calc(100% - 18px) 20px,
-    calc(100% - 13px) 20px;
+  background-position: calc(100% - 18px) 20px, calc(100% - 13px) 20px;
   background-repeat: no-repeat;
-  background-size:
-    5px 5px,
-    5px 5px;
+  background-size: 5px 5px, 5px 5px;
 }
 textarea.form-input {
   height: auto;
@@ -343,10 +347,7 @@ textarea.form-input {
   overflow: hidden;
   padding: 0.9rem;
   text-align: center;
-  transition:
-    border-color 0.2s,
-    box-shadow 0.2s,
-    background 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
 
   &:hover,
   &:focus-visible {
@@ -400,6 +401,11 @@ textarea.form-input {
 .form-input.has-error {
   border-color: var(--danger);
   background: var(--danger-light);
+
+  &:focus {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--danger) 14%, transparent);
+  }
 }
 .field-error,
 .field-checking,

@@ -1,3 +1,10 @@
+@if (!auth.isLoggedIn()) {
+  <fd-customer-locked-state
+    title="Login to checkout"
+    description="Your basket is ready. Sign in to choose an address, review delivery fees and place the order."
+    icon="shopping_bag"
+  />
+} @else {
 <div class="desktop-customer-view">
   <main class="fd-content">
     <fd-breadcrumbs
@@ -305,7 +312,7 @@
         </div>
       </section>
     </section>
-  </main>
+</main>
 </div>
 
 <div class="mobile-customer-view">
@@ -542,5 +549,6 @@
         <small>{{ checkoutBlockingReason() }}</small>
       }
     </section>
-  </main>
+</main>
 </div>
+}

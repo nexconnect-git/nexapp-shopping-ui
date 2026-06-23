@@ -64,7 +64,6 @@ export const routes: Routes = [
   },
   {
     path: 'checkout',
-    canActivate: [customerAuthGuard],
     loadComponent: () =>
       import('./pages/checkout/checkout.component').then(
         (m) => m.CheckoutComponent,
@@ -72,7 +71,6 @@ export const routes: Routes = [
   },
   {
     path: 'orders',
-    canActivate: [customerAuthGuard],
     loadComponent: () =>
       import('./pages/orders/orders.component').then((m) => m.OrdersComponent),
   },
@@ -113,7 +111,6 @@ export const routes: Routes = [
   },
   {
     path: 'account',
-    canActivate: [customerAuthGuard],
     loadComponent: () =>
       import('./pages/profile/profile.component').then(
         (m) => m.ProfileComponent,
@@ -122,7 +119,6 @@ export const routes: Routes = [
   { path: 'profile', redirectTo: 'account' },
   {
     path: 'addresses',
-    canActivate: [customerAuthGuard],
     loadComponent: () =>
       import('./pages/addresses/addresses.component').then(
         (m) => m.AddressesComponent,

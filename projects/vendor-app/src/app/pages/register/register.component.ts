@@ -93,7 +93,10 @@ export class RegisterComponent {
 
   nextStep() {
     this.error.set('');
-    if (!this.validateStep(this.step())) return;
+    if (!this.validateStep(this.step())) {
+      this.error.set('Please fix the highlighted fields before continuing.');
+      return;
+    }
     this.step.update((s) => s + 1);
   }
 
@@ -149,6 +152,84 @@ export class RegisterComponent {
       this.form.phone = normalizeIndianPhone(this.form.phone);
     this.clearFieldError(field);
     this.scheduleAvailabilityCheck(field);
+  }
+
+  validateField(field: string) {
+    const errors = { ...this.fieldErrors() };
+    delete errors[field];
+
+    if (field === 'username') {
+      const username = this.form.username.trim();
+      if (!username) {
+        errors[field] = 'Username is required.';
+      } else if (!USERNAME_PATTERN.test(username)) {
+        errors[field] =
+          'Use 3-30 letters, numbers, dots, dashes, or underscores.';
+      } else {
+        this.validateFieldAvailability('username', errors);
+      }
+    }
+
+    if (field === 'email') {
+      const email = sanitizeEmail(this.form.email);
+      this.form.email = email;
+      if (!email) {
+        errors[field] = 'Email address is required.';
+      } else if (!isValidEmail(email)) {
+        errors[field] = 'Enter a valid email address.';
+      } else {
+        this.validateFieldAvailability('email', errors);
+      }
+    }
+
+    if (field === 'phone') {
+      const phone = normalizeIndianPhone(this.form.phone);
+      this.form.phone = phone;
+      if (!phone) {
+        errors[field] = 'Phone number is required.';
+      } else if (!isValidIndianPhone(phone)) {
+        errors[field] = 'Enter a valid 10-digit Indian mobile number.';
+      } else {
+        this.validateFieldAvailability('phone', errors);
+      }
+    }
+
+    if (field === 'password') {
+      if (!String(this.form.password || '').trim()) {
+        errors[field] = 'Password is required.';
+      } else if (this.form.password.length < 8) {
+        errors[field] = 'Password must be at least 8 characters.';
+      }
+    }
+
+    if (field === 'store_name') {
+      this.validateRequired('store_name', 'Store name', errors);
+    }
+    if (field === 'description') {
+      this.validateRequired('description', 'Description', errors);
+    }
+    if (field === 'vendor_email') {
+      this.form.vendor_email = sanitizeEmail(this.form.vendor_email);
+      if (this.form.vendor_email && !isValidEmail(this.form.vendor_email)) {
+        errors[field] = 'Enter a valid public contact email.';
+      }
+    }
+
+    if (field === 'address')
+      this.validateRequired('address', 'Street address', errors);
+    if (field === 'city') this.validateRequired('city', 'City', errors);
+    if (field === 'state') this.validateRequired('state', 'State', errors);
+    if (field === 'postal_code') {
+      const postalCode = sanitizeDigits(this.form.postal_code, 6);
+      this.form.postal_code = postalCode;
+      if (!postalCode) {
+        errors[field] = 'Postal code is required.';
+      } else if (!INDIA_PINCODE_PATTERN.test(postalCode)) {
+        errors[field] = 'Enter a valid 6-digit pincode.';
+      }
+    }
+
+    this.fieldErrors.set(errors);
   }
 
   onPublicEmailInput() {
@@ -353,6 +434,22 @@ export class RegisterComponent {
     return ['address', 'city', 'state', 'postal_code', 'location'];
   }
 
+  private validateFieldAvailability(
+    field: 'username' | 'email' | 'phone',
+    errors: Record<string, string>
+  ) {
+    const value = String(this.form[field] || '').trim();
+    const state = this.availability()[field];
+    if (!state || state.value !== value) {
+      this.scheduleAvailabilityCheck(field, 0);
+      errors[field] = `Checking ${field} availability...`;
+    } else if (state.checking) {
+      errors[field] = `Checking ${field} availability...`;
+    } else if (state.unique === false) {
+      errors[field] = state.message || `${field} is already in use.`;
+    }
+  }
+
   clearFieldError(field: string) {
     if (!this.fieldErrors()[field]) return;
     this.fieldErrors.update((errors) => {
@@ -396,18 +493,19 @@ export class RegisterComponent {
         .subscribe({
           next: (result) => {
             if (String(this.form[field] || '').trim() !== value) return;
+            const unique = this.coerceAvailabilityUnique(result?.unique);
             const message = result.message || `${field} is already in use.`;
             this.availability.update((states) => ({
               ...states,
               [field]: {
                 checking: false,
-                unique: result.unique,
-                message: result.unique ? '' : message,
+                unique,
+                message: unique ? '' : message,
                 suggestions: result.suggestions || [],
                 value,
               },
             }));
-            if (result.unique) {
+            if (unique) {
               this.clearFieldError(field);
             } else {
               this.fieldErrors.update((errors) => ({
@@ -436,6 +534,15 @@ export class RegisterComponent {
           },
         });
     }, delay);
+  }
+
+  private coerceAvailabilityUnique(value: unknown): boolean {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'number') return value === 1;
+    if (typeof value === 'string') {
+      return ['true', '1', 'yes'].includes(value.trim().toLowerCase());
+    }
+    return false;
   }
 
   canContinueStep(step = this.step()): boolean {

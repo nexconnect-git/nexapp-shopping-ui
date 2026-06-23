@@ -22,6 +22,8 @@ import { AppCurrencyPipe } from '@shared/lib/pipes/currency.pipe';
 import { CurrencyService } from '@shared/lib/services/currency.service';
 import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
 import { MobileCheckoutStepperComponent } from '../../mobile-ui/mobile-checkout-stepper/mobile-checkout-stepper.component';
+import { AuthService } from '../../services/auth.service';
+import { CustomerLockedStateComponent } from '../../shared/customer-locked-state/customer-locked-state.component';
 
 interface AddressPreviewState {
   loading?: boolean;
@@ -41,6 +43,7 @@ interface AddressPreviewState {
     ProductCardComponent,
     AppCurrencyPipe,
     MobileCheckoutStepperComponent,
+    CustomerLockedStateComponent,
   ],
   templateUrl: './checkout.component.html',
   styleUrls: ['./checkout.component.scss'],
@@ -260,8 +263,10 @@ export class CheckoutComponent {
     private cartApi: CustomerCartApiService,
     private ui: UiService,
     private currency: CurrencyService,
+    public auth: AuthService,
   ) {
     effect(() => {
+      if (!this.auth.isLoggedIn()) return;
       if (this.state.cartLoaded() && !this.state.itemCount()) {
         this.state.showToast('Your cart is empty. Add items before checkout.');
         this.router.navigate(['/cart']);

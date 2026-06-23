@@ -1,11 +1,11 @@
 <main class="edit-page">
   <header class="edit-header">
-    <div>
+    <div class="edit-title">
       <small>ADMIN PANEL</small>
       <h1>{{ config.title }}</h1>
       <p>{{ config.subtitle }}</p>
     </div>
-    <div>
+    <div class="header-actions">
       <button type="button" class="btn outline" (click)="cancelEdit.emit()">
         {{ config.cancelLabel || "Cancel" }}
       </button>
@@ -15,187 +15,222 @@
         [disabled]="!isFormValid()"
         (click)="submitSaveDraft()"
       >
+        <span class="material-icons-outlined">save</span>
         {{ config.saveDraftLabel || "Save Draft" }}
       </button>
     </div>
   </header>
 
   <section class="wizard-card">
-    <nav class="stepper">
-      <button
-        *ngFor="let step of config.steps; let index = index"
-        type="button"
-        [class.active]="index === activeStepIndex()"
-        [class.done]="index < activeStepIndex()"
-        (click)="goTo(index)"
-      >
-        <span>{{
-          index < activeStepIndex() ? "✅" : step.icon || index + 1
-        }}</span>
-        <b>{{ step.label }}</b>
-      </button>
-    </nav>
-
-    <div class="section-grid">
-      <div *ngIf="submitError || localSummary()" class="form-error full">
-        {{ submitError || localSummary() }}
+    <aside class="step-rail" aria-label="Edit sections">
+      <div class="step-rail__header">
+        <span>Step {{ activeStepIndex() + 1 }} of {{ config.steps.length }}</span>
+        <b>{{ activeStep.label }}</b>
       </div>
-      <section *ngFor="let section of activeStep.sections" class="form-card">
-        <header>
-          <span>{{ section.icon || "📋" }}</span>
-          <div>
-            <h2>{{ section.title }}</h2>
-            <p>{{ section.subtitle }}</p>
-          </div>
-        </header>
 
-        <div class="form-grid" [attr.data-columns]="section.columns || 2">
-          <label
-            *ngFor="let field of section.fields"
-            [class.full]="
-              field.colSpan === 2 ||
-              field.type === 'textarea' ||
-              field.type === 'file' ||
-              field.type === 'map'
-            "
-            [class.has-error]="hasError(field)"
-            [attr.for]="fieldId(field)"
-          >
-            <span>{{ field.label }} <i *ngIf="field.required">*</i></span>
+      <nav class="stepper">
+        <button
+          *ngFor="let step of config.steps; let index = index"
+          type="button"
+          [class.active]="index === activeStepIndex()"
+          [class.done]="index < activeStepIndex()"
+          (click)="goTo(index)"
+        >
+          <span class="step-index">
+            <span class="material-icons-outlined" *ngIf="index < activeStepIndex()">check</span>
+            <ng-container *ngIf="index >= activeStepIndex()">{{ index + 1 }}</ng-container>
+          </span>
+          <span class="step-copy">
+            <b>{{ step.label }}</b>
+            <small>
+              {{
+                index === activeStepIndex()
+                  ? "In progress"
+                  : index < activeStepIndex()
+                    ? "Completed"
+                    : "Pending"
+              }}
+            </small>
+          </span>
+        </button>
+      </nav>
+    </aside>
 
-            <ng-container [ngSwitch]="field.type">
-              <input
-                *ngSwitchCase="'text'"
-                [id]="fieldId(field)"
-                type="text"
-                [placeholder]="field.placeholder || ''"
-                [attr.inputmode]="inputMode(field)"
-                [attr.maxlength]="maxLength(field)"
-                [ngModel]="formValue[field.key]"
-                (ngModelChange)="setValue(field.key, $event)"
-              />
-              <input
-                *ngSwitchCase="'email'"
-                [id]="fieldId(field)"
-                type="email"
-                [placeholder]="field.placeholder || 'name@example.com'"
-                [ngModel]="formValue[field.key]"
-                (ngModelChange)="setValue(field.key, $event)"
-              />
-              <input
-                *ngSwitchCase="'tel'"
-                [id]="fieldId(field)"
-                type="tel"
-                [placeholder]="field.placeholder || '9876543210'"
-                inputmode="numeric"
-                pattern="[0-9]*"
-                [attr.maxlength]="maxLength(field)"
-                [ngModel]="formValue[field.key]"
-                (ngModelChange)="setValue(field.key, $event)"
-              />
-              <input
-                *ngSwitchCase="'number'"
-                [id]="fieldId(field)"
-                type="number"
-                [placeholder]="field.placeholder || ''"
-                [ngModel]="formValue[field.key]"
-                (ngModelChange)="setValue(field.key, $event)"
-                (keydown)="blockInvalidNumberKey($event)"
-              />
-              <input
-                *ngSwitchCase="'currency'"
-                [id]="fieldId(field)"
-                type="number"
-                [placeholder]="field.placeholder || ''"
-                [ngModel]="formValue[field.key]"
-                (ngModelChange)="setValue(field.key, $event)"
-                (keydown)="blockInvalidNumberKey($event)"
-              />
-              <div *ngSwitchCase="'map'" class="map-control">
-                <app-map-picker
-                  [initialLat]="numberValue('latitude', 12.9716)"
-                  [initialLng]="numberValue('longitude', 77.5946)"
-                  height="320px"
-                  (locationPicked)="setLocationFromMap($event)"
-                ></app-map-picker>
-              </div>
-              <input
-                *ngSwitchCase="'date'"
-                [id]="fieldId(field)"
-                type="date"
-                [ngModel]="formValue[field.key]"
-                (ngModelChange)="setValue(field.key, $event)"
-              />
-              <input
-                *ngSwitchCase="'time'"
-                [id]="fieldId(field)"
-                type="time"
-                [ngModel]="formValue[field.key]"
-                (ngModelChange)="setValue(field.key, $event)"
-              />
-
-              <select
-                *ngSwitchCase="'select'"
-                [id]="fieldId(field)"
-                [ngModel]="formValue[field.key]"
-                (ngModelChange)="setValue(field.key, $event)"
-              >
-                <option
-                  *ngFor="let option of field.options"
-                  [ngValue]="option.value"
-                >
-                  {{ option.label }}
-                </option>
-              </select>
-
-              <textarea
-                *ngSwitchCase="'textarea'"
-                [id]="fieldId(field)"
-                rows="5"
-                [ngModel]="formValue[field.key]"
-                (ngModelChange)="setValue(field.key, $event)"
-              ></textarea>
-
-              <button
-                *ngSwitchCase="'toggle'"
-                class="toggle"
-                type="button"
-                [class.on]="formValue[field.key]"
-                (click)="toggle(field.key)"
-              >
-                <span></span>
-                {{ formValue[field.key] ? "Enabled" : "Disabled" }}
-              </button>
-
-              <div *ngSwitchCase="'file'" class="upload">
-                <input
-                  #fileInput
-                  [id]="fieldId(field)"
-                  type="file"
-                  accept="image/*,application/pdf"
-                  (change)="setFile(field, $event)"
-                />
-                <span>{{ fileName(field) || "No file selected" }}</span>
-                <button
-                  *ngIf="fileName(field)"
-                  type="button"
-                  (click)="clearFile(field, fileInput)"
-                >
-                  Remove
-                </button>
-                <small>{{ field.hint }}</small>
-              </div>
-            </ng-container>
-
-            <small *ngIf="field.hint && field.type !== 'file'">{{
-              field.hint
-            }}</small>
-            <small *ngIf="fieldError(field)" class="field-error">{{
-              fieldError(field)
-            }}</small>
-          </label>
+    <div class="editor-panel">
+      <div class="panel-heading">
+        <div>
+          <small>Current Section</small>
+          <h2>{{ activeStep.label }}</h2>
         </div>
-      </section>
+        <span>{{ activeStepIndex() + 1 }}/{{ config.steps.length }}</span>
+      </div>
+
+      <div *ngIf="submitError || localSummary()" class="form-error">
+        <span class="material-icons-outlined">error</span>
+        <b>{{ submitError || localSummary() }}</b>
+      </div>
+
+      <div class="section-grid">
+        <section *ngFor="let section of activeStep.sections" class="form-card">
+          <header>
+            <span class="material-icons-outlined section-icon">edit_note</span>
+            <div>
+              <h3>{{ section.title }}</h3>
+              <p>{{ section.subtitle }}</p>
+            </div>
+          </header>
+
+          <div class="form-grid" [attr.data-columns]="section.columns || 2">
+            <label
+              *ngFor="let field of section.fields"
+              class="field"
+              [class.full]="
+                field.colSpan === 2 ||
+                field.type === 'textarea' ||
+                field.type === 'file' ||
+                field.type === 'map'
+              "
+              [class.has-error]="hasError(field)"
+              [attr.for]="fieldId(field)"
+            >
+              <span class="field-label">
+                {{ field.label }} <i *ngIf="field.required">*</i>
+              </span>
+
+              <ng-container [ngSwitch]="field.type">
+                <input
+                  *ngSwitchCase="'text'"
+                  [id]="fieldId(field)"
+                  type="text"
+                  [placeholder]="field.placeholder || ''"
+                  [attr.inputmode]="inputMode(field)"
+                  [attr.maxlength]="maxLength(field)"
+                  [ngModel]="formValue[field.key]"
+                  (ngModelChange)="setValue(field.key, $event)"
+                />
+                <input
+                  *ngSwitchCase="'email'"
+                  [id]="fieldId(field)"
+                  type="email"
+                  [placeholder]="field.placeholder || 'name@example.com'"
+                  [ngModel]="formValue[field.key]"
+                  (ngModelChange)="setValue(field.key, $event)"
+                />
+                <input
+                  *ngSwitchCase="'tel'"
+                  [id]="fieldId(field)"
+                  type="tel"
+                  [placeholder]="field.placeholder || '9876543210'"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
+                  [attr.maxlength]="maxLength(field)"
+                  [ngModel]="formValue[field.key]"
+                  (ngModelChange)="setValue(field.key, $event)"
+                />
+                <input
+                  *ngSwitchCase="'number'"
+                  [id]="fieldId(field)"
+                  type="number"
+                  [placeholder]="field.placeholder || ''"
+                  [ngModel]="formValue[field.key]"
+                  (ngModelChange)="setValue(field.key, $event)"
+                  (keydown)="blockInvalidNumberKey($event)"
+                />
+                <input
+                  *ngSwitchCase="'currency'"
+                  [id]="fieldId(field)"
+                  type="number"
+                  [placeholder]="field.placeholder || ''"
+                  [ngModel]="formValue[field.key]"
+                  (ngModelChange)="setValue(field.key, $event)"
+                  (keydown)="blockInvalidNumberKey($event)"
+                />
+                <div *ngSwitchCase="'map'" class="map-control">
+                  <app-map-picker
+                    [initialLat]="numberValue('latitude', 12.9716)"
+                    [initialLng]="numberValue('longitude', 77.5946)"
+                    height="320px"
+                    (locationPicked)="setLocationFromMap($event)"
+                  ></app-map-picker>
+                </div>
+                <input
+                  *ngSwitchCase="'date'"
+                  [id]="fieldId(field)"
+                  type="date"
+                  [ngModel]="formValue[field.key]"
+                  (ngModelChange)="setValue(field.key, $event)"
+                />
+                <input
+                  *ngSwitchCase="'time'"
+                  [id]="fieldId(field)"
+                  type="time"
+                  [ngModel]="formValue[field.key]"
+                  (ngModelChange)="setValue(field.key, $event)"
+                />
+
+                <select
+                  *ngSwitchCase="'select'"
+                  [id]="fieldId(field)"
+                  [ngModel]="formValue[field.key]"
+                  (ngModelChange)="setValue(field.key, $event)"
+                >
+                  <option
+                    *ngFor="let option of field.options"
+                    [ngValue]="option.value"
+                  >
+                    {{ option.label }}
+                  </option>
+                </select>
+
+                <textarea
+                  *ngSwitchCase="'textarea'"
+                  [id]="fieldId(field)"
+                  rows="5"
+                  [ngModel]="formValue[field.key]"
+                  (ngModelChange)="setValue(field.key, $event)"
+                ></textarea>
+
+                <button
+                  *ngSwitchCase="'toggle'"
+                  class="toggle"
+                  type="button"
+                  [class.on]="formValue[field.key]"
+                  (click)="toggle(field.key)"
+                >
+                  <span></span>
+                  {{ formValue[field.key] ? "Enabled" : "Disabled" }}
+                </button>
+
+                <div *ngSwitchCase="'file'" class="upload">
+                  <input
+                    #fileInput
+                    [id]="fieldId(field)"
+                    type="file"
+                    accept="image/*,application/pdf"
+                    (change)="setFile(field, $event)"
+                  />
+                  <span>{{ fileName(field) || "No file selected" }}</span>
+                  <button
+                    *ngIf="fileName(field)"
+                    type="button"
+                    (click)="clearFile(field, fileInput)"
+                  >
+                    Remove
+                  </button>
+                  <small>{{ field.hint }}</small>
+                </div>
+              </ng-container>
+
+              <small *ngIf="field.hint && field.type !== 'file'">{{
+                field.hint
+              }}</small>
+              <small *ngIf="fieldError(field)" class="field-error">{{
+                fieldError(field)
+              }}</small>
+            </label>
+          </div>
+        </section>
+      </div>
     </div>
 
     <footer class="form-actions">
@@ -204,6 +239,9 @@
         class="btn outline"
         (click)="activeStepIndex() === 0 ? cancelEdit.emit() : previous()"
       >
+        <span class="material-icons-outlined">{{
+          activeStepIndex() === 0 ? "close" : "arrow_back"
+        }}</span>
         {{ activeStepIndex() === 0 ? config.cancelLabel || "Cancel" : "Back" }}
       </button>
       <div>
@@ -213,6 +251,7 @@
           [disabled]="!isFormValid()"
           (click)="submitSaveDraft()"
         >
+          <span class="material-icons-outlined">save</span>
           {{ config.saveDraftLabel || "Save Draft" }}
         </button>
         <button
@@ -221,10 +260,10 @@
           [disabled]="isLastStep() ? !isFormValid() : !isCurrentStepValid()"
           (click)="next()"
         >
-          {{
+          <span>{{
             isLastStep() ? "Review & Submit" : config.submitLabel || "Continue"
-          }}
-          ->
+          }}</span>
+          <span class="material-icons-outlined">arrow_forward</span>
         </button>
       </div>
     </footer>

@@ -8,6 +8,7 @@ import { UiService } from '../../services/ui.service';
 import { CustomerContentConfigService } from '../../services/customer-content-config.service';
 import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
 import { CustomerCartApiService } from '../../services/customer-cart-api.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   standalone: true,
@@ -52,6 +53,7 @@ export class CartComponent implements OnInit {
     public ui: UiService,
     public content: CustomerContentConfigService,
     private cartApi: CustomerCartApiService,
+    private auth: AuthService,
   ) {}
 
   ngOnInit(): void {
@@ -81,6 +83,10 @@ export class CartComponent implements OnInit {
   }
 
   private loadSuggestions(): void {
+    if (!this.canLoadCartEnhancements()) {
+      this.cartSuggestions.set([]);
+      return;
+    }
     this.cartApi.getSuggestions().subscribe({
       next: (response) =>
         this.cartSuggestions.set(
@@ -95,9 +101,17 @@ export class CartComponent implements OnInit {
   }
 
   private loadBestCoupon(): void {
+    if (!this.canLoadCartEnhancements()) {
+      this.bestCoupon.set(null);
+      return;
+    }
     this.cartApi.getBestCoupon().subscribe({
       next: (response) => this.bestCoupon.set(response || null),
       error: () => this.bestCoupon.set(null),
     });
+  }
+
+  private canLoadCartEnhancements(): boolean {
+    return this.auth.isLoggedIn() && this.state.cart().length > 0;
   }
 }

@@ -1,3 +1,10 @@
+@if (!auth.isLoggedIn()) {
+  <fd-customer-locked-state
+    title="Login to manage account"
+    description="View your profile, saved addresses, wallet entries and quick order actions from one compact hub."
+    icon="person"
+  />
+} @else {
 <div class="desktop-customer-view">
 <main class="fd-content">
   <fd-breadcrumbs [items]="[{ label: 'Account' }]" />
@@ -196,3 +203,4 @@
   <button type="button" class="logout" (click)="auth.logout()">Logout</button>
 </main>
 </div>
+}

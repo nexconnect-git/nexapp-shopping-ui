@@ -35,7 +35,7 @@ i {
   padding: 3px 5px;
   border-radius: 6px;
   color: #fff;
-  background: #19a65a;
+  background: var(--fd-color-orange);
   font-size: 10px;
   font-style: normal;
   font-weight: 950;
@@ -99,13 +99,15 @@ del {
   min-width: 70px;
   padding: 0 10px;
   border-radius: 10px;
-  color: var(--fd-color-primary);
-  background: var(--fd-color-primary-soft);
+  color: var(--cx-green-dark, #166534);
+  background: var(--fd-color-success-soft);
+  border: 1px solid var(--fd-color-success-border);
   font-weight: 950;
 }
 
 .foot > button:disabled {
-  color: #9a3412;
-  background: var(--fd-color-orange-soft);
+  color: var(--cx-red-dark, #991b1b);
+  background: var(--fd-color-danger-soft);
+  border-color: var(--fd-color-danger-border);
   cursor: not-allowed;
 }

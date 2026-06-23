@@ -7,10 +7,16 @@ import { AppStateService } from '../../services/app-state.service';
 import { AuthService } from '../../services/auth.service';
 import { OrderService } from '../../services/order.service';
 import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
+import { CustomerLockedStateComponent } from '../../shared/customer-locked-state/customer-locked-state.component';
 
 @Component({
   standalone: true,
-  imports: [RouterLink, BreadcrumbsComponent, AppCurrencyPipe],
+  imports: [
+    RouterLink,
+    BreadcrumbsComponent,
+    AppCurrencyPipe,
+    CustomerLockedStateComponent,
+  ],
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.scss'],
 })

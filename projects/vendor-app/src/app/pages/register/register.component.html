@@ -96,14 +96,16 @@
           <!-- STEP 1: Account -->
           <div class="form-step fade-in" *ngIf="step() === 1">
             <div class="form-group">
-              <label>Username</label>
+              <label>Username <span class="required">*</span></label>
               <input
                 type="text"
                 [(ngModel)]="form.username"
                 (ngModelChange)="onIdentityInput('username')"
+                (blur)="validateField('username')"
                 name="username"
                 class="form-input"
                 [class.has-error]="fieldError('username')"
+                [attr.aria-invalid]="fieldError('username') ? 'true' : null"
                 placeholder="e.g. coffee_shop"
                 required
               />
@@ -134,14 +136,16 @@
               }
             </div>
             <div class="form-group">
-              <label>Email Address</label>
+              <label>Email Address <span class="required">*</span></label>
               <input
                 type="email"
                 [(ngModel)]="form.email"
                 (ngModelChange)="onIdentityInput('email')"
+                (blur)="validateField('email')"
                 name="email"
                 class="form-input"
                 [class.has-error]="fieldError('email')"
+                [attr.aria-invalid]="fieldError('email') ? 'true' : null"
                 placeholder="store@example.com"
                 required
               />
@@ -172,14 +176,16 @@
               }
             </div>
             <div class="form-group">
-              <label>Phone Number</label>
+              <label>Phone Number <span class="required">*</span></label>
               <input
                 type="tel"
                 [(ngModel)]="form.phone"
                 (ngModelChange)="onIdentityInput('phone')"
+                (blur)="validateField('phone')"
                 name="phone"
                 class="form-input"
                 [class.has-error]="fieldError('phone')"
+                [attr.aria-invalid]="fieldError('phone') ? 'true' : null"
                 placeholder="+91 9876543210"
                 required
               />
@@ -210,14 +216,16 @@
               }
             </div>
             <div class="form-group">
-              <label>Password</label>
+              <label>Password <span class="required">*</span></label>
               <input
                 type="password"
                 [(ngModel)]="form.password"
                 (ngModelChange)="clearFieldError('password')"
+                (blur)="validateField('password')"
                 name="password"
                 class="form-input"
                 [class.has-error]="fieldError('password')"
+                [attr.aria-invalid]="fieldError('password') ? 'true' : null"
                 placeholder="••••••••"
                 required
                 minlength="8"
@@ -234,7 +242,7 @@
               <button
                 type="button"
                 class="btn btn-primary w-100 btn-lg"
-                [disabled]="!canContinueStep(1)"
+                [disabled]="loading()"
                 (click)="nextStep()"
               >
                 Continue to Store Profile
@@ -246,14 +254,16 @@
           <!-- STEP 2: Store Profile -->
           <div class="form-step fade-in" *ngIf="step() === 2">
             <div class="form-group">
-              <label>Store Name</label>
+              <label>Store Name <span class="required">*</span></label>
               <input
                 type="text"
                 [(ngModel)]="form.store_name"
                 (ngModelChange)="clearFieldError('store_name')"
+                (blur)="validateField('store_name')"
                 name="store_name"
                 class="form-input"
                 [class.has-error]="fieldError('store_name')"
+                [attr.aria-invalid]="fieldError('store_name') ? 'true' : null"
                 placeholder="The Daily Grind"
                 required
               />
@@ -281,13 +291,15 @@
               >
             </div>
             <div class="form-group">
-              <label>Description</label>
+              <label>Description <span class="required">*</span></label>
               <textarea
                 [(ngModel)]="form.description"
                 (ngModelChange)="clearFieldError('description')"
+                (blur)="validateField('description')"
                 name="description"
                 class="form-input"
                 [class.has-error]="fieldError('description')"
+                [attr.aria-invalid]="fieldError('description') ? 'true' : null"
                 placeholder="Tell customers about what you sell..."
                 rows="3"
                 required
@@ -377,9 +389,11 @@
                 type="email"
                 [(ngModel)]="form.vendor_email"
                 (ngModelChange)="onPublicEmailInput()"
+                (blur)="validateField('vendor_email')"
                 name="vendor_email"
                 class="form-input"
                 [class.has-error]="fieldError('vendor_email')"
+                [attr.aria-invalid]="fieldError('vendor_email') ? 'true' : null"
                 placeholder="contact@thedailygrind.com"
               />
               <small class="field-hint"
@@ -400,7 +414,7 @@
               <button
                 type="button"
                 class="btn btn-primary"
-                [disabled]="!canContinueStep(2)"
+                [disabled]="loading()"
                 (click)="nextStep()"
               >
                 Continue to Location
@@ -418,14 +432,16 @@
             ></app-map-picker>
 
             <div class="form-group mt-3">
-              <label>Street Address</label>
+              <label>Street Address <span class="required">*</span></label>
               <input
                 type="text"
                 [(ngModel)]="form.address"
                 (ngModelChange)="clearFieldError('address')"
+                (blur)="validateField('address')"
                 name="address"
                 class="form-input"
                 [class.has-error]="fieldError('address')"
+                [attr.aria-invalid]="fieldError('address') ? 'true' : null"
                 placeholder="123 Main St"
                 required
               />
@@ -439,14 +455,16 @@
             </div>
             <div class="location-fields">
               <div class="form-group">
-                <label>City</label>
+                <label>City <span class="required">*</span></label>
                 <input
                   type="text"
                   [(ngModel)]="form.city"
                   (ngModelChange)="clearFieldError('city')"
+                  (blur)="validateField('city')"
                   name="city"
                   class="form-input"
                   [class.has-error]="fieldError('city')"
+                  [attr.aria-invalid]="fieldError('city') ? 'true' : null"
                   placeholder="Metropolis"
                   required
                 />
@@ -458,14 +476,16 @@
                 }
               </div>
               <div class="form-group">
-                <label>State</label>
+                <label>State <span class="required">*</span></label>
                 <input
                   type="text"
                   [(ngModel)]="form.state"
                   (ngModelChange)="clearFieldError('state')"
+                  (blur)="validateField('state')"
                   name="state"
                   class="form-input"
                   [class.has-error]="fieldError('state')"
+                  [attr.aria-invalid]="fieldError('state') ? 'true' : null"
                   placeholder="Karnataka"
                   required
                 />
@@ -477,14 +497,18 @@
                 }
               </div>
               <div class="form-group">
-                <label>Postal Code</label>
+                <label>Postal Code <span class="required">*</span></label>
                 <input
                   type="text"
                   [(ngModel)]="form.postal_code"
                   (ngModelChange)="onPostalCodeInput()"
+                  (blur)="validateField('postal_code')"
                   name="postal_code"
                   class="form-input"
                   [class.has-error]="fieldError('postal_code')"
+                  [attr.aria-invalid]="
+                    fieldError('postal_code') ? 'true' : null
+                  "
                   placeholder="400001"
                   required
                 />
@@ -513,7 +537,7 @@
               <button
                 type="submit"
                 class="btn btn-primary"
-                [disabled]="!canSubmitRegistration()"
+                [disabled]="loading()"
               >
                 @if (loading()) {
                 <span class="spinner"></span> Processing... } @else { Complete

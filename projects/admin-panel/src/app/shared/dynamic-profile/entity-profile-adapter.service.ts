@@ -390,13 +390,13 @@ export class EntityProfileAdapterService {
     const user = this.user(dto, type);
     return {
       ...dto,
-      username: user['username'] ?? dto['username'] ?? '',
-      first_name: user['first_name'] ?? dto['first_name'] ?? '',
-      last_name: user['last_name'] ?? dto['last_name'] ?? '',
-      email: user['email'] ?? dto['email'] ?? '',
-      phone: user['phone'] ?? dto['phone'] ?? '',
-      country: user['country'] ?? dto['country'] ?? '',
-      currency: user['currency'] ?? dto['currency'] ?? 'INR',
+      username: this.firstText(user['username'], dto['username']),
+      first_name: this.firstText(user['first_name'], dto['first_name']),
+      last_name: this.firstText(user['last_name'], dto['last_name']),
+      email: this.firstText(user['email'], dto['email']),
+      phone: this.firstText(user['phone'], dto['phone']),
+      country: this.firstText(user['country'], dto['country']),
+      currency: this.firstText(user['currency'], dto['currency'], 'INR'),
       vendor_type: normalizeVendorStoreType(dto['vendor_type']),
       user_is_active: user['is_active'] ?? dto['is_active'] ?? true,
       business_addresses: this.collectionText(dto['business_addresses']),
@@ -1857,6 +1857,14 @@ export class EntityProfileAdapterService {
 
   private str(value: unknown): string {
     return value === undefined || value === null ? '' : String(value);
+  }
+
+  private firstText(...values: unknown[]): string {
+    for (const value of values) {
+      const text = this.str(value).trim();
+      if (text) return text;
+    }
+    return '';
   }
 
   private mediaUrl(value: unknown): string {

@@ -1,3 +1,10 @@
+@if (!auth.isLoggedIn()) {
+  <fd-customer-locked-state
+    title="Login to manage addresses"
+    description="Sign in to add delivery locations, pin map spots and pick a default checkout address."
+    icon="location_on"
+  />
+} @else {
 <div class="desktop-customer-view">
   <main class="fd-content">
     <fd-breadcrumbs [items]="[{ label: 'Addresses' }]" />
@@ -389,5 +396,6 @@
         </button>
       </div>
     </form>
-  </fd-mobile-bottom-sheet>
+</fd-mobile-bottom-sheet>
 </div>
+}

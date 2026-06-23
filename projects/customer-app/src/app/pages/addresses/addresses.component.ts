@@ -2,8 +2,8 @@ import { Component, computed, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import {
-  MapPickerComponent,
   type MapLocation,
+  MapPickerComponent,
 } from '@shared/lib/components/map-picker/map-picker.component';
 import {
   INDIA_PINCODE_PATTERN,
@@ -20,6 +20,8 @@ import { Address } from '../../models';
 import { AppStateService } from '../../services/app-state.service';
 import { MobileBottomSheetComponent } from '../../mobile-ui/mobile-bottom-sheet/mobile-bottom-sheet.component';
 import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
+import { AuthService } from '../../services/auth.service';
+import { CustomerLockedStateComponent } from '../../shared/customer-locked-state/customer-locked-state.component';
 
 @Component({
   standalone: true,
@@ -28,6 +30,7 @@ import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.compo
     BreadcrumbsComponent,
     MapPickerComponent,
     MobileBottomSheetComponent,
+    CustomerLockedStateComponent,
   ],
   templateUrl: './addresses.component.html',
   styleUrls: ['./addresses.component.scss'],
@@ -41,7 +44,11 @@ export class AddressesComponent {
   fieldErrors = signal<Record<string, string>>({});
   form: Address = { id: '', label: '', name: '', line: '', phone: '' };
 
-  constructor(private state: AppStateService, private route: ActivatedRoute) {
+  constructor(
+    public state: AppStateService,
+    private route: ActivatedRoute,
+    public auth: AuthService,
+  ) {
     this.route.queryParamMap.subscribe((params) => {
       if (params.get('add') === '1') this.openModal();
     });

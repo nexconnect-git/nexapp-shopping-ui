@@ -1,7 +1,7 @@
 import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { VendorApi, AuthService } from '@shared/public-api';
+import { VendorApi, AuthService, SessionStore } from '@shared/public-api';
 
 @Component({
   selector: 'app-pending-approval',
@@ -14,6 +14,7 @@ export class PendingApprovalComponent implements OnInit, OnDestroy {
   private api = inject(VendorApi);
   private auth = inject(AuthService);
   private router = inject(Router);
+  private session = inject(SessionStore);
 
   status = signal<string>('pending');
   statusReason = signal<string>('');
@@ -38,19 +39,26 @@ export class PendingApprovalComponent implements OnInit, OnDestroy {
         this.statusReason.set(profile.status_reason || '');
         this.storeName.set(profile.store_name || '');
         this.error.set('');
-        localStorage.setItem(this.auth.vendorKey, profile.status);
+        this.session.setVendorStatus(profile.status);
         this.loading.set(false);
         if (profile.status === 'approved') {
           clearInterval(this.pollInterval);
           this.router.navigate(['/']);
         } else if (
-          ['rejected', 'suspended', 'invalid_details', 'invalid_documents'].includes(profile.status)
+          [
+            'rejected',
+            'suspended',
+            'invalid_details',
+            'invalid_documents',
+          ].includes(profile.status)
         ) {
           clearInterval(this.pollInterval);
         }
       },
       error: () => {
-        this.error.set('Could not check approval status. Please retry shortly.');
+        this.error.set(
+          'Could not check approval status. Please retry shortly.'
+        );
         this.loading.set(false);
       },
     });
@@ -82,8 +90,7 @@ export class PendingApprovalComponent implements OnInit, OnDestroy {
         'Your store registration is under review. Our team will verify your details and get back to you shortly.',
       rejected:
         'Your application was not approved. Please contact support for more information.',
-      hold:
-        'Your store registration is on hold while our team reviews the next action.',
+      hold: 'Your store registration is on hold while our team reviews the next action.',
       suspended:
         'Your vendor account has been suspended. Please contact support.',
       in_review:

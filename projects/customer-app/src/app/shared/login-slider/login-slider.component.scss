@@ -379,13 +379,109 @@
 /* WebView safety override: prevent partial off-canvas rendering on some mobile engines. */
 @media (max-width: 760px) {
   .login-slider {
-    left: 8px !important;
-    right: 8px !important;
+    left: 10px !important;
+    right: 10px !important;
     inset-inline: unset !important;
     width: auto !important;
-    max-width: 430px !important;
+    max-width: 410px !important;
+    max-height: min(78dvh, 620px) !important;
     margin-inline: auto !important;
     transform: none !important;
+    gap: 8px;
+    padding: 0 14px calc(12px + env(safe-area-inset-bottom, 0px));
+    border-radius: 8px 8px 0 0;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(250, 248, 255, 0.96)),
+      #fff;
+  }
+
+  .login-slider::before {
+    margin-top: 8px;
+  }
+
+  .close {
+    top: 14px;
+    right: 14px;
+    width: 34px;
+    height: 34px;
+    background: #f3efff;
+    box-shadow: none;
+  }
+
+  .mobile-auth-hero {
+    gap: 7px;
+    padding: 12px 42px 10px 0;
+    border-bottom: 1px solid #ebe4ff;
+  }
+
+  .mobile-brand-row {
+    grid-template-columns: 38px minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .mobile-logo {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    box-shadow: 0 10px 22px rgba(56, 38, 142, 0.18);
+  }
+
+  .mobile-brand-row b {
+    font-size: 20px;
+    letter-spacing: -0.02em;
+  }
+
+  .mobile-auth-hero p {
+    max-width: 360px;
+    font-size: 12.5px;
+  }
+
+  .mobile-trust-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .mobile-trust-grid span {
+    min-height: 30px;
+    padding: 0 6px;
+    border-radius: 8px;
+    color: #33246f;
+    font-size: 11px;
+    background: #fff;
+  }
+
+  .login-form {
+    gap: 10px;
+    padding: 10px;
+    border-color: #e8e1ff;
+    background: #fff;
+    box-shadow: 0 10px 28px rgba(17, 24, 39, 0.06);
+  }
+
+  .auth-field {
+    gap: 5px;
+  }
+
+  .auth-field > span:first-child {
+    font-size: 11.5px;
+  }
+
+  .input-shell {
+    min-height: 42px;
+    border-radius: 8px;
+    padding: 0 10px;
+  }
+
+  .field-hint,
+  .field-error {
+    font-size: 10.5px;
+  }
+
+  :host ::ng-deep .login-form .nx-btn {
+    min-height: 44px;
+    border-radius: 8px;
+    font-size: 15px;
   }
 }
 

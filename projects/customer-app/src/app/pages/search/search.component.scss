@@ -512,9 +512,79 @@
     font-weight: 800;
   }
 
-  .search-page .mobile-grid-2 {
+.search-page .mobile-grid-2 {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 10px !important;
+  }
+}
+
+@media (min-width: 761px) {
+  .fd-two-col > div {
+    gap: 14px;
+  }
+
+  .local-search {
+    margin: 10px 0 4px;
+    padding: 10px;
+  }
+
+  .search-history {
+    padding: 12px;
+    margin: 0;
+  }
+
+  .search-history .chips {
+    gap: 8px;
+  }
+
+  .tabs {
+    margin: 4px 0 0;
+    padding: 2px;
+    gap: 6px;
+  }
+
+  .tabs button {
+    min-height: 32px;
+    height: 32px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
+  .filters {
+    margin: 2px 0 0;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .filters button,
+  .filters .fd-pill {
+    min-height: 32px;
+    height: 32px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
+  .filters fd-custom-select,
+  .filters .mobile-sort-control {
+    min-height: 32px;
+    height: 32px;
+  }
+
+  .fd-section-title {
+    margin: 4px 0 8px;
+  }
+
+  .store-mini-grid {
+    gap: 12px;
+  }
+
+  .mini-store {
+    min-height: 154px;
+    padding: 12px;
+  }
+
+  .mini-store img {
+    height: 82px;
   }
 }
 

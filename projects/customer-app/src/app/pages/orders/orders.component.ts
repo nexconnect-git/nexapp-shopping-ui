@@ -9,6 +9,8 @@ import { AppStateService } from '../../services/app-state.service';
 import { DisplayOrderIdPipe } from '../../shared/display-order-id.pipe';
 import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
 import { Order } from '../../models';
+import { AuthService } from '../../services/auth.service';
+import { CustomerLockedStateComponent } from '../../shared/customer-locked-state/customer-locked-state.component';
 
 @Component({
   standalone: true,
@@ -18,6 +20,7 @@ import { Order } from '../../models';
     BreadcrumbsComponent,
     AppCurrencyPipe,
     DisplayOrderIdPipe,
+    CustomerLockedStateComponent,
   ],
   templateUrl: './orders.component.html',
   styleUrls: ['./orders.component.scss'],
@@ -32,6 +35,7 @@ export class OrdersComponent {
     public orders: OrderService,
     public ui: UiService,
     private state: AppStateService,
+    public auth: AuthService,
   ) {}
 
   filteredOrders = computed(() => {

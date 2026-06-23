@@ -15,8 +15,7 @@
   <router-outlet />
   @defer (when ui.loginSliderOpen()) {
   <fd-login-slider />
-  } @defer (when showCartAssist() && (state.miniCartOpen() ||
-  ui.miniCartOpen())) {
+  } @defer (when state.miniCartOpen() || ui.miniCartOpen()) {
   <fd-mini-cart />
   } @defer (when ui.filterSliderOpen()) {
   <fd-filter-slider />

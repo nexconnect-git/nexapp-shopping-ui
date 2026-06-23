@@ -64,11 +64,11 @@ a:active {
     bottom: calc(10px + env(safe-area-inset-bottom, 0px));
     z-index: var(--fd-z-bottom-nav);
     height: var(--customer-bottom-nav-height);
-    border-radius: 22px;
-    background: rgba(255, 255, 255, 0.96);
-    border: 1px solid var(--fd-color-border);
-    box-shadow: 0 20px 60px rgba(18, 14, 45, 0.18);
-    backdrop-filter: blur(12px);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.94);
+    border: 1px solid rgba(56, 38, 142, 0.14);
+    box-shadow: 0 18px 44px rgba(18, 14, 45, 0.18);
+    backdrop-filter: blur(16px);
     width: auto;
     max-width: calc(100vw - 20px);
     overflow: hidden;
@@ -99,7 +99,29 @@ a:active {
   }
 
   a.active {
-    background: var(--fd-color-primary-soft);
+    color: var(--fd-color-primary);
+    background: linear-gradient(180deg, rgba(56, 38, 142, 0.12), rgba(255, 255, 255, 0.7));
+    box-shadow: inset 0 3px 0 currentColor;
+  }
+
+  a:nth-child(2).active {
+    color: var(--fd-color-orange);
+    box-shadow: inset 0 3px 0 var(--fd-color-orange);
+  }
+
+  a:nth-child(3).active {
+    color: var(--fd-color-success);
+    box-shadow: inset 0 3px 0 var(--fd-color-success);
+  }
+
+  a:nth-child(4).active {
+    color: var(--fd-color-warning);
+    box-shadow: inset 0 3px 0 var(--fd-color-warning);
+  }
+
+  a:nth-child(5).active {
+    color: var(--fd-color-danger);
+    box-shadow: inset 0 3px 0 var(--fd-color-danger);
   }
 
   b {

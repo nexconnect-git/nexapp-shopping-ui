@@ -1,0 +1,16 @@
+<main class="locked-shell">
+  <section class="locked-panel">
+    <span class="locked-icon material-symbols-rounded">{{ icon }}</span>
+    <div>
+      <small>Nextou customer</small>
+      <h1>{{ title }}</h1>
+      <p>{{ description }}</p>
+    </div>
+    <div class="locked-actions">
+      <button type="button" class="fd-btn primary" (click)="openLogin()">
+        {{ actionLabel }}
+      </button>
+      <a routerLink="/explore" class="fd-btn outline">Browse stores</a>
+    </div>
+  </section>
+</main>

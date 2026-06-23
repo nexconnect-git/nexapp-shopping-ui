@@ -24,7 +24,7 @@ export const authGuard: CanActivateFn = () => {
   const returnUrl = router.url && router.url !== '/' ? router.url : undefined;
   router.navigate(
     ['/login'],
-    returnUrl ? { queryParams: { returnUrl } } : undefined,
+    returnUrl ? { queryParams: { returnUrl } } : undefined
   );
   return false;
 };
@@ -108,6 +108,12 @@ export const approvedVendorGuard: CanActivateFn = () => {
     return false;
   }
 
+  const cachedStatus = session.getVendorStatus();
+  if (cachedStatus && cachedStatus !== 'approved') {
+    router.navigate(['/pending-approval']);
+    return false;
+  }
+
   return api.getVendorProfile().pipe(
     map((profile: any) => {
       session.setVendorStatus(profile.status);
@@ -132,7 +138,7 @@ export const approvedVendorGuard: CanActivateFn = () => {
         });
       }
       return of(false);
-    }),
+    })
   );
 };
 
@@ -161,6 +167,6 @@ export const approvedDeliveryGuard: CanActivateFn = () => {
         router.navigate(['/pending-approval']);
       }
       return of(false);
-    }),
+    })
   );
 };

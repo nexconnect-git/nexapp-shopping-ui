@@ -1,3 +1,10 @@
+@if (!auth.isLoggedIn()) {
+  <fd-customer-locked-state
+    title="Login to view orders"
+    description="Track active deliveries, download receipts and reorder your regular baskets after signing in."
+    icon="receipt_long"
+  />
+} @else {
 <div class="desktop-customer-view">
 <main class="fd-content">
   <fd-breadcrumbs [items]="[{ label: 'Orders' }]" />
@@ -215,3 +222,4 @@
   </section>
 </main>
 </div>
+}

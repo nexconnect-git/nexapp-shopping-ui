@@ -94,15 +94,10 @@
 }
 
 .insta-hero {
-  min-height: 224px;
-  border-radius: 12px;
+  min-height: 236px;
+  border-radius: 8px;
   background:
-    radial-gradient(
-      circle at 78% 36%,
-      rgba(255, 255, 255, 0.34),
-      transparent 24%
-    ),
-    var(--fd-color-primary);
+    linear-gradient(135deg, #2b167e 0%, #4b32b8 44%, #f97928 72%, #f8c21c 100%);
   color: #fff;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
@@ -111,7 +106,21 @@
   padding: 24px 28px;
   overflow: hidden;
   position: relative;
-  box-shadow: 0 20px 55px rgba(70, 48, 213, 0.2);
+  box-shadow: 0 24px 58px rgba(70, 48, 213, 0.22);
+}
+
+.insta-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.13) 0 1px, transparent 1px 22px);
+  pointer-events: none;
+}
+
+.insta-hero > * {
+  position: relative;
+  z-index: 1;
 }
 .speed-line {
   display: flex;
@@ -194,7 +203,7 @@
 .shop-btn {
   height: 46px;
   min-width: 154px;
-  border-radius: 8px;
+  border-radius: 999px;
   background: #fff;
   color: var(--fd-color-primary);
   font-weight: 900;
@@ -215,7 +224,7 @@
   width: 310px;
   height: 196px;
   object-fit: cover;
-  border-radius: 34px;
+  border-radius: 18px;
   box-shadow: 0 22px 40px rgba(27, 20, 75, 0.22);
   transform: rotate(-2deg);
   border: 8px solid rgba(100, 72, 255, 0.45);
@@ -226,7 +235,7 @@
   bottom: 6px;
   width: 120px;
   height: 120px;
-  border-radius: 50%;
+  border-radius: 22px;
   background: #fff;
   color: var(--fd-color-info);
   border: 11px solid var(--fd-color-info-border);
@@ -243,7 +252,7 @@
   color: #fff;
   font-size: 22px;
   font-weight: 900;
-  border-radius: 10px;
+  border-radius: 999px;
   padding: 10px 20px;
   box-shadow: 0 12px 24px rgba(239, 54, 118, 0.28);
   font-style: italic;
