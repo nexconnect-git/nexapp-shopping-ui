@@ -87,7 +87,10 @@ export class NativePlatformService {
     if (!this.isNative()) return null;
     if (this.pushRegistration) return this.pushRegistration;
 
-    this.pushRegistration = this.createPushRegistration();
+    this.pushRegistration = this.createPushRegistration().catch((error) => {
+      console.warn('[Native] Push notifications unavailable.', error);
+      return null;
+    });
     return this.pushRegistration;
   }
 
@@ -99,44 +102,51 @@ export class NativePlatformService {
   }
 
   private async createPushRegistration(): Promise<{ token: string; platform: string } | null> {
-    const { PushNotifications } = await import('@capacitor/push-notifications');
-    let permissions = await PushNotifications.checkPermissions();
+    try {
+      const { PushNotifications } = await import('@capacitor/push-notifications');
+      let permissions = await PushNotifications.checkPermissions();
 
-    if (permissions.receive === 'prompt') {
-      permissions = await PushNotifications.requestPermissions();
-    }
+      if (permissions.receive === 'prompt') {
+        permissions = await PushNotifications.requestPermissions();
+      }
 
-    if (permissions.receive !== 'granted') {
+      if (permissions.receive !== 'granted') {
+        return null;
+      }
+
+      let settled = false;
+      let registrationHandle: { remove: () => Promise<void> } | null = null;
+      let errorHandle: { remove: () => Promise<void> } | null = null;
+      let resolveRegistration: (result: { token: string; platform: string } | null) => void =
+        () => {};
+
+      const registration = new Promise<{ token: string; platform: string } | null>(
+        (resolve) => {
+          resolveRegistration = resolve;
+        },
+      );
+
+      const settle = (result: { token: string; platform: string } | null) => {
+        if (settled) return;
+        settled = true;
+        void registrationHandle?.remove();
+        void errorHandle?.remove();
+        resolveRegistration(result);
+      };
+
+      registrationHandle = await PushNotifications.addListener('registration', (token) =>
+        settle({ token: token.value, platform: this.getPlatform() }),
+      );
+      errorHandle = await PushNotifications.addListener('registrationError', () =>
+        settle(null),
+      );
+
+      await PushNotifications.register();
+      window.setTimeout(() => settle(null), 10000);
+      return registration;
+    } catch (error) {
+      console.warn('[Native] Push notification registration failed.', error);
       return null;
     }
-
-    let settled = false;
-    let resolveRegistration: (result: { token: string; platform: string } | null) => void =
-      () => {};
-
-    const registration = new Promise<{ token: string; platform: string } | null>(
-      (resolve) => {
-        resolveRegistration = resolve;
-      },
-    );
-
-    const registrationHandle = await PushNotifications.addListener('registration', (token) =>
-      settle({ token: token.value, platform: this.getPlatform() }),
-    );
-    const errorHandle = await PushNotifications.addListener('registrationError', () =>
-      settle(null),
-    );
-
-    function settle(result: { token: string; platform: string } | null) {
-      if (settled) return;
-      settled = true;
-      void registrationHandle.remove();
-      void errorHandle.remove();
-      resolveRegistration(result);
-    }
-
-    await PushNotifications.register();
-    window.setTimeout(() => settle(null), 10000);
-    return registration;
   }
 }

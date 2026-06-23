@@ -10,6 +10,22 @@ import { authInterceptor } from '@shared/lib/interceptors/auth.interceptor';
 import { cacheInterceptor } from '@shared/lib/interceptors/cache.interceptor';
 import { environment } from './environments/environment';
 
+declare global {
+  interface Window {
+    __NEXCONNECT_CONFIG__?: {
+      googleMapsApiKey?: string;
+      googleMapsMapId?: string;
+      [key: string]: unknown;
+    };
+  }
+}
+
+window.__NEXCONNECT_CONFIG__ = {
+  googleMapsApiKey: environment.googleMapsApiKey,
+  googleMapsMapId: environment.googleMapsMapId,
+  ...(window.__NEXCONNECT_CONFIG__ || {}),
+};
+
 bootstrapApplication(AppComponent, {
   providers: [
     provideAnimationsAsync(),

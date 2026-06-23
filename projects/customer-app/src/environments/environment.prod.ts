@@ -1,5 +1,6 @@
 export const environment = {
   production: true,
   apiBaseUrl: '/sa/api',
-  googleMapsApiKey: '',
+  googleMapsApiKey: 'AIzaSyDzuk1DZxnNniff_FJbzHnobHuYbk4hMrc',
+  googleMapsMapId: '',
 };

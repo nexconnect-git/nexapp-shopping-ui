@@ -6,12 +6,12 @@ const config: CapacitorConfig = {
   webDir: 'src',
   bundledWebRuntime: false,
   server: {
-    url: 'https://www.nex-connect.in/sa/',
+    url: 'https://nex-connect.in/sa/',
     cleartext: false,
     androidScheme: 'https',
     allowNavigation: [
-      'www.nex-connect.in',
       'nex-connect.in',
+      'www.nex-connect.in',
       'maps.googleapis.com',
       'maps.gstatic.com',
       'fonts.googleapis.com',

@@ -14,6 +14,6 @@ window.addEventListener('load', () => {
 
 if (retry) {
   retry.addEventListener('click', () => {
-    window.location.href = 'https://www.nex-connect.in/sa/';
+    window.location.href = 'https://nex-connect.in/sa/';
   });
 }
