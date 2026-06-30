@@ -52,6 +52,15 @@ export class StoreDetailComponent {
   store = computed(() =>
     this.catalog.getStore(this.route.snapshot.paramMap.get('id')),
   );
+  storeLoaded = computed(() => Boolean(this.store().raw));
+  storeTitle = computed(() =>
+    this.storeLoaded() ? this.store().name : 'This store',
+  );
+  storeCategoryLabel = computed(() =>
+    this.storeLoaded()
+      ? this.store().category || 'Nextou store'
+      : 'Store unavailable',
+  );
   storeOfferPromo = computed(() => {
     const store = this.store();
     if (store.offer) {
@@ -73,6 +82,18 @@ export class StoreDetailComponent {
     };
   });
   storeUnavailableReason = computed(() => {
+    if (this.state.deliveryUnavailable()) {
+      return (
+        this.state.serviceability()?.message ||
+        'Delivery is not available for your selected location. Choose another location to continue.'
+      );
+    }
+    if (
+      !this.storeLoaded() &&
+      !this.catalog.isStoreProductsLoading(this.store().id)
+    ) {
+      return 'This store is unavailable for your selected location or could not be found.';
+    }
     const raw = (this.store().raw as any) || {};
     if (raw?.is_serviceable === false) {
       return raw?.serviceability_error || 'This store is not serviceable for your selected location.';

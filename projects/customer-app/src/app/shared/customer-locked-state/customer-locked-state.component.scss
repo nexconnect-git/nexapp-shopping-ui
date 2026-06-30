@@ -1,8 +1,8 @@
 .locked-shell {
-  min-height: min(420px, calc(100vh - 140px));
+  min-height: min(360px, calc(100vh - 220px));
   display: grid;
   place-items: start center;
-  padding: clamp(16px, 4vw, 32px);
+  padding: clamp(12px, 3vw, 24px);
 }
 
 .locked-panel {
@@ -71,7 +71,7 @@ p {
   .locked-shell {
     min-height: auto;
     align-items: start;
-    padding: 10px 10px 14px;
+    padding: 8px 10px 10px;
   }
 
   .locked-panel {

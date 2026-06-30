@@ -4,6 +4,7 @@ import { AppCurrencyPipe } from '@shared/lib/pipes/currency.pipe';
 import { Product } from '../../models';
 import { CustomerCartFacade } from '../../services/facades/customer-cart.facade';
 import { CatalogService } from '../../services/catalog.service';
+import { AppStateService } from '../../services/app-state.service';
 
 type ProductMeta = Record<string, unknown> & {
   stock?: number | string;
@@ -42,6 +43,7 @@ export class ProductCardComponent {
   constructor(
     public cart: CustomerCartFacade,
     private catalog: CatalogService,
+    private state: AppStateService,
   ) {}
 
   productName(): string {
@@ -133,6 +135,10 @@ export class ProductCardComponent {
       (vendor?.is_open_now ?? vendor?.is_open) === false ||
       vendor?.is_accepting_orders === false
     );
+  }
+
+  deliveryUnavailable(): boolean {
+    return this.state.deliveryUnavailable();
   }
 
   isUnavailable(): boolean {

@@ -1,9 +1,19 @@
 @if (!auth.isLoggedIn()) {
-  <fd-customer-locked-state
-    title="Login to manage account"
-    description="Track orders, manage saved addresses, review your cart, and update profile details from one compact account hub."
-    icon="person"
-  />
+  <main class="public-account-page">
+    <fd-customer-locked-state
+      title="Login to manage account"
+      description="Track orders, manage saved addresses, review your cart, and update profile details from one compact account hub."
+      icon="person"
+    />
+    <a routerLink="/privacy-policy" class="public-privacy-link">
+      <span class="material-symbols-rounded">privacy_tip</span>
+      <span>
+        <b>Privacy Policy</b>
+        <small>How customer data is handled</small>
+      </span>
+      <i class="material-symbols-rounded">chevron_right</i>
+    </a>
+  </main>
 } @else {
   <div class="desktop-customer-view">
     <main class="fd-content account-desktop">

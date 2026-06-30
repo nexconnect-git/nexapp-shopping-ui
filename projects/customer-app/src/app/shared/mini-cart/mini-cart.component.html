@@ -16,89 +16,95 @@
       </button>
     </header>
 
-    <section
-      class="progress"
-      [class.unlocked]="state.freeDeliveryUnlocked()"
-      [class.pending]="!state.deliveryFeeKnown() && state.freeDeliveryRemaining() <= 0"
-    >
-      <span class="progress-icon material-symbols-rounded">{{
-        state.freeDeliveryUnlocked() ? "celebration" : "local_shipping"
-      }}</span>
-      <div>
-        <b>{{ state.deliveryPromotion().title }}</b>
-        <small>{{ state.deliveryPromotion().description }}</small>
-        <div class="progress-track">
-          <span [style.width.%]="state.freeDeliveryProgress()"></span>
-        </div>
-      </div>
-    </section>
-
-    @if (state.cartMinimumOrderRemaining() > 0) {
-      <section class="cart-rule">
-        <span class="material-symbols-rounded">shopping_bag</span>
+    <div class="cart-scroll">
+      <section
+        class="progress"
+        [class.unlocked]="state.freeDeliveryUnlocked()"
+        [class.pending]="!state.deliveryFeeKnown() && state.freeDeliveryRemaining() <= 0"
+      >
+        <span class="progress-icon material-symbols-rounded">{{
+          state.freeDeliveryUnlocked() ? "celebration" : "local_shipping"
+        }}</span>
         <div>
-          <b>Minimum order not met</b>
-          <small>{{ state.cartCheckoutBlockReason() }}</small>
+          <b>{{ state.deliveryPromotion().title }}</b>
+          <small>{{ state.deliveryPromotion().description }}</small>
+          <div class="progress-track">
+            <span [style.width.%]="state.freeDeliveryProgress()"></span>
+          </div>
         </div>
       </section>
-    }
 
-    <section class="items">
-      @for (item of state.cart(); track item.id) {
-        <article [class.flash]="state.lastAddedProductId() === item.id">
-          <img [src]="item.image" [alt]="item.name" />
+      @if (state.cartMinimumOrderRemaining() > 0) {
+        <section class="cart-rule">
+          <span class="material-symbols-rounded">shopping_bag</span>
           <div>
-            <b>{{ item.name }}</b>
-            <small>{{ item.unit }}</small>
-            <strong>{{ item.price * item.quantity | appCurrency }}</strong>
+            <b>Minimum order not met</b>
+            <small>{{ state.cartCheckoutBlockReason() }}</small>
           </div>
-          <div class="qty">
-            <button
-              type="button"
-              aria-label="Decrease quantity"
-              (click)="state.updateQuantity(item.id, -1)"
-            >
-              <span class="material-symbols-rounded">remove</span>
-            </button>
-            <span>{{ item.quantity }}</span>
-            <button
-              type="button"
-              aria-label="Increase quantity"
-              (click)="state.updateQuantity(item.id, 1)"
-            >
-              <span class="material-symbols-rounded">add</span>
-            </button>
-          </div>
-        </article>
-      } @empty {
-        <p class="empty">
-          {{ content.cart().emptyTitle }}. {{ content.cart().emptyDescription }}
-        </p>
+        </section>
       }
-    </section>
+
+      <section class="items">
+        @for (item of state.cart(); track item.id) {
+          <article [class.flash]="state.lastAddedProductId() === item.id">
+            <img [src]="item.image" [alt]="item.name" />
+            <div>
+              <b>{{ item.name }}</b>
+              <small>{{ item.unit }}</small>
+              <strong>{{ item.price * item.quantity | appCurrency }}</strong>
+            </div>
+            <div class="qty">
+              <button
+                type="button"
+                aria-label="Decrease quantity"
+                (click)="state.updateQuantity(item.id, -1)"
+              >
+                <span class="material-symbols-rounded">remove</span>
+              </button>
+              <span>{{ item.quantity }}</span>
+              <button
+                type="button"
+                aria-label="Increase quantity"
+                (click)="state.updateQuantity(item.id, 1)"
+              >
+                <span class="material-symbols-rounded">add</span>
+              </button>
+            </div>
+          </article>
+        } @empty {
+          <p class="empty">
+            {{ content.cart().emptyTitle }}. {{ content.cart().emptyDescription }}
+          </p>
+        }
+      </section>
+    </div>
 
     <footer>
       @if (state.itemCount()) {
-        <div>
-          <span>Subtotal</span><b>{{ state.subtotal() | appCurrency }}</b>
+        <div class="summary-lines">
+          <div>
+            <span>Subtotal</span><b>{{ state.subtotal() | appCurrency }}</b>
+          </div>
+          <div>
+            <span>Delivery</span><b>{{ state.deliveryFeeLabel() }}</b>
+          </div>
+          <div class="total">
+            <span>To Pay</span><b>{{ state.total() | appCurrency }}</b>
+          </div>
         </div>
-        <div>
-          <span>Delivery</span><b>{{ state.deliveryFeeLabel() }}</b>
+        <div class="footer-actions">
+          <a routerLink="/cart" (click)="close()" class="fd-btn outline"
+            >View Cart</a
+          >
+          <button
+            type="button"
+            class="fd-btn primary"
+            [disabled]="!state.canCheckoutCart()"
+            (click)="checkout()"
+          >
+            Checkout
+          </button>
         </div>
-        <div class="total">
-          <span>To Pay</span><b>{{ state.total() | appCurrency }}</b>
-        </div>
-        <a routerLink="/cart" (click)="close()" class="fd-btn outline"
-          >View Cart</a
-        >
-        <button
-          type="button"
-          class="fd-btn primary"
-          [disabled]="!state.canCheckoutCart()"
-          (click)="checkout()"
-        >
-          Checkout
-        </button>
       } @else {
         <a routerLink="/explore" (click)="close()" class="fd-btn primary">{{
           content.cart().browseCta

@@ -72,6 +72,12 @@ export class ProfileComponent {
       sub: 'Use order tracking for support',
       path: '/orders',
     },
+    {
+      icon: 'privacy_tip',
+      label: 'Privacy Policy',
+      sub: 'How customer data is handled',
+      path: '/privacy-policy',
+    },
   ];
 
   totalOrders = computed(

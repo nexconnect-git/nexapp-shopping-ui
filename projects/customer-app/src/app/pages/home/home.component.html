@@ -101,7 +101,7 @@
       </section>
 
       <section class="category-strip stagger">
-        @for (cat of catalog.categories().slice(1, 9); track cat.id) {
+        @for (cat of desktopCategories(); track cat.id) {
           <a [routerLink]="['/explore']" [queryParams]="{ category: cat.id }" class="insta-category">
             <span [style.background]="cat.bg">
               @if (cat.image) {
@@ -170,9 +170,11 @@
             <fd-store-card [store]="store" />
           }
         }
+        @if (serviceableStores().length > 5) {
         <a routerLink="/explore" class="row-next"
           ><span class="material-symbols-rounded">chevron_right</span></a
         >
+        }
       </section>
 
       <section class="ad-container" aria-label="Promotions">
@@ -256,66 +258,83 @@
             <fd-product-card [product]="product" />
           }
         }
+        @if (homeProducts().length > 6) {
         <a routerLink="/explore" class="row-next product-next"
           ><span class="material-symbols-rounded">chevron_right</span></a
         >
+        }
       </section>
 
-      <section class="discovery-rails" aria-label="Product discovery">
-        <article class="product-rail">
-          <div class="fd-section-title compact">
-            <h2>Recently ordered</h2>
-            <a routerLink="/orders">Reorder</a>
-          </div>
-          <div class="compact-product-strip">
-            @for (product of recentlyOrderedProducts(); track product.id) {
-              <fd-product-card [product]="product" />
-            }
-          </div>
-        </article>
+      @if (
+        recentlyOrderedProducts().length ||
+        trendingProducts().length ||
+        newArrivalProducts().length ||
+        bestSellerProducts().length
+      ) {
+        <section class="discovery-rails" aria-label="Product discovery">
+          @if (recentlyOrderedProducts().length) {
+            <article class="product-rail">
+              <div class="fd-section-title compact">
+                <h2>Recently ordered</h2>
+                <a routerLink="/orders">Reorder</a>
+              </div>
+              <div class="compact-product-strip">
+                @for (product of recentlyOrderedProducts(); track product.id) {
+                  <fd-product-card [product]="product" />
+                }
+              </div>
+            </article>
+          }
 
-        <article class="product-rail">
-          <div class="fd-section-title compact">
-            <h2>Trending near you</h2>
-            <a routerLink="/explore" [queryParams]="{ sort: 'trending' }"
-              >See all</a
-            >
-          </div>
-          <div class="compact-product-strip">
-            @for (product of trendingProducts(); track product.id) {
-              <fd-product-card [product]="product" />
-            }
-          </div>
-        </article>
+          @if (trendingProducts().length) {
+            <article class="product-rail">
+              <div class="fd-section-title compact">
+                <h2>Trending near you</h2>
+                <a routerLink="/explore" [queryParams]="{ sort: 'trending' }"
+                  >See all</a
+                >
+              </div>
+              <div class="compact-product-strip">
+                @for (product of trendingProducts(); track product.id) {
+                  <fd-product-card [product]="product" />
+                }
+              </div>
+            </article>
+          }
 
-        <article class="product-rail">
-          <div class="fd-section-title compact">
-            <h2>New arrivals</h2>
-            <a routerLink="/explore" [queryParams]="{ sort: 'newest' }"
-              >See all</a
-            >
-          </div>
-          <div class="compact-product-strip">
-            @for (product of newArrivalProducts(); track product.id) {
-              <fd-product-card [product]="product" />
-            }
-          </div>
-        </article>
+          @if (newArrivalProducts().length) {
+            <article class="product-rail">
+              <div class="fd-section-title compact">
+                <h2>New arrivals</h2>
+                <a routerLink="/explore" [queryParams]="{ sort: 'newest' }"
+                  >See all</a
+                >
+              </div>
+              <div class="compact-product-strip">
+                @for (product of newArrivalProducts(); track product.id) {
+                  <fd-product-card [product]="product" />
+                }
+              </div>
+            </article>
+          }
 
-        <article class="product-rail">
-          <div class="fd-section-title compact">
-            <h2>Bestsellers</h2>
-            <a routerLink="/explore" [queryParams]="{ sort: 'bestseller' }"
-              >See all</a
-            >
-          </div>
-          <div class="compact-product-strip">
-            @for (product of bestSellerProducts(); track product.id) {
-              <fd-product-card [product]="product" />
-            }
-          </div>
-        </article>
-      </section>
+          @if (bestSellerProducts().length) {
+            <article class="product-rail">
+              <div class="fd-section-title compact">
+                <h2>Bestsellers</h2>
+                <a routerLink="/explore" [queryParams]="{ sort: 'bestseller' }"
+                  >See all</a
+                >
+              </div>
+              <div class="compact-product-strip">
+                @for (product of bestSellerProducts(); track product.id) {
+                  <fd-product-card [product]="product" />
+                }
+              </div>
+            </article>
+          }
+        </section>
+      }
     </div>
   </section>
   }
@@ -406,100 +425,112 @@
     <fd-mobile-quick-action-grid [actions]="quickActions()" />
   </section>
 
-  <section class="mobile-section">
-    <div class="mobile-section-head">
-      <h2>Top stores</h2>
-      <a routerLink="/explore">See all</a>
-    </div>
-    <div class="store-scroller">
-      @for (store of serviceableStores().slice(0, 8); track store.id) {
-        <fd-store-card [store]="store" />
-      }
-    </div>
-  </section>
+  @if (catalog.storesLoading() || serviceableStores().length) {
+    <section class="mobile-section">
+      <div class="mobile-section-head">
+        <h2>Top stores</h2>
+        <a routerLink="/explore">See all</a>
+      </div>
+      <div class="store-scroller">
+        @for (store of serviceableStores().slice(0, 8); track store.id) {
+          <fd-store-card [store]="store" />
+        }
+      </div>
+    </section>
+  }
 
-  <section class="mobile-section">
-    <div class="mobile-section-head">
-      <h2>Recommended</h2>
-      <a routerLink="/explore">Search more</a>
-    </div>
+  @if (catalog.productsLoading() || homeProducts().length) {
+    <section class="mobile-section">
+      <div class="mobile-section-head">
+        <h2>Recommended</h2>
+        <a routerLink="/explore">Search more</a>
+      </div>
+        <div class="mobile-list">
+        @for (product of homeProducts().slice(0, 3); track product.id) {
+          <fd-mobile-product-row
+            [image]="product.image"
+            [name]="product.name"
+            [subtitle]="product.storeName || product.category || 'Fresh pick'"
+            [price]="product.price"
+            [mrp]="product.mrp"
+            (pressed)="openProduct(product.id)"
+            (add)="state.addToCart(product)"
+          />
+        }
+      </div>
+      <div class="mobile-grid-2">
+        @for (product of homeProducts().slice(3, 8); track product.id) {
+          <fd-product-card [product]="product" />
+        }
+      </div>
+    </section>
+  }
+
+  @if (recentlyOrderedProducts().length) {
+    <section class="mobile-section">
+      <div class="mobile-section-head">
+        <h2>Recently ordered</h2>
+        <a routerLink="/orders">Reorder</a>
+      </div>
       <div class="mobile-list">
-      @for (product of homeProducts().slice(0, 3); track product.id) {
-        <fd-mobile-product-row
-          [image]="product.image"
-          [name]="product.name"
-          [subtitle]="product.storeName || product.category || 'Fresh pick'"
-          [price]="product.price"
-          [mrp]="product.mrp"
-          (pressed)="openProduct(product.id)"
-          (add)="state.addToCart(product)"
-        />
-      }
-    </div>
-    <div class="mobile-grid-2">
-      @for (product of homeProducts().slice(3, 8); track product.id) {
-        <fd-product-card [product]="product" />
-      }
-    </div>
-  </section>
+        @for (product of recentlyOrderedProducts().slice(0, 3); track product.id) {
+          <fd-mobile-product-row
+            [image]="product.image"
+            [name]="product.name"
+            [subtitle]="product.storeName || product.category || 'Quick reorder'"
+            [price]="product.price"
+            [mrp]="product.mrp"
+            (pressed)="openProduct(product.id)"
+            (add)="state.addToCart(product)"
+          />
+        }
+      </div>
+    </section>
+  }
 
-  <section class="mobile-section">
-    <div class="mobile-section-head">
-      <h2>Recently ordered</h2>
-      <a routerLink="/orders">Reorder</a>
-    </div>
-    <div class="mobile-list">
-      @for (product of recentlyOrderedProducts().slice(0, 3); track product.id) {
-        <fd-mobile-product-row
-          [image]="product.image"
-          [name]="product.name"
-          [subtitle]="product.storeName || product.category || 'Quick reorder'"
-          [price]="product.price"
-          [mrp]="product.mrp"
-          (pressed)="openProduct(product.id)"
-          (add)="state.addToCart(product)"
-        />
-      }
-    </div>
-  </section>
+  @if (trendingProducts().length) {
+    <section class="mobile-section">
+      <div class="mobile-section-head">
+        <h2>Trending near you</h2>
+        <a routerLink="/explore" [queryParams]="{ sort: 'trending' }">See all</a>
+      </div>
+      <div class="mobile-grid-2">
+        @for (product of trendingProducts().slice(0, 4); track product.id) {
+          <fd-product-card [product]="product" />
+        }
+      </div>
+    </section>
+  }
 
-  <section class="mobile-section">
-    <div class="mobile-section-head">
-      <h2>Trending near you</h2>
-      <a routerLink="/explore" [queryParams]="{ sort: 'trending' }">See all</a>
-    </div>
-    <div class="mobile-grid-2">
-      @for (product of trendingProducts().slice(0, 4); track product.id) {
-        <fd-product-card [product]="product" />
-      }
-    </div>
-  </section>
+  @if (newArrivalProducts().length) {
+    <section class="mobile-section">
+      <div class="mobile-section-head">
+        <h2>New arrivals</h2>
+        <a routerLink="/explore" [queryParams]="{ sort: 'newest' }">See all</a>
+      </div>
+      <div class="mobile-grid-2">
+        @for (product of newArrivalProducts().slice(0, 4); track product.id) {
+          <fd-product-card [product]="product" />
+        }
+      </div>
+    </section>
+  }
 
-  <section class="mobile-section">
-    <div class="mobile-section-head">
-      <h2>New arrivals</h2>
-      <a routerLink="/explore" [queryParams]="{ sort: 'newest' }">See all</a>
-    </div>
-    <div class="mobile-grid-2">
-      @for (product of newArrivalProducts().slice(0, 4); track product.id) {
-        <fd-product-card [product]="product" />
-      }
-    </div>
-  </section>
-
-  <section class="mobile-section">
-    <div class="mobile-section-head">
-      <h2>Bestsellers</h2>
-      <a routerLink="/explore" [queryParams]="{ sort: 'bestseller' }"
-        >See all</a
-      >
-    </div>
-    <div class="mobile-grid-2">
-      @for (product of bestSellerProducts().slice(0, 4); track product.id) {
-        <fd-product-card [product]="product" />
-      }
-    </div>
-  </section>
+  @if (bestSellerProducts().length) {
+    <section class="mobile-section">
+      <div class="mobile-section-head">
+        <h2>Bestsellers</h2>
+        <a routerLink="/explore" [queryParams]="{ sort: 'bestseller' }"
+          >See all</a
+        >
+      </div>
+      <div class="mobile-grid-2">
+        @for (product of bestSellerProducts().slice(0, 4); track product.id) {
+          <fd-product-card [product]="product" />
+        }
+      </div>
+    </section>
+  }
   }
 </main>
 </div>

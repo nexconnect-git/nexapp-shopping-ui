@@ -88,12 +88,14 @@ export class AppComponent implements OnInit {
   showActiveOrderCard = computed(() => {
     const url = this.currentUrl().split('?')[0].split('#')[0];
     const cartPillVisible = this.showCartAssist() && this.state.itemCount() > 0;
+    if (url !== '/') return false;
     return (
       !!this.state.activeOrder() &&
       !cartPillVisible &&
       !url.startsWith('/orders') &&
       !url.startsWith('/account') &&
       !url.startsWith('/profile') &&
+      !url.startsWith('/location') &&
       !url.startsWith('/explore') &&
       !url.startsWith('/product/') &&
       !url.startsWith('/checkout') &&
@@ -152,10 +154,10 @@ export class AppComponent implements OnInit {
       );
     }
     if (url.startsWith('/store/') || url.startsWith('/product/')) {
-      return this.catalog.productsLoading() || this.catalog.storesLoading();
+      return false;
     }
     if (url.startsWith('/categories')) {
-      return this.catalog.categoriesLoading() || this.catalog.productsLoading();
+      return false;
     }
     if (
       url.startsWith('/cart') ||

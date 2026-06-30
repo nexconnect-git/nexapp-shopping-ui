@@ -253,6 +253,22 @@
       @if (formError()) {
       <div class="form-error">{{ formError() }}</div>
       }
+      <section class="form-section map-section map-section-top">
+        <div class="form-section-head">
+          <span class="material-symbols-rounded">my_location</span>
+          <div>
+            <b>Pin delivery spot</b>
+            <small>Search or move the pin first</small>
+          </div>
+        </div>
+        <app-map-picker
+          [initialLat]="form.latitude || 12.9716"
+          [initialLng]="form.longitude || 77.5946"
+          height="178px"
+          (locationPicked)="onMapLocationPicked($event)"
+        />
+      </section>
+
       <section class="form-section">
         <div class="form-section-head">
           <span class="material-symbols-rounded">person_pin_circle</span>
@@ -367,20 +383,6 @@
           @if (fieldError("pincode")) {
           <small class="field-error">{{ fieldError("pincode") }}</small> }</label
         >
-      </section>
-
-      <section class="form-section map-section">
-        <div class="form-section-head">
-          <span class="material-symbols-rounded">my_location</span>
-          <div>
-            <b>Pin delivery spot</b>
-            <small>Move the map pin if needed</small>
-          </div>
-        </div>
-        <app-map-picker
-          height="132px"
-          (locationPicked)="onMapLocationPicked($event)"
-        />
       </section>
 
       <div class="mobile-form-actions">

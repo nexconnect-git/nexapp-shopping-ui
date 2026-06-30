@@ -38,6 +38,11 @@
 
     <aside class="buy-panel fd-card">
       <div class="buy-top">
+        <div class="store-context">
+          <span class="material-symbols-rounded">storefront</span>
+          <b>{{ store()?.name || product().storeName || 'Nearby partner' }}</b>
+          <small>{{ deliveryLabel() }}</small>
+        </div>
         <span class="deal-pill">{{ product().discount || "Fresh deal" }}</span>
         <h1>{{ product().name }}</h1>
         <p>
@@ -207,9 +212,19 @@
 <div class="mobile-customer-view">
 <main class="mobile-page product-detail-page">
   <section class="product-hero">
+    <div class="product-mobile-tags">
+      @if (product().discount) {
+        <span class="discount">{{ product().discount }}</span>
+      }
+      <span><i class="material-symbols-rounded">bolt</i>{{ deliveryLabel() }}</span>
+    </div>
     <button type="button" class="image-button" (click)="zoomImage()">
       <img [src]="product().image" [alt]="product().name" />
     </button>
+    <div class="hero-store-chip">
+      <span class="material-symbols-rounded">storefront</span>
+      <b>{{ store()?.name || product().storeName || 'Partner store' }}</b>
+    </div>
   </section>
 
   <section class="product-info">
@@ -222,6 +237,9 @@
       <b>{{ product().price | appCurrency }}</b>
       @if (product().mrp > product().price) {
         <del>{{ product().mrp | appCurrency }}</del>
+      }
+      @if (product().discount) {
+        <em>{{ product().discount }}</em>
       }
     </div>
     <div class="benefits">
@@ -238,6 +256,10 @@
     }
 
     <section class="product-action-card detail-cta" aria-label="Product purchase actions">
+      <div class="cta-copy">
+        <small>Total</small>
+        <b>{{ product().price * qty() | appCurrency }}</b>
+      </div>
       <div class="qty">
         <button type="button" aria-label="Decrease quantity" (click)="qty.set(Math.max(1, qty() - 1))">
           <span class="material-symbols-rounded">remove</span>
@@ -248,7 +270,6 @@
         </button>
       </div>
       <button type="button" class="mobile-cta" [disabled]="!canPurchase()" (click)="addToCart()">{{ canPurchase() ? 'Add to cart' : 'Unavailable' }}</button>
-      <button type="button" class="mobile-cta secondary" [disabled]="!canPurchase()" (click)="buyNow()">Buy now</button>
     </section>
   </section>
 
@@ -280,7 +301,7 @@
     }
   </section>
 
-  @if (store()?.id) {
+  @if (similarFromStore().length) {
     <section class="mobile-section">
       <div class="mobile-section-head">
         <h2>More from {{ store()?.name }}</h2>

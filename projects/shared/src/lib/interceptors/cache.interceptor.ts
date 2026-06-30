@@ -2,9 +2,12 @@ import {
   HttpContextToken,
   type HttpEvent,
   type HttpInterceptorFn,
+  HttpHeaders,
   HttpResponse,
 } from '@angular/common/http';
+import { inject } from '@angular/core';
 import { Observable, of, tap, shareReplay, finalize } from 'rxjs';
+import { CookieService } from '../services/cookie.service';
 
 export const SKIP_HTTP_CACHE = new HttpContextToken<boolean>(() => false);
 
@@ -14,8 +17,21 @@ type CacheEntry = {
   request$?: Observable<HttpEvent<unknown>>;
 };
 
+type SerializedCacheEntry = {
+  body: unknown;
+  expiresAt: number;
+  headers: Record<string, string>;
+  status: number;
+  statusText: string;
+  url: string | null;
+};
+
 const cache = new Map<string, CacheEntry>();
+const CACHE_STORAGE_PREFIX = 'nextou_http_cache_v1::';
+const CACHE_STAMP_COOKIE = 'nextou_http_cache_stamp';
 const MAX_CACHE_ENTRIES = 160;
+const MAX_PERSISTED_RESPONSE_BYTES = 250_000;
+let lastCacheStamp = '';
 
 const PUBLIC_READ_PATTERNS = [
   /\/api\/vendors\/list\/?(\?|$)/,
@@ -84,11 +100,16 @@ const NEVER_CACHE_PATTERNS = [
 
 export function clearHttpCache(): void {
   cache.clear();
+  clearPersistedCache();
 }
 
 export const cacheInterceptor: HttpInterceptorFn = (req, next) => {
+  const cookies = inject(CookieService);
+  syncCacheStamp(cookies);
+
   if (req.method !== 'GET') {
     clearHttpCache();
+    bumpCacheStamp(cookies);
     return next(req);
   }
 
@@ -111,6 +132,15 @@ export const cacheInterceptor: HttpInterceptorFn = (req, next) => {
     return of(cached.response.clone());
   }
 
+  const persisted = readPersistedCache(key, now);
+  if (persisted) {
+    cache.set(key, {
+      expiresAt: persisted.expiresAt,
+      response: persisted.response.clone(),
+    });
+    return of(persisted.response.clone());
+  }
+
   if (cached?.request$ && cached.expiresAt > now) {
     return cached.request$;
   }
@@ -122,6 +152,7 @@ export const cacheInterceptor: HttpInterceptorFn = (req, next) => {
           expiresAt: Date.now() + ttlMs,
           response: event.clone(),
         });
+        writePersistedCache(key, event, ttlMs);
         trimCache();
       }
     }),
@@ -157,7 +188,18 @@ function normalizedPath(url: string): string {
 }
 
 function cacheKey(url: string, authorization: string | null): string {
-  return `${authorization || 'public'}::${normalizedPath(url)}`;
+  const scope = authorization ? `auth-${hashValue(authorization)}` : 'public';
+  return `${scope}::${normalizedPath(url)}`;
+}
+
+function hashValue(value: string): string {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash +=
+      (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
+  }
+  return (hash >>> 0).toString(36);
 }
 
 function pruneExpired(now: number): void {
@@ -171,5 +213,109 @@ function trimCache(): void {
     const oldestKey = cache.keys().next().value;
     if (!oldestKey) break;
     cache.delete(oldestKey);
+    removePersistedCache(oldestKey);
   }
+}
+
+function syncCacheStamp(cookies: CookieService): void {
+  const stamp = cookies.get(CACHE_STAMP_COOKIE) || '';
+  if (!lastCacheStamp) {
+    lastCacheStamp = stamp;
+    return;
+  }
+  if (stamp === lastCacheStamp) return;
+  clearHttpCache();
+  lastCacheStamp = stamp;
+}
+
+function bumpCacheStamp(cookies: CookieService): void {
+  lastCacheStamp = String(Date.now());
+  cookies.set(CACHE_STAMP_COOKIE, lastCacheStamp, {
+    maxAgeSeconds: 60 * 60 * 24 * 7,
+  });
+}
+
+function storageAvailable(): boolean {
+  try {
+    return typeof sessionStorage !== 'undefined';
+  } catch {
+    return false;
+  }
+}
+
+function storageKey(key: string): string {
+  return `${CACHE_STORAGE_PREFIX}${key}`;
+}
+
+function readPersistedCache(
+  key: string,
+  now: number,
+): { expiresAt: number; response: HttpResponse<unknown> } | null {
+  if (!storageAvailable()) return null;
+  const storedKey = storageKey(key);
+  const raw = sessionStorage.getItem(storedKey);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as SerializedCacheEntry;
+    if (!parsed.expiresAt || parsed.expiresAt <= now) {
+      sessionStorage.removeItem(storedKey);
+      return null;
+    }
+    const response = new HttpResponse({
+      body: parsed.body,
+      headers: new HttpHeaders(parsed.headers || {}),
+      status: parsed.status,
+      statusText: parsed.statusText,
+      url: parsed.url || undefined,
+    });
+    return { expiresAt: parsed.expiresAt, response };
+  } catch {
+    sessionStorage.removeItem(storedKey);
+    return null;
+  }
+}
+
+function writePersistedCache(
+  key: string,
+  response: HttpResponse<unknown>,
+  ttlMs: number,
+): void {
+  if (!storageAvailable()) return;
+  const headers = response.headers.keys().reduce<Record<string, string>>(
+    (result, header) => {
+      result[header] = response.headers.get(header) || '';
+      return result;
+    },
+    {},
+  );
+  const payload: SerializedCacheEntry = {
+    body: response.body,
+    expiresAt: Date.now() + ttlMs,
+    headers,
+    status: response.status,
+    statusText: response.statusText,
+    url: response.url,
+  };
+  const raw = JSON.stringify(payload);
+  if (raw.length > MAX_PERSISTED_RESPONSE_BYTES) return;
+  try {
+    sessionStorage.setItem(storageKey(key), raw);
+  } catch {
+    clearPersistedCache();
+  }
+}
+
+function removePersistedCache(key: string): void {
+  if (!storageAvailable()) return;
+  sessionStorage.removeItem(storageKey(key));
+}
+
+function clearPersistedCache(): void {
+  if (!storageAvailable()) return;
+  const keys: string[] = [];
+  for (let index = 0; index < sessionStorage.length; index += 1) {
+    const key = sessionStorage.key(index);
+    if (key?.startsWith(CACHE_STORAGE_PREFIX)) keys.push(key);
+  }
+  keys.forEach((key) => sessionStorage.removeItem(key));
 }

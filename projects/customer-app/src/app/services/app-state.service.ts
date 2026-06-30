@@ -130,6 +130,9 @@ export class AppStateService {
   readonly cartLoaded = signal(false);
   readonly serviceability = signal<CustomerServiceability | null>(null);
   readonly serviceabilityLoading = signal(false);
+  readonly deliveryUnavailable = computed(() =>
+    this.isDeliveryUnavailableResponse(this.serviceability())
+  );
   readonly cartFulfillmentNodeId = signal('');
   readonly cartFulfillmentNodeName = signal('');
   readonly cartFulfillmentPromiseId = signal('');
@@ -206,6 +209,12 @@ export class AppStateService {
   });
   readonly cartCheckoutBlockReason = computed(() => {
     if (!this.cart().length) return 'Your cart is empty.';
+    if (this.deliveryUnavailable()) {
+      return (
+        this.serviceability()?.message ||
+        'Delivery is not available for your selected location. Choose another location to continue.'
+      );
+    }
     if (this.hasMixedStoreItems()) {
       return 'Your cart has items from more than one store. Please keep one store per order.';
     }
@@ -337,6 +346,16 @@ export class AppStateService {
   }
 
   addToCart(product: Product, quantity = 1): boolean {
+    const serviceability = this.serviceability();
+    if (this.isDeliveryUnavailableResponse(serviceability)) {
+      this.catalog.clearDeliverableCatalog();
+      this.showToast(
+        serviceability?.message ||
+          'Delivery is not available for your selected location. Choose another location to continue.',
+        'warning'
+      );
+      return false;
+    }
     if (!this.isStoreOpenForProduct(product)) {
       this.showToast(this.storeClosedMessage(product));
       return false;
@@ -891,8 +910,8 @@ export class AppStateService {
     this.ui.closeMiniCart();
   }
 
-  showToast(message: string, tone?: ToastTone): void {
-    const toastMessage = String(message || '').trim();
+  showToast(message: unknown, tone?: ToastTone): void {
+    const toastMessage = this.normalizeToastMessage(message);
     if (!toastMessage) return;
     const resolvedTone = tone || this.inferToastTone(toastMessage);
     this.toast.set({ message: toastMessage, tone: resolvedTone });
@@ -902,6 +921,33 @@ export class AppStateService {
     );
     if (this.toastTimer) window.clearTimeout(this.toastTimer);
     this.toastTimer = window.setTimeout(() => this.toast.set(null), 2200);
+  }
+
+  private normalizeToastMessage(message: unknown): string {
+    if (typeof message === 'boolean') {
+      return message ? 'Done' : '';
+    }
+    if (message == null) return '';
+    if (typeof message === 'object') {
+      return readApiError(message).trim();
+    }
+    const text = String(message).trim();
+    if (text === 'true') return 'Done';
+    if (text === 'false') return '';
+    return text;
+  }
+
+  private isDeliveryUnavailableResponse(
+    serviceability: CustomerServiceability | null | undefined
+  ): boolean {
+    if (!serviceability) return false;
+    if (serviceability.is_serviceable === false) return true;
+    const message = String(serviceability.message || '').toLowerCase();
+    return (
+      message.includes('delivery is no longer available') ||
+      message.includes('please refresh availability') ||
+      message.includes('choose your location again')
+    );
   }
 
   loadCart(): void {
@@ -1124,7 +1170,7 @@ export class AppStateService {
     this.catalogApi.checkServiceability(params).subscribe({
       next: (response) => {
         this.serviceability.set(response || null);
-        if (response?.is_serviceable === false) {
+        if (this.isDeliveryUnavailableResponse(response || null)) {
           this.catalog.clearDeliverableCatalog();
         }
         this.serviceabilityLoading.set(false);

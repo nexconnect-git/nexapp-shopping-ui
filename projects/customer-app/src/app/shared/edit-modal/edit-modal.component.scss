@@ -3,11 +3,14 @@
   inset: 0;
   z-index: var(--fd-z-modal);
   background: var(--fd-sheet-overlay);
+  display: block;
+  width: 100vw;
+  height: 100dvh;
 }
 
 .edit-modal {
   position: fixed;
-  left: 50%;
+  left: max(6px, calc((100vw - min(100vw - 12px, var(--mobile-shell-max, 430px))) / 2));
   right: auto;
   top: auto;
   bottom: 0;
@@ -22,8 +25,9 @@
   border: 0;
   border-radius: 26px 26px 0 0;
   background: #f8f6ff !important;
+  border: 1px solid rgba(56, 38, 142, 0.1);
   box-shadow: 0 -26px 70px rgba(17, 24, 39, 0.24);
-  transform: translateX(-50%);
+  transform: none;
   animation: editSheetIn 0.22s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   box-sizing: border-box;
   overscroll-behavior: contain;
@@ -185,11 +189,15 @@ label span {
 }
 
 footer {
+  position: sticky;
+  bottom: calc(-1 * (14px + env(safe-area-inset-bottom, 0px)));
+  z-index: 2;
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
   gap: 9px;
   margin-top: 2px;
-  padding-top: 2px;
+  padding: 10px 0 calc(4px + env(safe-area-inset-bottom, 0px));
+  background: #f8f6ff;
 }
 
 footer .fd-btn {
@@ -225,6 +233,7 @@ footer .fd-btn {
   }
 
   footer {
+    position: static;
     display: flex;
     justify-content: flex-end;
     gap: 12px;
@@ -234,31 +243,39 @@ footer .fd-btn {
 
 @media (max-width: 360px) {
   .edit-modal {
-    width: calc(100% - 12px);
+    left: 6px;
+    width: calc(100vw - 12px);
     border-radius: 24px 24px 0 0;
   }
 }
 
 @media (max-width: 760px) {
+  .overlay {
+    background: rgba(8, 10, 24, 0.48);
+  }
+
   .edit-modal {
-    left: 50% !important;
-    right: auto !important;
+    left: max(6px, calc((100vw - min(100vw - 12px, var(--mobile-shell-max, 430px))) / 2)) !important;
+    right: unset !important;
     inset-inline: unset !important;
     width: min(calc(100vw - 12px), var(--mobile-shell-max, 430px)) !important;
-    max-width: 430px !important;
+    min-width: 0 !important;
+    max-width: calc(100vw - 12px) !important;
+    max-height: min(82dvh, calc(100dvh - 88px)) !important;
     margin: 0 !important;
-    transform: translateX(-50%) !important;
+    transform: none !important;
+    overflow-x: hidden;
   }
 }
 
 @keyframes editSheetIn {
   from {
     opacity: 0;
-    transform: translate(-50%, 24px);
+    transform: translateY(24px);
   }
   to {
     opacity: 1;
-    transform: translate(-50%, 0);
+    transform: translateY(0);
   }
 }
 

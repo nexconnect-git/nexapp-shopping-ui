@@ -425,8 +425,9 @@ export class CatalogService {
 
   getStore(id: string | null): Store {
     const key = String(id || '');
-    const store =
-      this._stores().find((item) => item.id === key) || this._stores()[0];
+    const store = key
+      ? this._stores().find((item) => item.id === key)
+      : this._stores()[0];
     return store || this.emptyStore(key);
   }
 

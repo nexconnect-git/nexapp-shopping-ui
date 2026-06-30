@@ -8,11 +8,11 @@
         </button>
         <div class="service-unavailable-card">
           <div class="service-unavailable-visual">
-            <img [src]="store().image" [alt]="store().name" />
+            <img [src]="store().image" [alt]="storeTitle()" />
             <span class="material-symbols-rounded">location_off</span>
           </div>
-          <small>{{ store().category || "Nextou store" }}</small>
-          <h1>{{ store().name }} is unavailable right now</h1>
+          <small>{{ storeCategoryLabel() }}</small>
+          <h1>{{ storeTitle() }} is unavailable right now</h1>
           <p>{{ storeUnavailableReason() }}</p>
           <div class="service-unavailable-actions">
             <button type="button" class="fd-btn primary" (click)="changeLocation()">
@@ -34,11 +34,11 @@
       </button>
       <section class="service-unavailable-card">
         <div class="service-unavailable-visual">
-          <img [src]="store().image" [alt]="store().name" />
+          <img [src]="store().image" [alt]="storeTitle()" />
           <span class="material-symbols-rounded">location_off</span>
         </div>
-        <small>{{ store().category || "Nextou store" }}</small>
-        <h1>{{ store().name }} is unavailable right now</h1>
+        <small>{{ storeCategoryLabel() }}</small>
+        <h1>{{ storeTitle() }} is unavailable right now</h1>
         <p>{{ storeUnavailableReason() }}</p>
         <button type="button" class="mobile-cta" (click)="changeLocation()">
           Change location

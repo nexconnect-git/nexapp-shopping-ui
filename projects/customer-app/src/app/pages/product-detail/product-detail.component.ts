@@ -99,6 +99,15 @@ export class ProductDetailComponent {
     return { canBuy: true, label: 'In stock', tone: 'success' as const };
   });
   storeOrderState = computed(() => {
+    const serviceability = this.state.serviceability();
+    if (this.state.deliveryUnavailable()) {
+      return {
+        canOrder: false,
+        message:
+          serviceability?.message ||
+          'Delivery is not available for your selected location. Choose another address to continue.',
+      };
+    }
     const vendor = (this.product().raw as any)?.vendor || {};
     if (vendor?.is_serviceable === false) {
       return {

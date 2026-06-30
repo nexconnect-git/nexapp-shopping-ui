@@ -340,6 +340,10 @@ app-map-picker {
     --address-sheet-bg: #f8f6ff;
   }
 
+  :host ::ng-deep fd-mobile-bottom-sheet .sheet-backdrop {
+    top: calc(var(--cx-mobile-topbar-height, 64px) + env(safe-area-inset-top, 0px));
+  }
+
   :host ::ng-deep fd-mobile-bottom-sheet .mobile-bottom-sheet {
     width: min(calc(100vw - 8px), var(--mobile-shell-max, 430px));
     max-height: min(90dvh, 760px);
@@ -495,6 +499,10 @@ app-map-picker {
     padding-bottom: 12px;
   }
 
+  .map-section-top {
+    padding: 10px;
+  }
+
   .map-section app-map-picker {
     height: auto;
     border: 1px solid #e6e0f4;
@@ -546,6 +554,10 @@ app-map-picker {
 
   :host ::ng-deep .map-section .map-container {
     min-height: 132px;
+  }
+
+  :host ::ng-deep .map-section-top .map-container {
+    min-height: 178px;
   }
 
   :host ::ng-deep .map-section .map-address-preview,

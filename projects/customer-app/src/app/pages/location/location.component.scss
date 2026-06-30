@@ -349,7 +349,7 @@ input:focus {
 
 @media (max-width: 760px) {
   .location-page {
-    padding: 12px 12px calc(var(--customer-bottom-nav-height, 74px) + 120px);
+    padding: 10px 10px calc(var(--customer-bottom-nav-height, 74px) + 128px);
   }
 
   .location-header {
@@ -380,7 +380,30 @@ input:focus {
   }
 
   :host ::ng-deep .map-panel .map-container {
-    min-height: 280px;
+    height: clamp(220px, 42vh, 300px) !important;
+    min-height: 220px;
+  }
+
+  :host ::ng-deep .map-panel .map-picker-wrap {
+    max-height: 390px;
+    overflow: hidden;
+  }
+
+  .serviceability.good,
+  .serviceability.bad {
+    position: fixed;
+    right: 12px;
+    bottom: calc(var(--customer-bottom-nav-height, 74px) + 10px + env(safe-area-inset-bottom, 0px));
+    left: 12px;
+    z-index: 20;
+    width: min(calc(100vw - 24px), var(--mobile-shell-max, 430px));
+    margin-inline: auto;
+    box-shadow: 0 16px 36px rgba(15, 23, 42, 0.14);
+  }
+
+  .serviceability.good .promise-summary,
+  .serviceability.bad .promise-summary {
+    display: none;
   }
 
   .address-list {

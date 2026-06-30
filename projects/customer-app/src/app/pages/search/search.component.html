@@ -1,38 +1,55 @@
 <div class="desktop-customer-view">
 <main class="fd-content">
-  <fd-breadcrumbs [items]="[{ label: 'Search Results' }]" />
   <section class="fd-two-col">
     <div>
-      <h1 class="fd-title">
-        {{ query() ? 'Results for "' + query() + '"' : "Explore stores and products" }}
-      </h1>
-      <p class="fd-subtitle">{{ content.search().subtitle }}</p>
-
-      <form class="local-search fd-card" (submit)="submitSearch($event)">
-        <div class="fd-search">
-          <span class="material-symbols-rounded">search</span>
-          <input
-            [value]="query()"
-            (input)="updateQuery($any($event.target).value)"
-            placeholder="Search stores, products, brands..."
-          />
-          @if (query()) {
-            <button
-              type="button"
-              aria-label="Clear search"
-              (click)="clearSearch()"
-            >
-              <span class="material-symbols-rounded">close</span>
-            </button>
-          }
+      <section class="explore-hero" aria-label="Explore grocery delivery">
+        <div class="hero-copy">
+          <span>Instant marketplace</span>
+          <h1>
+            {{ query() ? 'Results for "' + query() + '"' : "Find anything nearby" }}
+          </h1>
+          <p>{{ content.search().subtitle }}</p>
         </div>
-        <button type="submit" class="fd-btn primary">
-          <span class="material-symbols-rounded">search</span> Search
-        </button>
-        <button type="button" class="fd-btn outline" (click)="ui.openFilter()">
-          <span class="material-symbols-rounded">tune</span> Filters
-        </button>
-      </form>
+        <div class="hero-stats" aria-label="Explore summary">
+          <article>
+            <b>{{ visibleResults().stores.length }}</b>
+            <small>Stores</small>
+          </article>
+          <article>
+            <b>{{ visibleResults().products.length }}</b>
+            <small>Products</small>
+          </article>
+          <article>
+            <b>Fast</b>
+            <small>Delivery</small>
+          </article>
+        </div>
+        <form class="local-search" (submit)="submitSearch($event)">
+          <div class="fd-search">
+            <span class="material-symbols-rounded">search</span>
+            <input
+              [value]="query()"
+              (input)="updateQuery($any($event.target).value)"
+              placeholder="Search milk, fruits, stores..."
+            />
+            @if (query()) {
+              <button
+                type="button"
+                aria-label="Clear search"
+                (click)="clearSearch()"
+              >
+                <span class="material-symbols-rounded">close</span>
+              </button>
+            }
+          </div>
+          <button type="submit" class="fd-btn primary">
+            <span class="material-symbols-rounded">search</span> Search
+          </button>
+          <button type="button" class="fd-btn outline" (click)="ui.openFilter()">
+            <span class="material-symbols-rounded">tune</span> Filters
+          </button>
+        </form>
+      </section>
 
       @if (!query() && recentSearches().length) {
         <section class="search-history fd-card" aria-label="Recent searches">
@@ -68,7 +85,7 @@
         </section>
       }
 
-      <div class="tabs">
+      <div class="tabs result-tabs">
         @for (tab of tabs(); track tab) {
           <button
             type="button"
@@ -80,7 +97,7 @@
         }
       </div>
 
-      <div class="filters">
+      <div class="filters filter-row">
         <button type="button" class="fd-pill" (click)="ui.openFilter()">
           <span class="material-symbols-rounded">tune</span> Filters
         </button>
@@ -288,25 +305,45 @@
 
 <div class="mobile-customer-view">
 <main class="mobile-page search-page">
-  <header class="search-head">
-    <button type="button" aria-label="Back" (click)="goBack()">
-      <span class="material-symbols-rounded">arrow_back</span>
-    </button>
-    <form class="search-input" (submit)="submitSearch($event)">
-      <span class="material-symbols-rounded">search</span>
-      <input
-        name="q"
-        type="search"
-        placeholder="Search stores or products"
-        [ngModel]="query()"
-        (ngModelChange)="updateQuery($event)"
-      />
-      @if (query()) {
-        <button type="button" aria-label="Clear" (click)="clearSearch()">
-          <span class="material-symbols-rounded">close</span>
+  <header class="mobile-explore-hero">
+    <div class="search-head">
+      <button type="button" aria-label="Back" (click)="goBack()">
+        <span class="material-symbols-rounded">arrow_back</span>
+      </button>
+      <form class="search-input" (submit)="submitSearch($event)">
+        <span class="material-symbols-rounded">search</span>
+        <input
+          name="q"
+          type="search"
+          placeholder="Search milk, chips, bakery"
+          [ngModel]="query()"
+          (ngModelChange)="updateQuery($event)"
+        />
+        @if (query()) {
+          <button type="button" aria-label="Clear" (click)="clearSearch()">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        }
+      </form>
+    </div>
+    <div class="mobile-hero-copy">
+      <small>Explore nearby</small>
+      <h1>{{ query() ? 'Results for "' + query() + '"' : "What are you looking for?" }}</h1>
+      <p>{{ visibleResults().stores.length }} stores • {{ visibleResults().products.length }} products ready around you</p>
+    </div>
+    <div class="mobile-quick-filters">
+      <button type="button" (click)="ui.openFilter()">
+        <span class="material-symbols-rounded">tune</span> Filters
+      </button>
+      @for (filter of content.filters().quickFilters.slice(0, 3); track filter.action) {
+        <button type="button" (click)="applyQuickFilter(filter)">
+          @if (filter.icon) {
+            <span class="material-symbols-rounded">{{ filter.icon }}</span>
+          }
+          {{ filter.action === "under_budget" ? "Under " + (100 | appCurrency) : filter.label }}
         </button>
       }
-    </form>
+    </div>
   </header>
 
   @if (!query()) {

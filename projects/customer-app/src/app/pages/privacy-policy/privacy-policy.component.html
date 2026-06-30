@@ -1,0 +1,76 @@
+<main class="privacy-page">
+  <section class="privacy-hero">
+    <a routerLink="/account" class="back-link">
+      <span class="material-symbols-rounded">arrow_back</span>
+      Account
+    </a>
+    <div class="hero-copy">
+      <small>Nextou customer app</small>
+      <h1>Privacy Policy</h1>
+      <p>
+        How Nextou handles customer account, location, shopping, checkout,
+        delivery, notification, and support data.
+      </p>
+      <span class="updated">Last updated {{ lastUpdated }}</span>
+    </div>
+  </section>
+
+  <section class="summary-grid" aria-label="Privacy summary">
+    @for (card of summaryCards; track card.label) {
+      <article>
+        <span class="material-symbols-rounded">{{ card.icon }}</span>
+        <b>{{ card.label }}</b>
+        <p>{{ card.text }}</p>
+      </article>
+    }
+  </section>
+
+  <section class="policy-shell">
+    <aside class="policy-aside">
+      <span class="material-symbols-rounded">shield</span>
+      <h2>Customer-first data use</h2>
+      <p>
+        This policy covers the customer shopping app. Vendor, delivery partner,
+        and admin tools may have separate operational needs.
+      </p>
+      <a routerLink="/account">Back to account</a>
+    </aside>
+
+    <div class="policy-list">
+      @for (section of sections; track section.title) {
+        <article class="policy-card">
+          <header>
+            <span class="material-symbols-rounded">{{ section.icon }}</span>
+            <div>
+              <h2>{{ section.title }}</h2>
+              <p>{{ section.body }}</p>
+            </div>
+          </header>
+          <ul>
+            @for (item of section.items; track item) {
+              <li>{{ item }}</li>
+            }
+          </ul>
+        </article>
+      }
+
+      <article class="policy-card contact-card">
+        <header>
+          <span class="material-symbols-rounded">support_agent</span>
+          <div>
+            <h2>Contact And Updates</h2>
+            <p>
+              We may update this policy when app features, platform operations,
+              or data practices change.
+            </p>
+          </div>
+        </header>
+        <p>
+          For privacy questions, account correction requests, invoice questions,
+          delivery-address changes, or order support, use the account and order
+          support flows available in the customer app.
+        </p>
+      </article>
+    </div>
+  </section>
+</main>

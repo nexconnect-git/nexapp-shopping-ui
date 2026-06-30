@@ -11,6 +11,7 @@ import {
   CustomerContentConfigService,
   type CustomerPromoCard,
 } from '../../services/customer-content-config.service';
+import { Category, Product, Store } from '../../models';
 import {
   MobileQuickAction,
   MobileQuickActionGridComponent,
@@ -39,18 +40,18 @@ export class HomeComponent {
     const locationText = String(this.state.location() || '').trim();
     return !!locationText && locationText !== this.defaultLocationLabel;
   });
-  hasLocation = computed(() => this.hasSelectedLocation());
+  hasLocation = computed(
+    () => this.hasSelectedLocation() || !!this.state.serviceability(),
+  );
   deliveryUnavailable = computed(
-    () =>
-      this.hasSelectedLocation() &&
-      this.state.serviceability()?.is_serviceable === false,
+    () => this.state.deliveryUnavailable(),
   );
   serviceableStores = computed(() =>
     this.deliveryUnavailable()
       ? []
       : this.catalog
           .stores()
-          .filter((store) => (store.raw as any)?.is_serviceable !== false),
+          .filter((store) => this.isStoreAvailable(store)),
   );
   serviceableStoreIds = computed(
     () => new Set(this.serviceableStores().map((store) => store.id)),
@@ -66,21 +67,17 @@ export class HomeComponent {
   );
   noServiceableStores = computed(
     () =>
-      this.hasSelectedLocation() &&
-      (this.deliveryUnavailable() ||
-        (!this.catalog.storesLoading() && !this.serviceableStores().length)),
+      this.deliveryUnavailable() ||
+      (this.hasSelectedLocation() &&
+        !this.catalog.storesLoading() &&
+        !this.catalog.productsLoading() &&
+        !this.serviceableStores().length &&
+        !this.homeProductPool().length),
   );
   homeProducts = computed(() =>
     this.deliveryUnavailable()
       ? []
-      : this.catalog
-          .topProducts()
-          .filter(
-            (product) =>
-              !product.storeId ||
-              this.serviceableStoreIds().has(product.storeId),
-          )
-          .slice(0, 8),
+      : this.homeProductPool().slice(0, 8),
   );
   recentlyOrderedProducts = computed(() => {
     const buyAgain = this.catalog
@@ -143,10 +140,7 @@ export class HomeComponent {
   heroBanner = computed(() => this.catalog.banners()[0] || null);
   heroStore = computed(
     () =>
-      this.serviceableStores()[0] ||
-      this.catalog.featuredStores()[0] ||
-      this.catalog.stores()[0] ||
-      null,
+      this.serviceableStores()[0] || null,
   );
   heroImage = computed(
     () =>
@@ -198,14 +192,13 @@ export class HomeComponent {
     this.deliveryUnavailable() ? [] : this.catalog.topCoupons().slice(0, 2),
   );
   promoCategories = computed(() =>
-    this.rankCategoriesByHistory(
-      this.catalog.categories().filter((category) => category.id !== 'all'),
-    ).slice(0, 2),
+    this.rankCategoriesByHistory(this.visibleCategories()).slice(0, 2),
   );
   mobileCategories = computed(() =>
-    this.rankCategoriesByHistory(
-      this.catalog.categories().filter((category) => category.id !== 'all'),
-    ).slice(0, 6),
+    this.rankCategoriesByHistory(this.visibleCategories()).slice(0, 6),
+  );
+  desktopCategories = computed(() =>
+    this.rankCategoriesByHistory(this.visibleCategories()).slice(0, 8),
   );
   homePromos = computed<CustomerPromoCard[]>(() => {
     if (this.deliveryUnavailable()) return [];
@@ -344,15 +337,54 @@ export class HomeComponent {
     });
   }
 
-  private isServiceableProduct(product: { storeId?: string | null; raw?: any }): boolean {
-    const vendor = product.raw?.vendor || product.raw?.store;
+  private visibleCategories = computed<Category[]>(() => {
+    const categories = this.catalog
+      .categories()
+      .filter((category) => category.id !== 'all');
+    const categoryMap = new Map<string, Category>();
+    for (const category of categories) {
+      categoryMap.set(this.normalize(category.raw?.slug || category.label || category.id), category);
+    }
+    for (const product of this.homeProductPool()) {
+      const label = String(product.category || '').trim();
+      if (!label) continue;
+      const key = this.normalize(label);
+      if (!key || categoryMap.has(key)) continue;
+      categoryMap.set(key, {
+        id: key,
+        label,
+        icon: this.categoryIcon({ label }),
+        bg: '#f8f6ff',
+      });
+    }
+    return [...categoryMap.values()];
+  });
+
+  private isStoreAvailable(store: Store | null | undefined): boolean {
+    const raw = (store?.raw || {}) as Record<string, any>;
+    if (!store || raw?.['is_serviceable'] === false) return false;
+    return (
+      (raw['is_open_now'] ?? raw['is_open']) !== false &&
+      raw['is_accepting_orders'] !== false
+    );
+  }
+
+  private isServiceableProduct(product: Product): boolean {
+    const raw = (product.raw || {}) as Record<string, any>;
+    if (raw?.['is_serviceable'] === false) return false;
+    const vendor = raw['vendor'] || raw['store'];
+    if (vendor?.is_serviceable === false) return false;
     const openForShopping = vendor
       ? (vendor?.is_open_now ?? vendor?.is_open) !== false &&
         vendor?.is_accepting_orders !== false
       : true;
+    const loadedStore = product.storeId
+      ? this.serviceableStores().find((store) => store.id === product.storeId)
+      : null;
+    if (product.storeId && !loadedStore) return false;
     return (
       openForShopping &&
-      (!product.storeId || this.serviceableStoreIds().has(product.storeId))
+      (!product.storeId || this.isStoreAvailable(loadedStore))
     );
   }
 

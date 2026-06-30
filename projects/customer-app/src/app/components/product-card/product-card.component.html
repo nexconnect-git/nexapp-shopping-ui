@@ -55,6 +55,10 @@
         <button type="button" class="add closed" disabled>
           {{ unavailableLabel() }}
         </button>
+      } @else if (deliveryUnavailable()) {
+        <button type="button" class="add closed" disabled>
+          Delivery unavailable
+        </button>
       } @else if (storeClosed()) {
         <button type="button" class="add closed" disabled>Store closed</button>
       } @else {

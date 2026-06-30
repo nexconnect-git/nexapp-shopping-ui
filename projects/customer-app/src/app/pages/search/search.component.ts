@@ -11,7 +11,6 @@ import { UiService } from '../../services/ui.service';
 import { AppStateService } from '../../services/app-state.service';
 import { ProductCardComponent } from '../../components/product-card/product-card.component';
 import { StoreCardComponent } from '../../components/store-card/store-card.component';
-import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
 import {
   CustomerContentConfigService,
   CustomerPromoCard,
@@ -23,7 +22,6 @@ import {
   imports: [
     FormsModule,
     RouterLink,
-    BreadcrumbsComponent,
     ProductCardComponent,
     StoreCardComponent,
     AppCurrencyPipe,

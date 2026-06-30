@@ -155,6 +155,14 @@ export const routes: Routes = [
         (m) => m.NotificationsComponent,
       ),
   },
+  {
+    path: 'privacy-policy',
+    loadComponent: () =>
+      import('./pages/privacy-policy/privacy-policy.component').then(
+        (m) => m.PrivacyPolicyComponent,
+      ),
+  },
+  { path: 'privacy', redirectTo: 'privacy-policy' },
   { path: 'wishlist', redirectTo: 'account' },
   { path: 'favorites', redirectTo: 'account' },
   { path: 'wallet', redirectTo: 'account' },

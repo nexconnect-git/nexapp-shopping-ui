@@ -20,6 +20,7 @@ export * from './lib/services/auth.service';
 export * from './lib/services/global-loading.service';
 export * from './lib/services/persistent-upload.service';
 export * from './lib/services/session-store.service';
+export * from './lib/services/cookie.service';
 export * from './lib/interceptors/auth.interceptor';
 export * from './lib/interceptors/cache.interceptor';
 export * from './lib/guards/auth.guard';
