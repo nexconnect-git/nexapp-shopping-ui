@@ -7,6 +7,14 @@ import { CatalogService } from '../../services/catalog.service';
 
 type ProductMeta = Record<string, unknown> & {
   stock?: number | string;
+  available_quantity?: number | string;
+  stock_state?: string;
+  promise?: Record<string, unknown> & {
+    eta_label?: string;
+    delivery_label?: string;
+    min_minutes?: number | string;
+    max_minutes?: number | string;
+  };
   low_stock_threshold?: number | string;
   is_available?: boolean;
   in_stock?: boolean;
@@ -56,9 +64,13 @@ export class ProductCardComponent {
 
   stockBadge(): { label: string; tone: 'success' | 'warning' | 'danger' } | null {
     const raw = (this.product?.raw || {}) as ProductMeta;
-    const stock = Number(raw.stock ?? 0);
+    const stock = Number(raw.available_quantity ?? raw.stock ?? 0);
     const lowStockThreshold = Number(raw?.low_stock_threshold ?? 5);
-    const available = raw?.is_available !== false && raw?.in_stock !== false;
+    const state = String(raw.stock_state || '').toLowerCase();
+    const available =
+      raw?.is_available !== false &&
+      raw?.in_stock !== false &&
+      !['out', 'out_of_stock', 'unavailable'].includes(state);
     if (!available || (Number.isFinite(stock) && stock <= 0)) {
       return { label: 'Out of stock', tone: 'danger' };
     }
@@ -89,6 +101,15 @@ export class ProductCardComponent {
   deliveryBadge(): string {
     const raw = (this.product?.raw || {}) as ProductMeta;
     const vendor = raw.vendor || {};
+    const promise = raw.promise || {};
+    if (promise.eta_label || promise.delivery_label) {
+      return String(promise.eta_label || promise.delivery_label);
+    }
+    if (promise.min_minutes || promise.max_minutes) {
+      const min = promise.min_minutes || promise.max_minutes;
+      const max = promise.max_minutes || promise.min_minutes;
+      return min === max ? `${min} min` : `${min}-${max} min`;
+    }
     const eta =
       vendor.estimated_delivery_label ||
       vendor.eta_label ||

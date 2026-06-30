@@ -110,9 +110,9 @@ button.secondary {
 
 button.primary {
   border: 0;
-  background: var(--fd-color-primary);
+  background: var(--cx-green, #16a34a);
   color: #fff;
-  box-shadow: 0 14px 28px rgba(108, 99, 255, 0.24);
+  box-shadow: 0 14px 28px rgba(22, 163, 74, 0.22);
 }
 
 button.primary.danger {

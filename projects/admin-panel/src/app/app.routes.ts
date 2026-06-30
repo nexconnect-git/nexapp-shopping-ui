@@ -75,6 +75,14 @@ export const routes: Routes = [
     canActivate: adminGuard,
   },
   {
+    path: 'fulfillment-ops',
+    loadComponent: () =>
+      import('./pages/fulfillment-ops/fulfillment-ops.component').then(
+        (m) => m.FulfillmentOpsComponent,
+      ),
+    canActivate: adminGuard,
+  },
+  {
     path: 'vendors',
     loadComponent: () =>
       import('./pages/vendors/vendors.component').then(

@@ -135,7 +135,7 @@
   z-index: 2;
 }
 .progress b.done {
-  background: linear-gradient(135deg, var(--primary), var(--primary-2));
+  background: var(--cx-primary-soft, #ede9fe);
 }
 .progress span {
   display: block;
@@ -216,7 +216,7 @@
 .map {
   height: 380px;
   border-radius: 16px;
-  background: linear-gradient(135deg, #eff6ff, #eef8e9);
+  background: var(--cx-surface, #ffffff);
   position: relative;
   overflow: hidden;
 }
@@ -308,7 +308,7 @@
 .promo-row section {
   border-radius: 18px;
   padding: 22px;
-  background: linear-gradient(135deg, #f2edff, #fff);
+  background: var(--cx-primary-soft, #ede9fe);
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
@@ -316,7 +316,7 @@
   box-shadow: 0 14px 38px rgba(20, 16, 60, 0.06);
 }
 .promo-row section:nth-child(2) {
-  background: linear-gradient(135deg, #fff5e8, #fff);
+  background: var(--cx-warning-soft, #ffedd5);
 }
 .promo-copy {
   min-width: 0;
@@ -459,13 +459,11 @@
 }
 
 .desktop-customer-view .order-panel {
-  background:
-    radial-gradient(circle at right top, rgba(255, 101, 132, 0.12), transparent 34%),
-    linear-gradient(135deg, #fff, #faf8ff);
+  background: var(--cx-surface, #ffffff);
 }
 
 .desktop-customer-view .eta-panel {
-  background: linear-gradient(135deg, var(--primary), #3d2a93);
+  background: var(--cx-primary-soft, #ede9fe);
   color: #fff;
 }
 
@@ -560,7 +558,7 @@
 
 .desktop-customer-view .progress b.done {
   color: #fff;
-  background: linear-gradient(135deg, var(--primary), #3d2a93);
+  background: var(--cx-primary-soft, #ede9fe);
 }
 
 .desktop-customer-view .progress b .material-symbols-rounded {
@@ -615,7 +613,7 @@
 .desktop-customer-view .help {
   margin-top: auto;
   border-radius: 18px;
-  background: linear-gradient(135deg, #f2edff, #fff);
+  background: var(--cx-primary-soft, #ede9fe);
 }
 
 .desktop-customer-view .promo-row {
@@ -1072,8 +1070,8 @@
     place-items: center;
     border-radius: 50%;
     color: #fff;
-    background: var(--fd-color-primary);
-    box-shadow: 0 6px 16px rgba(56, 38, 142, 0.2);
+    background: var(--cx-orange, #f97316);
+    box-shadow: 0 6px 16px rgba(249, 115, 22, 0.2);
     transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
     
     &:active {

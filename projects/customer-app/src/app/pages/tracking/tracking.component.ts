@@ -4,6 +4,7 @@
   computed,
   effect,
   ElementRef,
+  Inject,
   OnDestroy,
   QueryList,
   signal,
@@ -13,6 +14,9 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { shouldShowDeliveryPartner } from '@nexconnect/customer-checkout';
 import { AppCurrencyPipe } from '@shared/lib/pipes/currency.pipe';
 import { GoogleMapsService } from '@shared/lib/services/google-maps.service';
+import { openAuthenticatedWebSocket } from '@shared/lib/services/websocket-auth';
+import { SessionStore } from '@shared/lib/services/session-store.service';
+import { API_BASE_URL } from '@shared/lib/tokens/api-url.token';
 import { normalizeOrderStatus } from '@shared/lib/models/adapters';
 import { Subscription } from 'rxjs';
 import { OrderService } from '../../services/order.service';
@@ -35,6 +39,7 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
   mapUnavailable = signal(false);
   trackingError = signal('');
   lastTrackingRefresh = signal<Date | null>(null);
+  liveEtaMinutes = signal<number | null>(null);
   invoiceDownloading = signal(false);
   private map: any = null;
   private currentMarker: any = null;
@@ -42,6 +47,9 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
   private mapHostChanges?: Subscription;
   private mapInitialized = false;
   private refreshTimer: number | null = null;
+  private trackingSocket: WebSocket | null = null;
+  private websocketReconnectTimer: number | null = null;
+  private websocketClosedByComponent = false;
   private readonly statusOrder: string[] = [
     'created',
     'placed',
@@ -69,10 +77,13 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
     public orders: OrderService,
     private state: AppStateService,
     private googleMaps: GoogleMapsService,
+    private session: SessionStore,
+    @Inject(API_BASE_URL) private apiBaseUrl: string,
   ) {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.loadTracking(id);
+      this.connectTrackingSocket(id);
       this.startAutoRefresh(id);
     }
     effect(() => {
@@ -91,6 +102,7 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
   ngOnDestroy(): void {
     this.mapHostChanges?.unsubscribe();
     this.stopAutoRefresh();
+    this.closeTrackingSocket();
     this.currentMarker?.setMap?.(null);
     this.map = null;
     this.mapHost = null;
@@ -183,6 +195,10 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
     }));
   });
   estimatedArrivalLabel = computed(() => {
+    const liveEta = this.liveEtaMinutes();
+    if (typeof liveEta === 'number' && Number.isFinite(liveEta) && liveEta > 0) {
+      return `${Math.round(liveEta)} mins`;
+    }
     const raw = this.order().raw?.estimated_delivery_time;
     if (raw === null || raw === undefined) return 'Soon';
     const rawText = String(raw).trim();
@@ -279,6 +295,7 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
     if (!id) return;
     this.orders.loadOrders();
     this.loadTracking(id);
+    this.connectTrackingSocket(id);
   }
 
   callPartner(): void {
@@ -304,6 +321,10 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
   }
 
   private initGoogleMap(): void {
+    if (!this.shouldUseEmbeddedMap()) {
+      this.mapUnavailable.set(true);
+      return;
+    }
     this.googleMaps
       .loadJavaScriptApi()
       .then(() => {
@@ -341,6 +362,15 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
         }, 0);
       })
       .catch(() => this.mapUnavailable.set(true));
+  }
+
+  private shouldUseEmbeddedMap(): boolean {
+    if (typeof window === 'undefined') return false;
+    const host = window.location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1' || host === '::1') {
+      return false;
+    }
+    return this.googleMaps.hasApiKey();
   }
 
   private visibleMapElement(): HTMLElement | null {
@@ -502,6 +532,7 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
     this.refreshTimer = window.setInterval(() => {
       if (this.isTerminalStatus(this.currentStatus())) {
         this.stopAutoRefresh();
+        this.closeTrackingSocket();
         return;
       }
       this.orders.loadOrders();
@@ -520,6 +551,104 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
     return ['delivered', 'cancelled', 'refunded'].includes(
       this.normalizeStatusKey(status),
     );
+  }
+
+  private connectTrackingSocket(id: string): void {
+    if (typeof window === 'undefined' || typeof WebSocket === 'undefined') return;
+    if (this.isTerminalStatus(this.currentStatus())) return;
+
+    this.closeTrackingSocket(false);
+    this.websocketClosedByComponent = false;
+
+    try {
+      const socket = openAuthenticatedWebSocket(
+        `/ws/delivery/${id}/tracking/`,
+        this.session.getAccessToken(),
+        this.apiBaseUrl,
+      );
+      this.trackingSocket = socket;
+      socket.onopen = () => {
+        this.trackingError.set('');
+        this.clearWebsocketReconnect();
+      };
+      socket.onmessage = (event) => this.applySocketTrackingMessage(event.data);
+      socket.onerror = () => this.scheduleWebsocketReconnect(id);
+      socket.onclose = () => {
+        if (!this.websocketClosedByComponent && !this.isTerminalStatus(this.currentStatus())) {
+          this.scheduleWebsocketReconnect(id);
+        }
+      };
+    } catch {
+      this.scheduleWebsocketReconnect(id);
+    }
+  }
+
+  private applySocketTrackingMessage(raw: string): void {
+    let payload: any;
+    try {
+      payload = JSON.parse(raw);
+    } catch {
+      return;
+    }
+
+    if (payload?.type === 'eta_update') {
+      const eta = Number(payload.eta_minutes);
+      if (Number.isFinite(eta) && eta > 0) {
+        this.liveEtaMinutes.set(eta);
+        this.lastTrackingRefresh.set(new Date());
+      }
+      return;
+    }
+
+    if (payload?.type !== 'location_update') return;
+    const lat = Number(payload.lat ?? payload.latitude);
+    const lng = Number(payload.lng ?? payload.longitude);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+    const entry = {
+      status: this.hasPickedUp() ? 'on_the_way' : 'delivery_assigned',
+      latitude: lat,
+      longitude: lng,
+      partner_id: payload.partner_id || null,
+      timestamp: new Date().toISOString(),
+    };
+    this.tracking.update((items) => [...items.slice(-49), entry]);
+    this.lastTrackingRefresh.set(new Date());
+    this.refreshMapMarker();
+  }
+
+  private scheduleWebsocketReconnect(id: string): void {
+    if (typeof window === 'undefined' || this.websocketReconnectTimer !== null) return;
+    this.websocketReconnectTimer = window.setTimeout(() => {
+      this.websocketReconnectTimer = null;
+      this.connectTrackingSocket(id);
+    }, 5000);
+  }
+
+  private clearWebsocketReconnect(): void {
+    if (this.websocketReconnectTimer !== null && typeof window !== 'undefined') {
+      window.clearTimeout(this.websocketReconnectTimer);
+    }
+    this.websocketReconnectTimer = null;
+  }
+
+  private closeTrackingSocket(markClosed = true): void {
+    if (markClosed) {
+      this.websocketClosedByComponent = true;
+    }
+    this.clearWebsocketReconnect();
+    const socket = this.trackingSocket;
+    this.trackingSocket = null;
+    if (!socket) return;
+    socket.onopen = null;
+    socket.onmessage = null;
+    socket.onerror = null;
+    socket.onclose = null;
+    try {
+      socket.close();
+    } catch {
+      // REST polling remains the fallback if the socket cannot close cleanly.
+    }
   }
 
   private vendorCoordinate(): { lat: number; lng: number } | null {

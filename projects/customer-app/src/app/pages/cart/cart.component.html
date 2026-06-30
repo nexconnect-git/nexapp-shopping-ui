@@ -35,6 +35,23 @@
           }
         </section>
 
+        @if (state.cartFulfillmentMismatch()) {
+          <section class="fulfillment-alert fd-card">
+            <span class="material-symbols-rounded">sync_problem</span>
+            <div>
+              <b>Cart needs your selected delivery area</b>
+              <p>{{ state.cartFulfillmentMismatchMessage() }}</p>
+            </div>
+            <button
+              type="button"
+              class="fd-btn outline"
+              (click)="state.clearStaleFulfillmentCart()"
+            >
+              Clear cart
+            </button>
+          </section>
+        }
+
         <section class="cart-table fd-card">
           <div class="table-head">
             <span>Item</span><span>Price</span><span>Quantity</span
@@ -226,6 +243,19 @@
       <b>{{ cartStoreName() }}</b>
       <p>{{ cartStoreStatus() }}</p>
     </section>
+
+    @if (state.cartFulfillmentMismatch()) {
+      <section class="fulfillment-alert mobile">
+        <span class="material-symbols-rounded">sync_problem</span>
+        <div>
+          <b>Delivery area changed</b>
+          <small>{{ state.cartFulfillmentMismatchMessage() }}</small>
+        </div>
+        <button type="button" (click)="state.clearStaleFulfillmentCart()">
+          Clear
+        </button>
+      </section>
+    }
 
     @if (state.discount()) {
       <section class="savings-banner">

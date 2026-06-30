@@ -1,7 +1,7 @@
 .locked-shell {
-  min-height: min(520px, calc(100vh - 140px));
+  min-height: min(420px, calc(100vh - 140px));
   display: grid;
-  place-items: center;
+  place-items: start center;
   padding: clamp(16px, 4vw, 32px);
 }
 
@@ -14,9 +14,7 @@
   padding: 22px;
   border: 1px solid var(--border, #e2def8);
   border-radius: 8px;
-  background:
-    linear-gradient(135deg, rgba(108, 99, 255, 0.1), rgba(255, 184, 0, 0.08) 58%, rgba(53, 168, 82, 0.08)),
-    var(--card, #fff);
+  background: var(--cx-surface, #ffffff);
   box-shadow: 0 14px 34px rgba(48, 32, 116, 0.12);
 }
 
@@ -25,7 +23,7 @@
   position: absolute;
   inset: 0 0 auto;
   height: 4px;
-  background: linear-gradient(90deg, var(--primary, #3f2a96), #ff8a3d, #ffd43b, #35a852);
+  background: var(--cx-success-soft, #dcfce7);
 }
 
 .locked-icon {
@@ -40,7 +38,7 @@
 }
 
 small {
-  color: var(--success, #35a852);
+  color: var(--cx-green-dark, #15803d);
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0;
@@ -71,13 +69,16 @@ p {
 
 @media (max-width: 760px) {
   .locked-shell {
-    min-height: calc(100dvh - var(--customer-header-mobile-height, 52px) - var(--customer-bottom-nav-height, 64px) - 18px);
-    align-items: center;
-    padding: 12px 18px calc(var(--customer-bottom-nav-height, 64px) + 18px);
+    min-height: auto;
+    align-items: start;
+    padding: 10px 10px 14px;
   }
 
   .locked-panel {
-    padding: 18px;
+    width: min(100%, var(--mobile-shell-max, 430px));
+    gap: 12px;
+    padding: 16px;
+    border-radius: 22px;
   }
 
   .locked-actions {

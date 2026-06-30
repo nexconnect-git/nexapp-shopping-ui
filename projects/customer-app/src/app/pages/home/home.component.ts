@@ -39,17 +39,26 @@ export class HomeComponent {
     const locationText = String(this.state.location() || '').trim();
     return !!locationText && locationText !== this.defaultLocationLabel;
   });
-  hasLocation = computed(() => true);
+  hasLocation = computed(() => this.hasSelectedLocation());
+  deliveryUnavailable = computed(
+    () =>
+      this.hasSelectedLocation() &&
+      this.state.serviceability()?.is_serviceable === false,
+  );
   serviceableStores = computed(() =>
-    this.catalog
-      .stores()
-      .filter((store) => (store.raw as any)?.is_serviceable !== false),
+    this.deliveryUnavailable()
+      ? []
+      : this.catalog
+          .stores()
+          .filter((store) => (store.raw as any)?.is_serviceable !== false),
   );
   serviceableStoreIds = computed(
     () => new Set(this.serviceableStores().map((store) => store.id)),
   );
   private homeProductPool = computed(() =>
-    (
+    this.deliveryUnavailable()
+      ? []
+      : (
       this.catalog.products().length
         ? this.catalog.products()
         : this.catalog.topProducts()
@@ -58,17 +67,20 @@ export class HomeComponent {
   noServiceableStores = computed(
     () =>
       this.hasSelectedLocation() &&
-      !this.catalog.storesLoading() &&
-      !this.serviceableStores().length,
+      (this.deliveryUnavailable() ||
+        (!this.catalog.storesLoading() && !this.serviceableStores().length)),
   );
   homeProducts = computed(() =>
-    this.catalog
-      .topProducts()
-      .filter(
-        (product) =>
-          !product.storeId || this.serviceableStoreIds().has(product.storeId),
-      )
-      .slice(0, 8),
+    this.deliveryUnavailable()
+      ? []
+      : this.catalog
+          .topProducts()
+          .filter(
+            (product) =>
+              !product.storeId ||
+              this.serviceableStoreIds().has(product.storeId),
+          )
+          .slice(0, 8),
   );
   recentlyOrderedProducts = computed(() => {
     const buyAgain = this.catalog
@@ -182,7 +194,9 @@ export class HomeComponent {
       this.heroBanner()?.ctaUrl ||
       this.content.home().fallbackHero.ctaUrl,
   );
-  promoCoupons = computed(() => this.catalog.topCoupons().slice(0, 2));
+  promoCoupons = computed(() =>
+    this.deliveryUnavailable() ? [] : this.catalog.topCoupons().slice(0, 2),
+  );
   promoCategories = computed(() =>
     this.rankCategoriesByHistory(
       this.catalog.categories().filter((category) => category.id !== 'all'),
@@ -194,6 +208,7 @@ export class HomeComponent {
     ).slice(0, 6),
   );
   homePromos = computed<CustomerPromoCard[]>(() => {
+    if (this.deliveryUnavailable()) return [];
     const liveBanners = this.catalog
       .banners()
       .slice(1, 3)
@@ -297,7 +312,6 @@ export class HomeComponent {
       '/help',
       '/issues',
       '/my-issues',
-      '/notifications',
       '/payments',
     ].includes(path)
       ? '/explore'
@@ -330,8 +344,16 @@ export class HomeComponent {
     });
   }
 
-  private isServiceableProduct(product: { storeId?: string | null }): boolean {
-    return !product.storeId || this.serviceableStoreIds().has(product.storeId);
+  private isServiceableProduct(product: { storeId?: string | null; raw?: any }): boolean {
+    const vendor = product.raw?.vendor || product.raw?.store;
+    const openForShopping = vendor
+      ? (vendor?.is_open_now ?? vendor?.is_open) !== false &&
+        vendor?.is_accepting_orders !== false
+      : true;
+    return (
+      openForShopping &&
+      (!product.storeId || this.serviceableStoreIds().has(product.storeId))
+    );
   }
 
   private trendingScore(product: any): number {

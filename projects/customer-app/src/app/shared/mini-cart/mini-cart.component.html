@@ -5,7 +5,7 @@
     aria-label="Close cart"
     (click)="close()"
   ></button>
-  <aside class="mini-cart" [class.enter]="state.miniCartOpen()">
+  <aside class="cart-panel" [class.enter]="state.miniCartOpen()">
     <header>
       <div>
         <h2>{{ content.cart().miniCartTitle }}</h2>

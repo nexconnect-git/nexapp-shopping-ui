@@ -1,64 +1,91 @@
+@if (!auth.isLoggedIn()) {
+  <fd-customer-locked-state
+    title="Login to view notifications"
+    description="Sign in to see order alerts, delivery updates, offers and account messages in one inbox."
+    icon="notifications"
+  />
+} @else {
 <div class="desktop-customer-view">
-  <main class="fd-content">
-    <div class="fd-page-header">
-      <div>
-        <h1 class="fd-title">Notifications</h1>
-        <p class="fd-subtitle">Latest order and account updates.</p>
-      </div>
-      <button type="button" class="fd-btn outline" (click)="markAllRead()">
-        Mark all as read
-      </button>
-    </div>
+  <main class="fd-content notifications-desktop">
+    <fd-breadcrumbs [items]="[{ label: 'Account', link: '/account' }, { label: 'Notifications' }]" />
 
-    <section class="fd-list">
-      @if (loading()) {
-        <article class="fd-card">Loading notifications...</article>
-      } @else {
-        @for (item of notifications(); track item.id) {
-          <button
-            type="button"
-            class="fd-card notify-row"
-            [class.unread]="!item.read"
-            (click)="open(item)"
-          >
-            <span class="material-symbols-rounded">notifications</span>
-            <div>
-              <b>{{ item.title }}</b>
-              <p>{{ item.message }}</p>
-              <small>{{ item.timestamp }}</small>
-            </div>
-            <i>{{ item.type }}</i>
-          </button>
-        } @empty {
-          <article class="fd-card">No notifications yet.</article>
+    <section class="notifications-shell">
+      <header class="notifications-hero fd-card">
+        <span class="material-symbols-rounded">notifications_active</span>
+        <div>
+          <small>Nextou updates</small>
+          <h1>Notifications</h1>
+          <p>Track order alerts, delivery changes, offers, and account messages from one clean inbox.</p>
+        </div>
+        <button type="button" class="mark-read" [disabled]="loading() || !notifications().length" (click)="markAllRead()">
+          Mark all as read
+        </button>
+      </header>
+
+      <section class="notification-list" aria-label="Notifications">
+        @if (loading()) {
+          @for (item of [1, 2, 3]; track item) {
+            <article class="notification-row skeleton fd-card">
+              <span></span>
+              <div><b></b><p></p><small></small></div>
+            </article>
+          }
+        } @else {
+          @for (item of notifications(); track item.id) {
+            <button
+              type="button"
+              class="notification-row fd-card"
+              [class.unread]="!item.read"
+              (click)="open(item)"
+            >
+              <span class="material-symbols-rounded">{{ item.orderId ? 'local_shipping' : 'notifications' }}</span>
+              <div>
+                <b>{{ item.title }}</b>
+                <p>{{ item.message }}</p>
+                <small>{{ item.timestamp }}</small>
+              </div>
+              <i>{{ item.type }}</i>
+            </button>
+          } @empty {
+            <article class="empty-inbox fd-card">
+              <span class="material-symbols-rounded">notifications_off</span>
+              <b>No notifications yet</b>
+              <p>When orders or offers change, updates will show here.</p>
+            </article>
+          }
         }
-      }
+      </section>
     </section>
   </main>
 </div>
 
 <div class="mobile-customer-view">
   <main class="mobile-page notifications-page">
-    <header class="simple-head">
+    <header class="mobile-notification-head">
       <div>
-        <small>Updates</small>
+        <small>Nextou updates</small>
         <h1>Notifications</h1>
       </div>
-      <button type="button" (click)="markAllRead()">Mark all</button>
+      <button type="button" [disabled]="loading() || !notifications().length" (click)="markAllRead()">Mark all</button>
     </header>
 
-    <section class="mobile-list">
+    <section class="notification-list" aria-label="Notifications">
       @if (loading()) {
-        <article class="notify-card">Loading notifications...</article>
+        @for (item of [1, 2, 3]; track item) {
+          <article class="notification-row skeleton">
+            <span></span>
+            <div><b></b><p></p><small></small></div>
+          </article>
+        }
       } @else {
         @for (item of notifications(); track item.id) {
           <button
             type="button"
-            class="notify-card"
+            class="notification-row"
             [class.unread]="!item.read"
             (click)="open(item)"
           >
-            <span class="material-symbols-rounded">notifications</span>
+            <span class="material-symbols-rounded">{{ item.orderId ? 'local_shipping' : 'notifications' }}</span>
             <div>
               <b>{{ item.title }}</b>
               <p>{{ item.message }}</p>
@@ -66,9 +93,14 @@
             </div>
           </button>
         } @empty {
-          <article class="notify-card">No notifications yet.</article>
+          <article class="empty-inbox">
+            <span class="material-symbols-rounded">notifications_off</span>
+            <b>No notifications yet</b>
+            <p>Order and account updates will appear here.</p>
+          </article>
         }
       }
     </section>
   </main>
 </div>
+}

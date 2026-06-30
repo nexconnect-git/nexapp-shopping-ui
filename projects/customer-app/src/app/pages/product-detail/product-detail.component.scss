@@ -82,7 +82,7 @@
   height: 386px;
   border: 1px solid rgba(56, 38, 142, 0.08);
   border-radius: 20px;
-  background: linear-gradient(180deg, #faf8ff 0%, #ffffff 100%);
+  background: var(--cx-surface, #ffffff);
   display: grid;
   place-items: center;
   position: relative;
@@ -376,6 +376,16 @@
   gap: 12px;
   margin: 4px 0 0;
 }
+.buy-actions .fd-btn.outline {
+  border-color: var(--cx-green, #16a34a) !important;
+  background: var(--cx-green, #16a34a) !important;
+  color: #ffffff !important;
+}
+.buy-actions .fd-btn.primary {
+  border-color: var(--cx-orange, #f97316) !important;
+  background: var(--cx-orange, #f97316) !important;
+  color: #ffffff !important;
+}
 .buy-actions .fd-btn[disabled] {
   opacity: 0.62;
   cursor: not-allowed;
@@ -568,7 +578,7 @@
     margin: -16px calc(-1 * var(--mobile-page-x)) 0;
     padding: 10px var(--mobile-page-x) 14px;
     border-radius: 0 0 22px 22px;
-    background: linear-gradient(180deg, #f5f2ff 0%, #ffffff 100%);
+    background: var(--cx-surface, #ffffff);
     box-shadow: 0 8px 24px rgba(56, 38, 142, 0.04);
   }
   
@@ -742,8 +752,8 @@
   
   .product-action-card {
     display: grid;
-    grid-template-columns: 96px 1fr 1fr;
-    gap: 7px;
+    grid-template-columns: 94px minmax(0, 1fr) minmax(92px, 0.9fr);
+    gap: 6px;
     margin-top: 4px;
     padding: 8px;
     background: #fbfaff;
@@ -756,8 +766,18 @@
     border-radius: 12px;
     height: 42px;
     box-shadow: none;
-    font-size: 14px;
+    font-size: 12.5px;
     min-width: 0;
+    padding: 0 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    line-height: 1;
+    white-space: nowrap;
+    border-color: var(--cx-green, #16a34a) !important;
+    background: var(--cx-green, #16a34a) !important;
+    color: #ffffff !important;
   }
   
   .product-action-card .secondary {
@@ -765,13 +785,17 @@
     border-radius: 12px;
     height: 42px;
     box-shadow: none;
-    font-size: 14px;
+    font-size: 12.5px;
+    padding: 0 8px;
+    border-color: var(--cx-orange, #f97316) !important;
+    background: var(--cx-orange, #f97316) !important;
+    color: #ffffff !important;
   }
   
   .qty {
     height: 42px;
     display: grid;
-    grid-template-columns: 28px 1fr 28px;
+    grid-template-columns: 30px 1fr 30px;
     align-items: center;
     border: 1px solid rgba(56, 38, 142, 0.16);
     border-radius: 12px;

@@ -258,13 +258,7 @@ select:focus,
   z-index: 10000;
   display: grid;
   place-items: center;
-  background:
-    radial-gradient(
-      circle at 30% 20%,
-      rgba(255, 255, 255, 0.62),
-      transparent 32%
-    ),
-    linear-gradient(135deg, #f7f3ff, #FBFBFC 42%, #fff6ed);
+  background: var(--cx-surface, #ffffff);
   animation: fdFadeIn 160ms var(--fd-ease-soft) both;
 }
 
@@ -315,7 +309,7 @@ select:focus,
 }
 
 .fd-loading-skeleton {
-  background: linear-gradient(90deg, #f1f1f7, #fafafe, #f1f1f7);
+  background: var(--cx-surface, #ffffff);
   background-size: 200% 100%;
   animation: fdSkeleton 1.25s infinite;
   border-radius: 14px;

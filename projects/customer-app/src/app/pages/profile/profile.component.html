@@ -1,206 +1,316 @@
 @if (!auth.isLoggedIn()) {
   <fd-customer-locked-state
     title="Login to manage account"
-    description="View your profile, saved addresses, wallet entries and quick order actions from one compact hub."
+    description="Track orders, manage saved addresses, review your cart, and update profile details from one compact account hub."
     icon="person"
   />
 } @else {
-<div class="desktop-customer-view">
-<main class="fd-content">
-  <fd-breadcrumbs [items]="[{ label: 'Account' }]" />
-  <section class="profile-layout">
-    <div>
-      <section class="profile-hero fd-card">
-        <div class="avatar">
-          <span class="avatar-initials">{{
-            (auth.currentUser()?.name || "NT").slice(0, 2).toUpperCase()
-          }}</span>
+  <div class="desktop-customer-view">
+    <main class="fd-content account-desktop">
+      <fd-breadcrumbs [items]="[{ label: 'Account' }]" />
+
+      <section class="account-shell">
+        <section class="account-main">
+          <article class="account-hero fd-card">
+            <div class="account-avatar">
+              {{ (auth.currentUser()?.name || "NT").slice(0, 2).toUpperCase() }}
+            </div>
+
+            <div class="account-identity">
+              <small>Nextou customer</small>
+              <h1>{{ auth.currentUser()?.name || "Welcome back" }}</h1>
+              <p>
+                {{ auth.currentUser()?.email || "Add email" }}
+                <span></span>
+                {{ auth.currentUser()?.phone || "Add mobile" }}
+              </p>
+            </div>
+
+            <button type="button" class="edit-action" (click)="editProfile()">
+              <span class="material-symbols-rounded">edit</span>
+              Edit profile
+            </button>
+
+            <div class="account-metrics">
+              <a routerLink="/orders">
+                <span class="material-symbols-rounded">receipt_long</span>
+                <small>Orders</small>
+                <b>{{ totalOrders() }}</b>
+              </a>
+              <a routerLink="/addresses">
+                <span class="material-symbols-rounded">location_on</span>
+                <small>Addresses</small>
+                <b>{{ state.addresses().length }}</b>
+              </a>
+              <a routerLink="/cart">
+                <span class="material-symbols-rounded">shopping_bag</span>
+                <small>Cart items</small>
+                <b>{{ state.itemCount() }}</b>
+              </a>
+              <div>
+                <span class="material-symbols-rounded">savings</span>
+                <small>Saved</small>
+                <b>{{ state.discount() | appCurrency }}</b>
+              </div>
+            </div>
+          </article>
+
+          @if (state.activeOrder(); as activeOrder) {
+            <a [routerLink]="['/tracking', activeOrder.id]" class="active-order-card fd-card">
+              <span class="active-icon material-symbols-rounded">near_me</span>
+              <span class="active-copy">
+                <small>Active order</small>
+                <b>#{{ activeOrder.order_number }}</b>
+                <em>
+                  {{ activeOrder.store?.store_name || "Store" }}
+                  {{ activeOrder.eta_label ? "- " + activeOrder.eta_label : "" }}
+                </em>
+              </span>
+              <span class="active-status">{{ activeOrder.status }}</span>
+              <i class="material-symbols-rounded">chevron_right</i>
+            </a>
+          }
+
+          <section class="account-section">
+            <div class="account-section-head">
+              <div>
+                <small>Quick actions</small>
+                <h2>Manage your shopping</h2>
+              </div>
+            </div>
+
+            <div class="quick-grid">
+              @for (link of quickLinks; track link.label) {
+                @if (link.disabled) {
+                  <button type="button" class="quick-card fd-card muted" (click)="disabledFeature(link.label)">
+                    <span class="material-symbols-rounded">{{ link.icon }}</span>
+                    <b>{{ link.label }}</b>
+                    <small>{{ link.sub }}</small>
+                    <i class="material-symbols-rounded">lock</i>
+                  </button>
+                } @else {
+                  <a [routerLink]="link.path" class="quick-card fd-card">
+                    <span class="material-symbols-rounded">{{ link.icon }}</span>
+                    <b>{{ link.label }}</b>
+                    <small>{{ link.sub }}</small>
+                    <i class="material-symbols-rounded">arrow_forward</i>
+                  </a>
+                }
+              }
+
+              <button type="button" class="quick-card fd-card" (click)="ui.openLocation()">
+                <span class="material-symbols-rounded">my_location</span>
+                <b>Location</b>
+                <small>Change delivery area</small>
+                <i class="material-symbols-rounded">arrow_forward</i>
+              </button>
+            </div>
+          </section>
+
+          <section class="account-columns">
+            <article class="fd-card account-panel">
+              <div class="account-section-head compact">
+                <div>
+                  <small>Saved places</small>
+                  <h2>Delivery addresses</h2>
+                </div>
+                <a routerLink="/addresses">Manage</a>
+              </div>
+
+              <div class="address-list">
+                @for (address of state.addresses().slice(0, 2); track address.id) {
+                  <article class="address-row">
+                    <span class="material-symbols-rounded">location_on</span>
+                    <div>
+                      <b>{{ address.label || "Address" }}</b>
+                      <p>{{ address.line }}</p>
+                      <small>{{ address.phone }}</small>
+                    </div>
+                    @if (address.isDefault) {
+                      <em>Default</em>
+                    }
+                  </article>
+                } @empty {
+                  <a routerLink="/addresses" class="empty-link">
+                    <span class="material-symbols-rounded">add_location_alt</span>
+                    <b>Add your first address</b>
+                    <small>Save a location for faster checkout.</small>
+                  </a>
+                }
+              </div>
+            </article>
+
+            <article class="fd-card account-panel">
+              <div class="account-section-head compact">
+                <div>
+                  <small>Payments</small>
+                  <h2>Checkout readiness</h2>
+                </div>
+                <button type="button" (click)="ui.openEdit('payment')">Edit</button>
+              </div>
+
+              <div class="payment-list">
+                @for (method of state.paymentMethods().slice(0, 2); track method.id) {
+                  <div class="payment-row">
+                    <span>{{ method.icon }}</span>
+                    <div>
+                      <b>{{ method.label }}</b>
+                      <small>{{ method.isDefault ? "Default method" : "Available at checkout" }}</small>
+                    </div>
+                  </div>
+                } @empty {
+                  <div class="payment-row muted">
+                    <span class="material-symbols-rounded">payments</span>
+                    <div>
+                      <b>Payment at checkout</b>
+                      <small>Available methods load during checkout.</small>
+                    </div>
+                  </div>
+                }
+              </div>
+            </article>
+          </section>
+        </section>
+
+        <aside class="account-side">
+          <article class="fd-card side-card">
+            <small>Account summary</small>
+            <h2>{{ totalOrders() }} orders</h2>
+            <p>Saved places, basket and order actions stay connected to this customer account.</p>
+            <a routerLink="/orders" class="side-button">View orders</a>
+          </article>
+
+          <article class="fd-card side-card support-card">
+            <span class="material-symbols-rounded">support_agent</span>
+            <div>
+              <b>Need help?</b>
+              <small>Use order tracking or account actions for support.</small>
+            </div>
+          </article>
+
+          <button type="button" class="logout desktop-logout" (click)="auth.logout()">
+            Logout
+          </button>
+        </aside>
+      </section>
+    </main>
+  </div>
+
+  <div class="mobile-customer-view">
+    <main class="mobile-page account-page">
+      <section class="mobile-account-hero">
+        <div class="account-avatar">
+          {{ (auth.currentUser()?.name || "N")[0] }}
         </div>
-        <div>
-          <h1>
-            {{ auth.currentUser()?.name || "Nextou customer" }}
-            @if (auth.currentUser()?.prime) {
-              <span>Prime</span>
-            }
-          </h1>
-          <p>
-            {{ auth.currentUser()?.email || "Sign in to view email" }} -
-            {{ auth.currentUser()?.phone || "Add mobile" }}
-          </p>
-          <p>
-            {{
-              auth.currentUser()?.memberSince
-                ? "Member since " + auth.currentUser()?.memberSince
-                : "Member details load from server"
-            }}
-            - {{ totalOrders() }} orders
-          </p>
+        <div class="account-identity">
+          <small>Nextou account</small>
+          <h1>{{ auth.currentUser()?.name || "Welcome back" }}</h1>
+          <p>{{ auth.currentUser()?.email || auth.currentUser()?.phone || "Manage your deliveries" }}</p>
         </div>
-        <button
-          type="button"
-          class="fd-btn outline"
-          (click)="ui.openEdit('profile')"
-        >
-          Edit Profile
+        <button type="button" class="icon-edit" aria-label="Edit profile" (click)="editProfile()">
+          <span class="material-symbols-rounded">edit</span>
         </button>
-        <div class="stats">
-          <div>
-            Orders <span>Total Orders</span><b>{{ totalOrders() }}</b>
-          </div>
-          <div>
-            Saved <span>Cart Savings</span
-            ><b>{{ state.discount() | appCurrency }}</b>
-          </div>
-          <div>
-            Addresses <span>Saved</span><b>{{ state.addresses().length }}</b>
-          </div>
-        </div>
+      </section>
+
+      <section class="mobile-stats" aria-label="Account summary">
+        <a routerLink="/orders">
+          <span class="material-symbols-rounded">receipt_long</span>
+          <small>Orders</small>
+          <b>{{ totalOrders() }}</b>
+        </a>
+        <a routerLink="/addresses">
+          <span class="material-symbols-rounded">location_on</span>
+          <small>Addresses</small>
+          <b>{{ state.addresses().length }}</b>
+        </a>
+        <a routerLink="/cart">
+          <span class="material-symbols-rounded">shopping_bag</span>
+          <small>Cart</small>
+          <b>{{ state.itemCount() }}</b>
+        </a>
       </section>
 
       @if (state.activeOrder(); as activeOrder) {
-        <section class="active-order-panel fd-card">
-          <span class="material-symbols-rounded">near_me</span>
-          <div>
-            <small>Active order</small>
-            <b>#{{ activeOrder.order_number }}</b>
-            <p>{{ activeOrder.store?.store_name || 'Store' }} {{ activeOrder.eta_label ? '- ' + activeOrder.eta_label : '' }}</p>
-          </div>
-          <a [routerLink]="['/tracking', activeOrder.id]" class="fd-btn primary">Track</a>
-        </section>
+        <a [routerLink]="['/tracking', activeOrder.id]" class="mobile-active-card">
+          <span class="active-icon material-symbols-rounded">near_me</span>
+          <span class="active-copy">
+            <b>Track active order</b>
+            <small>#{{ activeOrder.order_number }}{{ activeOrder.eta_label ? " - " + activeOrder.eta_label : "" }}</small>
+          </span>
+          <em>{{ activeOrder.status }}</em>
+          <i class="material-symbols-rounded">chevron_right</i>
+        </a>
       }
 
-      <div class="fd-section-title">
-        <h2>Saved Addresses</h2>
-        <a routerLink="/addresses">View all</a>
-      </div>
-      <section class="address-grid">
-        @for (address of state.addresses(); track address.id) {
-          <article class="fd-card address">
-            <span>{{ address.label }}</span
-            ><button
-              type="button"
-              aria-label="Edit address"
-              (click)="editAddress()"
-            >
-              <span class="material-symbols-rounded">more_horiz</span></button
-            ><b>{{ address.name }}</b>
-            <p>{{ address.line }}</p>
-            <small>{{ address.phone }}</small>
-            @if (address.isDefault) {
-              <em>Default</em>
+      <section class="mobile-section">
+        <div class="mobile-section-head">
+          <small>Quick actions</small>
+          <h2>Account tools</h2>
+        </div>
+
+        <div class="mobile-menu">
+          @for (link of quickLinks; track link.label) {
+            @if (link.disabled) {
+              <button type="button" class="mobile-row muted" (click)="disabledFeature(link.label)">
+                <span class="account-row-icon material-symbols-rounded">{{ link.icon }}</span>
+                <span class="account-row-copy">
+                  <b>{{ link.label }}</b>
+                  <small>{{ link.sub }}</small>
+                </span>
+                <i class="material-symbols-rounded">lock</i>
+              </button>
+            } @else {
+              <a [routerLink]="link.path" class="mobile-row">
+                <span class="account-row-icon material-symbols-rounded">{{ link.icon }}</span>
+                <span class="account-row-copy">
+                  <b>{{ link.label }}</b>
+                  <small>{{ link.sub }}</small>
+                </span>
+                <i class="material-symbols-rounded">chevron_right</i>
+              </a>
             }
-          </article>
-        }
-        <a routerLink="/addresses" class="fd-card add-address"
-          ><span class="material-symbols-rounded">add</span
-          ><b>Add New Address</b></a
-        >
-      </section>
+          }
 
-      <section class="bottom-grid">
-        <article class="fd-card">
-          <div class="fd-section-title">
-            <h2>Payment Methods</h2>
-            <button type="button" (click)="ui.openEdit('payment')">Edit</button>
-          </div>
-          @for (method of state.paymentMethods(); track method.id) {
-            <div class="pay-row">
-              <b>{{ method.icon }} {{ method.label }}</b
-              ><span>{{ method.isDefault ? "Default" : "Available" }}</span>
-            </div>
-          }
-        </article>
-        <article class="fd-card account-hub">
-          <div class="fd-section-title"><h2>Account Hub</h2></div>
-          @for (link of quickLinks; track link.path) {
-            <a [routerLink]="link.path" class="quick"
-              ><span class="material-symbols-rounded">{{ link.icon }}</span
-              ><b>{{ link.label }}</b
-              ><small>{{ link.sub }}</small
-              ><em>Open</em></a
-            >
-          }
-          <button
-            type="button"
-            class="quick location-action"
-            (click)="ui.openLocation()"
-          >
-            <span class="material-symbols-rounded">location_on</span
-            ><b>Change Location</b><small>Open location selector modal</small
-            ><em>Open</em>
+          <button type="button" class="mobile-row" (click)="ui.openLocation()">
+            <span class="account-row-icon material-symbols-rounded">my_location</span>
+            <span class="account-row-copy">
+              <b>Location</b>
+              <small>Change delivery area</small>
+            </span>
+            <i class="material-symbols-rounded">chevron_right</i>
           </button>
-        </article>
+        </div>
       </section>
-    </div>
 
-    <aside class="right-profile">
-      <section class="one-card fd-card">
-        <h3>Account summary</h3>
-        <p>{{ totalOrders() }} orders placed from this account.</p>
-        <a routerLink="/orders" class="fd-btn outline">View Orders</a>
+      <section class="mobile-section">
+        <div class="mobile-section-head inline">
+          <div>
+            <small>Saved places</small>
+            <h2>Addresses</h2>
+          </div>
+          <a routerLink="/addresses">Manage</a>
+        </div>
+
+        @if (state.addresses()[0]; as address) {
+          <article class="mobile-address-card">
+            <span class="material-symbols-rounded">home_pin</span>
+            <div>
+              <b>{{ address.label || "Delivery address" }}</b>
+              <p>{{ address.line }}</p>
+            </div>
+          </article>
+        } @else {
+          <a routerLink="/addresses" class="mobile-address-card">
+            <span class="material-symbols-rounded">add_location_alt</span>
+            <div>
+              <b>Add address</b>
+              <p>Save a delivery location for checkout.</p>
+            </div>
+          </a>
+        }
       </section>
-    </aside>
-  </section>
-</main>
-</div>
 
-<div class="mobile-customer-view">
-<main class="mobile-page profile-page account-page">
-  <section class="account-hero">
-    <div class="account-avatar">{{ (auth.currentUser()?.name || 'N')[0] }}</div>
-    <div class="account-copy">
-      <small>Nextou account</small>
-      <h1>{{ auth.currentUser()?.name || 'Welcome back' }}</h1>
-      <p>{{ auth.currentUser()?.email || auth.currentUser()?.phone || 'Manage your deliveries' }}</p>
-    </div>
-    <button type="button" class="account-edit-btn" aria-label="Edit profile" (click)="editProfile()">
-      <span class="material-symbols-rounded">edit</span>
-    </button>
-  </section>
-
-  <section class="account-stats" aria-label="Account summary">
-    <a routerLink="/orders">
-      <span class="material-symbols-rounded">receipt_long</span>
-      <small>Orders</small>
-      <b>{{ totalOrders() }}</b>
-    </a>
-    <a routerLink="/addresses">
-      <span class="material-symbols-rounded">location_on</span>
-      <small>Addresses</small>
-      <b>{{ state.addresses().length }}</b>
-    </a>
-    <a routerLink="/cart">
-      <span class="material-symbols-rounded">shopping_bag</span>
-      <small>Cart</small>
-      <b>{{ state.itemCount() }}</b>
-    </a>
-  </section>
-
-  <section class="account-menu">
-    @if (state.activeOrder(); as activeOrder) {
-      <a [routerLink]="['/tracking', activeOrder.id]" class="account-row account-row--active">
-        <span class="account-row-icon material-symbols-rounded">near_me</span>
-        <span class="account-row-copy">
-          <b>Track active order</b>
-          <small>#{{ activeOrder.order_number }}{{ activeOrder.eta_label ? ' - ' + activeOrder.eta_label : '' }}</small>
-        </span>
-        <span class="account-row-status">{{ activeOrder.status }}</span>
-        <i class="material-symbols-rounded">chevron_right</i>
-      </a>
-    }
-    @for (link of quickLinks; track link.path) {
-      <a [routerLink]="link.path" class="account-row">
-        <span class="account-row-icon material-symbols-rounded">{{ link.icon }}</span>
-        <span class="account-row-copy">
-          <b>{{ link.label }}</b>
-          <small>{{ link.sub }}</small>
-        </span>
-        <i class="material-symbols-rounded">chevron_right</i>
-      </a>
-    }
-  </section>
-
-  <button type="button" class="logout" (click)="auth.logout()">Logout</button>
-</main>
-</div>
+      <button type="button" class="logout" (click)="auth.logout()">Logout</button>
+    </main>
+  </div>
 }

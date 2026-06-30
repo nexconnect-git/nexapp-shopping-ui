@@ -105,7 +105,7 @@ export const DEFAULT_CUSTOMER_CONTENT_CONFIG: CustomerContentConfig = {
     bottomNav: [
       { label: 'Home', icon: 'home', route: '/', exact: true },
       { label: 'Stores', icon: 'storefront', route: '/stores' },
-      { label: 'Search', icon: 'search', route: '/search' },
+      { label: 'Search', icon: 'search', route: '/explore' },
       { label: 'Cart', icon: 'shopping_cart', route: '/cart', badge: 'cart' },
       { label: 'Account', icon: 'person', route: '/account' },
     ],
@@ -114,7 +114,7 @@ export const DEFAULT_CUSTOMER_CONTENT_CONFIG: CustomerContentConfig = {
         title: 'Shop',
         links: [
           { label: 'Explore', route: '/explore' },
-          { label: 'Explore', route: '/explore' },
+          { label: 'Stores', route: '/stores' },
         ],
       },
       {
@@ -235,7 +235,7 @@ function normalizeBottomNav(items: CustomerNavItem[]): CustomerNavItem[] {
   const required: CustomerNavItem[] = [
     { label: 'Home', icon: 'home', route: '/', exact: true },
     { label: 'Stores', icon: 'storefront', route: '/stores' },
-    { label: 'Search', icon: 'search', route: '/search' },
+    { label: 'Search', icon: 'search', route: '/explore' },
     { label: 'Cart', icon: 'shopping_cart', route: '/cart', badge: 'cart' },
     { label: 'Account', icon: 'person', route: '/account' },
   ];

@@ -2,7 +2,6 @@ import { Location } from '@angular/common';
 import { Component, computed, effect, OnDestroy, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { buildStoreSelectionTarget } from '@nexconnect/customer-search';
-import { buildCustomerLocationQuery } from '@nexconnect/customer-location';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { AppCurrencyPipe } from '@shared/lib/pipes/currency.pipe';
@@ -286,14 +285,7 @@ export class SearchComponent implements OnDestroy {
   }
 
   private activeLocation(): Record<string, any> {
-    const address = this.state.activeAddress();
-    return buildCustomerLocationQuery({
-      lat: address?.latitude ?? undefined,
-      lng: address?.longitude ?? undefined,
-      state: address?.state || undefined,
-      city: address?.city || undefined,
-      postal_code: address?.pincode || undefined,
-    });
+    return this.state.customerLocationQuery();
   }
 
   private normalizeKey(value: string | null | undefined): string {

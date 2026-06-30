@@ -233,7 +233,7 @@ export class StoreDetailComponent {
   private addressQuery(
     address: ReturnType<AppStateService['activeAddress']>,
   ): Record<string, any> {
-    if (!address) return {};
+    if (!address) return this.state.customerLocationQuery();
     const params: Record<string, any> = {
       state: address.state || '',
       city: address.city || '',

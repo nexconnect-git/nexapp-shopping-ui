@@ -25,9 +25,7 @@
   display: block;
   height: 138px;
   overflow: hidden;
-  background:
-    linear-gradient(135deg, rgba(56, 38, 142, 0.12), rgba(248, 194, 28, 0.12)),
-    #f8f6ff;
+  background: var(--cx-surface, #ffffff);
 }
 
 .store-img img {
@@ -69,7 +67,7 @@
 .offer-badge {
   top: 10px;
   color: #fff;
-  background: linear-gradient(135deg, var(--fd-color-orange), var(--fd-color-warning));
+  background: var(--cx-orange, #f97316);
   border: 0;
   box-shadow: 0 10px 20px rgba(249, 121, 40, 0.2);
 }

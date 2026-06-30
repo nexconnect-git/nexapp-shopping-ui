@@ -33,6 +33,12 @@ import {
   isCustomerAddressComplete,
   validateCode,
 } from '@nexconnect/customer-validation';
+import {
+  createAnalytics,
+  CustomerAnalyticsEvents,
+  type CustomerAnalyticsEventName,
+  type CustomerAnalyticsPayloads,
+} from '@nexconnect/customer-analytics';
 import { map, Observable, throwError } from 'rxjs';
 import {
   type Address as ApiAddress,
@@ -73,6 +79,12 @@ interface GuestCartPayload {
     id: string;
     name: string;
   };
+  fulfillment?: {
+    nodeId: string;
+    nodeName: string;
+    promiseId: string;
+    expiresAt: string;
+  };
   items: CartItem[];
 }
 
@@ -90,9 +102,13 @@ export class AppStateService {
   private readonly paymentAdapter = inject(BrowserPaymentAdapter);
   private readonly router = inject(Router);
   private readonly toastService = inject(ToastService);
+  private readonly analytics = createAnalytics();
   private readonly guestCartStorageKey = 'nextou.customer.guestCart.v1';
   private authenticatedBootstrapComplete = false;
   private toastTimer: number | null = null;
+  private cartFulfillmentPromptOpen = false;
+  private cartFulfillmentRefreshInFlight = false;
+  private lastCartFulfillmentRefreshKey = '';
 
   readonly location = signal('Select location');
   readonly cart = signal<CartItem[]>([]);
@@ -114,6 +130,10 @@ export class AppStateService {
   readonly cartLoaded = signal(false);
   readonly serviceability = signal<CustomerServiceability | null>(null);
   readonly serviceabilityLoading = signal(false);
+  readonly cartFulfillmentNodeId = signal('');
+  readonly cartFulfillmentNodeName = signal('');
+  readonly cartFulfillmentPromiseId = signal('');
+  readonly cartFulfillmentPromiseExpiresAt = signal('');
   readonly activeOrder = signal<ActiveOrderSummary | null>(null);
 
   readonly itemCount = computed(() => cartItemCount(this.cart()));
@@ -189,6 +209,8 @@ export class AppStateService {
     if (this.hasMixedStoreItems()) {
       return 'Your cart has items from more than one store. Please keep one store per order.';
     }
+    const fulfillmentIssue = this.cartFulfillmentIssue();
+    if (fulfillmentIssue) return fulfillmentIssue;
     const remaining = this.cartMinimumOrderRemaining();
     if (remaining > 0) {
       const storeName =
@@ -199,6 +221,10 @@ export class AppStateService {
     if (storeIssue) return storeIssue;
     return '';
   });
+  readonly cartFulfillmentMismatch = computed(() => !!this.cartFulfillmentIssue());
+  readonly cartFulfillmentMismatchMessage = computed(
+    () => this.cartFulfillmentIssue() || ''
+  );
   readonly canCheckoutCart = computed(() => !this.cartCheckoutBlockReason());
   readonly platformFee = computed(() =>
     this.priceBreakupAmount('platform_fee')
@@ -320,7 +346,7 @@ export class AppStateService {
       return true;
     }
     const productId = product.apiId || product.id;
-    this.cartApi.addToCart(productId, quantity).subscribe({
+    this.cartApi.addToCart(productId, quantity, this.cartFulfillmentContext()).subscribe({
       next: () => {
         this.lastAddedProductId.set(product.id);
         this.loadCart();
@@ -342,17 +368,34 @@ export class AppStateService {
     const conflictCode = body?.code || body?.error_code;
     if (
       conflictCode === 'cart_store_conflict' ||
+      conflictCode === 'cart_fulfillment_conflict' ||
       message.toLowerCase().includes('cart has items from')
     ) {
       const existingStore =
         body?.existing_store_name ||
         body?.existingStoreName ||
+        body?.existing_fulfillment_node_name ||
         'the current store';
       const incomingStore =
-        body?.incoming_store_name || product.storeName || 'this store';
+        body?.incoming_store_name ||
+        body?.incoming_fulfillment_node_name ||
+        product.storeName ||
+        'this store';
       const confirmMessage =
         body?.message ||
         `Your basket has items from ${existingStore}. To order from ${incomingStore}, replace basket?`;
+      const conflictPayload = {
+        existingNodeId: String(body?.existing_fulfillment_node_id || ''),
+        existingNodeName: String(body?.existing_fulfillment_node_name || existingStore || ''),
+        incomingNodeId: String(body?.incoming_fulfillment_node_id || ''),
+        incomingNodeName: String(body?.incoming_fulfillment_node_name || incomingStore || ''),
+        trigger: 'add_to_cart' as const,
+        itemCount: this.itemCount(),
+      };
+      this.trackCartFulfillmentEvent(
+        CustomerAnalyticsEvents.CartFulfillmentConflict,
+        conflictPayload
+      );
       this.ui
         .confirm({
           title: 'Replace cart?',
@@ -362,9 +405,33 @@ export class AppStateService {
           tone: 'warning',
         })
         .then((confirmed) => {
-          if (!confirmed) return;
+          if (!confirmed) {
+            this.trackCartFulfillmentEvent(
+              CustomerAnalyticsEvents.CartFulfillmentKept,
+              {
+                previousNodeId: conflictPayload.existingNodeId,
+                previousNodeName: conflictPayload.existingNodeName,
+                nextNodeId: conflictPayload.incomingNodeId,
+                nextNodeName: conflictPayload.incomingNodeName,
+                trigger: 'replace_cart',
+                itemCount: this.itemCount(),
+              }
+            );
+            return;
+          }
+          this.trackCartFulfillmentEvent(
+            CustomerAnalyticsEvents.CartFulfillmentInvalidated,
+            {
+              previousNodeId: conflictPayload.existingNodeId,
+              previousNodeName: conflictPayload.existingNodeName,
+              nextNodeId: conflictPayload.incomingNodeId,
+              nextNodeName: conflictPayload.incomingNodeName,
+              trigger: 'replace_cart',
+              itemCount: this.itemCount(),
+            }
+          );
           const productId = product.apiId || product.id;
-          this.cartApi.replaceCart(productId, quantity).subscribe({
+          this.cartApi.replaceCart(productId, quantity, this.cartFulfillmentContext()).subscribe({
             next: () => {
               this.lastAddedProductId.set(product.id);
               this.loadCart();
@@ -431,11 +498,28 @@ export class AppStateService {
     this.cartApi.clearCart().subscribe({
       next: () => {
         this.cart.set([]);
+        this.setCartFulfillmentLock('', '');
         this.cartApi.refreshCartCount();
       },
       error: (error) =>
         this.showToast(this.explainApiError(error, 'Could not clear cart')),
     });
+  }
+
+  clearStaleFulfillmentCart(): void {
+    const fulfillment = this.currentServiceabilityFulfillment();
+    this.trackCartFulfillmentEvent(
+      CustomerAnalyticsEvents.CartFulfillmentInvalidated,
+      {
+        previousNodeId: this.cartFulfillmentNodeId(),
+        previousNodeName: this.cartFulfillmentNodeName(),
+        nextNodeId: fulfillment.nodeId,
+        nextNodeName: fulfillment.nodeName,
+        trigger: 'stale_banner',
+        itemCount: this.itemCount(),
+      }
+    );
+    this.clearCart();
   }
 
   applyCoupon(code: string): void {
@@ -469,15 +553,287 @@ export class AppStateService {
           this.coupon.set('');
           this.couponDiscount.set(0);
           this.refreshCheckoutPreview();
-          this.showToast(
-            this.explainApiError(error, 'Coupon is not valid for this order')
-          );
+          this.showToast(this.explainCouponError(error), 'warning');
         },
       });
   }
 
   updateLocation(value: string): void {
     this.location.set(value);
+  }
+
+  customerLocationQuery(): Record<string, string | number> {
+    const address = this.activeAddress();
+    if (address?.latitude != null && address?.longitude != null) {
+      return buildCustomerLocationQuery({
+        lat: Number(address.latitude),
+        lng: Number(address.longitude),
+        state: address.state || '',
+        city: address.city || '',
+        postal_code: address.pincode || '',
+      });
+    }
+    const location = this.locationService.location();
+    return buildCustomerLocationQuery({
+      lat: location?.lat,
+      lng: location?.lng,
+      state: location?.state || '',
+      city: location?.city || '',
+      postal_code: location?.postalCode || '',
+    });
+  }
+
+  private cartFulfillmentContext(): Record<string, string> {
+    const serviceability = this.serviceability();
+    const nodeId =
+      serviceability?.promise?.fulfillment_node_id ||
+      serviceability?.fulfillment_node?.id ||
+      this.cartFulfillmentNodeId() ||
+      '';
+    const promiseId =
+      serviceability?.promise?.id || this.cartFulfillmentPromiseId() || '';
+    const expiresAt =
+      serviceability?.promise?.expires_at ||
+      this.cartFulfillmentPromiseExpiresAt() ||
+      '';
+    return {
+      ...(nodeId ? { fulfillment_node_id: String(nodeId) } : {}),
+      ...(promiseId ? { fulfillment_promise_id: String(promiseId) } : {}),
+      ...(expiresAt
+        ? { fulfillment_promise_expires_at: String(expiresAt) }
+        : {}),
+    };
+  }
+
+  private setCartFulfillmentLock(
+    nodeId: string,
+    nodeName = '',
+    promiseId = '',
+    expiresAt = ''
+  ): void {
+    this.cartFulfillmentNodeId.set(String(nodeId || ''));
+    this.cartFulfillmentNodeName.set(String(nodeName || ''));
+    this.cartFulfillmentPromiseId.set(String(promiseId || ''));
+    this.cartFulfillmentPromiseExpiresAt.set(String(expiresAt || ''));
+  }
+
+  private currentServiceabilityFulfillment(): {
+    nodeId: string;
+    nodeName: string;
+    promiseId: string;
+    expiresAt: string;
+  } {
+    const serviceability = this.serviceability();
+    const node = serviceability?.fulfillment_node;
+    const nodeId = String(
+      serviceability?.promise?.fulfillment_node_id || node?.id || ''
+    );
+    const nodeName = String(
+      node?.name || serviceability?.nearest_store?.store_name || ''
+    );
+    return {
+      nodeId,
+      nodeName,
+      promiseId: String(serviceability?.promise?.id || ''),
+      expiresAt: String(serviceability?.promise?.expires_at || ''),
+    };
+  }
+
+  private currentServiceabilityNode(): { id: string; name: string } {
+    const fulfillment = this.currentServiceabilityFulfillment();
+    return { id: fulfillment.nodeId, name: fulfillment.nodeName };
+  }
+
+  private cartFulfillmentIssue(): string {
+    const cartNodeId = this.cartFulfillmentNodeId();
+    const currentNode = this.currentServiceabilityNode();
+    if (!cartNodeId || !currentNode.id || cartNodeId === currentNode.id) {
+      return '';
+    }
+    const cartNodeName = this.cartFulfillmentNodeName() || 'your previous delivery area';
+    const nextNodeName = currentNode.name || 'this delivery area';
+    return `Your cart belongs to ${cartNodeName}. Clear it to shop from ${nextNodeName}.`;
+  }
+
+  private reconcileCartForServiceability(
+    serviceability: CustomerServiceability | null
+  ): void {
+    if (!serviceability?.is_serviceable || !this.cart().length) return;
+    const cartNodeId = this.cartFulfillmentNodeId();
+    const currentNode = this.currentServiceabilityNode();
+    if (!cartNodeId || !currentNode.id || cartNodeId === currentNode.id) {
+      this.refreshCartFulfillmentForServiceability(serviceability);
+      return;
+    }
+    if (this.cartFulfillmentPromptOpen) return;
+    this.cartFulfillmentPromptOpen = true;
+    const cartNodeName = this.cartFulfillmentNodeName() || 'your previous delivery area';
+    const nextNodeName = currentNode.name || 'this delivery area';
+    const eventPayload = {
+      previousNodeId: cartNodeId,
+      previousNodeName: this.cartFulfillmentNodeName(),
+      nextNodeId: currentNode.id,
+      nextNodeName: currentNode.name,
+      itemCount: this.itemCount(),
+    };
+    this.trackCartFulfillmentEvent(
+      CustomerAnalyticsEvents.CartFulfillmentConflict,
+      {
+        existingNodeId: eventPayload.previousNodeId,
+        existingNodeName: eventPayload.previousNodeName,
+        incomingNodeId: eventPayload.nextNodeId,
+        incomingNodeName: eventPayload.nextNodeName,
+        trigger: 'location_change',
+        itemCount: eventPayload.itemCount,
+      }
+    );
+    this.ui
+      .confirm({
+        title: 'Clear cart for new location?',
+        message: `Your cart is locked to ${cartNodeName}. Your selected location is served by ${nextNodeName}. Clear the cart to shop here?`,
+        confirmText: 'Clear cart',
+        cancelText: 'Keep cart',
+        tone: 'warning',
+      })
+      .then((confirmed) => {
+        this.cartFulfillmentPromptOpen = false;
+        if (confirmed) {
+          this.trackCartFulfillmentEvent(
+            CustomerAnalyticsEvents.CartFulfillmentInvalidated,
+            {
+              ...eventPayload,
+              trigger: 'location_change',
+            }
+          );
+          this.clearCart();
+          return;
+        }
+        this.trackCartFulfillmentEvent(
+          CustomerAnalyticsEvents.CartFulfillmentKept,
+          {
+            ...eventPayload,
+            trigger: 'location_change',
+          }
+        );
+        this.showToast('Keeping your existing cart', 'warning');
+      });
+  }
+
+  private refreshCartFulfillmentForServiceability(
+    serviceability: CustomerServiceability | null
+  ): void {
+    if (!serviceability?.is_serviceable || !this.cart().length) return;
+    const fulfillment = this.currentServiceabilityFulfillment();
+    const cartNodeId = this.cartFulfillmentNodeId();
+    if (!cartNodeId || !fulfillment.nodeId || cartNodeId !== fulfillment.nodeId) {
+      return;
+    }
+    if (!fulfillment.promiseId && !fulfillment.expiresAt) return;
+    if (
+      this.cartFulfillmentPromiseId() === fulfillment.promiseId &&
+      this.cartFulfillmentPromiseExpiresAt() === fulfillment.expiresAt
+    ) {
+      return;
+    }
+
+    const refreshKey = [
+      fulfillment.nodeId,
+      fulfillment.promiseId,
+      fulfillment.expiresAt,
+    ].join('|');
+    if (
+      this.cartFulfillmentRefreshInFlight ||
+      this.lastCartFulfillmentRefreshKey === refreshKey
+    ) {
+      return;
+    }
+
+    this.lastCartFulfillmentRefreshKey = refreshKey;
+    this.cartFulfillmentRefreshInFlight = true;
+    if (!this.auth.isLoggedIn()) {
+      this.setCartFulfillmentLock(
+        fulfillment.nodeId,
+        fulfillment.nodeName,
+        fulfillment.promiseId,
+        fulfillment.expiresAt
+      );
+      this.commitGuestCart(this.cart());
+      this.trackCartFulfillmentEvent(
+        CustomerAnalyticsEvents.CartFulfillmentRehydrated,
+        {
+          nodeId: fulfillment.nodeId,
+          nodeName: fulfillment.nodeName,
+          promiseId: fulfillment.promiseId,
+          expiresAt: fulfillment.expiresAt,
+          itemCount: this.itemCount(),
+        }
+      );
+      this.cartFulfillmentRefreshInFlight = false;
+      return;
+    }
+
+    this.cartApi.refreshFulfillmentLock(this.cartFulfillmentContext()).subscribe({
+      next: (cart: ApiCart) => {
+        this.setCartFulfillmentLock(
+          String((cart as any).fulfillment_node_id || fulfillment.nodeId),
+          String((cart as any).fulfillment_node_name || fulfillment.nodeName),
+          String((cart as any).fulfillment_promise_id || fulfillment.promiseId),
+          String(
+            (cart as any).fulfillment_promise_expires_at ||
+              fulfillment.expiresAt
+          )
+        );
+        this.trackCartFulfillmentEvent(
+          CustomerAnalyticsEvents.CartFulfillmentRehydrated,
+          {
+            nodeId: this.cartFulfillmentNodeId(),
+            nodeName: this.cartFulfillmentNodeName(),
+            promiseId: this.cartFulfillmentPromiseId(),
+            expiresAt: this.cartFulfillmentPromiseExpiresAt(),
+            itemCount: this.itemCount(),
+          }
+        );
+        this.cartFulfillmentRefreshInFlight = false;
+      },
+      error: (error) => {
+        this.lastCartFulfillmentRefreshKey = '';
+        this.cartFulfillmentRefreshInFlight = false;
+        const reason = this.explainApiError(
+          error,
+          'Could not refresh delivery promise'
+        );
+        this.trackCartFulfillmentEvent(
+          CustomerAnalyticsEvents.CartFulfillmentRefreshFailed,
+          {
+            nodeId: fulfillment.nodeId,
+            nodeName: fulfillment.nodeName,
+            promiseId: fulfillment.promiseId,
+            reason,
+            itemCount: this.itemCount(),
+          }
+        );
+        this.showToast(
+          reason,
+          'warning'
+        );
+      },
+    });
+  }
+
+  private trackCartFulfillmentEvent<TName extends CustomerAnalyticsEventName>(
+    name: TName,
+    payload: CustomerAnalyticsPayloads[TName]
+  ): void {
+    try {
+      this.analytics.track(name, payload);
+    } catch {
+      // Analytics must never block cart recovery.
+    }
+    if (!this.auth.isLoggedIn()) return;
+    const eventType = String(name).replace(/^customer_/, '');
+    this.cartApi.recordFulfillmentEvent(eventType, payload as Record<string, unknown>).subscribe({
+      error: () => undefined,
+    });
   }
 
   selectMapLocation(location: {
@@ -498,16 +854,13 @@ export class AppStateService {
       postalCode: location.postal_code || '',
       source: 'manual',
     });
-    const params = buildCustomerLocationQuery({
+    this.refreshCatalogForLocation({
       lat: Number(location.lat),
       lng: Number(location.lng),
       state: location.state || '',
       city: location.city || '',
-      postal_code: location.postal_code || '',
+      postalCode: location.postal_code || '',
     });
-    this.catalog.loadStores(params);
-    this.catalog.loadCategories(params);
-    this.checkServiceability(params);
     this.updateLocation([name, location.city].filter(Boolean).join(', '));
     this.refreshDeliveryFeePreview();
   }
@@ -520,16 +873,7 @@ export class AppStateService {
           this.showToast('Could not detect your location');
           return;
         }
-        const params = buildCustomerLocationQuery({
-          lat: location.lat,
-          lng: location.lng,
-          state: location.state || '',
-          city: location.city || '',
-          postal_code: location.postalCode || '',
-        });
-        this.catalog.loadStores(params);
-        this.catalog.loadCategories(params);
-        this.checkServiceability(params);
+        this.refreshCatalogForLocation(location);
         this.updateLocation(this.formatLocation(location.name, location.city));
         this.showToast('Location updated');
         this.refreshDeliveryFeePreview();
@@ -570,12 +914,20 @@ export class AppStateService {
       next: (cart: ApiCart) => {
         const items = (cart.items || []).map((item) => this.mapCartItem(item));
         this.cart.set(items);
+        this.setCartFulfillmentLock(
+          String((cart as any).fulfillment_node_id || ''),
+          String((cart as any).fulfillment_node_name || ''),
+          String((cart as any).fulfillment_promise_id || ''),
+          String((cart as any).fulfillment_promise_expires_at || '')
+        );
         this.cartApi.setCartCount(items.length);
         this.cartLoaded.set(true);
+        this.reconcileCartForServiceability(this.serviceability());
         this.refreshDeliveryFeePreview();
       },
       error: () => {
         this.cart.set([]);
+        this.setCartFulfillmentLock('', '');
         this.cartApi.setCartCount(0);
         this.cartLoaded.set(true);
       },
@@ -718,25 +1070,19 @@ export class AppStateService {
         postalCode: address.pincode || '',
         source: 'saved_address',
       });
-      const params = buildCustomerLocationQuery({
+      this.refreshCatalogForLocation({
         lat: Number(address.latitude),
         lng: Number(address.longitude),
         state: address.state || '',
         city: address.city || '',
-        postal_code: address.pincode || '',
+        postalCode: address.pincode || '',
       });
-      this.catalog.loadStores(params);
-      this.catalog.loadCategories(params);
-      this.checkServiceability(params);
     } else {
-      const params = buildCustomerLocationQuery({
+      this.refreshCatalogForLocation({
         state: address.state || '',
         city: address.city || '',
-        postal_code: address.pincode || '',
+        postalCode: address.pincode || '',
       });
-      this.catalog.loadStores(params);
-      this.catalog.loadCategories(params);
-      this.checkServiceability(params);
     }
     this.updateLocation(
       [address.label, address.city].filter(Boolean).join(', ')
@@ -778,9 +1124,14 @@ export class AppStateService {
     this.catalogApi.checkServiceability(params).subscribe({
       next: (response) => {
         this.serviceability.set(response || null);
+        if (response?.is_serviceable === false) {
+          this.catalog.clearDeliverableCatalog();
+        }
         this.serviceabilityLoading.set(false);
+        this.reconcileCartForServiceability(response || null);
       },
       error: () => {
+        this.catalog.clearDeliverableCatalog();
         this.serviceability.set({
           is_serviceable: false,
           message: 'Could not verify delivery availability for this location.',
@@ -1069,6 +1420,12 @@ export class AppStateService {
   private addToGuestCart(product: Product, quantity: number): void {
     const incoming = this.guestCartItem(product, quantity);
     const current = this.cart();
+    const currentNode = this.currentServiceabilityNode();
+    const differentFulfillment =
+      !!current.length &&
+      !!this.cartFulfillmentNodeId() &&
+      !!currentNode.id &&
+      this.cartFulfillmentNodeId() !== currentNode.id;
     const differentStore = current.some(
       (item) =>
         (item.storeId || item.storeName) &&
@@ -1077,11 +1434,38 @@ export class AppStateService {
           (incoming.storeId || incoming.storeName)
     );
     const addItem = (items: CartItem[]) => {
+      if (currentNode.id) {
+        const fulfillment = this.currentServiceabilityFulfillment();
+        this.setCartFulfillmentLock(
+          currentNode.id,
+          currentNode.name,
+          fulfillment.promiseId,
+          fulfillment.expiresAt
+        );
+      }
       this.commitGuestCart(items);
       this.lastAddedProductId.set(incoming.id);
       if (this.shouldAutoOpenMiniCart()) this.openMiniCart();
       this.showToast(`${incoming.name} added to cart`);
     };
+
+    if (differentFulfillment) {
+      const existingNode =
+        this.cartFulfillmentNodeName() || 'your previous delivery area';
+      const incomingNode = currentNode.name || 'this delivery area';
+      this.ui
+        .confirm({
+          title: 'Replace basket?',
+          message: `Your basket is locked to ${existingNode}. To shop from ${incomingNode}, replace basket?`,
+          confirmText: 'Replace basket',
+          cancelText: 'Keep basket',
+          tone: 'warning',
+        })
+        .then((confirmed) => {
+          if (confirmed) addItem([incoming]);
+        });
+      return;
+    }
 
     if (differentStore) {
       const existingStore = current[0]?.storeName || 'the current store';
@@ -1140,7 +1524,14 @@ export class AppStateService {
   }
 
   private loadGuestCart(): void {
-    this.commitGuestCart(this.readGuestCartItems(), false);
+    const payload = this.readGuestCartPayload();
+    this.setCartFulfillmentLock(
+      payload?.fulfillment?.nodeId || '',
+      payload?.fulfillment?.nodeName || '',
+      payload?.fulfillment?.promiseId || '',
+      payload?.fulfillment?.expiresAt || ''
+    );
+    this.commitGuestCart(this.readGuestCartItems(payload), false);
   }
 
   private commitGuestCart(items: CartItem[], persist = true): void {
@@ -1149,6 +1540,7 @@ export class AppStateService {
     this.cartApi.setCartCount(items.length);
     this.coupon.set('');
     this.couponDiscount.set(0);
+    if (!items.length) this.setCartFulfillmentLock('', '');
     if (persist) this.writeGuestCartItems(items);
   }
 
@@ -1163,12 +1555,22 @@ export class AppStateService {
     };
   }
 
-  private readGuestCartItems(): CartItem[] {
-    if (typeof window === 'undefined') return [];
+  private readGuestCartPayload(): Partial<GuestCartPayload> | null {
+    if (typeof window === 'undefined') return null;
     try {
-      const payload = JSON.parse(
+      return JSON.parse(
         window.localStorage.getItem(this.guestCartStorageKey) || 'null'
       ) as Partial<GuestCartPayload> | null;
+    } catch {
+      return null;
+    }
+  }
+
+  private readGuestCartItems(
+    existingPayload?: Partial<GuestCartPayload> | null
+  ): CartItem[] {
+    try {
+      const payload = existingPayload ?? this.readGuestCartPayload();
       if (!payload || !Array.isArray(payload.items)) return [];
       return payload.items
         .map((item) => this.normalizeGuestCartItem(item))
@@ -1191,6 +1593,12 @@ export class AppStateService {
       store: {
         id: first.storeId || '',
         name: first.storeName || 'Selected store',
+      },
+      fulfillment: {
+        nodeId: this.cartFulfillmentNodeId(),
+        nodeName: this.cartFulfillmentNodeName(),
+        promiseId: this.cartFulfillmentPromiseId(),
+        expiresAt: this.cartFulfillmentPromiseExpiresAt(),
       },
       items,
     };
@@ -1228,7 +1636,14 @@ export class AppStateService {
   }
 
   private mergeGuestCartIntoBackend(done: () => void): void {
-    const guestItems = this.readGuestCartItems();
+    const payload = this.readGuestCartPayload();
+    this.setCartFulfillmentLock(
+      payload?.fulfillment?.nodeId || '',
+      payload?.fulfillment?.nodeName || '',
+      payload?.fulfillment?.promiseId || '',
+      payload?.fulfillment?.expiresAt || ''
+    );
+    const guestItems = this.readGuestCartItems(payload);
     if (!guestItems.length) {
       done();
       return;
@@ -1242,7 +1657,13 @@ export class AppStateService {
         done();
         return;
       }
-      this.cartApi.addToCart(item.apiId || item.id, item.quantity).subscribe({
+      this.cartApi
+        .addToCart(
+          item.apiId || item.id,
+          item.quantity,
+          this.cartFulfillmentContext()
+        )
+        .subscribe({
         next: () => addNext(index + 1),
         error: (error) =>
           this.handleGuestCartMergeError(error, item, index, addNext, done),
@@ -1264,6 +1685,7 @@ export class AppStateService {
     const conflictCode = body?.code || body?.error_code;
     const isConflict =
       conflictCode === 'cart_store_conflict' ||
+      conflictCode === 'cart_fulfillment_conflict' ||
       message.toLowerCase().includes('cart has items from');
     if (!isConflict) {
       this.showToast(message);
@@ -1272,9 +1694,27 @@ export class AppStateService {
     }
 
     const existingStore =
-      body?.existing_store_name || body?.existingStoreName || 'your saved cart';
+      body?.existing_store_name ||
+      body?.existingStoreName ||
+      body?.existing_fulfillment_node_name ||
+      'your saved cart';
     const incomingStore =
-      body?.incoming_store_name || item.storeName || 'your guest cart';
+      body?.incoming_store_name ||
+      body?.incoming_fulfillment_node_name ||
+      item.storeName ||
+      'your guest cart';
+    const conflictPayload = {
+      existingNodeId: String(body?.existing_fulfillment_node_id || ''),
+      existingNodeName: String(body?.existing_fulfillment_node_name || existingStore || ''),
+      incomingNodeId: String(body?.incoming_fulfillment_node_id || ''),
+      incomingNodeName: String(body?.incoming_fulfillment_node_name || incomingStore || ''),
+      trigger: 'add_to_cart' as const,
+      itemCount: this.itemCount(),
+    };
+    this.trackCartFulfillmentEvent(
+      CustomerAnalyticsEvents.CartFulfillmentConflict,
+      conflictPayload
+    );
     this.ui
       .confirm({
         title: 'Replace saved basket?',
@@ -1285,11 +1725,37 @@ export class AppStateService {
       })
       .then((confirmed) => {
         if (!confirmed) {
+          this.trackCartFulfillmentEvent(
+            CustomerAnalyticsEvents.CartFulfillmentKept,
+            {
+              previousNodeId: conflictPayload.existingNodeId,
+              previousNodeName: conflictPayload.existingNodeName,
+              nextNodeId: conflictPayload.incomingNodeId,
+              nextNodeName: conflictPayload.incomingNodeName,
+              trigger: 'replace_cart',
+              itemCount: this.itemCount(),
+            }
+          );
           done();
           return;
         }
+        this.trackCartFulfillmentEvent(
+          CustomerAnalyticsEvents.CartFulfillmentInvalidated,
+          {
+            previousNodeId: conflictPayload.existingNodeId,
+            previousNodeName: conflictPayload.existingNodeName,
+            nextNodeId: conflictPayload.incomingNodeId,
+            nextNodeName: conflictPayload.incomingNodeName,
+            trigger: 'replace_cart',
+            itemCount: this.itemCount(),
+          }
+        );
         this.cartApi
-          .replaceCart(item.apiId || item.id, item.quantity)
+          .replaceCart(
+            item.apiId || item.id,
+            item.quantity,
+            this.cartFulfillmentContext()
+          )
           .subscribe({
             next: () => addNext(index + 1),
             error: () => {
@@ -1362,6 +1828,49 @@ export class AppStateService {
       error?.error || error,
       readApiError(error?.error || error) || fallback
     ).message;
+  }
+
+  private explainCouponError(error: any): string {
+    if (error?.status === 401)
+      return 'Sign in again to apply this coupon.';
+
+    const payload = error?.error || error;
+    const message = readApiError(payload).trim();
+    const code = this.extractApiErrorCode(payload);
+    const lowerMessage = message.toLowerCase();
+    const lowerCode = code.toLowerCase();
+
+    if (lowerMessage.includes('otp') || lowerCode.includes('otp')) {
+      return 'This coupon code is not valid.';
+    }
+    if (message) return message;
+    if (lowerCode.includes('expired')) return 'This coupon has expired.';
+    if (lowerCode.includes('minimum') || lowerCode.includes('min_order')) {
+      return 'This coupon needs a higher cart value.';
+    }
+    if (lowerCode.includes('usage')) {
+      return 'This coupon has reached its usage limit.';
+    }
+    if (lowerCode.includes('invalid') || lowerCode.includes('coupon')) {
+      return 'This coupon code is not valid.';
+    }
+    return 'Coupon is not valid for this order.';
+  }
+
+  private extractApiErrorCode(payload: unknown): string {
+    if (!payload || typeof payload !== 'object') return '';
+    const record = payload as Record<string, unknown>;
+    const nested =
+      record['error'] && typeof record['error'] === 'object'
+        ? (record['error'] as Record<string, unknown>)
+        : null;
+    return String(
+      record['code'] ||
+        record['error_code'] ||
+        nested?.['code'] ||
+        nested?.['error_code'] ||
+        ''
+    ).trim();
   }
 
   private isStoreOpenForProduct(product: Product): boolean {

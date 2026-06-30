@@ -1,0 +1,688 @@
+<div class="saas-page fulfillment-ops-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Operations</p>
+      <h1 class="page-title">Fulfillment Ops</h1>
+      <p class="page-subtitle">
+        Node rollout readiness, inventory mismatches, and cart promise events.
+      </p>
+    </div>
+    <div class="header-actions">
+      @if (lastLoaded()) {
+        <span>Updated {{ lastLoaded() | date: 'shortTime' }}</span>
+      }
+      <button type="button" (click)="loadReports()" [disabled]="loading()">
+        <span class="material-icons-outlined">refresh</span>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="alert error">
+      <span class="material-icons-outlined">error</span>
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  <section class="status-band" [class]="readinessStatus()">
+    <div>
+      <span class="status-dot"></span>
+      <strong>{{ readinessStatus().replaceAll('_', ' ') }}</strong>
+      <small>Critical {{ readiness()?.critical_issue_count || 0 }} · Warnings {{ readiness()?.warning_count || 0 }}</small>
+    </div>
+    <a routerLink="/scheduled-tasks">
+      <span class="material-icons-outlined">event_repeat</span>
+      Automation
+    </a>
+  </section>
+
+  <section class="rollout-panel">
+    <div>
+      <h2>Rollout Backfill</h2>
+      <p>Create missing vendor-store nodes and node inventory from current approved stores and products.</p>
+    </div>
+    <label>
+      <input
+        type="checkbox"
+        [checked]="syncExisting()"
+        (change)="setSyncExisting($any($event.target).checked)"
+      />
+      Sync existing rows
+    </label>
+    <div class="rollout-actions">
+      <button type="button" class="secondary" (click)="previewRollout()" [disabled]="rolloutRunning()">
+        <span class="material-icons-outlined">visibility</span>
+        Preview
+      </button>
+      <button type="button" class="primary" (click)="applyRollout()" [disabled]="rolloutRunning()">
+        <span class="material-icons-outlined">play_circle</span>
+        Apply
+      </button>
+    </div>
+  </section>
+
+  @if (rolloutResult()) {
+    <section class="rollout-result">
+      <strong>{{ rolloutResult()?.mode === 'dry_run' ? 'Preview result' : 'Applied result' }}</strong>
+      <span>Nodes created {{ rolloutResult()?.backfill?.nodes_created || 0 }}</span>
+      <span>Inventory created {{ rolloutResult()?.backfill?.inventories_created || 0 }}</span>
+      <span>Status {{ rolloutResult()?.readiness?.status || '-' }}</span>
+    </section>
+  }
+
+  <section class="rollout-panel reservation-panel">
+    <div>
+      <h2>Reservation Recovery</h2>
+      <p>Expire stale cart holds and release committed stock from cancelled or failed-payment flows.</p>
+    </div>
+    <div class="rollout-actions">
+      <button
+        type="button"
+        class="secondary"
+        (click)="previewReservationReconciliation()"
+        [disabled]="reconciliationRunning()"
+      >
+        <span class="material-icons-outlined">visibility</span>
+        Preview
+      </button>
+      <button
+        type="button"
+        class="primary"
+        (click)="applyReservationReconciliation()"
+        [disabled]="reconciliationRunning()"
+      >
+        <span class="material-icons-outlined">healing</span>
+        Apply
+      </button>
+    </div>
+  </section>
+
+  @if (reconciliationResult()) {
+    <section class="rollout-result">
+      <strong>{{ reconciliationResult()?.mode === 'dry_run' ? 'Recovery preview' : 'Recovery applied' }}</strong>
+      <span>Expired {{ reconciliationResult()?.result?.expired_reserved || 0 }}</span>
+      <span>Cancelled releases {{ reconciliationResult()?.result?.released_cancelled || 0 }}</span>
+      <span>Failed-payment releases {{ reconciliationResult()?.result?.released_failed_payment || 0 }}</span>
+      <span>Product units {{ reconciliationResult()?.result?.product_units_restored || 0 }}</span>
+      <span>Node units {{ reconciliationResult()?.result?.node_units_restored || 0 }}</span>
+    </section>
+  }
+
+  <section class="ops-section rollout-area-admin">
+    <div class="section-title">
+      <div>
+        <h2>Rollout Areas</h2>
+        <p>Manage active location coverage for fulfillment-node routing.</p>
+      </div>
+      <select
+        class="node-select"
+        [value]="selectedNodeId()"
+        (change)="selectNode($any($event.target).value)"
+      >
+        <option value="">Select node</option>
+        @for (node of fulfillmentNodes(); track node.id) {
+          <option [value]="node.id">{{ node.name }} - {{ node.city || node.vendor_name || 'Node' }}</option>
+        }
+      </select>
+    </div>
+
+    @if (!fulfillmentNodes().length) {
+      <div class="empty-state">No active fulfillment nodes found. Run rollout backfill first.</div>
+    } @else {
+      <div class="area-admin-grid">
+        <div class="area-form">
+          <label>
+            Label
+            <input
+              type="text"
+              [value]="serviceAreaForm().label"
+              (input)="updateServiceAreaField('label', $any($event.target).value)"
+              placeholder="HSR Layout"
+            />
+          </label>
+          <label>
+            City
+            <input
+              type="text"
+              [value]="serviceAreaForm().city"
+              (input)="updateServiceAreaField('city', $any($event.target).value)"
+              placeholder="Bengaluru"
+            />
+          </label>
+          <label>
+            State
+            <input
+              type="text"
+              [value]="serviceAreaForm().state"
+              (input)="updateServiceAreaField('state', $any($event.target).value)"
+              placeholder="Karnataka"
+            />
+          </label>
+          <label>
+            Postal code
+            <input
+              type="text"
+              [value]="serviceAreaForm().postal_code"
+              (input)="updateServiceAreaField('postal_code', $any($event.target).value)"
+              placeholder="560102"
+            />
+          </label>
+          <label>
+            Radius km
+            <input
+              type="number"
+              min="0"
+              step="0.5"
+              [value]="serviceAreaForm().radius_km"
+              (input)="updateServiceAreaField('radius_km', $any($event.target).value)"
+              placeholder="10"
+            />
+          </label>
+          <button type="button" class="primary area-save" (click)="createServiceArea()" [disabled]="serviceAreaSaving()">
+            <span class="material-icons-outlined">add_location_alt</span>
+            Add Area
+          </button>
+        </div>
+
+        <div class="area-list">
+          <div class="selected-node">
+            <span class="material-icons-outlined">hub</span>
+            <div>
+              <strong>{{ selectedNode()?.name || 'Select a node' }}</strong>
+              <small>{{ selectedNode()?.vendor_name || selectedNode()?.code || '-' }}</small>
+            </div>
+          </div>
+
+          @if (selectedNode()) {
+            <div class="node-settings">
+              <label>
+                Status
+                <select
+                  [value]="nodeSettingsForm().status"
+                  (change)="updateNodeSettingsField('status', $any($event.target).value)"
+                >
+                  <option value="active">Active</option>
+                  <option value="maintenance">Maintenance</option>
+                  <option value="paused">Paused</option>
+                  <option value="disabled">Disabled</option>
+                </select>
+              </label>
+              <label class="node-toggle">
+                Accepting orders
+                <span>
+                  <input
+                    type="checkbox"
+                    [checked]="nodeSettingsForm().is_accepting_orders"
+                    (change)="updateNodeSettingsField('is_accepting_orders', $any($event.target).checked)"
+                  />
+                  {{ nodeSettingsForm().is_accepting_orders ? 'Yes' : 'No' }}
+                </span>
+              </label>
+              <label>
+                Instant km
+                <input
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  [value]="nodeSettingsForm().instant_radius_km"
+                  (input)="updateNodeSettingsField('instant_radius_km', $any($event.target).value)"
+                />
+              </label>
+              <label>
+                Max km
+                <input
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  [value]="nodeSettingsForm().max_delivery_radius_km"
+                  (input)="updateNodeSettingsField('max_delivery_radius_km', $any($event.target).value)"
+                />
+              </label>
+              <label>
+                Prep min
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  [value]="nodeSettingsForm().base_prep_time_min"
+                  (input)="updateNodeSettingsField('base_prep_time_min', $any($event.target).value)"
+                />
+              </label>
+              <label>
+                Min/km
+                <input
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  [value]="nodeSettingsForm().delivery_time_per_km_min"
+                  (input)="updateNodeSettingsField('delivery_time_per_km_min', $any($event.target).value)"
+                />
+              </label>
+              <label>
+                Capacity
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  [value]="nodeSettingsForm().daily_order_capacity"
+                  (input)="updateNodeSettingsField('daily_order_capacity', $any($event.target).value)"
+                />
+              </label>
+              <button
+                type="button"
+                class="primary save-node"
+                (click)="saveNodeSettings()"
+                [disabled]="nodeSettingsSaving()"
+              >
+                Save Node
+              </button>
+            </div>
+          }
+
+          @if (serviceAreasLoading()) {
+            <div class="empty-state">Loading service areas...</div>
+          } @else if (!serviceAreas().length) {
+            <div class="empty-state">No rollout areas mapped to this node.</div>
+          } @else {
+            <div class="table-wrap">
+              <table class="area-table">
+                <thead>
+                  <tr>
+                    <th>Area</th>
+                    <th>City</th>
+                    <th>State</th>
+                    <th>Postal</th>
+                    <th>Radius</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (area of serviceAreas(); track area.id) {
+                    <tr>
+                      <td>{{ area.label || '-' }}</td>
+                      <td>{{ area.city || '-' }}</td>
+                      <td>{{ area.state || '-' }}</td>
+                      <td>{{ area.postal_code || '-' }}</td>
+                      <td>{{ area.radius_km || 0 }} km</td>
+                      <td>
+                        <span class="status-pill" [class.inactive]="!area.is_active">
+                          {{ area.is_active ? 'Active' : 'Inactive' }}
+                        </span>
+                      </td>
+                      <td>
+                        <div class="row-actions">
+                          @if (area.is_active) {
+                            <button
+                              type="button"
+                              class="secondary"
+                              (click)="setServiceAreaActive(area, false)"
+                              [disabled]="serviceAreaActionId() === area.id"
+                            >
+                              Pause
+                            </button>
+                          } @else {
+                            <button
+                              type="button"
+                              class="secondary"
+                              (click)="setServiceAreaActive(area, true)"
+                              [disabled]="serviceAreaActionId() === area.id"
+                            >
+                              Activate
+                            </button>
+                          }
+                          <button
+                            type="button"
+                            class="danger"
+                            (click)="deleteServiceArea(area)"
+                            [disabled]="serviceAreaActionId() === area.id"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="node-inventory-panel">
+        <div class="inventory-header">
+          <div>
+            <h3>Node Inventory</h3>
+            <p>Adjust stock, low-stock threshold, and availability for the selected fulfillment node.</p>
+          </div>
+          <span>{{ nodeInventoryRows().length }} items</span>
+        </div>
+
+        <div class="inventory-create">
+          <div class="product-search">
+            <label>
+              Product search
+              <div class="search-control">
+                <input
+                  type="search"
+                  [value]="inventoryProductSearch()"
+                  (input)="updateInventoryProductSearch($any($event.target).value)"
+                  (keyup.enter)="searchInventoryProducts()"
+                  placeholder="Search product name"
+                />
+                <button
+                  type="button"
+                  class="secondary"
+                  (click)="searchInventoryProducts()"
+                  [disabled]="inventoryProductSearching()"
+                >
+                  Search
+                </button>
+              </div>
+            </label>
+
+            @if (inventoryProductResults().length) {
+              <div class="product-results">
+                @for (product of inventoryProductResults(); track product.id) {
+                  <button
+                    type="button"
+                    [class.selected]="inventoryCreateForm().product_id === product.id"
+                    (click)="selectInventoryProduct(product)"
+                  >
+                    <strong>{{ product.name || '-' }}</strong>
+                    <span>{{ product.sku || product.vendor_name || product.vendor || 'Product' }}</span>
+                  </button>
+                }
+              </div>
+            }
+          </div>
+
+          <label>
+            Stock
+            <input
+              type="number"
+              min="0"
+              step="1"
+              [value]="inventoryCreateForm().stock"
+              (input)="updateInventoryCreateField('stock', $any($event.target).value)"
+            />
+          </label>
+          <label>
+            Low at
+            <input
+              type="number"
+              min="0"
+              step="1"
+              [value]="inventoryCreateForm().low_stock_threshold"
+              (input)="updateInventoryCreateField('low_stock_threshold', $any($event.target).value)"
+            />
+          </label>
+          <label class="create-toggle">
+            Available
+            <span>
+              <input
+                type="checkbox"
+                [checked]="inventoryCreateForm().is_available"
+                (change)="updateInventoryCreateField('is_available', $any($event.target).checked)"
+              />
+              {{ inventoryCreateForm().is_available ? 'Yes' : 'No' }}
+            </span>
+          </label>
+          <button
+            type="button"
+            class="primary add-inventory"
+            (click)="createInventory()"
+            [disabled]="inventoryCreating()"
+          >
+            <span class="material-icons-outlined">add_box</span>
+            Add Inventory
+          </button>
+        </div>
+
+        @if (nodeInventoryLoading()) {
+          <div class="empty-state">Loading node inventory...</div>
+        } @else if (!nodeInventoryRows().length) {
+          <div class="empty-state">No inventory mapped to this node. Run rollout backfill or add node inventory first.</div>
+        } @else {
+          <div class="table-wrap">
+            <table class="inventory-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>SKU</th>
+                  <th>Stock</th>
+                  <th>Reserved</th>
+                  <th>Sellable</th>
+                  <th>Low at</th>
+                  <th>Available</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of nodeInventoryRows(); track row.id) {
+                  <tr>
+                    <td>{{ row.product_name || '-' }}</td>
+                    <td>{{ row.product_sku || '-' }}</td>
+                    <td>
+                      <input
+                        class="stock-input"
+                        type="number"
+                        min="0"
+                        step="1"
+                        [value]="inventoryDraft(row.id).stock"
+                        (input)="updateInventoryDraftField(row.id, 'stock', $any($event.target).value)"
+                      />
+                    </td>
+                    <td>{{ row.reserved_stock || 0 }}</td>
+                    <td>{{ row.sellable_stock || 0 }}</td>
+                    <td>
+                      <input
+                        class="stock-input"
+                        type="number"
+                        min="0"
+                        step="1"
+                        [value]="inventoryDraft(row.id).low_stock_threshold"
+                        (input)="updateInventoryDraftField(row.id, 'low_stock_threshold', $any($event.target).value)"
+                      />
+                    </td>
+                    <td>
+                      <label class="toggle-cell">
+                        <input
+                          type="checkbox"
+                          [checked]="inventoryDraft(row.id).is_available"
+                          (change)="updateInventoryDraftField(row.id, 'is_available', $any($event.target).checked)"
+                        />
+                        <span>{{ inventoryDraft(row.id).is_available ? 'Yes' : 'No' }}</span>
+                      </label>
+                    </td>
+                    <td>
+                      <div class="row-actions">
+                        <button
+                          type="button"
+                          class="secondary"
+                          (click)="saveInventory(row)"
+                          [disabled]="inventoryActionId() === row.id"
+                        >
+                          Save
+                        </button>
+                        <button
+                          type="button"
+                          class="ghost"
+                          (click)="resetInventoryDraft(row)"
+                          [disabled]="inventoryActionId() === row.id"
+                        >
+                          Reset
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    }
+  </section>
+
+  <section class="metrics-grid" aria-label="Fulfillment readiness metrics">
+    <div class="metric">
+      <span>Approved Stores</span>
+      <strong>{{ metricValue('approved_vendor_count') }}</strong>
+    </div>
+    <div class="metric">
+      <span>Active Nodes</span>
+      <strong>{{ metricValue('active_fulfillment_node_count') }}</strong>
+    </div>
+    <div class="metric">
+      <span>Rollout Areas</span>
+      <strong>{{ metricValue('active_rollout_area_count') }}</strong>
+    </div>
+    <div class="metric">
+      <span>Sellable Products</span>
+      <strong>{{ metricValue('sellable_product_count') }}</strong>
+    </div>
+    <div class="metric danger">
+      <span>Missing Nodes</span>
+      <strong>{{ metricValue('vendors_missing_active_node_count') }}</strong>
+    </div>
+    <div class="metric danger">
+      <span>Missing Inventory</span>
+      <strong>{{ metricValue('sellable_products_missing_node_inventory_count') }}</strong>
+    </div>
+    <div class="metric warn">
+      <span>Empty Active Nodes</span>
+      <strong>{{ metricValue('active_nodes_without_sellable_stock_count') }}</strong>
+    </div>
+  </section>
+
+  <section class="ops-section">
+    <div class="section-title">
+      <div>
+        <h2>Readiness Issues</h2>
+        <p>Samples from the rollout audit. Run the backfill command before expecting this to clear.</p>
+      </div>
+    </div>
+
+    @if (loading() && !readiness()) {
+      <div class="empty-state">Loading fulfillment readiness...</div>
+    } @else if (!issueGroups().length) {
+      <div class="empty-state positive">No sampled readiness issues.</div>
+    } @else {
+      <div class="issue-grid">
+        @for (group of issueGroups(); track group.key) {
+          <article class="issue-panel">
+            <h3>{{ group.label }}</h3>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Store</th>
+                    <th>Stock</th>
+                    <th>State</th>
+                    <th>Quick fix</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of group.rows; track row.vendor_id || row.product_id || row.node_id || row.inventory_id) {
+                    <tr>
+                      <td>{{ row.product_name || row.node_name || row.store_name || '-' }}</td>
+                      <td>{{ row.vendor_name || row.store_name || '-' }}</td>
+                      <td>{{ row.stock ?? row.reserved_stock ?? '-' }}</td>
+                      <td>{{ row.state || row.status || row.approval_status || '-' }}</td>
+                      <td>
+                        @if (canQuickFix(group.key, row)) {
+                          <button
+                            type="button"
+                            class="quick-fix"
+                            (click)="runReadinessQuickFix(group.key, row)"
+                            [disabled]="readinessActionId() === row.vendor_id"
+                          >
+                            {{ quickFixLabel(group.key) }}
+                          </button>
+                        } @else {
+                          -
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </section>
+
+  <section class="split-layout">
+    <div class="ops-section">
+      <div class="section-title">
+        <div>
+          <h2>Stock Mismatches</h2>
+          <p>Product stock compared with node stock.</p>
+        </div>
+        <span>{{ stockMetricValue('mismatch_count') }} mismatches</span>
+      </div>
+      @if (!stockRows().length) {
+        <div class="empty-state positive">No stock mismatches returned.</div>
+      } @else {
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Node</th>
+                <th>Node</th>
+                <th>Product</th>
+                <th>Reason</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of stockRows(); track row.node_id + row.product_id) {
+                <tr>
+                  <td>{{ row.product_name }}</td>
+                  <td>{{ row.node_name }}</td>
+                  <td>{{ row.node_stock }}</td>
+                  <td>{{ row.product_stock }}</td>
+                  <td>{{ (row.mismatch_reasons || []).join(', ') || '-' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+
+    <div class="ops-section">
+      <div class="section-title">
+        <div>
+          <h2>Cart Promise Events</h2>
+          <p>Recent cart fulfillment conflicts, refreshes, and invalidations.</p>
+        </div>
+        <span>{{ cartSummary()?.total_events || 0 }} events</span>
+      </div>
+      <div class="event-pills">
+        @for (entry of eventCountEntries(); track entry.name) {
+          <span>{{ entry.name.replaceAll('cart_fulfillment_', '') }} · {{ entry.count }}</span>
+        }
+      </div>
+      @if (!cartRows().length) {
+        <div class="empty-state">No cart fulfillment events yet.</div>
+      } @else {
+        <div class="event-list">
+          @for (event of cartRows(); track event.id) {
+            <div class="event-row">
+              <strong>{{ event.event_type.replaceAll('cart_fulfillment_', '') }}</strong>
+              <span>{{ event.summary }}</span>
+              <small>{{ event.created_at | date: 'short' }}</small>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </section>
+</div>

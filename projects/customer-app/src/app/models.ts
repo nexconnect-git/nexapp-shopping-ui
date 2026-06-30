@@ -102,6 +102,34 @@ export interface CustomerServiceability {
   eta_label: string;
   nearest_store_eta?: number | null;
   nearest_store?: any;
+  fulfillment_node?: {
+    id: string;
+    type: string;
+    name: string;
+    vendor_id?: string;
+    distance_km?: number | null;
+    is_instant?: boolean;
+    is_accepting_orders?: boolean;
+    coverage_radius_km?: number | null;
+  } | null;
+  promise?: {
+    id: string;
+    fulfillment_node_id: string;
+    eta_min_minutes?: number | null;
+    eta_max_minutes?: number | null;
+    eta_label: string;
+    delivery_fee?: string | number | null;
+    distance_km?: number | null;
+    vehicle_type?: string;
+    expires_at?: string;
+    requires_confirmation?: boolean;
+    is_instant?: boolean;
+  } | null;
+  availability_summary?: {
+    available_product_count: number;
+    available_store_count: number;
+    instant_store_count: number;
+  };
 }
 
 export interface ActiveOrderSummary {

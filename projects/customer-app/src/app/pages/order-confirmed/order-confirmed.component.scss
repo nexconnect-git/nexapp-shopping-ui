@@ -4,9 +4,7 @@
   place-items: center;
   padding: 104px 18px 120px;
   color: #0f172a;
-  background:
-    radial-gradient(circle at top, rgba(34, 197, 94, 0.16), transparent 420px),
-    #f8fafc;
+  background: var(--cx-surface, #ffffff);
 }
 
 .confirmed-card {

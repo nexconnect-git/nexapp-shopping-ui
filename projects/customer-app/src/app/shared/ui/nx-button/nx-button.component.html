@@ -2,12 +2,24 @@
   [type]="type"
   class="nx-btn"
   [class.primary]="variant === 'primary'"
+  [class.secondary]="variant === 'secondary'"
   [class.outline]="variant === 'outline'"
   [class.soft]="variant === 'soft'"
+  [class.ghost]="variant === 'ghost'"
+  [class.destructive]="variant === 'destructive'"
   [class.green]="color === 'green'"
+  [class.orange]="color === 'orange'"
+  [class.red]="color === 'red'"
   [class.full]="full"
-  [disabled]="disabled"
-  (click)="clicked.emit()"
+  [class.loading]="loading"
+  [disabled]="disabled || loading"
+  [attr.aria-busy]="loading"
+  (click)="emitClick()"
 >
+  @if (loading) {
+    <span class="nx-spinner" aria-hidden="true"></span>
+  } @else if (icon) {
+    <span class="material-symbols-rounded" aria-hidden="true">{{ icon }}</span>
+  }
   <ng-content />
 </button>

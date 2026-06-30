@@ -40,7 +40,7 @@ em {
 
 span.active {
   color: #fff;
-  background: linear-gradient(135deg, var(--fd-color-primary), var(--fd-color-primary-hover));
+  background: var(--cx-orange, #f97316);
 }
 
 span.active b {

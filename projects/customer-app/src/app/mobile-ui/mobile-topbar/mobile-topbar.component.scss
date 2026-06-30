@@ -6,14 +6,15 @@
 }
 
 .mobile-topbar {
-  padding: calc(6px + env(safe-area-inset-top, 0px)) 10px 7px;
-  color: #fff;
-  background: linear-gradient(135deg, rgba(56, 38, 142, 0.94) 0%, rgba(35, 17, 124, 0.96) 60%, rgba(249, 121, 40, 0.94) 100%);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border-radius: 0 0 16px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 12px 28px rgba(35, 17, 124, 0.14);
+  min-height: var(--cx-mobile-topbar-height, 64px);
+  padding: calc(8px + env(safe-area-inset-top, 0px)) 16px 10px;
+  color: var(--cx-text, #111827);
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-radius: 0;
+  border-bottom: 1px solid var(--cx-border-soft, #f1f5f9);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
 }
 
 .brand-row,
@@ -48,8 +49,8 @@
   display: block;
   border-radius: 12px;
   object-fit: cover;
-  background: #38268e;
-  box-shadow: 0 8px 18px rgba(16, 10, 54, 0.12);
+  background: var(--cx-primary, #7c3aed);
+  box-shadow: 0 8px 18px rgba(124, 58, 237, 0.14);
 }
 
 .top-actions {
@@ -60,20 +61,23 @@
 .top-actions a,
 .top-actions button {
   position: relative;
-  width: 40px;
-  height: 40px;
+  width: 46px;
+  min-width: 46px;
+  height: 46px;
   display: grid;
   place-items: center;
-  border-radius: 12px;
-  color: #fff;
-  background: rgba(255, 255, 255, 0.16);
+  border-radius: var(--cx-radius-pill, 999px);
+  color: var(--cx-primary, #7c3aed);
+  background: var(--cx-primary-ultra-soft, #f5f3ff);
+  border: 1px solid #ddd6fe;
+  overflow: visible;
 }
 
 .brand-wordmark {
   overflow: hidden;
   display: block;
   max-width: 118px;
-  color: #fff;
+  color: var(--cx-text, #111827);
   font-size: 18px;
   font-weight: 950;
   line-height: 1;
@@ -83,17 +87,17 @@
 
 i {
   position: absolute;
-  top: -4px;
-  right: -4px;
-  min-width: 18px;
-  height: 18px;
+  top: 2px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
   display: grid;
   place-items: center;
-  padding: 0 4px;
+  padding: 0 3px;
   border-radius: 99px;
-  background: #ff315f;
+  background: var(--cx-danger, #dc2626);
   color: #fff;
-  font-size: 10px;
+  font-size: 9px;
   font-style: normal;
   font-weight: 900;
 }
@@ -101,17 +105,17 @@ i {
 .location-card {
   width: 100%;
   gap: 10px;
-  margin-top: 7px;
-  padding: 7px 10px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 16px;
+  background: var(--cx-surface-soft, #f9fafb);
+  border: 1px solid var(--cx-border, #e5e7eb);
   text-align: left;
   transition: all 0.2s ease-in-out;
   
   &:active {
     transform: scale(0.985);
-    background: rgba(255, 255, 255, 0.18);
+    background: var(--cx-primary-ultra-soft, #f5f3ff);
   }
 }
 
@@ -121,8 +125,7 @@ i {
 }
 
 .location-card .loc-icon {
-  color: #ffda6a;
-  animation: bounceSlow 2s infinite ease-in-out;
+  color: var(--cx-orange-dark, #ea580c);
 }
 
 .location-card small,
@@ -134,9 +137,8 @@ i {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  opacity: 0.86;
   font-size: 10px;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--cx-muted, #6b7280);
 }
 
 .live-pulse {
@@ -154,7 +156,7 @@ i {
   white-space: nowrap;
   font-size: 13px;
   font-weight: 800;
-  color: #fff;
+  color: var(--cx-text, #111827);
 }
 
 @keyframes pulseGlow {
@@ -180,14 +182,15 @@ i {
 
 
 .search-card {
-  height: 40px;
+  height: 48px;
   gap: 8px;
-  margin-top: 7px;
-  padding: 0 11px;
-  border-radius: 14px;
-  background: #fff;
-  color: #77708d;
-  box-shadow: 0 12px 28px rgba(28, 18, 74, 0.14);
+  margin-top: 10px;
+  padding: 0 14px;
+  border-radius: 16px;
+  background: var(--cx-surface, #fff);
+  color: var(--cx-muted, #6b7280);
+  border: 1px solid #ede9fe;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
 }
 
 .search-card input {
@@ -195,8 +198,8 @@ i {
   min-width: 0;
   border: 0;
   outline: 0;
-  color: #17122e;
+  color: var(--cx-text, #111827);
   background: transparent;
-  font-weight: 800;
+  font-weight: 650;
 }
 

@@ -1,103 +1,154 @@
 <main class="location-page">
-  <section class="location-hero">
-    <div>
-      <span class="eyebrow">Delivery location</span>
-      <h1>Where should we deliver?</h1>
-      <p>Pick a saved address, use your current location, or enter map coordinates to check instant delivery availability.</p>
-    </div>
-    <button type="button" class="primary-action" (click)="useCurrentLocation()">
-      <span class="material-symbols-rounded" aria-hidden="true">my_location</span>
-      Use current location
-    </button>
-  </section>
+  <section class="location-shell">
+    <header class="location-header">
+      <div>
+        <span class="eyebrow">Delivery location</span>
+        <h1>Choose where to deliver</h1>
+        <p>Pin a point or pick a saved address. We will refresh stores and products for that exact location.</p>
+      </div>
+      <button type="button" class="primary-action" (click)="useCurrentLocation()">
+        <span class="material-symbols-rounded" aria-hidden="true">my_location</span>
+        Use current location
+      </button>
+    </header>
 
-  <section class="location-grid">
-    <article class="panel">
-      <div class="panel-head">
-        <h2>Manual location</h2>
-        <p>Use this when browser location is unavailable.</p>
-      </div>
-      <label>
-        Area or street
-        <input [ngModel]="label()" (ngModelChange)="label.set($event)" placeholder="MG Road, Indiranagar" />
-      </label>
-      <div class="split">
-        <label>
-          City
-          <input [ngModel]="city()" (ngModelChange)="city.set($event)" placeholder="Bengaluru" />
-        </label>
-        <label>
-          State
-          <input [ngModel]="stateName()" (ngModelChange)="stateName.set($event)" placeholder="Karnataka" />
-        </label>
-      </div>
-      <div class="split">
-        <label>
-          Latitude
-          <input [ngModel]="latitude()" (ngModelChange)="latitude.set($event)" inputmode="decimal" placeholder="12.9716" />
-        </label>
-        <label>
-          Longitude
-          <input [ngModel]="longitude()" (ngModelChange)="longitude.set($event)" inputmode="decimal" placeholder="77.5946" />
-        </label>
-      </div>
-      <label>
-        Pincode
-        <input [ngModel]="postalCode()" (ngModelChange)="postalCode.set($event)" inputmode="numeric" placeholder="560001" />
-      </label>
-      <button type="button" class="secondary-action" (click)="applyManualLocation()">Check serviceability</button>
-    </article>
-
-    <article class="panel">
-      <div class="panel-head">
-        <h2>Saved addresses</h2>
-        <p>Signed-in customers can jump straight to a known delivery point.</p>
-      </div>
-      @for (address of state.addresses(); track address.id) {
-        <button type="button" class="address-row" (click)="selectAddress(address.id)">
-          <span class="material-symbols-rounded" aria-hidden="true">location_on</span>
-          <span>
-            <b>{{ address.label || address.name }}</b>
-            <small>{{ addressLine(address) }}</small>
-          </span>
-        </button>
-      } @empty {
-        <div class="empty-state">
-          <span class="material-symbols-rounded" aria-hidden="true">add_location_alt</span>
-          <b>No saved addresses yet</b>
-          <small>You can still use current location or manual coordinates.</small>
+    <section class="location-workspace">
+      <article class="map-panel">
+        <div class="panel-head">
+          <div>
+            <h2>Pin on map</h2>
+            <p>Search, click, or drag the pin to choose the delivery point.</p>
+          </div>
         </div>
-      }
-    </article>
-  </section>
+        <app-map-picker
+          [initialLat]="mapInitialLat()"
+          [initialLng]="mapInitialLng()"
+          height="430px"
+          (locationPicked)="onMapLocationPicked($event)"
+        />
+      </article>
 
-  <section class="serviceability" [class.good]="state.serviceability()?.is_serviceable" [class.bad]="state.serviceability()?.is_serviceable === false">
-    @if (state.serviceabilityLoading()) {
-      <span class="material-symbols-rounded spin" aria-hidden="true">progress_activity</span>
-      <div>
-        <b>Checking stores near you</b>
-        <small>Refreshing availability for the selected delivery point.</small>
-      </div>
-    } @else if (state.serviceability(); as serviceability) {
-      <span class="material-symbols-rounded" aria-hidden="true">
-        {{ serviceability.is_serviceable ? 'check_circle' : 'radio_button_unchecked' }}
-      </span>
-      <div>
-        <b>{{ serviceability.is_serviceable ? 'Instant delivery available' : 'Not serviceable yet' }}</b>
-        <small>
-          {{ serviceability.message || (serviceability.instant_store_count + ' instant stores nearby') }}
-          @if (serviceability.eta_label) {
-            <span> • {{ serviceability.eta_label }}</span>
+      <aside class="location-side">
+        <section
+          class="serviceability"
+          [class.good]="state.serviceability()?.is_serviceable"
+          [class.bad]="state.serviceability()?.is_serviceable === false"
+        >
+          @if (state.serviceabilityLoading()) {
+            <span class="material-symbols-rounded spin" aria-hidden="true">progress_activity</span>
+            <div>
+              <b>Checking availability</b>
+              <small>Refreshing stores for the selected delivery point.</small>
+            </div>
+          } @else if (state.serviceability(); as serviceability) {
+            <span class="material-symbols-rounded" aria-hidden="true">
+              {{ serviceability.is_serviceable ? 'check_circle' : 'error' }}
+            </span>
+            <div>
+              <b>{{ serviceability.is_serviceable ? 'Delivery available' : 'Not serviceable yet' }}</b>
+              <small>
+                {{ serviceability.message || (serviceability.instant_store_count + ' instant stores nearby') }}
+                @if (serviceability.eta_label) {
+                  <span> | {{ serviceability.eta_label }}</span>
+                }
+              </small>
+              @if (serviceability.fulfillment_node || serviceability.promise || serviceability.availability_summary) {
+                <div class="promise-summary">
+                  @if (serviceability.fulfillment_node; as node) {
+                    <span>
+                      <span class="material-symbols-rounded" aria-hidden="true">storefront</span>
+                      {{ node.name || 'Nearest fulfillment node' }}
+                    </span>
+                  }
+                  @if (serviceability.promise; as promise) {
+                    <span>
+                      <span class="material-symbols-rounded" aria-hidden="true">bolt</span>
+                      {{ promise.eta_label || serviceability.eta_label || 'Fast delivery' }}
+                    </span>
+                  }
+                  @if (serviceability.availability_summary; as summary) {
+                    <span>
+                      <span class="material-symbols-rounded" aria-hidden="true">inventory_2</span>
+                      {{ summary.available_product_count || 0 }} products
+                    </span>
+                  }
+                </div>
+              }
+            </div>
+            <button type="button" [disabled]="!serviceability.is_serviceable" (click)="continueShopping()">Continue</button>
+          } @else {
+            <span class="material-symbols-rounded" aria-hidden="true">near_me</span>
+            <div>
+              <b>Select a location</b>
+              <small>Only deliverable stores and products will be shown.</small>
+            </div>
           }
-        </small>
-      </div>
-      <button type="button" [disabled]="!serviceability.is_serviceable" (click)="continueShopping()">Continue</button>
-    } @else {
-      <span class="material-symbols-rounded" aria-hidden="true">near_me</span>
-      <div>
-        <b>Select a location to begin</b>
-        <small>We will only show stores and products that can deliver there.</small>
-      </div>
-    }
+        </section>
+
+        <article class="panel saved-panel">
+          <div class="panel-head compact">
+            <div>
+              <h2>Saved addresses</h2>
+              <p>Choose a known delivery point.</p>
+            </div>
+          </div>
+          <div class="address-list">
+            @for (address of state.addresses(); track address.id) {
+              <button type="button" class="address-row" (click)="selectAddress(address.id)">
+                <span class="material-symbols-rounded" aria-hidden="true">location_on</span>
+                <span>
+                  <b>{{ address.label || address.name }}</b>
+                  <small>{{ addressLine(address) }}</small>
+                </span>
+              </button>
+            } @empty {
+              <div class="empty-state">
+                <span class="material-symbols-rounded" aria-hidden="true">add_location_alt</span>
+                <b>No saved addresses</b>
+                <small>Use the map or current location to continue.</small>
+              </div>
+            }
+          </div>
+        </article>
+
+        <article class="panel manual-panel">
+          <div class="panel-head compact">
+            <div>
+              <h2>Manual check</h2>
+              <p>Edit the detected details if needed.</p>
+            </div>
+          </div>
+          <label>
+            Area or street
+            <input [ngModel]="label()" (ngModelChange)="label.set($event)" placeholder="MG Road, Indiranagar" />
+          </label>
+          <div class="split">
+            <label>
+              City
+              <input [ngModel]="city()" (ngModelChange)="city.set($event)" placeholder="Bengaluru" />
+            </label>
+            <label>
+              State
+              <input [ngModel]="stateName()" (ngModelChange)="stateName.set($event)" placeholder="Karnataka" />
+            </label>
+          </div>
+          <div class="split">
+            <label>
+              Latitude
+              <input [ngModel]="latitude()" (ngModelChange)="latitude.set($event)" inputmode="decimal" placeholder="12.9716" />
+            </label>
+            <label>
+              Longitude
+              <input [ngModel]="longitude()" (ngModelChange)="longitude.set($event)" inputmode="decimal" placeholder="77.5946" />
+            </label>
+          </div>
+          <label>
+            Pincode
+            <input [ngModel]="postalCode()" (ngModelChange)="postalCode.set($event)" inputmode="numeric" placeholder="560001" />
+          </label>
+          <button type="button" class="secondary-action" (click)="applyManualLocation()">Check serviceability</button>
+        </article>
+      </aside>
+    </section>
   </section>
 </main>

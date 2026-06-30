@@ -33,7 +33,7 @@ export class CustomerAppStartupService {
       complete: () => this.hideInitialLoaders(),
     });
     this.features.startPolling('customer-app');
-    window.setTimeout(() => this.hideInitialLoaders(), 8000);
+    window.setTimeout(() => this.hideInitialLoaders(), 3200);
   }
 
   private hideInitialLoaders(): void {

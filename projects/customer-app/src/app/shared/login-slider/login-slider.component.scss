@@ -24,8 +24,7 @@
   padding: 0 14px calc(14px + env(safe-area-inset-bottom, 0px));
   border: 0;
   border-radius: 28px 28px 0 0;
-  background:
-    linear-gradient(180deg, #fff, #fbfaff 62%, #fff);
+  background: var(--cx-primary-soft, #ede9fe);
   box-shadow: 0 -26px 70px rgba(17, 24, 39, 0.24);
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
@@ -307,7 +306,7 @@
     height: 44px;
     margin-bottom: 14px;
     border-radius: 8px;
-    background: var(--primary);
+    background: var(--cx-orange, #f97316);
     color: #fff;
     font-weight: 950;
   }
@@ -379,20 +378,18 @@
 /* WebView safety override: prevent partial off-canvas rendering on some mobile engines. */
 @media (max-width: 760px) {
   .login-slider {
-    left: 10px !important;
-    right: 10px !important;
     inset-inline: unset !important;
-    width: auto !important;
-    max-width: 410px !important;
-    max-height: min(78dvh, 620px) !important;
+    left: 50% !important;
+    right: auto !important;
+    width: calc(100vw - 24px) !important;
+    max-width: calc(var(--mobile-shell-max, 430px) - 24px) !important;
+    max-height: min(82dvh, 640px) !important;
     margin-inline: auto !important;
-    transform: none !important;
+    transform: translateX(-50%) !important;
     gap: 8px;
     padding: 0 14px calc(12px + env(safe-area-inset-bottom, 0px));
-    border-radius: 8px 8px 0 0;
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(250, 248, 255, 0.96)),
-      #fff;
+    border-radius: 24px 24px 0 0;
+    background: var(--cx-surface, #ffffff);
   }
 
   .login-slider::before {
@@ -455,6 +452,7 @@
     gap: 10px;
     padding: 10px;
     border-color: #e8e1ff;
+    border-radius: 18px;
     background: #fff;
     box-shadow: 0 10px 28px rgba(17, 24, 39, 0.06);
   }
@@ -480,7 +478,7 @@
 
   :host ::ng-deep .login-form .nx-btn {
     min-height: 44px;
-    border-radius: 8px;
+    border-radius: 14px;
     font-size: 15px;
   }
 }

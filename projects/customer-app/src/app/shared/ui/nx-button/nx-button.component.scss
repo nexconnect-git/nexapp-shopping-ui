@@ -1,42 +1,112 @@
 .nx-btn {
-  height: var(--button-height);
-  min-height: var(--fd-button-md);
-  border-radius: var(--fd-radius-md);
-  padding: 0 20px;
-  font-weight: 900;
+  min-height: 44px;
+  height: 44px;
+  border-radius: 14px;
+  padding: 0 18px;
+  font-size: 14px;
+  font-weight: 800;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
   border: 1px solid transparent;
-  transition: 0.18s;
-  background: #fff;
+  color: var(--cx-text, #111827);
+  background: var(--cx-surface, #fff);
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    background 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease;
+}
+
+.nx-btn .material-symbols-rounded {
+  font-size: 18px;
+}
+
+.nx-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 999px;
+  animation: nx-spin 0.72s linear infinite;
+}
+
+@keyframes nx-spin {
+  to {
+    transform: rotate(1turn);
+  }
 }
 
 .nx-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: var(--fd-shadow-md);
+  box-shadow: var(--cx-shadow-sm, 0 4px 12px rgba(15, 23, 42, 0.08));
 }
 
 .nx-btn.primary {
-  background: var(--fd-color-primary);
+  background: var(--cx-orange, #f97316);
   color: #fff;
+}
+
+.nx-btn.primary:hover:not(:disabled) {
+  background: var(--cx-orange-dark, #ea580c);
+}
+
+.nx-btn.primary:active:not(:disabled) {
+  background: var(--cx-orange-dark, #ea580c);
+}
+
+.nx-btn.secondary,
+.nx-btn.soft,
+.nx-btn.outline {
+  border-color: #ddd6fe;
+  color: var(--cx-primary-dark, #5b21b6);
+  background: var(--cx-primary-ultra-soft, #f5f3ff);
+}
+
+.nx-btn.secondary:hover:not(:disabled),
+.nx-btn.soft:hover:not(:disabled),
+.nx-btn.outline:hover:not(:disabled) {
+  background: var(--cx-primary-soft, #ede9fe);
+}
+
+.nx-btn.ghost {
+  min-height: 40px;
+  height: 40px;
+  border-color: transparent;
+  color: var(--cx-primary, #7c3aed);
+  background: transparent;
+  box-shadow: none;
+}
+
+.nx-btn.destructive,
+.nx-btn.red {
+  background: var(--cx-danger, #dc2626);
+  color: #fff;
+}
+
+.nx-btn.destructive:hover:not(:disabled),
+.nx-btn.red:hover:not(:disabled) {
+  background: var(--cx-danger-dark, #b91c1c);
 }
 
 .nx-btn.green {
-  background: var(--fd-color-success);
+  background: var(--cx-green, #16a34a);
   color: #fff;
 }
 
-.nx-btn.outline {
-  border-color: var(--fd-color-primary-border);
-  color: var(--primary);
-  background: #fff;
+.nx-btn.green:hover:not(:disabled) {
+  background: var(--cx-green-dark, #15803d);
 }
 
-.nx-btn.soft {
-  background: var(--fd-color-primary-soft);
-  color: var(--primary);
+.nx-btn.orange {
+  background: var(--cx-orange, #f97316);
+  color: #fff;
+}
+
+.nx-btn.orange:hover:not(:disabled) {
+  background: var(--cx-orange-dark, #ea580c);
 }
 
 .nx-btn.full {
@@ -44,16 +114,25 @@
 }
 
 .nx-btn:disabled {
-  opacity: 0.55;
+  border-color: #e5e7eb;
+  background: #f3f4f6;
+  color: #6b7280;
+  opacity: 1;
   cursor: not-allowed;
+  box-shadow: none;
+}
+
+.nx-btn.loading {
+  cursor: progress;
 }
 
 @media (max-width: 760px) {
   .nx-btn {
-    min-height: 44px;
-    height: auto;
+    min-height: 48px;
+    height: 48px;
     border-radius: 14px;
     padding: 0 14px;
+    font-size: 15px;
   }
 
   .nx-btn:active:not(:disabled) {

@@ -131,10 +131,7 @@ export class TopbarComponent {
 
   canUseRoute(route: string): boolean {
     if (route === '/explore') {
-      return (
-        this.features.isRouteEnabled('customer-app', '/explore') ||
-        this.features.isRouteEnabled('customer-app', '/search')
-      );
+      return this.features.isRouteEnabled('customer-app', '/explore');
     }
     return this.features.isRouteEnabled('customer-app', route);
   }

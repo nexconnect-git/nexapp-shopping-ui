@@ -24,7 +24,7 @@
   bottom: 0;
   height: 3px;
   border-radius: 999px 999px 0 0;
-  background: linear-gradient(90deg, var(--fd-color-primary), var(--fd-color-orange), var(--fd-color-warning), var(--fd-color-success), var(--fd-color-danger));
+  background: var(--cx-danger-soft, #fee2e2);
   opacity: 0.78;
 }
 .lead-controls {
@@ -110,6 +110,7 @@
 }
 .location {
   height: 52px;
+  min-width: 0;
   border: 1px solid var(--line);
   background: #fff;
   border-radius: 999px;
@@ -119,8 +120,14 @@
   gap: 12px;
   padding: 0 18px;
   color: #42485f;
+  overflow: hidden;
 }
 .location b {
+  min-width: 0;
+  max-width: 118px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 15px;
   font-weight: 700;
 }
@@ -208,8 +215,8 @@ nav a:hover,
   border: 0;
   border-radius: 16px;
   color: #fff;
-  background: linear-gradient(135deg, var(--fd-color-primary), var(--fd-color-orange));
-  box-shadow: 0 12px 24px rgba(56, 38, 142, 0.18);
+  background: var(--cx-green, #16a34a);
+  box-shadow: 0 12px 24px rgba(22, 163, 74, 0.18);
   display: grid;
   place-items: center;
   font-size: 23px;
@@ -232,7 +239,7 @@ nav a:hover,
   width: 48px;
   height: 48px;
   border-radius: 16px;
-  background: linear-gradient(135deg, var(--fd-color-primary), #5f4bd8);
+  background: var(--cx-primary, #7c3aed);
   color: #fff;
   display: grid;
   place-items: center;
@@ -519,13 +526,7 @@ nav a:hover,
 }
 @media (max-width: 760px) {
   .topbar {
-    background:
-      radial-gradient(
-        circle at 84% 16%,
-        rgba(255, 255, 255, 0.22),
-        transparent 24%
-      ),
-      linear-gradient(135deg, #3814c8 0%, #5a1dff 48%, #7b35ff 100%);
+    background: var(--cx-primary-soft, #ede9fe);
     border-bottom: 0;
     box-shadow: none;
     grid-template-columns: 1fr;

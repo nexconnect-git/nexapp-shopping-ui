@@ -45,9 +45,9 @@ export class CustomerCatalogApiService {
     return this.api.toObservable<any>(this.api.client.catalog.products(params));
   }
 
-  getProduct(productId: string) {
+  getProduct(productId: string, params?: Record<string, any>) {
     return this.api.toObservable<any>(
-      this.api.client.catalog.product(productId),
+      this.api.client.catalog.product(productId, params),
     );
   }
 

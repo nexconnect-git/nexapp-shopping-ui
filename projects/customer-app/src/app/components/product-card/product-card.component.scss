@@ -1,9 +1,9 @@
 .product-card {
-  background: #fff;
-  border: 1px solid rgba(56, 38, 142, 0.13);
-  border-radius: 8px;
+  background: var(--cx-surface, #fff);
+  border: 1px solid var(--cx-border-soft, #f1f5f9);
+  border-radius: 18px;
   overflow: hidden;
-  box-shadow: 0 12px 28px rgba(23, 18, 61, 0.06);
+  box-shadow: var(--cx-shadow-xs, 0 1px 2px rgba(15, 23, 42, 0.06));
   min-width: 0;
   height: 100%;
   display: grid;
@@ -15,18 +15,16 @@
 }
 
 .product-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 20px 48px rgba(23, 18, 61, 0.12);
-  border-color: rgba(56, 38, 142, 0.18);
+  transform: translateY(-2px);
+  box-shadow: var(--cx-shadow-md, 0 8px 24px rgba(15, 23, 42, 0.1));
+  border-color: #ddd6fe;
 }
 .image-wrap {
   position: relative;
-  height: 150px;
+  height: 132px;
   display: grid;
   place-items: center;
-  background:
-    linear-gradient(135deg, rgba(56, 38, 142, 0.1), rgba(249, 121, 40, 0.08)),
-    linear-gradient(180deg, #ffffff 0%, #f7f4ff 100%);
+  background: var(--cx-primary-soft, #ede9fe);
   overflow: hidden;
 }
 .image-wrap img {
@@ -39,9 +37,9 @@
   position: absolute;
   left: 10px;
   top: 10px;
-  background: linear-gradient(135deg, var(--fd-color-primary), var(--fd-color-orange));
-  color: #fff;
-  border-radius: 6px;
+  background: var(--cx-warning-soft, #ffedd5);
+  color: var(--cx-warning-dark, #ea580c);
+  border-radius: var(--cx-radius-pill, 999px);
   padding: 5px 8px;
   font-size: 11px;
   font-weight: 900;
@@ -56,25 +54,24 @@
   gap: 3px;
   padding: 0 8px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.94);
-  color: var(--cx-yellow-dark, #854d0e);
-  border: 1px solid var(--fd-color-warning-border);
-  background: var(--fd-color-warning-soft);
-  box-shadow: 0 8px 18px rgba(35, 17, 124, 0.08);
-  font-size: 11px;
-  font-weight: 950;
+  color: var(--cx-success-dark, #15803d);
+  border: 1px solid #bbf7d0;
+  background: var(--cx-success-soft, #dcfce7);
+  box-shadow: 0 8px 18px rgba(22, 163, 74, 0.08);
+  font-size: 12px;
+  font-weight: 800;
 }
 .eta-chip .material-symbols-rounded {
   font-size: 14px;
 }
 .body {
-  padding: 10px 12px 12px;
+  padding: 10px;
   display: grid;
-  gap: 5px;
+  gap: 6px;
   align-content: start;
 }
 .category {
-  color: var(--fd-color-primary);
+  color: var(--cx-primary-dark, #5b21b6);
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0;
@@ -83,9 +80,9 @@
   text-overflow: ellipsis;
 }
 .name {
-  font-weight: 900;
-  color: var(--ink);
-  font-size: 13.5px;
+  font-weight: 750;
+  color: var(--cx-text, #111827);
+  font-size: 13px;
   line-height: 1.25;
   min-height: 34px;
   display: -webkit-box;
@@ -108,9 +105,9 @@
   padding: 3px 8px;
   font-size: 11px;
   font-weight: 900;
-  color: #166534;
-  background: var(--fd-color-success-soft);
-  border: 1px solid var(--fd-color-success-border);
+  color: var(--cx-success-dark, #15803d);
+  background: var(--cx-success-soft, #dcfce7);
+  border: 1px solid #bbf7d0;
 }
 .stock-badge.warning {
   color: #9a3412;
@@ -128,29 +125,31 @@
   justify-content: space-between;
   gap: 10px;
   margin-top: auto;
-  min-height: 40px;
+  min-height: 42px;
 }
 .price {
   min-width: 0;
 }
 .price b {
   display: block;
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1.2;
+  font-weight: 900;
 }
 .price del {
   font-size: 12px;
   color: var(--muted);
 }
 .add {
-  height: 36px;
-  min-width: 66px;
-  border: 1px solid var(--fd-color-success-border);
+  height: 34px;
+  min-width: 72px;
+  border: 1px solid var(--cx-green, #16a34a);
   color: #fff;
-  background: linear-gradient(135deg, var(--fd-color-success), #159947);
-  border-radius: 8px;
-  box-shadow: 0 10px 20px rgba(39, 174, 96, 0.18);
-  font-weight: 900;
+  background: var(--cx-green, #16a34a);
+  border-radius: 12px;
+  box-shadow: none;
+  font-size: 13px;
+  font-weight: 800;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
@@ -169,16 +168,16 @@
   background: var(--fd-color-danger-soft);
   color: var(--cx-red-dark, #991b1b);
   cursor: not-allowed;
-  min-width: 124px;
+  min-width: 104px;
 }
 .qty {
-  height: 36px;
-  min-width: 96px;
-  border: 1px solid var(--fd-color-success-border);
+  height: 34px;
+  min-width: 92px;
+  border: 1px solid var(--cx-green, #16a34a);
   color: #fff;
-  background: linear-gradient(135deg, var(--fd-color-success), #159947);
-  border-radius: 8px;
-  box-shadow: 0 10px 20px rgba(39, 174, 96, 0.18);
+  background: var(--cx-green, #16a34a);
+  border-radius: 12px;
+  box-shadow: 0 8px 18px rgba(22, 163, 74, 0.16);
   display: flex;
   align-items: center;
   justify-content: space-around;
@@ -216,7 +215,7 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto 1fr;
-    border-radius: 12px;
+    border-radius: 18px;
     box-shadow: 0 8px 20px rgba(23, 18, 61, 0.045);
   }
   .product-card:hover {
@@ -224,9 +223,8 @@
     box-shadow: 0 8px 20px rgba(23, 18, 61, 0.045);
   }
   .image-wrap {
-    height: 118px;
-    min-height: 118px;
-    background: linear-gradient(180deg, #fff, #fbfaff);
+    height: 112px;
+    min-height: 112px;
   }
   .image-wrap img {
     padding: 8px;
@@ -266,7 +264,7 @@
     grid-template-columns: minmax(0, 1fr);
     gap: 7px;
     align-items: end;
-    min-height: 68px;
+    min-height: 66px;
   }
   .price b {
     font-size: 15px;
@@ -275,27 +273,27 @@
     font-size: 11px;
   }
   .add {
-    height: 40px;
-    width: 100%;
+    height: 34px;
+    width: 72px;
     min-width: 0;
-    border-radius: 10px;
-    color: var(--cx-green-dark, #166534);
-    background: linear-gradient(180deg, #f2fff7, var(--fd-color-success-soft));
-    border-color: var(--fd-color-success-border);
-    box-shadow:
-      inset 0 0 0 1px var(--fd-color-success-border),
-      0 8px 18px rgba(39, 174, 96, 0.1);
+    justify-self: end;
+    border-radius: 12px;
+    color: var(--cx-primary-dark, #5b21b6);
+    background: var(--cx-primary-ultra-soft, #f5f3ff);
+    border-color: #ddd6fe;
+    box-shadow: none;
     padding: 0 12px;
   }
   .qty {
-    height: 40px;
+    height: 34px;
     min-width: 0;
-    width: 100%;
-    border-radius: 10px;
+    width: 92px;
+    justify-self: end;
+    border-radius: 12px;
   }
   .qty button {
-    height: 36px;
-    width: 36px;
+    height: 32px;
+    width: 32px;
   }
 }
 @media (max-width: 390px) {

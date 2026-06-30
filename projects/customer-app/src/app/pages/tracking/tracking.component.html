@@ -70,13 +70,17 @@
           <div
             #trackingMap
             class="google-map"
-            [class.hidden]="mapUnavailable()"
+            [class.hidden]="mapUnavailable() || !mapReady()"
           ></div>
-          @if (mapUnavailable()) {
+          @if (mapUnavailable() || !mapReady()) {
             <div class="map-fallback">
               <span class="material-symbols-rounded">my_location</span>
-              <b>Tracking map unavailable</b>
-              <small>Google Maps could not be loaded right now.</small>
+              <b>{{ mapUnavailable() ? 'Tracking map unavailable' : 'Preparing map' }}</b>
+              <small>{{
+                mapUnavailable()
+                  ? 'Open route will use your maps app when available.'
+                  : 'Live location will appear in a moment.'
+              }}</small>
             </div>
           }
           <button

@@ -19,15 +19,35 @@ export class CustomerCartApiService {
     return this.api.toObservable<any>(this.api.client.cart.bestCoupon());
   }
 
-  addToCart(productId: string, quantity: number) {
+  addToCart(
+    productId: string,
+    quantity: number,
+    fulfillmentContext?: Record<string, unknown>
+  ) {
     return this.api.toObservable<any>(
-      this.api.client.cart.addToCart(productId, quantity),
+      this.api.client.cart.addToCart(productId, quantity, fulfillmentContext),
     );
   }
 
-  replaceCart(productId: string, quantity: number) {
+  replaceCart(
+    productId: string,
+    quantity: number,
+    fulfillmentContext?: Record<string, unknown>
+  ) {
     return this.api.toObservable<any>(
-      this.api.client.cart.replaceCart(productId, quantity),
+      this.api.client.cart.replaceCart(productId, quantity, fulfillmentContext),
+    );
+  }
+
+  refreshFulfillmentLock(fulfillmentContext: Record<string, unknown>) {
+    return this.api.toObservable<any>(
+      this.api.client.cart.refreshFulfillment(fulfillmentContext),
+    );
+  }
+
+  recordFulfillmentEvent(eventType: string, metadata?: Record<string, unknown>) {
+    return this.api.toObservable<any>(
+      this.api.client.cart.recordFulfillmentEvent(eventType, metadata),
     );
   }
 

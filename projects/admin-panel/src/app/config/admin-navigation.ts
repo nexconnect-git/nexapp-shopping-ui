@@ -23,6 +23,11 @@ export const ADMIN_BASE_NAV_SECTIONS: AdminNavSection[] = [
       { route: '/orders', icon: 'receipt_long', label: 'Live Orders' },
       { route: '/dispatch', icon: 'route', label: 'Dispatch Board' },
       {
+        route: '/fulfillment-ops',
+        icon: 'warehouse',
+        label: 'Fulfillment Ops',
+      },
+      {
         route: '/delivery-partners',
         icon: 'two_wheeler',
         label: 'Dispatch Fleet',

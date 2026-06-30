@@ -1,4 +1,4 @@
-<label class="nx-field">
+<label class="nx-field" [class.invalid]="error" [class.disabled]="disabled">
   @if (label) {
     <span>{{ label }}</span>
   }
@@ -10,16 +10,23 @@
       [type]="type"
       [placeholder]="placeholder"
       [value]="value"
-      (input)="valueChange.emit($any($event.target).value)"
+      [disabled]="disabled"
+      [attr.aria-invalid]="!!error"
+      (input)="update($any($event.target).value)"
     />
     @if (value && clearable) {
       <button
         type="button"
         aria-label="Clear field"
-        (click)="valueChange.emit('')"
+        (click)="update('')"
       >
         <span class="material-symbols-rounded">close</span>
       </button>
     }
   </div>
+  @if (error) {
+    <small class="error">{{ error }}</small>
+  } @else if (hint) {
+    <small>{{ hint }}</small>
+  }
 </label>

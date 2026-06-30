@@ -41,7 +41,7 @@
     (click)="openLocation()"
   >
     <span class="material-symbols-rounded">location_on</span>
-    <b>{{ state.location().split(",")[0] }}</b>
+    <b [title]="state.location()">{{ state.location().split(",")[0] }}</b>
     <span class="material-symbols-rounded">keyboard_arrow_down</span>
   </button>
 
@@ -217,7 +217,7 @@
       <span class="material-symbols-rounded">location_on</span>
       <span
         ><small>Delivering to</small
-        ><b>{{ state.location().split(",")[0] }}</b></span
+        ><b [title]="state.location()">{{ state.location().split(",")[0] }}</b></span
       >
       <span class="material-symbols-rounded">keyboard_arrow_down</span>
     </button>

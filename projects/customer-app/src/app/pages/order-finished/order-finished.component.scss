@@ -20,7 +20,7 @@
 
 .success-card {
   border: 1px solid #97f0bd;
-  background: linear-gradient(135deg, #ecfff3, #fff);
+  background: var(--cx-success-soft, #dcfce7);
   border-radius: 22px;
   padding: 26px;
   display: grid;
@@ -83,7 +83,7 @@
   right: 12%;
   top: 25px;
   height: 3px;
-  background: linear-gradient(90deg, var(--green), #97f0bd);
+  background: var(--cx-success-soft, #dcfce7);
 }
 .timeline div {
   position: relative;
@@ -295,7 +295,7 @@ textarea:focus {
 }
 
 .coupon-card {
-  background: linear-gradient(135deg, #fff7e8, #fff);
+  background: var(--cx-warning-soft, #ffedd5);
 }
 .coupon-card small {
   font-weight: 900;
@@ -365,7 +365,7 @@ textarea:focus {
     justify-items: center;
     padding: 28px 18px;
     color: #fff;
-    background: linear-gradient(135deg, var(--fd-color-primary), var(--fd-color-primary-hover));
+    background: var(--cx-primary-soft, #ede9fe);
     text-align: center;
   }
   

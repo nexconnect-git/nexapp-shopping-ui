@@ -1824,6 +1824,199 @@ export class ApiService {
     });
   }
 
+  getAdminFulfillmentReadinessReport(params?: any): Observable<any> {
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.keys(params).forEach((key) => {
+        if (
+          params[key] !== null &&
+          params[key] !== undefined &&
+          params[key] !== ''
+        ) {
+          httpParams = httpParams.set(key, params[key]);
+        }
+      });
+    }
+    return this.http.get(
+      `${this.baseUrl}/admin/fulfillment-reports/readiness/`,
+      { params: httpParams },
+    );
+  }
+
+  getAdminFulfillmentStockComparison(params?: any): Observable<any> {
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.keys(params).forEach((key) => {
+        if (
+          params[key] !== null &&
+          params[key] !== undefined &&
+          params[key] !== ''
+        ) {
+          httpParams = httpParams.set(key, params[key]);
+        }
+      });
+    }
+    return this.http.get(
+      `${this.baseUrl}/admin/fulfillment-reports/stock-comparison/`,
+      { params: httpParams },
+    );
+  }
+
+  getAdminCartFulfillmentEvents(params?: any): Observable<any> {
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.keys(params).forEach((key) => {
+        if (
+          params[key] !== null &&
+          params[key] !== undefined &&
+          params[key] !== ''
+        ) {
+          httpParams = httpParams.set(key, params[key]);
+        }
+      });
+    }
+    return this.http.get(`${this.baseUrl}/admin/fulfillment-reports/cart-events/`, {
+      params: httpParams,
+    });
+  }
+
+  getAdminFulfillmentNodes(params?: any): Observable<any> {
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.keys(params).forEach((key) => {
+        if (
+          params[key] !== null &&
+          params[key] !== undefined &&
+          params[key] !== ''
+        ) {
+          httpParams = httpParams.set(key, params[key]);
+        }
+      });
+    }
+    return this.http.get(`${this.baseUrl}/admin/fulfillment-nodes/`, {
+      params: httpParams,
+    });
+  }
+
+  updateAdminFulfillmentNode(nodeId: string, data: any): Observable<any> {
+    return this.http.patch(
+      `${this.baseUrl}/admin/fulfillment-nodes/${nodeId}/`,
+      data,
+    );
+  }
+
+  getAdminFulfillmentNodeServiceAreas(
+    nodeId: string,
+    params?: any,
+  ): Observable<any> {
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.keys(params).forEach((key) => {
+        if (
+          params[key] !== null &&
+          params[key] !== undefined &&
+          params[key] !== ''
+        ) {
+          httpParams = httpParams.set(key, params[key]);
+        }
+      });
+    }
+    return this.http.get(
+      `${this.baseUrl}/admin/fulfillment-nodes/${nodeId}/service-areas/`,
+      { params: httpParams },
+    );
+  }
+
+  createAdminFulfillmentNodeServiceArea(
+    nodeId: string,
+    data: any,
+  ): Observable<any> {
+    return this.http.post(
+      `${this.baseUrl}/admin/fulfillment-nodes/${nodeId}/service-areas/`,
+      data,
+    );
+  }
+
+  updateAdminFulfillmentServiceArea(
+    serviceAreaId: string,
+    data: any,
+  ): Observable<any> {
+    return this.http.patch(
+      `${this.baseUrl}/admin/fulfillment-service-areas/${serviceAreaId}/`,
+      data,
+    );
+  }
+
+  deleteAdminFulfillmentServiceArea(serviceAreaId: string): Observable<any> {
+    return this.http.delete(
+      `${this.baseUrl}/admin/fulfillment-service-areas/${serviceAreaId}/`,
+    );
+  }
+
+  getAdminFulfillmentNodeInventory(
+    nodeId: string,
+    params?: any,
+  ): Observable<any> {
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.keys(params).forEach((key) => {
+        if (
+          params[key] !== null &&
+          params[key] !== undefined &&
+          params[key] !== ''
+        ) {
+          httpParams = httpParams.set(key, params[key]);
+        }
+      });
+    }
+    return this.http.get(
+      `${this.baseUrl}/admin/fulfillment-nodes/${nodeId}/inventory/`,
+      { params: httpParams },
+    );
+  }
+
+  createAdminFulfillmentNodeInventory(
+    nodeId: string,
+    data: any,
+  ): Observable<any> {
+    return this.http.post(
+      `${this.baseUrl}/admin/fulfillment-nodes/${nodeId}/inventory/`,
+      data,
+    );
+  }
+
+  updateAdminFulfillmentInventory(
+    inventoryId: string,
+    data: any,
+  ): Observable<any> {
+    return this.http.patch(
+      `${this.baseUrl}/admin/fulfillment-inventory/${inventoryId}/`,
+      data,
+    );
+  }
+
+  prepareAdminFulfillmentRollout(data: {
+    dry_run?: boolean;
+    sync_existing?: boolean;
+    include_unapproved?: boolean;
+    vendor_id?: string;
+    sample_limit?: number;
+    confirm?: string;
+  }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/admin/fulfillment-rollout/prepare/`, data);
+  }
+
+  reconcileAdminFulfillmentReservations(data: {
+    dry_run?: boolean;
+    failed_payment_age_minutes?: number;
+    confirm?: string;
+  }): Observable<any> {
+    return this.http.post(
+      `${this.baseUrl}/admin/fulfillment-reservations/reconcile/`,
+      data,
+    );
+  }
+
   updateAdminOrderStatus(id: string, status: string): Observable<any> {
     return this.http.patch(`${this.baseUrl}/admin/orders/${id}/`, { status });
   }

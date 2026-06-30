@@ -1,8 +1,32 @@
 .nx-card {
-  background: var(--fd-color-surface);
-  border: 1px solid var(--fd-color-border);
-  border-radius: var(--fd-radius-lg);
-  box-shadow: var(--fd-shadow-sm);
+  background: var(--cx-surface, #fff);
+  border: 1px solid var(--cx-border-soft, #f1f5f9);
+  border-radius: var(--cx-radius-sm, 8px);
+  box-shadow: var(--cx-shadow-xs, 0 1px 2px rgba(15, 23, 42, 0.06));
+}
+
+.nx-card.padded {
+  padding: 16px;
+}
+
+.nx-card.success {
+  border-color: #bbf7d0;
+  background: var(--cx-green-soft, #dcfce7);
+}
+
+.nx-card.warning {
+  border-color: #fed7aa;
+  background: var(--cx-orange-soft, #ffedd5);
+}
+
+.nx-card.danger {
+  border-color: var(--cx-red-border, #fecaca);
+  background: var(--cx-red-soft, #fee2e2);
+}
+
+.nx-card.brand {
+  border-color: #ddd6fe;
+  background: var(--cx-primary-ultra-soft, #f5f3ff);
 }
 
 .nx-card.hover {
@@ -11,5 +35,5 @@
 
 .nx-card.hover:hover {
   transform: translateY(-2px);
-  box-shadow: var(--fd-shadow-md);
+  box-shadow: var(--cx-shadow-md, 0 8px 24px rgba(15, 23, 42, 0.1));
 }

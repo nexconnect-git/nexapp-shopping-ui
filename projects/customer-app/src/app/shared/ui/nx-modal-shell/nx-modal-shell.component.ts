@@ -11,5 +11,11 @@ export class NxModalShellComponent {
   @Input() title = '';
   @Input() subtitle = '';
   @Input() width = '720px';
+  @Input() dismissible = true;
   @Output() closed = new EventEmitter<void>();
+
+  close(): void {
+    if (!this.dismissible) return;
+    this.closed.emit();
+  }
 }

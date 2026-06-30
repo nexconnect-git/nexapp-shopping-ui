@@ -1,1 +1,11 @@
-<section class="nx-card" [class.hover]="hover"><ng-content /></section>
+<section
+  class="nx-card"
+  [class.hover]="hover"
+  [class.padded]="padded"
+  [class.success]="tone === 'success'"
+  [class.warning]="tone === 'warning'"
+  [class.danger]="tone === 'danger'"
+  [class.brand]="tone === 'brand'"
+>
+  <ng-content />
+</section>

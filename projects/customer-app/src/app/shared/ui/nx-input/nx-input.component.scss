@@ -20,6 +20,15 @@
   padding: 0 14px;
 }
 
+.nx-field.invalid .box {
+  border-color: var(--cx-danger, #dc2626);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.08);
+}
+
+.nx-field.disabled {
+  opacity: 0.7;
+}
+
 .box:focus-within {
   border-color: var(--fd-field-focus);
   box-shadow: var(--fd-shadow-focus);
@@ -35,6 +44,17 @@ input {
   outline: 0;
   width: 100%;
   background: transparent;
+}
+
+small {
+  color: var(--cx-muted, #6b7280);
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.error {
+  color: var(--cx-danger-dark, #b91c1c);
+  font-weight: 800;
 }
 
 button {

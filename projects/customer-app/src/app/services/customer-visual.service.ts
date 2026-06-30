@@ -23,12 +23,12 @@ export class CustomerVisualService {
   coverForCategory(category: string | null | undefined) {
     const key = String(category || '').toLowerCase();
     if (key.includes('pharma') || key.includes('health'))
-      return 'linear-gradient(135deg,#e6f3ff,#FBFBFC)';
-    if (key.includes('care')) return 'linear-gradient(135deg,#ffeaf2,#F1EEFA)';
-    if (key.includes('pet')) return 'linear-gradient(135deg,#f4ecff,#fff)';
+      return '#f8fafc';
+    if (key.includes('care')) return '#f8fafc';
+    if (key.includes('pet')) return '#f8fafc';
     if (key.includes('fruit') || key.includes('fresh'))
-      return 'linear-gradient(135deg,#e5fff2,#fff7df)';
-    return 'linear-gradient(135deg,#eef8ff,#fff)';
+      return '#f8fafc';
+    return '#f8fafc';
   }
 }
 

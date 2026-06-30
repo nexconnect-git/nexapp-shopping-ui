@@ -18,8 +18,8 @@ export const CUSTOMER_MOBILE_NAV_ITEMS: CustomerNavItem[] = [
   {
     icon: 'search',
     label: 'Search',
-    route: '/search',
-    featureRoute: '/search',
+    route: '/explore',
+    featureRoute: '/explore',
   },
   { icon: 'shopping_bag', label: 'Cart', route: '/cart', badge: true },
   {

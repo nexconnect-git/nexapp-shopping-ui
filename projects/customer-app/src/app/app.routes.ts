@@ -1,5 +1,6 @@
 import { type Routes } from '@angular/router';
 import { customerAuthGuard } from './services/customer-auth.guard';
+import { customerLocationGuard } from './services/customer-location.guard';
 
 export const routes: Routes = [
   {
@@ -19,28 +20,48 @@ export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
+    canActivate: [customerLocationGuard],
     loadComponent: () =>
       import('./pages/home/home.component').then((m) => m.HomeComponent),
   },
   { path: 'new-home', redirectTo: '' },
-  { path: 'categories', redirectTo: 'explore' },
+  {
+    path: 'categories',
+    canActivate: [customerLocationGuard],
+    loadComponent: () =>
+      import('./pages/categories/categories.component').then(
+        (m) => m.CategoriesComponent,
+      ),
+  },
   {
     path: 'explore',
+    canActivate: [customerLocationGuard],
     loadComponent: () =>
       import('./pages/search/search.component').then((m) => m.SearchComponent),
   },
   {
     path: 'explore/:categoryId',
+    canActivate: [customerLocationGuard],
     loadComponent: () =>
       import('./pages/search/search.component').then((m) => m.SearchComponent),
   },
   {
     path: 'stores',
-    redirectTo: 'explore',
+    canActivate: [customerLocationGuard],
+    loadComponent: () =>
+      import('./pages/stores/stores.component').then((m) => m.StoresComponent),
   },
-  { path: 'category/:id', redirectTo: 'explore/:id' },
+  {
+    path: 'category/:id',
+    canActivate: [customerLocationGuard],
+    loadComponent: () =>
+      import('./pages/category/category.component').then(
+        (m) => m.CategoryComponent,
+      ),
+  },
   {
     path: 'store/:id',
+    canActivate: [customerLocationGuard],
     loadComponent: () =>
       import('./pages/store-detail/store-detail.component').then(
         (m) => m.StoreDetailComponent,
@@ -48,6 +69,7 @@ export const routes: Routes = [
   },
   {
     path: 'product/:id',
+    canActivate: [customerLocationGuard],
     loadComponent: () =>
       import('./pages/product-detail/product-detail.component').then(
         (m) => m.ProductDetailComponent,
@@ -59,11 +81,13 @@ export const routes: Routes = [
   },
   {
     path: 'cart',
+    canActivate: [customerLocationGuard],
     loadComponent: () =>
       import('./pages/cart/cart.component').then((m) => m.CartComponent),
   },
   {
     path: 'checkout',
+    canActivate: [customerLocationGuard],
     loadComponent: () =>
       import('./pages/checkout/checkout.component').then(
         (m) => m.CheckoutComponent,
@@ -124,7 +148,13 @@ export const routes: Routes = [
         (m) => m.AddressesComponent,
       ),
   },
-  { path: 'notifications', redirectTo: 'account' },
+  {
+    path: 'notifications',
+    loadComponent: () =>
+      import('./pages/notifications/notifications.component').then(
+        (m) => m.NotificationsComponent,
+      ),
+  },
   { path: 'wishlist', redirectTo: 'account' },
   { path: 'favorites', redirectTo: 'account' },
   { path: 'wallet', redirectTo: 'account' },

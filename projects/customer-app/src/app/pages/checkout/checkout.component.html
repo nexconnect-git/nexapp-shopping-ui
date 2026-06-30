@@ -19,6 +19,23 @@
           <span><b>3</b><small>Review</small></span>
         </section>
 
+        @if (state.cartFulfillmentMismatch()) {
+          <section class="fulfillment-alert fd-card">
+            <span class="material-symbols-rounded">sync_problem</span>
+            <div>
+              <b>Cart is not valid for this delivery area</b>
+              <p>{{ state.cartFulfillmentMismatchMessage() }}</p>
+            </div>
+            <button
+              type="button"
+              class="fd-btn outline"
+              (click)="state.clearStaleFulfillmentCart()"
+            >
+              Clear cart
+            </button>
+          </section>
+        }
+
         <section class="fd-card block">
           <h2>1. Deliver to</h2>
           @if (!hasAddresses()) {
@@ -325,6 +342,19 @@
     </header>
 
     <fd-mobile-checkout-stepper [active]="mobileSection()" />
+
+    @if (state.cartFulfillmentMismatch()) {
+      <section class="fulfillment-alert mobile">
+        <span class="material-symbols-rounded">sync_problem</span>
+        <div>
+          <b>Delivery area changed</b>
+          <small>{{ state.cartFulfillmentMismatchMessage() }}</small>
+        </div>
+        <button type="button" (click)="state.clearStaleFulfillmentCart()">
+          Clear
+        </button>
+      </section>
+    }
 
     <section class="checkout-card" [class.collapsed]="mobileSection() !== 'address'">
       <button type="button" class="mobile-card-head" (click)="openMobileSection('address')">

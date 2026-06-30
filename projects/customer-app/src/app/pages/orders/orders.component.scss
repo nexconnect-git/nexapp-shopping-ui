@@ -62,27 +62,15 @@
   box-shadow: var(--fd-shadow-sm);
 }
 .stats section:nth-child(1) {
-  background: linear-gradient(
-    135deg,
-    var(--fd-color-primary-soft),
-    var(--fd-color-surface)
-  );
+  background: var(--cx-primary-soft, #ede9fe);
   border-color: var(--fd-color-primary-border);
 }
 .stats section:nth-child(2) {
-  background: linear-gradient(
-    135deg,
-    var(--fd-color-info-soft),
-    var(--fd-color-surface)
-  );
+  background: var(--cx-surface, #ffffff);
   border-color: var(--fd-color-info-border);
 }
 .stats section:nth-child(3) {
-  background: linear-gradient(
-    135deg,
-    var(--fd-color-success-soft),
-    var(--fd-color-surface)
-  );
+  background: var(--cx-success-soft, #dcfce7);
   border-color: var(--fd-color-success-border);
 }
 .stats small {

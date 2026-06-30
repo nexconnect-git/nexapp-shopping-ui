@@ -42,10 +42,14 @@ export class ProductDetailComponent {
     public ui: UiService,
   ) {
     const productId = this.route.snapshot.paramMap.get('id');
-    this.catalog.ensureProductLoaded(productId);
+    this.catalog.ensureProductLoaded(productId, this.state.customerLocationQuery());
     effect(() => {
       const storeId = this.product().storeId;
-      if (storeId) this.catalog.ensureStoreProductsLoaded(storeId);
+      if (storeId)
+        this.catalog.ensureStoreProductsLoaded(
+          storeId,
+          this.state.customerLocationQuery(),
+        );
     });
   }
   Math = Math;
@@ -276,7 +280,10 @@ export class ProductDetailComponent {
       this.state.showToast(
         'This item is still loading. Please try again in a moment.',
       );
-      this.catalog.ensureProductLoaded(this.route.snapshot.paramMap.get('id'));
+      this.catalog.ensureProductLoaded(
+        this.route.snapshot.paramMap.get('id'),
+        this.state.customerLocationQuery(),
+      );
       return false;
     }
     return this.state.addToCart(

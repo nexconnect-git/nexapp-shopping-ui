@@ -37,7 +37,7 @@
 .banner {
   height: 92px;
   border-radius: 18px;
-  background: linear-gradient(135deg, #5030e8, #be84ff);
+  background: var(--cx-primary-soft, #ede9fe);
   color: #fff;
   display: flex;
   align-items: center;
@@ -196,7 +196,7 @@
     padding: 16px;
     border-radius: 24px;
     color: #fff;
-    background: linear-gradient(135deg, var(--fd-color-primary), var(--fd-color-primary-hover));
+    background: var(--cx-primary-soft, #ede9fe);
     box-shadow: 0 16px 36px rgba(56, 38, 142, 0.16);
   }
   

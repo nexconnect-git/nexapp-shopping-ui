@@ -13,5 +13,13 @@ export class NxInputComponent {
   @Input() icon = '';
   @Input() type = 'text';
   @Input() clearable = false;
+  @Input() error = '';
+  @Input() hint = '';
+  @Input() disabled = false;
   @Output() valueChange = new EventEmitter<string>();
+
+  update(value: string): void {
+    if (this.disabled) return;
+    this.valueChange.emit(value);
+  }
 }

@@ -62,7 +62,7 @@
 }
 .filters .mobile-sort-control {
   margin-left: auto;
-  width: 210px;
+  width: 236px;
   min-width: 0;
 }
 .fd-section-title small {
@@ -102,7 +102,7 @@
   margin: 0 0 12px;
   border: 1px solid #e5dcff;
   border-radius: 16px;
-  background: linear-gradient(135deg, #EFECF8, #fff);
+  background: var(--cx-surface, #ffffff);
   display: grid;
   grid-template-columns: 42px minmax(0, 1fr);
   gap: 12px;

@@ -2,6 +2,9 @@ import { Component, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { NotificationApi } from '@shared/lib/api/notification-api.service';
 import { NotificationStateService } from '@shared/lib/services/notification-state.service';
+import { AuthService } from '../../services/auth.service';
+import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
+import { CustomerLockedStateComponent } from '../../shared/customer-locked-state/customer-locked-state.component';
 
 type NotificationItem = {
   id: string;
@@ -15,6 +18,7 @@ type NotificationItem = {
 
 @Component({
   standalone: true,
+  imports: [BreadcrumbsComponent, CustomerLockedStateComponent],
   templateUrl: './notifications.component.html',
   styleUrls: ['./notifications.component.scss'],
 })
@@ -23,11 +27,13 @@ export class NotificationsComponent {
   notifications = signal<NotificationItem[]>([]);
 
   constructor(
+    public auth: AuthService,
     private api: NotificationApi,
     private notificationState: NotificationStateService,
     private router: Router,
   ) {
-    this.loadNotifications();
+    if (this.auth.isLoggedIn()) this.loadNotifications();
+    else this.loading.set(false);
   }
 
   markAllRead(): void {
