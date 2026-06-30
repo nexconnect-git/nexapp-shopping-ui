@@ -20,10 +20,12 @@ declare global {
   }
 }
 
+const runtimeConfig = window.__NEXCONNECT_CONFIG__ || {};
 window.__NEXCONNECT_CONFIG__ = {
-  googleMapsApiKey: environment.googleMapsApiKey,
-  googleMapsMapId: environment.googleMapsMapId,
-  ...(window.__NEXCONNECT_CONFIG__ || {}),
+  ...runtimeConfig,
+  googleMapsApiKey:
+    runtimeConfig.googleMapsApiKey || environment.googleMapsApiKey,
+  googleMapsMapId: runtimeConfig.googleMapsMapId || environment.googleMapsMapId,
 };
 
 bootstrapApplication(AppComponent, {

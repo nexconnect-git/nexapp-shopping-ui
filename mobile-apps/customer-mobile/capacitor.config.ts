@@ -3,10 +3,10 @@ import type { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
   appId: 'com.nextou.customer',
   appName: 'Nextou',
-  webDir: 'src',
+  webDir: '../../dist/customer-app/browser',
   bundledWebRuntime: false,
   server: {
-    url: 'https://nex-connect.in/sa/',
+    hostname: 'nex-connect.in',
     cleartext: false,
     androidScheme: 'https',
     allowNavigation: [
@@ -19,23 +19,22 @@ const config: CapacitorConfig = {
       'www.google.com',
       'google.com',
     ],
-    errorPath: 'offline.html',
   },
   plugins: {
     SplashScreen: {
       launchShowDuration: 2600,
-      launchAutoHide: false,
+      launchAutoHide: true,
       launchFadeOutDuration: 300,
-      backgroundColor: '#38268E',
-      androidSplashResourceName: 'splash',
-      androidScaleType: 'CENTER_CROP',
+      backgroundColor: '#2C2976',
+      androidSplashResourceName: 'splash_logo',
+      androidScaleType: 'CENTER_INSIDE',
       showSpinner: true,
       androidSpinnerStyle: 'large',
       spinnerColor: '#FF7A21',
     },
     StatusBar: {
       style: 'LIGHT',
-      backgroundColor: '#38268E',
+      backgroundColor: '#2C2976',
     },
     Keyboard: {
       resize: 'body',

@@ -162,7 +162,6 @@ export class AuthService {
     this.session.markRefreshSession();
     this.currentUser.set(response.user);
     this.currency.configureFromLocation(response.user);
-    this.initializePushNotifications();
     return true;
   }
 
