@@ -19,13 +19,23 @@ export class NativePlatformService {
     if (!this.isNative()) return true;
 
     const { Geolocation } = await import('@capacitor/geolocation');
-    const permissions = await Geolocation.requestPermissions();
+    let permissions = await Geolocation.checkPermissions();
+    if (
+      permissions.location !== 'granted' &&
+      permissions.coarseLocation !== 'granted'
+    ) {
+      permissions = await Geolocation.requestPermissions();
+    }
     return permissions.location === 'granted' || permissions.coarseLocation === 'granted';
   }
 
   async getCurrentPosition(options: PositionOptions = {}): Promise<GeolocationPosition> {
     if (this.isNative()) {
       const { Geolocation } = await import('@capacitor/geolocation');
+      const hasPermission = await this.requestLocationPermissions();
+      if (!hasPermission) {
+        throw new Error('Location permission was denied');
+      }
       const position = await Geolocation.getCurrentPosition({
         enableHighAccuracy: options.enableHighAccuracy,
         timeout: options.timeout,
@@ -50,6 +60,10 @@ export class NativePlatformService {
   ): Promise<NativeWatchId> {
     if (this.isNative()) {
       const { Geolocation } = await import('@capacitor/geolocation');
+      const hasPermission = await this.requestLocationPermissions();
+      if (!hasPermission) {
+        throw new Error('Location permission was denied');
+      }
       return Geolocation.watchPosition(
         {
           enableHighAccuracy: options.enableHighAccuracy,

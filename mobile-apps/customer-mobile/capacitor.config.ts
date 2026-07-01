@@ -14,10 +14,13 @@ const config: CapacitorConfig = {
       'www.nex-connect.in',
       'maps.googleapis.com',
       'maps.gstatic.com',
+      'places.googleapis.com',
+      'routes.googleapis.com',
       'fonts.googleapis.com',
       'fonts.gstatic.com',
       'www.google.com',
       'google.com',
+      'maps.google.com',
     ],
   },
   plugins: {
