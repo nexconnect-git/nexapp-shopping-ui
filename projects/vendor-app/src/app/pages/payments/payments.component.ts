@@ -1,237 +1,172 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import {
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   apiErrorMessage,
-  VendorApi,
   AppCurrencyPipe,
-  ToastService,
+  VendorPayout,
+  VendorPayoutPage,
+  VendorWorkspaceApi,
 } from '@shared/public-api';
-
+import { VendorContextService } from '../../services/vendor-context.service';
+import { vendorListState } from '../../services/vendor-list-state';
+import { WorkspacePagerComponent } from '../../components/workspace-pager.component';
+import { WorkspaceDialogComponent } from '../../components/workspace-dialog.component';
+type PayoutAction = 'approve' | 'decline' | 'verify-credit';
 @Component({
   selector: 'app-payments',
   standalone: true,
-  imports: [CommonModule, AppCurrencyPipe, DatePipe, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterLink,
+    AppCurrencyPipe,
+    WorkspacePagerComponent,
+    WorkspaceDialogComponent,
+  ],
   templateUrl: './payments.component.html',
   styleUrl: './payments.component.scss',
 })
 export class PaymentsComponent implements OnInit {
-  private api = inject(VendorApi);
-  private toast = inject(ToastService);
-
-  loading = signal(true);
-  payouts = signal<any[]>([]);
-  activeTab = signal<
-    'all' | 'pending_approval' | 'scheduled' | 'paid' | 'failed' | 'ledger'
-  >('all');
-
-  // Decline modal
-  showDeclineModal = signal(false);
-  decliningPayout = signal<any | null>(null);
-  declineReason = '';
-  actionId = signal<string | null>(null);
-  downloadingId = signal<string | null>(null);
-
-  // Computed slices
-  pendingApproval = computed(() =>
-    this.payouts().filter((p) => p.status === 'pending_approval'),
+  private readonly api = inject(VendorWorkspaceApi);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly destroy = inject(DestroyRef);
+  readonly store = inject(VendorContextService);
+  readonly list = vendorListState<VendorPayout, VendorPayoutPage>((query) =>
+    this.api.payouts(query)
   );
-  pendingVerify = computed(() =>
-    this.payouts().filter((p) => p.status === 'paid'),
-  );
-  filteredPayouts = computed(() => {
-    const tab = this.activeTab();
-    if (tab === 'all' || tab === 'ledger') return this.payouts();
-    if (tab === 'failed')
-      return this.payouts().filter((p) =>
-        ['failed', 'declined'].includes(p.status),
-      );
-    return this.payouts().filter((p) => p.status === tab);
-  });
-
-  payoutTabs = [
-    { key: 'all', label: 'All' },
-    { key: 'pending_approval', label: 'Pending approval' },
+  readonly status = signal('');
+  readonly pending = signal<ReadonlySet<string>>(new Set());
+  readonly rowErrors = signal<Record<string, string>>({});
+  readonly dialog = signal<{
+    payout: VendorPayout;
+    action: PayoutAction;
+  } | null>(null);
+  reason = '';
+  search = '';
+  readonly statuses = [
+    { key: '', label: 'All' },
+    { key: 'pending_approval', label: 'Needs approval' },
+    { key: 'approved', label: 'Approved' },
     { key: 'scheduled', label: 'Scheduled' },
-    { key: 'paid', label: 'Paid / verify credit' },
+    { key: 'paid', label: 'Verify credit' },
+    { key: 'verified', label: 'Verified' },
     { key: 'failed', label: 'Failed / declined' },
-    { key: 'ledger', label: 'Ledger' },
-  ] as const;
-
-  readonly payoutSetupItems = [
-    {
-      title: 'Bank and KYC setup',
-      description:
-        'Add bank account and verification details when backend support is enabled.',
-      status: 'Not connected',
-    },
-    {
-      title: 'Payout review',
-      description:
-        'Platform settlements may require vendor approval before they are scheduled.',
-      status: 'Review payouts',
-    },
-    {
-      title: 'Credit verification',
-      description:
-        'After a payout is marked paid, verify the credit once it reaches your account.',
-      status: 'Verify when paid',
-    },
   ];
-
-  ngOnInit() {
-    this.loadPayouts();
+  readonly summary = computed(() => this.list.response()?.payout_summary || []);
+  ngOnInit(): void {
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe((params) => {
+        this.list.page.set(Math.max(1, Number(params.get('page')) || 1));
+        this.status.set(params.get('status') || '');
+        this.search = params.get('search') || '';
+        this.load();
+      });
   }
-
-  loadPayouts() {
-    this.loading.set(true);
-    this.api.getVendorPayouts().subscribe({
-      next: (res: any) => {
-        this.payouts.set(res.results || res);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.toast.show('Failed to load payout history.', 'error');
-        this.loading.set(false);
-      },
-    });
-  }
-
-  // ── Payout lifecycle ──────────────────────────────────────────
-
-  approvePayout(payout: any) {
-    this.actionId.set(payout.id);
-    this.api.approvePayout(payout.id).subscribe({
-      next: () => {
-        this.actionId.set(null);
-        this.toast.show('Payout approved successfully.', 'success');
-        this.loadPayouts();
-      },
-      error: (e: any) => {
-        this.actionId.set(null);
-        this.toast.show(apiErrorMessage(e, 'Failed to approve payout.'), 'error');
+  query(page = 1): void {
+    void this.router.navigate([], {
+      queryParams: {
+        page,
+        status: this.status() || null,
+        search: this.search || null,
       },
     });
   }
-
-  openDeclineModal(payout: any) {
-    this.decliningPayout.set(payout);
-    this.declineReason = '';
-    this.showDeclineModal.set(true);
+  filter(value: string): void {
+    this.status.set(value);
+    this.query();
   }
-
-  closeDeclineModal() {
-    this.showDeclineModal.set(false);
-    this.decliningPayout.set(null);
-    this.declineReason = '';
+  load(): void {
+    this.list.load({ status: this.status(), search: this.search });
   }
-
-  confirmDecline() {
-    const payout = this.decliningPayout();
-    if (!payout) return;
-    if (!this.declineReason.trim()) {
-      this.toast.show('Decline reason is required.', 'error');
+  label(payout: VendorPayout): string {
+    return payout.status === 'failed' && payout.vendor_rejection_reason
+      ? 'Declined by vendor'
+      : this.statuses.find((status) => status.key === payout.status)?.label ||
+          payout.status;
+  }
+  open(payout: VendorPayout, action: PayoutAction): void {
+    this.reason = '';
+    this.dialog.set({ payout, action });
+  }
+  act(): void {
+    const target = this.dialog();
+    if (
+      !target ||
+      this.pending().has(target.payout.id) ||
+      (target.action === 'decline' && !this.reason.trim())
+    )
       return;
-    }
-    this.actionId.set(payout.id);
-    this.api.declinePayout(payout.id, this.declineReason).subscribe({
-      next: () => {
-        this.actionId.set(null);
-        this.toast.show('Payout declined.', 'success');
-        this.closeDeclineModal();
-        this.loadPayouts();
-      },
-      error: (e: any) => {
-        this.actionId.set(null);
-        this.toast.show(apiErrorMessage(e, 'Failed to decline payout.'), 'error');
-      },
-    });
+    this.setPending(target.payout.id, true);
+    this.rowErrors.update((errors) => ({ ...errors, [target.payout.id]: '' }));
+    this.api
+      .payoutCommand(target.payout.id, target.action, this.reason.trim())
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: () => {
+          this.dialog.set(null);
+          this.setPending(target.payout.id, false);
+          this.load();
+        },
+        error: (error) => {
+          this.rowErrors.update((errors) => ({
+            ...errors,
+            [target.payout.id]: apiErrorMessage(
+              error,
+              'Settlement action failed.'
+            ),
+          }));
+          this.setPending(target.payout.id, false);
+          this.load();
+        },
+      });
   }
-
-  verifyCredit(payout: any) {
-    this.actionId.set(payout.id);
-    this.api.verifyPayoutCredit(payout.id).subscribe({
-      next: () => {
-        this.actionId.set(null);
-        this.toast.show(
-          'Credit verified! Your sales report has been updated.',
-          'success',
-        );
-        this.loadPayouts();
-      },
-      error: (e: any) => {
-        this.actionId.set(null);
-        this.toast.show(apiErrorMessage(e, 'Failed to verify credit.'), 'error');
-      },
-    });
+  download(payout: VendorPayout): void {
+    const id = 'download:' + payout.id;
+    if (this.pending().has(id)) return;
+    this.setPending(id, true);
+    this.api
+      .payoutStatement(payout.id)
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: (blob) => {
+          const url = URL.createObjectURL(blob),
+            anchor = document.createElement('a');
+          anchor.href = url;
+          anchor.download = 'settlement-' + payout.id + '.pdf';
+          anchor.click();
+          URL.revokeObjectURL(url);
+          this.setPending(id, false);
+        },
+        error: (error) => {
+          this.rowErrors.update((errors) => ({
+            ...errors,
+            [payout.id]: apiErrorMessage(
+              error,
+              'Statement download failed. Retry.'
+            ),
+          }));
+          this.setPending(id, false);
+        },
+      });
   }
-
-  statusLabel(status: string): string {
-    const map: Record<string, string> = {
-      pending_approval: 'Pending Your Approval',
-      approved: 'Approved',
-      scheduled: 'Scheduled',
-      paid: 'Verify Credit',
-      verified: 'Verified ✓',
-      failed: 'Declined',
-    };
-    return map[status] || status;
-  }
-
-  activeTabDescription(): string {
-    const map: Record<string, string> = {
-      all: 'All settlement records across approval, scheduling, payment, verification, and exceptions.',
-      pending_approval:
-        'Payouts waiting for your review before platform processing continues.',
-      scheduled: 'Approved payouts queued for transfer by the platform.',
-      paid: 'Transfers sent by the platform. Verify the credit after it lands in your bank account.',
-      failed:
-        'Declined or failed payouts that need admin follow-up before they can be retried.',
-      ledger: 'Your payout ledger: every settlement record in one audit trail.',
-    };
-    return map[this.activeTab()];
-  }
-
-  emptyStateMessage(): string {
-    if (this.activeTab() === 'all' || this.activeTab() === 'ledger') {
-      return 'Payouts will appear after completed orders are settled by the platform.';
-    }
-    return `No ${this.activeTabDescription().toLowerCase()}`;
-  }
-
-  // ── Invoice download ──────────────────────────────────────────
-
-  downloadInvoice(payout: any) {
-    this.downloadingId.set(payout.id);
-    const payload = {
-      invoice_type: 'vendor_settlement',
-      vendor: payout.vendor,
-      amount: payout.net_payout || payout.gross_sales || payout.total_earnings,
-      notes: `Settlement for period ${payout.period_start} to ${payout.period_end}`,
-    };
-
-    this.api.generateInvoice(payload).subscribe({
-      next: (inv: any) => {
-        this.api.downloadInvoice(inv.id).subscribe({
-          next: (blob: Blob) => {
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `settlement-${payout.period_start}-${payout.period_end}.pdf`;
-            a.click();
-            URL.revokeObjectURL(url);
-            this.downloadingId.set(null);
-          },
-          error: () => {
-            this.downloadingId.set(null);
-            this.toast.show('Failed to download invoice.', 'error');
-          },
-        });
-      },
-      error: () => {
-        this.downloadingId.set(null);
-        this.toast.show('Failed to generate invoice.', 'error');
-      },
+  private setPending(id: string, value: boolean): void {
+    this.pending.update((current) => {
+      const next = new Set(current);
+      if (value) next.add(id);
+      else next.delete(id);
+      return next;
     });
   }
 }

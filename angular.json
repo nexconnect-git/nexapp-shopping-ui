@@ -372,8 +372,9 @@
               }
             ],
             "styles": [
+              "projects/shared/src/styles/nextou-tokens.css",
               "projects/vendor-app/src/styles.scss",
-              "projects/shared/src/styles/nextou-platform.css"
+              "projects/vendor-app/src/workspace.scss"
             ],
             "scripts": [],
             "stylePreprocessorOptions": {
@@ -673,8 +674,7 @@
               }
             ],
             "styles": [
-              "projects/admin-panel/src/styles.scss",
-              "projects/shared/src/styles/nextou-platform.css"
+              "projects/admin-panel/src/styles.scss"
             ],
             "scripts": [],
             "stylePreprocessorOptions": {

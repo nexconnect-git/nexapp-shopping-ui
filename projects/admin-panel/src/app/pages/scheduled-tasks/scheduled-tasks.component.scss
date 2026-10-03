@@ -1,7 +1,8 @@
-﻿:host {
+:host {
   display: block;
-  padding-bottom: 3rem;
 }
+
+.tasks-layout > * { min-width: 0; }
 
 /* â”€â”€ Page Header â”€â”€ */
 .page-header {
@@ -14,7 +15,7 @@
 }
 .page-title {
   font-size: 2rem;
-  font-weight: 900;
+  font-weight: 600;
   color: var(--text-primary);
   margin: 0 0 0.25rem;
   letter-spacing: -0.03em;
@@ -28,6 +29,8 @@
 
 .header-meta {
   display: flex;
+  flex-wrap: wrap;
+  max-width: 100%;
   align-items: center;
   gap: 1rem;
   flex-shrink: 0;
@@ -120,26 +123,33 @@
 /* â”€â”€ Two-column layout â”€â”€ */
 .tasks-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.5rem;
   align-items: start;
   @media (max-width: 1100px) {
     grid-template-columns: 1fr;
   }
 }
+.left-panel { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.catalog-header, .schedule-form-wrap { grid-column: 1 / -1; }
+.job-detail { display: grid; gap: 20px; }
+.job-detail p, .job-detail dl { margin: 0; }
+.job-info { min-width: 0; }
+.job-label { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+.job-params { white-space: normal; overflow-wrap: anywhere; }
 
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    LEFT PANEL â€” Task Catalog
 â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .catalog-header {
-  margin-bottom: 1.5rem;
+  margin-bottom: 0;
 }
 .section-title {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   font-size: 1.25rem;
-  font-weight: 800;
+  font-weight: 600;
   color: var(--text-primary);
   margin: 0 0 0.25rem;
   .material-icons-outlined {
@@ -154,14 +164,14 @@
 }
 
 .catalog-section {
-  margin-bottom: 2rem;
+  margin-bottom: 0;
 }
 .catalog-cat-label {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  font-size: 0.6875rem;
-  font-weight: 800;
+  font-size: var(--admin-text-small);
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--text-muted);
@@ -180,8 +190,8 @@
 .task-card {
   display: flex;
   align-items: center;
-  gap: 1.25rem;
-  padding: 1.25rem 1.5rem;
+  gap: 12px;
+  padding: 16px;
   background: white;
   border: 1.5px solid var(--border-color);
   border-radius: var(--radius-xl);
@@ -204,15 +214,15 @@
 }
 
 .task-card-icon {
-  width: 52px;
-  height: 52px;
+  width: 40px;
+  height: 40px;
   border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   .material-icons-outlined {
-    font-size: 26px;
+    font-size: 22px;
   }
 }
 .task-card-icon--payouts {
@@ -229,6 +239,7 @@
 }
 
 .task-card-body {
+  min-width: 0;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -236,9 +247,14 @@
 }
 .task-card-title {
   font-size: 1rem;
-  font-weight: 800;
+  font-weight: 600;
   color: var(--text-primary);
 }
+.task-card-category { color: var(--text-muted); font-size: 13px; }
+.job-detail-title { margin: 0; overflow-wrap: anywhere; }
+.job-detail-fields { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 12px 16px; }
+.job-detail-fields dt { color: var(--text-muted); }
+.job-detail-fields dd { margin: 0; overflow-wrap: anywhere; }
 .task-card-desc {
   font-size: 0.875rem;
   color: var(--text-muted);
@@ -266,9 +282,18 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 1.5rem 2rem;
+  padding: 20px;
   border-bottom: 1px solid var(--border-light);
-  background: var(--primary);
+  background: white;
+}
+.form-header > div:last-child { min-width: 0; }
+.form-section > .field-label { display: grid; gap: 8px; margin: 0 0 16px; }
+.form-section > .field-label:last-child { margin-bottom: 0; }
+
+@media (max-width: 767px) {
+  .left-panel { grid-template-columns: minmax(0, 1fr); }
+  .form-header { padding: 16px; flex-wrap: wrap; }
+  .form-header > div:last-child { flex: 1 1 160px; }
 }
 .back-btn {
   width: 36px;
@@ -318,7 +343,7 @@
 
 .form-title {
   font-size: 1.125rem;
-  font-weight: 800;
+  font-weight: 600;
   color: var(--text-primary);
   margin: 0 0 0.125rem;
 }
@@ -329,7 +354,7 @@
 }
 
 .form-section {
-  padding: 1.5rem 2rem;
+  padding: 20px;
   border-bottom: 1px solid var(--border-light);
 }
 .form-section-title {
@@ -337,7 +362,7 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.875rem;
-  font-weight: 800;
+  font-weight: 600;
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -359,8 +384,8 @@
   }
 }
 .field-label {
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-size: var(--admin-text-small);
+  font-weight: 500;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.07em;
@@ -438,8 +463,12 @@
   cursor: pointer;
   transition: all 0.2s;
   input[type="radio"] {
-    display: none;
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
   }
+  &:focus-within { outline: 2px solid var(--primary); outline-offset: 2px; }
   &.selected {
     border-color: var(--primary);
     background: var(--primary-light);
@@ -494,8 +523,12 @@
   cursor: pointer;
   transition: all 0.2s;
   input[type="radio"] {
-    display: none;
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
   }
+  &:focus-within { outline: 2px solid var(--primary); outline-offset: 2px; }
   &.active {
     border-color: var(--primary);
     color: var(--primary);
@@ -519,7 +552,7 @@
   color: white;
   border: none;
   font-size: 1rem;
-  font-weight: 800;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow: 0 4px 14px var(--primary-shadow);
@@ -552,8 +585,7 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  position: sticky;
-  top: 1.5rem;
+  position: static;
 }
 
 .jobs-card {
@@ -587,7 +619,7 @@
 }
 .jobs-title {
   font-size: 1.0625rem;
-  font-weight: 800;
+  font-weight: 600;
   color: var(--text-primary);
   margin: 0 0 0.125rem;
 }
@@ -633,8 +665,8 @@
 
   th {
     padding: 1rem 1.5rem;
-    font-size: 0.75rem;
-    font-weight: 800;
+    font-size: var(--admin-text-small);
+    font-weight: 600;
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -700,13 +732,13 @@
 .job-label {
   font-weight: 700;
   color: var(--text-primary);
-  white-space: nowrap;
+  white-space: normal;
 }
 .job-params {
   color: var(--text-muted);
   font-weight: 500;
   font-size: 0.8125rem;
-  white-space: nowrap;
+  white-space: normal;
 }
 .job-time {
   color: var(--text-secondary);
@@ -730,8 +762,8 @@
   align-items: center;
   padding: 0.25rem 0.625rem;
   border-radius: var(--radius-full);
-  font-size: 0.6875rem;
-  font-weight: 800;
+  font-size: var(--admin-text-small);
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   white-space: nowrap;
@@ -810,13 +842,13 @@
 }
 .stat-num {
   font-size: 1.75rem;
-  font-weight: 900;
+  font-weight: 600;
   color: var(--text-primary);
   letter-spacing: -0.03em;
 }
 .stat-label {
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-size: var(--admin-text-small);
+  font-weight: 500;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -845,4 +877,3 @@
 .fade-in {
   animation: fadeIn 0.35s ease-out;
 }
-

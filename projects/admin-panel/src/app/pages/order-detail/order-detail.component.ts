@@ -1,4 +1,7 @@
-﻿import {
+import { AdminAccessService } from '../../services/admin-access.service';
+import { RefundLedgerComponent } from '../../shared/refund-ledger.component';
+import { AdminLiveSocket, openAdminLiveSocket } from '../../services/admin-live-socket';
+import {
   Component,
   inject,
   NgZone,
@@ -7,17 +10,16 @@
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import {
   API_BASE_URL,
-  ApiService,
   apiErrorMessage,
+  ApiService,
   AppCurrencyPipe,
   AuthService,
   decodeGooglePolyline,
   GoogleMapsService,
-  openAuthenticatedWebSocket,
   Order,
 } from '@shared/public-api';
 import { Subscription, timer } from 'rxjs';
@@ -28,7 +30,7 @@ declare const google: any;
 @Component({
   selector: 'app-order-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, AppCurrencyPipe],
+  imports: [RouterLink,RefundLedgerComponent,CommonModule, FormsModule, AppCurrencyPipe],
   templateUrl: './order-detail.component.html',
   styleUrl: './order-detail.component.scss',
 })
@@ -41,6 +43,10 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
   private googleMaps = inject(GoogleMapsService);
   private apiBaseUrl = inject(API_BASE_URL);
 
+  readonly access = inject(AdminAccessService);
+  error = signal('');
+  lastRefreshed = signal<Date|null>(null);
+  private loadSub?: Subscription;
   order = signal<Order | null>(null);
   loading = signal(true);
   updating = signal(false);
@@ -62,6 +68,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
 
   // Live tracking map
   showMap = signal(false);
+  mapError = signal('');
   private gmMap: any;
   private gmDriverMarker: any;
   private gmVendorMarker: any;
@@ -72,29 +79,34 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
   private customerPos?: { lat: number; lng: number };
   private lastDirectionsTime = 0;
   private directionsEnabled = true;
-  private ws: WebSocket | null = null;
+  ws: AdminLiveSocket | null = null;
   private animFrameId?: number;
 
   ngOnInit() {
     this.orderId = this.route.snapshot.paramMap.get('id')!;
-    this.pollSub = timer(0, 10000).subscribe(() => this.loadOrder());
+    this.pollSub = timer(0, 15000).subscribe(() => {if(!document.hidden && !this.updating())this.loadOrder();});
   }
 
   ngOnDestroy() {
     this.pollSub?.unsubscribe();
+    this.loadSub?.unsubscribe();
     this.closeWs();
     if (this.animFrameId) cancelAnimationFrame(this.animFrameId);
     this.gmRoutePolyline?.setMap(null);
   }
 
   loadOrder() {
-    this.api.getAdminOrder(this.orderId).subscribe({
+    this.loadSub?.unsubscribe();
+    this.error.set('');
+    this.loadSub = this.api.getAdminOrder(this.orderId).subscribe({
       next: (o) => {
         this.order.set(o);
+        this.lastRefreshed.set(new Date());
         this.loading.set(false);
         this.extractPositions(o);
       },
       error: () => {
+        this.error.set('Could not load the order.');
         this.loading.set(false);
       },
     });
@@ -136,11 +148,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
             requestAnimationFrame(() => this.initMap()),
           ),
         )
-        .catch(() =>
-          console.warn(
-            '[Map] Google Maps JavaScript API is not configured or unavailable.',
-          ),
-        );
+        .catch(() => this.mapError.set('The live map is unavailable. Check the configured Google Maps service. Order details continue to refresh.'));
     }
   }
 
@@ -235,9 +243,9 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
 
   private connectWebSocket() {
     this.closeWs();
-    this.ws = openAuthenticatedWebSocket(
+    this.ws = openAdminLiveSocket(
       `/ws/delivery/${this.orderId}/tracking/`,
-      this.auth.getToken(),
+      () => this.auth.getToken(),
       this.apiBaseUrl,
     );
     this.ws.onmessage = (msg) => {

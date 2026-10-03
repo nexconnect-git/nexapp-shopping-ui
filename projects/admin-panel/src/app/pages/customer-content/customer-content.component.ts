@@ -1,6 +1,9 @@
-import { CommonModule } from '@angular/common';
+import { AdminCanDirective } from '../../shared/admin-can.directive';
+import { toLocalDateTimeInput } from '../../shared/admin-date-input';
+
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { AdminDialogDirective } from '../../shared/admin-dialog.directive';
 import { ApiService } from '@shared/public-api';
 
 type Placement =
@@ -36,7 +39,7 @@ interface CustomerContentBlock {
 @Component({
   selector: 'app-customer-content',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [AdminCanDirective, FormsModule, AdminDialogDirective],
   templateUrl: './customer-content.component.html',
   styleUrl: './customer-content.component.scss',
 })
@@ -90,7 +93,10 @@ export class CustomerContentComponent implements OnInit {
     });
   }
 
-  openCreate(template: Template = 'soft_card', placement: Placement = 'home_ad') {
+  openCreate(
+    template: Template = 'soft_card',
+    placement: Placement = 'home_ad'
+  ) {
     this.editTarget.set(null);
     this.form = this.emptyForm(template, placement);
     this.error.set('');
@@ -143,7 +149,7 @@ export class CustomerContentComponent implements OnInit {
           this.firstError(error['title']) ||
             this.firstError(error['ends_at']) ||
             this.firstError(error['detail']) ||
-            'Save failed.',
+            'Save failed.'
         );
       },
     });
@@ -151,7 +157,9 @@ export class CustomerContentComponent implements OnInit {
 
   toggleActive(block: CustomerContentBlock) {
     this.api
-      .updateAdminCustomerContentBlock(block.id, { is_active: !block.is_active })
+      .updateAdminCustomerContentBlock(block.id, {
+        is_active: !block.is_active,
+      })
       .subscribe({ next: () => this.load() });
   }
 
@@ -188,7 +196,7 @@ export class CustomerContentComponent implements OnInit {
 
   private emptyForm(
     template: Template = 'soft_card',
-    placement: Placement = 'home_ad',
+    placement: Placement = 'home_ad'
   ): CustomerContentBlock {
     return {
       id: '',
@@ -203,9 +211,14 @@ export class CustomerContentComponent implements OnInit {
         placement === 'home_engagement'
           ? 'Order again, collect offers, and keep everyday essentials close.'
           : 'Curated products from live vendor catalogs.',
-      cta_label: placement === 'home_engagement' ? 'Explore rewards' : 'Shop picks',
-      cta_url: placement === 'home_engagement' ? '/wallet' : '/search?q=grocery',
-      icon: placement === 'home_engagement' ? 'workspace_premium' : 'shopping_basket',
+      cta_label:
+        placement === 'home_engagement' ? 'Explore rewards' : 'Shop picks',
+      cta_url:
+        placement === 'home_engagement' ? '/wallet' : '/search?q=grocery',
+      icon:
+        placement === 'home_engagement'
+          ? 'workspace_premium'
+          : 'shopping_basket',
       tone: placement === 'home_engagement' ? 'green' : 'purple',
       image: '',
       display_order: 0,
@@ -217,7 +230,7 @@ export class CustomerContentComponent implements OnInit {
 
   private toDatetimeLocal(value: string | null): string | null {
     if (!value) return null;
-    return value.slice(0, 16);
+    return toLocalDateTimeInput(value);
   }
 
   private fromDatetimeLocal(value: string | null): string | null {

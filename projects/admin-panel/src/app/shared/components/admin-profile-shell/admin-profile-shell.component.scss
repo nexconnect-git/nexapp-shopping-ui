@@ -1,4 +1,4 @@
-﻿:host {
+:host {
   display: block;
 }
 
@@ -75,7 +75,7 @@
   overflow: hidden;
   color: #fff;
   font-size: 2.1rem;
-  font-weight: 900;
+  font-weight: 600;
 
   img {
     width: 100%;
@@ -92,7 +92,7 @@
     color: #111827;
     font-size: clamp(1.45rem, 2.5vw, 2rem);
     line-height: 1.08;
-    font-weight: 850;
+    font-weight: 600;
   }
 
   p {
@@ -124,7 +124,7 @@
   border-radius: 999px;
   padding: 0.22rem 0.65rem;
   border: 1px solid transparent;
-  font-size: 0.72rem;
+  font-size: var(--admin-text-small);
   font-weight: 750;
   letter-spacing: 0;
   text-transform: none;
@@ -153,13 +153,13 @@
     color: #111827;
     font-size: 1.35rem;
     line-height: 1.15;
-    font-weight: 900;
+    font-weight: 600;
   }
 
   small {
     display: block;
     color: #667085;
-    font-size: 0.78rem;
+    font-size: var(--admin-text-small);
     font-weight: 650;
     margin-top: 0.2rem;
   }
@@ -171,7 +171,7 @@
   flex: 0 0 2.45rem;
   border-radius: 8px;
   background: rgba(6, 182, 212, 0.11);
-  color: #38268E;
+  color: var(--admin-brand);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -193,8 +193,8 @@
 .intel-label {
   display: block;
   color: #667085;
-  font-size: 0.72rem;
-  font-weight: 850;
+  font-size: var(--admin-text-small);
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -218,7 +218,7 @@
   background: transparent;
   font: inherit;
   font-size: 0.86rem;
-  font-weight: 800;
+  font-weight: 600;
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
@@ -266,4 +266,3 @@
     transform: rotate(360deg);
   }
 }
-

@@ -6,15 +6,21 @@ export interface ApiErrorBody {
 }
 
 export function apiErrorMessage(error: unknown, fallback = 'Request failed'): string {
-  const body = (error as any)?.error || error;
+  // An empty HTTP body is a transport failure, not a field-error object.
+  // Never stringify HttpErrorResponse headers, functions or an HTML error page.
+  const httpFailure = error !== null && typeof error === 'object' &&
+    'status' in error && 'error' in error;
+  const body = httpFailure ? (error as { error: unknown }).error : error;
+  if (typeof body === 'string') {
+    const message = body.trim();
+    return message && !message.startsWith('<') ? message : fallback;
+  }
+  if (!body || typeof body !== 'object') return fallback;
+  const response = body as ApiErrorBody;
+  if (typeof response.detail === 'string' && response.detail) return response.detail;
+  if (typeof response.message === 'string' && response.message) return response.message;
   const fieldMessage = formatFieldErrors(body);
-  return (
-    fieldMessage ||
-    body?.detail ||
-    body?.message ||
-    (typeof body === 'string' ? body : '') ||
-    fallback
-  );
+  return fieldMessage || fallback;
 }
 
 function formatFieldErrors(value: unknown): string {
@@ -39,6 +45,7 @@ function formatFieldErrors(value: unknown): string {
 
 function toMessage(value: unknown): string {
   if (!value) return '';
+  if (typeof value === 'function') return '';
   if (Array.isArray(value)) return value.map(toMessage).filter(Boolean).join(' ');
   if (typeof value === 'object') {
     return Object.values(value as Record<string, unknown>)

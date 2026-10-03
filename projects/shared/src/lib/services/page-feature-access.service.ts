@@ -184,6 +184,7 @@ export class PageFeatureAccessService {
     failMode: PageFeatureFailMode = this.failModeFor(appId),
   ): boolean {
     if (!this.resolved() || this.loadFailed()) return failMode === 'open';
+    if (this.config().global_settings?.['maintenanceMode'] === true) return false;
     const app = this.config().applications.find((item) => item.id === appId);
     if (!app) return true;
     const page = app.pages.find((item) => item.id === pageId);
@@ -196,6 +197,7 @@ export class PageFeatureAccessService {
     failMode: PageFeatureFailMode = this.failModeFor(appId),
   ): boolean {
     if (!this.resolved() || this.loadFailed()) return failMode === 'open';
+    if (this.config().global_settings?.['maintenanceMode'] === true) return false;
     const app = this.config().applications.find((item) => item.id === appId);
     if (!app) return true;
 
@@ -215,6 +217,7 @@ export class PageFeatureAccessService {
     failMode: PageFeatureFailMode = this.failModeFor(appId),
   ): boolean {
     if (!this.resolved() || this.loadFailed()) return failMode === 'open';
+    if (this.config().global_settings?.['maintenanceMode'] === true) return false;
     const app = this.config().applications.find((item) => item.id === appId);
     const page = app?.pages.find((item) => item.id === pageId);
     const feature = page?.features?.find(

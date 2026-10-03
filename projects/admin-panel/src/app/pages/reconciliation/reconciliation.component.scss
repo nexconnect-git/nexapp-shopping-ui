@@ -1,6 +1,11 @@
 :host {
   display: block;
 }
+.admin-panel > h2 { margin: 0 0 16px; }
+.admin-form-grid h2 { margin: 6px 0 0; font-variant-numeric: tabular-nums; }
+.admin-panel > p { margin: 16px 0; }
+.money-column, .action-column { text-align: right; }
+.money-column { white-space: nowrap; font-variant-numeric: tabular-nums; }
 
 .recon-kpis {
   display: grid;
@@ -29,14 +34,14 @@
 
   span {
     color: var(--text-muted);
-    font-size: 0.75rem;
-    font-weight: 900;
+    font-size: var(--admin-text-small);
+    font-weight: 600;
     text-transform: uppercase;
   }
   strong {
     font-size: 1.75rem;
     line-height: 1;
-    font-weight: 950;
+    font-weight: 600;
   }
   small {
     color: var(--text-muted);
@@ -69,12 +74,12 @@
   h2 {
     margin: 0;
     font-size: 1rem;
-    font-weight: 950;
+    font-weight: 600;
   }
   a {
     color: var(--primary);
     text-decoration: none;
-    font-weight: 900;
+    font-weight: 600;
   }
 }
 
@@ -102,7 +107,7 @@
   em {
     color: #ef4444;
     font-style: normal;
-    font-weight: 850;
+    font-weight: 600;
     text-align: right;
   }
 }

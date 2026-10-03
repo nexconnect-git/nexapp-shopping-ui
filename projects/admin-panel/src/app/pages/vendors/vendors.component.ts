@@ -1,4 +1,6 @@
-﻿import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { AdminCanDirective } from '../../shared/admin-can.directive';
+import { AdminRowActionsComponent } from '../../shared/admin-row-actions.component';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -9,7 +11,7 @@ import { Subscription, timer } from 'rxjs';
 @Component({
   selector: 'app-vendors',
   standalone: true,
-  imports: [
+  imports: [AdminCanDirective, AdminRowActionsComponent,
     CommonModule,
     FormsModule,
     RouterLink,

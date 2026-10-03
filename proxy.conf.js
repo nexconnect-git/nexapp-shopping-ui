@@ -11,6 +11,12 @@ const target =
     : configuredTarget;
 
 module.exports = {
+  "/ws": {
+    target,
+    secure: false,
+    changeOrigin: false,
+    ws: true,
+  },
   "/api": {
     target,
     secure: false,

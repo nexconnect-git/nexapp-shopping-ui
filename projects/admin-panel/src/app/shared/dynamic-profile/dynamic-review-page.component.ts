@@ -1,4 +1,3 @@
-import { NgFor, NgIf } from '@angular/common';
 import {
   Component,
   EventEmitter,
@@ -8,7 +7,7 @@ import {
   SimpleChanges,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DisplayValuePipe } from './display-value.pipe';
+import { AdminIconPipe, ProfileFieldValuePipe } from './profile-display.pipes';
 import {
   DynamicReviewConfig,
   ProfileDisplayField,
@@ -17,7 +16,7 @@ import {
 @Component({
   selector: 'nc-dynamic-review-page',
   standalone: true,
-  imports: [NgFor, NgIf, FormsModule, DisplayValuePipe],
+  imports: [FormsModule, ProfileFieldValuePipe, AdminIconPipe],
   templateUrl: './dynamic-review-page.component.html',
   styleUrls: ['./dynamic-review-page.component.scss'],
 })
@@ -26,7 +25,6 @@ export class DynamicReviewPageComponent implements OnChanges {
 
   @Output() back = new EventEmitter<void>();
   @Output() editSection = new EventEmitter<string>();
-  @Output() saveDraft = new EventEmitter<void>();
   @Output() submitForApproval = new EventEmitter<void>();
   @Output() statusSubmit = new EventEmitter<{
     status: string;
@@ -71,7 +69,7 @@ export class DynamicReviewPageComponent implements OnChanges {
   totalFields(): number {
     return this.config.sections.reduce(
       (total, section) => total + section.fields.length,
-      0,
+      0
     );
   }
 

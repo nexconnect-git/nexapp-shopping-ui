@@ -19,6 +19,12 @@ export class ProductEditComponent implements OnInit {
     if (id) void this.service.loadProduct(id);
   }
 
+  hasUnsavedChanges(): boolean {
+    return this.service.dirty();
+  }
+  isSaving(): boolean {
+    return this.service.saving();
+  }
   cancel(): void {
     void this.router.navigate(['/products']);
   }

@@ -1,99 +1,107 @@
-<div class="notifications-page">
-  <section class="page-hero">
-    <div class="page-hero-copy">
-      <span class="eyebrow">Inbox</span>
-      <h1 class="page-title">Notifications</h1>
-      <p>Order, delivery, payout, approval, support, and system messages.</p>
+<div class="workspace-page">
+  <header class="page-heading">
+    <div>
+      <p class="eyebrow">Account</p><h1>Notifications</h1>
+      <p>{{ inbox.unread() }} unread update{{ inbox.unread() === 1 ? '' : 's' }} across your inbox.</p>
     </div>
-    <div class="page-hero-actions">
-      <button
-        class="btn-primary"
-        (click)="markAllRead()"
-        [disabled]="unreadCount() === 0"
-      >
-        <span class="material-icons-outlined">done_all</span>
-        Mark All Read
-      </button>
-    </div>
-  </section>
-
-  <div
-    class="segmented-filters"
-    role="tablist"
-    aria-label="Notification filters"
-  >
-    @for (type of filters; track type) {
-      <button
-        type="button"
-        [class.active]="filter() === type"
-        (click)="setFilter(type)"
-      >
-        {{ type | titlecase }}
-      </button>
+    <button
+      type="button"
+      class="btn btn-secondary"
+      [disabled]="!inbox.unread() || inbox.pending().has('all')"
+      (click)="inbox.markAllRead()"
+    >
+      Mark all read
+    </button>
+  </header>
+  <form class="workspace-toolbar" (ngSubmit)="query()">
+    <label class="workspace-search"
+      ><span class="material-icons-outlined">search</span
+      ><input
+        name="search"
+        [(ngModel)]="search"
+        placeholder="Search notifications"
+        aria-label="Search notifications" /></label
+    ><label class="workspace-check"
+      ><input
+        type="checkbox"
+        [ngModel]="unreadOnly()"
+        (ngModelChange)="unreadOnly.set($event); query()"
+        name="unread"
+      />
+      Unread only</label
+    ><button type="submit" class="btn btn-secondary">Search</button
+    ><button
+      type="button"
+      class="btn btn-secondary"
+      (click)="load(); inbox.refreshCount()"
+    >
+      Refresh
+    </button>
+  </form>
+  <div class="workspace-tabs" aria-label="Notification types">
+    @for(type of filters;track type){<button
+      type="button"
+      [class.active]="filter() === type"
+      [attr.aria-pressed]="filter() === type"
+      (click)="setFilter(type)"
+    >
+      {{ type | titlecase }}</button
+    >}
+  </div>
+  @if(error() || inbox.error()){
+  <p class="workspace-error" role="alert">{{ error() || inbox.error() }}</p>
+  } @if(loading()){
+  <div class="workspace-state" role="status">Loading notifications…</div>
+  }@else if(!error()&&!notifications().length){
+  <div class="workspace-state">
+    <h3>No matching notifications</h3>
+    <p>Change your filters to see other updates.</p>
+  </div>
+  }@else{
+  <div class="workspace-notification-list">
+    @for(notification of notifications();track notification.id){
+    <article
+      class="workspace-card inbox-item"
+      [class.unread]="!notification.is_read"
+    >
+      <span class="material-icons-outlined" aria-hidden="true">{{
+        notification.notification_type === "payout"
+          ? "payments"
+          : notification.notification_type === "order"
+          ? "receipt_long"
+          : "notifications"
+      }}</span>
+      <div>
+        <h3>{{ notification.title }}</h3>
+        <p>{{ notification.message }}</p>
+        <small class="workspace-muted"
+          >{{ notification.created_at | date : "medium" }} ·
+          {{ notification.notification_type | titlecase }}</small
+        >
+      </div>
+      <div class="workspace-actions">
+        <a
+          class="btn btn-secondary"
+          [routerLink]="inbox.destination(notification)"
+          (click)="inbox.markRead(notification)"
+          >View</a
+        >@if(!notification.is_read){<button
+          type="button"
+          class="btn btn-secondary"
+          [disabled]="inbox.pending().has(notification.id)"
+          (click)="inbox.markRead(notification)"
+        >
+          Mark read</button
+        >}
+      </div>
+    </article>
     }
   </div>
-
-  @if (loading()) {
-    <div class="state-card">Loading notifications...</div>
-  } @else {
-    <section class="inbox-summary">
-      <div>
-        <strong>{{ filtered().length }}</strong>
-        <span>{{ filter() | titlecase }} messages</span>
-      </div>
-      <div>
-        <strong>{{ unreadCount() }}</strong>
-        <span>Unread</span>
-      </div>
-      <div>
-        <strong>{{ filter() === "all" ? "Unified" : "Filtered" }}</strong>
-        <span>Inbox mode</span>
-      </div>
-    </section>
-    <div class="notification-list">
-      @for (n of filtered(); track n.id) {
-        <article class="notification-card" [class.unread]="!n.is_read">
-          <span class="material-icons-outlined">{{
-            n.notification_type === "delivery"
-              ? "two_wheeler"
-              : n.notification_type === "payout"
-                ? "payments"
-                : n.notification_type === "support"
-                  ? "support_agent"
-                  : "notifications"
-          }}</span>
-          <div>
-            <h3>{{ n.title }}</h3>
-            <p>{{ n.message }}</p>
-            <small>{{ n.created_at | date: "medium" }}</small>
-          </div>
-          <div class="actions">
-            @if (!n.is_read) {
-              <button (click)="markRead(n)">Mark read</button>
-            }
-            @if (
-              n.notification_type === "order" &&
-              (n.data?.order_id || n.data?.id)
-            ) {
-              <a [routerLink]="['/orders', n.data?.order_id || n.data?.id]"
-                >Open order</a
-              >
-            }
-          </div>
-        </article>
-      } @empty {
-        <div class="state-card notifications-empty">
-          <span class="material-icons-outlined">notifications_none</span>
-          <strong>You're all caught up</strong>
-          <p>
-            {{
-              filter() === "all"
-                ? "Order, payout, support, and store alerts will appear here."
-                : "No " + filter() + " notifications right now."
-            }}
-          </p>
-        </div>
-      }
-    </div>
   }
+  <nc-vendor-pager
+    [page]="page()"
+    [count]="count()"
+    [busy]="loading()"
+    (pageChange)="query($event)"
+  />
 </div>

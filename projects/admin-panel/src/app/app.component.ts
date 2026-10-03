@@ -1,3 +1,9 @@
+import { AdminDialogDirective } from './shared/admin-dialog.directive';
+import { AdminListStateService } from './services/admin-list-state.service';
+import { AdminConfirmComponent } from './shared/admin-confirm.component';
+import { CommandSearchComponent } from './shared/command-search.component';
+import { AdminAccessService } from './services/admin-access.service';
+import { AdminConnectionService } from './services/admin-connection.service';
 import { Component, HostListener, inject, OnInit, signal } from '@angular/core';
 import { Location } from '@angular/common';
 import {
@@ -25,7 +31,9 @@ import { AdminAppStartupService } from './services/admin-app-startup.service';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [
+  imports: [AdminDialogDirective,
+    CommandSearchComponent,
+    AdminConfirmComponent,
     RouterOutlet,
     RouterLink,
     RouterLinkActive,
@@ -37,6 +45,9 @@ import { AdminAppStartupService } from './services/admin-app-startup.service';
   styleUrl: './app.component.scss',
 })
 export class AppComponent implements OnInit {
+  listState = inject(AdminListStateService);
+  access = inject(AdminAccessService);
+  connection = inject(AdminConnectionService);
   auth = inject(AuthService);
   api = inject(ApiService);
   private router = inject(Router);
@@ -45,15 +56,17 @@ export class AppComponent implements OnInit {
 
   sidebarCollapsed = signal(false);
   mobileMenuOpen = signal(false);
+  mobileViewport = signal(window.innerWidth <= 1024);
   profileOpen = signal(false);
   notifOpen = signal(false);
   notifications = signal<any[]>([]);
   notifLoading = signal(false);
   unreadCount = this.startup.unreadCount;
   navQuery = signal('');
+  pageQuery = signal('');
   breadcrumbs = signal<Array<{ label: string; url?: string }>>([]);
   currentUrl = signal('/');
-  readonly quickLinks = ADMIN_QUICK_LINKS;
+  get quickLinks() { return ADMIN_QUICK_LINKS.filter(link => this.access.canRoute(link.route)); }
   private readonly baseNavSections = ADMIN_BASE_NAV_SECTIONS;
   private readonly governNavItems = ADMIN_GOVERN_NAV_ITEMS;
 
@@ -67,10 +80,11 @@ export class AppComponent implements OnInit {
       });
     }
 
+    if (this.auth.isSuperUser()) access.push({route:'/permissions',label:'Permissions',icon:'lock'});
     return [
       ...this.baseNavSections,
-      ...(access.length ? [{ label: 'Govern', items: access }] : []),
-    ];
+      ...(access.length ? [{ label: 'Administration', items: access }] : []),
+    ].map(section => ({...section,items:section.items.filter(item => this.access.canRoute(item.route))})).filter(section => section.items.length);
   }
 
   get filteredNavSections() {
@@ -92,6 +106,7 @@ export class AppComponent implements OnInit {
 
   ngOnInit() {
     this.startup.start();
+    this.access.load().subscribe();
     this.currentUrl.set(this.router.url);
     this.redirectAuthenticatedAuthRoute(this.router.url);
     this.setBreadcrumbs(this.router.url);
@@ -102,6 +117,9 @@ export class AppComponent implements OnInit {
         ),
       )
       .subscribe((event) => {
+        this.clearPageQuery();
+        this.closeMobileMenu();
+        this.closeDropdowns();
         this.currentUrl.set(event.urlAfterRedirects);
         this.redirectAuthenticatedAuthRoute(event.urlAfterRedirects);
         this.setBreadcrumbs(event.urlAfterRedirects);
@@ -119,33 +137,33 @@ export class AppComponent implements OnInit {
     const cleanUrl = url.split('?')[0].split('#')[0];
     const parts = cleanUrl.split('/').filter(Boolean);
     const crumbs: Array<{ label: string; url?: string }> = [
-      { label: 'Command Center', url: '/' },
+      { label: 'Overview', url: '/' },
     ];
     const labels: Record<string, string> = {
-      orders: 'Live Orders',
+      orders: 'Orders',
       dispatch: 'Dispatch Board',
-      'delivery-partners': 'Dispatch Fleet',
-      issues: 'Exceptions',
-      vendors: 'Stores',
+      'delivery-partners': 'Delivery Partners',
+      issues: 'Order Issues',
+      vendors: 'Vendors',
       products: 'Vendor Products',
       catalog: 'Master Catalog',
       'catalog-requests': 'Catalog Requests',
       'vendor-variant-approvals': 'Product Approvals',
       categories: 'Categories',
       customers: 'Customers',
-      coupons: 'Promotions',
+      coupons: 'Coupons',
       notifications: 'Notifications',
-      'customer-content': 'Customer Templates',
+      'customer-content': 'Customer Content',
       assets: 'Assets',
       payments: 'Payments',
       payouts: 'Payouts',
       reconciliation: 'Reconciliation',
-      'scheduled-tasks': 'Automation',
+      'scheduled-tasks': 'Scheduled Tasks',
       settings: 'Settings',
       'page-feature-management': 'Page & Feature Management',
       'platform-settings': 'Platform Settings',
       'audit-logs': 'Audit Logs',
-      'production-readiness': 'Implementation Roadmap',
+      'production-readiness': 'Runtime Readiness',
       'admin-users': 'Admin Access',
       admin: 'Admin',
       profile: 'Profile',
@@ -166,11 +184,11 @@ export class AppComponent implements OnInit {
         : labels[part] || this.titleCase(part);
       crumbs.push({
         label,
-        url: index === parts.length - 1 ? undefined : currentUrl,
+        url: index === parts.length - 1 || part === 'settings' || part === 'admin' ? undefined : currentUrl,
       });
     });
 
-    this.breadcrumbs.set(parts.length ? crumbs : [{ label: 'Command Center' }]);
+    this.breadcrumbs.set(parts.length ? crumbs : [{ label: 'Overview' }]);
   }
 
   private titleCase(value: string): string {
@@ -236,6 +254,32 @@ export class AppComponent implements OnInit {
   closeDropdowns() {
     this.profileOpen.set(false);
     this.notifOpen.set(false);
+    this.pageQuery.set('');
+  }
+
+  get pageMatches() {
+    const query = this.pageQuery().trim().toLowerCase();
+    return this.navSections.flatMap(section => section.items
+      .filter(item => item.label.toLowerCase().includes(query) || item.route.includes(query))
+      .map(item => ({ ...item, section: section.label }))).slice(0, 8);
+  }
+
+  setPageQuery(value: string) { this.pageQuery.set(value); }
+  clearPageQuery() { this.pageQuery.set(''); }
+  openFirstSearchResult() {
+    const match = this.pageMatches[0];
+    if (!this.pageQuery().trim() || !match) return;
+    this.router.navigateByUrl(match.route);
+    this.clearPageQuery();
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  handleKeyboard(event: KeyboardEvent) {
+    if (event.key === 'Escape') {
+      this.closeDropdowns();
+      this.closeMobileMenu();
+    }
+
   }
 
   toggleSidebar() {
@@ -244,6 +288,12 @@ export class AppComponent implements OnInit {
       return;
     }
     this.sidebarCollapsed.update((v) => !v);
+  }
+
+  @HostListener('window:resize')
+  updateViewport() {
+    this.mobileViewport.set(window.innerWidth <= 1024);
+    if (!this.mobileViewport()) this.closeMobileMenu();
   }
 
   setNavQuery(value: string) {
@@ -295,12 +345,12 @@ export class AppComponent implements OnInit {
 
   pageTitle(): string {
     const crumbs = this.breadcrumbs();
-    return crumbs[crumbs.length - 1]?.label || 'Command Center';
+    return crumbs[crumbs.length - 1]?.label || 'Overview';
   }
 
   isAuthRoute(): boolean {
     const path = this.currentUrl().split('?')[0].split('#')[0];
-    return path === '/login' || path === '/setup';
+    return ['/login','/setup','/forgot-password','/reset-password'].includes(path);
   }
 
   showBackButton(): boolean {

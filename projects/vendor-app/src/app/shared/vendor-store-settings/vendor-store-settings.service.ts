@@ -1,16 +1,15 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import {
+  apiErrorMessage,
+  AuthService,
   CurrencyService,
   MapLocation,
-  ToastService,
-  VendorApi,
+  User,
+  VendorWorkspaceApi,
 } from '@shared/public-api';
-import {
-  StoreLocationSuggestion,
-  StoreSettingsStatusCard,
-  VendorStoreSettings,
-} from './vendor-store-settings.models';
+import { VendorContextService } from '../../services/vendor-context.service';
+import { VendorStoreSettings } from './vendor-store-settings.models';
 
 const EMPTY_SETTINGS: VendorStoreSettings = {
   storeName: '',
@@ -30,101 +29,75 @@ const EMPTY_SETTINGS: VendorStoreSettings = {
   city: '',
   state: '',
   postalCode: '',
-  latitude: 0,
-  longitude: 0,
+  latitude: null,
+  longitude: null,
   packagingPreferences: '',
   cancellationRules: '',
 };
 
 @Injectable({ providedIn: 'root' })
 export class VendorStoreSettingsService {
-  private readonly api = inject(VendorApi);
-  private readonly toastService = inject(ToastService);
+  private readonly api = inject(VendorWorkspaceApi);
+  readonly store = inject(VendorContextService);
+  private readonly auth = inject(AuthService);
+  readonly loadError = signal('');
+  readonly loaded = signal(false);
+  readonly result = signal('');
+  readonly mediaBusy = signal('');
+  readonly mediaError = signal('');
+  readonly account = signal<User | null>(null);
+  readonly accountError = signal('');
+  readonly accountBusy = signal(false);
+  accountForm = { first_name: '', last_name: '', phone: '', email: '' };
+  private generation = 0;
   private readonly currency = inject(CurrencyService);
 
   readonly settings = signal<VendorStoreSettings>({ ...EMPTY_SETTINGS });
   readonly savedSettings = signal<VendorStoreSettings>({ ...EMPTY_SETTINGS });
+  readonly dirty = computed(() => this.loaded() && JSON.stringify(this.settings()) !== JSON.stringify(this.savedSettings()));
+  discard(): void {
+    if (this.saving()) return;
+    this.settings.set({ ...this.savedSettings() });
+    this.errors.set({});
+    this.result.set('');
+  }
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly toast = signal('');
   readonly errors = signal<Record<string, string>>({});
 
-  readonly locationSuggestions: StoreLocationSuggestion[] = [
-    {
-      label: 'Current store location',
-      address: '',
-      city: '',
-      state: '',
-      postalCode: '',
-      latitude: 0,
-      longitude: 0,
-    },
-  ];
-
   async load(): Promise<void> {
+    const generation = ++this.generation,
+      session = this.auth.sessionVersion;
     this.loading.set(true);
+    this.loaded.set(false);
+    this.loadError.set('');
     this.errors.set({});
 
     try {
-      const dto = await firstValueFrom(this.api.getVendorStoreSettings());
+      const dto = await firstValueFrom(this.api.storeSettings());
+      if (
+        generation !== this.generation ||
+        session !== this.auth.sessionVersion
+      )
+        return;
       const settings = this.fromApiDto(dto);
       this.settings.set(settings);
       this.savedSettings.set(settings);
+      this.loaded.set(true);
       this.syncCurrentLocation(settings);
-    } catch {
-      this.showToast('Failed to load store settings.', 'error');
+    } catch (failure) {
+      this.loadError.set(
+        apiErrorMessage(failure, 'Failed to load store settings.')
+      );
     } finally {
-      this.loading.set(false);
+      if (generation === this.generation) this.loading.set(false);
     }
-  }
-
-  getStatusCards(value: VendorStoreSettings): StoreSettingsStatusCard[] {
-    return [
-      {
-        label: 'Store status',
-        value: value.storeOpen ? 'Open' : 'Closed',
-        caption: value.storeOpen
-          ? 'Store is operating for the day.'
-          : 'Store is closed for customers.',
-        icon: '🏪',
-        tone: 'purple',
-      },
-      {
-        label: 'Order intake',
-        value: value.acceptingOrders ? 'Accepting' : 'Paused',
-        caption: value.acceptingOrders
-          ? 'Taking new orders from customers.'
-          : 'New orders are temporarily paused.',
-        icon: '🧾',
-        tone: 'green',
-      },
-      {
-        label: 'Order approval',
-        value: value.autoAcceptOrders ? 'Auto' : 'Manual',
-        caption: value.autoAcceptOrders
-          ? 'Orders auto-confirm after placement.'
-          : 'Orders require manual review.',
-        icon: '⚡',
-        tone: 'orange',
-      },
-    ];
   }
 
   patch(patch: Partial<VendorStoreSettings>): void {
     this.settings.update((current) => ({ ...current, ...patch }));
     this.errors.set({});
-  }
-
-  selectLocation(location: StoreLocationSuggestion): void {
-    this.patch({
-      address: location.address,
-      city: location.city,
-      state: location.state,
-      postalCode: location.postalCode,
-      latitude: location.latitude,
-      longitude: location.longitude,
-    });
-    this.showToast('Location selected', 'success');
   }
 
   selectMapLocation(location: MapLocation): void {
@@ -143,7 +116,10 @@ export class VendorStoreSettingsService {
 
   async useMyLocation(): Promise<void> {
     if (!navigator?.geolocation) {
-      this.selectLocation(this.locationSuggestions[0]);
+      this.showToast(
+        'Geolocation is unavailable. Enter coordinates or choose a location on the map.',
+        'error'
+      );
       return;
     }
 
@@ -156,13 +132,19 @@ export class VendorStoreSettingsService {
         this.showToast('Current location captured', 'success');
       },
       () => {
-        this.selectLocation(this.locationSuggestions[0]);
+        this.showToast(
+          'Could not obtain your location. Check browser permissions or enter coordinates.',
+          'error'
+        );
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
   }
 
   async save(): Promise<boolean> {
+    if (!this.loaded() || this.saving()) return false;
+    this.result.set('');
+    const session = this.auth.sessionVersion;
     const errors = this.validate(this.settings());
     this.errors.set(errors);
     if (Object.keys(errors).length) {
@@ -173,20 +155,23 @@ export class VendorStoreSettingsService {
     this.saving.set(true);
     try {
       const dto = await firstValueFrom(
-        this.api.updateVendorStoreSettings(this.toApiPayload(this.settings()))
+        this.api.saveStoreSettings(this.toApiPayload(this.settings()))
       );
+      if (session !== this.auth.sessionVersion) return false;
       const settings = this.fromApiDto(dto);
       this.settings.set(settings);
       this.savedSettings.set(settings);
+      this.store.refresh();
       this.syncCurrentLocation(settings);
       this.showToast('Store settings saved.', 'success');
       return true;
-    } catch (err: any) {
-      const mapped = this.mapBackendErrors(err?.error);
+    } catch (err: unknown) {
+      const body = (err as { error?: unknown })?.error;
+      const mapped = this.mapBackendErrors(body);
       this.errors.set({ ...this.errors(), ...mapped });
       const message = Object.keys(mapped).length
         ? 'Please fix the highlighted store settings fields.'
-        : this.formatSaveError(err?.error) || 'Failed to save store settings.';
+        : this.formatSaveError(body) || 'Failed to save store settings.';
       this.showToast(message, 'error');
       return false;
     } finally {
@@ -198,29 +183,39 @@ export class VendorStoreSettingsService {
     return this.errors()[field] || '';
   }
 
-  private fromApiDto(dto: any): VendorStoreSettings {
+  private fromApiDto(dto: Record<string, unknown>): VendorStoreSettings {
     return {
-      storeName: this.toString(dto?.store_name),
-      description: this.toString(dto?.description),
-      phone: this.toString(dto?.phone),
-      email: this.toString(dto?.email),
-      storeOpen: this.toBool(dto?.is_open),
-      acceptingOrders: this.toBool(dto?.is_accepting_orders),
-      autoAcceptOrders: this.toBool(dto?.auto_order_acceptance),
-      openingTime: this.toString(dto?.opening_time),
-      closingTime: this.toString(dto?.closing_time),
-      minimumOrder: this.toNumber(dto?.min_order_amount),
-      basePrepMinutes: this.toNumber(dto?.base_prep_time_min),
-      deliveryRadiusKm: this.toNumber(dto?.delivery_radius_km),
-      instantRadiusKm: this.toNumber(dto?.instant_delivery_radius_km),
-      address: this.toString(dto?.address),
-      city: this.toString(dto?.city),
-      state: this.toString(dto?.state),
-      postalCode: this.toString(dto?.postal_code),
-      latitude: this.toNumber(dto?.latitude),
-      longitude: this.toNumber(dto?.longitude),
-      packagingPreferences: this.toString(dto?.packaging_preferences),
-      cancellationRules: this.toString(dto?.cancellation_rules),
+      storeName: this.toString(dto['store_name']),
+      description: this.toString(dto['description']),
+      phone: this.toString(dto['phone']),
+      email: this.toString(dto['email']),
+      storeOpen: this.toBool(dto['is_open']),
+      acceptingOrders: this.toBool(dto['is_accepting_orders']),
+      autoAcceptOrders: this.toBool(dto['auto_order_acceptance']),
+      openingTime: this.toString(dto['opening_time']),
+      closingTime: this.toString(dto['closing_time']),
+      minimumOrder: this.toNumber(dto['min_order_amount']),
+      basePrepMinutes: this.toNumber(dto['base_prep_time_min']),
+      deliveryRadiusKm: this.toNumber(dto['delivery_radius_km']),
+      instantRadiusKm: this.toNumber(dto['instant_delivery_radius_km']),
+      address: this.toString(dto['address']),
+      city: this.toString(dto['city']),
+      state: this.toString(dto['state']),
+      postalCode: this.toString(dto['postal_code']),
+      latitude:
+        dto['latitude'] === null ||
+        dto['latitude'] === undefined ||
+        dto['latitude'] === ''
+          ? null
+          : this.toNumber(dto['latitude']),
+      longitude:
+        dto['longitude'] === null ||
+        dto['longitude'] === undefined ||
+        dto['longitude'] === ''
+          ? null
+          : this.toNumber(dto['longitude']),
+      packagingPreferences: this.toString(dto['packaging_preferences']),
+      cancellationRules: this.toString(dto['cancellation_rules']),
     };
   }
 
@@ -230,8 +225,6 @@ export class VendorStoreSettingsService {
       description: settings.description,
       phone: settings.phone,
       email: settings.email,
-      is_open: settings.storeOpen,
-      is_accepting_orders: settings.acceptingOrders,
       auto_order_acceptance: settings.autoAcceptOrders,
       opening_time: settings.openingTime,
       closing_time: settings.closingTime,
@@ -243,8 +236,8 @@ export class VendorStoreSettingsService {
       city: settings.city,
       state: settings.state,
       postal_code: settings.postalCode,
-      latitude: settings.latitude || null,
-      longitude: settings.longitude || null,
+      latitude: settings.latitude,
+      longitude: settings.longitude,
       packaging_preferences: settings.packagingPreferences,
       cancellation_rules: settings.cancellationRules,
     };
@@ -254,8 +247,6 @@ export class VendorStoreSettingsService {
     const errors: Record<string, string> = {};
     if (!settings.storeName.trim())
       errors['storeName'] = 'Store name is required.';
-    if (!settings.description.trim())
-      errors['description'] = 'Description is required.';
     if (!settings.phone.trim()) errors['phone'] = 'Phone is required.';
     if (
       settings.email &&
@@ -269,23 +260,24 @@ export class VendorStoreSettingsService {
     ) {
       errors['phone'] = 'Enter a valid phone number.';
     }
-    if (
-      settings.openingTime &&
-      settings.closingTime &&
-      settings.openingTime >= settings.closingTime
-    ) {
-      errors['closingTime'] = 'Closing time must be later than opening time.';
-    }
     if (!settings.address.trim())
       errors['address'] = 'Enter the pickup street address.';
     if (!settings.city.trim()) errors['city'] = 'Enter the pickup city.';
     if (!settings.state.trim()) errors['state'] = 'Enter the pickup state.';
     if (!settings.postalCode.trim())
       errors['postalCode'] = 'Enter the pickup postal code.';
-    if (!settings.latitude)
+    if (
+      settings.latitude === null ||
+      !Number.isFinite(settings.latitude) ||
+      Math.abs(settings.latitude) > 90
+    )
       errors['latitude'] =
         'Pick the store location on the map or enter latitude.';
-    if (!settings.longitude)
+    if (
+      settings.longitude === null ||
+      !Number.isFinite(settings.longitude) ||
+      Math.abs(settings.longitude) > 180
+    )
       errors['longitude'] =
         'Pick the store location on the map or enter longitude.';
     for (const field of [
@@ -294,22 +286,23 @@ export class VendorStoreSettingsService {
       'deliveryRadiusKm',
       'instantRadiusKm',
     ] as const) {
-      if (Number(settings[field]) < 0)
+      if (
+        !Number.isFinite(Number(settings[field])) ||
+        Number(settings[field]) < 0
+      )
         errors[field] = 'Value cannot be negative.';
     }
+    if (!Number.isInteger(settings.basePrepMinutes))
+      errors['basePrepMinutes'] = 'Use whole minutes.';
+    if (!settings.openingTime || !settings.closingTime)
+      errors['openingTime'] = 'Set both opening and closing times.';
+    if (settings.instantRadiusKm > settings.deliveryRadiusKm)
+      errors['instantRadiusKm'] =
+        'Instant radius cannot exceed the delivery radius.';
     return errors;
   }
 
   private syncCurrentLocation(settings: VendorStoreSettings): void {
-    this.locationSuggestions[0] = {
-      label: settings.address || 'Current store location',
-      address: settings.address,
-      city: settings.city,
-      state: settings.state,
-      postalCode: settings.postalCode,
-      latitude: settings.latitude,
-      longitude: settings.longitude,
-    };
     this.currency.configureFromLocation({
       latitude: settings.latitude,
       longitude: settings.longitude,
@@ -321,7 +314,7 @@ export class VendorStoreSettingsService {
     });
   }
 
-  private formatSaveError(error: any): string {
+  private formatSaveError(error: unknown): string {
     if (!error) return '';
     if (typeof error === 'string') return error;
     return Object.entries(error)
@@ -334,7 +327,7 @@ export class VendorStoreSettingsService {
       .join(' ');
   }
 
-  private mapBackendErrors(error: any): Record<string, string> {
+  private mapBackendErrors(error: unknown): Record<string, string> {
     if (!error || typeof error !== 'object') return {};
     const mapped: Record<string, string> = {};
     Object.entries(error).forEach(([field, messages]) => {
@@ -386,11 +379,10 @@ export class VendorStoreSettingsService {
 
   private showToast(
     message: string,
-    type: 'success' | 'error' = 'success'
+    _type: 'success' | 'error' = 'success'
   ): void {
     this.toast.set(message);
-    this.toastService.show(message, type);
-    window.setTimeout(() => this.toast.set(''), 2200);
+    this.result.set(message);
   }
 
   private toString(value: unknown): string {
@@ -404,5 +396,79 @@ export class VendorStoreSettingsService {
   private toNumber(value: unknown): number {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : 0;
+  }
+  async loadAccount(): Promise<void> {
+    this.accountError.set('');
+    try {
+      const user = await firstValueFrom(this.api.account());
+      this.account.set(user);
+      this.accountForm = {
+        first_name: user.first_name,
+        last_name: user.last_name,
+        phone: user.phone,
+        email: user.email,
+      };
+    } catch (failure) {
+      this.accountError.set(
+        apiErrorMessage(failure, 'Account details could not be loaded.')
+      );
+    }
+  }
+  async saveAccount(): Promise<void> {
+    if (this.accountBusy() || !this.account()) return;
+    this.accountBusy.set(true);
+    this.accountError.set('');
+    try {
+      const user = await firstValueFrom(this.api.saveAccount(this.accountForm));
+      this.account.set(user);
+      this.auth.updateUserData(user);
+      this.accountForm = {
+        first_name: user.first_name,
+        last_name: user.last_name,
+        phone: user.phone,
+        email: user.email,
+      };
+      this.result.set('Account details saved.');
+    } catch (failure) {
+      this.accountError.set(
+        apiErrorMessage(failure, 'Account details were not saved.')
+      );
+    } finally {
+      this.accountBusy.set(false);
+    }
+  }
+  async upload(event: Event, kind: 'logo' | 'banner'): Promise<void> {
+    const input = event.target as HTMLInputElement,
+      file = input.files?.[0];
+    if (!file || this.mediaBusy()) return;
+    this.mediaError.set('');
+    if (
+      !['image/png', 'image/jpeg', 'image/webp'].includes(file.type) ||
+      file.size > 5 * 1024 * 1024
+    ) {
+      this.mediaError.set('Choose a PNG, JPEG or WebP image up to 5 MB.');
+      input.value = '';
+      return;
+    }
+    this.mediaBusy.set(kind);
+    try {
+      await firstValueFrom(this.api.uploadStoreImage(file, kind));
+      this.store.refresh();
+      this.result.set(`${kind === 'logo' ? 'Logo' : 'Banner'} saved.`);
+    } catch (failure) {
+      this.mediaError.set(apiErrorMessage(failure, 'Image was not saved.'));
+    } finally {
+      this.mediaBusy.set('');
+      input.value = '';
+    }
+  }
+  accountDirty(): boolean {
+    const user = this.account();
+    return (
+      !!user &&
+      Object.entries(this.accountForm).some(
+        ([key, value]) => value !== user[key as keyof User]
+      )
+    );
   }
 }

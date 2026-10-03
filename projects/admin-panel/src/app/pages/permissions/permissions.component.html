@@ -1,0 +1,136 @@
+<div class="saas-page permissions-page">
+  <header class="page-header">
+    <div>
+      <h1>Permissions</h1>
+      <p>
+        Grant explicit access to administrator accounts. Manage permissions
+        include their corresponding read permissions.
+      </p>
+    </div>
+    <button class="btn btn-primary" (click)="openGrant()">Grant access</button>
+  </header>
+  @if(error()){
+  <div class="admin-error" role="alert">
+    {{ error()
+    }}<button class="btn btn-secondary" (click)="load()">Retry</button>
+  </div>
+  }
+  <div class="admin-toolbar">
+    <label
+      >Filter administrator<select
+        [(ngModel)]="userFilter"
+        (change)="page = 0; load()"
+      >
+        <option value="">All administrators</option>
+        @for(user of users();track user.id){
+        <option [value]="user.id">{{ user.username }}</option>
+        }
+      </select></label
+    ><span class="admin-muted"
+      >Superusers already have full access. Scoped grants are unavailable.</span
+    >
+  </div>
+  <p-table
+    [value]="grants()"
+    [loading]="loading()"
+    [paginator]="total() > 20"
+    [rows]="20"
+    [totalRecords]="total()"
+    [lazy]="true"
+    [first]="page * 20"
+    (onLazyLoad)="page = ($event.first || 0) / 20; load()"
+    [tableStyle]="{ 'min-width': '920px' }"
+  >
+    <ng-template #header
+      ><tr>
+        <th style="min-width:240px">Administrator</th>
+        <th style="min-width:200px">Permission</th>
+        <th style="min-width:160px">Granted by</th>
+        <th style="min-width:160px">Granted at</th>
+        <th style="width:120px;text-align:right">Action</th>
+      </tr></ng-template
+    >
+    <ng-template #body let-grant
+      ><tr>
+        <td>
+          {{ grant.user_name }}
+          <div class="admin-muted">{{ grant.user_email }}</div>
+        </td>
+        <td>{{ label(grant.permission) }}</td>
+        <td>{{ grant.granted_by_name || "System" }}</td>
+        <td>{{ grant.created_at | date : "mediumDate" }}</td>
+        <td>
+          <button class="btn btn-secondary" (click)="pendingRevoke = grant">
+            Revoke
+          </button>
+        </td>
+      </tr></ng-template
+    >
+    <ng-template #emptymessage
+      ><tr>
+        <td colspan="5">No explicit grants match this administrator.</td>
+      </tr></ng-template
+    >
+  </p-table>
+  <p-dialog closeAriaLabel="Close dialog"
+    header="Grant administrator access"
+    [(visible)]="grantOpen"
+    [modal]="true"
+    [style]="{ width: '520px' }"
+    [breakpoints]="{ '768px': '94vw' }"
+    ><div class="admin-form-grid">
+      <label
+        >Administrator<select [(ngModel)]="selectedUser">
+          <option value="">Choose account</option>
+          @for(user of users();track user.id){@if(!user.is_superuser){
+          <option [value]="user.id">
+            {{ user.username }} · {{ user.email }}
+          </option>
+          }}
+        </select></label
+      ><label
+        >Permission<select [(ngModel)]="selectedPermission">
+          <option value="">Choose access</option>
+          @for(permission of access.identity()?.catalog || [];track
+          permission.key){
+          <option [value]="permission.key">{{ permission.label }}</option>
+          }
+        </select></label
+      >
+    </div>
+    <p class="admin-muted">
+      Grants are enforced by routes, navigation and server endpoints.
+    </p>
+    <ng-template #footer
+      ><button class="btn btn-secondary" (click)="grantOpen = false">
+        Cancel</button
+      ><button
+        class="btn btn-primary"
+        [disabled]="saving() || !selectedUser || !selectedPermission"
+        (click)="grant()"
+      >
+        Grant permission
+      </button></ng-template
+    ></p-dialog
+  >
+  <p-dialog closeAriaLabel="Close dialog"
+    header="Revoke access"
+    [visible]="!!pendingRevoke"
+    (visibleChange)="!$event && (pendingRevoke = null)"
+    [modal]="true"
+    [style]="{ width: '480px' }"
+    [breakpoints]="{ '768px': '94vw' }"
+    ><p>
+      Revoke {{ label(pendingRevoke?.permission) }} from
+      {{ pendingRevoke?.user_name }}? Access changes apply to their next
+      request.
+    </p>
+    <ng-template #footer
+      ><button class="btn btn-secondary" (click)="pendingRevoke = null">
+        Cancel</button
+      ><button class="btn btn-primary" [disabled]="saving()" (click)="revoke()">
+        Revoke permission
+      </button></ng-template
+    ></p-dialog
+  >
+</div>

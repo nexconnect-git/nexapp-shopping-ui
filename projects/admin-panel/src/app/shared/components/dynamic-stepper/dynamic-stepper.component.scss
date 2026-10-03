@@ -53,7 +53,6 @@
 .wizard-shell {
   display: flex;
   flex-direction: column;
-  min-height: 490px;
   background: #fff;
   border: 1px solid var(--border-color);
   border-radius: 8px;
@@ -141,7 +140,7 @@
   background: #fff;
   color: var(--text-secondary);
   font-size: 0.88rem;
-  font-weight: 900;
+  font-weight: 600;
   transition: all 0.2s ease;
 
   .material-icons-outlined {
@@ -153,8 +152,8 @@
   max-width: 122px;
   min-height: 1rem;
   color: var(--text-muted);
-  font-size: 0.76rem;
-  font-weight: 850;
+  font-size: var(--admin-text-small);
+  font-weight: 600;
   line-height: 1.25;
   text-align: center;
   white-space: normal;
@@ -179,7 +178,7 @@
     margin: 0 0 0.35rem;
     color: var(--text-primary);
     font-size: 1.25rem;
-    font-weight: 950;
+    font-weight: 600;
     letter-spacing: 0;
   }
 
@@ -187,7 +186,7 @@
     margin: 0;
     color: var(--text-secondary);
     font-size: 0.9rem;
-    font-weight: 700;
+    font-weight: 400;
   }
 }
 
@@ -200,7 +199,7 @@
   background: var(--primary-light);
   color: var(--primary);
   font-size: 1.2rem;
-  font-weight: 950;
+  font-weight: 600;
   flex: 0 0 auto;
 }
 
@@ -213,7 +212,7 @@
     margin: 0 0 0.25rem;
     color: var(--text-primary);
     font-size: 1rem;
-    font-weight: 900;
+    font-weight: 600;
   }
 
   p {
@@ -235,6 +234,7 @@
 }
 
 .form-group {
+  margin: 0;
   display: flex;
   min-width: 0;
   flex-direction: column;
@@ -247,7 +247,7 @@
   label {
     color: var(--text-primary);
     font-size: 0.8rem;
-    font-weight: 900;
+    font-weight: 600;
   }
 
   input,
@@ -318,8 +318,8 @@
   span {
     min-width: 0;
     color: var(--text-muted);
-    font-size: 0.78rem;
-    font-weight: 800;
+    font-size: var(--admin-text-small);
+    font-weight: 600;
     overflow-wrap: anywhere;
   }
 }
@@ -327,7 +327,7 @@
 .map-selected-value {
   margin-top: 0.75rem;
   background: color-mix(in srgb, var(--primary) 5%, #fff) !important;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .req {
@@ -338,7 +338,7 @@
 .opt {
   margin-left: 4px;
   color: var(--text-muted);
-  font-size: 0.75rem;
+  font-size: var(--admin-text-small);
   font-weight: 600;
 }
 
@@ -352,21 +352,21 @@
 
 .field-error {
   color: var(--danger);
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-size: var(--admin-text-small);
+  font-weight: 500;
 }
 
 .field-hint {
   color: var(--text-muted);
-  font-size: 0.74rem;
-  font-weight: 700;
+  font-size: var(--admin-text-small);
+  font-weight: 400;
   line-height: 1.35;
 }
 
 .field-checking,
 .field-success {
-  font-size: 0.74rem;
-  font-weight: 800;
+  font-size: var(--admin-text-small);
+  font-weight: 600;
   line-height: 1.35;
 }
 
@@ -384,8 +384,8 @@
   align-items: center;
   gap: 0.45rem;
   color: var(--text-muted);
-  font-size: 0.75rem;
-  font-weight: 800;
+  font-size: var(--admin-text-small);
+  font-weight: 600;
 }
 
 .suggestion-chip {
@@ -395,8 +395,8 @@
   background: var(--primary-light);
   color: var(--primary);
   font: inherit;
-  font-size: 0.74rem;
-  font-weight: 900;
+  font-size: var(--admin-text-small);
+  font-weight: 600;
   padding: 0.25rem 0.65rem;
   cursor: pointer;
 
@@ -448,8 +448,8 @@
 .list-error {
   margin-top: 0.75rem;
   color: var(--danger);
-  font-size: 0.78rem;
-  font-weight: 800;
+  font-size: var(--admin-text-small);
+  font-weight: 600;
 }
 
 .list-items {
@@ -513,7 +513,7 @@
     margin: 0 0 0.75rem;
     color: var(--text-primary);
     font-size: 1rem;
-    font-weight: 950;
+    font-weight: 600;
   }
 }
 
@@ -537,14 +537,14 @@
 
   span {
     color: var(--text-muted);
-    font-size: 0.78rem;
-    font-weight: 800;
+    font-size: var(--admin-text-small);
+    font-weight: 600;
   }
 
   strong {
     color: var(--text-primary);
     font-size: 0.9rem;
-    font-weight: 850;
+    font-weight: 600;
     overflow-wrap: anywhere;
   }
 }
@@ -570,7 +570,7 @@
   gap: 0.35rem;
   min-height: 48px;
   border-radius: 8px;
-  font-weight: 900;
+  font-weight: 600;
 
   .material-icons-outlined {
     font-size: 1.1rem;

@@ -74,6 +74,7 @@ const SHORT_LIVED_PATTERNS = [
 ];
 
 const NEVER_CACHE_PATTERNS = [
+  /\/api\/admin\//,
   /\/api\/auth\/profile\/?(\?|$)/,
   /\/api\/auth\/addresses\/?/,
   /\/api\/auth\/wallet\/?(\?|$)/,

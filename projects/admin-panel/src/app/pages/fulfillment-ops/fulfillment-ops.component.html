@@ -179,10 +179,10 @@
               placeholder="10"
             />
           </label>
-          <button type="button" class="primary area-save" (click)="createServiceArea()" [disabled]="serviceAreaSaving()">
+          <ng-container *appAdminCan="'dispatch.manage'"><button type="button" class="primary area-save" (click)="createServiceArea()" [disabled]="serviceAreaSaving()">
             <span class="material-icons-outlined">add_location_alt</span>
             Add Area
-          </button>
+          </button></ng-container>
         </div>
 
         <div class="area-list">
@@ -269,14 +269,14 @@
                   (input)="updateNodeSettingsField('daily_order_capacity', $any($event.target).value)"
                 />
               </label>
-              <button
+              <ng-container *appAdminCan="'dispatch.manage'"><button
                 type="button"
                 class="primary save-node"
                 (click)="saveNodeSettings()"
                 [disabled]="nodeSettingsSaving()"
               >
                 Save Node
-              </button>
+              </button></ng-container>
             </div>
           }
 
@@ -332,14 +332,14 @@
                               Activate
                             </button>
                           }
-                          <button
+                          <ng-container *appAdminCan="'dispatch.manage'"><button
                             type="button"
                             class="danger"
                             (click)="deleteServiceArea(area)"
                             [disabled]="serviceAreaActionId() === area.id"
                           >
                             Delete
-                          </button>
+                          </button></ng-container>
                         </div>
                       </td>
                     </tr>
@@ -430,7 +430,7 @@
               {{ inventoryCreateForm().is_available ? 'Yes' : 'No' }}
             </span>
           </label>
-          <button
+          <ng-container *appAdminCan="'dispatch.manage'"><button
             type="button"
             class="primary add-inventory"
             (click)="createInventory()"
@@ -438,7 +438,7 @@
           >
             <span class="material-icons-outlined">add_box</span>
             Add Inventory
-          </button>
+          </button></ng-container>
         </div>
 
         @if (nodeInventoryLoading()) {
@@ -499,14 +499,14 @@
                     </td>
                     <td>
                       <div class="row-actions">
-                        <button
+                        <ng-container *appAdminCan="'dispatch.manage'"><button
                           type="button"
                           class="secondary"
                           (click)="saveInventory(row)"
                           [disabled]="inventoryActionId() === row.id"
                         >
                           Save
-                        </button>
+                        </button></ng-container>
                         <button
                           type="button"
                           class="ghost"

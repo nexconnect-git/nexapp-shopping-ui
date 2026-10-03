@@ -15,7 +15,7 @@
             >Updated {{ lastRefreshed() | date: "HH:mm:ss" }}</span
           >
         }
-        <button
+        <button aria-label="Reload"
           class="btn btn-ghost btn-sm"
           (click)="manualReload()"
           [disabled]="loading()"
@@ -54,7 +54,7 @@
     </label>
     <label class="toolbar-field">
       <span>Status</span>
-      <select class="filter-input" [(ngModel)]="statusFilter" (change)="load()">
+      <select class="filter-input" [(ngModel)]="statusFilter" (change)="applyFilters()">
         <option value="">All Status</option>
         <option value="placed">Placed</option>
         <option value="confirmed">Confirmed</option>
@@ -68,6 +68,12 @@
     </label>
   </section>
 
+  <details class="admin-panel"><summary>Advanced filters</summary><div class="admin-form-grid" style="margin-top:16px">
+    <label>Placed from<input type="date" [(ngModel)]="dateFrom" (change)="applyFilters()" /></label><label>Placed to<input type="date" [(ngModel)]="dateTo" (change)="applyFilters()" /></label><label>Minimum total<input type="number" min="0" [(ngModel)]="amountMin" (change)="applyFilters()" /></label><label>Maximum total<input type="number" min="0" [(ngModel)]="amountMax" (change)="applyFilters()" /></label>
+    <label>Vendor ID<input [(ngModel)]="vendorFilter" placeholder="Vendor UUID" (change)="applyFilters()" /></label><label>Customer ID<input [(ngModel)]="customerFilter" placeholder="Customer UUID" (change)="applyFilters()" /></label><label>Partner ID<input [(ngModel)]="partnerFilter" placeholder="Partner UUID" (change)="applyFilters()" /></label>
+    <label>Issue state<select [(ngModel)]="issueState" (change)="applyFilters()"><option value="">Any</option><option value="open">Open issues</option></select></label><label>Delivery state<select [(ngModel)]="deliveryState" (change)="applyFilters()"><option value="">Any</option><option value="unassigned">Unassigned</option><option value="in_transit">In transit</option></select></label><label>Sort<select [(ngModel)]="ordering" (change)="applyFilters()"><option value="-placed_at">Newest first</option><option value="placed_at">Oldest first</option><option value="-total">Highest total</option><option value="total">Lowest total</option></select></label>
+  </div><button class="btn btn-secondary" style="margin-top:16px" (click)="resetFilters()">Clear filters</button></details>
+  @if(error()){<div class="admin-error" role="alert">{{error()}}<button class="btn btn-secondary" (click)="load()">Retry</button></div>}
   <app-dynamic-table
     [loading]="loading()"
     [data]="orders()"
@@ -82,7 +88,7 @@
   >
     <!-- Custom order_number column -->
     <ng-template tableCell="order_number" let-order>
-      <span class="order-id">#{{ order.order_number }}</span>
+      <a class="order-id" [routerLink]="['/orders',order.id]">#{{ order.order_number }}</a>
     </ng-template>
 
     <!-- Custom customer_name column -->
@@ -115,7 +121,7 @@
     <!-- Custom actions column -->
     <ng-template tableCell="actions" let-order>
       <div class="actions">
-        <button
+        <button aria-label="View Details"
           class="action-btn"
           (click)="viewDetails(order)"
           title="View Details"
@@ -126,13 +132,14 @@
         </button>
         <select
           class="status-select"
-          [value]="order.status"
+          [ngModel]="order.status"
+          [attr.aria-label]="'Update status for ' + order.order_number"
           [disabled]="
-            updatingId() === order.id ||
+            !access.can('orders.manage') || updatingId() === order.id ||
             order.status === 'delivered' ||
             order.status === 'cancelled'
           "
-          (change)="updateStatus(order, $any($event.target).value)"
+          (ngModelChange)="updateStatus(order, $event)"
         >
           @for (s of getAvailableStatuses(order); track s) {
             <option [value]="s">{{ s }}</option>
@@ -143,8 +150,8 @@
   </app-dynamic-table>
 
   @if (showModal()) {
-    <div class="modal-backdrop" (click)="closeModal()">
-      <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-backdrop" (click)="$event.target === $event.currentTarget && (closeModal())" (keydown.escape)="closeModal()" tabindex="-1" role="presentation">
+      <div class="modal-content" appAdminDialog (appAdminDialogClose)="closeModal()">
         <div class="modal-header">
           <h2>Order #{{ selectedOrder()?.order_number }} Details</h2>
           <button class="close-btn" (click)="closeModal()">&times;</button>
@@ -209,7 +216,7 @@
               @if (selectedOrder()?.delivery_address) {
                 <p>
                   <strong>Address:</strong>
-                  {{ selectedOrder()?.delivery_address?.street }},
+                  @if (selectedOrder()?.delivery_address?.street) { {{ selectedOrder()?.delivery_address?.street }}, }
                   {{ selectedOrder()?.delivery_address?.city }}
                 </p>
                 <p>
@@ -267,6 +274,8 @@
                     <span>{{ item.quantity }}x {{ item.product_name }}</span>
                     <span>{{ item.subtotal | appCurrency }}</span>
                   </div>
+                } @empty {
+                  <p class="text-muted">No item details available.</p>
                 }
                 <div class="item-row total-row">
                   <strong>Total (incl. fee)</strong>

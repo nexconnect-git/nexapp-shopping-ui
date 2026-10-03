@@ -1,15 +1,11 @@
-﻿import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { CommonModule, DecimalPipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { ApiService, AppCurrencyPipe, ToastService } from '@shared/public-api';
-import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
-import {
-  AdminProfileBadge,
-  AdminProfileMetric,
-  AdminProfileShellComponent,
-  AdminProfileTab,
-} from '../../shared/components/admin-profile-shell/admin-profile-shell.component';
+import { ProfileContextComponent } from '../../shared/profile-context.component';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
+
+
+import { ActivatedRoute, Router } from '@angular/router';
+import { ApiService, ToastService } from '@shared/public-api';
+
+import { AdminProfileBadge, AdminProfileMetric, AdminProfileTab } from '../../shared/components/admin-profile-shell/admin-profile-shell.component';
 import { DynamicProfilePageComponent } from '../../shared/dynamic-profile/dynamic-profile-page.component';
 import { EntityProfileAdapterService } from '../../shared/dynamic-profile/entity-profile-adapter.service';
 import { ProfileHeroAction } from '../../shared/dynamic-profile/dynamic-profile.models';
@@ -19,7 +15,7 @@ type Tab = 'overview' | 'deliveries' | 'assets';
 @Component({
   selector: 'app-partner-profile',
   standalone: true,
-  imports: [DynamicProfilePageComponent],
+  imports: [DynamicProfilePageComponent, ProfileContextComponent],
   templateUrl: './partner-profile.component.html',
   styleUrl: './partner-profile.component.scss',
 })
@@ -37,7 +33,7 @@ export class PartnerProfileComponent implements OnInit {
   dynamicProfileConfig = computed(() =>
     this.partner()
       ? this.adapter.buildProfileConfig('delivery-partner', this.partner())
-      : null,
+      : null
   );
 
   /** Derived status for the select: active | suspended | pending */
@@ -49,8 +45,6 @@ export class PartnerProfileComponent implements OnInit {
     return 'active';
   });
 
-  showTempPassword = signal(false);
-  copied = signal(false);
 
   activeTab = signal<Tab>('overview');
 
@@ -237,19 +231,6 @@ export class PartnerProfileComponent implements OnInit {
     }
   }
 
-  toggleTempPassword() {
-    this.showTempPassword.update((v) => !v);
-  }
-
-  copyTempPassword() {
-    const pwd = this.partner()?.user?.temp_password;
-    if (!pwd) return;
-    navigator.clipboard.writeText(pwd).then(() => {
-      this.copied.set(true);
-      setTimeout(() => this.copied.set(false), 2000);
-    });
-  }
-
   revoke() {
     if (!confirm('Revoke approval for this partner?')) return;
     this.actionLoading.set(true);
@@ -301,7 +282,7 @@ export class PartnerProfileComponent implements OnInit {
             this.actionLoading.set(false);
             this.toast.show(
               'Temporary password generated. Share it securely with the partner.',
-              'success',
+              'success'
             );
           },
           error: () => {
@@ -402,4 +383,3 @@ export class PartnerProfileComponent implements OnInit {
     return 'â˜…'.repeat(f) + 'â˜†'.repeat(5 - f);
   }
 }
-

@@ -1,112 +1,18 @@
-<div class="saas-page dispatch-board-page">
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">Dispatch Board</h1>
-      <p class="page-subtitle">
-        Live queue for instant delivery order movement and rider readiness.
-      </p>
-    </div>
-    <div class="header-actions">
-      @if (lastUpdated()) {
-        <span class="reload-timestamp"
-          >Updated {{ lastUpdated() | date: "HH:mm:ss" }}</span
-        >
-      }
-      <button class="btn btn-primary" (click)="load()" [disabled]="loading()">
-        <span class="material-icons-outlined" [class.spin]="loading()"
-          >refresh</span
-        >
-        Refresh
-      </button>
-    </div>
-  </div>
-
-  @if (loading()) {
-    <div class="admin-loading">
-      <div class="spinner"></div>
-      <span>Loading dispatch telemetry...</span>
-    </div>
-  } @else if (error()) {
-    <div class="admin-empty danger">{{ error() }}</div>
-  } @else {
-    <section class="dispatch-kpis">
-      <a routerLink="/orders" class="dispatch-kpi">
-        <span class="material-icons-outlined">receipt_long</span>
-        <strong>{{ activeOrders().length }}</strong>
-        <small>Active orders</small>
-      </a>
-      <a routerLink="/orders" class="dispatch-kpi accent">
-        <span class="material-icons-outlined">room_service</span>
-        <strong>{{ readyOrders().length }}</strong>
-        <small>Ready for pickup</small>
-      </a>
-      <a routerLink="/orders" class="dispatch-kpi cyan">
-        <span class="material-icons-outlined">conversion_path</span>
-        <strong>{{ inTransit().length }}</strong>
-        <small>In transit</small>
-      </a>
-      <a routerLink="/delivery-partners" class="dispatch-kpi green">
-        <span class="material-icons-outlined">two_wheeler</span>
-        <strong>{{ onlinePartners().length }}</strong>
-        <small>Available partners</small>
-      </a>
-    </section>
-
-    <section class="lane-grid">
-      @for (
-        status of [
-          "placed",
-          "confirmed",
-          "preparing",
-          "ready",
-          "picked_up",
-          "on_the_way",
-        ];
-        track status
-      ) {
-        <article class="lane-card">
-          <header>
-            <span class="lane-dot" [class]="status"></span>
-            <h2>{{ status.replace("_", " ") | titlecase }}</h2>
-            <strong>{{ lane(status).length }}</strong>
-          </header>
-
-          @if (lane(status).length === 0) {
-            <div class="lane-empty">No orders in this lane.</div>
-          } @else {
-            <div class="lane-list">
-              @for (order of lane(status); track order.id) {
-                <a
-                  class="lane-order"
-                  [routerLink]="['/orders', order.id]"
-                  [class]="slaClass(order)"
-                >
-                  <div>
-                    <strong>#{{ order.order_number }}</strong>
-                    <span
-                      >{{ order.vendor_name || "Vendor" }} ->
-                      {{ order.customer_name || "Customer" }}</span
-                    >
-                  </div>
-                  <div class="lane-order-meta">
-                    <em>{{ order.total | appCurrency }}</em>
-                    <small>{{ ageMinutes(order) }}m</small>
-                  </div>
-                </a>
-              }
-            </div>
-          }
-        </article>
-      }
-    </section>
-
-    <section class="ops-note">
-      <span class="material-icons-outlined">info</span>
-      <p>
-        Orders older than 20 minutes are highlighted for SLA attention. Orders
-        older than 35 minutes before pickup should be escalated to store or
-        dispatch support.
-      </p>
-    </section>
-  }
+<div class="saas-page">
+  <header class="page-header"><div><h1>Dispatch board</h1><p>Manage pickup assignment, capacity and operational exceptions.</p></div><div class="admin-action-row"><label><input type="checkbox" [(ngModel)]="autoReload" /> Auto refresh</label><button class="btn btn-secondary" (click)="load()" [disabled]="loading()">Refresh</button></div></header>
+  <div class="admin-toolbar"><label>Queue <select [(ngModel)]="state" (change)="filter()"><option value="">All active orders</option><option value="unassigned">Unassigned</option><option value="ready">Ready for pickup</option><option value="picked_up">Picked up</option><option value="on_the_way">On the way</option><option value="escalated">Escalated</option></select></label><span class="admin-muted">{{total()}} matching orders · Pickup SLA: {{sla()}} min from recorded ready event</span>@if(updated()){<span class="admin-muted">Updated {{updated() | date:'mediumTime'}}</span>}</div>
+  @if(orderFilter){<p class="admin-muted">Showing the selected order. <button class="btn btn-secondary" (click)="orderFilter='';filter()">Show all orders</button></p>}
+  @if(error()){<div class="admin-error" role="alert">{{error()}}<button class="btn btn-secondary" (click)="load()">Retry</button></div>}
+  <p-table [value]="orders()" [loading]="loading()" [paginator]="true" [lazy]="true" [rows]="20" [totalRecords]="total()" [first]="page*20" (onLazyLoad)="page=($event.first || 0)/20;load()" [tableStyle]="{'min-width':'1020px'}">
+    <ng-template #header><tr><th>Order / store</th><th>Status</th><th>Partner</th><th>Deadline / priority</th><th>Dispatch actions</th></tr></ng-template>
+    <ng-template #body let-order><tr><td>@if(access.can('orders.view')){<a [routerLink]="['/orders',order.id]">{{order.order_number}}</a>}@else{<strong>{{order.order_number}}</strong>}<div class="admin-muted">{{order.vendor_name}} · {{order.customer_name}}</div></td><td><span class="badge">{{order.status.replaceAll('_',' ')}}</span></td><td>{{order.partner_name || 'Unassigned'}}</td><td>@if(order.deadline){<strong [class.dispatch-late]="order.delayed">{{order.deadline | date:'shortTime'}} {{order.delayed ? '· Overdue' : ''}}</strong>}@else{<span class="admin-muted">No deadline recorded</span>}<div class="admin-muted">{{order.priority}} {{order.escalated_at ? '· Escalated' : ''}}</div></td><td><div class="admin-action-row">@if(access.can('dispatch.manage')){@if(order.can_assign){<button class="btn btn-secondary btn-sm" (click)="open(order,'assign')">{{order.partner_id ? 'Reassign' : 'Assign'}}</button>}@if(order.can_unassign){<button class="btn btn-secondary btn-sm" (click)="open(order,'unassign')">Unassign</button>}<button class="btn btn-secondary btn-sm" (click)="open(order,order.escalated_at ? 'clear_escalation' : 'escalate')">{{order.escalated_at ? 'Clear escalation' : 'Escalate'}}</button><button class="btn btn-secondary btn-sm" (click)="open(order,'update')">Notes</button>}@else{<span class="admin-muted">Read access</span>}</div></td></tr></ng-template>
+    <ng-template #emptymessage><tr><td colspan="5">No active orders in this queue.</td></tr></ng-template>
+  </p-table>
+  <section class="admin-panel"><h2>Partner availability</h2><p class="admin-muted">Approved active accounts · One active delivery per partner · {{partners().length}} partner records shown</p><div class="partner-capacity-grid">@for(partner of partners();track partner.id){<article><strong>{{partner.name}}</strong><span>{{partner.status.replaceAll('_',' ')}}</span><span>{{partner.workload}} / {{partner.capacity}} active deliveries</span><span [class.dispatch-late]="!partner.available">{{partner.available ? 'Available for assignment' : 'Unavailable'}}</span></article>}@empty{<p>No approved partner records available.</p>}</div></section>
 </div>
+<p-dialog closeAriaLabel="Close dialog" [header]="title()" [(visible)]="dialogOpen" [modal]="true" [style]="{width:'560px'}" [breakpoints]="{'768px':'94vw'}"><p>{{selected?.order_number}} · {{selected?.vendor_name}}</p><div class="admin-form-grid">
+  @if(command === 'assign'){<label>Delivery partner<select [(ngModel)]="partnerId"><option value="">Choose an available partner</option>@for(partner of partners();track partner.id){<option [value]="partner.id" [disabled]="!partner.available">{{partner.name}} · {{partner.workload}}/{{partner.capacity}} active {{partner.distance_km !== null ? '· ' + partner.distance_km + ' km' : '· Location unavailable'}} {{!partner.available ? '· Unavailable' : ''}}</option>}</select></label>}
+  @if(command === 'unassign'){<p>The partner will be released and delivery search will restart. This is allowed before pickup only.</p>}
+  @if(command === 'update'){<label>Priority<select [(ngModel)]="priority"><option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option></select></label><label>Private dispatch notes<textarea [(ngModel)]="notes" maxlength="3000"></textarea></label>}
+  <label>Audit reason<textarea [(ngModel)]="reason" maxlength="500" placeholder="Reason for this dispatch change"></textarea></label>
+</div><ng-template #footer><button class="btn btn-secondary" (click)="dialogOpen=false" [disabled]="saving()">Cancel</button><button class="btn btn-primary" (click)="submit()" [disabled]="saving() || reason.trim().length < 3 || (command === 'assign' && !partnerId)">{{saving() ? 'Saving…' : 'Confirm change'}}</button></ng-template></p-dialog>

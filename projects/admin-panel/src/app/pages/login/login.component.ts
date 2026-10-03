@@ -1,9 +1,10 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { AdminAccessService } from '../../services/admin-access.service';
 import {
-  ApiService,
   apiErrorMessage,
+  ApiService,
   AuthService,
   sanitizeUsername,
   USERNAME_PATTERN,
@@ -12,7 +13,7 @@ import {
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule],
+  imports: [RouterLink,FormsModule],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
 })
@@ -20,6 +21,7 @@ export class LoginComponent implements OnInit {
   private auth = inject(AuthService);
   private api = inject(ApiService);
   private router = inject(Router);
+  private access = inject(AdminAccessService);
 
   username = '';
   password = '';
@@ -85,8 +87,10 @@ export class LoginComponent implements OnInit {
           this.loading.set(false);
           return;
         }
-        this.router.navigate(['/']);
-        this.loading.set(false);
+        this.access.load(true).subscribe(() => {
+          this.router.navigateByUrl(this.access.landingRoute());
+          this.loading.set(false);
+        });
       },
       error: (err) => {
         this.error.set(apiErrorMessage(err, 'Invalid credentials.'));

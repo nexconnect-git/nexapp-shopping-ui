@@ -1,11 +1,15 @@
+import { DestroyRef, HostListener } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ViewChild } from '@angular/core';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
-  ApiService,
   apiErrorMessage,
+  ApiService,
   AuthService,
   parseFormErrors,
   ToastService,
+  User,
 } from '@shared/public-api';
 import { DynamicEditPageComponent } from '../../shared/dynamic-profile/dynamic-edit-page.component';
 import {
@@ -28,6 +32,16 @@ export class DynamicEntityEditComponent implements OnInit {
   private readonly toast = inject(ToastService);
   private readonly adapter = inject(EntityProfileAdapterService);
 
+  private destroy = inject(DestroyRef);
+  readonly saving = signal(false);
+  @HostListener('window:beforeunload', ['$event']) beforeUnload(
+    event: BeforeUnloadEvent
+  ) {
+    if (this.hasUnsavedChanges()) {
+      event.preventDefault();
+      event.returnValue = '';
+    }
+  }
   readonly loading = signal(true);
   readonly entityDto = signal<unknown>(null);
   readonly entityType = signal('vendor');
@@ -50,13 +64,22 @@ export class DynamicEntityEditComponent implements OnInit {
     this.entityType.set(this.route.snapshot.data['entityType'] || 'vendor');
     this.entityId.set(this.route.snapshot.paramMap.get('id') || '');
     this.initialStepId.set(
-      this.route.snapshot.queryParamMap.get('step') || undefined,
+      this.route.snapshot.queryParamMap.get('step') || undefined
     );
     this.load();
   }
 
   cancel(): void {
     this.router.navigate([this.profileUrl()]);
+  }
+
+  @ViewChild(DynamicEditPageComponent) editor?: DynamicEditPageComponent;
+  hasUnsavedChanges() {
+    return (
+      !!this.editor &&
+      JSON.stringify(this.editor.formValue) !==
+        JSON.stringify(this.editor.entity.data)
+    );
   }
 
   saveDraft(formValue: Record<string, unknown>): void {
@@ -76,19 +99,18 @@ export class DynamicEntityEditComponent implements OnInit {
       type === 'vendor'
         ? this.api.getAdminVendor(id)
         : type === 'customer'
-          ? this.api.getAdminCustomer(id)
-          : type === 'delivery-partner'
-            ? this.api.getAdminDeliveryPartner(id)
-            : type === 'product'
-              ? this.api.getAdminProducts({ id })
-              : this.api.getProfile();
+        ? this.api.getAdminCustomer(id)
+        : type === 'delivery-partner'
+        ? this.api.getAdminDeliveryPartner(id)
+        : type === 'product'
+        ? this.api.getAdminProducts({ id })
+        : this.api.getProfile();
 
-    request.subscribe({
+    request.pipe(takeUntilDestroyed(this.destroy)).subscribe({
       next: (dto: unknown) => {
         const normalized = this.normalizeLoadedDto(dto);
-        this.entityDto.set(
-          type === 'admin-user' ? this.auth.user() || normalized : normalized,
-        );
+        this.entityDto.set(normalized);
+        if (type === 'admin-user') this.auth.updateUserData(normalized as User);
         this.loading.set(false);
       },
       error: () => {
@@ -101,43 +123,49 @@ export class DynamicEntityEditComponent implements OnInit {
 
   private save(
     formValue: Record<string, unknown>,
-    navigateToReview: boolean,
+    navigateToReview: boolean
   ): void {
     const type = this.entityType();
+    if (this.saving()) return;
+    this.saving.set(true);
     const payload = this.adapter.toUpdatePayload(type, formValue);
     const id = this.entityId();
     const request =
       type === 'vendor'
         ? this.api.adminUpdateVendor(id, payload)
         : type === 'customer'
-          ? this.api.updateAdminCustomer(id, payload)
-          : type === 'delivery-partner'
-            ? this.api.updateAdminDeliveryPartner(id, payload)
-            : type === 'product'
-              ? this.api.updateAdminProduct(id, payload)
-              : this.api.updateProfile(payload);
+        ? this.api.updateAdminCustomer(id, payload)
+        : type === 'delivery-partner'
+        ? this.api.updateAdminDeliveryPartner(id, payload)
+        : type === 'product'
+        ? this.api.updateAdminProduct(id, payload)
+        : this.api.updateProfile(payload);
 
-    request.subscribe({
+    request.pipe(takeUntilDestroyed(this.destroy)).subscribe({
       next: (dto: unknown) => {
+        this.saving.set(false);
         this.saveError.set('');
         this.fieldErrors.set({});
         this.entityDto.set(
           this.normalizeLoadedDto(dto) || {
             ...(this.entityDto() as Record<string, unknown>),
             ...(payload as Record<string, unknown>),
-          },
+          }
         );
+        if (type === 'admin-user')
+          this.auth.updateUserData(this.entityDto() as User);
         this.toast.show(
           navigateToReview
             ? 'Changes saved. Review the profile.'
-            : 'Draft saved.',
-          'success',
+            : 'Changes saved.',
+          'success'
         );
         if (navigateToReview) {
           this.router.navigate([this.reviewUrl()]);
         }
       },
       error: (error: unknown) => {
+        this.saving.set(false);
         const parsed = parseFormErrors(error);
         const message = apiErrorMessage(error, 'Unable to save changes.');
         this.fieldErrors.set(parsed.fieldErrors);

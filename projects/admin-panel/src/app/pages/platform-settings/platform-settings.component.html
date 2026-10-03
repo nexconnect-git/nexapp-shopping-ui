@@ -7,14 +7,14 @@
         defaults.
       </p>
     </div>
-    <button
+    <ng-container *appAdminCan="'settings.manage'"><button
       class="btn btn-primary"
       (click)="save()"
       [disabled]="loading() || saving()"
     >
       <span class="material-icons-outlined">save</span>
       {{ saving() ? "Saving..." : "Save settings" }}
-    </button>
+    </button></ng-container>
   </div>
 
   @if (loading()) {
@@ -24,7 +24,7 @@
     </div>
   } @else {
     <form class="settings-grid" (ngSubmit)="save()">
-      <section class="settings-card">
+      <section class="settings-card payment-settings">
         <div class="card-title">
           <span class="material-icons-outlined">payments</span>
           <div>
@@ -71,6 +71,7 @@
               type="button"
               class="method-toggle"
               [class.enabled]="isPaymentMethodEnabled(method.key)"
+              [attr.aria-pressed]="isPaymentMethodEnabled(method.key)"
               (click)="togglePaymentMethod(method.key)"
             >
               <span class="material-icons-outlined">{{
@@ -219,7 +220,7 @@
         </div>
       </section>
 
-      <section class="settings-card">
+      <section class="settings-card policy-settings">
         <div class="card-title">
           <span class="material-icons-outlined">rule</span>
           <div>

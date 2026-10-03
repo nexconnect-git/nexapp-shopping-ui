@@ -1,3 +1,6 @@
+import { inject } from '@angular/core';
+import { compactVendorProfilePayload } from '../admin-profile-payload';
+import { AdminAccessService } from '../../services/admin-access.service';
 import { Injectable } from '@angular/core';
 import { CURRENCY_SELECT_OPTIONS } from '@shared/public-api';
 import {
@@ -143,6 +146,7 @@ function normalizeVendorStoreType(value: unknown): string {
 
 @Injectable({ providedIn: 'root' })
 export class EntityProfileAdapterService {
+  private access = inject(AdminAccessService);
   buildProfileConfig(
     entityType: string,
     entityDto: unknown,
@@ -150,7 +154,6 @@ export class EntityProfileAdapterService {
     const type = this.normalizeType(entityType);
     const dto = this.asRecord(entityDto);
     const user = this.user(dto, type);
-    const hasTempPassword = Boolean(user['temp_password']);
 
     return {
       entityName: this.entityName(type, dto, user),
@@ -166,25 +169,11 @@ export class EntityProfileAdapterService {
       tabs: [{ id: 'overview', label: 'Overview', icon: '📋' }],
       activeTabId: 'overview',
       metrics: this.metrics(type, dto, user),
-      passwordNotice: {
-        enabled: Boolean(user['force_password_change'] || hasTempPassword),
-        title: hasTempPassword
-          ? 'Temporary password still active'
-          : 'Temporary password required',
-        message: hasTempPassword
-          ? 'This user has not changed their auto-generated password yet.'
-          : 'Generate a new temporary password to share with this user.',
-        actionLabel: hasTempPassword
-          ? 'Generate New Password'
-          : 'Generate Password',
-        secretLabel: 'Temp Password',
-        secretValue: this.str(user['temp_password']),
-      },
       checklistTitle: this.checklistTitle(type),
       checklistCompletion: this.completion(type, dto, user),
       checklist: this.checklist(type, dto, user),
-      sections: this.profileSections(type, dto, user),
-      activities: this.activities(type, dto, user),
+      sections: this.profileSections(type, dto, user).map(section => this.canManage(type) ? section : {...section,editStepId:undefined}),
+      activities: [],
     };
   }
 
@@ -196,7 +185,7 @@ export class EntityProfileAdapterService {
       subtitle: `Update ${this.entityName(type, dto, this.user(dto, type))} details.`,
       breadcrumbs: this.breadcrumbs(type, dto, 'Edit'),
       cancelLabel: 'Cancel',
-      saveDraftLabel: 'Save Draft',
+      saveDraftLabel: 'Save Changes',
       submitLabel: 'Continue',
       steps: this.editSteps(type),
     };
@@ -209,45 +198,30 @@ export class EntityProfileAdapterService {
     const type = this.normalizeType(entityType);
     const dto = this.asRecord(entityDto);
     const user = this.user(dto, type);
-    const hasTempPassword = Boolean(user['temp_password']);
     return {
       title: `Review ${this.entityTypeLabel(type)}`,
       subtitle:
-        'Review all mapped details before submitting or applying changes.',
+        'Review profile details and operational readiness.',
       breadcrumbs: this.breadcrumbs(type, dto, 'Review'),
       profileSummary: this.buildProfileConfig(type, dto),
       completionPercent: this.completion(type, dto, user),
       readinessLabel: this.readiness(type, dto, user),
       readinessTone: this.readinessTone(type, dto, user),
-      warning: {
-        enabled: Boolean(user['force_password_change'] || hasTempPassword),
-        title: hasTempPassword
-          ? 'Action required: temporary password is active'
-          : 'Action required: generate temporary password',
-        message: hasTempPassword
-          ? 'The user account will not be fully operational until the password is changed.'
-          : 'Generate a new temporary password before sharing account access.',
-        actionLabel: hasTempPassword
-          ? 'Generate New Password'
-          : 'Generate Password',
-        secretLabel: 'Temp Password',
-        secretValue: this.str(user['temp_password']),
-      },
       attentionItems: this.attentionItems(type, dto, user),
-      sections: this.reviewSections(type, dto, user),
-      saveDraftLabel: 'Save Draft',
+      sections: this.reviewSections(type, dto, user).map(section => this.canManage(type) ? section : {...section,editStepId:undefined}),
+      saveDraftLabel: 'Save Changes',
       statusValue:
         type === 'vendor' || type === 'store'
           ? this.str(dto['status']) || 'pending'
           : undefined,
       statusOptions:
-        type === 'vendor' || type === 'store'
+        !this.canManage(type) ? undefined : type === 'vendor' || type === 'store'
           ? VENDOR_REVIEW_STATUS_OPTIONS
           : undefined,
       submitLabel:
-        type === 'vendor' || type === 'store'
+        !this.canManage(type) || !['vendor','store','delivery-partner'].includes(type) ? undefined : type === 'vendor' || type === 'store'
           ? 'Save Status'
-          : 'Submit Review',
+          : dto['is_approved'] ? undefined : 'Approve Partner',
     };
   }
 
@@ -317,14 +291,17 @@ export class EntityProfileAdapterService {
         'is_featured',
         ...VENDOR_DOCUMENT_UPLOAD_FIELDS,
       ]);
-      return this.withParsedCollections(payload, [
+      return this.withParsedCollections(compactVendorProfilePayload(payload), [
         'business_addresses',
         'serviceable_pincodes',
         'holidays',
       ]);
     }
 
-    if (type === 'customer' || type === 'admin-user') {
+    if (type === 'admin-user') {
+      return this.pick(value, ['first_name', 'last_name', 'email', 'phone', 'country', 'currency']);
+    }
+    if (type === 'customer') {
       return this.pick(value, [
         'username',
         'first_name',
@@ -397,6 +374,8 @@ export class EntityProfileAdapterService {
       phone: this.firstText(user['phone'], dto['phone']),
       country: this.firstText(user['country'], dto['country']),
       currency: this.firstText(user['currency'], dto['currency'], 'INR'),
+      is_active: user['is_active'] ?? dto['is_active'] ?? true,
+      is_verified: user['is_verified'] ?? dto['is_verified'] ?? false,
       vendor_type: normalizeVendorStoreType(dto['vendor_type']),
       user_is_active: user['is_active'] ?? dto['is_active'] ?? true,
       business_addresses: this.collectionText(dto['business_addresses']),
@@ -944,7 +923,7 @@ export class EntityProfileAdapterService {
 
     if (type === 'delivery-partner') {
       return [
-        this.step('account', 'Account', [this.accountFormSection()], '👤'),
+        this.step('account', 'Account', [this.accountFormSection(true)], '👤'),
         this.step(
           'vehicle',
           'Vehicle',
@@ -1024,7 +1003,7 @@ export class EntityProfileAdapterService {
       ];
     }
 
-    return [this.step('account', 'Account', [this.accountFormSection()], '👤')];
+    return [this.step('account', 'Account', [this.accountFormSection(false, type === 'admin-user')], '👤')];
   }
 
   private reviewSections(
@@ -1095,14 +1074,14 @@ export class EntityProfileAdapterService {
         },
         {
           label: 'Orders',
-          value: this.num(dto['total_orders']),
+          value: dto['total_orders'] == null ? '—' : this.num(dto['total_orders']),
           subtext: 'Operational volume',
           icon: '🧾',
           tone: 'purple',
         },
         {
           label: 'Catalog',
-          value: this.num(dto['total_products']),
+          value: dto['total_products'] == null ? '—' : this.num(dto['total_products']),
           subtext: 'Listed products',
           icon: '📦',
           tone: 'info',
@@ -1144,7 +1123,7 @@ export class EntityProfileAdapterService {
         },
         {
           label: 'Vehicle',
-          value: this.str(dto['vehicle_type']) || 'Vehicle',
+          value: this.str(dto['vehicle_type']) || 'Not provided',
           subtext: this.str(dto['vehicle_number']) || 'Plate missing',
           icon: '🛵',
           tone: 'neutral',
@@ -1249,6 +1228,8 @@ export class EntityProfileAdapterService {
     ];
   }
 
+  private canManage(type: string):boolean{return type==='admin-user'||this.access.can(`${type==='vendor'||type==='store'?'vendors':type==='customer'?'customers':type==='delivery-partner'?'dispatch':'catalog'}.manage`);}
+
   private profileActions(
     type: EntityType,
     dto: Record<string, unknown>,
@@ -1276,15 +1257,8 @@ export class EntityProfileAdapterService {
         variant: 'soft',
       });
     }
-    if (type === 'delivery-partner') {
-      actions.push({
-        id: 'resetPassword',
-        label: 'Generate Password',
-        icon: '🔐',
-        variant: 'outline',
-      });
-    }
-    return actions;
+    const domain = type === 'vendor' || type === 'store' ? 'vendors' : type === 'customer' ? 'customers' : type === 'delivery-partner' ? 'dispatch' : 'catalog';
+    return actions.filter(action => type === 'admin-user' || !['edit','approve'].includes(action.id) || this.access.can(`${domain}.manage`));
   }
 
   private attentionItems(
@@ -1384,45 +1358,18 @@ export class EntityProfileAdapterService {
     ];
   }
 
-  private activities(
-    type: EntityType,
-    dto: Record<string, unknown>,
-    user: Record<string, unknown>,
-  ) {
-    return [
-      {
-        title: `${this.entityTypeLabel(type)} profile loaded`,
-        description:
-          'Current admin API details are mapped into the shared dynamic profile system.',
-        timestamp:
-          this.str(dto['updated_at'] ?? user['updated_at']) ||
-          'No update timestamp',
-        tone: 'info' as ProfileStatusTone,
-      },
-      {
-        title: 'Account created',
-        description:
-          this.str(user['username'] ?? dto['username']) || 'Linked account',
-        timestamp:
-          this.str(
-            dto['created_at'] ?? user['created_at'] ?? user['date_joined'],
-          ) || 'No creation timestamp',
-        tone: 'purple' as ProfileStatusTone,
-      },
-    ];
-  }
 
-  private accountFormSection() {
+  private accountFormSection(partner = false, ownProfile = false) {
     return this.formSection('account', 'Account Details', '👤', [
-      this.formField('username', 'Username', 'text', true, 2),
+      {...this.formField('username', 'Username', 'text', true, 2), readOnly: ownProfile},
       this.formField('first_name', 'First Name', 'text', false),
       this.formField('last_name', 'Last Name', 'text', false),
       this.formField('email', 'Email', 'email', false),
       this.formField('phone', 'Phone', 'tel', false),
       this.formField('country', 'Country', 'text', false),
       this.currencyField(),
-      this.formField('is_verified', 'Verified', 'toggle', false),
-      this.formField('is_active', 'Active', 'toggle', false),
+      {...this.formField('is_verified', 'Verified', 'toggle', false), readOnly: partner || ownProfile, hint: partner || ownProfile ? 'Verification reflects the account verification flow.' : undefined},
+      {...this.formField(partner ? 'user_is_active' : 'is_active', 'Active', 'toggle', false), readOnly: ownProfile, hint: ownProfile ? 'Account access is managed in Admin Access.' : undefined},
     ]);
   }
 
@@ -1794,7 +1741,7 @@ export class EntityProfileAdapterService {
       'compare_price',
       'stock',
     ]) {
-      if (value[key] !== undefined && value[key] !== '')
+      if (value[key] !== undefined && value[key] !== null && value[key] !== '')
         value[key] = Number(value[key]);
     }
     return value;

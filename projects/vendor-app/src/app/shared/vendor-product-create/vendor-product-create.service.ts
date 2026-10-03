@@ -1,13 +1,12 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
-import { firstValueFrom, forkJoin } from 'rxjs';
+import { computed, effect, inject, Injectable, signal } from '@angular/core';
 import {
-  CurrencyService,
+  apiErrorMessage,
+  AuthService,
   FieldErrors,
-  firstFieldError,
-  parseFormErrors,
-  ToastService,
-  VendorApi,
+  Product,
+  VendorWorkspaceApi,
 } from '@shared/public-api';
+import { firstValueFrom } from 'rxjs';
 import {
   ApprovedCatalogItem,
   CreateProductStep,
@@ -19,692 +18,551 @@ import {
   mapProductDtoToVariantDraft,
   mapVariantDraftToUpdatePayload,
 } from './vendor-product-create.mappers';
-
 @Injectable({ providedIn: 'root' })
 export class VendorProductCreateService {
-  private readonly api = inject(VendorApi);
-  private readonly globalToast = inject(ToastService);
-  private readonly currency = inject(CurrencyService);
-
+  private readonly api = inject(VendorWorkspaceApi);
+  private readonly auth = inject(AuthService);
+  private owner = '';
+  private sessionGeneration = 0;
+  private draftGeneration = 0;
+  private catalogGeneration = 0;
+  private batchKey = '';
+  private batchSelection = '';
   readonly activeStep = signal<CreateProductStep>('catalog');
   readonly searchQuery = signal('');
-  readonly categoryFilter = signal('all');
+  readonly requestedCatalogId = signal('');
+  readonly catalogPage = signal(1);
+  readonly catalogCount = signal(0);
   readonly selectedCatalogIds = signal<string[]>([]);
   readonly activeVariantIndex = signal(0);
-  readonly approvalNote = signal(
-    'Kindly review the new variants. Pricing and inventory details are verified. Please let me know if any changes are required.',
-  );
+  readonly approvalNote = signal('');
   readonly saving = signal(false);
   readonly loadingCatalog = signal(false);
-  readonly toast = signal('');
   readonly error = signal('');
   readonly fieldErrors = signal<FieldErrors>({});
-
   readonly catalogItems = signal<ApprovedCatalogItem[]>([]);
+  readonly selectedItems = signal<ReadonlyMap<string, ApprovedCatalogItem>>(
+    new Map()
+  );
   readonly variants = signal<VendorVariantDraft[]>([]);
-
-  readonly selectedCatalogItems = computed(() => {
-    const ids = this.selectedCatalogIds();
-    return this.catalogItems().filter((item) => ids.includes(item.id));
-  });
-
+  readonly saved = signal<ReadonlyMap<string, string>>(new Map());
+  readonly submittedIds = signal<ReadonlySet<string>>(new Set());
+  readonly itemErrors = signal<ReadonlyMap<string, string>>(new Map());
+  readonly draftRows = signal<Product[]>([]);
+  readonly draftPage = signal(1);
+  readonly draftCount = signal(0);
+  readonly draftsLoading = signal(false);
+  readonly success = signal('');
+  readonly selectedCatalogItems = computed(() =>
+    this.selectedCatalogIds()
+      .map((id) => this.selectedItems().get(id))
+      .filter((item): item is ApprovedCatalogItem => !!item)
+  );
+  readonly filteredCatalogItems = this.catalogItems;
   readonly draftedCatalogIds = computed(() =>
-    this.variants()
-      .map((variant) => variant.catalogId)
-      .filter(Boolean),
+    this.variants().map((variant) => variant.catalogId)
   );
-
-  readonly newSelectedCatalogIds = computed(() => {
-    const drafted = new Set(this.draftedCatalogIds());
-    return this.selectedCatalogIds().filter((id) => !drafted.has(id));
-  });
-
-  readonly categoryOptions = computed(() => {
-    const categories = new Set(
-      this.catalogItems()
-        .map((item) => item.category)
-        .filter(Boolean),
-    );
-    return ['all', ...Array.from(categories).sort()];
-  });
-
-  readonly filteredCatalogItems = computed(() => {
-    const q = this.searchQuery().trim().toLowerCase();
-    const category = this.categoryFilter();
-    return this.catalogItems().filter((item) => {
-      const matchesSearch =
-        !q ||
-        `${item.name} ${item.brand} ${item.category} ${item.unit}`
-          .toLowerCase()
-          .includes(q);
-      const matchesCategory = category === 'all' || item.category === category;
-      return matchesSearch && matchesCategory;
-    });
-  });
-
+  readonly newSelectedCatalogIds = computed(() =>
+    this.selectedCatalogIds().filter(
+      (id) => !this.draftedCatalogIds().includes(id)
+    )
+  );
   readonly activeVariant = computed(
-    () => this.variants()[this.activeVariantIndex()] ?? this.variants()[0],
+    () => this.variants()[this.activeVariantIndex()]
   );
-
-  readonly priceRange = computed(() => {
-    const prices = this.variants()
-      .map((variant) => Number(variant.price || 0))
-      .filter((price) => price > 0);
-    if (!prices.length) return 'Not set';
-    const min = Math.min(...prices);
-    const max = Math.max(...prices);
-    return min === max
-      ? this.formatCurrency(min)
-      : `${this.formatCurrency(min)} - ${this.formatCurrency(max)}`;
-  });
-
+  readonly dirty = computed(() =>
+    this.variants().some(
+      (variant) =>
+        !this.submittedIds().has(variant.id) &&
+        this.saved().get(variant.id) !== this.signature(variant)
+    )
+  );
   readonly totalInventory = computed(() =>
-    this.variants().reduce(
-      (total, variant) => total + Number(variant.stock || 0),
-      0,
-    ),
+    this.variants().reduce((total, item) => total + Number(item.stock || 0), 0)
   );
-
-  readonly averagePrice = computed(() => {
-    const variants = this.variants();
-    if (!variants.length) return this.formatCurrency(0);
-    const total = variants.reduce(
-      (sum, variant) => sum + Number(variant.price || 0),
-      0,
+  constructor() {
+    effect(() => {
+      const owner = this.auth.user()?.id || '';
+      if (owner !== this.owner) {
+        this.owner = owner;
+        this.reset();
+      }
+    });
+  }
+  private current(generation: number, session: number): boolean {
+    return (
+      generation === this.sessionGeneration &&
+      session === this.auth.sessionVersion
     );
-    return this.formatCurrency(total / variants.length);
-  });
-
-  readonly readiness = computed(() => {
-    const variants = this.variants();
-    return [
-      {
-        label: 'Catalog items selected',
-        subtext: `${this.selectedCatalogItems().length} selected`,
-        done: this.selectedCatalogItems().length > 0,
-      },
-      {
-        label: 'Variants configured',
-        subtext: `${variants.filter((v) => v.price > 0 && v.stock >= 0).length} of ${variants.length} variants`,
-        done: variants.length > 0 && variants.every((v) => v.price > 0),
-      },
-      {
-        label: 'Pricing defined',
-        subtext: `${variants.filter((v) => v.price > 0).length} of ${variants.length} variants`,
-        done: variants.length > 0 && variants.every((v) => v.price > 0),
-      },
-      {
-        label: 'Inventory set',
-        subtext: `${variants.filter((v) => v.stock >= 0).length} of ${variants.length} variants`,
-        done: variants.length > 0 && variants.every((v) => v.stock >= 0),
-      },
-      {
-        label: 'Required product details complete',
-        subtext: 'Brand, unit, pack size, and description are required',
-        done:
-          variants.length > 0 &&
-          variants.every((v) =>
-            Boolean(v.brand && v.unit && v.quantityPackSize && v.description),
-          ),
-      },
-    ];
-  });
-
+  }
   reset(): void {
-    this.activeStep.set('catalog');
-    this.searchQuery.set('');
-    this.categoryFilter.set('all');
-    this.selectedCatalogIds.set([]);
-    this.activeVariantIndex.set(0);
-    this.variants.set([]);
+    this.sessionGeneration++;
+    this.draftGeneration++;
+    this.catalogGeneration++;
+    this.catalogItems.set([]);
+    this.draftRows.set([]);
+    this.draftCount.set(0);
+    this.catalogCount.set(0);
     this.saving.set(false);
+    this.loadingCatalog.set(false);
+    this.draftsLoading.set(false);
+    this.activeStep.set('catalog');
+    this.selectedCatalogIds.set([]);
+    this.selectedItems.set(new Map());
+    this.variants.set([]);
+    this.saved.set(new Map());
+    this.submittedIds.set(new Set());
+    this.activeVariantIndex.set(0);
+    this.approvalNote.set('');
     this.error.set('');
-    this.toast.set('');
-    this.fieldErrors.set({});
+    this.success.set('');
+    this.itemErrors.set(new Map());
+    this.batchKey = '';
   }
-
-  async loadCatalogItems(search = this.searchQuery()): Promise<void> {
+  async loadCatalogItems(
+    search = this.searchQuery(),
+    page = this.catalogPage()
+  ): Promise<void> {
+    const generation = ++this.catalogGeneration;
     this.loadingCatalog.set(true);
-    this.error.set('');
     try {
-      const term = search.trim();
-      const response = await firstValueFrom(
-        this.api.getVendorAvailableCatalogProducts({
-          page_size: 100,
-          search: term,
-        }),
+      const result = await firstValueFrom(
+        this.api.catalog({
+          search,
+          page,
+          catalog_id: this.requestedCatalogId() || undefined,
+        })
       );
-      const items = Array.isArray(response)
-        ? response
-        : response?.results || [];
-      const selectedItems = this.selectedCatalogItems();
-      const byId = new Map<string, ApprovedCatalogItem>();
-      [...selectedItems, ...items.map(mapApprovedCatalogDtoToItem)].forEach(
-        (item) => byId.set(item.id, item),
-      );
-      this.catalogItems.set(Array.from(byId.values()));
-    } catch {
-      this.error.set(
-        'Failed to load approved catalog items. Refresh and try again.',
-      );
-      this.showToast('Failed to load approved catalog items.', 'error');
-    } finally {
-      this.loadingCatalog.set(false);
-    }
-  }
-
-  async applyFilters(): Promise<void> {
-    await this.loadCatalogItems(this.searchQuery());
-    if (!this.error()) {
-      this.showToast(
-        `${this.filteredCatalogItems().length} catalog item${this.filteredCatalogItems().length === 1 ? '' : 's'} match your filters.`,
-        'info',
-      );
-    }
-  }
-
-  toggleCatalog(id: string): void {
-    const isDrafted = this.draftedCatalogIds().includes(id);
-    const current = this.selectedCatalogIds();
-    if (current.includes(id)) {
-      if (isDrafted) {
-        this.showToast(
-          'This item already has a variant draft. Remove the variant to deselect it.',
-          'info',
-        );
-        return;
-      }
-      this.selectedCatalogIds.set(current.filter((item) => item !== id));
-      return;
-    }
-
-    this.selectedCatalogIds.set([...current, id]);
-    this.error.set('');
-  }
-
-  removeSelectedCatalog(id: string): void {
-    this.toggleCatalog(id);
-  }
-
-  setStep(step: CreateProductStep, variantIndex?: number): void {
-    if (step !== 'catalog' && !this.variants().length) return;
-    if (
-      (step === 'variant-1' || step === 'variant-2') &&
-      typeof variantIndex === 'number'
-    ) {
-      this.activeVariantIndex.set(
-        Math.min(variantIndex, Math.max(0, this.variants().length - 1)),
-      );
-      this.activeStep.set(variantIndex <= 0 ? 'variant-1' : 'variant-2');
-      this.error.set('');
-      this.fieldErrors.set({});
-      return;
-    }
-    if (step === 'review') {
-      if (this.newSelectedCatalogIds().length) {
+      if (generation !== this.catalogGeneration) return;
+      this.catalogPage.set(page);
+      this.catalogCount.set(result.count);
+      this.catalogItems.set(result.results.map(mapApprovedCatalogDtoToItem));
+    } catch (failure) {
+      if (generation === this.catalogGeneration)
         this.error.set(
-          'Create variant drafts for newly selected catalog items before review.',
+          apiErrorMessage(failure, 'Catalog could not be loaded.')
         );
-        this.showToast(this.error(), 'error');
+    } finally {
+      if (generation === this.catalogGeneration) this.loadingCatalog.set(false);
+    }
+  }
+  async loadDrafts(page = this.draftPage()): Promise<void> {
+    const generation = ++this.draftGeneration;
+    const session = this.auth.sessionVersion;
+    this.draftsLoading.set(true);
+    try {
+      const result = await firstValueFrom(this.api.drafts({ page }));
+      if (
+        generation !== this.draftGeneration ||
+        session !== this.auth.sessionVersion
+      )
+        return;
+      this.draftPage.set(page);
+      this.draftCount.set(result.count);
+      this.draftRows.set(result.results);
+    } catch (failure) {
+      if (
+        generation !== this.draftGeneration ||
+        session !== this.auth.sessionVersion
+      )
+        return;
+      this.error.set(
+        apiErrorMessage(failure, 'Saved drafts could not be loaded.')
+      );
+    } finally {
+      if (
+        generation === this.draftGeneration &&
+        session === this.auth.sessionVersion
+      )
+        this.draftsLoading.set(false);
+    }
+  }
+  async applyFilters(): Promise<void> {
+    this.requestedCatalogId.set('');
+    await this.loadCatalogItems(this.searchQuery(), 1);
+  }
+  toggleCatalog(id: string): void {
+    if (this.saving()) return;
+    const selected = this.selectedCatalogIds();
+    if (selected.includes(id)) {
+      if (this.draftedCatalogIds().includes(id)) {
+        this.error.set(
+          'A saved variant uses this catalog item. Remove that variant first.'
+        );
         return;
       }
-      if (!this.validateAllVariants()) return;
+      this.selectedCatalogIds.set(selected.filter((value) => value !== id));
+    } else {
+      const item = this.catalogItems().find((item) => item.id === id);
+      if (item)
+        this.selectedItems.update((items) => new Map(items).set(id, item));
+      this.selectedCatalogIds.set([...selected, id]);
     }
     this.error.set('');
+  }
+  resume(product: Product): void {
+    if (!this.variants().some((item) => item.id === product.id)) {
+      this.approvalNote.set(product.approval_note || this.approvalNote());
+      const draft = mapProductDtoToVariantDraft(product);
+      this.variants.update((items) => [...items, draft]);
+      this.saved.update((items) =>
+        new Map(items).set(draft.id, this.signature(draft))
+      );
+      if (product.catalog_product) {
+        const item = mapApprovedCatalogDtoToItem(product.catalog_product);
+        this.selectedItems.update((items) => new Map(items).set(item.id, item));
+        this.selectedCatalogIds.update((ids) => [
+          ...new Set([...ids, item.id]),
+        ]);
+      }
+    }
+    this.activeVariantIndex.set(
+      this.variants().findIndex((item) => item.id === product.id)
+    );
+    this.activeStep.set('variants');
+  }
+  setStep(step: CreateProductStep, index?: number): void {
+    if (this.saving()) return;
+    if (index !== undefined)
+      this.activeVariantIndex.set(
+        Math.max(0, Math.min(index, this.variants().length - 1))
+      );
+    if (step !== 'catalog' && !this.variants().length) return;
+    if (step === 'review' && !this.validateAll()) return;
     this.activeStep.set(step);
+    this.fieldErrors.set({});
+    this.error.set('');
   }
-
-  async next(): Promise<void> {
-    const step = this.activeStep();
-    if (step === 'catalog') {
-      await this.createVariantDrafts();
-      return;
-    }
-
-    if (step === 'variant-1') {
-      if (!(await this.saveDraft())) return;
-      this.moveToNextVariantOrReview();
-      return;
-    }
-
-    if (step === 'variant-2') {
-      if (!(await this.saveDraft())) return;
-      this.moveToNextVariantOrReview();
-    }
-  }
-
   back(): void {
     if (this.activeStep() === 'review') {
-      const lastVariantIndex = Math.max(0, this.variants().length - 1);
-      this.activeVariantIndex.set(lastVariantIndex);
-      this.activeStep.set(lastVariantIndex > 0 ? 'variant-2' : 'variant-1');
+      this.activeVariantIndex.set(Math.max(0, this.variants().length - 1));
+      this.activeStep.set('variants');
+    } else if (this.activeVariantIndex() > 0)
+      this.activeVariantIndex.update((index) => index - 1);
+    else this.activeStep.set('catalog');
+  }
+  async next(): Promise<void> {
+    if (this.saving()) return;
+    if (this.activeStep() === 'catalog') {
+      await this.createDrafts();
       return;
     }
-
-    if (
-      this.activeStep() === 'variant-2' ||
-      this.activeStep() === 'variant-1'
-    ) {
-      const previousIndex = this.activeVariantIndex() - 1;
-      if (previousIndex >= 0) {
-        this.activeVariantIndex.set(previousIndex);
-        this.activeStep.set(previousIndex > 0 ? 'variant-2' : 'variant-1');
-      } else {
-        this.activeStep.set('catalog');
-      }
-      return;
+    if (await this.saveDraft()) {
+      if (this.activeVariantIndex() < this.variants().length - 1)
+        this.activeVariantIndex.update((index) => index + 1);
+      else this.setStep('review');
     }
   }
-
   updateVariant(patch: Partial<VendorVariantDraft>): void {
-    const index = this.activeVariantIndex();
-    const variants = [...this.variants()];
-    if (!variants[index]) return;
-    variants[index] = { ...variants[index], ...patch };
-    this.variants.set(variants);
-    this.clearFieldErrors(Object.keys(patch));
+    const id = this.activeVariant()?.id;
+    if (!id || this.submittedIds().has(id) || this.saving()) return;
+    this.variants.update((items) =>
+      items.map((item) => (item.id === id ? { ...item, ...patch } : item))
+    );
+    this.fieldErrors.set({});
+    this.success.set('');
+    this.itemErrors.update((errors) => {
+      const remaining = new Map(errors);
+      remaining.delete(id);
+      return remaining;
+    });
   }
-
-  async duplicateActiveVariant(): Promise<void> {
-    const active = this.activeVariant();
-    if (!active) return;
+  private async createDrafts(): Promise<void> {
+    const generation = this.sessionGeneration;
+    const session = this.auth.sessionVersion;
+    const ids = this.newSelectedCatalogIds();
+    if (!ids.length) {
+      if (this.variants().length) this.activeStep.set('variants');
+      else this.error.set('Select at least one approved catalog item.');
+      return;
+    }
+    const selection = [...ids].sort().join(',');
+    if (this.batchSelection !== selection || !this.batchKey) {
+      this.batchSelection = selection;
+      this.batchKey = crypto.randomUUID();
+    }
     this.saving.set(true);
     this.error.set('');
     try {
-      const duplicate = await firstValueFrom(
-        this.api.duplicateInheritedProduct(active.id),
+      const result = await firstValueFrom(
+        this.api.createDraftBatch(ids, this.batchKey)
       );
-      this.variants.set([
-        ...this.variants(),
-        mapProductDtoToVariantDraft(duplicate),
-      ]);
-      this.activeVariantIndex.set(this.variants().length - 1);
-      this.activeStep.set(
-        this.activeVariantIndex() > 0 ? 'variant-2' : 'variant-1',
+      if (!this.current(generation, session)) return;
+      result.variants.forEach((product) => this.resume(product));
+      this.success.set(
+        `${result.variants.length} drafts saved. Configure their details before submission.`
       );
-      this.showToast('Variant duplicated', 'success');
-    } catch (err: any) {
-      this.showError(err, 'Duplicate failed.');
+      this.batchKey = '';
+      await this.loadDrafts();
+    } catch (failure) {
+      if (!this.current(generation, session)) return;
+      this.error.set(
+        apiErrorMessage(
+          failure,
+          'Draft batch could not be created. Your selection remains available to retry.'
+        )
+      );
     } finally {
-      this.saving.set(false);
+      if (this.current(generation, session)) this.saving.set(false);
     }
   }
-
-  async removeActiveVariant(): Promise<void> {
+  async duplicateActiveVariant(): Promise<void> {
+    const generation = this.sessionGeneration;
+    const session = this.auth.sessionVersion;
     const active = this.activeVariant();
-    const variants = this.variants();
-    if (!active) return;
-    if (variants.length <= 1) {
-      this.showToast('At least one variant is required', 'info');
-      return;
-    }
-
+    if (!active || this.saving()) return;
     this.saving.set(true);
-    this.error.set('');
+    try {
+      const duplicated = await firstValueFrom(
+        this.api.duplicateDraft(active.id)
+      );
+      if (!this.current(generation, session)) return;
+      this.resume(duplicated);
+      this.success.set(
+        'Duplicate draft saved. Adjust its pack size, brand, or unit to make a distinct variant.'
+      );
+    } catch (failure) {
+      if (!this.current(generation, session)) return;
+      this.error.set(
+        apiErrorMessage(failure, 'Could not duplicate this variant.')
+      );
+    } finally {
+      if (this.current(generation, session)) this.saving.set(false);
+    }
+  }
+  async removeActiveVariant(): Promise<void> {
+    const generation = this.sessionGeneration;
+    const session = this.auth.sessionVersion;
+    const active = this.activeVariant();
+    if (!active || this.saving()) return;
+    this.saving.set(true);
     try {
       await firstValueFrom(this.api.deleteProduct(active.id));
-      const remaining = variants.filter((variant) => variant.id !== active.id);
-      this.variants.set(remaining);
-      this.selectedCatalogIds.set(
-        remaining.map((variant) => variant.catalogId).filter(Boolean),
+      if (!this.current(generation, session)) return;
+      this.variants.update((items) =>
+        items.filter((item) => item.id !== active.id)
       );
-      const nextIndex = Math.min(
-        this.activeVariantIndex(),
-        remaining.length - 1,
+      this.activeVariantIndex.set(
+        Math.max(
+          0,
+          Math.min(this.activeVariantIndex(), this.variants().length - 1)
+        )
       );
-      this.activeVariantIndex.set(nextIndex);
-      this.activeStep.set(nextIndex > 0 ? 'variant-2' : 'variant-1');
-      this.showToast('Variant removed', 'success');
-    } catch (err: any) {
-      this.showError(err, 'Failed to remove variant.');
+      if (!this.variants().some((item) => item.catalogId === active.catalogId))
+        this.selectedCatalogIds.update((ids) =>
+          ids.filter((id) => id !== active.catalogId)
+        );
+      if (!this.variants().length) this.activeStep.set('catalog');
+      this.success.set('Draft removed.');
+      await this.loadDrafts();
+    } catch (failure) {
+      if (!this.current(generation, session)) return;
+      this.error.set(apiErrorMessage(failure, 'Draft was not removed.'));
     } finally {
-      this.saving.set(false);
+      if (this.current(generation, session)) this.saving.set(false);
     }
   }
-
   async saveDraft(): Promise<boolean> {
+    const generation = this.sessionGeneration;
+    const session = this.auth.sessionVersion;
     const active = this.activeVariant();
-    if (!active) return false;
-    const validation = this.validateVariant(active);
-    if (Object.keys(validation).length) {
-      const message = firstFieldError(
-        validation,
-        'Fix the highlighted variant fields.',
-      );
-      this.fieldErrors.set(validation);
-      this.error.set(message);
-      this.showToast(message, 'error');
+    if (!active || this.saving() || this.submittedIds().has(active.id))
+      return false;
+    const errors = this.validate(active);
+    this.fieldErrors.set(errors);
+    if (Object.keys(errors).length) {
+      this.error.set('Correct the highlighted fields before saving.');
       return false;
     }
-
     this.saving.set(true);
     this.error.set('');
     try {
       const updated = await firstValueFrom(
-        this.api.updateInheritedProduct(
-          active.id,
-          mapVariantDraftToUpdatePayload(active),
-        ),
+        this.api.updateDraft(active.id, {
+          ...mapVariantDraftToUpdatePayload(active),
+          approval_note: this.approvalNote(),
+        })
       );
+      if (!this.current(generation, session)) return false;
       const draft = mapProductDtoToVariantDraft(updated);
       this.variants.update((items) =>
-        items.map((item) => (item.id === draft.id ? draft : item)),
+        items.map((item) => (item.id === draft.id ? draft : item))
       );
-      this.showToast('Draft saved', 'success');
+      this.saved.update((items) =>
+        new Map(items).set(draft.id, this.signature(draft))
+      );
+      this.success.set('Draft saved. It remains hidden until admin approval.');
       return true;
-    } catch (err: any) {
-      this.showError(err, 'Failed to save draft.');
+    } catch (failure) {
+      if (!this.current(generation, session)) return false;
+      this.error.set(
+        apiErrorMessage(
+          failure,
+          'Draft was not saved. Your edits remain in this form.'
+        )
+      );
       return false;
     } finally {
-      this.saving.set(false);
+      if (this.current(generation, session)) this.saving.set(false);
     }
   }
-
-  async submitForApproval(): Promise<CreateProductSubmitPayload> {
-    if (!this.validateAllVariants()) {
-      throw new Error(
-        this.error() || 'Fix validation errors before submitting.',
-      );
+  async upload(file: File): Promise<void> {
+    const generation = this.sessionGeneration;
+    const session = this.auth.sessionVersion;
+    const active = this.activeVariant();
+    if (!active || this.saving()) return;
+    if (
+      file.size > 5 * 1024 * 1024 ||
+      !['image/png', 'image/jpeg', 'image/webp'].includes(file.type)
+    ) {
+      this.error.set('Choose a PNG, JPEG, or WebP image up to 5 MB.');
+      return;
     }
-
-    this.saving.set(true);
-    this.error.set('');
-    try {
-      await Promise.all(
-        this.variants().map((variant) =>
-          firstValueFrom(
-            this.api.updateInheritedProduct(
-              variant.id,
-              mapVariantDraftToUpdatePayload(variant),
-            ),
-          ),
-        ),
-      );
-      const response = await firstValueFrom(
-        this.api.submitInheritedProducts(
-          this.variants().map((variant) => variant.id),
-        ),
-      );
-      const submitted = Array.isArray(response)
-        ? response
-        : response?.variants || [];
-      if (submitted.length)
-        this.variants.set(submitted.map(mapProductDtoToVariantDraft));
-      this.showToast('Submitted for admin approval', 'success');
-      return {
-        selectedCatalogItems: this.selectedCatalogItems(),
-        variants: this.variants(),
-        approvalNote: this.approvalNote(),
-      };
-    } catch (err: any) {
-      this.showError(
-        err,
-        'Fix validation errors before submitting for approval.',
-      );
-      throw err;
-    } finally {
-      this.saving.set(false);
-    }
-  }
-
-  async discardDrafts(): Promise<boolean> {
-    const ids = this.variants().map((variant) => variant.id);
-    if (!ids.length) return true;
-    const confirmed =
-      typeof window === 'undefined' ||
-      window.confirm('Discard all unsubmitted variant drafts?');
-    if (!confirmed) return false;
     this.saving.set(true);
     try {
       await firstValueFrom(
-        forkJoin(ids.map((id) => this.api.deleteProduct(id))),
+        this.api.uploadProductImage(active.id, file, active.inheritanceMode)
       );
-      this.reset();
-      this.showToast('Draft variants discarded.', 'success');
-      return true;
-    } catch {
-      this.showToast(
-        'Some drafts could not be discarded. Please remove them individually.',
-        'error',
-      );
-      return false;
+      if (!this.current(generation, session)) return;
+      const product = await firstValueFrom(this.api.product(active.id));
+      if (!this.current(generation, session)) return;
+      this.updateImage(product);
+      this.success.set('Image uploaded.');
+    } catch (failure) {
+      if (!this.current(generation, session)) return;
+      this.error.set(apiErrorMessage(failure, 'Image could not be uploaded.'));
     } finally {
-      this.saving.set(false);
+      if (this.current(generation, session)) this.saving.set(false);
     }
   }
-
-  private async createVariantDrafts(): Promise<void> {
-    if (!this.selectedCatalogIds().length) {
-      this.error.set('Select at least one approved catalog item.');
-      return;
-    }
-
-    const idsToCreate = this.newSelectedCatalogIds();
-    if (!idsToCreate.length) {
-      this.activeVariantIndex.set(
-        Math.min(
-          this.activeVariantIndex(),
-          Math.max(0, this.variants().length - 1),
-        ),
-      );
-      this.activeStep.set(
-        this.activeVariantIndex() > 0 ? 'variant-2' : 'variant-1',
-      );
-      this.showToast(
-        'No new catalog items selected. Continue editing your existing variants.',
-        'info',
-      );
-      return;
-    }
-
+  private updateImage(product: Product): void {
+    const image = mapProductDtoToVariantDraft(product).imageUrl;
+    this.variants.update((items) =>
+      items.map((item) =>
+        item.id === product.id ? { ...item, imageUrl: image } : item
+      )
+    );
+  }
+  async submitForApproval(): Promise<CreateProductSubmitPayload> {
+    const generation = this.sessionGeneration;
+    const session = this.auth.sessionVersion;
+    if (this.saving() || !this.validateAll())
+      throw new Error('Correct variant validation first.');
     this.saving.set(true);
     this.error.set('');
-    try {
-      const response = await firstValueFrom(
-        this.api.createInheritedProductDraftBatch(idsToCreate),
-      );
-      const drafts = Array.isArray(response)
-        ? response
-        : response?.variants || [];
-      if (!drafts.length) {
-        this.error.set(
-          'No variant drafts were created. Refresh catalog items and try again.',
+    this.itemErrors.set(new Map());
+    this.success.set('');
+    const failures = new Map<string, string>();
+    for (const draft of this.variants()) {
+      if (this.submittedIds().has(draft.id)) continue;
+      try {
+        const updated = await firstValueFrom(
+          this.api.updateDraft(draft.id, {
+            ...mapVariantDraftToUpdatePayload(draft),
+            approval_note: this.approvalNote(),
+          })
         );
-        this.showToast(this.error(), 'error');
-        return;
+        if (!this.current(generation, session))
+          throw new Error('Session changed during submission.');
+        this.saved.update((items) =>
+          new Map(items).set(
+            draft.id,
+            this.signature(mapProductDtoToVariantDraft(updated))
+          )
+        );
+        const response = await firstValueFrom(
+          this.api.submitDrafts([draft.id], this.approvalNote())
+        );
+        if (!this.current(generation, session))
+          throw new Error('Session changed during submission.');
+        if (
+          response.length !== 1 ||
+          response[0].approval_status !== 'pending_approval'
+        )
+          throw new Error('Submission was not confirmed by the server.');
+        this.submittedIds.update((ids) => new Set(ids).add(draft.id));
+      } catch (failure) {
+        if (!this.current(generation, session))
+          throw new Error('Session changed during submission.');
+        failures.set(
+          draft.id,
+          apiErrorMessage(failure, 'Variant was not submitted.')
+        );
       }
-      const mappedDrafts = drafts.map(mapProductDtoToVariantDraft);
-      const existingVariants = this.variants();
-      this.variants.set([...existingVariants, ...mappedDrafts]);
-      this.selectedCatalogIds.set(
-        this.variants()
-          .map((variant) => variant.catalogId)
-          .filter(Boolean),
-      );
-      this.activeVariantIndex.set(existingVariants.length);
-      this.activeStep.set(
-        existingVariants.length > 0 ? 'variant-2' : 'variant-1',
-      );
-      this.showToast(
-        `${drafts.length} variant draft${drafts.length === 1 ? '' : 's'} ready to edit.`,
-        'success',
-      );
-    } catch (err: any) {
-      this.showError(err, 'Could not create variant drafts.');
-    } finally {
-      this.saving.set(false);
     }
+    this.saving.set(false);
+    this.itemErrors.set(failures);
+    if (failures.size) {
+      this.error.set(
+        `${failures.size} variants remain unsubmitted. Successful submissions are preserved; retry only the remaining variants.`
+      );
+      throw new Error(this.error());
+    }
+    const payload = {
+      selectedCatalogItems: this.selectedCatalogItems(),
+      variants: this.variants(),
+      approvalNote: this.approvalNote(),
+    };
+    this.success.set('All variants submitted for admin approval.');
+    this.reset();
+    return payload;
   }
-
-  private validateAllVariants(): boolean {
-    for (const variant of this.variants()) {
-      const errors = this.validateVariant(variant);
+  fieldError(field: keyof VendorVariantDraft): string {
+    return this.fieldErrors()[field] || '';
+  }
+  private signature(variant: VendorVariantDraft): string {
+    return JSON.stringify({
+      ...mapVariantDraftToUpdatePayload(variant),
+      approval_note: this.approvalNote(),
+    });
+  }
+  variantDirty(variant: VendorVariantDraft): boolean {
+    return this.saved().get(variant.id) !== this.signature(variant);
+  }
+  private validate(variant: VendorVariantDraft): FieldErrors {
+    const errors: FieldErrors = {};
+    if (!variant.productName.trim())
+      errors['productName'] = 'Name is required.';
+    if (!variant.brand.trim()) errors['brand'] = 'Brand is required.';
+    if (!variant.quantityPackSize.trim())
+      errors['quantityPackSize'] = 'Pack size is required.';
+    if (!variant.description.trim())
+      errors['description'] = 'Description is required.';
+    if (!Number.isFinite(Number(variant.price)) || Number(variant.price) <= 0)
+      errors['price'] = 'Enter a positive price.';
+    if (
+      !Number.isInteger(Number(variant.stock)) ||
+      Number(variant.stock) < 0 ||
+      Number(variant.stock) > 2147483647
+    )
+      errors['stock'] = 'Enter a whole stock quantity from 0 to 2147483647.';
+    if (
+      variant.comparePrice !== null &&
+      variant.comparePrice !== undefined &&
+      Number(variant.comparePrice) < Number(variant.price)
+    )
+      errors['comparePrice'] =
+        'Compare price must be at least the selling price.';
+    if (!/^[0-9]+$/.test(variant.prepTime))
+      errors['prepTime'] = 'Enter preparation time as whole minutes.';
+    if (!variant.instantDelivery && !variant.scheduledDelivery)
+      errors['instantDelivery'] =
+        'Enable at least one supported delivery mode.';
+    return errors;
+  }
+  private validateAll(): boolean {
+    for (let index = 0; index < this.variants().length; index++) {
+      const draft = this.variants()[index];
+      if (this.submittedIds().has(draft.id)) continue;
+      const errors = this.validate(draft);
       if (Object.keys(errors).length) {
-        const index = this.variants().findIndex(
-          (item) => item.id === variant.id,
-        );
-        if (index >= 0) {
-          this.activeVariantIndex.set(index);
-          this.activeStep.set(index > 0 ? 'variant-2' : 'variant-1');
-        }
-        const message = firstFieldError(
-          errors,
-          'Fix the highlighted variant fields.',
-        );
         this.fieldErrors.set(errors);
-        this.error.set(message);
-        this.showToast(message, 'error');
+        this.activeVariantIndex.set(index);
+        this.activeStep.set('variants');
+        this.error.set('Correct the highlighted variant fields.');
         return false;
       }
     }
-    return true;
+    return this.variants().length > 0;
   }
-
-  private validateVariant(variant: VendorVariantDraft): FieldErrors {
-    const errors: FieldErrors = {};
-    if (!variant.productName?.trim())
-      errors['productName'] = 'Product name is required.';
-    if (!variant.brand?.trim()) errors['brand'] = 'Brand is required.';
-    if (!variant.unit?.trim()) errors['unit'] = 'Unit is required.';
-    if (!variant.quantityPackSize?.trim())
-      errors['quantityPackSize'] = 'Pack size is required.';
-    if (Number(variant.price) <= 0)
-      errors['price'] = 'Price must be greater than 0.';
-    if (Number(variant.stock) < 0)
-      errors['stock'] = 'Stock cannot be negative.';
-    if (!variant.description?.trim())
-      errors['description'] = 'Description is required.';
-    return errors;
-  }
-
-  private showError(err: any, fallback: string): void {
-    const parsed = parseFormErrors(
-      err?.error,
-      this.apiFieldMap,
-      this.friendlyApiMessages,
-    );
-    const message = parsed.summary || fallback;
-    this.fieldErrors.set(parsed.fieldErrors);
-    this.error.set(message);
-    this.showToast(message, 'error');
-  }
-
-  private formatCurrency(value: number): string {
-    return this.currency.format(value);
-  }
-
-  showToast(
-    message: string,
-    type: 'success' | 'error' | 'info' = 'info',
-  ): void {
-    this.toast.set(message);
-    this.globalToast.show(message, type);
-    window.setTimeout(() => this.toast.set(''), 2200);
-  }
-
-  visibleStepItems(): Array<{ label: string; created: boolean }> {
-    const variants = this.variants();
-    const drafted = new Set(variants.map((variant) => variant.catalogId));
-    const created = variants.map((variant) => ({
-      label: variant.productName,
-      created: true,
-    }));
-    const pending = this.selectedCatalogItems()
-      .filter((item) => !drafted.has(item.id))
-      .map((item) => ({ label: item.name, created: false }));
-    return [...created, ...pending];
-  }
-
-  variantStepLabel(index: number): string {
-    return (
-      this.variants()[index]?.productName ||
-      this.selectedCatalogItems()[index]?.name ||
-      `Variant ${index + 1}`
-    );
-  }
-
-  variantStepCaption(index: number): string {
-    if (!this.variants().length) return 'Create draft first';
-    if (!this.variants()[index]) return 'Not created';
-    return this.activeVariantIndex() > index || this.activeStep() === 'review'
-      ? 'Variant saved'
-      : 'Customize variant';
-  }
-
-  catalogPrimaryActionLabel(): string {
-    if (this.saving()) return 'Creating...';
-    if (!this.variants().length) return 'Create Variant Steps';
-    if (this.newSelectedCatalogIds().length) return 'Add Variant Steps';
-    return 'Continue Editing';
-  }
-
-  fieldError(field: keyof VendorVariantDraft | 'availability'): string {
-    return this.fieldErrors()[field] || '';
-  }
-
-  clearFieldErrors(fields: string[]): void {
-    if (!fields.length) return;
-    const current = { ...this.fieldErrors() };
-    fields.forEach((field) => {
-      delete current[field];
-      if (field === 'availability') delete current['status'];
-    });
-    this.fieldErrors.set(current);
-    if (!Object.keys(current).length) this.error.set('');
-  }
-
-  variantTagOptions(): string[] {
-    const active = this.activeVariant();
-    if (!active) return ['Featured', 'Popular', 'Fresh', 'Fast moving'];
-    const catalogItem = this.catalogItems().find(
-      (item) => item.id === active.catalogId,
-    );
-
-    const words = [
-      catalogItem?.category,
-      active.brand,
-      active.unit,
-      active.availability,
-      active.stock > 0 ? 'In stock' : 'Restock needed',
-      active.visibleOnStore ? 'Visible on store' : 'Hidden from store',
-    ]
-      .filter(Boolean)
-      .map((value) => String(value));
-
-    return Array.from(new Set([...words, 'Featured', 'Popular'])).slice(0, 8);
-  }
-
-  private moveToNextVariantOrReview(): void {
-    const nextIndex = this.activeVariantIndex() + 1;
-    if (nextIndex < this.variants().length) {
-      this.activeVariantIndex.set(nextIndex);
-      this.activeStep.set(nextIndex > 0 ? 'variant-2' : 'variant-1');
-      return;
-    }
-    if (this.validateAllVariants()) this.activeStep.set('review');
-  }
-
-  private readonly apiFieldMap: Record<string, string> = {
-    name: 'productName',
-    weight: 'quantityPackSize',
-    compare_price: 'comparePrice',
-    prep_time_minutes: 'prepTime',
-    packaging_instructions: 'packagingNotes',
-    shelf_life: 'shelfLife',
-    search_keywords: 'tags',
-    is_available: 'visibleOnStore',
-    is_instant_delivery: 'requiresShipping',
-    status: 'availability',
-  };
-
-  private readonly friendlyApiMessages: Record<string, string> = {
-    status: 'Choose a valid availability option for this variant.',
-    price: 'Enter a selling price greater than 0.',
-    stock: 'Enter a valid stock quantity.',
-    weight: 'Enter the pack size customers will see.',
-    name: 'Product name is required.',
-    brand: 'Brand is required.',
-    unit: 'Unit is required.',
-    description: 'Description is required.',
-  };
 }

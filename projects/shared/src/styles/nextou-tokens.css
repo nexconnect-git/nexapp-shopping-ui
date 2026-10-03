@@ -1,0 +1,315 @@
+/* Shared tokens and local fonts; no global component overrides. */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap');
+
+@font-face {
+  font-family: "Material Icons Outlined";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src:
+    url("/sa/fonts/material-icons-outlined.otf") format("opentype"),
+    url("/fonts/material-icons-outlined.otf") format("opentype");
+}
+
+@font-face {
+  font-family: "Material Symbols Rounded";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src:
+    url("/sa/fonts/material-symbols-rounded.ttf") format("truetype"),
+    url("/fonts/material-symbols-rounded.ttf") format("truetype");
+}
+
+
+
+:root {
+  /* Nextou brand core */
+  --nextou-primary-purple: #38268E;
+  --nextou-deep-purple: #23117C;
+  --nextou-secondary-purple: #6557A8;
+  --nextou-accent-orange: #F97928;
+  --nextou-white: #FBFBFC;
+  --nextou-text: #111111;
+  --nextou-text-strong: #050505;
+  --nextou-text-muted: #3f3f46;
+  --nextou-text-soft: #6b7280;
+  --nextou-bg: #F7F6FC;
+  --nextou-surface: #FFFFFF;
+  --nextou-border: #E8E5F4;
+  --nextou-shadow-card: 0 12px 32px rgba(35, 17, 124, 0.10);
+  --nextou-shadow-sm: 0 2px 8px rgba(17, 24, 39, 0.06);
+  --nextou-shadow-md: 0 8px 24px rgba(17, 24, 39, 0.08);
+  --nextou-shadow-lg: 0 16px 40px rgba(17, 24, 39, 0.12);
+  --nextou-radius-sm: 12px;
+  --nextou-radius-md: 18px;
+  --nextou-radius-lg: 24px;
+  --nextou-radius-xl: 32px;
+
+  --fd-color-primary: #38268E;
+  --fd-color-primary-hover: #23117C;
+  --fd-color-primary-soft: #EFECF8;
+  --fd-color-primary-border: #C7BFE8;
+
+  --fd-color-success: #22c55e;
+  --fd-color-success-soft: #eafbf1;
+  --fd-color-success-border: #bbf7d0;
+
+  --fd-color-warning: #facc15;
+  --fd-color-warning-soft: #fef9c3;
+  --fd-color-warning-border: #fde68a;
+
+  --fd-color-danger: #ef4444;
+  --fd-color-danger-soft: #fee2e2;
+  --fd-color-danger-border: #fecaca;
+
+  --fd-color-orange: #F97928;
+  --fd-color-orange-soft: #FFF0E5;
+  --fd-color-orange-border: #fed7aa;
+
+  --fd-color-info: #6557A8;
+  --fd-color-info-soft: #F1EEFA;
+  --fd-color-info-border: #C7BFE8;
+
+  --fd-color-bg: #FBFBFC;
+  --fd-color-page: #F1EEFA;
+  --fd-color-surface: #FBFBFC;
+  --fd-color-surface-soft: #F1EEFA;
+  --fd-color-text: #23117C;
+  --fd-color-text-secondary: #4B466D;
+  --fd-color-text-muted: #6A6690;
+  --fd-color-border: #DDD8EE;
+  --fd-color-border-soft: #EBE7F5;
+
+  --fd-gradient-brand: linear-gradient(135deg, #38268E 0%, #23117C 100%);
+  --fd-gradient-success: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  --fd-gradient-danger: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+  --fd-gradient-info: linear-gradient(135deg, #6557A8 0%, #38268E 100%);
+
+  --fd-shadow-sm: 0 2px 8px rgba(17, 24, 39, 0.06);
+  --fd-shadow-md: 0 8px 24px rgba(17, 24, 39, 0.08);
+  --fd-shadow-lg: 0 16px 40px rgba(17, 24, 39, 0.12);
+  --fd-shadow-focus: 0 0 0 4px rgba(56, 38, 142, 0.16);
+
+  --fd-radius-sm: 8px;
+  --fd-radius-md: 12px;
+  --fd-radius-lg: 16px;
+  --fd-radius-xl: 20px;
+  --fd-radius-pill: 999px;
+
+  --fd-space-1: 4px;
+  --fd-space-2: 8px;
+  --fd-space-3: 12px;
+  --fd-space-4: 16px;
+  --fd-space-5: 20px;
+  --fd-space-6: 24px;
+  --fd-space-8: 32px;
+
+  --fd-font-xs: 12px;
+  --fd-font-sm: 14px;
+  --fd-font-md: 16px;
+  --fd-font-lg: 18px;
+  --fd-font-xl: 22px;
+  --fd-font-2xl: 28px;
+
+  --fd-button-sm: 38px;
+  --fd-button-md: 44px;
+  --fd-button-lg: 48px;
+
+  --fd-z-topbar: 100;
+  --fd-z-bottom-nav: 120;
+  --fd-z-sticky-cta: 130;
+  --fd-z-drawer: 200;
+  --fd-z-modal: 300;
+  --fd-z-toast: 400;
+
+  --fd-breakpoint-xs: 320px;
+  --fd-breakpoint-sm: 360px;
+  --fd-breakpoint-md: 390px;
+  --fd-breakpoint-lg: 430px;
+  --fd-breakpoint-desktop: 1366px;
+
+  --fd-status-pending: var(--fd-color-orange);
+  --fd-status-active: var(--fd-color-success);
+  --fd-status-info: var(--fd-color-info);
+  --fd-status-danger: var(--fd-color-danger);
+  --fd-status-warning: var(--fd-color-warning);
+
+  --fd-toast-success-bg: var(--fd-color-success-soft);
+  --fd-toast-success-text: #166534;
+  --fd-toast-error-bg: var(--fd-color-danger-soft);
+  --fd-toast-error-text: #991b1b;
+  --fd-toast-info-bg: var(--fd-color-info-soft);
+  --fd-toast-info-text: #1e40af;
+  --fd-toast-warning-bg: var(--fd-color-warning-soft);
+  --fd-toast-warning-text: #854d0e;
+
+  --fd-modal-bg: var(--fd-color-surface);
+  --fd-modal-border: var(--fd-color-border);
+  --fd-sheet-bg: #FBFBFC;
+  --fd-sheet-handle: #d1d5db;
+  --fd-sheet-overlay: rgba(17, 24, 39, 0.42);
+
+  --fd-field-border: var(--fd-color-border);
+  --fd-field-focus: var(--fd-color-primary);
+  --fd-field-error: var(--fd-color-danger);
+  --fd-field-error-bg: var(--fd-color-danger-soft);
+  --fd-field-success: var(--fd-color-success);
+
+  --nc-primary: #38268E;
+  --nc-primary-2: #23117C;
+  --nc-primary-hover: #23117C;
+  --nc-primary-dark: #23117C;
+  --nc-primary-soft: #EFECF8;
+  --nc-primary-shadow: rgba(56, 38, 142, 0.24);
+
+  --nc-bg: #FBFBFC;
+  --nc-surface: #FBFBFC;
+  --nc-surface-alt: #EFECF8;
+  --nc-surface-hover: #EFECF8;
+  --nc-text-primary: #23117C;
+  --nc-text-secondary: #4B466D;
+  --nc-muted: #6A6690;
+  --nc-faint: #8A85A7;
+  --nc-line: #EBE7F5;
+  --nc-white: #FBFBFC;
+
+  --nc-success: #22c55e;
+  --nc-success-soft: rgba(34, 197, 94, 0.12);
+  --nc-danger: #ef4444;
+  --nc-danger-soft: rgba(239, 68, 68, 0.1);
+  --nc-warning: #facc15;
+  --nc-warning-soft: #fef9c3;
+  --nc-orange: #F97928;
+  --nc-orange-soft: #FFF0E5;
+  --nc-info: #6557A8;
+  --nc-info-soft: #F1EEFA;
+
+  --nc-radius-xs: 6px;
+  --nc-radius-sm: 8px;
+  --nc-radius-md: 8px;
+  --nc-radius-lg: 8px;
+  --nc-radius-xl: 8px;
+  --nc-radius-pill: 999px;
+
+  --nc-shadow-sm: 0 2px 8px rgba(16, 24, 40, 0.04);
+  --nc-shadow-md: 0 12px 28px rgba(16, 24, 40, 0.07);
+  --nc-shadow-lg: 0 22px 60px rgba(16, 24, 40, 0.12);
+  --nc-shadow-focus: 0 0 0 4px rgba(56, 38, 142, 0.16);
+
+  --nc-font-family:
+    "Nunito", sans-serif;
+  --nc-font-heading:
+    "Nunito", sans-serif;
+  --nc-emoji-font:
+    "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", emoji, sans-serif;
+
+  --nc-space-xs: 4px;
+  --nc-space-sm: 8px;
+  --nc-space-md: 12px;
+  --nc-space-lg: 16px;
+  --nc-space-xl: 24px;
+  --nc-space-xxl: 32px;
+
+  --nc-button-height-sm: 38px;
+  --nc-button-height-md: 42px;
+  --nc-button-height-lg: 46px;
+  --nc-input-height: 42px;
+  --nc-sidebar-width: 268px;
+}
+
+:root {
+  --primary: var(--fd-color-primary);
+  --primary-2: var(--fd-color-primary-hover);
+  --primary-gradient: var(--fd-color-primary);
+  --primary-hover: var(--fd-color-primary-hover);
+  --primary-dark: var(--nc-primary-dark);
+  --primary-light: var(--fd-color-primary-soft);
+  --primary-soft: var(--fd-color-primary-soft);
+  --primary-shadow: var(--nc-primary-shadow);
+
+  --bg: var(--fd-color-bg);
+  --background: var(--fd-color-bg);
+  --bg-color: var(--fd-color-bg);
+  --cream: var(--fd-color-bg);
+  --peach: var(--fd-color-bg);
+  --surface: var(--fd-color-surface);
+  --surface-color: var(--fd-color-surface);
+  --surface-card: var(--fd-color-surface);
+  --surface-alt: var(--fd-color-page);
+  --surface-hover: var(--nc-surface-hover);
+
+  --ink: var(--fd-color-text);
+  --charcoal: var(--fd-color-text);
+  --text-primary: var(--fd-color-text);
+  --text-secondary: var(--fd-color-text-secondary);
+  --muted: var(--fd-color-text-muted);
+  --text-muted: var(--fd-color-text-muted);
+  --faint: var(--nc-faint);
+  --line: var(--fd-color-border-soft);
+  --border-color: var(--fd-color-border);
+  --border-light: var(--fd-color-border-soft);
+  --white: var(--nc-white);
+
+  --green: var(--fd-color-success);
+  --success: var(--fd-color-success);
+  --teal: var(--nc-success);
+  --mint: var(--nc-success);
+  --green-soft: var(--fd-color-success-soft);
+  --success-light: var(--fd-color-success-soft);
+  --teal-soft: var(--nc-success-soft);
+  --mint-soft: var(--nc-success-soft);
+
+  --red: var(--fd-color-danger);
+  --danger: var(--fd-color-danger);
+  --accent-red: var(--nc-danger);
+  --danger-light: var(--fd-color-danger-soft);
+  --red-soft: var(--fd-color-danger-soft);
+
+  --orange: var(--fd-color-orange);
+  --warning: var(--fd-color-warning);
+  --attention: var(--fd-color-warning);
+  --orange-soft: var(--fd-color-orange-soft);
+  --warning-light: var(--fd-color-warning-soft);
+  --attention-soft: var(--fd-color-warning-soft);
+
+  --blue: var(--fd-color-info);
+  --info: var(--fd-color-info);
+  --cyan: var(--fd-color-info);
+  --indigo: var(--nc-primary);
+  --purple: var(--nc-primary);
+  --highlight: var(--nc-primary);
+  --blue-soft: var(--fd-color-info-soft);
+  --info-light: var(--fd-color-info-soft);
+  --cyan-soft: var(--fd-color-info-soft);
+  --indigo-soft: var(--nc-primary-soft);
+  --purple-soft: var(--nc-primary-soft);
+  --coral: var(--fd-color-orange);
+  --coral-soft: var(--fd-color-orange-soft);
+  --brand-accent: var(--nc-primary-2);
+  --brand-accent-deep: var(--nc-primary);
+
+  --radius-sm: var(--nc-radius-sm);
+  --radius-md: var(--nc-radius-md);
+  --radius-lg: var(--nc-radius-lg);
+  --radius-xl: var(--nc-radius-xl);
+  --radius-2xl: var(--nc-radius-xl);
+  --radius-full: var(--nc-radius-pill);
+  --radius: var(--nc-radius-xl);
+
+  --shadow: var(--nc-shadow-md);
+  --shadow-sm: var(--nc-shadow-sm);
+  --shadow-md: var(--nc-shadow-md);
+  --shadow-lg: var(--nc-shadow-lg);
+  --shadow-hover: var(--nc-shadow-lg);
+  --shadow-focus: var(--nc-shadow-focus);
+
+  --font-family: var(--nc-font-family);
+  --font-heading: var(--nc-font-heading);
+  --font-body: var(--nc-font-family);
+
+  --sidebar-width: var(--nc-sidebar-width);
+  --sidebar-bg: var(--nc-white);
+  --sidebar-text-active: var(--nc-primary);
+  --sidebar-item-active-bg: var(--nc-primary-soft);
+}

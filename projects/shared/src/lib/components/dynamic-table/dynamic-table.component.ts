@@ -19,6 +19,7 @@ export interface DynamicTableColumn {
   label: string;
   flex?: string;
   align?: 'left' | 'center' | 'right';
+  minWidth?: number;
 }
 
 export interface DynamicTableDefaults {
@@ -27,6 +28,7 @@ export interface DynamicTableDefaults {
   emptyIcon?: string;
   itemsPerPage?: number;
   hasPagination?: boolean;
+  contentSizing?: boolean;
 }
 
 export const DYNAMIC_TABLE_DEFAULTS = new InjectionToken<DynamicTableDefaults>(
@@ -84,11 +86,36 @@ export class DynamicTableComponent {
   }
 
   getGridTemplate(): string {
-    return this.columns.map((column) => column.flex || '1fr').join(' ');
+    return this.columns.map((column) => {
+      const flex = column.flex || '1fr';
+      if (!this.defaults?.contentSizing && !column.minWidth) return flex;
+      if (!/^\d*\.?\d+fr$/.test(flex)) return flex;
+      const width = column.minWidth ?? this.getColumnWidth(column.key);
+      return `minmax(${width}px, ${flex})`;
+    }).join(' ');
+  }
+
+  getMinimumWidth(): string | null {
+    if (!this.defaults?.contentSizing && !this.columns.some(column => column.minWidth)) return null;
+    const width = this.columns.reduce((sum, column) => {
+      const fixedWidth = /^(\d*\.?\d+)px$/.exec(column.flex || '');
+      return sum + (fixedWidth ? Number(fixedWidth[1]) : column.minWidth ?? this.getColumnWidth(column.key));
+    }, 0);
+    return `max(100%, calc(${width + 32}px + ${Math.max(0, this.columns.length - 1)} * 0.85rem))`;
+  }
+
+  private getColumnWidth(key: string): number {
+    if (/actions|update/.test(key)) return 160;
+    if (/email/.test(key)) return 200;
+    if (/name|vendor|customer|partner/.test(key)) return 160;
+    if (/order_number|reference|phone|date|created/.test(key)) return 140;
+    if (/rating/.test(key)) return 110;
+    return 100;
   }
 
   getAlignment(column: DynamicTableColumn): string {
-    return column.align ? `align-${column.align}` : '';
+    const alignment = column.align ?? (this.defaults?.contentSizing && /^(total|amount|balance|deliveries|min_order|price|quantity|actions|update)$/.test(column.key) ? 'right' : undefined);
+    return alignment ? `align-${alignment}` : '';
   }
 
   getRowId(row: unknown, index: number): unknown {

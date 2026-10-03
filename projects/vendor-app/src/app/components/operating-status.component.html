@@ -1,0 +1,75 @@
+@if(compact()){
+<span class="compact-state" [title]="store.operatingReason()">{{
+  store.operatingLabel()
+}}</span>
+}@else{
+<div class="operating-summary">
+  <div>
+    <span
+      class="status-chip"
+      [attr.data-status]="
+        store.stale()
+          ? 'unknown'
+          : store.context()?.operating?.effective_status?.code
+      "
+      >{{ store.operatingLabel() }}</span
+    >
+    <p>{{ store.operatingReason() }}</p>
+  </div>
+  @if(showAction()){ @if(store.stale()){<button
+    type="button"
+    class="btn-secondary"
+    (click)="store.refresh()"
+  >
+    Refresh status</button
+  >} @else if(store.context();as context){
+  @if(context.readiness.blockers.length){<a
+    class="btn-secondary"
+    [routerLink]="context.readiness.blockers[0].route"
+    >Resolve
+    {{
+      context.readiness.blockers[0].code === "stock_review"
+        ? "inventory review"
+        : "store blocker"
+    }}</a
+  >} @else if(!context.operating.is_open){<button
+    type="button"
+    class="btn-primary"
+    [disabled]="store.busy()"
+    (click)="store.operate({ is_open: true })"
+  >
+    Open store</button
+  >} @else if(!context.operating.is_accepting_orders){<button
+    type="button"
+    class="btn-primary"
+    [disabled]="store.busy()"
+    (click)="store.operate({ is_accepting_orders: true })"
+  >
+    Enable order intake</button
+  >} @else{<button
+    type="button"
+    class="btn-secondary"
+    [disabled]="store.busy()"
+    (click)="store.operate({ is_accepting_orders: false })"
+  >
+    Pause new orders</button
+  >} } }
+</div>
+@if(store.context();as context){
+<details class="operating-details">
+  <summary>Configuration and schedule</summary>
+  <p>
+    Store switch: {{ context.operating.is_open ? "Enabled" : "Off" }} · Order
+    intake switch:
+    {{ context.operating.is_accepting_orders ? "Enabled" : "Paused" }}
+  </p>
+  <p>
+    Scheduled hours: {{ context.vendor.opening_time || "Not set" }} –
+    {{ context.vendor.closing_time || "Not set" }} · {{ context.timezone }}
+  </p>
+  <small
+    >Hours use the configured business timezone. A closing time before opening
+    means overnight hours.</small
+  >
+</details>
+} }

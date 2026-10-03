@@ -1,6 +1,8 @@
+import { AdminDialogDirective } from '../../shared/admin-dialog.directive';
+import { AdminCanDirective } from '../../shared/admin-can.directive';
 import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { Subscription, timer } from 'rxjs';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '@shared/public-api';
 import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
@@ -8,8 +10,8 @@ import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
 @Component({
   selector: 'app-assets',
   standalone: true,
-  imports: [
-    CommonModule,
+  imports: [AdminDialogDirective,
+    AdminCanDirective,
     FormsModule,
     DynamicTableComponent,
     TableCellDirective,
@@ -19,6 +21,7 @@ import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
 })
 export class AssetsComponent implements OnInit, OnDestroy {
   private api = inject(ApiService);
+  assignedToFilter = '';
 
   assets = signal<any[]>([]);
   loading = signal(true);
@@ -88,6 +91,7 @@ export class AssetsComponent implements OnInit, OnDestroy {
   load() {
     this.loading.set(true);
     const params: any = { page: this.page() };
+    if (this.assignedToFilter) params.assigned_to = this.assignedToFilter;
     if (this.typeFilter) params.type = this.typeFilter;
     if (this.statusFilter) params.status = this.statusFilter;
     this.api.getAssets(params).subscribe({
@@ -167,7 +171,7 @@ export class AssetsComponent implements OnInit, OnDestroy {
       error: (err: any) => {
         this.saving.set(false);
         this.modalError.set(
-          err.error ? JSON.stringify(err.error) : 'Failed to save asset.',
+          err.error ? JSON.stringify(err.error) : 'Failed to save asset.'
         );
       },
     });

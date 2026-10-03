@@ -1,15 +1,11 @@
-﻿import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { CommonModule, DecimalPipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { ApiService, AppCurrencyPipe, ToastService } from '@shared/public-api';
-import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
-import {
-  AdminProfileBadge,
-  AdminProfileMetric,
-  AdminProfileShellComponent,
-  AdminProfileTab,
-} from '../../shared/components/admin-profile-shell/admin-profile-shell.component';
+import { ProfileContextComponent } from '../../shared/profile-context.component';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
+
+
+import { ActivatedRoute, Router } from '@angular/router';
+import { ApiService, ToastService } from '@shared/public-api';
+
+import { AdminProfileBadge, AdminProfileMetric, AdminProfileTab } from '../../shared/components/admin-profile-shell/admin-profile-shell.component';
 import { DynamicProfilePageComponent } from '../../shared/dynamic-profile/dynamic-profile-page.component';
 import { EntityProfileAdapterService } from '../../shared/dynamic-profile/entity-profile-adapter.service';
 import { ProfileHeroAction } from '../../shared/dynamic-profile/dynamic-profile.models';
@@ -20,7 +16,7 @@ type Period = '30d' | '90d' | '12m';
 @Component({
   selector: 'app-vendor-profile',
   standalone: true,
-  imports: [DynamicProfilePageComponent],
+  imports: [DynamicProfilePageComponent, ProfileContextComponent],
   templateUrl: './vendor-profile.component.html',
   styleUrl: './vendor-profile.component.scss',
 })
@@ -76,15 +72,13 @@ export class VendorProfileComponent implements OnInit {
 
   logoUploading = signal(false);
 
-  showTempPassword = signal(false);
-  copied = signal(false);
 
   Math = Math;
 
   dynamicProfileConfig = computed(() =>
     this.vendor()
       ? this.adapter.buildProfileConfig('vendor', this.vendor())
-      : null,
+      : null
   );
 
   profileTabs: AdminProfileTab[] = [
@@ -93,19 +87,6 @@ export class VendorProfileComponent implements OnInit {
     { id: 'orders', label: 'Orders', icon: 'receipt_long' },
     { id: 'report', label: 'Sales Report', icon: 'bar_chart' },
   ];
-
-  toggleTempPassword() {
-    this.showTempPassword.update((v) => !v);
-  }
-
-  copyTempPassword() {
-    const pwd = this.vendor()?.user_info?.temp_password;
-    if (!pwd) return;
-    navigator.clipboard.writeText(pwd).then(() => {
-      this.copied.set(true);
-      setTimeout(() => this.copied.set(false), 2000);
-    });
-  }
 
   ngOnInit() {
     this.vendorId = this.route.snapshot.paramMap.get('id')!;
@@ -207,7 +188,9 @@ export class VendorProfileComponent implements OnInit {
     const reason =
       newStatus === 'approved'
         ? ''
-        : window.prompt(`Reason for setting vendor status to "${newStatus}"?`)?.trim();
+        : window
+            .prompt(`Reason for setting vendor status to "${newStatus}"?`)
+            ?.trim();
     if (newStatus !== 'approved' && !reason) return;
     this.actionLoading.set(true);
     this.api.setVendorStatus(this.vendorId, newStatus, reason || '').subscribe({
@@ -266,7 +249,7 @@ export class VendorProfileComponent implements OnInit {
     if (action.id === 'resetPassword') {
       this.toast.show(
         'Password reset flow is available from auth support tools.',
-        'info',
+        'info'
       );
     }
   }
@@ -376,4 +359,3 @@ export class VendorProfileComponent implements OnInit {
     this.loadOrders();
   }
 }
-

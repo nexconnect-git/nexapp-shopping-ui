@@ -20,15 +20,15 @@
 .page-kicker {
   display: block;
   color: var(--primary);
-  font-size: 0.72rem;
-  font-weight: 900;
+  font-size: var(--admin-text-small);
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   margin-bottom: 0.35rem;
 }
 .page-title {
   font-size: 1.55rem;
-  font-weight: 950;
+  font-weight: 600;
   color: var(--text-primary);
   margin: 0 0 0.2rem 0;
   letter-spacing: 0;
@@ -92,7 +92,7 @@
   align-items: center;
   justify-content: center;
   color: white;
-  font-weight: 900;
+  font-weight: 600;
   font-size: 0.9rem;
   border: 1px solid rgba(255, 255, 255, 0.8);
   box-shadow: none;
@@ -107,7 +107,7 @@
 }
 .customer-name {
   margin: 0;
-  font-weight: 900;
+  font-weight: 600;
   font-size: 0.92rem;
   color: var(--text-primary);
   white-space: nowrap;
@@ -116,8 +116,8 @@
 }
 .customer-subline {
   color: var(--text-muted);
-  font-size: 0.72rem;
-  font-weight: 700;
+  font-size: var(--admin-text-small);
+  font-weight: 400;
 }
 .customer-name-link {
   transition: color 0.2s;
@@ -150,8 +150,8 @@
   min-height: 28px;
   padding: 0.25rem 0.65rem;
   border-radius: var(--radius-full);
-  font-size: 0.68rem;
-  font-weight: 900;
+  font-size: var(--admin-text-small);
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
   border: 1px solid transparent;
@@ -238,7 +238,7 @@
   padding: 1.5rem 1.5rem 0;
   h2 {
     font-size: 1.25rem;
-    font-weight: 800;
+    font-weight: 600;
     color: var(--text-primary);
     margin: 0;
   }

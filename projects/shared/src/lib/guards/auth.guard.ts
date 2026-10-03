@@ -51,7 +51,7 @@ export const unauthGuard: CanActivateFn = () => {
  * Cross-portal users (different role) are always allowed to see the login page.
  */
 export const portalUnauthGuard = (expectedRole: string): CanActivateFn => {
-  return () => {
+  return (route) => {
     const router = inject(Router);
     const auth = inject(AuthService);
     const token = auth.getToken() || getScopedToken();
@@ -64,6 +64,10 @@ export const portalUnauthGuard = (expectedRole: string): CanActivateFn => {
     }
 
     if (user.role === expectedRole) {
+      // Approval lookup failures retain the session, but must allow the
+      // vendor sign-in retry surface rather than redirecting back in a loop.
+      if (expectedRole === 'vendor' &&
+          route.queryParamMap.get('reason') === 'profile_unavailable') return true;
       router.navigate(['/']);
       return false;
     }

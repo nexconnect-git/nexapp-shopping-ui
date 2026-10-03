@@ -1,0 +1,98 @@
+<div class="workspace-page">
+  <header class="page-heading">
+    <div>
+      <p class="eyebrow">Money</p><h1>Wallet transactions</h1>
+      <p>Credits, debits, and running balances from your wallet ledger.</p>
+    </div>
+    <a routerLink="/payouts" class="btn btn-secondary">Settlements</a>
+  </header>
+  @if(context.context();as store){
+  <section class="workspace-card">
+    <h3>Current wallet balance</h3>
+    <strong>{{ store.vendor.wallet_balance | appCurrency }}</strong>
+    <p class="workspace-muted">
+      Server balance, separate from bank settlements.
+    </p>
+  </section>
+  }
+  <form class="workspace-toolbar" (ngSubmit)="query()">
+    <label class="workspace-search"
+      ><span class="material-icons-outlined">search</span
+      ><input
+        name="search"
+        [(ngModel)]="search"
+        placeholder="Description or reference"
+        aria-label="Search wallet transactions" /></label
+    ><label class="workspace-field"
+      >Type<select name="type" [(ngModel)]="type" (ngModelChange)="query()">
+        <option value="">All types</option>
+        <option value="credit">Credit</option>
+        <option value="debit">Debit</option>
+      </select></label
+    ><label class="workspace-field"
+      >Source<select
+        name="source"
+        [(ngModel)]="source"
+        (ngModelChange)="query()"
+      >
+        <option value="">All sources</option>
+        <option value="order_earning">Order earnings</option>
+        <option value="payout_withdrawal">Payout withdrawals</option>
+        <option value="admin_adjustment">Admin adjustments</option>
+        <option value="refund_deduction">Refund deductions</option>
+      </select></label
+    ><button type="submit" class="btn btn-secondary">Search</button>
+  </form>
+  @if(list.error()){
+  <p class="workspace-error" role="alert">
+    {{ list.error() }}
+    <button
+      type="button"
+      class="btn-secondary"
+      [disabled]="list.loading()"
+      (click)="list.reload()"
+    >
+      Retry
+    </button>
+  </p>
+  }@if(list.loading()){
+  <div class="workspace-state" role="status">Loading wallet transactions…</div>
+  }@else if(!list.error()&&!list.rows().length){
+  <div class="workspace-state">
+    <h3>No matching transactions</h3>
+    <p>Transactions appear when the platform posts wallet credits or debits.</p>
+  </div>
+  }@else{
+  <div class="workspace-transaction-list">
+    @for(transaction of list.rows();track transaction.id){
+    <article class="workspace-card transaction-item">
+      <div>
+        <h3>
+          {{ transaction.description || sourceLabel(transaction.source) }}
+        </h3>
+        <p>
+          {{ transaction.created_at | date : "medium" }} ·
+          {{ sourceLabel(transaction.source) }}
+        </p>
+        @if(transaction.reference_id){<small class="workspace-muted"
+          >Reference {{ transaction.reference_id }}</small
+        >}
+      </div>
+      <div>
+        <span
+          class="status-pill"
+          [class.success]="transaction.transaction_type === 'credit'"
+          >{{ transaction.transaction_type | titlecase }}</span
+        ><strong>{{ transaction.amount | appCurrency }}</strong>
+        <p>Balance after {{ transaction.balance_after | appCurrency }}</p>
+      </div>
+    </article>
+    }
+  </div>
+  }<nc-vendor-pager
+    [page]="list.page()"
+    [count]="list.count()"
+    [busy]="list.loading()"
+    (pageChange)="query($event)"
+  />
+</div>

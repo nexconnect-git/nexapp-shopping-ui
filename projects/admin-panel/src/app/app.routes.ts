@@ -1,3 +1,5 @@
+import { unsavedChangesGuard } from './guards/unsaved-changes.guard';
+import { adminPermissionGuard } from './guards/admin-permission.guard';
 import { type Routes } from '@angular/router';
 import {
   authGuard,
@@ -8,7 +10,7 @@ import {
 import { initialSetupGuard } from './guards/initial-setup.guard';
 import { superuserGuard } from './guards/superuser.guard';
 
-const adminGuard = [initialSetupGuard, authGuard, roleGuard('admin')];
+const adminGuard = [initialSetupGuard, authGuard, roleGuard('admin'), adminPermissionGuard];
 
 export const routes: Routes = [
   {
@@ -41,6 +43,7 @@ export const routes: Routes = [
   },
   {
     path: 'admin/profile/edit',
+    canDeactivate: [unsavedChangesGuard],
     loadComponent: () =>
       import('./pages/dynamic-entity-edit/dynamic-entity-edit.component').then(
         (m) => m.DynamicEntityEditComponent,
@@ -101,6 +104,7 @@ export const routes: Routes = [
   },
   {
     path: 'vendors/:id/edit',
+    canDeactivate: [unsavedChangesGuard],
     loadComponent: () =>
       import('./pages/dynamic-entity-edit/dynamic-entity-edit.component').then(
         (m) => m.DynamicEntityEditComponent,
@@ -135,6 +139,7 @@ export const routes: Routes = [
   },
   {
     path: 'customers/:id/edit',
+    canDeactivate: [unsavedChangesGuard],
     loadComponent: () =>
       import('./pages/dynamic-entity-edit/dynamic-entity-edit.component').then(
         (m) => m.DynamicEntityEditComponent,
@@ -178,6 +183,7 @@ export const routes: Routes = [
   },
   {
     path: 'delivery-partners/:id/edit',
+    canDeactivate: [unsavedChangesGuard],
     loadComponent: () =>
       import('./pages/dynamic-entity-edit/dynamic-entity-edit.component').then(
         (m) => m.DynamicEntityEditComponent,
@@ -306,6 +312,7 @@ export const routes: Routes = [
   },
   {
     path: 'platform-settings',
+    canDeactivate: [unsavedChangesGuard],
     loadComponent: () =>
       import('./pages/platform-settings/platform-settings.component').then(
         (m) => m.PlatformSettingsComponent,
@@ -374,5 +381,9 @@ export const routes: Routes = [
       ),
     canActivate: [initialSetupGuard, superuserGuard],
   },
+  { path: 'permissions', loadComponent: () => import('./pages/permissions/permissions.component').then(m => m.PermissionsComponent), canActivate: [initialSetupGuard, superuserGuard] },
+  { path: 'access-denied', loadComponent: () => import('./pages/access-denied/access-denied.component').then(m => m.AccessDeniedComponent), canActivate: [authGuard, roleGuard('admin')] },
+  { path: 'forgot-password', loadComponent: () => import('./pages/password-reset/password-reset.component').then(m => m.PasswordResetComponent) },
+  { path: 'reset-password', loadComponent: () => import('./pages/password-reset/password-reset.component').then(m => m.PasswordResetComponent) },
   { path: '**', redirectTo: '' },
 ];

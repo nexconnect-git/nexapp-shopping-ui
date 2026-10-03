@@ -1,14 +1,18 @@
-import { NgFor, NgIf, NgSwitch, NgSwitchCase } from '@angular/common';
 import {
+  afterRenderEffect,
   Component,
+  ElementRef,
+  HostListener,
   EventEmitter,
   Input,
   OnChanges,
   Output,
-  SimpleChanges,
   signal,
+  SimpleChanges,
+  viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { AdminIconPipe } from './profile-display.pipes';
 import {
   inferCountryFromLocation,
   isValidEmail,
@@ -29,14 +33,7 @@ import {
 @Component({
   selector: 'nc-dynamic-edit-page',
   standalone: true,
-  imports: [
-    NgFor,
-    NgIf,
-    NgSwitch,
-    NgSwitchCase,
-    FormsModule,
-    MapPickerComponent,
-  ],
+  imports: [FormsModule, MapPickerComponent, AdminIconPipe],
   templateUrl: './dynamic-edit-page.component.html',
   styleUrls: ['./dynamic-edit-page.component.scss'],
 })
@@ -59,6 +56,35 @@ export class DynamicEditPageComponent implements OnChanges {
   activeStepIndex = signal(0);
   localErrors = signal<Record<string, string>>({});
   localSummary = signal('');
+  private readonly stepper = viewChild<ElementRef<HTMLElement>>('stepper');
+  private readonly panelHeading = viewChild<ElementRef<HTMLElement>>('panelHeading');
+  private readonly sectionFocusRequested = signal(false);
+
+  constructor() {
+    afterRenderEffect(() => {
+      this.revealActiveStep();
+      const heading = this.panelHeading()?.nativeElement;
+      if (this.sectionFocusRequested() && heading) {
+        this.sectionFocusRequested.set(false);
+        heading.focus({ preventScroll: true });
+        heading.scrollIntoView({ block: 'start', behavior: 'instant' });
+      }
+    });
+  }
+
+  @HostListener('window:resize')
+  revealActiveStep(): void {
+    const rail = this.stepper()?.nativeElement;
+    const active = rail?.querySelectorAll<HTMLButtonElement>('button')[this.activeStepIndex()];
+    if (!rail || !active || rail.scrollWidth <= rail.clientWidth) return;
+    const railBounds = rail.getBoundingClientRect();
+    const activeBounds = active.getBoundingClientRect();
+    if (activeBounds.left < railBounds.left) {
+      rail.scrollLeft += activeBounds.left - railBounds.left;
+    } else if (activeBounds.right > railBounds.right) {
+      rail.scrollLeft += activeBounds.right - railBounds.right;
+    }
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['entity'] && this.entity) {
@@ -70,7 +96,7 @@ export class DynamicEditPageComponent implements OnChanges {
       this.config?.steps?.length
     ) {
       const index = this.config.steps.findIndex(
-        (step) => step.id === this.initialStepId,
+        (step) => step.id === this.initialStepId
       );
       this.activeStepIndex.set(index >= 0 ? index : 0);
     }
@@ -146,12 +172,14 @@ export class DynamicEditPageComponent implements OnChanges {
     }
 
     this.activeStepIndex.update((i) =>
-      Math.min(i + 1, this.config.steps.length - 1),
+      Math.min(i + 1, this.config.steps.length - 1)
     );
+    this.sectionFocusRequested.set(true);
   }
 
   previous(): void {
     this.activeStepIndex.update((i) => Math.max(i - 1, 0));
+    this.sectionFocusRequested.set(true);
   }
 
   goTo(index: number): void {
@@ -159,6 +187,7 @@ export class DynamicEditPageComponent implements OnChanges {
       return;
     }
     this.activeStepIndex.set(index);
+    this.sectionFocusRequested.set(true);
   }
 
   fieldId(field: ProfileFormField): string {
@@ -277,7 +306,10 @@ export class DynamicEditPageComponent implements OnChanges {
         section.fields.some((field) => keys.has(field.key))
       )
     );
-    if (index >= 0) this.activeStepIndex.set(index);
+    if (index >= 0) {
+      this.activeStepIndex.set(index);
+      this.sectionFocusRequested.set(true);
+    }
   }
 
   private findField(key: string): ProfileFormField | undefined {

@@ -1,20 +1,23 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { afterNextRender, Component, DestroyRef, effect, ElementRef, inject, Injector, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
-  VendorApi,
+  apiErrorMessage,
   AppCurrencyPipe,
-  formatFormErrors,
-  parseFormErrors,
-  getCurrencySymbol,
-  ToastService,
+  VendorCoupon,
+  VendorWorkspaceApi,
 } from '@shared/public-api';
-
+import { WorkspaceDialogComponent } from '../../components/workspace-dialog.component';
+import { WorkspacePagerComponent } from '../../components/workspace-pager.component';
+import { VendorContextService } from '../../services/vendor-context.service';
+import { vendorListState } from '../../services/vendor-list-state';
 interface CouponForm {
   code: string;
   title: string;
   description: string;
-  discount_type: 'percentage' | 'fixed' | 'free_delivery';
+  discount_type: VendorCoupon['discount_type'];
   discount_value: number;
   min_order_amount: number;
   max_discount_amount: number | null;
@@ -24,155 +27,78 @@ interface CouponForm {
   valid_until: string;
   is_active: boolean;
 }
-
 @Component({
   selector: 'app-coupons',
   standalone: true,
-  imports: [CommonModule, FormsModule, AppCurrencyPipe],
+  imports: [
+    CommonModule,
+    FormsModule,
+    AppCurrencyPipe,
+    WorkspaceDialogComponent,
+    WorkspacePagerComponent,
+  ],
   templateUrl: './coupons.component.html',
   styleUrl: './coupons.component.scss',
 })
 export class CouponsComponent implements OnInit {
-  private api = inject(VendorApi);
-  private toast = inject(ToastService);
-
-  coupons = signal<any[]>([]);
-  loading = signal(true);
-  saving = signal(false);
-  deleting = signal<string | null>(null);
-  deleteCandidate = signal<any | null>(null);
-  showForm = signal(false);
-  editingId = signal<string | null>(null);
-  error = signal('');
-  success = signal('');
-  fieldErrors = signal<Record<string, string>>({});
-  filter = signal<'all' | 'active' | 'upcoming' | 'expired' | 'inactive'>(
-    'all'
+  private readonly host: ElementRef<HTMLElement> = inject(ElementRef);
+  private readonly injector = inject(Injector);
+  private readonly api = inject(VendorWorkspaceApi);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly destroy = inject(DestroyRef);
+  readonly context = inject(VendorContextService);
+  readonly list = vendorListState<VendorCoupon>((query) =>
+    this.api.coupons(query)
   );
-
-  // Pagination
-  page = signal(1);
-  total = signal(0);
-  totalPages = signal(1);
-  readonly pageSize = 20;
-  Math = Math;
-
-  form: CouponForm = this.blankForm();
-
-  readonly discountTypes = [
-    { value: 'percentage', label: 'Percentage (%)' },
-    { value: 'fixed', label: 'Fixed Amount' },
-    { value: 'free_delivery', label: 'Free Delivery' },
-  ];
-
-  readonly campaignPresets = [
-    {
-      label: 'First order discount',
-      code: 'WELCOME15',
-      title: 'First order discount',
-      discount_type: 'percentage',
-      discount_value: 15,
-      min_order_amount: 149,
-    },
-    {
-      label: 'Weekend offer',
-      code: 'WEEKEND10',
-      title: 'Weekend special',
-      discount_type: 'percentage',
-      discount_value: 10,
-      min_order_amount: 199,
-    },
-    {
-      label: 'Free delivery',
-      code: 'FREEDEL',
-      title: 'Free delivery',
-      discount_type: 'free_delivery',
-      discount_value: 0,
-      min_order_amount: 249,
-    },
-    {
-      label: 'Slow product push',
-      code: 'MOVE20',
-      title: 'Move slow stock',
-      discount_type: 'fixed',
-      discount_value: 20,
-      min_order_amount: 99,
-    },
-  ];
-
-  ngOnInit() {
-    this.load();
-  }
-
-  filteredCoupons() {
-    const now = new Date();
-    return this.coupons().filter((c) => {
-      const f = this.filter();
-      if (f === 'all') return true;
-      if (f === 'active') return c.status_label === 'Active';
-      if (f === 'upcoming') return c.valid_from && new Date(c.valid_from) > now;
-      if (f === 'expired') return this.isExpired(c);
-      if (f === 'inactive') return !c.is_active;
-      return true;
+  readonly search = signal('');
+  readonly lifecycle = signal('');
+  readonly editing = signal(false);
+  readonly editId = signal<string | null>(null);
+  readonly saving = signal(false);
+  readonly pending = signal<string | null>(null);
+  readonly deleteCandidate = signal<VendorCoupon | null>(null);
+  readonly error = signal('');
+  readonly success = signal('');
+  readonly fieldErrors = signal<Record<string, string>>({});
+  readonly limitsOpen = signal(false);
+  constructor() {
+    effect(() => {
+      if (['min_order_amount', 'max_discount_amount', 'usage_limit', 'per_user_limit'].some(key => this.fieldErrors()[key])) this.limitsOpen.set(true);
     });
   }
-
-  summary() {
-    const coupons = this.coupons();
-    return {
-      active: coupons.filter((c) => c.status_label === 'Active').length,
-      usage: coupons.reduce(
-        (sum, c) => sum + Number(c.usage_count ?? c.used_count ?? 0),
-        0
-      ),
-      revenue: coupons.reduce(
-        (sum, c) => sum + Number(c.revenue_influenced || 0),
-        0
-      ),
-      warnings: coupons.filter((c) => c.health_warnings?.length).length,
-    };
+  readonly statuses = [
+    'active',
+    'upcoming',
+    'expired',
+    'inactive',
+    'exhausted',
+  ];
+  form: CouponForm = this.blank();
+  private saved = '';
+  ngOnInit(): void {
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe((params) => {
+        this.search.set(params.get('search') || '');
+        this.lifecycle.set(params.get('lifecycle') || '');
+        this.list.page.set(Math.max(1, Number(params.get('page')) || 1));
+        this.load();
+      });
   }
-
-  load() {
-    this.loading.set(true);
-    this.api.getVendorCoupons({ page: this.page() }).subscribe({
-      next: (res) => {
-        this.coupons.set(res.results || res);
-        this.total.set(res.count || (res.results || res).length);
-        this.totalPages.set(
-          Math.ceil(
-            (res.count || (res.results || res).length) / this.pageSize
-          ) || 1
-        );
-        this.loading.set(false);
+  query(page = 1): void {
+    void this.router.navigate([], {
+      queryParams: {
+        page,
+        search: this.search() || null,
+        lifecycle: this.lifecycle() || null,
       },
-      error: () => this.loading.set(false),
     });
   }
-
-  setPage(p: number) {
-    if (p >= 1 && p <= this.totalPages()) {
-      this.page.set(p);
-      this.load();
-    }
+  load(): void {
+    this.list.load({ search: this.search(), lifecycle: this.lifecycle() });
   }
-
-  pageNumbers(): number[] {
-    const total = this.totalPages();
-    const cur = this.page();
-    const range: number[] = [];
-    for (let i = Math.max(1, cur - 2); i <= Math.min(total, cur + 2); i++)
-      range.push(i);
-    return range;
-  }
-
-  blankForm(): CouponForm {
-    const now = new Date();
-    const later = new Date(
-      now.getFullYear() + 1,
-      now.getMonth(),
-      now.getDate()
-    );
+  blank(): CouponForm {
     return {
       code: '',
       title: '',
@@ -183,229 +109,255 @@ export class CouponsComponent implements OnInit {
       max_discount_amount: null,
       usage_limit: null,
       per_user_limit: 1,
-      valid_from: now.toISOString().slice(0, 16),
-      valid_until: later.toISOString().slice(0, 16),
-      is_active: true,
+      valid_from: '',
+      valid_until: '',
+      is_active: false,
     };
   }
-
-  openCreate() {
-    this.form = this.blankForm();
-    this.editingId.set(null);
+  zone(): string {
+    return this.context.context()?.timezone || '';
+  }
+  local(iso: string): string {
+    if (!iso || !this.zone()) return '';
+    const values = Object.fromEntries(
+      new Intl.DateTimeFormat('en-GB', {
+        timeZone: this.zone(),
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23',
+      })
+        .formatToParts(new Date(iso))
+        .map((part) => [part.type, part.value])
+    );
+    return `${values['year']}-${values['month']}-${values['day']}T${values['hour']}:${values['minute']}`;
+  }
+  toIso(local: string): string | null {
+    if (!local) return null;
+    const target = Date.parse(local + 'Z');
+    if (!Number.isFinite(target))
+      throw new Error('Enter a valid date and time.');
+    let actual = target;
+    for (let index = 0; index < 3; index++)
+      actual +=
+        target - Date.parse(this.local(new Date(actual).toISOString()) + 'Z');
+    const result = new Date(actual).toISOString();
+    if (this.local(result) !== local)
+      throw new Error(
+        'This local time does not exist in the store timezone. Choose another time.'
+      );
+    return result;
+  }
+  open(coupon?: VendorCoupon): void {
+    if (!this.zone()) return;
+    this.form = coupon
+      ? {
+          code: coupon.code,
+          title: coupon.title,
+          description: coupon.description,
+          discount_type: coupon.discount_type,
+          discount_value: Number(coupon.discount_value),
+          min_order_amount: Number(coupon.min_order_amount),
+          max_discount_amount:
+            coupon.max_discount_amount === null
+              ? null
+              : Number(coupon.max_discount_amount),
+          usage_limit: coupon.usage_limit,
+          per_user_limit: coupon.per_user_limit,
+          valid_from: this.local(coupon.valid_from),
+          valid_until: coupon.valid_until ? this.local(coupon.valid_until) : '',
+          is_active: coupon.is_active,
+        }
+      : { ...this.blank(), valid_from: this.local(new Date().toISOString()) };
+    this.editId.set(coupon?.id || null);
+    this.saved = JSON.stringify(this.form);
     this.error.set('');
     this.fieldErrors.set({});
-    this.showForm.set(true);
+    this.limitsOpen.set(false);
+    this.editing.set(true);
   }
-
-  applyPreset(preset: any) {
-    this.form = {
-      ...this.blankForm(),
-      code: preset.code,
-      title: preset.title,
-      discount_type: preset.discount_type,
-      discount_value: preset.discount_value,
-      min_order_amount: preset.min_order_amount,
-    };
-    this.editingId.set(null);
+  hasUnsavedChanges(): boolean {
+    return this.editing() && JSON.stringify(this.form) !== this.saved;
+  }
+  isSaving(): boolean {
+    return this.saving() || !!this.pending();
+  }
+  close(): void {
+    if (this.saving()) return;
+    if (this.hasUnsavedChanges()) {
+      this.error.set(
+        'Unsaved edits remain. Save, or use Discard edits to close.'
+      );
+      return;
+    }
+    this.editing.set(false);
     this.error.set('');
     this.fieldErrors.set({});
-    this.showForm.set(true);
   }
-
-  openEdit(c: any) {
-    this.form = {
-      code: c.code,
-      title: c.title,
-      description: c.description || '',
-      discount_type: c.discount_type,
-      discount_value: c.discount_value,
-      min_order_amount: c.min_order_amount,
-      max_discount_amount: c.max_discount_amount,
-      usage_limit: c.usage_limit,
-      per_user_limit: c.per_user_limit,
-      valid_from: c.valid_from?.slice(0, 16) || '',
-      valid_until: c.valid_until?.slice(0, 16) || '',
-      is_active: c.is_active,
-    };
-    this.editingId.set(c.id);
+  discard(): void {
+    if (this.saving()) return;
+    this.editing.set(false);
     this.error.set('');
     this.fieldErrors.set({});
-    this.showForm.set(true);
   }
-
-  save() {
-    this.error.set('');
-    const validationErrors = this.validateCouponForm();
-    this.fieldErrors.set(validationErrors);
-    if (Object.keys(validationErrors).length) {
-      this.error.set('Please fix the highlighted coupon fields.');
+  validateField(key: keyof CouponForm): void {
+    const message = this.validationErrors()[key];
+    this.fieldErrors.update(current => {
+      const next = { ...current };
+      if (message) next[key] = message;
+      else delete next[key];
+      return next;
+    });
+  }
+  private validationErrors(): Record<string, string> {
+    const errors: Record<string, string> = {};
+    if (!/^[A-Z0-9_-]{3,50}$/i.test(this.form.code))
+      errors['code'] = 'Use 3–50 letters, numbers, dashes or underscores.';
+    if (!this.form.title.trim()) errors['title'] = 'Title is required.';
+    for (const key of ['discount_value', 'min_order_amount'] as const)
+      if (!Number.isFinite(this.form[key]) || this.form[key] < 0)
+        errors[key] = 'Use a non-negative number.';
+    if (
+      this.form.discount_type !== 'free_delivery' &&
+      this.form.discount_value <= 0
+    )
+      errors['discount_value'] = 'Use a positive discount.';
+    if (
+      this.form.discount_type === 'percentage' &&
+      this.form.discount_value > 100
+    )
+      errors['discount_value'] = 'Percentage cannot exceed 100.';
+    if (
+      this.form.max_discount_amount !== null &&
+      (!Number.isFinite(this.form.max_discount_amount) ||
+        this.form.max_discount_amount < 0)
+    )
+      errors['max_discount_amount'] = 'Use a non-negative amount.';
+    for (const key of ['usage_limit', 'per_user_limit'] as const)
+      if (
+        this.form[key] !== null &&
+        (!Number.isInteger(this.form[key]) || this.form[key]! < 1)
+      )
+        errors[key] = 'Use a whole number of at least 1.';
+    if (!this.form.valid_from) errors['valid_from'] = 'Start date is required.';
+    if (this.form.valid_until && this.form.valid_until <= this.form.valid_from)
+      errors['valid_until'] = 'End must be after start.';
+    return errors;
+  }
+  save(): void {
+    if (this.saving() || !this.zone()) return;
+    const errors = this.validationErrors();
+    this.fieldErrors.set(errors);
+    if (Object.keys(errors).length) {
+      this.error.set('Fix the highlighted fields.');
+      afterNextRender(() => {
+        const invalid = this.host.nativeElement.querySelector<HTMLElement>('[aria-invalid="true"]');
+        invalid?.focus();
+        invalid?.scrollIntoView({ block: 'center' });
+      }, { injector: this.injector });
+      return;
+    }
+    let from: string | null, until: string | null;
+    try {
+      from = this.toIso(this.form.valid_from);
+      until = this.toIso(this.form.valid_until);
+    } catch (failure) {
+      this.error.set(
+        failure instanceof Error ? failure.message : 'Invalid time.'
+      );
       return;
     }
     this.saving.set(true);
-    const payload = {
-      ...this.form,
-      code: this.form.code.trim().toUpperCase(),
-      valid_from: new Date(this.form.valid_from).toISOString(),
-      valid_until: this.form.valid_until
-        ? new Date(this.form.valid_until).toISOString()
-        : null,
-    };
-    const req = this.editingId()
-      ? this.api.updateVendorCoupon(this.editingId()!, payload)
-      : this.api.createVendorCoupon(payload);
-
-    req.subscribe({
-      next: () => {
-        this.saving.set(false);
-        this.showForm.set(false);
-        this.success.set(
-          this.editingId() ? 'Coupon updated.' : 'Coupon created.'
-        );
-        setTimeout(() => this.success.set(''), 3000);
-        this.load();
-      },
-      error: (err) => {
-        this.saving.set(false);
-        const parsed = parseFormErrors(err.error);
-        this.fieldErrors.set(parsed.fieldErrors);
-        this.error.set(
-          formatFormErrors(err.error, 'Failed to save coupon.', {
-            code: 'Coupon code',
-            title: 'Title',
-            description: 'Description',
-            discount_value: 'Discount value',
-            min_order_amount: 'Minimum order',
-            valid_from: 'Start date',
-            valid_until: 'End date',
-          })
-        );
-      },
-    });
-  }
-
-  requestDelete(coupon: any) {
-    this.deleteCandidate.set(coupon);
     this.error.set('');
+    this.api
+      .saveCoupon(this.editId(), {
+        ...this.form,
+        code: this.form.code.trim().toUpperCase(),
+        discount_value:
+          this.form.discount_type === 'free_delivery'
+            ? 0
+            : this.form.discount_value,
+        valid_from: from,
+        valid_until: until,
+      })
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: () => {
+          this.saving.set(false);
+          this.editing.set(false);
+          this.success.set('Coupon saved.');
+          this.load();
+        },
+        error: (failure) => {
+          this.saving.set(false);
+          this.error.set(apiErrorMessage(failure, 'Coupon was not saved.'));
+        },
+      });
   }
-
-  closeDeleteConfirm() {
-    if (this.deleting()) return;
-    this.deleteCandidate.set(null);
+  command(coupon: VendorCoupon, command: 'duplicate' | 'reactivate'): void {
+    if (this.pending()) return;
+    this.pending.set(coupon.id);
+    this.error.set('');
+    this.api
+      .couponCommand(coupon.id, command)
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: () => {
+          this.pending.set(null);
+          this.success.set(
+            command === 'duplicate'
+              ? 'Inactive copy created. Review its dates before activation.'
+              : 'Coupon activated.'
+          );
+          this.load();
+        },
+        error: (failure) => {
+          this.pending.set(null);
+          this.error.set(apiErrorMessage(failure, 'Coupon was not changed.'));
+        },
+      });
   }
-
-  confirmDelete() {
+  remove(): void {
     const coupon = this.deleteCandidate();
-    if (!coupon) return;
-    this.deleting.set(coupon.id);
-    this.api.deleteVendorCoupon(coupon.id).subscribe({
-      next: () => {
-        this.deleting.set(null);
-        this.deleteCandidate.set(null);
-        this.success.set(
-          `Coupon ${coupon.code || coupon.title || ''} deleted.`.trim()
-        );
-        this.toast.show('Coupon deleted.', 'success');
-        setTimeout(() => this.success.set(''), 3000);
-        this.load();
-      },
-      error: (err) => {
-        this.deleting.set(null);
-        const message = formatFormErrors(err.error, 'Failed to delete coupon.');
-        this.error.set(message);
-        this.toast.show(message, 'error');
-      },
-    });
-  }
-
-  duplicate(c: any) {
-    this.api.duplicateVendorCoupon(c.id).subscribe({
-      next: () => {
-        this.success.set('Coupon duplicated as an inactive draft.');
-        this.load();
-      },
-      error: () => this.error.set('Failed to duplicate coupon.'),
-    });
-  }
-
-  reactivate(c: any) {
-    this.api.reactivateVendorCoupon(c.id).subscribe({
-      next: () => {
-        this.success.set('Coupon reactivated.');
-        this.load();
-      },
-      error: () => this.error.set('Failed to reactivate coupon.'),
-    });
-  }
-
-  discountLabel(c: any): string {
-    if (c.discount_type === 'percentage') return `${c.discount_value}% OFF`;
-    if (c.discount_type === 'free_delivery') return 'FREE DELIVERY';
-    return `${getCurrencySymbol()}${c.discount_value} OFF`;
-  }
-
-  isExpired(c: any): boolean {
-    return (
-      c.is_expired || (c.valid_until && new Date(c.valid_until) < new Date())
-    );
-  }
-
-  fieldError(field: string): string {
-    return this.fieldErrors()[field] || '';
-  }
-
-  clearFieldError(field: string): void {
-    if (!this.fieldErrors()[field]) return;
-    this.fieldErrors.update((current) => {
-      const next = { ...current };
-      delete next[field];
-      return next;
-    });
+    if (!coupon || this.pending()) return;
+    this.pending.set(coupon.id);
     this.error.set('');
+    this.api
+      .deleteCoupon(coupon.id)
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: () => {
+          this.pending.set(null);
+          this.deleteCandidate.set(null);
+          this.success.set('Coupon deleted.');
+          if (this.list.page() > 1 && this.list.rows().length === 1)
+            this.query(this.list.page() - 1);
+          else this.load();
+        },
+        error: (failure) => {
+          this.pending.set(null);
+          this.error.set(apiErrorMessage(failure, 'Coupon was not deleted.'));
+        },
+      });
   }
-
-  isCouponFormValid(): boolean {
-    return (
-      Object.keys(this.validateCouponForm()).length === 0 &&
-      Object.keys(this.fieldErrors()).length === 0
-    );
-  }
-
-  private validateCouponForm(): Record<string, string> {
-    const errors: Record<string, string> = {};
-    if (!this.form.code.trim()) errors['code'] = 'Coupon code is required.';
-    if (!/^[A-Z0-9_-]{3,50}$/i.test(this.form.code.trim()))
-      errors['code'] =
-        'Coupon code must be 3-50 letters, numbers, dashes, or underscores.';
-    if (!this.form.title.trim()) errors['title'] = 'Coupon title is required.';
-    if (!this.form.description.trim())
-      errors['description'] = 'Description is required.';
+  previewSubtotal = signal(500);
+  preview(): number | null {
+    const total = Number(this.previewSubtotal());
     if (
-      this.form.discount_type === 'percentage' &&
-      (this.form.discount_value <= 0 || this.form.discount_value > 100)
-    ) {
-      errors['discount_value'] =
-        'Percentage discount must be between 1 and 100.';
-    }
-    if (this.form.discount_type === 'fixed' && this.form.discount_value <= 0)
-      errors['discount_value'] = 'Fixed discount must be greater than 0.';
-    if (this.form.min_order_amount < 0)
-      errors['min_order_amount'] = 'Minimum order cannot be negative.';
-    if (
-      this.form.max_discount_amount !== null &&
-      this.form.max_discount_amount < 0
+      !Number.isFinite(total) ||
+      total < 0 ||
+      total < this.form.min_order_amount
     )
-      errors['max_discount_amount'] = 'Maximum discount cannot be negative.';
-    if (this.form.usage_limit !== null && this.form.usage_limit < 1)
-      errors['usage_limit'] = 'Usage limit must be at least 1.';
-    if (this.form.per_user_limit < 1)
-      errors['per_user_limit'] = 'Per-user limit must be at least 1.';
-    if (!this.form.valid_from) errors['valid_from'] = 'Start date is required.';
-    if (
-      this.form.valid_until &&
-      new Date(this.form.valid_until) <= new Date(this.form.valid_from)
-    ) {
-      errors['valid_until'] = 'End date must be after start date.';
-    }
-    return errors;
+      return null;
+    if (this.form.discount_type === 'free_delivery') return 0;
+    let discount =
+      this.form.discount_type === 'percentage'
+        ? (total * this.form.discount_value) / 100
+        : this.form.discount_value;
+    if (this.form.max_discount_amount)
+      discount = Math.min(discount, this.form.max_discount_amount);
+    return Math.max(0, Math.min(discount, total));
   }
 }

@@ -1,12 +1,14 @@
+import { Product } from '@shared/public-api';
 import { VendorProductEdit } from './vendor-product-edit.models';
 
-export function mapExistingProductDtoToEdit(dto: any): VendorProductEdit {
-  const status = mapStatus(dto?.status, dto?.is_available, dto?.stock);
+export function mapExistingProductDtoToEdit(dto: Product): VendorProductEdit {
+  const status = mapStatus(dto?.status);
   const updated =
     dto?.updated_at || dto?.reviewed_at || dto?.approval_requested_at;
 
   return {
     id: String(dto?.id || ''),
+    inheritanceMode: dto.inheritance_mode || 'base_image',
     productName: dto?.name || dto?.catalog_product?.name || 'Product',
     brand: dto?.brand || dto?.catalog_product?.brand || '',
     sku: dto?.sku || '',
@@ -18,7 +20,7 @@ export function mapExistingProductDtoToEdit(dto: any): VendorProductEdit {
     quantityPackSize: dto?.weight || '',
     imageUrl:
       dto?.primary_image ||
-      dto?.images?.find?.((image: any) => image?.is_primary)?.image ||
+      dto?.images?.find?.((image) => image?.is_primary)?.image ||
       dto?.catalog_product?.images?.[0]?.image ||
       '',
     price: toNumber(dto?.price),
@@ -58,10 +60,11 @@ export function mapExistingProductDtoToEdit(dto: any): VendorProductEdit {
 }
 
 export function mapVendorProductEditToUpdatePayload(
-  product: VendorProductEdit,
-): any {
+  product: VendorProductEdit
+): Record<string, unknown> {
   return {
     name: product.productName,
+    inheritance_mode: product.inheritanceMode,
     brand: product.brand,
     sku: product.sku,
     unit: product.unit,
@@ -74,10 +77,7 @@ export function mapVendorProductEditToUpdatePayload(
     min_order_quantity: Number(product.minOrderQuantity || 1),
     prep_time_minutes: Number(product.prepTimeMinutes || 0),
     status: apiStatus(product.status),
-    is_available:
-      product.availableForSale &&
-      product.status !== 'Paused' &&
-      product.status !== 'Out of Stock',
+    is_available: product.availableForSale,
     is_instant_delivery: product.instantDelivery,
     is_scheduled_delivery: product.scheduledDelivery,
     description: product.description,
@@ -94,25 +94,23 @@ export function mapVendorProductEditToUpdatePayload(
   };
 }
 
-function mapStatus(
-  status: string | undefined,
-  available: boolean | undefined,
-  stock: any,
-): VendorProductEdit['status'] {
-  if (status === 'sold_out' || Number(stock || 0) <= 0) return 'Out of Stock';
+function mapStatus(status: string | undefined): VendorProductEdit['status'] {
+  if (status === 'sold_out') return 'Out of Stock';
   if (status === 'draft') return 'Draft';
-  if (status === 'archived' || available === false) return 'Paused';
+  if (status === 'archived') return 'Archived';
+  if (status === 'coming_soon') return 'Coming Soon';
   return 'Active';
 }
 
 function apiStatus(status: VendorProductEdit['status']): string {
   if (status === 'Draft') return 'draft';
-  if (status === 'Paused') return 'draft';
+  if (status === 'Archived') return 'archived';
+  if (status === 'Coming Soon') return 'coming_soon';
   if (status === 'Out of Stock') return 'sold_out';
   return 'active';
 }
 
-function toNumber(value: any): number {
+function toNumber(value: unknown): number {
   const next = Number(value ?? 0);
   return Number.isFinite(next) ? next : 0;
 }

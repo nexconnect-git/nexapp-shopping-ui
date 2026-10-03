@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { InvoiceApi } from '@shared/public-api';
+import { InvoiceApi } from '@shared/lib/api/invoice-api.service';
 import { CustomerApiClientService } from './customer-api-client.service';
 
 @Injectable({ providedIn: 'root' })

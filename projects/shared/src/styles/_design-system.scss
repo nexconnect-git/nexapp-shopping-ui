@@ -24,7 +24,11 @@
   --nextou-radius-lg: 24px;
   --nextou-radius-xl: 32px;
 
-  --primary-gradient: linear-gradient(135deg, #38268E 0%, var(--fd-color-primary-hover) 100%);
+  --primary-gradient: linear-gradient(
+    135deg,
+    #38268e 0%,
+    var(--fd-color-primary-hover) 100%
+  );
   /* â”€â”€ Core Color Palette â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --bg-color: var(--nextou-white);
   --surface-color: var(--nextou-surface);
@@ -54,16 +58,8 @@
   --info-light: var(--fd-color-info-soft);
 
   /* â”€â”€ Typography â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-  --font-family: var(
-    --nc-font-family,
-    "Nunito",
-    sans-serif
-  );
-  --font-heading: var(
-    --nc-font-heading,
-    "Nunito",
-    sans-serif
-  );
+  --font-family: var(--nc-font-family, "Nunito", sans-serif);
+  --font-heading: var(--nc-font-heading, "Nunito", sans-serif);
 
   /* â”€â”€ Geometry & Depth â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --radius-sm: 6px;
@@ -79,10 +75,10 @@
 
   // Premium soft shadows
   --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
-  --shadow-md:
-    0 4px 12px rgba(15, 23, 42, 0.05), 0 2px 4px rgba(15, 23, 42, 0.03);
-  --shadow-lg:
-    0 10px 25px rgba(15, 23, 42, 0.05), 0 4px 10px rgba(15, 23, 42, 0.03);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.05),
+    0 2px 4px rgba(15, 23, 42, 0.03);
+  --shadow-lg: 0 10px 25px rgba(15, 23, 42, 0.05),
+    0 4px 10px rgba(15, 23, 42, 0.03);
   --shadow-focus: 0 0 0 4px rgba(56, 38, 142, 0.16);
 
   /* â”€â”€ Glassmorphism â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
@@ -372,9 +368,10 @@ form.ng-submitted input.ng-invalid:not([type="checkbox"]):not([type="radio"]),
 form.ng-submitted textarea.ng-invalid,
 form.ng-submitted select.ng-invalid,
 [aria-invalid="true"]:not([type="checkbox"]):not([type="radio"]),
-label:has(.field-error) > input:not([type="checkbox"]):not([type="radio"]),
-label:has(.field-error) > textarea,
-label:has(.field-error) > select {
+label:has(.field-error:not(:empty))
+  > input:not([type="checkbox"]):not([type="radio"]),
+label:has(.field-error:not(:empty)) > textarea,
+label:has(.field-error:not(:empty)) > select {
   border-color: var(--red, var(--danger)) !important;
   background: color-mix(
     in srgb,
@@ -406,9 +403,7 @@ select.has-warning,
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-sm);
-  transition:
-    box-shadow 0.2s ease,
-    transform 0.2s ease;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
   overflow: hidden;
 
   &:hover {
@@ -465,8 +460,8 @@ select.has-warning,
   color: #1e40af;
 }
 .badge-preparing {
-  background: #EFECF8;
-  color: #38268E;
+  background: #efecf8;
+  color: #38268e;
 }
 .badge-ready_for_pickup {
   background: #fce7f3;
@@ -554,7 +549,7 @@ select.has-warning,
 }
 .alert-info {
   background: var(--info-light);
-  color: #23117C;
+  color: #23117c;
   border: 1px solid #bfdbfe;
 }
 
@@ -628,7 +623,11 @@ select.has-warning,
 }
 
 .gradient-primary {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--primary) 0%,
+    var(--primary-dark) 100%
+  );
   color: white;
 }
 
@@ -670,7 +669,8 @@ select.has-warning,
   animation: radar-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
 }
 @keyframes radar-ping {
-  75%, 100% {
+  75%,
+  100% {
     transform: scale(2);
     opacity: 0;
   }

@@ -139,9 +139,9 @@
                             [class.has-error]="fieldError(f.key)"
                             (change)="onFileSelected(f, $event)"
                           />
-                          <span>{{ fileName(f.key) || "No file selected" }}</span>
                           @if (fileName(f.key)) {
-                            <button
+                            <span>{{ fileName(f.key) }}</span>
+                            <button aria-label="Remove file"
                               type="button"
                               class="icon-btn"
                               (click)="clearFile(f, fileInput)"
@@ -237,7 +237,7 @@
                             )
                           }}</span>
                         </div>
-                        <button
+                        <button aria-label="Remove"
                           type="button"
                           class="icon-btn danger"
                           (click)="removeListItem(section.list.key, $index)"

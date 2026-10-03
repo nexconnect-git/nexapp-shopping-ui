@@ -1,247 +1,111 @@
 <div class="saas-page dashboard">
   <section class="command-hero">
     <div>
-      <span class="eyebrow">Instant delivery command center</span>
-      <h1>Today's marketplace operations</h1>
-      <p>
-        Live order pressure, fleet readiness, marketplace health, and money
-        movement in one control room.
-      </p>
+      <span class="eyebrow">Your marketplace, at a glance</span>
+      <h1>Marketplace overview</h1>
+      <p>Orders, people, and the work that needs your attention.</p>
     </div>
-    <div class="hero-actions">
-      @for (action of heroActions; track action.route) {
-        <a
-          [routerLink]="action.route"
-          class="hero-button"
-          [class.primary]="action.primary"
-        >
-          <span class="material-icons-outlined">{{ action.icon }}</span>
-          {{ action.label }}
-        </a>
-      }
-    </div>
+    <div class="overview-date"><span class="material-icons-outlined" aria-hidden="true">calendar_today</span>{{ today | date: "EEE, d MMM y" }}</div>
   </section>
 
   @if (loadingStats()) {
-    <div class="loading-state">
-      <div class="spinner"></div>
-      <p>Syncing platform telemetry...</p>
-    </div>
+    <div class="loading-state" role="status"><div class="spinner"></div><p>Loading marketplace overview...</p></div>
+  } @else if (statsError()) {
+    <div class="overview-error" role="alert"><span class="material-icons-outlined">cloud_off</span><p>{{ statsError() }}</p><button class="btn btn-secondary" (click)="loadStatsHttp()">Try again</button></div>
   } @else {
-    <section class="kpi-grid">
-      <a routerLink="/payments" class="kpi-card revenue">
-        <span class="kpi-label">Gross revenue</span>
-        <strong>{{ stats()?.total_revenue | appCurrency }}</strong>
-        <span class="kpi-note">Across all completed and active orders</span>
-      </a>
-
-      <a routerLink="/orders" class="kpi-card">
-        <span class="kpi-icon danger"
-          ><span class="material-icons-outlined">timer</span></span
-        >
-        <span class="kpi-label">Open orders</span>
-        <strong>{{ openOrderCount() }}</strong>
-        <span class="kpi-note">Needs store or dispatch attention</span>
-      </a>
-
-      <a routerLink="/delivery-partners" class="kpi-card">
-        <span class="kpi-icon teal"
-          ><span class="material-icons-outlined">delivery_dining</span></span
-        >
-        <span class="kpi-label">Fleet partners</span>
-        <strong>{{ stats()?.delivery_partners ?? 0 }}</strong>
-        <span class="kpi-note"
-          >{{ stats()?.pending_delivery_partners || 0 }} pending
-          verification</span
-        >
-      </a>
-
-      <a routerLink="/vendors" class="kpi-card">
-        <span class="kpi-icon green"
-          ><span class="material-icons-outlined">storefront</span></span
-        >
-        <span class="kpi-label">Active stores</span>
-        <strong>{{ stats()?.vendors ?? 0 }}</strong>
-        <span class="kpi-note"
-          >{{ stats()?.pending_vendors || 0 }} onboarding reviews</span
-        >
-      </a>
-
-      <a routerLink="/products" class="kpi-card">
-        <span class="kpi-icon accent"
-          ><span class="material-icons-outlined">inventory_2</span></span
-        >
-        <span class="kpi-label">Catalog SKUs</span>
-        <strong>{{ stats()?.products ?? 0 }}</strong>
-        <span class="kpi-note">Across all vendor storefronts</span>
-      </a>
-
-      <a routerLink="/customers" class="kpi-card">
-        <span class="kpi-icon violet"
-          ><span class="material-icons-outlined">groups</span></span
-        >
-        <span class="kpi-label">Customers</span>
-        <strong>{{ stats()?.customers ?? 0 }}</strong>
-        <span class="kpi-note">Registered buyer accounts</span>
-      </a>
-    </section>
-
-    <section class="governance-strip" aria-label="Marketplace governance">
-      <a routerLink="/catalog">
-        <span class="material-icons-outlined">hub</span>
-        <div>
-          <small>Parent catalog</small>
-          <strong>Approve master SKUs</strong>
-          <p>Keep customer search clean with controlled catalog records.</p>
-        </div>
-      </a>
-      <a routerLink="/catalog-requests">
-        <span class="material-icons-outlined">rule</span>
-        <div>
-          <small>Vendor requests</small>
-          <strong>Review additions</strong>
-          <p>Accept or reject store-submitted catalog changes.</p>
-        </div>
-      </a>
-      <a routerLink="/vendor-variant-approvals">
-        <span class="material-icons-outlined">inventory</span>
-        <div>
-          <small>Store variants</small>
-          <strong>Control pricing/stock variants</strong>
-          <p>Govern vendor listings before they reach customers.</p>
-        </div>
-      </a>
-      <a routerLink="/dispatch">
-        <span class="material-icons-outlined">delivery_dining</span>
-        <div>
-          <small>Dispatch</small>
-          <strong>Reassign delivery fast</strong>
-          <p>Recover orders when pickup, distance, or partner state changes.</p>
-        </div>
-      </a>
+    <section class="kpi-grid" aria-label="Marketplace metrics">
+      <ng-container *appAdminCan="'finance.view'"><a routerLink="/payments" class="kpi-card">
+        <span class="kpi-icon violet"><span class="material-icons-outlined" aria-hidden="true">account_balance_wallet</span></span>
+        <span class="kpi-label">Verified completed revenue</span><strong>{{ stats()?.total_revenue | appCurrency }}</strong>
+        <span class="kpi-note">Verified receipts for delivered orders</span><span class="kpi-arrow material-icons-outlined" aria-hidden="true">north_east</span>
+      </a></ng-container>
+      <ng-container *appAdminCan="'orders.view'"><a routerLink="/orders" class="kpi-card">
+        <span class="kpi-icon blue"><span class="material-icons-outlined" aria-hidden="true">receipt_long</span></span>
+        <span class="kpi-label">Total orders</span><strong>{{ statNumber('total_orders') | number }}</strong>
+        <span class="kpi-note">{{ statNumber('completed_orders') }} delivered successfully</span><span class="kpi-arrow material-icons-outlined" aria-hidden="true">north_east</span>
+      </a></ng-container>
+      @if(access.can('dispatch.view') && access.can('orders.view')){<a routerLink="/dispatch" class="kpi-card">
+        <span class="kpi-icon orange"><span class="material-icons-outlined" aria-hidden="true">local_shipping</span></span>
+        <span class="kpi-label">Active orders</span><strong>{{ openOrderCount() | number }}</strong>
+        <span class="kpi-note">From placement through delivery</span><span class="kpi-arrow material-icons-outlined" aria-hidden="true">north_east</span>
+      </a>}
+      <ng-container *appAdminCan="'vendors.view'"><a routerLink="/vendors" class="kpi-card">
+        <span class="kpi-icon green"><span class="material-icons-outlined" aria-hidden="true">storefront</span></span>
+        <span class="kpi-label">Marketplace stores</span><strong>{{ stats()?.vendors ?? 0 | number }}</strong>
+        <span class="kpi-note">{{ statNumber('pending_vendors') }} awaiting approval</span><span class="kpi-arrow material-icons-outlined" aria-hidden="true">north_east</span>
+      </a></ng-container>
+      <ng-container *appAdminCan="'dispatch.view'"><a routerLink="/delivery-partners" class="kpi-card">
+        <span class="kpi-icon cyan"><span class="material-icons-outlined" aria-hidden="true">two_wheeler</span></span>
+        <span class="kpi-label">Delivery partners</span><strong>{{ stats()?.delivery_partners ?? 0 | number }}</strong>
+        <span class="kpi-note">{{ statNumber('pending_delivery_partners') }} awaiting verification</span><span class="kpi-arrow material-icons-outlined" aria-hidden="true">north_east</span>
+      </a></ng-container>
+      <ng-container *appAdminCan="'customers.view'"><a routerLink="/customers" class="kpi-card">
+        <span class="kpi-icon rose"><span class="material-icons-outlined" aria-hidden="true">groups</span></span>
+        <span class="kpi-label">Customers</span><strong>{{ stats()?.customers ?? 0 | number }}</strong>
+        <span class="kpi-note">Registered shopping accounts</span><span class="kpi-arrow material-icons-outlined" aria-hidden="true">north_east</span>
+      </a></ng-container>
     </section>
 
     <section class="ops-grid">
-      <div class="ops-card order-flow">
-        <div class="section-header">
-          <div>
-            <h2>Order flow</h2>
-            <p>{{ stats()?.total_orders || 0 }} total orders in the platform</p>
+      <div class="ops-card order-flow" *appAdminCan="'orders.view'">
+        <div class="section-header"><div><h2>Order activity</h2><p>A breakdown of all {{ statNumber('total_orders') }} orders</p></div><ng-container *appAdminCan="'orders.view'"><a routerLink="/orders">View orders <span aria-hidden="true">→</span></a></ng-container></div>
+        <div class="flow-content">
+          <div class="flow-donut" [style.background]="orderFlowGradient()" role="img" [attr.aria-label]="statNumber('total_orders') + ' total orders; ' + openOrderCount() + ' active'">
+            <div><strong>{{ statNumber('total_orders') }}</strong><span>Total orders</span></div>
           </div>
-          <a routerLink="/orders">Manage</a>
-        </div>
-
-        <div class="flow-list">
-          @for (item of orderFlowItems; track item.label) {
-            <div class="flow-row">
-              <div class="flow-meta">
-                <span class="flow-dot" [class]="item.className"></span>
-                <span>{{ item.label }}</span>
-              </div>
-              <div class="flow-track">
-                <span
-                  [class]="item.className"
-                  [style.width.%]="flowPercent(statNumber(item.key))"
-                ></span>
-              </div>
-              <strong>{{ statNumber(item.key) }}</strong>
-            </div>
-          }
+          <div class="flow-list">
+            @for (item of orderFlowItems; track item.key) {
+              <div class="flow-row"><span class="flow-dot" [class]="item.className"></span><span>{{ item.label }}</span><strong>{{ statNumber(item.key) }}</strong><small>{{ flowPercent(statNumber(item.key)) | number:"1.0-0" }}%</small></div>
+            }
+          </div>
         </div>
       </div>
-
       <div class="ops-card action-queue">
-        <div class="section-header">
-          <div>
-            <h2>Action queue</h2>
-            <p>Items that can block an instant-delivery marketplace</p>
-          </div>
-        </div>
+        <div class="section-header"><div><h2>Needs attention</h2><p>Keep marketplace operations moving</p></div><span class="queue-count">{{ statNumber('pending_vendors') + statNumber('pending_delivery_partners') }}</span></div>
         @for (item of actionQueueItems; track item.route) {
-          <a [routerLink]="item.route" class="queue-item">
-            <span class="material-icons-outlined">{{ item.icon }}</span>
-            <div>
-              <strong>{{
-                item.statKey
-                  ? statNumber(item.statKey) + " " + item.title
-                  : item.title
-              }}</strong>
-              <small>{{ item.description }}</small>
-            </div>
-          </a>
+          @if(access.canRoute(item.route)){<a [routerLink]="item.route" [queryParams]="item.statKey === 'pending_vendors' ? {status:'pending'} : {}" class="queue-item"><span class="queue-icon material-icons-outlined" aria-hidden="true">{{ item.icon }}</span><div><strong>{{ item.statKey ? statNumber(item.statKey) + " " + item.title : item.title }}</strong><small>{{ item.description }}</small></div><span class="material-icons-outlined queue-arrow" aria-hidden="true">chevron_right</span></a>}
         }
       </div>
     </section>
   }
 
   <section class="lower-grid">
-    <div class="ops-card">
-      <div class="section-header">
-        <div>
-          <h2>Recent orders</h2>
-          <p>Newest transactions entering operations</p>
-        </div>
-        <a routerLink="/orders">View all</a>
-      </div>
-
+    @if(access.can('orders.view')){<div class="ops-card recent-orders-card">
+      <div class="section-header"><div><h2>Recent orders</h2><p>The latest orders in your marketplace</p></div><ng-container *appAdminCan="'orders.view'"><a routerLink="/orders">View all <span aria-hidden="true">→</span></a></ng-container></div>
       @if (loadingOrders()) {
-        <div class="compact-loading"><div class="spinner"></div></div>
+        <div class="compact-loading" role="status"><div class="spinner"></div><span>Loading orders...</span></div>
       } @else if (ordersError()) {
-        <div class="empty-panel danger">{{ ordersError() }}</div>
+        <div class="empty-panel" role="alert">{{ ordersError() }}<button class="btn btn-secondary" (click)="refreshTables()">Try again</button></div>
       } @else if (recentOrders().length > 0) {
         <div class="order-list">
+          <div class="order-list-head" aria-hidden="true"><span>Order / customer</span><span>Amount / status</span></div>
           @for (o of recentOrders(); track o.id) {
-            <a class="order-row" [routerLink]="['/orders', o.id]">
-              <div>
-                <strong>#{{ o.order_number }}</strong>
-                <span
-                  >{{ o.customer_name }} &middot;
-                  {{ o.vendor_name || "Vendor" }}</span
-                >
-              </div>
-              <div class="order-value">
-                <strong>{{ o.total | appCurrency }}</strong>
-                <span class="status-pill" [class]="o.status">{{
-                  o.status
-                }}</span>
-              </div>
-            </a>
+            <a class="order-row" [routerLink]="['/orders', o.id]"><span class="order-row-icon material-icons-outlined" aria-hidden="true">shopping_bag</span><div><strong>{{ o.order_number }}</strong><span>{{ o.customer_name }} · {{ o.vendor_name || "Vendor" }}</span></div><div class="order-value"><strong>{{ o.total | appCurrency }}</strong><span class="status-pill" [class]="o.status">{{ o.status.split('_').join(' ') }}</span></div></a>
           }
         </div>
-      } @else {
-        <div class="empty-panel">No live transactions yet.</div>
-      }
+      } @else { <div class="empty-panel"><span class="material-icons-outlined">receipt_long</span><strong>No orders yet</strong><span>New orders will appear here.</span></div> }
     </div>
-
-    <div class="ops-card">
-      <div class="section-header">
-        <div>
-          <h2>Top stores</h2>
-          <p>Best-rated vendor storefronts</p>
-        </div>
-        <a routerLink="/vendors">View all</a>
-      </div>
-
+    } @if(access.can('vendors.view')){<div class="ops-card">
+      <div class="section-header"><div><h2>Top stores</h2><p>Approved marketplace storefronts</p></div><ng-container *appAdminCan="'vendors.view'"><a routerLink="/vendors">View all <span aria-hidden="true">→</span></a></ng-container></div>
       @if (loadingVendors()) {
-        <div class="compact-loading"><div class="spinner"></div></div>
+        <div class="compact-loading" role="status"><div class="spinner"></div><span>Loading stores...</span></div>
       } @else if (vendorsError()) {
-        <div class="empty-panel danger">{{ vendorsError() }}</div>
+        <div class="empty-panel" role="alert">{{ vendorsError() }}</div>
       } @else if (topVendors().length > 0) {
         <div class="store-list">
           @for (v of topVendors(); track v.id) {
-            <a class="store-row" [routerLink]="['/vendors', v.id]">
-              <span class="store-avatar">{{ v.store_name?.[0] || "S" }}</span>
-              <div>
-                <strong>{{ v.store_name }}</strong>
-                <span>{{ v.city || "Coverage city pending" }}</span>
-              </div>
-              <em>{{ v.average_rating | number: "1.1-1" }}</em>
-            </a>
+            <a class="store-row" [routerLink]="['/vendors',v.id]"><span class="store-avatar">{{ v.store_name?.[0] || "S" }}</span><div><strong>{{ v.store_name }}</strong><span>{{ v.city || "City not provided" }}</span></div><span class="store-rating"><span class="material-icons-outlined" aria-hidden="true">star</span>{{ v.average_rating | number:"1.1-1" }}</span></a>
           }
         </div>
-      } @else {
-        <div class="empty-panel">No rated stores yet.</div>
-      }
+      } @else { <div class="empty-panel"><span class="material-icons-outlined">storefront</span><strong>No approved stores yet</strong><span>Approved stores will appear here.</span></div> }
+      <ng-container *appAdminCan="'vendors.manage'"><a class="store-directory-link" routerLink="/vendors/onboard"><span class="material-icons-outlined" aria-hidden="true">add</span>Onboard a new vendor</a></ng-container>
     </div>
+  } </section>
+
+  <section class="governance-strip" aria-label="Quick access">
+    <ng-container *appAdminCan="'catalog.view'"><a routerLink="/catalog"><span class="material-icons-outlined" aria-hidden="true">inventory_2</span><div><strong>Master catalog</strong><small>{{ stats()?.products ?? 0 }} vendor products</small></div><span class="material-icons-outlined governance-arrow" aria-hidden="true">arrow_forward</span></a></ng-container>
+    <ng-container *appAdminCan="'catalog.view'"><a routerLink="/catalog-requests"><span class="material-icons-outlined" aria-hidden="true">playlist_add_check</span><div><strong>Catalog requests</strong><small>Review store submissions</small></div><span class="material-icons-outlined governance-arrow" aria-hidden="true">arrow_forward</span></a></ng-container>
+    <ng-container *appAdminCan="'catalog.view'"><a routerLink="/vendor-variant-approvals"><span class="material-icons-outlined" aria-hidden="true">rule</span><div><strong>Product approvals</strong><small>Review pricing and stock</small></div><span class="material-icons-outlined governance-arrow" aria-hidden="true">arrow_forward</span></a></ng-container>
   </section>
+  @if (lastUpdated()) { <p class="overview-footer"><span class="refresh-dot" aria-hidden="true"></span>Live connection: {{ ws?.state() || 'closed' }} · Overview updated {{ lastUpdated() | date:"h:mm a" }} · Recent orders refresh every 30 seconds</p> }
 </div>

@@ -141,6 +141,8 @@ export interface ProductImage {
 }
 
 export interface Product {
+  updated_at?:string;
+  created_at?:string;
   id: string;
   catalog_product?: CatalogProduct | null;
   parent_catalog_item_id?: string | null;
@@ -197,6 +199,7 @@ export interface Product {
   approval_status?: 'draft' | 'pending_approval' | 'approved' | 'rejected';
   approval_status_label?: string;
   rejection_reason?: string;
+  approval_note?: string;
   reviewed_at?: string | null;
   approval_requested_at?: string | null;
   approval_change_summary?: string[];
@@ -402,6 +405,7 @@ export interface Order {
   normalized_status?: OrderStatus;
   payment_method: string;
   is_payment_verified: boolean;
+  payment_metadata?: Record<string, unknown>;
   payment_status?: PaymentStatus | string;
   subtotal: number;
   delivery_fee: number;

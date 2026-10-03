@@ -1,13 +1,13 @@
-﻿<div class="saas-page banners-page">
+<div class="saas-page banners-page">
   <div class="page-header">
     <div>
-      <h1 class="page-title">Home banners</h1>
+      <h1 class="page-title">Home Banners</h1>
       <p class="page-subtitle">Manage the customer app carousel.</p>
     </div>
-    <button class="btn-primary" (click)="openCreate()">
+    <ng-container *appAdminCan="'growth.manage'"><button class="btn-primary" (click)="openCreate()">
       <span class="material-icons-outlined">add</span>
       New Banner
-    </button>
+    </button></ng-container>
   </div>
 
   @if (loading()) {
@@ -33,7 +33,7 @@
               <h2>{{ banner.title }}</h2>
               <p>{{ banner.subtitle || "No subtitle" }}</p>
             </div>
-            <button
+            <ng-container *appAdminCan="'growth.manage'"><button
               class="status-pill"
               [class.active]="banner.is_active"
               (click)="toggleActive(banner)"
@@ -42,19 +42,19 @@
                 banner.is_active ? "visibility" : "visibility_off"
               }}</span>
               {{ banner.is_active ? "Active" : "Hidden" }}
-            </button>
+            </button></ng-container>
           </div>
           <div class="banner-meta">
             <span>Order {{ banner.display_order }}</span>
             <span>{{ banner.cta_label }} -> {{ banner.cta_url }}</span>
           </div>
           <div class="actions">
-            <button class="action-btn" (click)="openEdit(banner)">
+            <ng-container *appAdminCan="'growth.manage'"><button aria-label="Edit record" class="action-btn" (click)="openEdit(banner)">
               <span class="material-icons-outlined">edit</span>
-            </button>
-            <button class="action-btn danger" (click)="delete(banner)">
+            </button></ng-container>
+            <ng-container *appAdminCan="'growth.manage'"><button aria-label="Delete record" class="action-btn danger" (click)="delete(banner)">
               <span class="material-icons-outlined">delete_outline</span>
-            </button>
+            </button></ng-container>
           </div>
         </article>
       }
@@ -63,25 +63,25 @@
 </div>
 
 @if (showModal()) {
-  <div class="modal-backdrop" (click)="closeModal()">
-    <div class="modal" (click)="$event.stopPropagation()">
+  <div class="modal-backdrop" (click)="$event.target === $event.currentTarget && (closeModal())" (keydown.escape)="closeModal()" tabindex="-1" role="presentation">
+    <div class="modal" appAdminDialog aria-labelledby="banner-form-title" (appAdminDialogClose)="closeModal()">
       <div class="modal-header">
-        <h2>{{ editTarget() ? "Edit Banner" : "New Banner" }}</h2>
-        <button class="modal-close" (click)="closeModal()">&times;</button>
+        <h2 id="banner-form-title">{{ editTarget() ? "Edit Banner" : "New Banner" }}</h2>
+        <button class="modal-close" aria-label="Close dialog" (click)="closeModal()"><span class="material-icons-outlined">close</span></button>
       </div>
       <div class="modal-body">
         @if (error()) {
           <div class="alert-error">{{ error() }}</div>
         }
-        <label class="form-label">Title *</label>
-        <input
+        <label for="admin-banners.component-0" class="form-label">Title *</label>
+        <input id="admin-banners.component-0"
           class="form-input"
           [(ngModel)]="form.title"
           placeholder="Banner title"
         />
 
-        <label class="form-label">Subtitle</label>
-        <input
+        <label for="admin-banners.component-1" class="form-label">Subtitle</label>
+        <input id="admin-banners.component-1"
           class="form-input"
           [(ngModel)]="form.subtitle"
           placeholder="Short supporting text"
@@ -89,16 +89,16 @@
 
         <div class="form-grid">
           <div>
-            <label class="form-label">Badge</label>
-            <input
+            <label for="admin-banners.component-2" class="form-label">Badge</label>
+            <input id="admin-banners.component-2"
               class="form-input"
               [(ngModel)]="form.badge_text"
               placeholder="Optional"
             />
           </div>
           <div>
-            <label class="form-label">Display order</label>
-            <input
+            <label for="admin-banners.component-3" class="form-label">Display order</label>
+            <input id="admin-banners.component-3"
               class="form-input"
               type="number"
               [(ngModel)]="form.display_order"
@@ -108,24 +108,24 @@
 
         <div class="form-grid">
           <div>
-            <label class="form-label">CTA label</label>
-            <input class="form-input" [(ngModel)]="form.cta_label" />
+            <label for="admin-banners.component-4" class="form-label">CTA label</label>
+            <input id="admin-banners.component-4" class="form-input" [(ngModel)]="form.cta_label" />
           </div>
           <div>
-            <label class="form-label">CTA URL</label>
-            <input class="form-input" [(ngModel)]="form.cta_url" />
+            <label for="admin-banners.component-5" class="form-label">CTA URL</label>
+            <input id="admin-banners.component-5" class="form-input" [(ngModel)]="form.cta_url" />
           </div>
         </div>
 
-        <label class="form-label">Background color</label>
-        <input
+        <label for="admin-banners.component-6" class="form-label">Background color</label>
+        <input id="admin-banners.component-6"
           class="form-input"
           [(ngModel)]="form.bg_gradient"
           placeholder="#38268E"
         />
 
-        <label class="form-label">Image</label>
-        <input
+        <label for="admin-banners.component-7" class="form-label">Image</label>
+        <input id="admin-banners.component-7"
           class="form-input"
           type="file"
           accept="image/*"
@@ -139,9 +139,9 @@
       </div>
       <div class="modal-footer">
         <button class="btn-secondary" (click)="closeModal()">Cancel</button>
-        <button class="btn-primary" [disabled]="saving()" (click)="save()">
+        <ng-container *appAdminCan="'growth.manage'"><button class="btn-primary" [disabled]="saving()" (click)="save()">
           {{ saving() ? "Saving..." : "Save" }}
-        </button>
+        </button></ng-container>
       </div>
     </div>
   </div>

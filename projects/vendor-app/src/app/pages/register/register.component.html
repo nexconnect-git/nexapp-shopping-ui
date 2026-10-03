@@ -1,559 +1,316 @@
-<div class="register-page fade-in">
-  @if (loading()) {
-  <div class="register-loading-screen" role="status" aria-live="polite">
-    <div class="brand">
-      <span class="material-icons-outlined">storefront</span>
-      <span class="brand-text">Nextou</span>
-    </div>
-    <div class="register-loading-mark">
-      <span class="spinner"></span>
-    </div>
-    <h1>Creating your vendor account</h1>
-    <p>Please wait while we submit your store for review.</p>
-  </div>
-  } @else {
-  <div class="register-container card">
-    <!-- Stylish Left Panel -->
-    <div class="register-left">
-      <div class="brand">
-        <span class="material-icons-outlined">storefront</span>
-        <span class="brand-text">Nextou</span>
-      </div>
-      <div class="left-content">
-        <h1>Partner With Us.</h1>
-        <p>
-          Unlock new revenue streams by joining our elite network of local
-          vendors and restaurants.
+<div class="register-page">
+  <header class="register-intro">
+    <a routerLink="/login" class="register-brand"
+      ><span class="material-icons-outlined" aria-hidden="true">storefront</span
+      >Nextou Vendor</a
+    >
+    <ol aria-label="Registration progress">
+      @for(label of steps;track label;let index=$index){
+      <li
+        [class.current]="step() === index + 1"
+        [attr.aria-current]="step() === index + 1 ? 'step' : null"
+      >
+        <span class="step-number">{{ index + 1 }}</span
+        >{{ label }}
+      </li>
+      }
+    </ol>
+  </header>
+  <main class="register-form">
+    <header>
+      <p class="workspace-eyebrow">Step {{ step() }} of 4</p>
+      <h1>{{ steps[step() - 1] }}</h1>
+      <p>Save accurate details so the platform can review your store.</p>
+    </header>
+    @if(error()){
+    <p class="workspace-error" role="alert">{{ error() }}</p>
+    }
+    <form (ngSubmit)="onSubmit()">
+      <fieldset [disabled]="loading()" class="registration-fields">
+        @if(step()===1){@for(field of accountFields;track field.key){<label
+          class="workspace-field"
+          >{{ field.label
+          }}<input
+            [name]="field.key"
+            [type]="field.type"
+            [autocomplete]="field.auto"
+            [id]="'register-' + field.key"
+            (blur)="validateField(field.key)"
+            [attr.aria-invalid]="fieldError(field.key) ? true : null"
+            [attr.aria-describedby]="
+              fieldError(field.key) ? 'register-error-' + field.key : null
+            "
+            [ngModel]="value(field.key)"
+            (ngModelChange)="update(field.key, $event)"
+            [maxlength]="field.key === 'username' ? 150 : null"
+            required
+          />@if(fieldError(field.key)){<small
+            class="workspace-error"
+            [id]="'register-error-' + field.key"
+            >{{ fieldError(field.key) }}</small
+          >}@if(availabilityState(field.key)?.checking){<small role="status"
+            >Checking availability…</small
+          >}@if(availabilityState(field.key)?.unique===true){<small
+            class="available"
+            >Available</small
+          >}@if(availabilityState(field.key)?.suggestions;as suggestions){
+          <div class="workspace-actions">
+            @for(suggestion of suggestions;track suggestion){<button
+              type="button"
+              class="btn btn-secondary"
+              (click)="useFieldSuggestion(field.key, suggestion)"
+            >
+              {{ suggestion }}</button
+            >}
+          </div>
+          }</label
+        >}
+        <p class="workspace-muted">
+          Use at least 8 characters for your password. The server applies
+          additional password checks.
         </p>
-
-        <div class="progress-indicator">
-          <div
-            class="step"
-            [class.active]="step() === 1"
-            [class.completed]="step() > 1"
-          >
-            <div class="step-icon">
-              <span class="material-icons-outlined">{{
-                step() > 1 ? "check" : "person"
-              }}</span>
-            </div>
-            <div class="step-text">Account Details</div>
-          </div>
-          <div class="step-line" [class.filled]="step() > 1"></div>
-          <div
-            class="step"
-            [class.active]="step() === 2"
-            [class.completed]="step() > 2"
-          >
-            <div class="step-icon">
-              <span class="material-icons-outlined">{{
-                step() > 2 ? "check" : "store"
-              }}</span>
-            </div>
-            <div class="step-text">Store Profile</div>
-          </div>
-          <div class="step-line" [class.filled]="step() > 2"></div>
-          <div class="step" [class.active]="step() === 3">
-            <div class="step-icon">
-              <span class="material-icons-outlined">location_on</span>
-            </div>
-            <div class="step-text">Store Location</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Right Panel (Form) -->
-    <div class="register-right">
-      <div class="form-wrapper">
-        <h2 class="step-title">
-          {{
-            step() === 1
-              ? "Create your account"
-              : step() === 2
-              ? "Store settings"
-              : "Location details"
-          }}
-        </h2>
-        <p class="step-subtitle">
-          {{
-            step() === 1
-              ? "Start by setting up your credentials."
-              : step() === 2
-              ? "Tell us about your business."
-              : "Pinpoint your exact store location."
-          }}
-        </p>
-
-        @if (error()) {
-        <div class="alert alert-error">
-          <span class="material-icons-outlined">error_outline</span>
-          <span>{{ error() }}</span>
-        </div>
-        }
-
-        <form (ngSubmit)="onSubmit()">
-          <!-- STEP 1: Account -->
-          <div class="form-step fade-in" *ngIf="step() === 1">
-            <div class="form-group">
-              <label>Username <span class="required">*</span></label>
-              <input
-                type="text"
-                [(ngModel)]="form.username"
-                (ngModelChange)="onIdentityInput('username')"
-                (blur)="validateField('username')"
-                name="username"
-                class="form-input"
-                [class.has-error]="fieldError('username')"
-                [attr.aria-invalid]="fieldError('username') ? 'true' : null"
-                placeholder="e.g. coffee_shop"
-                required
-              />
-              <small class="field-hint"
-                >This becomes your login ID. Keep it short, memorable, and
-                unique.</small
-              >
-              @if (availabilityState("username")?.checking) {
-              <span class="field-checking">Checking availability...</span>
-              } @if ( availabilityState("username")?.unique === true &&
-              !fieldError("username") ) {
-              <span class="field-success">Username available</span>
-              } @if ( availabilityState("username")?.unique === false &&
-              availabilityState("username")?.suggestions?.length ) {
-              <div class="suggestions">
-                @for ( suggestion of availabilityState("username")!.suggestions;
-                track suggestion ) {
-                <button
-                  type="button"
-                  (click)="useSuggestion('username', suggestion)"
-                >
-                  {{ suggestion }}
-                </button>
-                }
-              </div>
-              } @if (fieldError("username")) {
-              <span class="field-error">{{ fieldError("username") }}</span>
-              }
-            </div>
-            <div class="form-group">
-              <label>Email Address <span class="required">*</span></label>
-              <input
-                type="email"
-                [(ngModel)]="form.email"
-                (ngModelChange)="onIdentityInput('email')"
-                (blur)="validateField('email')"
-                name="email"
-                class="form-input"
-                [class.has-error]="fieldError('email')"
-                [attr.aria-invalid]="fieldError('email') ? 'true' : null"
-                placeholder="store@example.com"
-                required
-              />
-              <small class="field-hint"
-                >Used for account login, security messages, and admin
-                communication.</small
-              >
-              @if (availabilityState("email")?.checking) {
-              <span class="field-checking">Checking availability...</span>
-              } @if ( availabilityState("email")?.unique === true &&
-              !fieldError("email") ) {
-              <span class="field-success">Email available</span>
-              } @if ( availabilityState("email")?.unique === false &&
-              availabilityState("email")?.suggestions?.length ) {
-              <div class="suggestions">
-                @for ( suggestion of availabilityState("email")!.suggestions;
-                track suggestion ) {
-                <button
-                  type="button"
-                  (click)="useSuggestion('email', suggestion)"
-                >
-                  {{ suggestion }}
-                </button>
-                }
-              </div>
-              } @if (fieldError("email")) {
-              <span class="field-error">{{ fieldError("email") }}</span>
-              }
-            </div>
-            <div class="form-group">
-              <label>Phone Number <span class="required">*</span></label>
-              <input
-                type="tel"
-                [(ngModel)]="form.phone"
-                (ngModelChange)="onIdentityInput('phone')"
-                (blur)="validateField('phone')"
-                name="phone"
-                class="form-input"
-                [class.has-error]="fieldError('phone')"
-                [attr.aria-invalid]="fieldError('phone') ? 'true' : null"
-                placeholder="+91 9876543210"
-                required
-              />
-              <small class="field-hint"
-                >Primary business number for order or verification
-                follow-up.</small
-              >
-              @if (availabilityState("phone")?.checking) {
-              <span class="field-checking">Checking availability...</span>
-              } @if ( availabilityState("phone")?.unique === true &&
-              !fieldError("phone") ) {
-              <span class="field-success">Phone available</span>
-              } @if ( availabilityState("phone")?.unique === false &&
-              availabilityState("phone")?.suggestions?.length ) {
-              <div class="suggestions">
-                @for ( suggestion of availabilityState("phone")!.suggestions;
-                track suggestion ) {
-                <button
-                  type="button"
-                  (click)="useSuggestion('phone', suggestion)"
-                >
-                  {{ suggestion }}
-                </button>
-                }
-              </div>
-              } @if (fieldError("phone")) {
-              <span class="field-error">{{ fieldError("phone") }}</span>
-              }
-            </div>
-            <div class="form-group">
-              <label>Password <span class="required">*</span></label>
-              <input
-                type="password"
-                [(ngModel)]="form.password"
-                (ngModelChange)="clearFieldError('password')"
-                (blur)="validateField('password')"
-                name="password"
-                class="form-input"
-                [class.has-error]="fieldError('password')"
-                [attr.aria-invalid]="fieldError('password') ? 'true' : null"
-                placeholder="••••••••"
-                required
-                minlength="8"
-              />
-              <small class="field-hint"
-                >Use at least 8 characters so your vendor account stays
-                secure.</small
-              >
-              @if (fieldError("password")) {
-              <span class="field-error">{{ fieldError("password") }}</span>
-              }
-            </div>
-            <div class="form-group mt-4">
-              <button
-                type="button"
-                class="btn btn-primary w-100 btn-lg"
-                [disabled]="loading()"
-                (click)="nextStep()"
-              >
-                Continue to Store Profile
-                <span class="material-icons-outlined">arrow_forward</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- STEP 2: Store Profile -->
-          <div class="form-step fade-in" *ngIf="step() === 2">
-            <div class="form-group">
-              <label>Store Name <span class="required">*</span></label>
-              <input
-                type="text"
-                [(ngModel)]="form.store_name"
-                (ngModelChange)="clearFieldError('store_name')"
-                (blur)="validateField('store_name')"
-                name="store_name"
-                class="form-input"
-                [class.has-error]="fieldError('store_name')"
-                [attr.aria-invalid]="fieldError('store_name') ? 'true' : null"
-                placeholder="The Daily Grind"
-                required
-              />
-              <small class="field-hint"
-                >Customer-facing store name shown in the marketplace.</small
-              >
-              @if (fieldError("store_name")) {
-              <span class="field-error">{{ fieldError("store_name") }}</span>
-              }
-            </div>
-            <div class="form-group">
-              <label>Shop Type</label>
-              <select
-                [(ngModel)]="form.vendor_type"
-                name="vendor_type"
-                class="form-input"
-              >
-                @for (option of storeTypeOptions; track option.value) {
-                <option [value]="option.value">{{ option.label }}</option>
-                }
-              </select>
-              <small class="field-hint"
-                >Used to enable shop-specific flows such as B2B and
-                wholesale.</small
-              >
-            </div>
-            <div class="form-group">
-              <label>Description <span class="required">*</span></label>
-              <textarea
-                [(ngModel)]="form.description"
-                (ngModelChange)="clearFieldError('description')"
-                (blur)="validateField('description')"
-                name="description"
-                class="form-input"
-                [class.has-error]="fieldError('description')"
-                [attr.aria-invalid]="fieldError('description') ? 'true' : null"
-                placeholder="Tell customers about what you sell..."
-                rows="3"
-                required
-              ></textarea>
-              @if (fieldError("description")) {
-              <span class="field-error">{{ fieldError("description") }}</span>
-              }
-              <small class="field-hint"
-                >Mention your specialties, product range, or what makes the
-                store trustworthy.</small
-              >
-            </div>
-            <div class="upload-grid">
-              <div class="image-upload">
-                <label>Profile Image (Optional)</label>
-                <button
-                  type="button"
-                  class="image-picker logo-picker"
-                  (click)="logoInput.click()"
-                >
-                  @if (logoPreview()) {
-                  <img [src]="logoPreview()" alt="Store profile preview" />
-                  } @else {
-                  <span class="material-icons-outlined">storefront</span>
-                  <strong>Choose profile image</strong>
-                  }
-                </button>
-                <input
-                  #logoInput
-                  type="file"
-                  accept="image/*"
-                  hidden
-                  (change)="onImageSelected('logo', $event)"
-                />
-                <small class="field-hint"
-                  >Square logo or storefront image shown on store cards.</small
-                >
-                @if (logoFile()) {
-                <button
-                  type="button"
-                  class="link-button"
-                  (click)="clearImage('logo'); logoInput.value = ''"
-                >
-                  Remove image
-                </button>
-                }
-              </div>
-
-              <div class="image-upload">
-                <label>Cover Image (Optional)</label>
-                <button
-                  type="button"
-                  class="image-picker banner-picker"
-                  (click)="bannerInput.click()"
-                >
-                  @if (bannerPreview()) {
-                  <img [src]="bannerPreview()" alt="Store cover preview" />
-                  } @else {
-                  <span class="material-icons-outlined">panorama</span>
-                  <strong>Choose cover image</strong>
-                  }
-                </button>
-                <input
-                  #bannerInput
-                  type="file"
-                  accept="image/*"
-                  hidden
-                  (change)="onImageSelected('banner', $event)"
-                />
-                <small class="field-hint"
-                  >Wide image used as the store profile cover.</small
-                >
-                @if (bannerFile()) {
-                <button
-                  type="button"
-                  class="link-button"
-                  (click)="clearImage('banner'); bannerInput.value = ''"
-                >
-                  Remove image
-                </button>
-                }
-              </div>
-            </div>
-            <div class="form-group">
-              <label>Public Contact Email (Optional)</label>
-              <input
-                type="email"
-                [(ngModel)]="form.vendor_email"
-                (ngModelChange)="onPublicEmailInput()"
-                (blur)="validateField('vendor_email')"
-                name="vendor_email"
-                class="form-input"
-                [class.has-error]="fieldError('vendor_email')"
-                [attr.aria-invalid]="fieldError('vendor_email') ? 'true' : null"
-                placeholder="contact@thedailygrind.com"
-              />
-              <small class="field-hint"
-                >Public store email for customer or admin follow-up.</small
-              >
-              @if (fieldError("vendor_email")) {
-              <span class="field-error">{{ fieldError("vendor_email") }}</span>
-              }
-            </div>
-            <div class="form-actions mt-4">
-              <button
-                type="button"
-                class="btn btn-secondary"
-                (click)="prevStep()"
-              >
-                Back
-              </button>
-              <button
-                type="button"
-                class="btn btn-primary"
-                [disabled]="loading()"
-                (click)="nextStep()"
-              >
-                Continue to Location
-                <span class="material-icons-outlined">arrow_forward</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- STEP 3: Location -->
-          <div class="form-step fade-in" *ngIf="step() === 3">
-            <app-map-picker
-              [initialLat]="form.latitude"
-              [initialLng]="form.longitude"
-              (locationPicked)="onLocationPicked($event)"
-            ></app-map-picker>
-
-            <div class="form-group mt-3">
-              <label>Street Address <span class="required">*</span></label>
-              <input
-                type="text"
-                [(ngModel)]="form.address"
-                (ngModelChange)="clearFieldError('address')"
-                (blur)="validateField('address')"
-                name="address"
-                class="form-input"
-                [class.has-error]="fieldError('address')"
-                [attr.aria-invalid]="fieldError('address') ? 'true' : null"
-                placeholder="123 Main St"
-                required
-              />
-              <small class="field-hint"
-                >Full pickup address where delivery partners collect
-                orders.</small
-              >
-              @if (fieldError("address")) {
-              <span class="field-error">{{ fieldError("address") }}</span>
-              }
-            </div>
-            <div class="location-fields">
-              <div class="form-group">
-                <label>City <span class="required">*</span></label>
-                <input
-                  type="text"
-                  [(ngModel)]="form.city"
-                  (ngModelChange)="clearFieldError('city')"
-                  (blur)="validateField('city')"
-                  name="city"
-                  class="form-input"
-                  [class.has-error]="fieldError('city')"
-                  [attr.aria-invalid]="fieldError('city') ? 'true' : null"
-                  placeholder="Metropolis"
-                  required
-                />
-                <small class="field-hint"
-                  >City where your store operates.</small
-                >
-                @if (fieldError("city")) {
-                <span class="field-error">{{ fieldError("city") }}</span>
-                }
-              </div>
-              <div class="form-group">
-                <label>State <span class="required">*</span></label>
-                <input
-                  type="text"
-                  [(ngModel)]="form.state"
-                  (ngModelChange)="clearFieldError('state')"
-                  (blur)="validateField('state')"
-                  name="state"
-                  class="form-input"
-                  [class.has-error]="fieldError('state')"
-                  [attr.aria-invalid]="fieldError('state') ? 'true' : null"
-                  placeholder="Karnataka"
-                  required
-                />
-                <small class="field-hint"
-                  >State or region for service and compliance records.</small
-                >
-                @if (fieldError("state")) {
-                <span class="field-error">{{ fieldError("state") }}</span>
-                }
-              </div>
-              <div class="form-group">
-                <label>Postal Code <span class="required">*</span></label>
-                <input
-                  type="text"
-                  [(ngModel)]="form.postal_code"
-                  (ngModelChange)="onPostalCodeInput()"
-                  (blur)="validateField('postal_code')"
-                  name="postal_code"
-                  class="form-input"
-                  [class.has-error]="fieldError('postal_code')"
-                  [attr.aria-invalid]="
-                    fieldError('postal_code') ? 'true' : null
-                  "
-                  placeholder="400001"
-                  required
-                />
-                <small class="field-hint"
-                  >Postal or ZIP code for the pickup location.</small
-                >
-                @if (fieldError("postal_code")) {
-                <span class="field-error">{{ fieldError("postal_code") }}</span>
-                }
-              </div>
-            </div>
-            @if (fieldError("location")) {
-            <div class="field-error location-error">
-              {{ fieldError("location") }}
-            </div>
+        } @if(step()===2){<label class="workspace-field"
+          >Store name<input
+            name="storeName"
+            [(ngModel)]="form.store_name"
+            (blur)="validateField('store_name')"
+            [attr.aria-invalid]="fieldError('store_name') ? true : null"
+            [attr.aria-describedby]="
+              fieldError('store_name') ? 'register-error-store_name' : null
+            "
+            (ngModelChange)="clearFieldError('store_name')"
+            required
+            maxlength="200"
+          />@if(fieldError('store_name')){<small
+            class="workspace-error"
+            id="register-error-store_name"
+            >{{ fieldError("store_name") }}</small
+          >}</label
+        ><label class="workspace-field"
+          >Store type<select name="type" [(ngModel)]="form.vendor_type">
+            @for(option of storeTypeOptions;track option.value){
+            <option [value]="option.value">{{ option.label }}</option>
             }
-
-            <div class="form-actions mt-4">
-              <button
-                type="button"
-                class="btn btn-secondary"
-                (click)="prevStep()"
-              >
-                Back
-              </button>
-              <button
-                type="submit"
-                class="btn btn-primary"
-                [disabled]="loading()"
-              >
-                @if (loading()) {
-                <span class="spinner"></span> Processing... } @else { Complete
-                Registration
-                <span class="material-icons-outlined">check_circle</span>
-                }
-              </button>
-            </div>
-          </div>
-        </form>
-
-        <p class="login-prompt mt-4 text-center">
-          Already have a partner account? <a routerLink="/login">Log in here</a>
+          </select></label
+        ><label class="workspace-field"
+          >Description<textarea
+            name="description"
+            [(ngModel)]="form.description"
+            (blur)="validateField('description')"
+            [attr.aria-invalid]="fieldError('description') ? true : null"
+            [attr.aria-describedby]="
+              fieldError('description') ? 'register-error-description' : null
+            "
+            (ngModelChange)="clearFieldError('description')"
+            rows="4"
+            required
+          ></textarea
+          >@if(fieldError('description')){<small
+            class="workspace-error"
+            id="register-error-description"
+            >{{ fieldError("description") }}</small
+          >}</label
+        ><label class="workspace-field"
+          >Public contact email (optional)<input
+            name="vendorEmail"
+            type="email"
+            [(ngModel)]="form.vendor_email"
+            (blur)="validateField('vendor_email')"
+            [attr.aria-invalid]="fieldError('vendor_email') ? true : null"
+            [attr.aria-describedby]="
+              fieldError('vendor_email') ? 'register-error-vendor_email' : null
+            "
+          />@if(fieldError('vendor_email')){<small
+            class="workspace-error"
+            id="register-error-vendor_email"
+            >{{ fieldError("vendor_email") }}</small
+          >}</label
+        >
+        <div class="workspace-form-grid">
+          <label class="workspace-field"
+            >Store logo (optional)<input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              (change)="onImageSelected('logo', $event)"
+            />@if(logoPreview()){<img
+              class="image-preview"
+              [src]="logoPreview()"
+              alt="Selected logo"
+            /><button
+              type="button"
+              class="btn btn-secondary"
+              (click)="clearImage('logo')"
+            >
+              Remove logo</button
+            >}</label
+          ><label class="workspace-field"
+            >Store banner (optional)<input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              (change)="onImageSelected('banner', $event)"
+            />@if(bannerPreview()){<img
+              class="image-preview"
+              [src]="bannerPreview()"
+              alt="Selected banner"
+            /><button
+              type="button"
+              class="btn btn-secondary"
+              (click)="clearImage('banner')"
+            >
+              Remove banner</button
+            >}</label
+          >
+        </div>
+        <p class="workspace-muted">PNG, JPEG or WebP, up to 5 MB each.</p>
+        } @if(step()===3){
+        <div class="workspace-form-grid">
+          @for(field of addressFields;track field.key){<label
+            class="workspace-field"
+            >{{ field.label
+            }}<input
+              [name]="field.key"
+              [id]="'register-' + field.key"
+              (blur)="validateField(field.key)"
+              [attr.aria-invalid]="fieldError(field.key) ? true : null"
+              [attr.aria-describedby]="
+                fieldError(field.key) ? 'register-error-' + field.key : null
+              "
+              [ngModel]="value(field.key)"
+              (ngModelChange)="update(field.key, $event)"
+              required
+            />@if(fieldError(field.key)){<small
+              class="workspace-error"
+              [id]="'register-error-' + field.key"
+              >{{ fieldError(field.key) }}</small
+            >}</label
+          >}<label class="workspace-field"
+            >Latitude<input
+              name="latitude"
+              type="number"
+              min="-90"
+              max="90"
+              step="any"
+              [(ngModel)]="form.latitude"
+              (ngModelChange)="clearFieldError('location')"
+              required /></label
+          ><label class="workspace-field"
+            >Longitude<input
+              name="longitude"
+              type="number"
+              min="-180"
+              max="180"
+              step="any"
+              [(ngModel)]="form.longitude"
+              (ngModelChange)="clearFieldError('location')"
+              required
+          /></label>
+        </div>
+        @if(fieldError('location')){
+        <p class="workspace-error">{{ fieldError("location") }}</p>
+        }
+        <div class="workspace-actions">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            (click)="useLocation()"
+          >
+            Use current location</button
+          ><button
+            type="button"
+            class="btn btn-secondary"
+            [attr.aria-expanded]="mapVisible()"
+            (click)="mapVisible.set(!mapVisible())"
+          >
+            {{ mapVisible() ? "Hide map" : "Choose on map" }}
+          </button>
+        </div>
+        @if(mapVisible()){<app-map-picker
+          [initialLat]="form.latitude ?? 0"
+          [initialLng]="form.longitude ?? 0"
+          [emitInitialLocation]="false"
+          (locationPicked)="onLocationPicked($event)"
+        />}
+        <p class="workspace-muted">
+          Coordinates identify the pickup point. Enter them manually if maps or
+          location services are unavailable.
         </p>
-      </div>
-    </div>
-  </div>
-  }
+        } @if(step()===4){
+        <div class="review-grid">
+          <section>
+            <h3>Account</h3>
+            <p>
+              {{ form.username }}<br />{{ form.email }}<br />{{ form.phone }}
+            </p>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              (click)="step.set(1)"
+            >
+              Edit account
+            </button>
+          </section>
+          <section>
+            <h3>Store</h3>
+            <p>
+              {{ form.store_name }}<br />{{
+                form.vendor_type.replaceAll("_", " ")
+              }}<br />{{ form.description }}
+            </p>
+            <p>Public email: {{ form.vendor_email || form.email }}</p>
+            <p>
+              Logo: {{ logoFile()?.name || "Not selected" }}<br />Banner:
+              {{ bannerFile()?.name || "Not selected" }}
+            </p>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              (click)="step.set(2)"
+            >
+              Edit store
+            </button>
+          </section>
+          <section>
+            <h3>Pickup location</h3>
+            <p>
+              {{ form.address }}, {{ form.city }}, {{ form.state }}
+              {{ form.postal_code }}<br />{{ form.latitude }},
+              {{ form.longitude }}
+            </p>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              (click)="step.set(3)"
+            >
+              Edit location
+            </button>
+          </section>
+        </div>
+        <p class="workspace-notice">
+          Submitting creates a vendor account and starts the approval process.
+          Operating controls become available after approval.
+        </p>
+        }
+        <div class="workspace-actions">
+          @if(step()>1){<button
+            type="button"
+            class="btn btn-secondary"
+            (click)="prevStep()"
+          >
+            Back</button
+          >}<button type="submit" class="btn btn-primary">
+            {{
+              loading()
+                ? "Creating account…"
+                : step() === 4
+                ? "Submit for approval"
+                : "Continue"
+            }}
+          </button>
+        </div>
+      </fieldset>
+    </form>
+    <p class="workspace-muted">
+      Already registered? <a routerLink="/login">Log in</a>
+    </p>
+  </main>
 </div>

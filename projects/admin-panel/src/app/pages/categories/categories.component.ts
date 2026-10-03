@@ -1,3 +1,5 @@
+import { AdminDialogDirective } from '../../shared/admin-dialog.directive';
+import { AdminCanDirective } from '../../shared/admin-can.directive';
 import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { Subscription, timer } from 'rxjs';
 import { CommonModule } from '@angular/common';
@@ -309,7 +311,7 @@ const MATERIAL_ICON_SUGGESTIONS: IconSuggestion[] = [
 @Component({
   selector: 'app-categories',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [AdminDialogDirective,AdminCanDirective,CommonModule, FormsModule],
   templateUrl: './categories.component.html',
   styleUrl: './categories.component.scss',
 })
@@ -481,6 +483,7 @@ export class CategoriesComponent implements OnInit, OnDestroy {
   }
 
   save() {
+    if (this.saving()) return;
     if (!this.form.name.trim()) {
       this.error.set('Name is required.');
       return;

@@ -1,94 +1,103 @@
-<main class="profile-page">
-  <section class="profile-hero" [class.has-cover]="config.coverUrl">
+<section class="profile-page" aria-label="Profile workspace">
+  <header class="profile-hero" [class.has-cover]="config.coverUrl">
+    @if (config.coverUrl) {
     <div
-      *ngIf="config.coverUrl"
-      class="cover"
+      class="profile-cover"
       [style.background-image]="'url(' + config.coverUrl + ')'"
+      aria-hidden="true"
     ></div>
-
-    <div class="avatar">
-      <img
-        *ngIf="config.avatarUrl"
-        [src]="config.avatarUrl"
-        [alt]="config.entityName"
-      />
-      <span *ngIf="!config.avatarUrl && config.avatarIcon">{{
-        config.avatarIcon
-      }}</span>
-      <b *ngIf="!config.avatarUrl && !config.avatarIcon">{{
-        config.avatarInitials || config.entityName.slice(0, 2)
-      }}</b>
-    </div>
-
-    <div class="hero-copy">
-      <h1>{{ config.entityName }}</h1>
-      <p>{{ config.subtitle || config.entityTypeLabel }}</p>
-
-      <div class="badges">
-        <span
-          *ngFor="let badge of config.badges"
-          class="badge"
-          [attr.data-tone]="badge.tone || 'neutral'"
+    }
+    <div class="identity-row">
+      <div class="profile-avatar">
+        @if (config.avatarUrl) {
+        <img [src]="config.avatarUrl" [alt]="config.entityName" />
+        } @if (!config.avatarUrl && config.avatarIcon) {
+        <span class="material-icons-outlined" aria-hidden="true">{{
+          config.avatarIcon | adminIcon
+        }}</span>
+        } @if (!config.avatarUrl && !config.avatarIcon) {
+        <b>{{ config.avatarInitials || config.entityName.slice(0, 2) }}</b>
+        }
+      </div>
+      <div class="identity-copy">
+        <span class="profile-eyebrow"
+          >{{ config.entityTypeLabel }} profile</span
         >
-          {{ badge.label }}
-        </span>
+        <h1>{{ config.entityName }}</h1>
+        <p>{{ config.subtitle || config.entityTypeLabel }}</p>
+        @if (contactFields.length) {
+        <div class="contact-strip">
+          @for (field of contactFields; track field.label) {
+          <span [attr.aria-label]="field.label + ': ' + field.value">
+            <span class="material-icons-outlined" aria-hidden="true">{{
+              field.icon
+            }}</span
+            >{{ field | profileFieldValue }}
+          </span>
+          }
+        </div>
+        }
+      </div>
+      <div class="identity-actions">
+        <div class="profile-badges">
+          @for (badge of config.badges; track badge.label) {
+          <span
+            class="profile-badge"
+            [attr.data-tone]="badge.tone || 'neutral'"
+            >{{ badge.label }}</span
+          >
+          }
+        </div>
+        <div class="profile-actions">
+          @for (item of config.actions; track item.id) {
+          <button
+            type="button"
+            class="profile-action"
+            [attr.data-variant]="item.variant || 'outline'"
+            (click)="action.emit(item)"
+          >
+            @if (item.icon) {
+            <span class="material-icons-outlined" aria-hidden="true">{{
+              item.icon | adminIcon
+            }}</span>
+            }{{ item.label }}
+          </button>
+          }
+        </div>
       </div>
     </div>
+    @if (config.metrics?.length) {
+    <section class="profile-metrics" aria-label="Profile summary">
+      @for (metric of config.metrics; track trackById($index, metric)) {
+      <article>
+        <span
+          class="profile-metric-icon material-icons-outlined"
+          aria-hidden="true"
+          [attr.data-tone]="metric.tone || 'purple'"
+          >{{ metric.icon | adminIcon }}</span
+        >
+        <div>
+          <span class="metric-label">{{ metric.label }}</span
+          ><strong>{{ metric.value }}</strong
+          ><small>{{ metric.subtext }}</small>
+        </div>
+      </article>
+      }
+    </section>
+    }
+  </header>
 
-    <div class="hero-actions">
-      <button
-        *ngFor="let item of config.actions"
-        type="button"
-        class="btn"
-        [attr.data-variant]="item.variant || 'outline'"
-        (click)="action.emit(item)"
-      >
-        <span *ngIf="item.icon">{{ item.icon }}</span>
-        {{ item.label }}
-      </button>
-    </div>
-  </section>
-
-  <section class="metric-grid" *ngIf="config.metrics?.length">
-    <article
-      *ngFor="let metric of config.metrics; trackBy: trackById"
-      class="metric-card"
-    >
-      <span class="metric-icon" [attr.data-tone]="metric.tone || 'purple'">{{
-        metric.icon || "📌"
-      }}</span>
-      <div>
-        <small>{{ metric.label }}</small>
-        <strong>{{ metric.value }}</strong>
-        <p>{{ metric.subtext }}</p>
-      </div>
-    </article>
-  </section>
-
-  <nav class="tabs" *ngIf="config.tabs?.length">
-    <button
-      *ngFor="let tab of config.tabs"
-      type="button"
-      [class.active]="tab.id === (config.activeTabId || config.tabs?.[0]?.id)"
-    >
-      <span>{{ tab.icon }}</span
-      >{{ tab.label }}
-    </button>
-  </nav>
-
-  <section *ngIf="config.passwordNotice?.enabled" class="notice">
-    <span>🔐</span>
+  @if (config.passwordNotice?.enabled) {
+  <section class="profile-notice">
+    <span class="material-icons-outlined" aria-hidden="true">lock_outline</span>
     <div>
       <b>{{ config.passwordNotice?.title }}</b>
       <p>{{ config.passwordNotice?.message }}</p>
-      <code *ngIf="config.passwordNotice?.secretValue">
-        {{ config.passwordNotice?.secretLabel || "Temporary Password" }}:
-        <strong>{{ config.passwordNotice?.secretValue }}</strong>
-      </code>
     </div>
+    @if (config.passwordNotice?.actionLabel) {
     <button
-      *ngIf="config.passwordNotice?.actionLabel"
       type="button"
+      class="profile-action"
       (click)="
         action.emit({
           id: 'resetPassword',
@@ -98,94 +107,218 @@
     >
       {{ config.passwordNotice?.actionLabel }}
     </button>
+    }
   </section>
+  }
 
-  <section class="main-grid">
-    <div class="left-stack">
-      <section class="card checklist" *ngIf="config.checklist?.length">
-        <header>
-          <div>
-            <h2>{{ config.checklistTitle || "Checklist" }}</h2>
-            <p>{{ config.checklistCompletion || 0 }}% complete</p>
-          </div>
-          <div class="ring" [style.--value.%]="config.checklistCompletion || 0">
-            <span>{{ config.checklistCompletion || 0 }}%</span>
-          </div>
-        </header>
-
-        <div class="check-grid">
-          <article *ngFor="let item of config.checklist">
-            <i [class.done]="item.completed">{{
-              item.completed ? "✅" : "⚠️"
-            }}</i>
+  <div class="profile-layout">
+    <div class="profile-details">
+      <div class="details-heading">
+        <div>
+          <h2>Profile details</h2>
+          <p>Account information and operational settings</p>
+        </div>
+        <label class="profile-search"
+          ><span class="material-icons-outlined" aria-hidden="true"
+            >search</span
+          >
+          <input
+            type="search"
+            aria-label="Search profile fields"
+            placeholder="Find a detail..."
+            [value]="fieldQuery()"
+            (input)="fieldQuery.set($any($event.target).value)"
+          />
+        </label>
+      </div>
+      <nav class="section-nav" aria-label="Profile sections">
+        <button
+          type="button"
+          [class.active]="selectedSection() === 'all'"
+          [attr.aria-pressed]="selectedSection() === 'all'"
+          (click)="selectSection('all')"
+        >
+          Overview
+        </button>
+        @for (section of config.sections; track trackById($index, section)) {
+        <button
+          type="button"
+          [class.active]="selectedSection() === section.id"
+          [attr.aria-pressed]="selectedSection() === section.id"
+          (click)="selectSection(section.id)"
+        >
+          {{ section.title }}
+        </button>
+        }
+      </nav>
+      <div class="profile-section-stack" aria-live="polite">
+        @for (section of visibleSections; track trackById($index, section)) {
+        <section class="profile-detail-card" [attr.aria-label]="section.title">
+          <header class="detail-card-heading">
+            <span
+              class="section-icon material-icons-outlined"
+              aria-hidden="true"
+              >{{ section.icon | adminIcon }}</span
+            >
             <div>
-              <b>{{ item.label }}</b>
-              <small [attr.data-tone]="item.tone || 'neutral'">{{
+              <h3>{{ section.title }}</h3>
+              <span>{{ section.fields.length }} details</span>
+            </div>
+            @if (section.editStepId) {
+            <button
+              type="button"
+              class="section-edit"
+              [attr.aria-label]="'Edit ' + section.title"
+              (click)="editSection.emit(section.editStepId)"
+            >
+              <span class="material-icons-outlined" aria-hidden="true"
+                >edit</span
+              >{{ section.actionLabel || "Edit" }}
+            </button>
+            }
+          </header>
+          @if (detailFields(section).length) {
+          <dl
+            class="profile-field-grid"
+            [attr.data-columns]="section.columns || 2"
+          >
+            @for (field of detailFields(section); track field.label) {
+            <div
+              class="profile-field"
+              [class.field-empty]="isEmpty(field.value)"
+            >
+              <dt>{{ field.label }}</dt>
+              <dd [attr.data-tone]="field.tone || 'neutral'">
+                @if (field.href) {
+                <a [href]="field.href" target="_blank" rel="noopener"
+                  >{{ field | profileFieldValue
+                  }}<span
+                    class="material-icons-outlined"
+                    aria-label="Opens in new tab"
+                    >open_in_new</span
+                  ></a
+                >
+                } @else {
+                {{ field | profileFieldValue }}
+                }
+              </dd>
+            </div>
+            }
+          </dl>
+          } @if (recordFields(section).length) {
+          <details
+            class="record-details"
+            [attr.open]="fieldQuery() ? '' : null"
+          >
+            <summary>
+              <span class="material-icons-outlined" aria-hidden="true"
+                >fingerprint</span
+              >Record details<span class="record-count">{{
+                recordFields(section).length
+              }}</span>
+            </summary>
+            <dl class="profile-field-grid">
+              @for (field of recordFields(section); track field.label) {
+              <div
+                class="profile-field"
+                [class.field-empty]="isEmpty(field.value)"
+              >
+                <dt>{{ field.label }}</dt>
+                <dd>{{ field | profileFieldValue }}</dd>
+              </div>
+              }
+            </dl>
+          </details>
+          }
+        </section>
+        } @if (!visibleSections.length) {
+        <div class="profile-empty">
+          <span class="material-icons-outlined" aria-hidden="true"
+            >search_off</span
+          >
+          <h3>No matching details</h3>
+          <p>Try a name, field label, or another section.</p>
+          <button
+            type="button"
+            class="profile-action"
+            (click)="selectSection('all')"
+          >
+            Clear filters
+          </button>
+        </div>
+        }
+      </div>
+    </div>
+    <aside class="profile-sidebar" aria-label="Profile status and activity">
+      @if (config.checklist?.length) {
+      <section class="profile-status-card">
+        <header>
+          <span class="section-icon material-icons-outlined" aria-hidden="true"
+            >fact_check</span
+          >
+          <h2>{{ config.checklistTitle || "Checklist" }}</h2>
+        </header>
+        <div class="readiness-heading">
+          <span>Profile readiness</span
+          ><b>{{ config.checklistCompletion || 0 }}%</b>
+        </div>
+        <div
+          class="readiness-track"
+          role="progressbar"
+          aria-label="Profile readiness"
+          [attr.aria-valuenow]="config.checklistCompletion || 0"
+          aria-valuemin="0"
+          aria-valuemax="100"
+        >
+          <span [style.width.%]="config.checklistCompletion || 0"></span>
+        </div>
+        <div class="profile-checklist">
+          @for (item of config.checklist; track item) {
+          <article>
+            <span
+              class="material-icons-outlined"
+              aria-hidden="true"
+              [class.complete]="item.completed"
+              >{{ item.completed ? "check_circle" : "pending" }}</span
+            >
+            <div>
+              <b>{{ item.label }}</b
+              ><span [attr.data-tone]="item.tone || 'neutral'">{{
                 item.status
-              }}</small>
+              }}</span>
             </div>
           </article>
+          }
         </div>
       </section>
-
-      <section class="card activity" *ngIf="config.activities?.length">
+      } @if (config.activities?.length) {
+      <section class="profile-activity-card">
         <header>
-          <h2>Recent Activity</h2>
-        </header>
-        <article
-          *ngFor="let item of config.activities"
-          [attr.data-tone]="item.tone || 'purple'"
-        >
-          <i></i>
-          <div>
-            <b>{{ item.title }}</b>
-            <p>{{ item.description }}</p>
-            <small>{{ item.timestamp }}</small>
-          </div>
-        </article>
-      </section>
-    </div>
-
-    <div class="section-grid">
-      <section
-        *ngFor="let section of config.sections; trackBy: trackById"
-        class="card info-card"
-      >
-        <header>
-          <h2>
-            <span>{{ section.icon }}</span
-            >{{ section.title }}
-          </h2>
-          <button
-            *ngIf="section.editStepId"
-            type="button"
-            (click)="editSection.emit(section.editStepId)"
+          <span class="section-icon material-icons-outlined" aria-hidden="true"
+            >history</span
           >
-            Edit
-          </button>
+          <h2>Recent activity</h2>
         </header>
-
-        <div class="field-grid" [attr.data-columns]="section.columns || 2">
-          <article *ngFor="let field of section.fields">
-            <small>{{ field.label }}</small>
-            <a
-              *ngIf="field.href; else plainField"
-              [href]="field.href"
-              target="_blank"
-              rel="noopener"
-              class="field-link"
-              [attr.data-tone]="field.tone || 'neutral'"
-            >
-              {{ field.value | displayValue }}
-            </a>
-            <ng-template #plainField>
-              <b [attr.data-tone]="field.tone || 'neutral'">{{
-                field.value | displayValue
-              }}</b>
-            </ng-template>
-          </article>
-        </div>
+        <ol>
+          @for (item of config.activities; track item) {
+          <li>
+            <span
+              class="activity-dot"
+              [attr.data-tone]="item.tone || 'purple'"
+            ></span>
+            <div>
+              <b>{{ item.title }}</b>
+              <p>{{ item.description }}</p>
+              <time>{{ item.timestamp | adminDate }}</time>
+            </div>
+          </li>
+          }
+        </ol>
       </section>
-    </div>
-  </section>
-</main>
+      }
+    </aside>
+  </div>
+  @if (config.footerNote) {
+  <p class="profile-footer">{{ config.footerNote }}</p>
+  }
+</section>

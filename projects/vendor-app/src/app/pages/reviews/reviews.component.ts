@@ -1,89 +1,69 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  effect,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
-import { VendorApi } from '@shared/public-api';
-import { forkJoin } from 'rxjs';
-
+import { ActivatedRoute, Router } from '@angular/router';
+import {
+  VendorReview,
+  VendorReviewPage,
+  VendorWorkspaceApi,
+} from '@shared/public-api';
+import { VendorContextService } from '../../services/vendor-context.service';
+import { vendorListState } from '../../services/vendor-list-state';
+import { WorkspacePagerComponent } from '../../components/workspace-pager.component';
 @Component({
   selector: 'app-reviews',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, WorkspacePagerComponent],
   templateUrl: './reviews.component.html',
   styleUrl: './reviews.component.scss',
 })
 export class ReviewsComponent implements OnInit {
-  private api = inject(VendorApi);
-  private router = inject(Router);
-
-  loading = signal(true);
-  reviews = signal<any[]>([]);
-  averageRating = signal(0);
-  totalReviews = signal(0);
-  filter = signal<'all' | 'low' | 'recent'>('all');
-
-  readonly stars = [1, 2, 3, 4, 5];
-
-  ratingBreakdown = computed(() => {
-    const counts = [0, 0, 0, 0, 0];
-    for (const r of this.reviews()) {
-      const idx = Math.round(r.rating) - 1;
-      if (idx >= 0 && idx < 5) counts[idx]++;
-    }
-    return counts.reverse(); // [5-star, 4-star, ..., 1-star]
-  });
-
-  lowReviews = computed(() =>
-    this.reviews().filter((r) => Number(r.rating) <= 3),
+  private readonly api = inject(VendorWorkspaceApi);
+  private readonly context = inject(VendorContextService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly destroy = inject(DestroyRef);
+  readonly list = vendorListState<VendorReview, VendorReviewPage>((query) =>
+    this.api.reviews(this.context.context()!.vendor.id, query)
   );
-
-  filteredReviews = computed(() => {
-    const list = [...this.reviews()];
-    if (this.filter() === 'low')
-      return list.filter((r) => Number(r.rating) <= 3);
-    if (this.filter() === 'recent') {
-      return list
-        .sort(
-          (a, b) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-        )
-        .slice(0, 10);
-    }
-    return list;
-  });
-
-  ngOnInit() {
-    this.api.getVendorProfile().subscribe({
-      next: (profile) => {
-        const vendorId = profile.id;
-        this.api.getVendorReviews(vendorId).subscribe({
-          next: (res) => {
-            const list = res.results || res || [];
-            this.reviews.set(list);
-            this.totalReviews.set(list.length);
-            if (list.length > 0) {
-              const avg =
-                list.reduce((s: number, r: any) => s + r.rating, 0) /
-                list.length;
-              this.averageRating.set(Math.round(avg * 10) / 10);
-            }
-            this.loading.set(false);
-          },
-          error: () => this.loading.set(false),
-        });
-      },
-      error: () => this.loading.set(false),
+  readonly filter = signal('all');
+  readonly stars = [5, 4, 3, 2, 1];
+  private initialized = false;
+  constructor() {
+    effect(() => {
+      if (this.context.context()?.vendor.id && this.initialized) this.load();
     });
   }
-
-  starsArray(n: number): number[] {
-    return Array.from({ length: Math.min(5, Math.max(0, Math.round(n))) });
+  ngOnInit(): void {
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe((params) => {
+        this.list.page.set(Math.max(1, Number(params.get('page')) || 1));
+        this.filter.set(params.get('filter') || 'all');
+        this.initialized = true;
+        this.load();
+      });
   }
-
-  setFilter(filter: 'all' | 'low' | 'recent') {
-    this.filter.set(filter);
+  query(page = 1): void {
+    void this.router.navigate([], {
+      queryParams: {
+        page,
+        filter: this.filter() === 'all' ? null : this.filter(),
+      },
+    });
   }
-
-  goBack() {
-    window.history.back();
+  setFilter(value: string): void {
+    this.filter.set(value);
+    this.query();
+  }
+  load(): void {
+    if (this.context.context()) this.list.load({ filter: this.filter() });
   }
 }

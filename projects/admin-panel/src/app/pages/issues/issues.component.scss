@@ -1,4 +1,4 @@
-﻿:host {
+:host {
   display: block;
   padding-bottom: 3rem;
 }
@@ -15,7 +15,7 @@
         150px,
         180px
       );
-    width: min(720px, 100%);
+    width: 100%;
   }
 
   .search-input,
@@ -43,7 +43,7 @@
 }
 .page-title {
   font-size: 2rem;
-  font-weight: 900;
+  font-weight: 600;
   color: var(--text-primary);
   margin: 0 0 0.25rem;
   letter-spacing: -0.03em;
@@ -115,7 +115,7 @@
   }
   th {
     padding: 1rem 1.25rem;
-    font-size: 0.75rem;
+    font-size: var(--admin-text-small);
     font-weight: 700;
     color: var(--text-muted);
     text-transform: uppercase;
@@ -141,7 +141,7 @@
 
 .order-num {
   font-size: 0.875rem;
-  font-weight: 800;
+  font-weight: 600;
   color: var(--text-primary);
   font-family: monospace;
 }
@@ -162,8 +162,8 @@
   gap: 0.3rem;
   padding: 0.25rem 0.625rem;
   border-radius: var(--radius-full);
-  font-size: 0.75rem;
-  font-weight: 800;
+  font-size: var(--admin-text-small);
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   background: var(--surface-hover);
@@ -179,8 +179,8 @@
   align-items: center;
   padding: 0.25rem 0.625rem;
   border-radius: var(--radius-full);
-  font-size: 0.7rem;
-  font-weight: 800;
+  font-size: var(--admin-text-small);
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   &.badge-open {
@@ -190,7 +190,7 @@
   }
   &.badge-review {
     background: #EFECF8;
-    color: #38268E;
+    color: var(--admin-brand);
     border: 1px solid rgba(56, 38, 142, 0.24);
   }
   &.badge-resolved {
@@ -203,7 +203,7 @@
   }
   &.badge-refund {
     background: #EFECF8;
-    color: #38268E;
+    color: var(--admin-brand);
   }
 }
 
@@ -241,7 +241,7 @@
   color: var(--text-muted);
   strong {
     font-size: 1.125rem;
-    font-weight: 800;
+    font-weight: 600;
     color: var(--text-primary);
   }
   p {
@@ -285,7 +285,7 @@
   z-index: 201;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-y: auto;
   animation: slideIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -297,6 +297,9 @@
 }
 
 .panel-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -307,7 +310,7 @@
 }
 .panel-title {
   font-size: 1.125rem;
-  font-weight: 900;
+  font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 0.25rem;
 }
@@ -334,6 +337,7 @@
 }
 
 .panel-section {
+  flex-shrink: 0;
   padding: 1.25rem 1.5rem;
   border-bottom: 1px solid var(--border-light);
   &:last-child {
@@ -341,15 +345,15 @@
   }
 }
 .panel-chat {
-  flex: 1;
+  flex: 0 0 auto;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .section-label {
-  font-size: 0.75rem;
-  font-weight: 800;
+  font-size: var(--admin-text-small);
+  font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -374,7 +378,7 @@
   flex-direction: column;
   gap: 0.75rem;
   padding-bottom: 0.5rem;
-  min-height: 180px;
+  min-height: 64px;
   max-height: 260px;
 }
 .chat-empty {
@@ -400,7 +404,7 @@
   background: var(--surface-hover);
   border: 1px solid var(--border-light);
   .chat-sender {
-    font-size: 0.6875rem;
+    font-size: var(--admin-text-small);
     font-weight: 700;
     color: var(--text-muted);
     margin-bottom: 0.25rem;
@@ -411,7 +415,7 @@
     line-height: 1.4;
   }
   .chat-time {
-    font-size: 0.6875rem;
+    font-size: var(--admin-text-small);
     color: var(--text-muted);
     margin-top: 0.25rem;
     text-align: right;
@@ -469,7 +473,7 @@
 }
 .form-label {
   display: block;
-  font-size: 0.75rem;
+  font-size: var(--admin-text-small);
   font-weight: 700;
   color: var(--text-secondary);
   text-transform: uppercase;
@@ -553,4 +557,5 @@ textarea.form-input {
   }
 }
 
+.overdue { color: var(--danger); font-size: 13px; }
 

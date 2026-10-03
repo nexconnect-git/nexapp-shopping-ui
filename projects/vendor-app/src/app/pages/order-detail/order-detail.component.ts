@@ -1,463 +1,407 @@
-﻿import {
-  AfterViewInit,
+import {
   Component,
+  computed,
+  DestroyRef,
+  effect,
   inject,
   NgZone,
-  OnDestroy,
   OnInit,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { GoogleMapsModule } from '@angular/google-maps';
 import {
+  apiErrorMessage,
   AppCurrencyPipe,
   AuthService,
   decodeGooglePolyline,
   GoogleMapsService,
   openAuthenticatedWebSocket,
-  Order,
+  VendorOrderCommand,
 } from '@shared/public-api';
-import { Subscription, timer } from 'rxjs';
-import { GoogleMapsModule } from '@angular/google-maps';
+import { finalize, timer } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { VendorOrderActionsService } from '../../services/vendor-order-actions.service';
+import { VendorOrdersStore } from '../../services/vendor-orders.store';
 import { VendorOrderFacade } from '../../services/vendor-order.facade';
-
+import { WorkspaceDialogComponent } from '../../components/workspace-dialog.component';
+function coordinate(value: unknown, bound: number): number | null {
+  if (value === null || value === undefined || value === '') return null;
+  const number = Number(value);
+  return Number.isFinite(number) && Math.abs(number) <= bound ? number : null;
+}
 @Component({
   selector: 'app-order-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, AppCurrencyPipe, GoogleMapsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterLink,
+    AppCurrencyPipe,
+    GoogleMapsModule,
+    WorkspaceDialogComponent,
+  ],
   templateUrl: './order-detail.component.html',
   styleUrl: './order-detail.component.scss',
 })
-export class OrderDetailComponent implements OnInit, OnDestroy, AfterViewInit {
-  private auth = inject(AuthService);
-  private route = inject(ActivatedRoute);
-  private zone = inject(NgZone);
-  private orderActions = inject(VendorOrderActionsService);
-  private orderFacade = inject(VendorOrderFacade);
-  private googleMaps = inject(GoogleMapsService);
-
-  order = signal<Order | null>(null);
-  loading = signal(true);
-  private orderId = '';
-  private pollSub?: Subscription;
-
-  // OTP verification
-  otpInput = signal('');
-  otpError = signal('');
-  verifying = signal(false);
-  otpSuccess = signal(false);
-
-  // Delivery search controls
-  startingSearch = signal(false);
-  cancellingSearch = signal(false);
-  searchError = signal('');
-
-  // Cancel modal
-  showCancelModal = signal(false);
-  cancelReason = '';
-  cancelError = signal('');
-  cancelling = signal(false);
-
-  // Map state
-  center: google.maps.LatLngLiteral = { lat: 12.9716, lng: 77.5946 };
-  zoom = 14;
-  driverPosition?: google.maps.LatLngLiteral;
-  vendorPosition?: google.maps.LatLngLiteral;
-  customerPosition?: google.maps.LatLngLiteral;
-
-  driverMarkerOptions: google.maps.MarkerOptions = {};
-  vendorMarkerOptions: google.maps.MarkerOptions = {};
-  customerMarkerOptions: google.maps.MarkerOptions = {};
-  mapOptions: google.maps.MapOptions = {};
-
+export class OrderDetailComponent implements OnInit {
+  private readonly route = inject(ActivatedRoute);
+  private readonly destroy = inject(DestroyRef);
+  private readonly auth = inject(AuthService);
+  private readonly zone = inject(NgZone);
+  private readonly maps = inject(GoogleMapsService);
+  private readonly facade = inject(VendorOrderFacade);
+  readonly store = inject(VendorOrdersStore);
+  readonly id = signal('');
+  readonly order = computed(() => this.store.records().get(this.id()) || null);
+  readonly loading = signal(false);
+  readonly loadError = signal('');
+  readonly invoiceBusy = signal(false);
+  readonly invoiceError = signal('');
+  readonly otp = signal('');
+  readonly validationError = signal('');
+  readonly cancel = signal(false);
+  readonly reason = signal('');
+  readonly mapsReady = signal(false);
+  readonly mapError = signal('');
+  readonly trackingState = signal('Disconnected');
+  readonly location = signal<google.maps.LatLngLiteral | null>(null);
+  readonly locationTime = signal<number | null>(null);
+  readonly eta = signal<number | null>(null);
+  readonly pending = computed(() => this.store.pending().has(this.id()));
+  readonly error = computed(
+    () => this.store.errors().get(this.id()) || this.validationError()
+  );
+  readonly locationAge = computed(() =>
+    this.locationTime() === null
+      ? null
+      : Math.max(
+          0,
+          Math.floor((this.store.clock() - this.locationTime()!) / 1000)
+        )
+  );
+  readonly trackingEligible = computed(() => {
+    const order = this.order();
+    return (
+      !!order?.delivery_partner &&
+      ['ready', 'picked_up', 'on_the_way'].includes(order.status)
+    );
+  });
+  readonly vendorPosition = computed(() =>
+    this.position(
+      this.order()?.vendor_info.latitude,
+      this.order()?.vendor_info.longitude
+    )
+  );
+  readonly customerPosition = computed(() =>
+    this.position(
+      this.order()?.delivery_latitude,
+      this.order()?.delivery_longitude
+    )
+  );
+  readonly center = computed(
+    () => this.location() || this.vendorPosition() || this.customerPosition()
+  );
+  readonly mapOptions: google.maps.MapOptions = {
+    streetViewControl: false,
+    mapTypeControl: false,
+    fullscreenControl: false,
+  };
+  readonly driverMarker: google.maps.MarkerOptions = {
+    title: 'Delivery partner',
+  };
+  readonly vendorMarker: google.maps.MarkerOptions = { title: 'Store' };
+  readonly customerMarker: google.maps.MarkerOptions = {
+    title: 'Delivery destination',
+  };
+  private socket: WebSocket | null = null;
+  private retry?: ReturnType<typeof setTimeout>;
+  private attempts = 0;
+  private trackingGeneration = 0;
   private nativeMap?: google.maps.Map;
-  private routePolyline?: google.maps.Polyline;
-  private lastDirectionsTime = 0;
-  private directionsEnabled = true;
-  mapsApiReady = signal(false);
-
-  private ws: WebSocket | null = null;
-  private animFrameId?: number;
-
-  ngOnInit() {
-    this.orderId = this.route.snapshot.paramMap.get('id')!;
-    this.loadOrder();
-    this.pollSub = timer(10000, 10000).subscribe(() => {
-      const s = this.order()?.status;
-      if (s && !['delivered', 'cancelled'].includes(s)) this.loadOrder();
+  private routeLine?: google.maps.Polyline;
+  private routeRequested = 0;
+  private alive = true;
+  constructor() {
+    const mapFailure = () =>
+      this.zone.run(() => {
+        this.mapsReady.set(false);
+        this.mapError.set(
+          'Map unavailable. Delivery status and tracking coordinates remain available below.'
+        );
+        this.routeLine?.setMap(null);
+        this.nativeMap = undefined;
+      });
+    window.addEventListener('nexconnect:google-maps-auth-failure', mapFailure);
+    this.destroy.onDestroy(() =>
+      window.removeEventListener(
+        'nexconnect:google-maps-auth-failure',
+        mapFailure
+      )
+    );
+    effect(() => {
+      const id = this.id(),
+        eligible = this.trackingEligible();
+      this.disconnect();
+      if (eligible && id) {
+        this.connect(id);
+        this.loadMap();
+      } else {
+        this.location.set(null);
+        this.locationTime.set(null);
+        this.eta.set(null);
+      }
+    });
+    this.destroy.onDestroy(() => {
+      this.alive = false;
+      this.disconnect();
+      this.routeLine?.setMap(null);
     });
   }
-
-  ngOnDestroy() {
-    this.pollSub?.unsubscribe();
-    this.closeWs();
-    if (this.animFrameId) cancelAnimationFrame(this.animFrameId);
-    this.routePolyline?.setMap(null);
+  ngOnInit(): void {
+    this.route.paramMap
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe((params) => {
+        this.id.set(params.get('id') || '');
+        this.load();
+      });
+    timer(30000, 30000)
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe(() => {
+        const order = this.order();
+        if (
+          !document.hidden &&
+          order &&
+          !['delivered', 'cancelled'].includes(order.status)
+        )
+          this.load();
+      });
   }
-
-  ngAfterViewInit() {
-    this.initMapOptions();
-    this.googleMaps
+  private loadMap(): void {
+    this.maps
       .loadJavaScriptApi()
-      .then(() =>
-        this.zone.run(() => {
-          this.initMarkerOptions();
-          this.mapsApiReady.set(true);
-        }),
-      )
-      .catch(() =>
-        console.warn(
-          '[Map] Google Maps JavaScript API is not configured or unavailable.',
-        ),
-      );
-    this.connectWebSocket(this.route.snapshot.paramMap.get('id')!);
+      .then(() => {
+        if (this.alive) this.zone.run(() => this.mapsReady.set(true));
+      })
+      .catch(() => {
+        if (this.alive)
+          this.mapError.set(
+            'Map unavailable. Delivery status and tracking coordinates remain available below.'
+          );
+      });
   }
-
-  /** Called by (mapInitialized) on <google-map> when the map instance is ready. */
-  onMapReady(nativeMap: google.maps.Map) {
-    this.routePolyline?.setMap(null);
-    this.nativeMap = nativeMap;
-    this.lastDirectionsTime = 0;
-
-    const pts = [
-      this.vendorPosition,
-      this.driverPosition,
-      this.customerPosition,
-    ].filter(Boolean) as google.maps.LatLngLiteral[];
-    if (pts.length >= 2) {
-      const bounds = new google.maps.LatLngBounds();
-      pts.forEach((p) => bounds.extend(p));
-      nativeMap.fitBounds(bounds, 40);
-    } else if (pts.length === 1) {
-      nativeMap.setCenter(pts[0]);
-    }
-    this.requestDirections();
+  load(): void {
+    const id = this.id();
+    this.loading.set(true);
+    this.loadError.set('');
+    this.store
+      .fetch(id)
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: () => {
+          if (id === this.id()) this.loading.set(false);
+        },
+        error: (failure) => {
+          if (id === this.id()) {
+            this.loading.set(false);
+            this.loadError.set(
+              apiErrorMessage(failure, 'Order details could not be loaded.')
+            );
+          }
+        },
+      });
   }
-
-  private initMapOptions() {
-    this.mapOptions = {
-      zoomControl: true,
-      streetViewControl: false,
-      fullscreenControl: false,
-      mapTypeControl: false,
-      clickableIcons: false,
-    };
+  can(action: VendorOrderCommand): boolean {
+    const order = this.order();
+    return !!order && this.store.can(order, action);
   }
-
-  private initMarkerOptions() {
-    const maps = (globalThis as any).google?.maps;
-    if (!maps) {
+  command(action: VendorOrderCommand, data: Record<string, string> = {}): void {
+    this.validationError.set('');
+    this.store
+      .run(this.id(), action, data)
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: () => {
+          this.otp.set('');
+          this.cancel.set(false);
+          this.reason.set('');
+        },
+        error: () => {
+          /* Shared state displays the command failure and refreshes the order. */
+        },
+      });
+  }
+  verify(): void {
+    if (!/^[0-9]{6}$/.test(this.otp().trim())) {
+      this.validationError.set('Enter the six-digit pickup code.');
       return;
     }
-    this.driverMarkerOptions = {
-      icon: {
-        url: 'https://maps.google.com/mapfiles/ms/micons/motorcycling.png',
-        scaledSize: new maps.Size(36, 36),
-        anchor: new maps.Point(18, 18),
-      },
-      zIndex: 10,
-      title: 'Delivery Partner',
-    };
-    this.vendorMarkerOptions = {
-      icon: {
-        url: 'https://maps.google.com/mapfiles/ms/icons/restaurant.png',
-        scaledSize: new maps.Size(30, 30),
-      },
-      zIndex: 5,
-      title: 'Your Store',
-    };
-    this.customerMarkerOptions = {
-      icon: {
-        url: 'https://maps.google.com/mapfiles/ms/icons/homegardenbusiness.png',
-        scaledSize: new maps.Size(30, 30),
-      },
-      zIndex: 5,
-      title: 'Customer Location',
-    };
+    this.command('verify_pickup_otp', { otp: this.otp().trim() });
   }
-
-  private updateMapPositions(o: Order) {
-    const vLat = parseFloat(o.vendor_info?.latitude as any);
-    const vLng = parseFloat(o.vendor_info?.longitude as any);
-    if (!isNaN(vLat) && !isNaN(vLng)) {
-      this.vendorPosition = { lat: vLat, lng: vLng };
+  cancelOrder(): void {
+    if (!this.reason().trim()) {
+      this.validationError.set(
+        'Provide a customer-facing cancellation reason.'
+      );
+      return;
     }
-
-    const cLat = parseFloat(o.delivery_latitude as any);
-    const cLng = parseFloat(o.delivery_longitude as any);
-    if (!isNaN(cLat) && !isNaN(cLng)) {
-      this.customerPosition = { lat: cLat, lng: cLng };
-    }
-
-    if (this.vendorPosition) this.center = this.vendorPosition;
-    this.requestDirections();
+    this.command(this.can('reject') ? 'reject' : 'cancel_order', {
+      reason: this.reason().trim(),
+    });
   }
-
-  private requestDirections() {
-    if (!this.directionsEnabled) return;
-    if (!this.nativeMap) return;
-    const origin = this.driverPosition ?? this.vendorPosition;
-    const destination = this.customerPosition;
-    if (!origin || !destination) return;
-    const now = Date.now();
-    if (now - this.lastDirectionsTime < 20000) return;
-    this.lastDirectionsTime = now;
-    this.googleMaps
-      .computeRoute(origin, destination)
+  downloadInvoice(): void {
+    const order = this.order();
+    if (!order || this.invoiceBusy()) return;
+    this.invoiceBusy.set(true);
+    this.invoiceError.set('');
+    this.facade
+      .downloadCustomerInvoice(order)
+      .pipe(
+        takeUntilDestroyed(this.destroy),
+        finalize(() => this.invoiceBusy.set(false))
+      )
+      .subscribe({
+        next: (blob) => {
+          const url = URL.createObjectURL(blob),
+            link = document.createElement('a');
+          link.href = url;
+          link.download = `invoice-${order.order_number}.pdf`;
+          link.click();
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+        },
+        error: (failure) =>
+          this.invoiceError.set(
+            apiErrorMessage(failure, 'Invoice download failed. Retry.')
+          ),
+      });
+  }
+  onMapReady(map: google.maps.Map): void {
+    this.nativeMap = map;
+    const points = [
+      this.vendorPosition(),
+      this.customerPosition(),
+      this.location(),
+    ].filter((point): point is google.maps.LatLngLiteral => point !== null);
+    if (points.length > 1) {
+      const bounds = new google.maps.LatLngBounds();
+      points.forEach((point) => bounds.extend(point));
+      map.fitBounds(bounds, 40);
+    }
+    this.requestRoute();
+  }
+  private position(
+    lat: unknown,
+    lng: unknown
+  ): google.maps.LatLngLiteral | null {
+    const latitude = coordinate(lat, 90),
+      longitude = coordinate(lng, 180);
+    return latitude === null || longitude === null
+      ? null
+      : { lat: latitude, lng: longitude };
+  }
+  private connect(id: string): void {
+    const generation = this.trackingGeneration;
+    this.trackingState.set(this.attempts ? 'Reconnecting' : 'Connecting');
+    this.socket = openAuthenticatedWebSocket(
+      `/ws/delivery/${id}/tracking/`,
+      this.auth.getToken(),
+      environment.apiBaseUrl
+    );
+    this.socket.onopen = () =>
+      this.zone.run(() => {
+        if (generation !== this.trackingGeneration) return;
+        this.attempts = 0;
+        this.trackingState.set('Connected · waiting for location');
+        this.load();
+      });
+    this.socket.onmessage = (event) =>
+      this.zone.run(() => {
+        if (generation !== this.trackingGeneration) return;
+        try {
+          const data = JSON.parse(event.data) as {
+            type?: string;
+            lat?: unknown;
+            lng?: unknown;
+            eta_minutes?: number;
+            timestamp?: string;
+          };
+          if (data.type === 'location_update') {
+            const point = this.position(data.lat, data.lng);
+            if (point) {
+              const timestamp = data.timestamp ? Date.parse(data.timestamp) : null;
+              const currentTime = this.locationTime();
+              if (timestamp !== null && (!Number.isFinite(timestamp) || (currentTime !== null && timestamp <= currentTime))) return;
+              this.location.set(point);
+              this.locationTime.set(timestamp);
+              this.trackingState.set('Connected');
+              this.requestRoute();
+            }
+          } else if (
+            data.type === 'eta_update' &&
+            Number.isFinite(data.eta_minutes)
+          )
+            this.eta.set(data.eta_minutes!);
+        } catch {
+          this.trackingState.set('Connected · invalid tracking update');
+        }
+      });
+    this.socket.onclose = () =>
+      this.zone.run(() => {
+        if (generation !== this.trackingGeneration || !this.alive) return;
+        this.trackingState.set('Reconnecting · order status still refreshes');
+        this.retry = setTimeout(
+          () => this.connect(id),
+          Math.min(30000, 1000 * 2 ** this.attempts++)
+        );
+      });
+    this.socket.onerror = () =>
+      this.zone.run(() => {
+        if (generation === this.trackingGeneration)
+          this.trackingState.set('Tracking unavailable · retrying');
+      });
+  }
+  private disconnect(): void {
+    this.trackingGeneration++;
+    if (this.retry) clearTimeout(this.retry);
+    this.socket?.close();
+    this.socket = null;
+    this.routeLine?.setMap(null);
+    this.routeLine = undefined;
+    this.nativeMap = undefined;
+    this.routeRequested = 0;
+    this.trackingState.set('Disconnected');
+  }
+  private requestRoute(): void {
+    const start = this.location() || this.vendorPosition(),
+      end = this.customerPosition();
+    if (
+      !this.nativeMap ||
+      !start ||
+      !end ||
+      Date.now() - this.routeRequested < 20000
+    )
+      return;
+    this.routeRequested = Date.now();
+    const generation=this.trackingGeneration;const map=this.nativeMap;
+    this.maps
+      .computeRoute(start, end)
       .then((route) => {
+        if (!this.alive || !route || this.nativeMap!==map || generation!==this.trackingGeneration) return;
         this.zone.run(() => {
-          if (!route || !this.nativeMap) return;
-          this.routePolyline?.setMap(null);
-          this.routePolyline = new google.maps.Polyline({
+          this.routeLine?.setMap(null);
+          this.routeLine = new google.maps.Polyline({
             path: decodeGooglePolyline(route.encodedPolyline),
             map: this.nativeMap,
             strokeColor: '#38268E',
             strokeWeight: 4,
-            strokeOpacity: 0.8,
           });
         });
       })
-      .catch((error) => {
-        this.directionsEnabled = false;
-        console.warn('[Map] Routes API not available. Markers only.', error);
+      .catch(() => {
+        if (!this.alive || this.nativeMap !== map || generation !== this.trackingGeneration || !this.mapsReady()) return;
+        this.mapError.set('Route guidance unavailable. Use the tracking coordinates below.');
       });
-  }
-
-  loadOrder() {
-    this.orderFacade.loadOrder(this.orderId).subscribe({
-      next: (o) => {
-        this.order.set(o);
-        this.loading.set(false);
-        this.updateMapPositions(o);
-      },
-      error: () => this.loading.set(false),
-    });
-  }
-
-  private connectWebSocket(orderId: string) {
-    this.ws = openAuthenticatedWebSocket(
-      `/ws/delivery/${orderId}/tracking/`,
-      this.auth.getToken(),
-      environment.apiBaseUrl,
-    );
-    this.ws.onmessage = (msg) => {
-      const data = JSON.parse(msg.data);
-      if (data.type === 'location_update' && data.lat && data.lng) {
-        const target: google.maps.LatLngLiteral = {
-          lat: data.lat,
-          lng: data.lng,
-        };
-        this.zone.run(() => {
-          if (this.driverPosition) {
-            this.animateToPosition(this.driverPosition, target);
-          } else {
-            this.driverPosition = target;
-            this.lastDirectionsTime = 0;
-            this.requestDirections();
-          }
-        });
-      }
-    };
-  }
-
-  private animateToPosition(
-    from: google.maps.LatLngLiteral,
-    to: google.maps.LatLngLiteral,
-  ) {
-    if (this.animFrameId) cancelAnimationFrame(this.animFrameId);
-    const startTime = performance.now();
-    const duration = 1500;
-    const step = (now: number) => {
-      const t = Math.min((now - startTime) / duration, 1);
-      const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
-      this.zone.run(() => {
-        this.driverPosition = {
-          lat: from.lat + (to.lat - from.lat) * ease,
-          lng: from.lng + (to.lng - from.lng) * ease,
-        };
-      });
-      if (t < 1) {
-        this.animFrameId = requestAnimationFrame(step);
-      } else {
-        this.zone.run(() => {
-          this.driverPosition = to;
-          this.requestDirections();
-        });
-      }
-    };
-    this.animFrameId = requestAnimationFrame(step);
-  }
-
-  private closeWs() {
-    if (this.ws) {
-      this.ws.close();
-      this.ws = null;
-    }
-  }
-
-  showLiveMap(): boolean {
-    const s = this.order()?.status;
-    return ['ready', 'picked_up', 'on_the_way'].includes(s ?? '');
-  }
-
-  canUpdateStatus() {
-    return ['placed', 'confirmed', 'preparing', 'ready'].includes(
-      this.order()?.status || '',
-    );
-  }
-
-  canVendorCancel() {
-    return ['placed', 'confirmed', 'preparing', 'ready'].includes(
-      this.order()?.status || '',
-    );
-  }
-
-  updateStatus(newStatus: string) {
-    if (newStatus === 'cancelled') {
-      this.cancelReason = '';
-      this.cancelError.set('');
-      this.showCancelModal.set(true);
-      return;
-    }
-    this.orderActions
-      .run(this.order()!.id, 'set_status', { status: newStatus })
-      .subscribe({ next: (o) => this.order.set(o) });
-  }
-
-  confirmCancel() {
-    if (!this.cancelReason.trim()) {
-      this.cancelError.set('Please provide a reason for cancellation.');
-      return;
-    }
-    this.cancelling.set(true);
-    this.cancelError.set('');
-    this.orderActions
-      .run(this.order()!.id, 'cancel_order', {
-        reason: this.cancelReason.trim(),
-      })
-      .subscribe({
-        next: (o) => {
-          this.order.set(o);
-          this.showCancelModal.set(false);
-          this.cancelling.set(false);
-        },
-        error: (err) => {
-          this.cancelError.set(
-            this.orderActions.errorMessage(err, 'Failed to cancel order.'),
-          );
-          this.cancelling.set(false);
-        },
-      });
-  }
-
-  closeCancelModal() {
-    if (this.cancelling()) return;
-    this.showCancelModal.set(false);
-    this.cancelReason = '';
-    this.cancelError.set('');
-  }
-
-  startDeliverySearch() {
-    this.startingSearch.set(true);
-    this.searchError.set('');
-    this.orderActions.run(this.order()!.id, 'start_delivery_search').subscribe({
-      next: (o) => {
-        this.order.set(o);
-        this.startingSearch.set(false);
-      },
-      error: (err) => {
-        this.searchError.set(
-          this.orderActions.errorMessage(
-            err,
-            'Failed to start search. Please try again.',
-          ),
-        );
-        this.startingSearch.set(false);
-      },
-    });
-  }
-
-  cancelDeliverySearch() {
-    this.cancellingSearch.set(true);
-    this.searchError.set('');
-    this.orderActions
-      .run(this.order()!.id, 'cancel_delivery_search')
-      .subscribe({
-        next: (o) => {
-          this.order.set(o);
-          this.cancellingSearch.set(false);
-        },
-        error: (err) => {
-          this.searchError.set(
-            this.orderActions.errorMessage(
-              err,
-              'Failed to cancel search. Please try again.',
-            ),
-          );
-          this.cancellingSearch.set(false);
-        },
-      });
-  }
-
-  verifyPickupOtp() {
-    const otp = this.otpInput().trim();
-    if (!otp) {
-      this.otpError.set('Please enter the OTP.');
-      return;
-    }
-    this.verifying.set(true);
-    this.otpError.set('');
-    this.orderActions
-      .run(this.order()!.id, 'verify_pickup_otp', { otp })
-      .subscribe({
-        next: (o) => {
-          this.order.set(o);
-          this.verifying.set(false);
-          this.otpSuccess.set(true);
-          this.otpInput.set('');
-        },
-        error: (err) => {
-          this.verifying.set(false);
-          this.otpError.set(
-            this.orderActions.errorMessage(err, 'Invalid OTP.'),
-          );
-        },
-      });
-  }
-
-  downloadInvoice() {
-    const o = this.order();
-    if (!o) return;
-    this.orderFacade
-      .downloadCustomerInvoice(o)
-      .subscribe({
-        next: (blob) => {
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `invoice-${o.order_number}.pdf`;
-          a.click();
-          URL.revokeObjectURL(url);
-        },
-        error: () => alert('Failed to download invoice.'),
-      });
-  }
-
-  orderStatusBadge(s: string) {
-    const map: Record<string, string> = {
-      placed: 'badge-placed',
-      confirmed: 'badge-confirmed',
-      preparing: 'badge-preparing',
-      ready: 'badge-ready',
-      picked_up: 'badge-ready',
-      on_the_way: 'badge-preparing',
-      delivered: 'badge-delivered',
-      cancelled: 'badge-cancelled',
-    };
-    return 'badge ' + (map[s] || 'badge-secondary');
   }
 }
-

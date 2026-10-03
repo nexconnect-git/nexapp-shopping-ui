@@ -1,7 +1,9 @@
+import { AdminDialogDirective } from '../../shared/admin-dialog.directive';
+import { AdminCanDirective } from '../../shared/admin-can.directive';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService, apiErrorMessage } from '@shared/public-api';
+import { apiErrorMessage, ApiService } from '@shared/public-api';
 
 interface AdminNotification {
   id: string;
@@ -17,7 +19,7 @@ interface AdminNotification {
 @Component({
   selector: 'app-notifications',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [AdminDialogDirective,AdminCanDirective,CommonModule, FormsModule],
   templateUrl: './notifications.component.html',
   styleUrl: './notifications.component.scss',
 })

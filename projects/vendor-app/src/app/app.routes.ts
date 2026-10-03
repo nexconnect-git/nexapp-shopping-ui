@@ -1,3 +1,4 @@
+import { vendorDirtyGuard } from './services/vendor-leave.service';
 import { type Routes } from '@angular/router';
 import {
   approvedVendorGuard,
@@ -16,6 +17,21 @@ const vendorPageGuard = (pageId: string) => [
 
 export const routes: Routes = [
   {
+    path: 'forgot-password',
+    loadComponent: () =>
+      import('./pages/password-recovery/password-recovery.component').then(
+        (m) => m.PasswordRecoveryComponent
+      ),
+  },
+  {
+    path: 'reset-password',
+    data: { reset: true },
+    loadComponent: () =>
+      import('./pages/password-recovery/password-recovery.component').then(
+        (m) => m.PasswordRecoveryComponent
+      ),
+  },
+  {
     path: 'login',
     loadComponent: () =>
       import('./pages/login/login.component').then((m) => m.LoginComponent),
@@ -25,7 +41,7 @@ export const routes: Routes = [
     path: 'register',
     loadComponent: () =>
       import('./pages/register/register.component').then(
-        (m) => m.RegisterComponent,
+        (m) => m.RegisterComponent
       ),
     canActivate: [unauthGuard],
   },
@@ -33,15 +49,15 @@ export const routes: Routes = [
     path: 'change-password',
     loadComponent: () =>
       import('./pages/change-password/change-password.component').then(
-        (m) => m.ChangePasswordComponent,
+        (m) => m.ChangePasswordComponent
       ),
-    canActivate: [authGuard],
+    canActivate: [authGuard, roleGuard('vendor')],
   },
   {
     path: 'pending-approval',
     loadComponent: () =>
       import('./pages/pending-approval/pending-approval.component').then(
-        (m) => m.PendingApprovalComponent,
+        (m) => m.PendingApprovalComponent
       ),
     canActivate: [authGuard, roleGuard('vendor')],
   },
@@ -49,7 +65,7 @@ export const routes: Routes = [
     path: 'feature-unavailable',
     loadComponent: () =>
       import('@shared/public-api').then(
-        (m) => m.PageFeatureUnavailableComponent,
+        (m) => m.PageFeatureUnavailableComponent
       ),
     canActivate: vendorGuard,
   },
@@ -57,7 +73,7 @@ export const routes: Routes = [
     path: '',
     loadComponent: () =>
       import('./pages/dashboard/dashboard.component').then(
-        (m) => m.DashboardComponent,
+        (m) => m.DashboardComponent
       ),
     canActivate: vendorGuard,
   },
@@ -65,15 +81,16 @@ export const routes: Routes = [
     path: 'live-orders',
     loadComponent: () =>
       import('./pages/live-orders/live-orders.component').then(
-        (m) => m.LiveOrdersComponent,
+        (m) => m.LiveOrdersComponent
       ),
     canActivate: vendorPageGuard('vendor-live-orders'),
   },
   {
     path: 'inventory',
+    canDeactivate: [vendorDirtyGuard],
     loadComponent: () =>
       import('./pages/inventory/inventory.component').then(
-        (m) => m.InventoryComponent,
+        (m) => m.InventoryComponent
       ),
     canActivate: vendorPageGuard('vendor-inventory'),
   },
@@ -81,40 +98,44 @@ export const routes: Routes = [
     path: 'products',
     loadComponent: () =>
       import('./pages/products/products.component').then(
-        (m) => m.ProductsComponent,
+        (m) => m.ProductsComponent
       ),
     canActivate: vendorPageGuard('vendor-products'),
   },
   { path: 'products/health', redirectTo: 'inventory' },
   {
     path: 'products/new',
+    canDeactivate: [vendorDirtyGuard],
     loadComponent: () =>
       import('./pages/product-create/product-create.component').then(
-        (m) => m.ProductCreateComponent,
+        (m) => m.ProductCreateComponent
       ),
     canActivate: vendorPageGuard('vendor-product-new'),
   },
   {
     path: 'products/:id/edit',
+    canDeactivate: [vendorDirtyGuard],
     loadComponent: () =>
       import('./pages/product-edit/product-edit.component').then(
-        (m) => m.ProductEditComponent,
+        (m) => m.ProductEditComponent
       ),
     canActivate: vendorPageGuard('vendor-product-edit'),
   },
   {
     path: 'products/edit/:id',
+    canDeactivate: [vendorDirtyGuard],
     loadComponent: () =>
       import('./pages/product-edit/product-edit.component').then(
-        (m) => m.ProductEditComponent,
+        (m) => m.ProductEditComponent
       ),
     canActivate: vendorPageGuard('vendor-product-edit'),
   },
   {
     path: 'catalog-requests',
+    canDeactivate: [vendorDirtyGuard],
     loadComponent: () =>
       import('./pages/catalog-requests/catalog-requests.component').then(
-        (m) => m.CatalogRequestsComponent,
+        (m) => m.CatalogRequestsComponent
       ),
     canActivate: vendorPageGuard('vendor-catalog-requests'),
   },
@@ -130,7 +151,7 @@ export const routes: Routes = [
     path: 'orders/:id/prep',
     loadComponent: () =>
       import('./pages/order-prep/order-prep.component').then(
-        (m) => m.OrderPrepComponent,
+        (m) => m.OrderPrepComponent
       ),
     canActivate: vendorPageGuard('vendor-order-prep'),
   },
@@ -138,21 +159,29 @@ export const routes: Routes = [
     path: 'orders/:id',
     loadComponent: () =>
       import('./pages/order-detail/order-detail.component').then(
-        (m) => m.OrderDetailComponent,
+        (m) => m.OrderDetailComponent
       ),
     canActivate: vendorPageGuard('vendor-order-detail'),
   },
   { path: 'profile', redirectTo: 'store-settings' },
   { path: 'sales-report', redirectTo: 'analytics' },
   { path: 'stock-management', redirectTo: 'inventory' },
-  { path: 'wallet', redirectTo: 'payouts' },
+  { path: 'wallet', redirectTo: 'transactions' },
+  {
+    path: 'transactions',
+    loadComponent: () =>
+      import('./pages/transactions/transactions.component').then(
+        (m) => m.TransactionsComponent
+      ),
+    canActivate: vendorPageGuard('vendor-payouts'),
+  },
   { path: 'payments', redirectTo: 'payouts' },
   { path: 'coupons', redirectTo: 'promotions' },
   {
     path: 'analytics',
     loadComponent: () =>
       import('./pages/sales-report/sales-report.component').then(
-        (m) => m.SalesReportComponent,
+        (m) => m.SalesReportComponent
       ),
     canActivate: vendorPageGuard('vendor-analytics'),
   },
@@ -160,15 +189,16 @@ export const routes: Routes = [
     path: 'payouts',
     loadComponent: () =>
       import('./pages/payments/payments.component').then(
-        (m) => m.PaymentsComponent,
+        (m) => m.PaymentsComponent
       ),
     canActivate: vendorPageGuard('vendor-payouts'),
   },
   {
     path: 'promotions',
+    canDeactivate: [vendorDirtyGuard],
     loadComponent: () =>
       import('./pages/coupons/coupons.component').then(
-        (m) => m.CouponsComponent,
+        (m) => m.CouponsComponent
       ),
     canActivate: vendorPageGuard('vendor-promotions'),
   },
@@ -176,7 +206,7 @@ export const routes: Routes = [
     path: 'support',
     loadComponent: () =>
       import('./pages/support/support.component').then(
-        (m) => m.SupportComponent,
+        (m) => m.SupportComponent
       ),
     canActivate: vendorPageGuard('vendor-support'),
   },
@@ -184,7 +214,7 @@ export const routes: Routes = [
     path: 'reviews',
     loadComponent: () =>
       import('./pages/reviews/reviews.component').then(
-        (m) => m.ReviewsComponent,
+        (m) => m.ReviewsComponent
       ),
     canActivate: vendorPageGuard('vendor-reviews'),
   },
@@ -192,23 +222,25 @@ export const routes: Routes = [
     path: 'notifications',
     loadComponent: () =>
       import('./pages/notifications/notifications.component').then(
-        (m) => m.NotificationsComponent,
+        (m) => m.NotificationsComponent
       ),
     canActivate: vendorPageGuard('vendor-notifications'),
   },
   {
     path: 'store/settings',
+    canDeactivate: [vendorDirtyGuard],
     loadComponent: () =>
       import('./pages/store-settings/store-settings.component').then(
-        (m) => m.StoreSettingsComponent,
+        (m) => m.StoreSettingsComponent
       ),
     canActivate: vendorPageGuard('vendor-store-settings'),
   },
   {
     path: 'store-settings',
+    canDeactivate: [vendorDirtyGuard],
     loadComponent: () =>
       import('./pages/store-settings/store-settings.component').then(
-        (m) => m.StoreSettingsComponent,
+        (m) => m.StoreSettingsComponent
       ),
     canActivate: vendorPageGuard('vendor-store-settings'),
   },

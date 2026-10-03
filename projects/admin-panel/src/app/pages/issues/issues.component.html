@@ -38,12 +38,14 @@
     </select>
   </div>
 
+  <div class="admin-toolbar"><label>Owner<select [(ngModel)]="ownerFilter" (change)="onFilterChange()"><option value="">All owners</option>@for(owner of assignees();track owner.id){<option [value]="owner.id">{{owner.first_name || owner.username}}</option>}</select></label><label>Queue<input [(ngModel)]="queueFilter" (change)="onFilterChange()" placeholder="All queues" /></label><label>Priority<select [(ngModel)]="priorityFilter" (change)="onFilterChange()"><option value="">All priorities</option><option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option></select></label><label>Due<select [(ngModel)]="dueFilter" (change)="onFilterChange()"><option value="">Any deadline</option><option value="overdue">Overdue</option><option value="upcoming">Upcoming</option></select></label></div>
   <!-- ── Table ────────────────────────────────────────── -->
   <div
     class="table-card"
     style="padding: 0; background: transparent; box-shadow: none"
   >
-    <app-dynamic-table
+  @if(error()){<div class="admin-error" role="alert">{{error()}}<button class="btn btn-secondary" (click)="load()">Retry</button></div>}
+  <app-dynamic-table
       [columns]="tableColumns"
       [data]="issues()"
       [loading]="loading()"
@@ -97,15 +99,13 @@
         </span>
       </ng-template>
 
-      <ng-template tableCell="date" let-row="row">
-        <div class="text-muted">{{ row.created_at | date: "MMM d, y" }}</div>
-      </ng-template>
-
+      <ng-template tableCell="ownership" let-row="row"><strong>{{row.assignee_name || 'Unassigned'}}</strong><p class="admin-muted">{{row.queue || 'support'}}</p></ng-template><ng-template tableCell="deadline" let-row="row"><strong>{{row.priority}}</strong><p [class.overdue]="overdue(row)">{{row.due_at ? (row.due_at | date:'short') : 'No deadline recorded'}} {{overdue(row) ? '· Overdue' : ''}}</p></ng-template>
       <ng-template tableCell="actions" let-row="row">
         <button
           class="action-btn"
           (click)="openIssue(row)"
           title="Open Details"
+          aria-label="Open case"
         >
           <span class="material-icons-outlined">open_in_new</span>
         </button>
@@ -116,8 +116,8 @@
 
 <!-- ── Detail Side Panel ─────────────────────────────── -->
 @if (selectedIssue() || loadingDetail()) {
-  <div class="panel-backdrop" (click)="closePanel()"></div>
-  <div class="side-panel">
+  <div class="panel-backdrop" (click)="$event.target === $event.currentTarget && (closePanel())" (keydown.escape)="closePanel()" tabindex="-1" role="presentation"></div>
+  <div class="side-panel" appAdminDialog aria-label="Support case" (appAdminDialogClose)="closePanel()">
     @if (loadingDetail()) {
       <div class="panel-loading"><div class="spinner"></div></div>
     } @else {
@@ -134,7 +134,7 @@
             }}
           </div>
         </div>
-        <button class="panel-close" (click)="closePanel()">
+        <button aria-label="Close dialog" class="panel-close" (click)="closePanel()">
           <span class="material-icons-outlined">close</span>
         </button>
       </div>
@@ -146,7 +146,7 @@
       </div>
 
       <!-- Chat -->
-      <div class="panel-section panel-chat">
+      <div class="panel-section panel-chat"><p class="admin-muted">Live connection: {{ws?.state() || 'closed'}}</p>
         <div class="section-label">Chat</div>
         <div class="chat-messages">
           @for (msg of selectedIssue().messages; track msg.id) {
@@ -182,10 +182,10 @@
             placeholder="Reply to customer…"
             (keydown.enter)="sendMessage()"
           />
-          <button
+          <button aria-label="Send reply"
             class="chat-send-btn"
             (click)="sendMessage()"
-            [disabled]="!newMessage.trim() || sending()"
+            [disabled]="!access.can('support.manage') || !newMessage.trim() || sending()"
           >
             <span class="material-icons-outlined">send</span>
           </button>
@@ -194,24 +194,24 @@
 
       <!-- Resolution -->
       <div class="panel-section">
-        <div class="section-label">Resolution</div>
+        <div class="section-label">Case management</div><div class="admin-form-grid"><label>Assigned administrator<select [(ngModel)]="assignee"><option value="">Unassigned</option>@for(owner of assignees();track owner.id){<option [value]="owner.id">{{owner.first_name || owner.username}} {{owner.last_name}}</option>}</select></label><label>Queue<input [(ngModel)]="queue" maxlength="60" /></label><label>Priority<select [(ngModel)]="priority"><option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option></select></label><label>Due by<input type="datetime-local" [(ngModel)]="dueAt" /></label><label>Resolution decision<select [(ngModel)]="resolutionType"><option value="">No decision recorded</option><option value="refund">Refund review</option><option value="replacement">Replacement review</option><option value="compensation">Compensation review</option><option value="explanation">Explanation</option></select></label></div><p class="admin-muted">Refund, replacement and compensation decisions record a review request. They do not transfer money or create a replacement order.</p>
 
         <div class="form-row">
-          <label class="form-label">Status</label>
-          <select class="form-input" [(ngModel)]="newStatus">
+          <label for="admin-issues.component-5" class="form-label">Status</label>
+          <select id="admin-issues.component-5" class="form-input" [(ngModel)]="newStatus">
             @for (s of statuses.slice(1); track s.value) {
               <option [value]="s.value">{{ s.label }}</option>
             }
           </select>
         </div>
 
-        @if (newStatus === "refund_initiated") {
+        @if (resolutionType === "refund" || newStatus === "refund_initiated") {
           <div class="form-row two">
             <div>
-              <label class="form-label"
+              <label for="admin-control-issues.component-6" class="form-label"
                 >Refund Amount ({{ 0 | appCurrency: true }})</label
               >
-              <input
+              <input id="admin-control-issues.component-6"
                 type="number"
                 class="form-input"
                 [(ngModel)]="refundAmount"
@@ -220,20 +220,15 @@
               />
             </div>
             <div>
-              <label class="form-label">Refund Method</label>
-              <input
-                type="text"
-                class="form-input"
-                [(ngModel)]="refundMethod"
-                placeholder="e.g. Bank transfer, Wallet"
-              />
+              <label for="admin-control-issues.component-7" class="form-label">Refund Method</label>
+              <select id="admin-control-issues.component-7" class="form-input" [(ngModel)]="refundMethod"><option value="">Select method</option><option value="wallet">Wallet</option><option value="razorpay">Razorpay</option><option value="manual">Manual recorded refund</option></select>
             </div>
           </div>
         }
 
         <div class="form-row">
-          <label class="form-label">Admin Notes</label>
-          <textarea
+          <label for="admin-issues.component-7" class="form-label">Private admin notes</label>
+          <textarea id="admin-issues.component-7"
             class="form-input"
             [(ngModel)]="adminNotes"
             rows="3"
@@ -244,12 +239,12 @@
         <button
           class="save-btn"
           (click)="saveResolution()"
-          [disabled]="saving()"
+          [disabled]="saving() || !access.can('support.manage')"
         >
           @if (saving()) {
             <span class="btn-spinner"></span>
           }
-          Save Resolution
+          Save case changes
         </button>
       </div>
     }

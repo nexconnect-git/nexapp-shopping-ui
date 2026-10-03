@@ -2,12 +2,13 @@
   <div class="page-header">
     <div>
       <h1 class="page-title">Catalog Requests</h1>
-      <p class="page-subtitle">{{ total() }} vendor catalog submissions</p>
+      <p class="page-subtitle">{{ total() }} vendor catalog {{ total() === 1 ? 'submission' : 'submissions' }}</p>
     </div>
   </div>
   <div class="toolbar">
     <select
       class="filter-select"
+      aria-label="Request status"
       [(ngModel)]="statusFilter"
       (change)="load()"
     >
@@ -22,6 +23,11 @@
     <div class="loading-state">
       <div class="spinner"></div>
       <span>Loading requests...</span>
+    </div>
+  } @else if (loadError()) {
+    <div class="admin-error" role="alert">
+      <p>Catalog requests could not be loaded. Check your connection and try again.</p>
+      <button class="btn btn-secondary" (click)="load()">Retry</button>
     </div>
   } @else if (proposals().length === 0) {
     <div class="empty-state">
@@ -45,12 +51,15 @@
             proposal.status.replace('_', ' ')
           }}</span>
         </div>
-        <div class="product-table">
+        <div class="product-table" tabindex="0" aria-label="Catalog request items">
+          <div class="table-head">
+            <span>Product</span><span>Category</span><span>Status</span><span class="col-actions">Actions</span>
+          </div>
           @for (item of proposal.items; track item.id) {
             <div class="table-row">
               <div class="col-product product-cell">
                 <div class="product-avatar">{{ item.name[0] }}</div>
-                <span class="product-name">{{ item.name }}</span>
+                <span class="product-name" [title]="item.name">{{ item.name }}</span>
               </div>
               <div class="col-category">
                 <span class="text-muted">{{
@@ -62,20 +71,21 @@
               </div>
               <div class="col-actions actions">
                 @if (item.status === 'pending') {
-                  <button
+                  <ng-container *appAdminCan="'catalog.manage'"><button
                     class="action-btn approve"
+                    aria-label="Approve"
                     (click)="approve(proposal.id, item.id)"
                     title="Approve"
                   >
                     <span class="material-icons-outlined">check</span>
-                  </button>
-                  <button
+                  </button></ng-container>
+                  <ng-container *appAdminCan="'catalog.manage'"><button aria-label="Reject"
                     class="action-btn danger"
                     (click)="reject(proposal.id, item.id)"
                     title="Reject"
                   >
                     <span class="material-icons-outlined">close</span>
-                  </button>
+                  </button></ng-container>
                 }
               </div>
             </div>
@@ -85,3 +95,25 @@
     }
   }
 </div>
+@if (rejection()) {
+  <div class="modal-backdrop" (click)="closeRejection()">
+    <form class="modal" appAdminDialog aria-labelledby="catalog-rejection-title"
+      (appAdminDialogClose)="closeRejection()" (click)="$event.stopPropagation()" (ngSubmit)="submitRejection()">
+      <div class="modal-header">
+        <h2 id="catalog-rejection-title">Reject catalog request</h2>
+        <button type="button" class="icon-btn" aria-label="Close dialog" [disabled]="submitting()" (click)="closeRejection()">
+          <span class="material-icons-outlined">close</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>Explain why this item cannot be added to the catalog. The vendor will receive this reason.</p>
+        <label for="catalog-rejection-reason">Reason for rejection</label>
+        <textarea id="catalog-rejection-reason" name="rejectionReason" [(ngModel)]="rejectionReason" rows="4" required [disabled]="submitting()"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" [disabled]="submitting()" (click)="closeRejection()">Cancel</button>
+        <button type="submit" class="btn btn-danger" [disabled]="submitting() || !rejectionReason.trim()">{{ submitting() ? 'Rejecting…' : 'Reject request' }}</button>
+      </div>
+    </form>
+  </div>
+}

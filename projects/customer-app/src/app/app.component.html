@@ -20,7 +20,9 @@
   } @defer (when ui.filterSliderOpen()) {
   <fd-filter-slider />
   }
+  @defer (when ui.locationModalOpen()) {
   <fd-location-modal />
+  }
   @defer (when ui.editModal()) {
   <fd-edit-modal />
   } @defer (when ui.confirmDialog()) {

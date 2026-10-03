@@ -11,7 +11,7 @@
             >Updated {{ lastRefreshed() | date: "HH:mm:ss" }}</span
           >
         }
-        <button
+        <button aria-label="Refresh"
           class="btn btn-ghost btn-sm"
           (click)="manualReload()"
           [disabled]="loading()"
@@ -32,15 +32,15 @@
           {{ autoReload() ? "Auto" : "Paused" }}
         </button>
       </div>
-      <button class="btn-primary" (click)="openCreate(null)">
+      <ng-container *appAdminCan="'catalog.manage'"><button class="btn-primary" (click)="openCreate(null)">
         <span class="material-icons-outlined">add</span>
         New Category
-      </button>
+      </button></ng-container>
     </div>
   </div>
 
   <!-- Table -->
-  <div class="table-card">
+  <div class="table-card" tabindex="0" aria-label="Categories table">
     @if (loading()) {
       <div class="loading-state">
         <div class="spinner"></div>
@@ -78,7 +78,7 @@
             <!-- Root category row -->
             <tr class="cat-row root-row" [class.expanded]="isExpanded(cat.id)">
               <td class="expand-cell">
-                <button
+                <button aria-label="Expand row"
                   class="expand-btn"
                   (click)="toggleExpand(cat)"
                   [class.open]="isExpanded(cat.id)"
@@ -167,7 +167,7 @@
               </td>
               <td>
                 <div class="actions">
-                  <button
+                  <ng-container *appAdminCan="'catalog.manage'"><button aria-label="Add subcategory"
                     class="action-btn"
                     (click)="openCreate(cat.id)"
                     title="Add subcategory"
@@ -175,21 +175,21 @@
                     <span class="material-icons-outlined"
                       >create_new_folder</span
                     >
-                  </button>
-                  <button
+                  </button></ng-container>
+                  <ng-container *appAdminCan="'catalog.manage'"><button aria-label="Edit"
                     class="action-btn"
                     (click)="openEdit(cat)"
                     title="Edit"
                   >
                     <span class="material-icons-outlined">edit</span>
-                  </button>
-                  <button
+                  </button></ng-container>
+                  <ng-container *appAdminCan="'catalog.manage'"><button aria-label="Delete"
                     class="action-btn danger"
                     (click)="delete(cat)"
                     title="Delete"
                   >
                     <span class="material-icons-outlined">delete_outline</span>
-                  </button>
+                  </button></ng-container>
                 </div>
               </td>
             </tr>
@@ -287,14 +287,14 @@
                     </td>
                     <td>
                       <div class="actions">
-                        <button
+                        <ng-container *appAdminCan="'catalog.manage'"><button aria-label="Edit"
                           class="action-btn"
                           (click)="openEdit(sub)"
                           title="Edit"
                         >
                           <span class="material-icons-outlined">edit</span>
-                        </button>
-                        <button
+                        </button></ng-container>
+                        <ng-container *appAdminCan="'catalog.manage'"><button aria-label="Delete"
                           class="action-btn danger"
                           (click)="delete(sub)"
                           title="Delete"
@@ -302,7 +302,7 @@
                           <span class="material-icons-outlined"
                             >delete_outline</span
                           >
-                        </button>
+                        </button></ng-container>
                       </div>
                     </td>
                   </tr>
@@ -312,9 +312,9 @@
                     <td colspan="6">
                       <div class="no-subs">
                         No subcategories yet.
-                        <button class="link-btn" (click)="openCreate(cat.id)">
+                        <ng-container *appAdminCan="'catalog.manage'"><button class="link-btn" (click)="openCreate(cat.id)">
                           Add one
-                        </button>
+                        </button></ng-container>
                       </div>
                     </td>
                   </tr>
@@ -363,12 +363,12 @@
 
 <!-- Modal -->
 @if (showModal()) {
-  <div class="modal-backdrop" (click)="closeModal()">
-    <div class="modal" (click)="$event.stopPropagation()">
+  <div class="modal-backdrop" (click)="$event.target === $event.currentTarget && (closeModal())" (keydown.escape)="closeModal()" tabindex="-1" role="presentation">
+    <div class="modal" appAdminDialog aria-labelledby="category-form-title" (appAdminDialogClose)="closeModal()">
       <div class="modal-header">
         <div class="modal-title-group">
           <span class="material-icons-outlined modal-icon">folder</span>
-          <h2>
+          <h2 id="category-form-title">
             {{
               editTarget()
                 ? "Edit Category"
@@ -378,7 +378,7 @@
             }}
           </h2>
         </div>
-        <button class="modal-close" (click)="closeModal()">&times;</button>
+        <button class="modal-close" aria-label="Close dialog" (click)="closeModal()"><span class="material-icons-outlined">close</span></button>
       </div>
       <div class="modal-body">
         @if (error()) {
@@ -388,8 +388,8 @@
           </div>
         }
         <div class="form-group">
-          <label class="form-label">Name *</label>
-          <input
+          <label for="admin-categories.component-0" class="form-label">Name *</label>
+          <input id="admin-categories.component-0"
             class="form-input"
             [(ngModel)]="form.name"
             (input)="autoSlug()"
@@ -397,16 +397,16 @@
           />
         </div>
         <div class="form-group">
-          <label class="form-label">Slug</label>
-          <input
+          <label for="admin-categories.component-1" class="form-label">Slug</label>
+          <input id="admin-categories.component-1"
             class="form-input"
             [(ngModel)]="form.slug"
             placeholder="category-slug"
           />
         </div>
         <div class="form-group">
-          <label class="form-label">Description</label>
-          <textarea
+          <label for="admin-categories.component-2" class="form-label">Description</label>
+          <textarea id="admin-categories.component-2"
             class="form-input"
             [(ngModel)]="form.description"
             rows="3"
@@ -414,7 +414,7 @@
           ></textarea>
         </div>
         <div class="form-group">
-          <label class="form-label">Customer app emoji</label>
+          <span class="form-label">Customer app emoji</span>
           <div class="emoji-picker-grid">
             @for (option of categoryEmojiOptions; track option.key) {
               <button
@@ -435,7 +435,7 @@
           </p>
         </div>
         <div class="form-group">
-          <label class="form-label">Optional image icon</label>
+          <span class="form-label">Optional image icon</span>
           <div class="icon-picker-grid">
             @for (option of categoryIconOptions; track option.key) {
               <button
@@ -460,7 +460,7 @@
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">Icon value</label>
+          <label for="admin-categories.component-5" class="form-label">Icon value</label>
           <div class="icon-name-row">
             <span class="icon-preview">
               @if (
@@ -480,7 +480,7 @@
                 }}</span>
               }
             </span>
-            <input
+            <input id="admin-categories.component-5"
               class="form-input"
               [(ngModel)]="form.icon_name"
               placeholder="Emoji, image URL, or Material icon name"
@@ -565,9 +565,9 @@
       </div>
       <div class="modal-footer">
         <button class="btn-secondary" (click)="closeModal()">Cancel</button>
-        <button class="btn-primary" [disabled]="saving()" (click)="save()">
+        <ng-container *appAdminCan="'catalog.manage'"><button class="btn-primary" [disabled]="saving()" (click)="save()">
           {{ saving() ? "Saving…" : editTarget() ? "Update" : "Create" }}
-        </button>
+        </button></ng-container>
       </div>
     </div>
   </div>

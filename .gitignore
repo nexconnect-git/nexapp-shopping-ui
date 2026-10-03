@@ -52,8 +52,8 @@ testem.log
 **/test/
 **/tests/
 **/*.spec.ts
-!e2e/
-!e2e/*.spec.ts
+/e2e/
+/playwright.*.config.ts
 **/*.test.ts
 **/*.test.js
 **/*.test.jsx
@@ -62,6 +62,16 @@ testem.log
 **/*-test/
 **/*seed*
 **/*fixture*
+
+# Generated validation output
+/scripts/test-*.mjs
+**/androidTest/
+.codex-run/
+.codex-visual-validation/
+/scss_sizes.json
+/empty_scss.txt
+/scss_files.txt
+/build_err*.txt
 
 # Static/media assets
 **/media/

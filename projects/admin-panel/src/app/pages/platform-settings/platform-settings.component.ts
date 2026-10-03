@@ -1,4 +1,6 @@
-import { CommonModule } from '@angular/common';
+import { AdminCanDirective } from '../../shared/admin-can.directive';
+import { AdminAccessService } from '../../services/admin-access.service';
+
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService, ToastService } from '@shared/public-api';
@@ -6,11 +8,16 @@ import { ApiService, ToastService } from '@shared/public-api';
 @Component({
   selector: 'app-platform-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [AdminCanDirective, FormsModule],
   templateUrl: './platform-settings.component.html',
   styleUrl: './platform-settings.component.scss',
 })
 export class PlatformSettingsComponent implements OnInit {
+  access = inject(AdminAccessService);
+  private savedState = '';
+  hasUnsavedChanges() {
+    return !!this.savedState && JSON.stringify(this.form) !== this.savedState;
+  }
   private api = inject(ApiService);
   private toast = inject(ToastService);
 
@@ -70,7 +77,7 @@ export class PlatformSettingsComponent implements OnInit {
       next: (settings) => {
         this.form = { ...settings };
         this.form.enabled_payment_methods = Array.isArray(
-          this.form.enabled_payment_methods,
+          this.form.enabled_payment_methods
         )
           ? this.form.enabled_payment_methods
           : [];
@@ -78,6 +85,7 @@ export class PlatformSettingsComponent implements OnInit {
           this.form.cancellation_allowed_statuses =
             this.form.cancellation_allowed_statuses.join(',');
         }
+        this.savedState = JSON.stringify(this.form);
         this.loading.set(false);
       },
       error: () => {
@@ -88,13 +96,14 @@ export class PlatformSettingsComponent implements OnInit {
   }
 
   save() {
+    if (this.saving() || !this.access.can('settings.manage')) return;
     const payload = {
       ...this.form,
       enabled_payment_methods: Array.isArray(this.form.enabled_payment_methods)
         ? this.form.enabled_payment_methods
         : [],
       cancellation_allowed_statuses: String(
-        this.form.cancellation_allowed_statuses || '',
+        this.form.cancellation_allowed_statuses || ''
       )
         .split(',')
         .map((s: string) => s.trim())
@@ -106,7 +115,7 @@ export class PlatformSettingsComponent implements OnInit {
       next: (settings) => {
         this.form = { ...settings };
         this.form.enabled_payment_methods = Array.isArray(
-          this.form.enabled_payment_methods,
+          this.form.enabled_payment_methods
         )
           ? this.form.enabled_payment_methods
           : [];
@@ -114,6 +123,7 @@ export class PlatformSettingsComponent implements OnInit {
           this.form.cancellation_allowed_statuses =
             this.form.cancellation_allowed_statuses.join(',');
         }
+        this.savedState = JSON.stringify(this.form);
         this.toast.show('Platform settings updated.', 'success');
         this.saving.set(false);
       },

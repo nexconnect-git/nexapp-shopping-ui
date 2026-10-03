@@ -1,5 +1,5 @@
 import { inject, Injectable, signal } from '@angular/core';
-import { ApiService } from './api.service';
+import { AddressApi } from '../api/address-api.service';
 import { AuthService } from './auth.service';
 import { CurrencyService } from './currency.service';
 import { NativePlatformService } from './native-platform.service';
@@ -11,7 +11,7 @@ export type UserLocation = SelectedLocation;
   providedIn: 'root',
 })
 export class LocationService {
-  private api = inject(ApiService);
+  private api = inject(AddressApi);
   private auth = inject(AuthService);
   private currency = inject(CurrencyService);
   private nativePlatform = inject(NativePlatformService);

@@ -1,7 +1,7 @@
-<main class="nc-dynamic-review">
+<section class="nc-dynamic-review" aria-label="Profile review">
   <header class="nc-review-head nc-compact-card">
     <div>
-      <small>ADMIN PANEL</small>
+      <small>PROFILE REVIEW</small>
       <h1>{{ config.title }}</h1>
       <p>{{ config.subtitle }}</p>
     </div>
@@ -13,24 +13,19 @@
       >
         Back
       </button>
-      <button
-        type="button"
-        class="nc-review-btn nc-review-btn-secondary"
-        (click)="saveDraft.emit()"
-      >
-        {{ config.saveDraftLabel || "Save Draft" }}
-      </button>
-      <label *ngIf="config.statusOptions?.length" class="nc-status-select">
+
+      @if (config.statusOptions?.length) {
+      <label class="nc-status-select">
         <span>Status</span>
         <select [(ngModel)]="selectedStatus">
-          <option
-            *ngFor="let option of config.statusOptions"
-            [ngValue]="option.value"
-          >
+          @for (option of config.statusOptions; track option.value) {
+          <option [ngValue]="option.value">
             {{ option.label }}
           </option>
+          }
         </select>
       </label>
+      } @if (config.submitLabel) {
       <button
         type="button"
         class="nc-review-btn nc-review-btn-primary"
@@ -38,6 +33,7 @@
       >
         {{ config.submitLabel || "Submit for Approval" }}
       </button>
+      }
     </div>
   </header>
 
@@ -54,9 +50,12 @@
         <p>{{ config.profileSummary.entityTypeLabel }}</p>
       </div>
       <div class="nc-review-summary-meta">
-        <span *ngFor="let metric of config.profileSummary.metrics?.slice(0, 4)">
+        @for (metric of config.profileSummary.metrics?.slice(0, 4); track
+        metric.label) {
+        <span>
           {{ metric.label }} <b>{{ metric.value }}</b>
         </span>
+        }
       </div>
     </article>
 
@@ -77,111 +76,110 @@
     </article>
   </section>
 
-  <section
-    *ngIf="config.warning?.enabled"
-    class="nc-review-warning nc-compact-card"
-  >
-    <span class="nc-emoji-icon">🔐</span>
+  @if (config.warning?.enabled) {
+  <section class="nc-review-warning nc-compact-card">
+    <span class="material-icons-outlined" aria-hidden="true">lock</span>
     <div>
       <b>{{ config.warning?.title }}</b>
       <p>{{ config.warning?.message }}</p>
-      <code *ngIf="config.warning?.secretValue">
+      @if (config.warning?.secretValue) {
+      <code>
         {{ config.warning?.secretLabel || "Temporary Password" }}:
         <strong>{{ config.warning?.secretValue }}</strong>
       </code>
+      }
     </div>
     <button type="button">{{ config.warning?.actionLabel }}</button>
   </section>
+  }
 
   <section class="nc-review-sections-grid">
-    <article
-      *ngFor="let section of config.sections"
-      class="nc-review-section nc-compact-card"
-    >
+    @for (section of config.sections; track section.id) {
+    <article class="nc-review-section nc-compact-card">
       <header>
         <h2>
-          <span class="nc-emoji-icon">{{ section.icon }}</span
+          <span class="material-icons-outlined" aria-hidden="true">{{
+            section.icon | adminIcon
+          }}</span
           >{{ section.title }}
         </h2>
+        @if (section.editStepId) {
         <button
           type="button"
-          *ngIf="section.editStepId"
+          [attr.aria-label]="'Edit ' + section.title"
           (click)="editSection.emit(section.editStepId)"
         >
-          ✎ Edit
+          <span class="material-icons-outlined" aria-hidden="true">edit</span>
+          Edit
         </button>
+        }
       </header>
-
       <div class="nc-review-grid">
-        <div
-          *ngFor="let field of visibleFields(section.fields)"
-          class="nc-review-item"
-          [class.full]="isWideField(field.value)"
-        >
+        @for (field of visibleFields(section.fields); track field.label) {
+        <div class="nc-review-item" [class.full]="isWideField(field.value)">
           <span>{{ field.label }}</span>
+          @if (field.href) {
           <a
-            *ngIf="field.href; else visiblePlain"
             [href]="field.href"
             target="_blank"
             rel="noopener"
             class="nc-review-link"
             [attr.data-tone]="field.tone || 'neutral'"
           >
-            {{ field.value | displayValue }}
+            {{ field | profileFieldValue }}
           </a>
-          <ng-template #visiblePlain>
-            <strong [attr.data-tone]="field.tone || 'neutral'">{{
-              field.value | displayValue
-            }}</strong>
-          </ng-template>
+          } @else {
+          <strong [attr.data-tone]="field.tone || 'neutral'">{{
+            field | profileFieldValue
+          }}</strong>
+          }
         </div>
+        }
       </div>
-
-      <details
-        *ngIf="hiddenFieldCount(section.fields) > 0"
-        class="nc-review-more-fields"
-      >
+      @if (hiddenFieldCount(section.fields) > 0) {
+      <details class="nc-review-more-fields">
         <summary>
           Show {{ hiddenFieldCount(section.fields) }} more fields
         </summary>
         <div class="nc-review-grid">
-          <div
-            *ngFor="let field of hiddenFields(section.fields)"
-            class="nc-review-item"
-            [class.full]="isWideField(field.value)"
-          >
+          @for (field of hiddenFields(section.fields); track field.label) {
+          <div class="nc-review-item" [class.full]="isWideField(field.value)">
             <span>{{ field.label }}</span>
+            @if (field.href) {
             <a
-              *ngIf="field.href; else hiddenPlain"
               [href]="field.href"
               target="_blank"
               rel="noopener"
               class="nc-review-link"
               [attr.data-tone]="field.tone || 'neutral'"
             >
-              {{ field.value | displayValue }}
+              {{ field | profileFieldValue }}
             </a>
-            <ng-template #hiddenPlain>
-              <strong [attr.data-tone]="field.tone || 'neutral'">{{
-                field.value | displayValue
-              }}</strong>
-            </ng-template>
+            } @else {
+            <strong [attr.data-tone]="field.tone || 'neutral'">{{
+              field | profileFieldValue
+            }}</strong>
+            }
           </div>
+          }
         </div>
       </details>
+      }
     </article>
+    }
   </section>
 
-  <section
-    class="nc-review-attention nc-compact-card"
-    *ngIf="config.attentionItems?.length"
-  >
+  @if (config.attentionItems?.length) {
+  <section class="nc-review-attention nc-compact-card">
     <h2>Attention Items</h2>
-    <article *ngFor="let item of config.attentionItems">
+    @for (item of config.attentionItems; track item.title) {
+    <article>
       <b>{{ item.title }}</b>
       <p>{{ item.description }}</p>
     </article>
+    }
   </section>
+  }
 
   <footer class="nc-review-mobile-actions">
     <button
@@ -191,13 +189,7 @@
     >
       Back
     </button>
-    <button
-      type="button"
-      class="nc-review-btn nc-review-btn-secondary"
-      (click)="saveDraft.emit()"
-    >
-      {{ config.saveDraftLabel || "Save Draft" }}
-    </button>
+    @if (config.submitLabel) {
     <button
       type="button"
       class="nc-review-btn nc-review-btn-primary"
@@ -205,14 +197,11 @@
     >
       {{ config.submitLabel || "Submit for Approval" }}
     </button>
+    }
   </footer>
 
-  <section
-    *ngIf="reasonModalOpen"
-    class="nc-status-modal"
-    role="dialog"
-    aria-modal="true"
-  >
+  @if (reasonModalOpen) {
+  <section class="nc-status-modal" role="dialog" aria-modal="true">
     <div class="nc-status-dialog">
       <h2>Status Reason</h2>
       <p>Enter the reason shown to the vendor while this status is active.</p>
@@ -240,4 +229,5 @@
       </div>
     </div>
   </section>
-</main>
+  }
+</section>

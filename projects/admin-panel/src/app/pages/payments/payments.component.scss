@@ -1,4 +1,4 @@
-﻿:host {
+:host {
   display: block;
 }
 
@@ -17,7 +17,7 @@
 
 .page-title {
   font-size: 1.5rem;
-  font-weight: 800;
+  font-weight: 600;
   color: var(--text-primary);
   margin: 0 0 0.25rem;
 }
@@ -48,7 +48,7 @@
 }
 
 .summary-label {
-  font-size: 0.75rem;
+  font-size: var(--admin-text-small);
   font-weight: 600;
   color: var(--text-secondary);
   text-transform: uppercase;
@@ -57,12 +57,12 @@
 
 .summary-value {
   font-size: 1.375rem;
-  font-weight: 800;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
 .summary-value.accent {
-  color: var(--accent-cyan, #38268E);
+  color: var(--accent-cyan, var(--admin-brand));
 }
 
 .summary-value.warn {
@@ -117,7 +117,7 @@
 .data-table thead th {
   padding: 0.875rem 1rem;
   text-align: left;
-  font-size: 0.75rem;
+  font-size: var(--admin-text-small);
   font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
@@ -159,10 +159,12 @@
 
 .amount-cell {
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
+.data-table :is(th, td).amount-cell { text-align: right; }
 
 .order-link {
-  color: var(--accent-cyan, #38268E);
+  color: var(--accent-cyan, var(--admin-brand));
   text-decoration: none;
   font-weight: 700;
 
@@ -172,7 +174,7 @@
 }
 
 .rz-id {
-  font-size: 0.75rem;
+  font-size: var(--admin-text-small);
   color: var(--text-secondary);
 }
 
@@ -187,7 +189,7 @@
   display: inline-block;
   padding: 0.2rem 0.625rem;
   border-radius: 999px;
-  font-size: 0.6875rem;
+  font-size: var(--admin-text-small);
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -195,7 +197,7 @@
 
 .badge-paid {
   background: rgba(16, 185, 129, 0.15);
-  color: #22c55e;
+  color: #167048;
 }
 
 .badge-pending {
@@ -205,19 +207,19 @@
 
 .badge-cod {
   background: rgba(99, 102, 241, 0.15);
-  color: #818cf8;
+  color: var(--primary);
 }
 
 .badge-cancelled {
   background: rgba(239, 68, 68, 0.12);
-  color: #f87171;
+  color: #a63243;
 }
 
 .method-badge {
   display: inline-block;
   padding: 0.15rem 0.5rem;
   border-radius: 4px;
-  font-size: 0.75rem;
+  font-size: var(--admin-text-small);
   font-weight: 600;
   background: var(--border);
   color: var(--text-secondary);
@@ -225,7 +227,7 @@
 
 .method-razorpay {
   background: rgba(6, 182, 212, 0.12);
-  color: #38268E;
+  color: var(--admin-brand);
 }
 
 /* Loading */
@@ -274,7 +276,7 @@
   }
 
   &:hover:not(:disabled) {
-    border-color: var(--accent-cyan, #38268E);
+    border-color: var(--accent-cyan, var(--admin-brand));
   }
 }
 
@@ -282,5 +284,3 @@
   font-size: 0.875rem;
   color: var(--text-secondary);
 }
-
-

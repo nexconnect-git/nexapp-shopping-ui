@@ -2,20 +2,16 @@
   <div class="login-left">
     <div class="left-content">
       <div class="brand-icon-wrap">
-        <span class="material-icons-outlined">admin_panel_settings</span>
+        <span class="material-icons-outlined" aria-hidden="true">hub</span>
       </div>
 
       <div class="left-heading">
-        <img
-          src="assets/brand/nextou-brand-logo-white.png"
-          alt="Nextou"
-          class="left-brand-wordmark"
-        />
-        <span class="left-app-label">Admin</span>
+        <strong class="left-brand-wordmark">nextou.</strong>
+        <span class="left-app-label">Operations console</span>
       </div>
+      <h1 class="login-headline">Your marketplace.<br />One clear view.</h1>
       <p class="left-subtitle">
-        Run stores, riders, payments, exceptions, and customer operations from a
-        single admin workspace.
+        Bring your stores, orders, and delivery partners together in one focused workspace.
       </p>
 
       <ul class="feature-list">
@@ -24,8 +20,7 @@
           <div>
             <strong>Live order operations</strong>
             <span
-              >Track placed, preparing, ready, picked up, and delivered
-              orders</span
+              >Follow every order from placement to delivery</span
             >
           </div>
         </li>
@@ -34,8 +29,7 @@
           <div>
             <strong>Fleet and dispatch oversight</strong>
             <span
-              >Approve partners, monitor assignment readiness, and review
-              assets</span
+              >Keep your delivery team ready for the next order</span
             >
           </div>
         </li>
@@ -44,8 +38,7 @@
           <div>
             <strong>Marketplace governance</strong>
             <span
-              >Manage stores, catalog quality, coupons, payouts, and support
-              issues</span
+              >Manage your catalog, payments, and customer support</span
             >
           </div>
         </li>
@@ -56,8 +49,9 @@
   <div class="login-right">
     <div class="login-form-card">
       <div class="form-card-header">
-        <h2>Admin sign in</h2>
-        <p>Use an approved operations account to continue</p>
+        <span class="login-kicker">Welcome back</span>
+        <h2>Sign in to Nextou</h2>
+        <p>Enter your administrator account details to continue.</p>
       </div>
 
       @if (error()) {
@@ -97,7 +91,6 @@
             fieldErrors().username
           }}</small>
           }
-          <small class="field-hint">Use your admin operations username.</small>
         </div>
         <div class="form-group" [class.invalid]="fieldErrors().password">
           <label class="form-label" for="password">Password</label>
@@ -122,7 +115,6 @@
             fieldErrors().password
           }}</small>
           }
-          <small class="field-hint">Use the password for this admin account.</small>
         </div>
         <button type="submit" class="signin-btn" [disabled]="!canSubmit()">
           @if (loading()) {
@@ -134,10 +126,10 @@
       </form>
       }
 
+      <a class="forgot-link" routerLink="/forgot-password">Forgot password?</a>
       <p class="admin-note">
         <span class="material-icons-outlined">info</span>
-        Administrator access only. Activity in this console affects production
-        operations.
+        Need access? Contact your platform administrator.
       </p>
     </div>
   </div>

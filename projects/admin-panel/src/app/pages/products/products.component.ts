@@ -1,6 +1,8 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { AdminCanDirective } from '../../shared/admin-can.directive';
+import { Component, inject, OnInit, signal } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
+import { AdminDialogDirective } from '../../shared/admin-dialog.directive';
 import {
   ApiService,
   AppCurrencyPipe,
@@ -30,12 +32,13 @@ interface VendorGroup {
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, FormsModule, AppCurrencyPipe],
+  imports: [AdminCanDirective, FormsModule, AppCurrencyPipe, AdminDialogDirective],
   templateUrl: './products.component.html',
   styleUrl: './products.component.scss',
 })
 export class ProductsComponent implements OnInit {
   private api = inject(ApiService);
+  vendorFilter = '';
 
   allProducts = signal<ProductRow[]>([]);
   loading = signal(true);
@@ -80,7 +83,8 @@ export class ProductsComponent implements OnInit {
 
   load() {
     this.loading.set(true);
-    const params: any = { page: 1, page_size: this.PAGE_SIZE };
+    const params: any = { page: this.page(), page_size: this.PAGE_SIZE };
+    if (this.vendorFilter) params.vendor = this.vendorFilter;
     if (this.search) params.search = this.search;
     if (this.statusFilter !== 'all') params.status = this.statusFilter;
 
@@ -89,6 +93,9 @@ export class ProductsComponent implements OnInit {
         const products: ProductRow[] = r.results || r;
         this.allProducts.set(products);
         this.total.set(r.count || products.length);
+        this.totalPages.set(
+          Math.max(1, Math.ceil((r.count || products.length) / this.PAGE_SIZE))
+        );
         this.buildGroups(products);
         this.loading.set(false);
       },

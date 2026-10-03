@@ -1,0 +1,31 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+.operating-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.operating-summary p,
+.operating-details p {
+  margin: 8px 0;
+  font-size: 15px;
+  line-height: 1.5;
+}
+.operating-details summary {
+  cursor: pointer;
+  padding: 10px 0;
+  min-height: 44px;
+  font-size: 14px;
+}
+.compact-state {
+  font-size: 13px;
+  color: inherit;
+}
+.status-chip[data-status="receiving"] {
+  color: #14704c;
+  background: #e8f6ef;
+}

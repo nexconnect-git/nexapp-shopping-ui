@@ -1,13 +1,15 @@
-import { CommonModule } from '@angular/common';
+import { AdminDialogDirective } from '../../shared/admin-dialog.directive';
+import { AdminCanDirective } from '../../shared/admin-can.directive';
+
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ApiService, Product, ToastService } from '@shared/public-api';
+import { ApiService, AppCurrencyPipe, Product, ToastService } from '@shared/public-api';
 import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-vendor-variant-approvals',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [AdminDialogDirective,AdminCanDirective, AppCurrencyPipe, FormsModule],
   templateUrl: './vendor-variant-approvals.component.html',
   styleUrl: './vendor-variant-approvals.component.scss',
 })
@@ -30,22 +32,21 @@ export class VendorVariantApprovalsComponent implements OnInit {
       new Set(
         this.items()
           .map((item) => item.vendor?.id)
-          .filter(Boolean),
-      ).size,
+          .filter(Boolean)
+      ).size
   );
   reviewTypeCount = computed(
     () =>
       new Set(
         this.items()
           .map((item) => this.changeSummary(item))
-          .filter(Boolean),
-      ).size,
+          .filter(Boolean)
+      ).size
   );
   selectedCount = computed(() => this.selectedIds().size);
   allSelected = computed(
     () =>
-      this.items().length > 0 &&
-      this.selectedIds().size === this.items().length,
+      this.items().length > 0 && this.selectedIds().size === this.items().length
   );
 
   ngOnInit() {
@@ -166,7 +167,7 @@ export class VendorVariantApprovalsComponent implements OnInit {
     this.saving.set(false);
     this.toast.show(
       `Approved ${successCount} variants.`,
-      successCount ? 'success' : 'error',
+      successCount ? 'success' : 'error'
     );
     this.load();
   }
@@ -192,7 +193,7 @@ export class VendorVariantApprovalsComponent implements OnInit {
     for (const id of ids) {
       try {
         await firstValueFrom(
-          this.api.rejectAdminVendorProduct(id, this.batchRejectReason.trim()),
+          this.api.rejectAdminVendorProduct(id, this.batchRejectReason.trim())
         );
         successCount += 1;
       } catch {
@@ -203,7 +204,7 @@ export class VendorVariantApprovalsComponent implements OnInit {
     this.closeBatchReject();
     this.toast.show(
       `Rejected ${successCount} variants.`,
-      successCount ? 'success' : 'error',
+      successCount ? 'success' : 'error'
     );
     this.load();
   }

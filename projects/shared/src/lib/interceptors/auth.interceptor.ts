@@ -1,8 +1,8 @@
 import { type HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { catchError, finalize, switchMap, throwError, timeout } from 'rxjs';
+import { catchError, finalize, of, switchMap, throwError, timeout } from 'rxjs';
 import { AuthService } from '../services/auth.service';
-import { GlobalLoadingService } from '../services/global-loading.service';
+import { GlobalLoadingService, SKIP_GLOBAL_LOADING } from '../services/global-loading.service';
 
 const REQUEST_TIMEOUT_MS = 15_000;
 const NON_REFRESHABLE_PATHS = [
@@ -17,6 +17,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
   const loading = inject(GlobalLoadingService);
   const token = auth.getToken();
+  const sessionVersion=auth.sessionVersion;
   const hasSessionToken = !!token;
 
   if (token) {
@@ -25,7 +26,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     });
   }
 
-  loading.start();
+  const showLoading = !req.context.get(SKIP_GLOBAL_LOADING);
+  if (showLoading) loading.start();
 
   return next(req).pipe(
     timeout(REQUEST_TIMEOUT_MS),
@@ -34,20 +36,23 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         err.status === 401 &&
         hasSessionToken &&
         !NON_REFRESHABLE_PATHS.some((path) => req.url.includes(path));
-      if (!canRefresh) {
+      if (!canRefresh || sessionVersion!==auth.sessionVersion) {
         return throwError(() => err);
       }
 
-      return auth.refreshAccessToken().pipe(
+      // A slower response may still reject the token that another request renewed.
+      const renewedAlready = auth.getToken() && auth.getToken() !== token;
+      const renewal = renewedAlready ? of(true) : auth.refreshAccessToken();
+      return renewal.pipe(
         switchMap((refreshed) => {
           if (!refreshed) {
-            auth.logout();
+            if(sessionVersion===auth.sessionVersion || !auth.isLoggedIn())auth.logout();
             return throwError(() => err);
           }
 
           const refreshedToken = auth.getToken();
           if (!refreshedToken) {
-            auth.logout();
+            if(sessionVersion===auth.sessionVersion || !auth.isLoggedIn())auth.logout();
             return throwError(() => err);
           }
 
@@ -57,12 +62,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
             }),
           ).pipe(timeout(REQUEST_TIMEOUT_MS));
         }),
-        catchError(() => {
-          auth.logout();
-          return throwError(() => err);
+        catchError((refreshError) => {
+          if(sessionVersion===auth.sessionVersion && refreshError.status===401)auth.logout();
+          return throwError(() => refreshError.status === 400 || refreshError.status === 401 ? err : refreshError);
         }),
       );
     }),
-    finalize(() => loading.stop()),
+    finalize(() => { if (showLoading) loading.stop(); }),
   );
 };

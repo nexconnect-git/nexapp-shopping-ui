@@ -1,95 +1,81 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import { VendorApi, AuthService } from '@shared/public-api';
-
+import { Router, RouterLink } from '@angular/router';
+import {
+  apiErrorMessage,
+  AuthService,
+  VendorWorkspaceApi,
+} from '@shared/public-api';
+import { VendorContextService } from '../../services/vendor-context.service';
 @Component({
   selector: 'app-change-password',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink],
   templateUrl: './change-password.component.html',
   styleUrl: './change-password.component.scss',
 })
 export class ChangePasswordComponent {
-  private api = inject(VendorApi);
-  private auth = inject(AuthService);
-  private router = inject(Router);
-
+  private readonly api = inject(VendorWorkspaceApi);
+  readonly auth = inject(AuthService);
+  readonly store = inject(VendorContextService);
+  private readonly router = inject(Router);
+  private readonly destroy = inject(DestroyRef);
   currentPassword = '';
   newPassword = '';
   confirmPassword = '';
-  loading = signal(false);
-  error = signal('');
-  success = signal(false);
-
+  readonly loading = signal(false);
+  readonly error = signal('');
+  readonly success = signal(false);
+  readonly forced = this.auth.user()?.force_password_change || false;
   canSubmit(): boolean {
     return (
       !this.loading() &&
-      !!this.currentPassword.trim() &&
+      !!this.currentPassword &&
       this.newPassword.length >= 8 &&
       this.newPassword === this.confirmPassword
     );
   }
-
-  onSubmit() {
-    this.error.set('');
-
-    if (this.newPassword.length < 8) {
-      this.error.set('New password must be at least 8 characters.');
+  onSubmit(): void {
+    if (!this.canSubmit()) {
+      this.error.set(
+        'Enter your current password and matching new passwords with at least eight characters.'
+      );
       return;
     }
-    if (this.newPassword !== this.confirmPassword) {
-      this.error.set('Passwords do not match.');
-      return;
-    }
-
     this.loading.set(true);
+    this.error.set('');
     this.api
-      .changePassword({
-        current_password: this.currentPassword,
-        new_password: this.newPassword,
-      })
+      .changePassword(this.currentPassword, this.newPassword)
+      .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
-        next: () => {
-          this.loading.set(false);
-          this.success.set(true);
-          const user = this.auth.user();
-          if (user) {
-            this.auth.updateUserData({ ...user, force_password_change: false });
+        next: (response) => {
+          if (!this.auth.handleAuthResponse(response)) {
+            this.error.set('Your session could not be renewed. Sign in again.');
+            this.loading.set(false);
+            return;
           }
-          // Fetch vendor profile to determine next route
-          this.api.getVendorProfile().subscribe({
-            next: (profile) => {
-              localStorage.setItem(this.auth.vendorKey, profile.status);
-              setTimeout(() => {
-                if (profile.status === 'approved') {
-                  this.router.navigate(['/']);
-                } else {
-                  this.router.navigate(['/pending-approval']);
-                }
-              }, 1500);
-            },
-            error: () =>
-              setTimeout(
-                () => this.router.navigate(['/pending-approval']),
-                1500
-              ),
-          });
-        },
-        error: (err) => {
+          this.store.refresh();
+          this.currentPassword = '';
+          this.newPassword = '';
+          this.confirmPassword = '';
+          this.success.set(true);
           this.loading.set(false);
-          const e = err.error;
-          this.error.set(
-            e?.current_password ||
-              e?.new_password ||
-              e?.detail ||
-              'Failed to update password.'
-          );
+        },
+        error: (error) => {
+          this.error.set(apiErrorMessage(error, 'Password was not changed.'));
+          this.loading.set(false);
         },
       });
   }
-
-  logout() {
+  continue(): void {
+    void this.router.navigateByUrl(
+      this.store.context()?.vendor.status === 'approved'
+        ? '/'
+        : '/pending-approval'
+    );
+  }
+  logout(): void {
     this.auth.logout();
   }
 }

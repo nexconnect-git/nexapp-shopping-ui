@@ -1,3 +1,6 @@
+import { AdminCanDirective } from '../../shared/admin-can.directive';
+import { AdminAccessService } from '../../services/admin-access.service';
+import { AdminLiveSocket, openAdminLiveSocket } from '../../services/admin-live-socket';
 import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
@@ -6,18 +9,18 @@ import {
   ApiService,
   AppCurrencyPipe,
   AuthService,
-  openAuthenticatedWebSocket,
 } from '@shared/public-api';
 import { Subscription, timer } from 'rxjs';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, AppCurrencyPipe],
+  imports: [AdminCanDirective,CommonModule, RouterLink, AppCurrencyPipe],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
 })
 export class DashboardComponent implements OnInit, OnDestroy {
+  access=inject(AdminAccessService);
   private api = inject(ApiService);
   private auth = inject(AuthService);
   private apiBaseUrl = inject(API_BASE_URL);
@@ -28,10 +31,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
   loadingStats = signal(true);
   loadingOrders = signal(true);
   loadingVendors = signal(true);
+  statsError = signal('');
+  lastUpdated = signal<Date | null>(null);
+  readonly today = new Date();
   ordersError = signal('');
   vendorsError = signal('');
   private sub?: Subscription;
-  private ws: WebSocket | null = null;
+  ws: AdminLiveSocket | null = null;
 
   readonly heroActions = [
     {
@@ -50,7 +56,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   readonly orderFlowItems = [
     { label: 'Placed', key: 'pending_orders', className: 'warn' },
-    { label: 'Preparing', key: 'preparing_orders', className: 'info' },
+    { label: 'Awaiting fulfillment', key: 'awaiting_fulfillment', className: 'info' },
+    { label: 'In transit', key: 'orders_delivering', className: 'transit' },
     { label: 'Completed', key: 'completed_orders', className: 'good' },
     { label: 'Cancelled', key: 'cancelled_orders', className: 'bad' },
   ];
@@ -84,7 +91,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.loadStatsHttp();
     this.connectWebSocket();
     // Refresh tables independently every 30 seconds
-    this.sub = timer(0, 30000).subscribe(() => this.refreshTables());
+    this.sub = timer(0, 30000).subscribe(() => {if(!document.hidden){this.refreshTables();this.loadStatsHttp();}});
   }
 
   ngOnDestroy() {
@@ -97,19 +104,24 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   /** Immediate HTTP fallback — resolves before WS handshake completes. */
   loadStatsHttp() {
+    this.statsError.set('');
     this.api.getAdminStats().subscribe({
       next: (s) => {
         this.stats.set(s);
         this.loadingStats.set(false);
+        this.lastUpdated.set(new Date());
       },
-      error: () => this.loadingStats.set(false),
+      error: () => {
+        this.loadingStats.set(false);
+        this.statsError.set('The overview could not be loaded. Please try again.');
+      },
     });
   }
 
   connectWebSocket() {
-    this.ws = openAuthenticatedWebSocket(
+    this.ws = openAdminLiveSocket(
       '/ws/admin/stats/',
-      this.auth.getToken(),
+      () => this.auth.getToken(),
       this.apiBaseUrl,
     );
 
@@ -119,6 +131,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
       if (data.type === 'stats_update' && data.data) {
         this.stats.set(data.data);
         this.loadingStats.set(false);
+        this.statsError.set('');
+        this.lastUpdated.set(new Date());
       }
     };
 
@@ -134,7 +148,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.ordersError.set('');
     this.vendorsError.set('');
 
-    this.api
+    if(this.access.can('orders.view'))this.api
       .getAdminOrders({ page_size: 5, ordering: '-placed_at' })
       .subscribe({
         next: (r) => {
@@ -149,7 +163,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         },
       });
 
-    this.api
+    if(this.access.can('vendors.view'))this.api
       .getAdminVendors({
         status: 'approved',
         ordering: '-average_rating',
@@ -168,16 +182,26 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   statNumber(key: string): number {
+    if (key === 'awaiting_fulfillment') {
+      return Math.max(0, this.statNumber('total_orders') - this.statNumber('pending_orders')
+        - this.statNumber('orders_delivering') - this.statNumber('completed_orders') - this.statNumber('cancelled_orders'));
+    }
     return Number(this.stats()?.[key] ?? 0);
   }
 
   openOrderCount(): number {
-    return (
-      this.statNumber('pending_orders') +
-      this.statNumber('confirmed_orders') +
-      this.statNumber('preparing_orders') +
-      this.statNumber('ready_orders')
-    );
+    return Math.max(0, this.statNumber('total_orders') - this.statNumber('completed_orders') - this.statNumber('cancelled_orders'));
+  }
+
+  orderFlowGradient(): string {
+    const colors = ['#b79aee', '#7185ea', '#63bdd0', '#67b99a', '#e7a1ad'];
+    let offset = 0;
+    const stops = this.orderFlowItems.map((item, index) => {
+      const start = offset;
+      offset += this.flowPercent(this.statNumber(item.key));
+      return `${colors[index]} ${start}% ${offset}%`;
+    });
+    return this.statNumber('total_orders') ? `conic-gradient(${stops.join(',')})` : '#e8ecf3';
   }
 
   flowPercent(value: number): number {

@@ -9,7 +9,7 @@
       </p>
     </div>
     <div class="admin-page-actions">
-      <button class="btn btn-primary" (click)="openSendModal()">
+      <button *appAdminCan="'notifications.manage'" class="btn btn-primary" (click)="openSendModal()">
         <span class="material-icons-outlined">send</span>
         Send Notification
       </button>
@@ -20,11 +20,12 @@
     <input
       class="filter-input"
       type="search"
+      aria-label="Search notifications"
       [(ngModel)]="search"
       (input)="onSearch()"
       placeholder="Search username, title..."
     />
-    <select class="filter-input" [(ngModel)]="typeFilter" (change)="load()">
+    <select class="filter-input" aria-label="Notification type" [(ngModel)]="typeFilter" (change)="load()">
       <option value="">All Types</option>
       <option value="order_update">Order Update</option>
       <option value="promo">Promo</option>
@@ -45,7 +46,7 @@
       </p>
     </div>
   } @else {
-    <div class="table-card">
+    <div class="table-card" tabindex="0" aria-label="Notification records">
       <div class="t-header">
         <span>Type</span><span>Title</span><span>Message</span
         ><span>Recipient</span><span>Sent At</span><span>Actions</span>
@@ -68,7 +69,7 @@
               }}</span>
             } @else {
               <span class="broadcast-pill">
-                <span class="material-icons-outlined" style="font-size: 12px"
+                <span class="material-icons-outlined" style="font-size: var(--admin-text-small)"
                   >campaign</span
                 >
                 Broadcast
@@ -79,12 +80,12 @@
             n.created_at | date: "MMM d, hh:mm a"
           }}</span>
           <div class="actions">
-            <button
+            <ng-container *appAdminCan="'notifications.manage'"><button
               class="action-btn danger"
               (click)="deleteNotification(n.id)"
             >
               Delete
-            </button>
+            </button></ng-container>
           </div>
         </div>
       }
@@ -115,19 +116,19 @@
 
   <!-- Send Notification Modal -->
   @if (showModal()) {
-    <div class="modal-backdrop" (click)="closeModal()">
-      <div class="modal-content notif-modal" (click)="$event.stopPropagation()">
+    <div class="modal-backdrop" (click)="$event.target === $event.currentTarget && (closeModal())" (keydown.escape)="closeModal()" tabindex="-1" role="presentation">
+      <div class="modal-content notif-modal" appAdminDialog aria-labelledby="notification-form-title" (appAdminDialogClose)="closeModal()">
         <div class="modal-header">
           <div class="modal-header-icon">
             <span class="material-icons-outlined">campaign</span>
           </div>
           <div>
-            <h2>Send Notification</h2>
+            <h2 id="notification-form-title">Send Notification</h2>
             <p class="modal-subtitle">
               Broadcast to users or target a specific audience
             </p>
           </div>
-          <button class="close-btn" (click)="closeModal()">&times;</button>
+          <button class="close-btn" aria-label="Close dialog" (click)="closeModal()"><span class="material-icons-outlined">close</span></button>
         </div>
 
         <div class="modal-body">
@@ -143,7 +144,7 @@
 
           <!-- Audience selector -->
           <div class="form-group">
-            <label class="input-label">Target Audience</label>
+            <span class="input-label">Target Audience</span>
             <div class="audience-grid">
               @for (
                 opt of [
@@ -177,8 +178,8 @@
 
           @if (form.audience === "user") {
             <div class="form-group">
-              <label class="input-label">User ID</label>
-              <input
+              <label for="admin-notifications.component-1" class="input-label">User ID</label>
+              <input id="admin-notifications.component-1"
                 class="input-field"
                 type="number"
                 [(ngModel)]="form.user_id"
@@ -188,8 +189,8 @@
           }
 
           <div class="form-group">
-            <label class="input-label">Title *</label>
-            <input
+            <label for="admin-notifications.component-2" class="input-label">Title *</label>
+            <input id="admin-notifications.component-2"
               class="input-field"
               type="text"
               [(ngModel)]="form.title"
@@ -198,8 +199,8 @@
           </div>
 
           <div class="form-group">
-            <label class="input-label">Message *</label>
-            <textarea
+            <label for="admin-notifications.component-3" class="input-label">Message *</label>
+            <textarea id="admin-notifications.component-3"
               class="input-field"
               rows="3"
               [(ngModel)]="form.message"
@@ -208,8 +209,8 @@
           </div>
 
           <div class="form-group">
-            <label class="input-label">Notification Type</label>
-            <select class="input-field" [(ngModel)]="form.notification_type">
+            <label for="admin-notifications.component-4" class="input-label">Notification Type</label>
+            <select id="admin-notifications.component-4" class="input-field" [(ngModel)]="form.notification_type">
               <option value="info">Info</option>
               <option value="promo">Promo</option>
               <option value="alert">Alert</option>

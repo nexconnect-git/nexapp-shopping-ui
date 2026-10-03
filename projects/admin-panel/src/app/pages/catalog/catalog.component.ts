@@ -1,4 +1,6 @@
-import { CommonModule } from '@angular/common';
+import { AdminDialogDirective } from '../../shared/admin-dialog.directive';
+import { AdminCanDirective } from '../../shared/admin-can.directive';
+
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
@@ -14,8 +16,8 @@ import {
 @Component({
   selector: 'app-catalog',
   standalone: true,
-  imports: [
-    CommonModule,
+  imports: [AdminDialogDirective,
+    AdminCanDirective,
     FormsModule,
     DynamicTableComponent,
     TableCellDirective,
@@ -54,10 +56,10 @@ export class CatalogComponent implements OnInit {
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   activeCount = computed(
-    () => this.items().filter((item) => item.is_active).length,
+    () => this.items().filter((item) => item.is_active).length
   );
   inactiveCount = computed(
-    () => this.items().filter((item) => !item.is_active).length,
+    () => this.items().filter((item) => !item.is_active).length
   );
 
   ngOnInit() {
@@ -156,7 +158,7 @@ export class CatalogComponent implements OnInit {
       .uploadAdminCatalogProductImage(
         target.id,
         file,
-        this.modalImages().length === 0,
+        this.modalImages().length === 0
       )
       .subscribe({
         next: () => {

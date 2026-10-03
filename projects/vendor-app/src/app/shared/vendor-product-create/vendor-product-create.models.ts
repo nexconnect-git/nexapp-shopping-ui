@@ -1,9 +1,4 @@
-export type CreateProductStep =
-  | 'catalog'
-  | 'variant-1'
-  | 'variant-2'
-  | 'review';
-
+export type CreateProductStep = 'catalog' | 'variants' | 'review';
 export interface ApprovedCatalogItem {
   id: string;
   name: string;
@@ -12,9 +7,10 @@ export interface ApprovedCatalogItem {
   unit: string;
   icon: string;
   status: 'Approved' | 'Pending' | 'Rejected';
+  imageUrl?: string;
 }
-
 export interface VendorVariantDraft {
+  inheritanceMode:'base_image'|'vendor_image_only'|'mixed';
   id: string;
   catalogId: string;
   productName: string;
@@ -30,20 +26,13 @@ export interface VendorVariantDraft {
   description: string;
   packagingNotes?: string;
   shelfLife?: string;
-  availability: 'In Stock' | 'Preorder' | 'Out of Stock';
-  allowBackorder: boolean;
+  availability: 'In Stock' | 'Out of Stock';
   visibleOnStore: boolean;
-  requiresShipping: boolean;
+  instantDelivery: boolean;
+  scheduledDelivery: boolean;
   imageUrl?: string;
   tags: string[];
 }
-
-export interface CreateProductSummary {
-  selectedCatalogCount: number;
-  variantDraftCount: number;
-  readyForReview: boolean;
-}
-
 export interface CreateProductSubmitPayload {
   selectedCatalogItems: ApprovedCatalogItem[];
   variants: VendorVariantDraft[];

@@ -16,8 +16,8 @@
   </div>
 } @else {
   <div class="table-shell">
-    <div class="table-scroll">
-      <div class="t-header" [style.grid-template-columns]="getGridTemplate()">
+    <div class="table-scroll" tabindex="0" aria-label="Scrollable records">
+      <div class="t-header" [style.grid-template-columns]="getGridTemplate()" [style.min-width]="getMinimumWidth()">
         @for (col of columns; track col.key) {
           <span [class]="getAlignment(col)">{{ col.label }}</span>
         }
@@ -28,6 +28,7 @@
           <div
             class="t-row"
             [style.grid-template-columns]="getGridTemplate()"
+            [style.min-width]="getMinimumWidth()"
             [class.clickable]="clickableRows"
             (click)="clickableRows && rowClick.emit(row)"
           >
@@ -37,6 +38,7 @@
                 [class]="getAlignment(col)"
                 [attr.data-label]="col.label"
               >
+                <div class="t-value">
                 @if (getTemplate(col.key); as template) {
                   <ng-container
                     *ngTemplateOutlet="
@@ -51,6 +53,7 @@
                 } @else {
                   {{ getValue(row, col.key) }}
                 }
+                </div>
               </div>
             }
           </div>

@@ -43,10 +43,6 @@ export class DynamicEntityReviewComponent implements OnInit {
     this.router.navigate([this.editUrl()], { queryParams: { step: stepId } });
   }
 
-  saveDraft(): void {
-    this.toast.show('Draft saved.', 'success');
-  }
-
   submitForApproval(): void {
     const type = this.entityType();
     const id = this.entityId();
@@ -58,8 +54,6 @@ export class DynamicEntityReviewComponent implements OnInit {
           : null;
 
     if (!request) {
-      this.toast.show('Review submitted.', 'success');
-      this.router.navigate([this.profileUrl()]);
       return;
     }
 
@@ -107,9 +101,7 @@ export class DynamicEntityReviewComponent implements OnInit {
     request.subscribe({
       next: (dto: unknown) => {
         this.entityDto.set(
-          type === 'admin-user'
-            ? this.auth.user() || dto
-            : this.normalizeLoadedDto(dto),
+          this.normalizeLoadedDto(dto),
         );
         this.loading.set(false);
       },

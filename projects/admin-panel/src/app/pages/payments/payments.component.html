@@ -11,32 +11,35 @@
   </section>
 
   <!-- Summary Cards -->
-  <div class="summary-row">
+  @if(financeError()){<p class="admin-error" role="alert">{{financeError()}}</p>}
+  @if(finance();as summary){<div class="summary-row">
     <div class="summary-card">
-      <span class="summary-label">Page Revenue</span>
-      <span class="summary-value">{{ totalRevenue | appCurrency }}</span>
+      <span class="summary-label">Verified received · all records</span>
+      <span class="summary-value">{{ summary.verified_received | appCurrency }}</span>
     </div>
     <div class="summary-card">
-      <span class="summary-label">Razorpay Collected</span>
+      <span class="summary-label">Unsettled COD · all records</span>
       <span class="summary-value accent">{{
-        razorpayRevenue | appCurrency
+        summary.unsettled_cod | appCurrency
       }}</span>
     </div>
     <div class="summary-card">
-      <span class="summary-label">Pending Payments</span>
-      <span class="summary-value warn">{{ pendingCount }}</span>
+      <span class="summary-label">Pending online · all records</span>
+      <span class="summary-value warn">{{ summary.pending_online }}</span>
     </div>
     <div class="summary-card">
-      <span class="summary-label">Total Orders</span>
+      <span class="summary-label">Matching order records</span>
       <span class="summary-value">{{ total() }}</span>
     </div>
   </div>
 
+  }
   <!-- Filters -->
   <div class="admin-toolbar filters-row">
     <input
       class="filter-input"
       type="text"
+      aria-label="Search payments by order number"
       placeholder="Search order number…"
       [(ngModel)]="search"
       (input)="onSearch()"
@@ -44,6 +47,7 @@
 
     <select
       class="filter-select"
+      aria-label="Payment method"
       [(ngModel)]="methodFilter"
       (change)="applyFilters()"
     >
@@ -54,6 +58,7 @@
 
     <select
       class="filter-select"
+      aria-label="Payment status"
       [(ngModel)]="verifiedFilter"
       (change)="applyFilters()"
     >
@@ -67,7 +72,7 @@
   @if (loading()) {
     <div class="loading-row"><div class="spinner"></div></div>
   } @else {
-    <div class="table-card">
+    <div class="table-card" tabindex="0" aria-label="Payments table">
       <table class="data-table">
         <thead>
           <tr>
@@ -76,7 +81,7 @@
             <th>Vendor</th>
             <th>Method</th>
             <th>Razorpay ID</th>
-            <th>Amount</th>
+            <th class="amount-cell">Amount</th>
             <th>Status</th>
             <th>Date</th>
           </tr>
@@ -102,7 +107,7 @@
               <td class="mono">
                 @if (p.razorpay_payment_id) {
                   <span class="rz-id" title="{{ p.razorpay_payment_id }}"
-                    >{{ p.razorpay_payment_id | slice: 0 : 16 }}…</span
+                    >{{ p.razorpay_payment_id | slice: 0 : 16 }}{{ p.razorpay_payment_id.length > 16 ? '…' : '' }}</span
                   >
                 } @else {
                   <span class="text-muted">—</span>

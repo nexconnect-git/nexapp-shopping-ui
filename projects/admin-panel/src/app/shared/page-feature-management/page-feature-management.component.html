@@ -1,10 +1,13 @@
-<main class="pfm-page" [class.is-loading]="service.loading()">
-  <section
-    class="pfm-loading-shield"
-    *ngIf="service.loading()"
-    aria-live="polite"
-    aria-busy="true"
-  >
+<div class="saas-page pfm-page" [class.is-loading]="service.loading()">
+  @if(service.error()){
+  <div class="admin-error" role="alert">
+    {{ service.error() }}
+    <button class="btn btn-secondary" (click)="service.loadRemoteConfig()">
+      Retry
+    </button>
+  </div>
+  } @if (service.loading()) {
+  <section class="pfm-loading-shield" aria-live="polite" aria-busy="true">
     <div class="pfm-loader"></div>
     <h2>Loading page controls</h2>
     <p>
@@ -12,23 +15,22 @@
       controls.
     </p>
   </section>
+  }
 
-  <section class="pfm-hero">
+  <section class="admin-page-hero">
     <div>
-      <nav class="crumbs">
-        <a>Settings</a><span>/</span><b>Page & Feature Management</b>
-      </nav>
       <h1>Page & Feature Management</h1>
       <p>
         Enable or disable pages and control page-level functionality across
-        Vendor App, Delivery App, Customer App, and Mobile Customer.
+        the registered Vendor, Delivery and Customer application routes. Authentication remains enforced by each application.
       </p>
     </div>
 
-    <label class="global-search">
-      <span>search</span>
+    <label class="toolbar-search">
+      <span class="material-icons-outlined" aria-hidden="true">search</span>
       <input
         type="search"
+        aria-label="Search pages and features"
         placeholder="Search pages, routes, features, or applications..."
         [ngModel]="service.searchQuery()"
         (ngModelChange)="service.searchQuery.set($event)"
@@ -36,6 +38,7 @@
     </label>
   </section>
 
+  <fieldset class="admin-form-fieldset" [disabled]="!service.ready() || service.saving()">
   <section class="stats-grid">
     <article>
       <div>
@@ -43,14 +46,14 @@
         ><b>{{ service.stats().totalApplications }}</b>
         <p>Managed apps</p>
       </div>
-      <span class="purple">apps</span>
+      <span class="material-icons-outlined purple" aria-hidden="true">apps</span>
     </article>
     <article>
       <div>
         <small>Total Pages</small><b>{{ service.stats().totalPages }}</b>
         <p>Across all applications</p>
       </div>
-      <span class="blue">pages</span>
+      <span class="material-icons-outlined blue" aria-hidden="true">description</span>
     </article>
     <article>
       <div>
@@ -66,7 +69,7 @@
           }}% of total pages
         </p>
       </div>
-      <span class="green">on</span>
+      <span class="material-icons-outlined green" aria-hidden="true">check_circle</span>
     </article>
     <article>
       <div>
@@ -82,7 +85,7 @@
           }}% of total pages
         </p>
       </div>
-      <span class="red">off</span>
+      <span class="material-icons-outlined red" aria-hidden="true">block</span>
     </article>
   </section>
 
@@ -111,7 +114,8 @@
       </button>
     </nav>
 
-    <div class="panel-layout" *ngIf="service.activeTab() !== 'settings'">
+    @if (service.activeTab() !== 'settings') {
+    <div class="panel-layout">
       <section class="table-panel">
         <div class="toolbar">
           <div class="filters">
@@ -122,42 +126,14 @@
             >
               All Applications
             </button>
-            <button
-              type="button"
-              class="green-btn"
-              [class.active]="service.selectedApp() === 'vendor-app'"
-              (click)="service.selectedApp.set('vendor-app')"
-            >
-              Vendor App
-            </button>
-            <button
-              type="button"
-              class="blue-btn"
-              [class.active]="service.selectedApp() === 'delivery-app'"
-              (click)="service.selectedApp.set('delivery-app')"
-            >
-              Delivery App
-            </button>
-            <button
-              type="button"
-              class="orange-btn"
-              [class.active]="service.selectedApp() === 'customer-app'"
-              (click)="service.selectedApp.set('customer-app')"
-            >
-              Customer App
-            </button>
-            <button
-              type="button"
-              class="purple-btn"
-              [class.active]="service.selectedApp() === 'mobile-customer'"
-              (click)="service.selectedApp.set('mobile-customer')"
-            >
-              Mobile Customer
-            </button>
+            @for (app of service.apps(); track app.id) {
+              <button type="button" [class.active]="service.selectedApp() === app.id"
+                [attr.aria-pressed]="service.selectedApp() === app.id" (click)="service.selectedApp.set(app.id)">{{ app.name }}</button>
+            }
           </div>
-
           <div class="tools">
             <select
+              aria-label="Page availability status"
               [ngModel]="service.statusFilter()"
               (ngModelChange)="service.statusFilter.set($event)"
             >
@@ -173,224 +149,184 @@
             >
               Export Selected
             </button>
-            <div class="bulk">
-              <button
-                type="button"
-                class="primary"
-                (click)="bulkOpen.set(!bulkOpen())"
-              >
-                Bulk Actions
-              </button>
-              <div class="bulk-menu" *ngIf="bulkOpen()">
-                <button
-                  type="button"
-                  (click)="service.bulkEnablePages(); bulkOpen.set(false)"
-                >
-                  Enable Selected
-                </button>
-                <button
-                  type="button"
-                  (click)="service.bulkDisablePages(); bulkOpen.set(false)"
-                >
-                  Disable Selected
-                </button>
-                <button
-                  type="button"
-                  (click)="service.deleteSelected(); bulkOpen.set(false)"
-                >
-                  Delete Selected
-                </button>
-                <button
-                  type="button"
-                  (click)="service.exportSelected(); bulkOpen.set(false)"
-                >
-                  Export Selected
-                </button>
-              </div>
-            </div>
+            <app-admin-row-actions label="Bulk page actions" triggerText="Bulk Actions">
+              <ng-template>
+                <button type="button" role="menuitem" [disabled]="!access.can('settings.manage') || !service.selectedPageIds().length" (click)="service.bulkEnablePages()">Enable Selected</button>
+                <button type="button" role="menuitem" [disabled]="!access.can('settings.manage') || !service.selectedPageIds().length" (click)="service.bulkDisablePages()">Disable Selected</button>
+                <button type="button" role="menuitem" [disabled]="!access.can('settings.manage') || !service.selectedPageIds().length" (click)="service.deleteSelected()">Delete Selected</button>
+                <button type="button" role="menuitem" [disabled]="!service.selectedPageIds().length" (click)="service.exportSelected()">Export Selected</button>
+              </ng-template>
+            </app-admin-row-actions>
           </div>
         </div>
-
-        <ng-container *ngIf="service.activeTab() === 'applications'">
-          <div class="app-table">
-            <div class="app-head">
-              <b>Application</b><b>Description</b><b>Pages</b><b>Enabled</b
-              ><b>Disabled</b><b>Status</b><b>Actions</b>
-            </div>
-            <article *ngFor="let row of service.appRows()" class="app-row">
-              <div class="app-name">
-                <span [attr.data-tone]="row.app.color">{{ row.app.icon }}</span>
-                <div>
-                  <b>{{ row.app.name }}</b
-                  ><small>{{ row.app.description }}</small>
-                </div>
+        @if (service.activeTab() === 'applications') {
+        <div class="app-table" tabindex="0" aria-label="Managed applications table">
+          <div class="app-head">
+            <b>Application</b><b>Description</b><b>Pages</b><b>Enabled</b
+            ><b>Disabled</b><b>Status</b><b>Actions</b>
+          </div>
+          @for (row of service.appRows(); track row) {
+          <article class="app-row">
+            <div class="app-name">
+              <span class="material-icons-outlined" aria-hidden="true" [attr.data-tone]="row.app.color">{{ row.app.icon }}</span>
+              <div>
+                <b>{{ row.app.name }}</b>
               </div>
-              <p>{{ row.app.description }}</p>
-              <strong>{{ row.app.pages.length }}</strong>
-              <em class="enabled">{{ row.enabledCount }}</em>
-              <em class="disabled">{{ row.disabledCount }}</em>
-              <button
-                type="button"
-                class="mini-toggle"
-                [class.on]="row.disabledCount < row.app.pages.length"
-                (click)="
-                  row.disabledCount < row.app.pages.length
-                    ? service.disableAllPages(row.app.id)
-                    : service.enableAllPages(row.app.id)
-                "
-                aria-label="Toggle application pages"
-              >
-                <span></span>
-              </button>
-              <button
-                type="button"
-                class="icon-btn"
-                (click)="service.toggleAppExpansion(row.app.id)"
-                aria-label="Expand application"
-              >
-                {{ service.isExpanded(row.app.id) ? "Up" : "Down" }}
-              </button>
-            </article>
-          </div>
-        </ng-container>
-
-        <ng-container *ngIf="service.activeTab() === 'pages'">
-          <div class="pages-table">
-            <div class="page-head">
-              <b>Page / Module</b><b>Application</b><b>Route</b><b>Status</b
-              ><b>Features</b><b>Last Updated</b><b>Actions</b>
             </div>
-            <ng-container *ngFor="let row of service.appRows()">
-              <section class="app-group" *ngIf="row.pages.length">
-                <header (click)="service.toggleAppExpansion(row.app.id)">
-                  <div class="group-name">
-                    <span [attr.data-tone]="row.app.color">{{
-                      row.app.icon
-                    }}</span
-                    ><b>{{ row.app.name }}</b
-                    ><small>{{ row.app.pages.length }} pages</small>
-                  </div>
-                  <div class="group-badges">
-                    <em class="enabled">{{ row.enabledCount }} enabled</em
-                    ><em class="disabled">{{ row.disabledCount }} disabled</em
-                    ><button type="button">
-                      {{
-                        service.isExpanded(row.app.id) ? "Collapse" : "Expand"
-                      }}
-                    </button>
-                  </div>
-                </header>
-
-                <div *ngIf="service.isExpanded(row.app.id)">
-                  <article *ngFor="let page of row.pages" class="page-row">
-                    <div class="page-title">
-                      <input
-                        type="checkbox"
-                        [checked]="service.selectedPageIds().includes(page.id)"
-                        (change)="service.selectedToggle(page.id)"
-                      />
-                      <div>
-                        <b>{{ page.name }}</b
-                        ><small>{{ page.description }}</small>
-                      </div>
-                    </div>
-                    <span
-                      class="app-pill"
-                      [attr.data-tone]="appTone(page.appId)"
-                      >{{ service.appName(page.appId) }}</span
-                    >
-                    <code>{{ page.route }}</code>
-                    <button
-                      type="button"
-                      class="mini-toggle"
-                      [class.on]="page.status !== 'disabled'"
-                      [class.partial]="page.status === 'partial'"
-                      (click)="service.togglePageStatus(page)"
-                      aria-label="Toggle page status"
-                    >
-                      <span></span>
-                    </button>
-                    <button
-                      type="button"
-                      class="feature-count"
-                      (click)="openFeatureModal(page)"
-                    >
-                      {{ page.features.length }} features
-                    </button>
-                    <time>{{ page.lastUpdated }}</time>
-                    <div class="actions">
-                      <button
-                        type="button"
-                        class="icon-btn"
-                        (click)="viewPage(page)"
-                      >
-                        View
-                      </button>
-                      <button
-                        type="button"
-                        class="icon-btn"
-                        (click)="openActions(page)"
-                      >
-                        More
-                      </button>
-                      <div
-                        class="action-menu"
-                        *ngIf="actionMenuFor() === page.id"
-                      >
-                        <button type="button" (click)="viewPage(page)">
-                          View Page
-                        </button>
-                        <button type="button" (click)="openFeatureModal(page)">
-                          Edit Features
-                        </button>
-                        <button type="button" (click)="openSettingsModal(page)">
-                          Page Settings
-                        </button>
-                        <button type="button" (click)="openCloneModal(page)">
-                          Clone Page
-                        </button>
-                        <button
-                          type="button"
-                          class="danger"
-                          (click)="openDisableModal(page)"
-                        >
-                          Disable Page
-                        </button>
-                      </div>
-                    </div>
-                  </article>
-                </div>
-              </section>
-            </ng-container>
+            <p>{{ row.app.description }}</p>
+            <strong>{{ row.app.pages.length }}</strong>
+            <em class="enabled">{{ row.enabledCount }}</em>
+            <em class="disabled">{{ row.disabledCount }}</em>
+            <button [disabled]="!access.can('settings.manage')"
+              type="button"
+              class="mini-toggle"
+              role="switch" [attr.aria-checked]="row.disabledCount < row.app.pages.length"
+              [class.on]="row.disabledCount < row.app.pages.length"
+              (click)="
+                row.disabledCount < row.app.pages.length
+                  ? service.disableAllPages(row.app.id)
+                  : service.enableAllPages(row.app.id)
+              "
+              [attr.aria-label]="'Toggle ' + row.app.name + ' pages'"
+            >
+              <span></span>
+            </button>
+            <button
+              type="button"
+              class="icon-btn"
+              (click)="viewApplication(row.app.id)"
+              [attr.aria-label]="'View ' + row.app.name + ' pages'"
+            >
+              View pages
+            </button>
+          </article>
+          } @empty {
+            <p class="inventory-empty">No applications match the current filters.</p>
+          }
+        </div>
+        } @if (service.activeTab() === 'pages') {
+        <div class="pages-table" tabindex="0" aria-label="Managed pages table">
+          <div class="page-head">
+            <b>Page / Module</b><b>Application</b><b>Route</b><b>Status</b
+            ><b>Features</b><b>Last Updated</b><b>Actions</b>
           </div>
-        </ng-container>
-
+          @for (row of service.appRows(); track row) { @if (row.pages.length) {
+          <section class="app-group">
+            <header (click)="service.toggleAppExpansion(row.app.id)" tabindex="0" role="button" (keydown.enter)="service.toggleAppExpansion(row.app.id)" (keydown.space)="$event.preventDefault();service.toggleAppExpansion(row.app.id)">
+              <div class="group-name">
+                <span class="material-icons-outlined" aria-hidden="true" [attr.data-tone]="row.app.color">{{ row.app.icon }}</span
+                ><b>{{ row.app.name }}</b
+                ><small>{{ row.app.pages.length }} pages</small>
+              </div>
+              <div class="group-badges">
+                <em class="enabled">{{ row.enabledCount }} enabled</em
+                ><em class="disabled">{{ row.disabledCount }} disabled</em
+                ><span>
+                  {{ service.isExpanded(row.app.id) ? "Collapse" : "Expand" }}
+                </span>
+              </div>
+            </header>
+            @if (service.isExpanded(row.app.id)) {
+            <div>
+              @for (page of row.pages; track page) {
+              <article class="page-row">
+                <div class="page-identity">
+                  <input
+                    type="checkbox"
+                    [attr.aria-label]="'Select ' + page.name"
+                    [checked]="service.selectedPageIds().includes(page.id)"
+                    (change)="service.selectedToggle(page.id)"
+                  />
+                  <div>
+                    <b>{{ page.name }}</b
+                    ><small>{{ page.description }}</small>
+                  </div>
+                </div>
+                <span class="app-pill" [attr.data-tone]="appTone(page.appId)">{{
+                  service.appName(page.appId)
+                }}</span>
+                <code>{{ page.route }}</code>
+                <button [disabled]="!access.can('settings.manage')"
+                  type="button"
+                  class="mini-toggle"
+                  role="switch" [attr.aria-checked]="page.status !== 'disabled'"
+                  [class.on]="page.status !== 'disabled'"
+                  [class.partial]="page.status === 'partial'"
+                  (click)="service.togglePageStatus(page)"
+                  [attr.aria-label]="'Toggle ' + page.name + ' availability'"
+                >
+                  <span></span>
+                </button>
+                <button
+                  type="button"
+                  class="feature-count"
+                  (click)="openFeatureModal(page)"
+                >
+                  {{ page.features.length }} features
+                </button>
+                <time>{{ page.lastUpdated }}</time>
+                <div class="actions">
+                  <button
+                    type="button"
+                    class="icon-btn"
+                    (click)="viewPage(page)"
+                  >
+                    Details
+                  </button>
+                  <app-admin-row-actions [label]="'More actions for ' + page.name">
+                  <ng-template>
+                    <button type="button" role="menuitem" (click)="viewPage(page)">
+                      View configuration
+                    </button>
+                    <button type="button" role="menuitem" (click)="openFeatureModal(page)">
+                      Edit Features
+                    </button>
+                    <button type="button" role="menuitem" (click)="openSettingsModal(page)">
+                      Page Settings
+                    </button>
+                    <button role="menuitem" [disabled]="!access.can('settings.manage')" type="button" (click)="openCloneModal(page)">
+                      Clone Page
+                    </button>
+                    <button [disabled]="!access.can('settings.manage')"
+                      role="menuitem"
+                      type="button"
+                      class="danger"
+                      (click)="openDisableModal(page)"
+                    >
+                      Disable Page
+                    </button>
+                  </ng-template>
+                  </app-admin-row-actions>
+                </div>
+              </article>
+              }
+            </div>
+            }
+          </section>
+          } } @empty {
+            <p class="inventory-empty">No pages match the current filters.</p>
+          }
+        </div>
+        }
         <footer class="pagination">
-          <span
-            >Showing managed inventory for
-            {{ service.stats().totalPages }} pages</span
-          >
-          <div><button type="button" class="active">Inventory</button></div>
+          <span>{{ matchingPageCount() }} matching pages · {{ service.stats().totalPages }} registered pages</span>
         </footer>
       </section>
-
       <aside class="right-rail">
         <section>
           <h3>About This Section</h3>
           <p>
             Control page visibility and feature availability across each
-            application. This module currently persists locally until backend
-            management APIs are added.
+            application. Authentication rules remain enforced independently.
           </p>
-          <button type="button">Learn more</button>
         </section>
         <section>
           <h3>Quick Actions</h3>
-          <button type="button" (click)="service.enableAllPages()">
+          <button [disabled]="!access.can('settings.manage')" type="button" (click)="service.enableAllPages()">
             Enable All Pages</button
-          ><button type="button" (click)="service.disableAllPages()">
+          ><button [disabled]="!access.can('settings.manage')" type="button" (click)="service.disableAllPages()">
             Disable All Pages</button
-          ><button type="button" (click)="service.resetDefaults()">
+          ><button [disabled]="!access.can('settings.manage')" type="button" (click)="service.resetDefaults()">
             Reset to Defaults
           </button>
         </section>
@@ -411,32 +347,31 @@
         </section>
       </aside>
     </div>
-
-    <section class="settings-panel" *ngIf="service.activeTab() === 'settings'">
+    } @if (service.activeTab() === 'settings') {
+    <section class="settings-panel">
       <h2>Default Page Status</h2>
       <p>
         Set the default status for new pages and features across all
         applications.
       </p>
       <div class="choice-grid">
-        <button
+        <button [disabled]="!access.can('settings.manage')"
           type="button"
           [class.active]="service.enabledByDefault()"
           (click)="service.enabledByDefault.set(true)"
         >
           <b>Enabled by Default</b
-          ><span>New pages and features will be enabled by default.</span>
+          ><span>New configuration copies will be enabled by default.</span>
         </button>
-        <button
+        <button [disabled]="!access.can('settings.manage')"
           type="button"
           [class.active]="!service.enabledByDefault()"
           (click)="service.enabledByDefault.set(false)"
         >
           <b>Disabled by Default</b
-          ><span>New pages and features will be disabled by default.</span>
+          ><span>New configuration copies will be disabled by default.</span>
         </button>
       </div>
-
       <h2>Access Control</h2>
       <section class="setting-list">
         <article>
@@ -451,7 +386,7 @@
             type="button"
             class="mini-toggle"
             [class.on]="service.requireAuthentication()"
-            (click)="toggleGlobalSetting('requireAuthentication')"
+            disabled aria-label="Authentication enforced by application guards"
           >
             <span></span>
           </button>
@@ -463,28 +398,27 @@
               >Temporarily restrict access to managed application pages.</small
             >
           </div>
-          <button
+          <button [disabled]="!access.can('settings.manage')"
             type="button"
             class="mini-toggle"
-            [class.on]="service.maintenanceMode()"
+            role="switch" [attr.aria-checked]="service.maintenanceMode()" aria-label="Maintenance mode" [class.on]="service.maintenanceMode()"
             (click)="toggleGlobalSetting('maintenanceMode')"
           >
             <span></span>
           </button>
         </article>
       </section>
-
       <h2>Notification Settings</h2>
       <section class="setting-list">
         <article>
           <div>
             <b>Page Disabled Alerts</b
-            ><small>Get notified when any page is disabled.</small>
+            ><small>Receive an in-app notice when you disable pages.</small>
           </div>
-          <button
+          <button [disabled]="!access.can('settings.manage')"
             type="button"
             class="mini-toggle"
-            [class.on]="service.pageDisabledAlerts()"
+            role="switch" [attr.aria-checked]="service.pageDisabledAlerts()" aria-label="Page disabled alerts" [class.on]="service.pageDisabledAlerts()"
             (click)="toggleGlobalSetting('pageDisabledAlerts')"
           >
             <span></span>
@@ -492,34 +426,20 @@
         </article>
         <article>
           <div>
-            <b>Feature Access Requests</b
-            ><small>Get notified for feature access requests.</small>
-          </div>
-          <button
-            type="button"
-            class="mini-toggle"
-            [class.on]="service.featureAccessRequests()"
-            (click)="toggleGlobalSetting('featureAccessRequests')"
-          >
-            <span></span>
-          </button>
-        </article>
-        <article>
-          <div>
             <b>Bulk Action Alerts</b
-            ><small>Get notified for bulk changes.</small>
+            ><small>Receive an in-app notice after changing multiple page states.</small>
           </div>
-          <button
+          <button [disabled]="!access.can('settings.manage')"
             type="button"
             class="mini-toggle"
-            [class.on]="service.bulkActionAlerts()"
+            role="switch" [attr.aria-checked]="service.bulkActionAlerts()" aria-label="Bulk action alerts" [class.on]="service.bulkActionAlerts()"
             (click)="toggleGlobalSetting('bulkActionAlerts')"
           >
             <span></span>
           </button>
         </article>
       </section>
-      <button
+      <button [disabled]="!access.can('settings.manage')"
         type="button"
         class="primary save-global"
         (click)="service.saveGlobalSettings()"
@@ -527,35 +447,29 @@
         Save Settings
       </button>
     </section>
+    }
   </section>
 
-  <div
-    class="modal-backdrop"
-    *ngIf="service.modal().type"
-    (click)="service.closeModal()"
-  ></div>
+  @if (service.modal().type) {
+  <div class="modal-backdrop" (click)="$event.target === $event.currentTarget && (service.closeModal())" (keydown.escape)="service.closeModal()" tabindex="-1" role="presentation"></div>
+  } @if (service.modal().type === 'features' && modalPage()) {
+  <section appAdminDialog aria-labelledby="pfm-dialog-title" (appAdminDialogClose)="service.closeModal()" class="modal"><header class="modal-header"><h2 id="pfm-dialog-title">Edit Features - {{ modalPage()?.name }}</h2><button type="button" aria-label="Close dialog" class="close" (click)="service.closeModal()"><span class="material-icons-outlined" aria-hidden="true">close</span></button></header><div class="modal-body">
 
-  <section
-    class="modal"
-    *ngIf="service.modal().type === 'features' && modalPage()"
-  >
-    <button type="button" class="close" (click)="service.closeModal()">
-      x
-    </button>
-    <h2>Edit Features - {{ modalPage()?.name }}</h2>
+
     <p>Manage functionalities available on this page.</p>
     <div class="feature-table">
       <div><b>Feature</b><b>Description</b><b>Status</b></div>
-      <article *ngFor="let feature of featureDraft()">
+      @if(!featureDraft().length){<p>No individual feature controls are registered for this page. Page availability is managed separately.</p>} @for (feature of featureDraft(); track feature) {
+      <article>
         <label
           ><input
             type="checkbox"
             [checked]="feature.status === 'enabled'"
-            [disabled]="feature.locked"
+
             (change)="
               updateFeatureDraft(feature.id, $any($event.target).checked)
             "
-          />
+          [disabled]="!access.can('settings.manage')" />
           {{ feature.name }}</label
         >
         <span>{{ feature.description }}</span>
@@ -563,34 +477,27 @@
           type="button"
           class="mini-toggle"
           [class.on]="feature.status === 'enabled'"
-          [disabled]="feature.locked"
+          [disabled]="!access.can('settings.manage') || (feature.locked)"
           (click)="updateFeatureDraft(feature.id, feature.status !== 'enabled')"
         >
           <span></span>
         </button>
       </article>
+      }
     </div>
-    <footer>
+
+  </div><footer>
       <button type="button" class="outline" (click)="service.closeModal()">
         Cancel</button
-      ><button type="button" class="primary" (click)="saveFeatureDraft()">
+      ><button [disabled]="!access.can('settings.manage')" type="button" class="primary" (click)="saveFeatureDraft()">
         Save Changes
       </button>
-    </footer>
-  </section>
+    </footer></section>
+  } @if ( service.modal().type === 'settings' && modalPage() && settingsForm();
+  as form ) {
+  <section appAdminDialog aria-labelledby="pfm-dialog-title" (appAdminDialogClose)="service.closeModal()" class="modal small"><header class="modal-header"><h2 id="pfm-dialog-title">Page Settings - {{ modalPage()?.name }}</h2><button type="button" aria-label="Close dialog" class="close" (click)="service.closeModal()"><span class="material-icons-outlined" aria-hidden="true">close</span></button></header><div class="modal-body">
 
-  <section
-    class="modal small"
-    *ngIf="
-      service.modal().type === 'settings' &&
-      modalPage() &&
-      settingsForm() as form
-    "
-  >
-    <button type="button" class="close" (click)="service.closeModal()">
-      x
-    </button>
-    <h2>Page Settings - {{ modalPage()?.name }}</h2>
+
     <label
       >Display Name
       <input
@@ -598,7 +505,7 @@
         placeholder="Example: Vendor Dashboard"
         [ngModel]="form.displayName"
         (ngModelChange)="updateSettingsForm({ displayName: $event })"
-    /></label>
+    [disabled]="!access.can('settings.manage')" /></label>
     <label
       >Route
       <input
@@ -606,13 +513,13 @@
         placeholder="Example: /dashboard"
         [ngModel]="form.route"
         (ngModelChange)="updateSettingsForm({ route: $event })"
-    /></label>
+    [disabled]="!access.can('settings.manage')" /></label>
     <label
       >Icon
       <select
         [ngModel]="form.icon"
         (ngModelChange)="updateSettingsForm({ icon: $event })"
-      >
+       [disabled]="!access.can('settings.manage')">
         <option>dashboard</option>
         <option>orders</option>
         <option>products</option>
@@ -626,7 +533,7 @@
         placeholder="Describe what this page controls."
         [ngModel]="form.description"
         (ngModelChange)="updateSettingsForm({ description: $event })"
-      ></textarea>
+       [disabled]="!access.can('settings.manage')"></textarea>
     </label>
     <div class="radio-row">
       <label
@@ -636,7 +543,7 @@
           value="enabled"
           [ngModel]="form.status"
           (ngModelChange)="updateSettingsForm({ status: $event })"
-        />
+        [disabled]="!access.can('settings.manage')" />
         Enabled</label
       >
       <label
@@ -646,7 +553,7 @@
           value="disabled"
           [ngModel]="form.status"
           (ngModelChange)="updateSettingsForm({ status: $event })"
-        />
+        [disabled]="!access.can('settings.manage')" />
         Disabled</label
       >
       <label
@@ -654,51 +561,40 @@
           type="checkbox"
           [ngModel]="form.protected"
           (ngModelChange)="updateSettingsForm({ protected: $event })"
-        />
+        [disabled]="!access.can('settings.manage')" />
         Protected route</label
       >
     </div>
-    <footer>
+
+  </div><footer>
       <button type="button" class="outline" (click)="service.closeModal()">
         Cancel</button
-      ><button type="button" class="primary" (click)="saveSettingsForm()">
+      ><button [disabled]="!access.can('settings.manage')" type="button" class="primary" (click)="saveSettingsForm()">
         Save Changes
       </button>
-    </footer>
-  </section>
+    </footer></section>
+  } @if (service.modal().type === 'disable' && modalPage()) {
+  <section appAdminDialog aria-labelledby="pfm-dialog-title" (appAdminDialogClose)="service.closeModal()" class="modal confirm"><header class="modal-header"><h2 id="pfm-dialog-title">Disable This Page?</h2><button type="button" aria-label="Close dialog" class="close" (click)="service.closeModal()"><span class="material-icons-outlined" aria-hidden="true">close</span></button></header><div class="modal-body">
 
-  <section
-    class="modal confirm"
-    *ngIf="service.modal().type === 'disable' && modalPage()"
-  >
-    <button type="button" class="close" (click)="service.closeModal()">
-      x
-    </button>
-    <div class="warn-icon">!</div>
-    <h2>Disable This Page?</h2>
+    <span class="material-icons-outlined warn-icon" aria-hidden="true">warning</span>
+
     <p>
       {{ modalPage()?.name }} and all its features will be hidden from users.
     </p>
     <div class="warning">This action can be reverted anytime.</div>
-    <footer>
+
+  </div><footer>
       <button type="button" class="outline" (click)="service.closeModal()">
         Cancel</button
-      ><button type="button" class="danger-btn" (click)="disablePage()">
+      ><button [disabled]="!access.can('settings.manage')" type="button" class="danger-btn" (click)="disablePage()">
         Disable Page
       </button>
-    </footer>
-  </section>
+    </footer></section>
+  } @if ( service.modal().type === 'clone' && modalPage() && cloneForm(); as
+  form ) {
+  <section appAdminDialog aria-labelledby="pfm-dialog-title" (appAdminDialogClose)="service.closeModal()" class="modal small"><header class="modal-header"><h2 id="pfm-dialog-title">Clone Page</h2><button type="button" aria-label="Close dialog" class="close" (click)="service.closeModal()"><span class="material-icons-outlined" aria-hidden="true">close</span></button></header><div class="modal-body">
 
-  <section
-    class="modal small"
-    *ngIf="
-      service.modal().type === 'clone' && modalPage() && cloneForm() as form
-    "
-  >
-    <button type="button" class="close" (click)="service.closeModal()">
-      x
-    </button>
-    <h2>Clone Page</h2>
+
     <p>Create a copy of this page with the same features and settings.</p>
     <label
       >New Page Name
@@ -707,7 +603,7 @@
         placeholder="Example: Dashboard Copy"
         [ngModel]="form.name"
         (ngModelChange)="updateCloneForm({ name: $event })"
-    /></label>
+    [disabled]="!access.can('settings.manage')" /></label>
     <label
       >New Route
       <input
@@ -715,23 +611,25 @@
         placeholder="Example: /dashboard-copy"
         [ngModel]="form.route"
         (ngModelChange)="updateCloneForm({ route: $event })"
-    /></label>
+    [disabled]="!access.can('settings.manage')" /></label>
     <label class="checkbox-line"
       ><input
         type="checkbox"
         [ngModel]="form.copyFeatures"
         (ngModelChange)="updateCloneForm({ copyFeatures: $event })"
-      />
+      [disabled]="!access.can('settings.manage')" />
       Copy Features</label
     >
-    <footer>
+
+  </div><footer>
       <button type="button" class="outline" (click)="service.closeModal()">
         Cancel</button
-      ><button type="button" class="primary" (click)="clonePage()">
+      ><button [disabled]="!access.can('settings.manage')" type="button" class="primary" (click)="clonePage()">
         Clone Page
       </button>
-    </footer>
-  </section>
-
-  <div class="toast" *ngIf="service.toast()">{{ service.toast() }}</div>
-</main>
+    </footer></section>
+  } @if (service.toast()) {
+  <div class="toast">{{ service.toast() }}</div>
+  }
+</fieldset>
+</div>

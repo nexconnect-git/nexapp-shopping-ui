@@ -1,5 +1,5 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '@shared/public-api';
 
@@ -10,11 +10,13 @@ import { ApiService } from '@shared/public-api';
   templateUrl: './audit-logs.component.html',
   styleUrl: './audit-logs.component.scss',
 })
-export class AuditLogsComponent implements OnInit {
+export class AuditLogsComponent implements OnInit, OnDestroy {
   private api = inject(ApiService);
+  entityIdFilter='';
 
   logs = signal<any[]>([]);
   loading = signal(true);
+  error = signal<string | null>(null);
   total = signal(0);
   page = signal(1);
   action = '';
@@ -28,7 +30,9 @@ export class AuditLogsComponent implements OnInit {
 
   load() {
     this.loading.set(true);
+    this.error.set(null);
     const params: any = { page: this.page() };
+    if(this.entityIdFilter)params.entity_id=this.entityIdFilter;
     if (this.action) params.action = this.action;
     if (this.entityType.trim()) params.entity_type = this.entityType.trim();
     if (this.search.trim()) params.search = this.search.trim();
@@ -41,6 +45,7 @@ export class AuditLogsComponent implements OnInit {
       },
       error: () => {
         this.logs.set([]);
+        this.error.set('Unable to load the audit trail. Please try again.');
         this.loading.set(false);
       },
     });
@@ -64,6 +69,8 @@ export class AuditLogsComponent implements OnInit {
     this.page.set(page);
     this.load();
   }
+
+  ngOnDestroy() { clearTimeout(this.searchTimer); }
 
   get totalPages() {
     return Math.max(1, Math.ceil(this.total() / 20));

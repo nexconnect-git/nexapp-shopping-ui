@@ -1,3 +1,6 @@
+import { AdminDialogDirective } from '../../shared/admin-dialog.directive';
+import { AdminCanDirective } from '../../shared/admin-can.directive';
+import { AdminRowActionsComponent } from '../../shared/admin-row-actions.component';
 import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { Subscription, timer } from 'rxjs';
 import { CommonModule } from '@angular/common';
@@ -9,7 +12,7 @@ import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
 @Component({
   selector: 'app-delivery-partners',
   standalone: true,
-  imports: [
+  imports: [AdminDialogDirective,AdminCanDirective,AdminRowActionsComponent,
     CommonModule,
     FormsModule,
     RouterLink,

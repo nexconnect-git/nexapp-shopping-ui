@@ -1,274 +1,202 @@
-<div class="sales-report-page fade-in">
-  <section class="page-hero">
-    <div class="page-hero-copy">
-      <span class="eyebrow">Analytics</span>
-      <h1>Sales Report</h1>
+<div class="workspace-page">
+  <header class="page-heading">
+    <div>
+      <p class="eyebrow">Growth</p>
+      <h1>Analytics</h1>
       <p>
-        Analyze revenue, customers, coupons, product performance, and settlement
-        health.
+        Delivered sales performance and a separate, all-time settlement summary.
       </p>
     </div>
-    <div class="page-hero-actions">
+    <div class="heading-actions">
       <button
-        class="export-btn"
+        class="btn-secondary"
+        (click)="loadStats()"
+        [disabled]="loading()"
+      >
+        Refresh sales</button
+      ><button
+        class="btn-primary"
         (click)="exportCsv()"
-        [disabled]="loading() || !stats()"
+        [disabled]="!stats() || loading() || !!error()"
       >
-        <span class="material-icons-outlined">download</span>
-        Export CSV
+        <span class="material-icons-outlined">download</span>Export sales CSV
       </button>
-      <select
-        class="form-select"
-        [ngModel]="dateRange()"
-        (ngModelChange)="dateRange.set($event); onRangeChange()"
-      >
-        <option value="7">Last 7 Days</option>
-        <option value="30">Last 30 Days</option>
-        <option value="90">Last 90 Days</option>
-        <option value="all">All Time</option>
-      </select>
-      <small class="field-hint"
-        >Choose the reporting period used for the dashboard and CSV
-        export.</small
-      >
     </div>
+  </header>
+  <div class="workspace-toolbar">
+    <label for="analytics-period"
+      >Sales period<select
+        id="analytics-period"
+        [ngModel]="days()"
+        (ngModelChange)="range($event)"
+      >
+        <option value="7">Last 7 days</option>
+        <option value="30">Last 30 days</option>
+        <option value="90">Last 90 days</option>
+        <option value="all">All time</option>
+      </select></label
+    >
+    <p>
+      Sales revenue includes delivered orders. Placed-order counts include all
+      statuses.
+    </p>
+  </div>
+  @if(error()){
+  <p class="error-banner" role="alert">
+    {{ error()
+    }}<button class="btn-secondary" (click)="loadStats()">Retry sales</button>
+  </p>
+  }@if(loading()){
+  <p role="status">Loading sales period…</p>
+  } @if(stats();as sales){
+  <section class="metric-grid" aria-label="Sales metrics">
+    <article class="workspace-card">
+      <span>Delivered revenue</span
+      ><strong>{{ sales.total_revenue | appCurrency }}</strong
+      ><small>{{ sales.period_label }}</small>
+    </article>
+    <article class="workspace-card">
+      <span>Orders placed</span><strong>{{ sales.total_orders }}</strong
+      ><small>{{ sales.delivered_orders }} delivered</small>
+    </article>
+    <article class="workspace-card">
+      <span>Average delivered order</span
+      ><strong>{{ sales.average_order_value | appCurrency }}</strong>
+    </article>
+    <article class="workspace-card">
+      <span>Repeat customers</span><strong>{{ sales.repeat_customers }}</strong
+      ><small>More than one order in the selected period</small>
+    </article>
   </section>
-
-  @if (loading()) {
-    <div class="loading-state">
-      <div class="spinner"></div>
-      <p>Loading your sales data...</p>
-    </div>
-  } @else {
-    <section class="analytics-hero">
-      <div>
-        <span>Selected period</span>
-        <strong>{{
-          dateRange() === "all" ? "All time" : "Last " + dateRange() + " days"
-        }}</strong>
-        <p>
-          Revenue, repeat customers, coupons, stock risk, and settlements in one
-          workspace.
-        </p>
-      </div>
-      <div class="analytics-hero-metric">
-        <small>Total revenue</small>
-        <strong>{{ stats()?.total_revenue ?? 0 | appCurrency }}</strong>
-      </div>
-      <div class="analytics-hero-metric">
-        <small>Average order</small>
-        <strong>{{ stats()?.average_order_value ?? 0 | appCurrency }}</strong>
+  <div class="analytics-grid">
+    <section class="workspace-card">
+      <h2>Delivered revenue by month</h2>
+      <p>Only months with delivered orders are shown.</p>
+      <div class="chart-list">
+        @for(month of sales.monthly_data;track month.month){
+        <div class="chart-row">
+          <div>
+            <strong>{{ month.month | date : "MMM yyyy" }}</strong
+            ><span
+              >{{ month.revenue | appCurrency }} ·
+              {{ month.orders }} order{{ month.orders === 1 ? '' : 's' }}</span
+            >
+          </div>
+          <meter
+            min="0"
+            [max]="maximumMonthly()"
+            [value]="month.revenue"
+            [attr.aria-label]="
+              'Revenue for ' + (month.month | date : 'MMM yyyy')
+            "
+          ></meter>
+        </div>
+        }@empty{
+        <p>No delivered revenue in this period.</p>
+        }
       </div>
     </section>
-
-    <div class="report-grid">
-      <!-- Settlement Summary Map -->
-      <div class="widget-card full-width settlement-summary-card">
-        <div class="widget-header">
+    <section class="workspace-card">
+      <h2>Top delivered products</h2>
+      <p>
+        The ten products with the highest delivered line revenue in this period.
+      </p>
+      <div class="chart-list">
+        @for(product of sales.top_products;track product.product_id){
+        <div class="chart-row">
           <div>
-            <h3>Settlement Summary</h3>
-            <p>All-time payout movement across your vendor account.</p>
+            <strong>{{ product.name }}</strong
+            ><span
+              >{{ product.revenue | appCurrency }} ·
+              {{ product.total_sold }} units</span
+            >
           </div>
+          <meter
+            min="0"
+            [max]="maximumProduct()"
+            [value]="product.revenue"
+            [attr.aria-label]="'Delivered revenue for ' + product.name"
+          ></meter>
         </div>
-        <div class="widget-body">
-          <div class="settlement-metrics">
-            <div class="s-metric">
-              <span class="s-icon material-icons-outlined text-success"
-                >verified</span
-              >
-              <div class="s-info">
-                <span class="s-title">Successfully Settled</span>
-                <span class="s-value">{{ totalSettled() | appCurrency }}</span>
-              </div>
-            </div>
-            <div class="s-metric">
-              <span class="s-icon material-icons-outlined text-warning"
-                >hourglass_empty</span
-              >
-              <div class="s-info">
-                <span class="s-title">Pending Settlement</span>
-                <span class="s-value">{{
-                  pendingSettled() | appCurrency
-                }}</span>
-              </div>
-            </div>
-            <div class="s-metric">
-              <span class="s-icon material-icons-outlined text-danger"
-                >cancel</span
-              >
-              <div class="s-info">
-                <span class="s-title">Failed Transfers</span>
-                <span class="s-value">{{ failedSettled() | appCurrency }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        }@empty{
+        <p>No delivered product sales in this period.</p>
+        }
       </div>
-
-      <!-- Key Metrics -->
-      <div class="metrics-row">
-        <div class="metric-card">
-          <div class="metric-icon primary">
-            <span class="material-icons-outlined">attach_money</span>
-          </div>
-          <div class="metric-info">
-            <span class="label">Total Revenue</span>
-            <span class="value">{{
-              stats()?.total_revenue ?? 0 | appCurrency
-            }}</span>
-          </div>
+    </section>
+    <section class="workspace-card">
+      <h2>Coupon contribution</h2>
+      <p>
+        {{ sales.coupon_contribution.usage_count }} use{{ sales.coupon_contribution.usage_count === 1 ? '' : 's' }} on delivered orders
+      </p>
+      <dl>
+        <div>
+          <dt>Influenced revenue</dt>
+          <dd>{{ sales.coupon_contribution.revenue | appCurrency }}</dd>
         </div>
-        <div class="metric-card">
-          <div class="metric-icon success">
-            <span class="material-icons-outlined">shopping_cart</span>
-          </div>
-          <div class="metric-info">
-            <span class="label">Total Orders</span>
-            <span class="value">{{ stats()?.total_orders }}</span>
-          </div>
+        <div>
+          <dt>Discount applied</dt>
+          <dd>{{ sales.coupon_contribution.discount | appCurrency }}</dd>
         </div>
-        <div class="metric-card">
-          <div class="metric-icon info">
-            <span class="material-icons-outlined">analytics</span>
-          </div>
-          <div class="metric-info">
-            <span class="label">Avg Order Value</span>
-            <span class="value">{{
-              stats()?.average_order_value ?? 0 | appCurrency
-            }}</span>
-          </div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-icon warning">
-            <span class="material-icons-outlined">check_circle</span>
-          </div>
-          <div class="metric-info">
-            <span class="label">Delivered Orders</span>
-            <span class="value">{{ stats()?.delivered_orders }}</span>
-          </div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-icon repeat">
-            <span class="material-icons-outlined">loyalty</span>
-          </div>
-          <div class="metric-info">
-            <span class="label">Repeat Customers</span>
-            <span class="value">{{ stats()?.repeat_customers }}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="metrics-row">
-        <div class="metric-card compact">
-          <div class="metric-icon coupon">
-            <span class="material-icons-outlined">confirmation_number</span>
-          </div>
-          <div class="metric-info">
-            <span class="label">Coupon Revenue</span>
-            <span class="value">{{
-              stats()?.coupon_contribution?.revenue ?? 0 | appCurrency
-            }}</span>
-          </div>
-        </div>
-        <div class="metric-card compact">
-          <div class="metric-icon stock">
-            <span class="material-icons-outlined">inventory</span>
-          </div>
-          <div class="metric-info">
-            <span class="label">Low Stock Risk</span>
-            <span class="value">{{
-              stats()?.low_stock_impact?.low_stock_count || 0
-            }}</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Top Products and Chart area -->
-      <div class="dashboard-widgets">
-        <div class="widget-card full-width">
-          <div class="widget-header">
-            <div>
-              <h3>Monthly Trend</h3>
-              <p>Revenue shape across the selected range.</p>
-            </div>
-          </div>
-          <div class="widget-body">
-            @if (stats()?.monthly_data?.length) {
-              <div class="trend-chart-placeholder">
-                <div class="bars">
-                  @for (
-                    month of stats()?.monthly_data || [];
-                    track month.month
-                  ) {
-                    <div class="bar-col">
-                      <!-- max bar height 150px representing max value roughly -->
-                      <div
-                        class="bar"
-                        [style.height.px]="
-                          mathMax(
-                            10,
-                            (stats()?.total_revenue ?? 0)
-                              ? (month.revenue /
-                                  (stats()?.total_revenue ?? 1)) *
-                                  300
-                              : 10
-                          )
-                        "
-                      ></div>
-                      <span class="bar-label">{{
-                        month.month | date: "MMM"
-                      }}</span>
-                    </div>
-                  }
-                </div>
-              </div>
-            } @else {
-              <div class="empty-state">
-                No trend data available for this range.
-              </div>
-            }
-          </div>
-        </div>
-      </div>
-
-      <!-- Top Products Table -->
-      <div class="widget-card">
-        <div class="widget-header">
-          <div>
-            <h3>Top Selling Products</h3>
-            <p>Products driving the most volume.</p>
-          </div>
-        </div>
-        <div class="widget-body p-0">
-          @if (stats()?.top_products?.length) {
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Product</th>
-                  <th class="text-right">Units Sold</th>
-                  <th class="text-right">Revenue</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (
-                  prod of stats()?.top_products || [];
-                  track prod.product_id
-                ) {
-                  <tr>
-                    <td>{{ prod.name }}</td>
-                    <td class="text-right">{{ prod.total_sold }}</td>
-                    <td class="text-right">{{ prod.revenue | appCurrency }}</td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          } @else {
-            <div class="empty-state p-4">No product sales yet.</div>
-          }
-        </div>
-      </div>
-    </div>
+      </dl>
+      <a routerLink="/promotions">Manage promotions</a>
+    </section>
+    <section class="workspace-card">
+      <h2>Current stock risk</h2>
+      <strong class="big-number">{{
+        sales.low_stock_impact.low_stock_count
+      }}</strong>
+      <p>
+        Products currently at or below their configured alert threshold. This
+        count is a present inventory snapshot.
+      </p>
+      <a routerLink="/inventory" [queryParams]="{ health: 'low' }"
+        >Review low stock</a
+      >
+    </section>
+  </div>
   }
+  <section class="workspace-card finance-region" aria-label="All-time settlements">
+    @if(financeError()){
+    <p class="error-banner" role="alert">
+      {{ financeError() }}
+      <button class="btn-secondary" (click)="loadFinance()">Retry settlements</button>
+    </p>
+    }
+    <details>
+      <summary>All-time settlement totals</summary>
+    <div class="section-header">
+      <div>
+        <h2>All-time settlements</h2>
+        <p>
+          Independent of the sales-period filter. Amounts come from the server
+          across the complete payout history.
+        </p>
+      </div>
+      <button
+        class="btn-secondary"
+        [disabled]="financeLoading()"
+        (click)="loadFinance()"
+      >
+        Refresh settlements
+      </button>
+    </div>
+    @if(financeLoading()){
+    <p role="status">Loading settlement totals…</p>
+    }@if(finance();as payouts){
+    <div class="settlement-grid">
+      @for(summary of payouts.payout_summary;track summary.status){<a
+        class="settlement-total"
+        routerLink="/payouts"
+        [queryParams]="{ status: summary.status }"
+        ><span>{{ summary.status.replaceAll("_", " ") | titlecase }}</span
+        ><strong>{{ summary.amount | appCurrency }}</strong
+        ><small>{{ summary.count }} records</small></a
+      >}@empty{
+      <p>No payout records yet.</p>
+      }
+    </div>
+    }
+    <a routerLink="/payouts">Manage settlements</a>
+    </details>
+  </section>
 </div>
-
-<!-- aria-label -->

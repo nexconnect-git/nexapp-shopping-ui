@@ -1,85 +1,26 @@
-import { effect, Injectable, signal } from '@angular/core';
-import {
-  AuthService,
-  CurrencyService,
-  NotificationPollingService,
-  PageFeatureAccessService,
-  VendorApi,
-} from '@shared/public-api';
-
+import { effect, inject, Injectable } from '@angular/core';
+import { CurrencyService, PageFeatureAccessService } from '@shared/public-api';
+import { VendorContextService } from './vendor-context.service';
 @Injectable({ providedIn: 'root' })
 export class VendorAppStartupService {
-  readonly unreadCount = signal(0);
-
+  private readonly features = inject(PageFeatureAccessService);
+  private readonly context = inject(VendorContextService);
+  private readonly currency = inject(CurrencyService);
   private started = false;
-  private currencyConfiguredForUserId = '';
-
-  constructor(
-    private readonly auth: AuthService,
-    private readonly api: VendorApi,
-    private readonly currency: CurrencyService,
-    private readonly notifications: NotificationPollingService,
-    private readonly features: PageFeatureAccessService,
-  ) {
+  constructor() {
     effect(() => {
-      if (this.auth.isLoggedIn()) {
-        this.startNotificationPolling();
-        this.configureCurrencyForUser();
-        return;
-      }
-      this.notifications.stop();
-      this.currencyConfiguredForUserId = '';
-      this.unreadCount.set(0);
+      const context = this.context.context();
+      if (context)
+        this.currency.configureFromLocation({
+          ...context.vendor,
+          postalCode: context.vendor.postal_code,
+          country: context.vendor.user_info.country,
+        });
     });
   }
-
   start(): void {
     if (this.started) return;
     this.started = true;
-    this.notifications.onUnreadChange((count) => this.unreadCount.set(count));
-    if (this.auth.isLoggedIn()) {
-      this.startNotificationPolling();
-      this.configureCurrencyForUser();
-    }
     this.features.startPolling('vendor-app');
-  }
-
-  private startNotificationPolling(): void {
-    this.notifications.start((notification) => {
-      if (notification.notification_type === 'order' && notification.related_entity_id) {
-        return { label: 'View', url: `/orders/${notification.related_entity_id}` };
-      }
-      if (notification.notification_type === 'order' && notification.data?.order_id) {
-        return { label: 'View', url: `/orders/${notification.data.order_id}` };
-      }
-      return null;
-    });
-  }
-
-  private configureCurrencyForUser(): void {
-    const userId = this.auth.user()?.id || 'vendor';
-    if (this.currencyConfiguredForUserId === userId) return;
-    this.currencyConfiguredForUserId = userId;
-    this.api.getVendorProfile().subscribe({
-      next: (vendor) => {
-        this.currency.configureFromLocation({
-          country:
-            vendor?.country ||
-            vendor?.country_code ||
-            vendor?.user_info?.country,
-          latitude: vendor?.latitude,
-          longitude: vendor?.longitude,
-          address: vendor?.address,
-          city: vendor?.city,
-          state: vendor?.state,
-          postalCode: vendor?.postal_code,
-          name: vendor?.store_name,
-        });
-      },
-      error: () => {
-        const userCountry = this.auth.user()?.country;
-        if (userCountry) this.currency.configureFromLocation({ country: userCountry });
-      },
-    });
   }
 }

@@ -1,37 +1,39 @@
-import { NgFor, NgIf } from '@angular/common';
+import { inject } from '@angular/core';
+import { AdminAccessService } from '../../services/admin-access.service';
 import { Component, computed, signal } from '@angular/core';
+import { AdminDialogDirective } from '../admin-dialog.directive';
+import { AdminRowActionsComponent } from '../admin-row-actions.component';
 import { FormsModule } from '@angular/forms';
-import {
-  ClonePageForm,
-  ManagedAppId,
-  ManagedFeature,
-  ManagedPage,
-  PageSettingsForm,
-  PageStatus,
-} from './page-feature-management.models';
+import { ClonePageForm, ManagedAppId, ManagedFeature, ManagedPage, PageSettingsForm } from './page-feature-management.models';
 import { PageFeatureManagementService } from './page-feature-management.service';
 
 @Component({
   selector: 'nc-page-feature-management',
   standalone: true,
-  imports: [NgFor, NgIf, FormsModule],
+  imports: [FormsModule, AdminDialogDirective, AdminRowActionsComponent],
   templateUrl: './page-feature-management.component.html',
   styleUrls: ['./page-feature-management.component.scss'],
 })
 export class PageFeatureManagementComponent {
+  readonly access=inject(AdminAccessService);
   readonly actionMenuFor = signal<string | null>(null);
-  readonly bulkOpen = signal(false);
   readonly featureDraft = signal<ManagedFeature[]>([]);
   readonly settingsForm = signal<PageSettingsForm | null>(null);
   readonly cloneForm = signal<ClonePageForm | null>(null);
   readonly modalPage = computed(() => this.service.modal().page);
+  readonly matchingPageCount = computed(() => this.service.appRows().reduce((count, row) => count + row.pages.length, 0));
 
   constructor(public service: PageFeatureManagementService) {}
 
   selectTab(tab: 'applications' | 'pages' | 'settings'): void {
     this.service.activeTab.set(tab);
     this.actionMenuFor.set(null);
-    this.bulkOpen.set(false);
+  }
+
+  viewApplication(appId: ManagedAppId): void {
+    this.selectTab('pages');
+    this.service.selectedApp.set(appId);
+    this.service.expandedAppIds.set([appId]);
   }
 
   appTone(appId: ManagedAppId): string {
@@ -43,8 +45,7 @@ export class PageFeatureManagementComponent {
   }
 
   viewPage(page: ManagedPage): void {
-    this.service.toast.set(`Open ${page.route}`);
-    this.actionMenuFor.set(null);
+    this.openSettingsModal(page);
   }
 
   openFeatureModal(page: ManagedPage): void {
@@ -86,8 +87,8 @@ export class PageFeatureManagementComponent {
       features.map((feature) =>
         feature.id === featureId
           ? { ...feature, status: enabled ? 'enabled' : 'disabled' }
-          : feature,
-      ),
+          : feature
+      )
     );
   }
 
@@ -133,7 +134,7 @@ export class PageFeatureManagementComponent {
       | 'enabledByDefault'
       | 'pageDisabledAlerts'
       | 'featureAccessRequests'
-      | 'bulkActionAlerts',
+      | 'bulkActionAlerts'
   ): void {
     this.service[key].set(!this.service[key]());
   }

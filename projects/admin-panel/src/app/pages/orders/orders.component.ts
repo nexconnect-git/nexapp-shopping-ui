@@ -1,4 +1,7 @@
-﻿import {
+import { AdminDialogDirective } from '../../shared/admin-dialog.directive';
+import { AdminLiveSocket, openAdminLiveSocket } from '../../services/admin-live-socket';
+import { AdminAccessService } from '../../services/admin-access.service';
+import {
   Component,
   inject,
   NgZone,
@@ -8,15 +11,17 @@
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import {
   API_BASE_URL,
+  apiErrorMessage,
   ApiService,
   AppCurrencyPipe,
   AuthService,
   decodeGooglePolyline,
   GoogleMapsService,
-  openAuthenticatedWebSocket,
-  Order,
+    Order,
+    ToastService,
 } from '@shared/public-api';
 import { Subscription, timer } from 'rxjs';
 import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
@@ -27,9 +32,10 @@ declare const google: any;
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [
+  imports: [AdminDialogDirective,
     CommonModule,
     FormsModule,
+    RouterLink,
     DynamicTableComponent,
     TableCellDirective,
     AppCurrencyPipe,
@@ -38,7 +44,13 @@ declare const google: any;
   styleUrl: './orders.component.scss',
 })
 export class OrdersComponent implements OnInit, OnDestroy {
+  access = inject(AdminAccessService);
+  error=signal('');
+  vendorFilter='';customerFilter='';partnerFilter='';dateFrom='';dateTo='';amountMin='';amountMax='';issueState='';deliveryState='';ordering='-placed_at';
+  applyFilters(){this.page.set(1);this.load();}
+  resetFilters(){this.statusFilter='';this.search='';this.vendorFilter='';this.customerFilter='';this.partnerFilter='';this.dateFrom='';this.dateTo='';this.amountMin='';this.amountMax='';this.issueState='';this.deliveryState='';this.ordering='-placed_at';this.applyFilters();}
   private api = inject(ApiService);
+  private toast = inject(ToastService);
   private auth = inject(AuthService);
   private zone = inject(NgZone);
   private googleMaps = inject(GoogleMapsService);
@@ -60,7 +72,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
     { key: 'total', label: 'Total', flex: '1fr' },
     { key: 'status', label: 'Status', flex: '1fr' },
     { key: 'date', label: 'Date', flex: '1fr' },
-    { key: 'actions', label: 'Update Status', flex: '1.5fr' },
+    { key: 'actions', label: 'Actions', flex: '1.5fr', minWidth: 210 },
   ];
 
   lastRefreshed = signal<Date | null>(null);
@@ -84,7 +96,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
   private lastDirectionsTime = 0;
   private directionsEnabled = true;
 
-  private ws: WebSocket | null = null;
+  private ws: AdminLiveSocket | null = null;
   private animFrameId?: number;
   private timer: any;
   readonly statuses = [
@@ -108,17 +120,20 @@ export class OrdersComponent implements OnInit, OnDestroy {
     );
   }
   private sub?: Subscription;
+  private listSub?: Subscription;
 
   ngOnInit() {
     this.sub = timer(0, 15000).subscribe(() => {
-      if (this.autoReload() && !this.showModal() && !this.updatingId()) {
+      if (this.autoReload() && !document.hidden && !this.showModal() && !this.updatingId()) {
         this.load();
       }
     });
   }
 
   ngOnDestroy() {
+    clearTimeout(this.timer);
     this.sub?.unsubscribe();
+    this.listSub?.unsubscribe();
     this.closeWs();
     if (this.animFrameId) cancelAnimationFrame(this.animFrameId);
     this.gmRoutePolyline?.setMap(null);
@@ -133,11 +148,14 @@ export class OrdersComponent implements OnInit, OnDestroy {
   }
 
   load() {
+    this.listSub?.unsubscribe();
+    this.error.set('');
     this.loading.set(true);
     const params: any = { page: this.page() };
     if (this.statusFilter) params.status = this.statusFilter;
     if (this.search) params.search = this.search;
-    this.api.getAdminOrders(params).subscribe({
+    Object.assign(params,Object.fromEntries(Object.entries({vendor:this.vendorFilter,customer:this.customerFilter,delivery_partner:this.partnerFilter,date_from:this.dateFrom,date_to:this.dateTo,amount_min:this.amountMin,amount_max:this.amountMax,issue_state:this.issueState,delivery_state:this.deliveryState,ordering:this.ordering}).filter(([,value])=>value!=='')));
+    this.listSub = this.api.getAdminOrders(params).subscribe({
       next: (r) => {
         this.orders.set(r.results || r);
         this.total.set(r.count || (r.results || r).length);
@@ -145,7 +163,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
         this.loading.set(false);
         this.lastRefreshed.set(new Date());
       },
-      error: () => this.loading.set(false),
+      error: () => {this.loading.set(false);this.error.set('Could not load orders. Check the filter values and retry.');},
     });
   }
 
@@ -162,14 +180,14 @@ export class OrdersComponent implements OnInit, OnDestroy {
   }
 
   updateStatus(order: Order, newStatus: string) {
-    if (order.status === newStatus) return;
+    if (!this.access.can('orders.manage') || order.status === newStatus) return;
     this.updatingId.set(order.id);
     this.api.updateAdminOrderStatus(order.id, newStatus).subscribe({
       next: () => {
         this.updatingId.set(null);
         this.load();
       },
-      error: () => this.updatingId.set(null),
+      error: error => {this.updatingId.set(null);this.toast.show(apiErrorMessage(error, 'The order status change was rejected.'), 'error');this.load();},
     });
   }
 
@@ -311,9 +329,9 @@ export class OrdersComponent implements OnInit, OnDestroy {
 
   private connectWebSocket(orderId: string) {
     this.closeWs();
-    this.ws = openAuthenticatedWebSocket(
+    this.ws = openAdminLiveSocket(
       `/ws/delivery/${orderId}/tracking/`,
-      this.auth.getToken(),
+      () => this.auth.getToken(),
       this.apiBaseUrl,
     );
     this.ws.onmessage = (msg) => {

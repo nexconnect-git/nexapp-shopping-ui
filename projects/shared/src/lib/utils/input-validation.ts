@@ -37,6 +37,8 @@ export function isValidIndianPhone(value: unknown): boolean {
 
 export function stripControlCharacters(value: unknown): string {
   return String(value ?? '')
-    .replace(/[\u0000-\u001F\u007F]/g, '')
+    .split('')
+    .filter((character) => character.charCodeAt(0) > 31 && character.charCodeAt(0) !== 127)
+    .join('')
     .trim();
 }

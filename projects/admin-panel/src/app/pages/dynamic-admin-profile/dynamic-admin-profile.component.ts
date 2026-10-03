@@ -1,6 +1,15 @@
-import { Component, computed, inject } from '@angular/core';
+import { ProfileContextComponent } from '../../shared/profile-context.component';
+import {
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { AuthService } from '@shared/public-api';
+import { ApiService, AuthService, User } from '@shared/public-api';
 import { DynamicProfilePageComponent } from '../../shared/dynamic-profile/dynamic-profile-page.component';
 import { EntityProfileAdapterService } from '../../shared/dynamic-profile/entity-profile-adapter.service';
 import { ProfileHeroAction } from '../../shared/dynamic-profile/dynamic-profile.models';
@@ -8,13 +17,29 @@ import { ProfileHeroAction } from '../../shared/dynamic-profile/dynamic-profile.
 @Component({
   selector: 'app-dynamic-admin-profile',
   standalone: true,
-  imports: [DynamicProfilePageComponent],
+  imports: [DynamicProfilePageComponent, ProfileContextComponent],
   templateUrl: './dynamic-admin-profile.component.html',
 })
-export class DynamicAdminProfileComponent {
-  private readonly auth = inject(AuthService);
+export class DynamicAdminProfileComponent implements OnInit {
+  readonly auth = inject(AuthService);
   private readonly adapter = inject(EntityProfileAdapterService);
   private readonly router = inject(Router);
+  private readonly api = inject(ApiService);
+  private readonly destroy = inject(DestroyRef);
+  readonly error = signal('');
+  ngOnInit() {
+    this.refresh();
+  }
+  refresh() {
+    this.error.set('');
+    this.api
+      .getProfile()
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: (user) => this.auth.updateUserData(user as User),
+        error: () => this.error.set('Could not refresh your account details.'),
+      });
+  }
 
   readonly profileConfig = computed(() => {
     const user = this.auth.user();

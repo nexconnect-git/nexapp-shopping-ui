@@ -1,0 +1,50 @@
+<button
+  class="command-trigger"
+  type="button"
+  (click)="open()"
+  aria-label="Search admin app"
+>
+  <span class="material-icons-outlined">search</span
+  ><span>Search orders, people, pages…</span><kbd>Ctrl K</kbd>
+</button>
+<p-dialog closeAriaLabel="Close dialog"
+  header="Search workspace"
+  [(visible)]="visible"
+  [modal]="true"
+  [style]="{ width: '640px' }"
+  [breakpoints]="{ '768px': '94vw' }"
+  (onHide)="close()"
+>
+  <input
+    id="workspace-search"
+    type="search"
+    class="form-input"
+    [value]="query()"
+    (input)="search($any($event.target).value)"
+    (keydown.enter)="openFirst()"
+    aria-label="Search orders, vendors, customers, partners, products and cases"
+    placeholder="Type a name or order number"
+  />
+  @if (busy()) {
+  <p role="status">Searching…</p>
+  } @if (error()) {
+  <p role="alert">{{ error() }}</p>
+  }
+  <div class="command-results">
+    @for(item of results(); track item.route) {
+    <a [routerLink]="item.route" (click)="close()"
+      ><small>{{ item.group }}</small
+      ><strong>{{ item.label }}</strong
+      ><span>{{ item.detail }}</span></a
+    >
+    } @empty { @if(!busy() && !error()){
+    <p>
+      {{
+        query().length < 2
+          ? "Enter at least two characters to search records."
+          : "No matches in the pages and records you can access."
+      }}
+    </p>
+    } }
+  </div>
+</p-dialog>

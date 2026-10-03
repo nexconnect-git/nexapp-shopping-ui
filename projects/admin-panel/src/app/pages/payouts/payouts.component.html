@@ -9,7 +9,7 @@
       </p>
     </div>
     <div class="admin-page-actions">
-      <button class="new-payout-btn" (click)="openModal()">
+      <button *appAdminCan="'finance.manage'" class="new-payout-btn" (click)="openModal()">
         <span class="material-icons-outlined">add_card</span>
         New Payout
       </button>
@@ -125,84 +125,47 @@
 
           <ng-template tableCell="status" let-row="row">
             <span class="badge" [class]="'badge-' + row.status">{{
-              row.status | uppercase
+              row.status.replaceAll('_', ' ')
             }}</span>
           </ng-template>
 
           <ng-template tableCell="actions" let-row="row">
             <div class="actions-cell">
-              @if (activeTab() === "vendors") {
                 <button
                   class="action-icon-btn"
-                  title="View Invoice"
+                  title="View settlement statement" aria-label="View settlement statement"
                   (click)="viewInvoice(row)"
                 >
                   <span class="material-icons-outlined">receipt_long</span>
                 </button>
+              @if (row.status === 'pending_approval' || ['schedule', 'send-payment', 'force-paid'].includes(getPayoutAction(row))) {
+                <app-admin-row-actions *appAdminCan="'finance.manage'" [label]="'Payout actions for ' + row.id.split('-')[0]">
+                  <ng-template>
+                    @if (row.status === 'pending_approval') {
+                      <button role="menuitem" (click)="editPayout(row)"><span class="material-icons-outlined">edit</span>Edit payout</button>
+                    }
+                    @switch (getPayoutAction(row)) {
+                      @case ('schedule') {
+                        <button role="menuitem" (click)="schedulePayout(row)"><span class="material-icons-outlined">event_available</span>Schedule payout</button>
+                      }
+                      @case ('send-payment') {
+                        <button role="menuitem" (click)="openSendPaymentModal(row)"><span class="material-icons-outlined">payments</span>Record external payment</button>
+                      }
+                      @case ('force-paid') {
+                        <button role="menuitem" (click)="openForcePaidModal(row)"><span class="material-icons-outlined">warning</span>Override verification</button>
+                      }
+                    }
+                  </ng-template>
+                </app-admin-row-actions>
               }
-              <!-- Edit (only on non-final statuses) -->
-              @if (!["verified", "paid", "failed"].includes(row.status)) {
-                <button
-                  class="action-icon-btn"
-                  title="Edit Payout"
-                  (click)="editPayout(row)"
-                >
-                  <span class="material-icons-outlined">edit</span>
-                </button>
+              @if (getPayoutAction(row) === 'awaiting') {
+                <span class="awaiting-chip" [title]="'Override unlocks ' + (overrideAvailableAt(row) | date: 'MMM d, HH:mm')">
+                  <span class="material-icons-outlined">hourglass_top</span>
+                  Awaiting recipient
+                </span>
               }
-              <!-- Lifecycle actions -->
-              @switch (getPayoutAction(row)) {
-                @case ("schedule") {
-                  <button
-                    class="lifecycle-btn schedule-btn"
-                    (click)="schedulePayout(row)"
-                  >
-                    <span class="material-icons-outlined">event_available</span>
-                    Schedule
-                  </button>
-                }
-                @case ("send-payment") {
-                  <button
-                    class="lifecycle-btn send-btn"
-                    (click)="openSendPaymentModal(row)"
-                  >
-                    <span class="material-icons-outlined">send_money</span>
-                    Send Payment
-                  </button>
-                }
-                @case ("awaiting") {
-                  <span
-                    class="awaiting-chip"
-                    [title]="
-                      'Override unlocks ' +
-                      (overrideAvailableAt(row) | date: 'MMM d, HH:mm')
-                    "
-                  >
-                    <span class="material-icons-outlined">hourglass_top</span>
-                    Awaiting Vendor ·
-                    <em
-                      >Override:
-                      {{ overrideAvailableAt(row) | date: "MMM d" }}</em
-                    >
-                  </span>
-                }
-                @case ("force-paid") {
-                  <button
-                    class="lifecycle-btn force-btn"
-                    (click)="openForcePaidModal(row)"
-                  >
-                    <span class="material-icons-outlined">warning</span>
-                    Force Mark Paid
-                  </button>
-                }
-                @case ("none") {
-                  @if (row.status === "verified") {
-                    <span class="paid-check">
-                      <span class="material-icons-outlined">check_circle</span>
-                      Verified
-                    </span>
-                  }
-                }
+              @if (row.status === 'verified') {
+                <span class="paid-check"><span class="material-icons-outlined">check_circle</span>Verified</span>
               }
             </div>
           </ng-template>
@@ -216,17 +179,17 @@
      SEND PAYMENT MODAL
 ════════════════════════════════════════════════════════ -->
 @if (showSendModal()) {
-  <div class="modal-backdrop" (click)="closeSendModal()">
-    <div class="modal-panel modal-sm" (click)="$event.stopPropagation()">
+  <div class="modal-backdrop" (click)="$event.target === $event.currentTarget && (closeSendModal())" (keydown.escape)="closeSendModal()" tabindex="-1" role="presentation">
+    <div class="modal-panel modal-sm" appAdminDialog (appAdminDialogClose)="closeSendModal()">
       <div class="modal-header">
         <div class="modal-header-icon send-icon">
-          <span class="material-icons-outlined">send_money</span>
+          <span class="material-icons-outlined">payments</span>
         </div>
         <div>
-          <h2 class="modal-title">Confirm Payment Dispatch</h2>
-          <p class="modal-sub">Mark as sent and notify vendor to verify</p>
+          <h2 class="modal-title">Record External Payment</h2>
+          <p class="modal-sub">Record a completed bank payment; this app does not transfer money.</p>
         </div>
-        <button class="modal-close-btn" (click)="closeSendModal()">
+        <button aria-label="Close dialog" class="modal-close-btn" (click)="closeSendModal()">
           <span class="material-icons-outlined">close</span>
         </button>
       </div>
@@ -245,35 +208,35 @@
             will have <strong>2 days</strong> to verify the credit.
           </p>
           <div class="field-group">
-            <label class="field-label"
+            <label for="admin-control-payouts.component-0" class="field-label"
               >Transaction Reference
-              <span class="muted">(optional)</span></label
+              <span class="muted">(required)</span></label
             >
-            <input
+            <input id="admin-control-payouts.component-0"
               type="text"
               class="field-input"
               [(ngModel)]="transactionRefInput"
               placeholder="Bank UTR / ref no."
             />
           </div>
+        </div>
+      </div>
           <div class="modal-actions">
             <button type="button" class="cancel-btn" (click)="closeSendModal()">
               Cancel
             </button>
-            <button
+            <ng-container *appAdminCan="'finance.manage'"><button
               class="create-btn send-confirm-btn"
-              [disabled]="sendingPayment()"
+              [disabled]="sendingPayment() || !transactionRefInput.trim()"
               (click)="confirmSendPayment()"
             >
               @if (sendingPayment()) {
-                <span class="spinner-btn"></span> Sending…
+                <span class="spinner-btn"></span> Recording…
               } @else {
-                <span class="material-icons-outlined">send</span> Confirm & Send
+                <span class="material-icons-outlined">save</span> Record Payment
               }
-            </button>
+            </button></ng-container>
           </div>
-        </div>
-      </div>
     </div>
   </div>
 }
@@ -282,19 +245,19 @@
      FORCE PAID MODAL
 ════════════════════════════════════════════════════════ -->
 @if (showForcePaidModal()) {
-  <div class="modal-backdrop" (click)="closeForcePaidModal()">
-    <div class="modal-panel modal-sm" (click)="$event.stopPropagation()">
+  <div class="modal-backdrop" (click)="$event.target === $event.currentTarget && (closeForcePaidModal())" (keydown.escape)="closeForcePaidModal()" tabindex="-1" role="presentation">
+    <div class="modal-panel modal-sm" appAdminDialog (appAdminDialogClose)="closeForcePaidModal()">
       <div class="modal-header force-header">
         <div class="modal-header-icon force-icon">
           <span class="material-icons-outlined">warning</span>
         </div>
         <div>
-          <h2 class="modal-title">Force Mark as Verified</h2>
+          <h2 class="modal-title">Override verification</h2>
           <p class="modal-sub">
             Override vendor confirmation and close this payout
           </p>
         </div>
-        <button class="modal-close-btn" (click)="closeForcePaidModal()">
+        <button aria-label="Close dialog" class="modal-close-btn" (click)="closeForcePaidModal()">
           <span class="material-icons-outlined">close</span>
         </button>
       </div>
@@ -340,6 +303,12 @@
               </span>
             </div>
           </div>
+          <div class="field-group">
+            <label for="payout-override-reason" class="field-label">Override reason</label>
+            <textarea id="payout-override-reason" class="field-input" [(ngModel)]="overrideReason" rows="3" required></textarea>
+          </div>
+        </div>
+      </div>
           <div class="modal-actions">
             <button
               type="button"
@@ -348,21 +317,19 @@
             >
               Cancel
             </button>
-            <button
+            <ng-container *appAdminCan="'finance.manage'"><button
               class="create-btn force-confirm-btn"
-              [disabled]="forcingPaid()"
+              [disabled]="forcingPaid() || !overrideReason.trim()"
               (click)="confirmForcePaid()"
             >
               @if (forcingPaid()) {
                 <span class="spinner-btn"></span> Processing…
               } @else {
                 <span class="material-icons-outlined">check_circle</span>
-                Confirm & Mark Verified
+                Confirm override
               }
-            </button>
+            </button></ng-container>
           </div>
-        </div>
-      </div>
     </div>
   </div>
 }
@@ -371,8 +338,8 @@
      CREATE PAYOUT MODAL
 ════════════════════════════════════════════════════════ -->
 @if (showModal()) {
-  <div class="modal-backdrop" (click)="closeModal()">
-    <div class="modal-panel" (click)="$event.stopPropagation()">
+  <div class="modal-backdrop" (click)="$event.target === $event.currentTarget && (closeModal())" (keydown.escape)="closeModal()" tabindex="-1" role="presentation">
+    <div class="modal-panel" appAdminDialog (appAdminDialogClose)="closeModal()">
       <!-- Modal Header -->
       <div class="modal-header">
         <div class="modal-header-icon">
@@ -390,7 +357,7 @@
             }}
           </p>
         </div>
-        <button class="modal-close-btn" (click)="closeModal()">
+        <button aria-label="Close dialog" class="modal-close-btn" (click)="closeModal()">
           <span class="material-icons-outlined">close</span>
         </button>
       </div>
@@ -398,6 +365,7 @@
       <!-- Modal Body -->
       <div class="modal-body">
         <form
+          id="payout-create-form"
           class="create-form"
           (ngSubmit)="submitPayout()"
           #payoutForm="ngForm"
@@ -405,11 +373,11 @@
           <!-- Vendor / Delivery Partner Selector -->
           @if (activeTab() === "vendors") {
             <div class="field-group">
-              <label class="field-label"
+              <label for="admin-control-payouts.component-1" class="field-label"
                 >Vendor <span class="required">*</span></label
               >
               <div class="select-wrap">
-                <select
+                <select id="admin-control-payouts.component-1"
                   class="field-input field-select"
                   [(ngModel)]="createFormObj.vendor_id"
                   name="vendor_id"
@@ -428,7 +396,7 @@
                   }
                 </select>
                 <span class="select-icon material-icons-outlined"
-                  >storefront</span
+                  >expand_more</span
                 >
               </div>
             </div>
@@ -450,7 +418,7 @@
                   } @else if (vendorBank()) {
                     <div class="commission-pill">
                       <span class="material-icons-outlined">percent</span>
-                      {{ vendorBank()!.commission_percentage }}% Commission
+                      {{ commissionPct() }}% Commission
                     </div>
                   }
                 </div>
@@ -476,11 +444,11 @@
             }
           } @else {
             <div class="field-group">
-              <label class="field-label"
+              <label for="admin-control-payouts.component-2" class="field-label"
                 >Delivery Partner <span class="required">*</span></label
               >
               <div class="select-wrap">
-                <select
+                <select id="admin-control-payouts.component-2"
                   class="field-input field-select"
                   [(ngModel)]="createFormObj.delivery_partner_id"
                   name="delivery_partner_id"
@@ -495,12 +463,13 @@
                   @for (p of partners(); track p.id) {
                     <option [value]="p.id">
                       {{ p.user?.first_name || p.user?.username }}
-                      {{ p.user?.last_name }} · {{ p.vehicle_type }}
+                      {{ p.user?.last_name }}
+                      @if (p.vehicle_type) { · {{ p.vehicle_type }} }
                     </option>
                   }
                 </select>
                 <span class="select-icon material-icons-outlined"
-                  >two_wheeler</span
+                  >expand_more</span
                 >
               </div>
             </div>
@@ -509,10 +478,10 @@
           <!-- Date Range -->
           <div class="field-row">
             <div class="field-group">
-              <label class="field-label"
+              <label for="admin-control-payouts.component-3" class="field-label"
                 >Start Date <span class="required">*</span></label
               >
-              <input
+              <input id="admin-control-payouts.component-3"
                 type="date"
                 class="field-input"
                 [(ngModel)]="createFormObj.period_start"
@@ -522,10 +491,10 @@
               />
             </div>
             <div class="field-group">
-              <label class="field-label"
+              <label for="admin-control-payouts.component-4" class="field-label"
                 >End Date <span class="required">*</span></label
               >
-              <input
+              <input id="admin-control-payouts.component-4"
                 type="date"
                 class="field-input"
                 [(ngModel)]="createFormObj.period_end"
@@ -553,7 +522,7 @@
                 </div>
                 <div class="sales-summary-grid">
                   <div class="sales-stat">
-                    <span class="sales-stat-label">Gross Revenue</span>
+                    <span class="sales-stat-label">Verified gross revenue</span>
                     <span class="sales-stat-value green">{{
                       vendorSalesSummary()!.total_revenue | appCurrency
                     }}</span>
@@ -577,7 +546,7 @@
                     }}</span>
                   </div>
                   <div class="sales-stat">
-                    <span class="sales-stat-label">Avg. Order Value</span>
+                    <span class="sales-stat-label">Avg. verified order</span>
                     <span class="sales-stat-value">{{
                       vendorSalesSummary()!.average_order_value | appCurrency
                     }}</span>
@@ -585,8 +554,7 @@
                 </div>
                 <p class="sales-summary-hint">
                   <span class="material-icons-outlined">check_circle</span>
-                  Gross sales pre-filled from delivered order revenue. Adjust if
-                  needed.
+                  {{ isEditMode() ? 'Existing payout amounts are preserved. This estimate is shown for reference.' : 'Gross sales pre-filled from delivered orders with verified receipts. Adjust if needed.' }}
                 </p>
               </div>
             }
@@ -594,7 +562,7 @@
 
           <!-- Amount Input -->
           <div class="field-group">
-            <label class="field-label flex-label">
+            <label for="admin-control-payouts.component-5" class="field-label flex-label">
               <span>
                 @if (activeTab() === "vendors") {
                   GROSS SALES AMOUNT
@@ -609,16 +577,16 @@
             </label>
             <div class="amount-input-wrap">
               <span class="amount-prefix">{{ 0 | appCurrency: true }}</span>
-              <input
+              <input id="admin-control-payouts.component-5"
                 type="number"
                 class="field-input amount-input"
                 [(ngModel)]="createFormObj.amount"
+                [disabled]="loadingSales() || calculatingDeliveryEarnings()"
                 name="amount"
                 placeholder="0.00"
                 required
                 step="0.01"
                 min="0"
-                (input)="recalculate()"
               />
             </div>
           </div>
@@ -657,23 +625,23 @@
             </div>
           }
 
+        </form>
+      </div>
           <!-- Actions -->
           <div class="modal-actions">
             <button type="button" class="cancel-btn" (click)="closeModal()">
               Cancel
             </button>
-            <button type="submit" class="create-btn" [disabled]="creating()">
+            <button type="submit" form="payout-create-form" class="create-btn" [disabled]="creating()">
               @if (creating()) {
                 <span class="spinner-btn"></span>
                 Creating…
               } @else {
                 <span class="material-icons-outlined">add</span>
-                Create Payout
+                {{ isEditMode() ? 'Save Payout' : 'Create Payout' }}
               }
             </button>
           </div>
-        </form>
-      </div>
     </div>
   </div>
 }
@@ -682,21 +650,24 @@
      INVOICE MODAL (Print-ready)
 ════════════════════════════════════════════════════════ -->
 @if (invoicePayout()) {
-  <div class="modal-backdrop" (click)="closeInvoice()">
-    <div class="invoice-panel" (click)="$event.stopPropagation()">
+  <div class="modal-backdrop" (click)="$event.target === $event.currentTarget && (closeInvoice())" (keydown.escape)="closeInvoice()" tabindex="-1" role="presentation">
+    <div class="invoice-panel" appAdminDialog aria-labelledby="settlement-statement-title" (appAdminDialogClose)="closeInvoice()">
       <!-- Invoice toolbar -->
       <div class="invoice-toolbar no-print">
         <span class="material-icons-outlined">receipt_long</span>
-        <span>Vendor Invoice</span>
+        <span id="settlement-statement-title" class="invoice-toolbar-title">Settlement statement</span>
         <div class="invoice-toolbar-actions">
+          <button class="toolbar-btn" [disabled]="downloadingStatement()" (click)="downloadStatement()">
+            {{ downloadingStatement() ? 'Preparing PDF…' : 'Download PDF' }}
+          </button>
           <button class="toolbar-btn" (click)="printInvoice()">
             <span class="material-icons-outlined">print</span>
             Print / Save PDF
           </button>
-          <button class="toolbar-close" (click)="closeInvoice()">
-            <span class="material-icons-outlined">close</span>
-          </button>
         </div>
+        <button aria-label="Close dialog" class="toolbar-close" (click)="closeInvoice()">
+          <span class="material-icons-outlined">close</span>
+        </button>
       </div>
 
       <!-- Invoice Document -->
@@ -711,9 +682,9 @@
             </div>
           </div>
           <div class="inv-meta">
-            <div class="inv-title">TAX INVOICE</div>
+            <div class="inv-title">SETTLEMENT STATEMENT</div>
             <div class="inv-number">
-              # INV-{{ invoicePayout()!.id.split("-")[0].toUpperCase() }}
+              Payout # {{ invoicePayout()!.id.split("-")[0].toUpperCase() }}
             </div>
             <div class="inv-date">
               Issued: {{ invoicePayout()!.created_at | date: "dd MMM yyyy" }}
@@ -732,7 +703,7 @@
           </div>
           <div class="inv-party">
             <div class="inv-party-label">VENDOR / PAYEE</div>
-            <div class="inv-party-name">{{ invoicePayout()!.vendor_name }}</div>
+            <div class="inv-party-name">{{ invoicePayout()!.vendor_name || invoicePayout()!.partner_name }}</div>
             @if (invoiceBank()) {
               <div class="inv-party-detail">
                 {{ invoiceBank()!.bank_name }} ·
@@ -776,6 +747,7 @@
             </tr>
           </thead>
           <tbody>
+            @if (invoicePayout()!.gross_sales !== undefined) {
             <tr>
               <td>1</td>
               <td>
@@ -792,22 +764,20 @@
               <td>2</td>
               <td>
                 Platform Commission Deduction
-                @if (invoiceBank()) {
-                  <span class="inv-rate-badge"
-                    >({{ invoiceBank()!.commission_percentage }}%)</span
-                  >
-                }
               </td>
               <td class="inv-td-r red">
                 − {{ invoicePayout()!.platform_commission | number: "1.2-2" }}
               </td>
             </tr>
+            } @else {
+              <tr><td>1</td><td>Delivery earnings · {{ invoicePayout()!.total_deliveries }} deliveries</td><td class="inv-td-r">{{ invoicePayout()!.total_earnings | number: "1.2-2" }}</td></tr>
+            }
           </tbody>
           <tfoot>
             <tr class="inv-total-row">
               <td colspan="2">NET PAYOUT AMOUNT</td>
               <td class="inv-td-r inv-total-amt">
-                {{ invoicePayout()!.net_payout | appCurrency }}
+                {{ (invoicePayout()!.net_payout ?? invoicePayout()!.total_earnings) | appCurrency }}
               </td>
             </tr>
           </tfoot>
@@ -815,10 +785,11 @@
 
         <!-- Status & Settlement Info -->
         <div class="inv-status-row">
+          <div class="inv-status-item"><div class="inv-status-label">External transaction reference</div><div class="inv-status-value">{{ invoicePayout()!.transaction_ref || 'Not recorded' }}</div></div>
           <div class="inv-status-item">
             <div class="inv-status-label">Payment Status</div>
             <span class="badge" [class]="'badge-' + invoicePayout()!.status">{{
-              invoicePayout()!.status | uppercase
+              invoicePayout()!.status.replaceAll('_', ' ')
             }}</span>
           </div>
           @if (invoicePayout()!.paid_at) {
@@ -845,11 +816,11 @@
           }
         </div>
 
+        @if (invoiceBankError()) { <p role="status">{{ invoiceBankError() }}</p> }
         <!-- Footer -->
         <div class="inv-footer">
           <div class="inv-footer-note">
-            This is a system-generated settlement invoice. For disputes, contact
-            <strong>support&#64;nextou.in</strong>
+            This statement reflects the stored payout record. It is not a tax invoice or independent confirmation of a bank transfer.
           </div>
           <div class="inv-footer-generated">
             Generated: {{ today | date: "dd MMM yyyy, hh:mm a" }}

@@ -1,21 +1,20 @@
 @if (auth.isLoggedIn() && !isAuthRoute()) {
+  <a class="skip-link" href="#main-content">Skip to content</a>
   <div
     class="saas-admin-shell"
     [class.nav-collapsed]="sidebarCollapsed()"
     [class.nav-open]="mobileMenuOpen()"
   >
-    <aside class="app-sidebar" aria-label="Admin navigation">
+    <aside class="app-sidebar" aria-label="Admin navigation"
+      [attr.inert]="mobileViewport() && !mobileMenuOpen() ? '' : null"
+      [attr.aria-hidden]="mobileViewport() && !mobileMenuOpen() ? 'true' : null">
       <div class="sidebar-brand-row">
-        <a class="brand-lockup" routerLink="/" (click)="closeMobileMenu()">
-          <img
-            class="brand-mark"
-            src="assets/brand/nextou-logo-single.png"
-            alt="Nextou logo"
-          />
+        <a class="brand-lockup" routerLink="/" (click)="closeMobileMenu()" (keydown.enter)="closeMobileMenu()" (keydown.space)="$event.preventDefault(); closeMobileMenu()" role="button">
+          <span class="brand-mark" aria-hidden="true"><span class="material-icons-outlined">hub</span></span>
           @if (!sidebarCollapsed()) {
             <span class="brand-copy">
-              <img src="assets/brand/nextou-brand-logo.png" alt="Nextou" class="brand-wordmark" />
-              <small>Admin Cloud</small>
+              <strong>nextou<span aria-hidden="true">.</span></strong>
+              <small>Operations console</small>
             </span>
           }
         </a>
@@ -24,6 +23,8 @@
           type="button"
           (click)="toggleSidebar()"
           title="Toggle navigation"
+          aria-label="Toggle navigation"
+          [attr.aria-expanded]="!sidebarCollapsed()"
         >
           <span class="material-icons-outlined">{{
             sidebarCollapsed()
@@ -37,22 +38,23 @@
         <div class="tenant-card">
           <span class="tenant-icon material-icons-outlined">hub</span>
           <div>
-            <strong>Marketplace Ops</strong>
-            <span>Production workspace</span>
+            <strong>Marketplace workspace</strong>
+            <span>Admin operations</span>
           </div>
-          <span class="live-pill">Live</span>
+
         </div>
 
         <label class="nav-search">
           <span class="material-icons-outlined">search</span>
           <input
             type="search"
-            placeholder="Search admin..."
+            placeholder="Filter navigation..."
+            aria-label="Filter navigation"
             [value]="navQuery()"
             (input)="setNavQuery($any($event.target).value)"
           />
           @if (navQuery()) {
-            <button
+            <button aria-label="Clear search"
               type="button"
               (click)="clearNavQuery()"
               title="Clear search"
@@ -76,8 +78,10 @@
                 routerLinkActive="active"
                 [routerLinkActiveOptions]="{ exact: item.route === '/' }"
                 [title]="sidebarCollapsed() ? item.label : ''"
+                [attr.aria-label]="item.label"
+                ariaCurrentWhenActive="page"
                 (click)="closeMobileMenu()"
-              >
+               (keydown.enter)="closeMobileMenu()" (keydown.space)="$event.preventDefault(); closeMobileMenu()" role="button">
                 <span class="material-icons-outlined">{{ item.icon }}</span>
                 @if (!sidebarCollapsed()) {
                   <span>{{ item.label }}</span>
@@ -85,6 +89,8 @@
               </a>
             }
           </section>
+        } @empty {
+          <p class="nav-empty">No matching pages. Try another search.</p>
         }
       </nav>
 
@@ -103,6 +109,7 @@
           type="button"
           (click)="logout()"
           title="Sign out"
+          aria-label="Sign out"
         >
           <span class="material-icons-outlined">logout</span>
         </button>
@@ -127,26 +134,19 @@
             type="button"
             (click)="toggleSidebar()"
             aria-label="Open navigation"
+            [attr.aria-expanded]="mobileMenuOpen()"
           >
             <span class="material-icons-outlined">menu</span>
           </button>
 
           <div class="page-context">
-            <h1>{{ pageTitle() }}</h1>
+            <strong>{{ pageTitle() }}</strong>
           </div>
         </div>
 
-        <div class="topbar-center" role="search">
-          <span class="material-icons-outlined">manage_search</span>
-          <input
-            type="search"
-            placeholder="Search orders, vendors, customers..."
-            [value]="navQuery()"
-            (input)="setNavQuery($any($event.target).value)"
-          />
-        </div>
+        @defer (on idle) { <app-command-search class="workspace-command-search" /> } @placeholder { <span class="workspace-command-search admin-muted">Search workspace</span> }
 
-        <div class="topbar-actions">
+        <div class="topbar-actions"><span class="connection-state" role="status" [title]="connection.lastResponse() ? 'Last API response: ' + connection.lastResponse()!.toLocaleTimeString() : 'Waiting for API response'">API {{connection.state()}}</span>
           <div class="quick-actions" aria-label="Quick actions">
             @for (link of quickLinks; track link.route) {
               <a [routerLink]="link.route" title="{{ link.label }}">
@@ -156,12 +156,14 @@
             }
           </div>
 
-          <div class="notif-wrapper" (click)="$event.stopPropagation()">
+          <div class="notif-wrapper" (click)="$event.stopPropagation()" (keydown.escape)="$event.stopPropagation()" role="presentation" tabindex="-1">
             <button
               class="icon-button notification-btn"
               type="button"
               (click)="toggleNotif($event)"
               title="Notifications"
+              aria-label="Notifications"
+              [attr.aria-expanded]="notifOpen()"
             >
               <span class="material-icons-outlined">notifications</span>
               @if (unreadCount() > 0) {
@@ -236,11 +238,13 @@
             }
           </div>
 
-          <div class="profile-menu" (click)="toggleProfile($event)">
+          <div class="profile-menu">
             <button
               class="profile-trigger"
               type="button"
               aria-label="Open profile menu"
+              (click)="toggleProfile($event)"
+              [attr.aria-expanded]="profileOpen()"
             >
               <span class="avatar">{{ getInitials() }}</span>
               <span class="profile-trigger-copy">
@@ -253,7 +257,7 @@
             @if (profileOpen()) {
               <div
                 class="dropdown-panel profile-panel"
-                (click)="$event.stopPropagation()"
+                appAdminDialog (appAdminDialogClose)="closeDropdowns()"
               >
                 <div class="profile-card-header">
                   <span class="profile-card-avatar">{{ getInitials() }}</span>
@@ -262,6 +266,12 @@
                     <span>{{ auth.user()?.email }}</span>
                   </div>
                 </div>
+                <a class="profile-action" routerLink="/admin/profile" (click)="closeDropdowns()" (keydown.enter)="closeDropdowns()" (keydown.space)="$event.preventDefault(); closeDropdowns()" role="button">
+                  <span class="material-icons-outlined">account_circle</span>My profile
+                </a>
+                <a class="profile-action" routerLink="/change-password" (click)="closeDropdowns()" (keydown.enter)="closeDropdowns()" (keydown.space)="$event.preventDefault(); closeDropdowns()" role="button">
+                  <span class="material-icons-outlined">lock_outline</span>Change password
+                </a>
                 <button
                   class="profile-action danger"
                   type="button"
@@ -276,7 +286,7 @@
         </div>
       </header>
 
-      <main class="workspace-content">
+      <main class="workspace-content" id="main-content" tabindex="-1">
         <nav class="workspace-breadcrumbs" aria-label="Breadcrumb">
           @for (crumb of breadcrumbs(); track crumb.label + ($index || 0)) {
             @if (crumb.url && $index < breadcrumbs().length - 1) {
@@ -291,7 +301,7 @@
             }
           }
         </nav>
-        <router-outlet />
+        <router-outlet (activate)="listState.activate($event)" (deactivate)="listState.deactivate($event)" />
       </main>
     </section>
   </div>
@@ -305,8 +315,9 @@
     ></button>
   }
 } @else {
-  <router-outlet />
+  <router-outlet (activate)="listState.activate($event)" (deactivate)="listState.deactivate($event)" />
 }
 
+@defer (on idle) { <app-admin-confirm /> }
 <app-toast />
 <app-global-loading />

@@ -1,0 +1,25 @@
+<section class="admin-panel">
+  <header class="page-header"><div><h2>Refund ledger</h2><p class="admin-muted">Requests, approvals and evidence of external refunds.</p></div><div class="header-actions"><button class="btn btn-secondary" (click)="export('refunds')">Export refunds</button><button class="btn btn-secondary" (click)="export('payments')">Export payments</button>@if(access.can('finance.manage')){<button class="btn btn-primary" (click)="open()">Record refund request</button>}</div></header>
+  @if(error()&&!visible){<div class="admin-error" role="alert">{{error()}} <button class="btn btn-secondary" (click)="load()">Retry</button></div>}
+  @if(notice()){<p role="status">{{notice()}}</p>}
+  <label class="field-label refund-status-filter">Status <select class="field-input" [(ngModel)]="status" (ngModelChange)="page=1;load()"><option value="">All statuses</option><option value="requested">Requested</option><option value="approved">Approved</option><option value="processing">Processing</option><option value="processed">Processed</option><option value="failed">Failed</option><option value="cancelled">Cancelled</option></select></label>
+  <p-table [value]="rows()" [loading]="loading()" [paginator]="total()>20" [rows]="20" [lazy]="true" [totalRecords]="total()" (onPage)="page=($event.first||0)/20+1;load()" [scrollable]="true" [tableStyle]="{'min-width':'1040px'}" dataKey="id">
+    <ng-template #header><tr><th style="min-width:180px">Order / customer</th><th class="money-column" style="min-width:120px">Amount</th><th style="min-width:120px">Method</th><th style="min-width:110px">Status</th><th style="min-width:230px">Reason / reference</th><th style="min-width:160px">Requested</th><th class="action-column" style="min-width:100px">Action</th></tr></ng-template>
+    <ng-template #body let-row><tr><td>@if(access.can('orders.view')){<a [routerLink]="['/orders',row.order]">{{row.order_number}}</a>}@else{<strong>{{row.order_number}}</strong>}<div class="admin-muted">{{row.customer_name}}</div></td><td class="money-column">{{row.amount | appCurrency}}</td><td>{{row.method | titlecase}}</td><td>{{row.status | titlecase}}</td><td>{{row.reason}}<div class="admin-muted">{{row.gateway_refund_id || 'No external reference'}}</div></td><td>{{row.created_at | date:'short'}}</td><td class="action-column">@if(access.can('finance.manage')&&row.status!=='processed'&&row.status!=='cancelled'){<button class="btn btn-secondary btn-sm" (click)="open(row)">Review</button>}@else{<span>Recorded</span>}</td></tr></ng-template>
+    <ng-template #emptymessage><tr><td colspan="7">{{error()?'Refund records could not be loaded.':'No refund records match these filters.'}}</td></tr></ng-template>
+  </p-table>
+</section>
+<p-dialog closeAriaLabel="Close dialog" header="Refund record" [(visible)]="visible" [modal]="true" [style]="{width:'560px','max-width':'calc(100vw - 32px)'}" [closable]="!busy()" [draggable]="false">
+  <p class="admin-muted">This records a refund decision or external payment evidence. It does not initiate a bank transfer or gateway refund.</p>
+  @if(error()){<div class="admin-error" role="alert">{{error()}}</div>}
+  <form id="refund-record-form" (ngSubmit)="save()" class="admin-form-grid">
+    <label class="field-label">Order ID <input class="field-input" name="order" [(ngModel)]="form.order" [disabled]="!!selected||!!orderId()" required /></label>
+    <label class="field-label">Amount <input class="field-input" name="amount" type="number" min="0.01" step="0.01" [(ngModel)]="form.amount" [disabled]="!!selected" required /></label>
+    <label class="field-label">Method <select class="field-input" name="method" [(ngModel)]="form.method" [disabled]="!!selected"><option value="manual">Manual transfer evidence</option><option value="razorpay">Razorpay refund evidence</option><option value="wallet">Wallet request</option></select></label>
+    <label class="field-label">Status <select class="field-input" name="status" [(ngModel)]="form.status">@for(choice of choices();track choice){<option [value]="choice">{{choice | titlecase}}</option>}</select></label>
+    <label class="field-label full-width">Reason <textarea class="field-input" name="reason" [(ngModel)]="form.reason" required rows="3"></textarea></label>
+    @if(selected){<label class="field-label">External reference <input class="field-input" name="reference" [(ngModel)]="form.gateway_refund_id" [required]="form.status==='processed'" /></label>}
+    @if(form.status==='failed'){<label class="field-label">Failure reason <textarea class="field-input" name="failure" [(ngModel)]="form.failure_reason" required></textarea></label>}
+  </form>
+  <ng-template #footer><button type="button" class="btn btn-secondary" (click)="visible=false" [disabled]="busy()">Cancel</button><button class="btn btn-primary" type="submit" form="refund-record-form" [disabled]="busy()">{{busy()?'Saving…':'Save record'}}</button></ng-template>
+</p-dialog>

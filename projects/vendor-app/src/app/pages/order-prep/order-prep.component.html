@@ -1,149 +1,125 @@
-<div class="prep-page">
-  <a routerLink="/live-orders" class="back-link">
-    <span class="material-icons-outlined">arrow_back</span>
-    Live Orders
-  </a>
-
-  @if (loading()) {
-    <div class="state-card">Loading prep screen...</div>
-  } @else if (order()) {
-    <section class="prep-header">
-      <div>
-        <h1>Prep #{{ order()!.order_number }}</h1>
-        <p>
-          {{ order()!.customer_name }} - {{ elapsedMinutes() }} minutes since
-          order placed
-        </p>
-      </div>
-      <span class="status">{{ order()!.status | titlecase }}</span>
-    </section>
-
-    <section class="prep-command-strip">
-      <div>
-        <span class="material-icons-outlined">checklist</span>
+<div class="workspace-page">
+  <header class="page-heading">
+    <div>
+      <p class="eyebrow">Orders</p>
+      <h1>Prepare order {{ order() ? "#" + order()!.order_number : "" }}</h1>
+      <p>Checklist progress is saved on this device for your account.</p>
+    </div>
+    <a routerLink="/live-orders" class="btn btn-secondary">Live orders</a>
+  </header>
+  @if(error()){
+  <p class="workspace-error" role="alert">{{ error() }}</p>
+  <button type="button" class="btn btn-secondary" (click)="load()">Retry</button
+  >}@if(loading()&&!order()){
+  <div class="workspace-state" role="status">Loading preparation…</div>
+  }@if(order();as current){
+  <section class="workspace-card operating-card">
+    <div>
+      <h3>{{ current.customer_name || "Customer" }}</h3>
+      <p>
+        {{ elapsed() }} minutes since placed
+      </p>
+    </div>
+    <span class="status-pill">{{
+      current.status.replaceAll("_", " ") | titlecase
+    }}</span>
+  </section>
+  @if(storageError()){
+  <p class="workspace-error" role="alert">{{ storageError() }}</p>
+  }
+  <div class="workspace-two-column">
+    <section class="workspace-card">
+      <header class="workspace-section-heading">
+        <h3>Item checklist</h3>
         <strong>{{ progress() }}%</strong>
-        <small>Checklist done</small>
-      </div>
-      <div>
-        <span class="material-icons-outlined">timer</span>
-        <strong>{{ elapsedMinutes() }} min</strong>
-        <small>Since placed</small>
-      </div>
-      <div>
-        <span class="material-icons-outlined">payments</span>
-        <strong>{{ order()!.total | appCurrency }}</strong>
-        <small>Order total</small>
-      </div>
+      </header>
+      <progress
+        [value]="progress()"
+        max="100"
+        aria-label="Item preparation progress"
+      ></progress
+      >@for(item of current.items;track item.id){<label class="prep-check-row"
+        ><input
+          type="checkbox"
+          [checked]="checklist()[item.id]?.checked"
+          [disabled]="
+            current.status === 'delivered' || current.status === 'cancelled'
+          "
+          (change)="toggle(item.id, $any($event.target).checked)"
+        /><span
+          ><strong>{{ item.product_name }}</strong
+          ><small
+            >{{ item.quantity }} units @if(item.pack_size){ · {{ item.pack_size }} }</small
+          ></span
+        ></label
+      >}
+      <p class="workspace-muted">
+        This checklist records local preparation progress; it does not reserve
+        stock or update the server.
+      </p>
     </section>
-
-    <div class="prep-grid">
-      <section class="panel">
-        <div class="panel-head">
-          <h2>Item Checklist</h2>
-          <strong>{{ progress() }}%</strong>
-        </div>
-        <div class="progress"><span [style.width.%]="progress()"></span></div>
-        @for (item of order()!.items; track item.id) {
-          <label class="check-row">
-            <input
-              type="checkbox"
-              [checked]="checkedItems()[item.id]"
-              (change)="toggleItem(item.id, $any($event.target).checked)"
-            />
-            <span>
-              <strong>{{ item.product_name }}</strong>
-              <em
-                >{{ item.quantity }} x
-                {{ item.product_price | appCurrency }}</em
-              >
-            </span>
-            <b>{{ item.subtotal | appCurrency }}</b>
-          </label>
-        }
-      </section>
-
-      <section class="panel">
-        <h2>Prep Controls</h2>
-        <div class="control-list">
-          @if (order()!.status === "placed") {
-            <button [disabled]="busy()" (click)="accept()">Accept Order</button>
-          }
-          @if (order()!.status === "confirmed") {
-            <button [disabled]="busy()" (click)="startPreparing()">
-              Start Preparing
-            </button>
-          }
-          @if (order()!.status === "preparing") {
-            <button
-              [disabled]="busy() || progress() < 100"
-              (click)="markReady()"
-            >
-              Mark Ready
-            </button>
-          }
-          @if (
-            order()!.status === "ready" &&
-            !order()!.delivery_partner &&
-            !["searching", "notified"].includes(
-              order()!.assignment_status || ""
-            )
-          ) {
-            <button [disabled]="busy()" (click)="findDriver()">
-              Find Driver
-            </button>
-          }
-          @if (
-            ["searching", "notified"].includes(order()!.assignment_status || "")
-          ) {
-            <button
-              class="secondary"
-              [disabled]="busy()"
-              (click)="cancelSearch()"
-            >
-              Cancel Driver Search
-            </button>
-          }
-        </div>
-
-        <div class="otp-box">
-          <h3>Pickup OTP</h3>
-          <p>Verify handoff when the delivery partner arrives.</p>
-          <input
+    <section class="workspace-card">
+      <h3>Next actions</h3>
+      <div class="workspace-actions">
+        @for(action of actions;track
+        action.key){@if(store.can(current,action.key)){<button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="
+            store.pending().has(current.id)
+          "
+          (click)="run(action.key)"
+        >
+          {{ action.label }}</button
+        >}}
+      </div>
+      @if(current.status==='preparing'&&progress()<100){
+      <p class="workspace-muted">
+        Item checks are optional. Mark ready when packing is complete.
+      </p>
+      }@if(store.errors().get(current.id)){
+      <p class="workspace-error" role="alert">
+        {{ store.errors().get(current.id) }}
+      </p>
+      }@if(store.can(current,'verify_pickup_otp')){
+      <form class="workspace-form pickup-form" (ngSubmit)="verify()">
+        <label class="workspace-field"
+          >Pickup OTP<input
+            name="otp"
             type="text"
             inputmode="numeric"
+            pattern="[0-9]{6}"
             maxlength="6"
             [(ngModel)]="otp"
-            placeholder="e.g. 123456"
-          />
-          <small class="field-hint"
-            >Ask the delivery partner for the 6-digit pickup code before giving
-            the order.</small
-          >
-          @if (otpError()) {
-            <div class="error">{{ otpError() }}</div>
-          }
-          <button [disabled]="busy() || !otp.trim()" (click)="verifyOtp()">
-            Verify Pickup
-          </button>
-        </div>
-      </section>
-
-      <section class="panel">
-        <h2>Customer Notes</h2>
-        <p class="notes">{{ order()!.notes || "No customer notes." }}</p>
-        <h2>Delivery</h2>
-        <p>{{ order()!.delivery_address.address_line1 }}</p>
-        <p>
-          {{ order()!.delivery_address.city }}
-          {{ order()!.delivery_address.postal_code }}
+            autocomplete="off"
+            placeholder="Six-digit code"
+        /></label>
+        <p class="workspace-muted">
+          Ask the assigned delivery partner for their code before handing over
+          the order.
         </p>
-      </section>
-
-      <section class="panel">
-        <h2>Order Total</h2>
-        <div class="amount">{{ order()!.total | appCurrency }}</div>
-        <a [routerLink]="['/orders', order()!.id]">Open full order detail</a>
-      </section>
-    </div>
+        @if(otpError()){
+        <p class="workspace-error" role="alert">{{ otpError() }}</p>
+        }<button
+          type="submit"
+          class="btn btn-primary"
+          [disabled]="store.pending().has(current.id)"
+        >
+          Verify pickup
+        </button>
+      </form>
+      }
+      <p class="workspace-muted">
+        Driver search: {{ current.assignment_status || "Not started" }}
+      </p>
+    </section>
+  </div>
+  <section class="workspace-card">
+    <h3>Customer notes</h3>
+    <p>{{ current.notes || "No customer notes." }}</p>
+    <a class="btn btn-secondary" [routerLink]="['/orders', current.id]"
+      >Open full order details</a
+    >
+  </section>
   }
 </div>

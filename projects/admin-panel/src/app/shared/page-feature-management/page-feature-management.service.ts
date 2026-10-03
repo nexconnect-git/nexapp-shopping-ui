@@ -1,4 +1,4 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { computed, Injectable, signal } from '@angular/core';
 import { ApiService } from '@shared/public-api';
 import {
   ClonePageForm,
@@ -57,6 +57,8 @@ export class PageFeatureManagementService {
   readonly toast = signal('');
   readonly loading = signal(true);
   readonly ready = signal(false);
+  readonly saving = signal(false);
+  readonly error = signal('');
 
   readonly requireAuthentication = signal(
     this.initialState.globalSettings.requireAuthentication,
@@ -121,7 +123,8 @@ export class PageFeatureManagementService {
           partialCount: app.pages.filter((page) => page.status === 'partial')
             .length,
         };
-      });
+      })
+      .filter(row => row.pages.length > 0 || (!query && status === 'all'));
   });
 
   loadApplications(): ManagedApplication[] {
@@ -139,7 +142,7 @@ export class PageFeatureManagementService {
 
   updatePageStatus(pageId: string, status: PageStatus): void {
     this.updatePage(pageId, { status, lastUpdated: 'Just now' });
-    this.showToast(`Page ${status}`);
+    this.showToast('Saving page status…');
   }
 
   updateFeatureStatus(
@@ -210,7 +213,7 @@ export class PageFeatureManagementService {
     });
     this.persistState();
     this.closeModal();
-    this.showToast('Page settings saved');
+    this.showToast('Saving page settings…');
   }
 
   clonePageConfig(page: ManagedPage, form: ClonePageForm): void {
@@ -219,6 +222,7 @@ export class PageFeatureManagementService {
       id: `${page.id}-copy-${Date.now()}`,
       name: form.name,
       route: form.route,
+      status: this.enabledByDefault() ? 'enabled' : 'disabled',
       lastUpdated: 'Just now',
       features: form.copyFeatures
         ? page.features.map((feature) => ({
@@ -235,7 +239,7 @@ export class PageFeatureManagementService {
     );
     this.persistState();
     this.closeModal();
-    this.showToast('Page cloned');
+    this.showToast('Saving configuration copy. No runtime route is created.');
   }
 
   clonePage(page: ManagedPage, form: ClonePageForm): void {
@@ -282,7 +286,7 @@ export class PageFeatureManagementService {
     );
     this.persistState();
     this.selectedPageIds.set([]);
-    this.showToast(`Selected pages ${status}`);
+    this.showToast('Saving selected page status…');
   }
 
   deleteSelected(): void {
@@ -300,7 +304,7 @@ export class PageFeatureManagementService {
     );
     this.persistState();
     this.selectedPageIds.set([]);
-    this.showToast('Selected pages deleted');
+    this.showToast('Saving configuration removal…');
   }
 
   exportSelected(): void {
@@ -334,15 +338,15 @@ export class PageFeatureManagementService {
   }
 
   resetDefaults(): void {
-    this.apps.set(this.clone(this.defaultApplications));
+    this.apps.update(apps => apps.map(app => ({...app, pages: app.pages.map(page => ({...page,status: 'enabled' as const}))})));
     this.applyGlobalSettings(this.defaultGlobalSettings);
     this.persistState();
-    this.showToast('Defaults restored');
+    this.showToast('Saving restored defaults…');
   }
 
   saveGlobalSettings(): void {
     this.persistState();
-    this.showToast('Global settings saved');
+    this.showToast('Saving global configuration…');
   }
 
   openModal(
@@ -368,7 +372,7 @@ export class PageFeatureManagementService {
       })),
     );
     this.persistState();
-    this.showToast(`Pages ${status}`);
+    this.showToast('Saving page status…');
   }
 
   private updatePage(pageId: string, patch: Partial<ManagedPage>): void {
@@ -436,6 +440,8 @@ export class PageFeatureManagementService {
   }
 
   private persistState(): void {
+    if(!this.ready()||this.saving()){this.showToast('Configuration is not ready to save.');return;}
+    this.saving.set(true);
     const payload: PersistedPageFeatureState = {
       apps: this.apps(),
       globalSettings: this.currentGlobalSettings(),
@@ -449,8 +455,8 @@ export class PageFeatureManagementService {
         global_settings: payload.globalSettings,
       })
       .subscribe({
-        next: (response) => this.applyRemoteConfig(response),
-        error: () => this.showToast('Saved locally. Backend sync failed.'),
+        next: (response) => {this.saving.set(false);this.applyRemoteConfig(response);this.showToast('Configuration saved to server.');},
+        error: () => {this.saving.set(false);this.showToast('Server save failed. Reloading the saved configuration.');this.loadRemoteConfig();},
       });
   }
 
@@ -482,7 +488,9 @@ export class PageFeatureManagementService {
     return JSON.parse(JSON.stringify(value)) as T;
   }
 
-  private loadRemoteConfig(): void {
+  loadRemoteConfig(): void {
+    this.ready.set(false);
+    this.error.set('');
     this.loading.set(true);
     this.api.getAdminPageFeatureConfig().subscribe({
       next: (response) => {
@@ -492,27 +500,20 @@ export class PageFeatureManagementService {
             : this.clone(this.defaultApplications);
         this.apps.set(applications);
         this.applyGlobalSettings(this.remoteGlobalSettings(response));
-        if (
-          !Array.isArray(response?.applications) ||
-          response.applications.length === 0
-        ) {
-          this.persistState();
-        }
         this.ready.set(true);
         this.loading.set(false);
       },
       error: () => {
-        const localState = this.loadPersistedState();
-        this.apps.set(localState.apps);
-        this.applyGlobalSettings(localState.globalSettings);
-        this.ready.set(true);
+        this.apps.set([]);
+        this.error.set('Could not load saved page configuration. Retry to reconnect.');
+        this.ready.set(false);
         this.loading.set(false);
       },
     });
   }
 
   private applyRemoteConfig(response: any): void {
-    if (Array.isArray(response?.applications) && response.applications.length) {
+    if (Array.isArray(response?.applications)) {
       this.apps.set(response.applications);
     }
     this.applyGlobalSettings(this.remoteGlobalSettings(response));

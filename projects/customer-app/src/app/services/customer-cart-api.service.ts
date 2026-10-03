@@ -1,10 +1,10 @@
 import { inject, Injectable } from '@angular/core';
-import { ApiService } from '@shared/lib/services/api.service';
+import { CartStateService } from '@shared/lib/services/cart-state.service';
 import { CustomerApiClientService } from './customer-api-client.service';
 
 @Injectable({ providedIn: 'root' })
 export class CustomerCartApiService {
-  private readonly sharedApi = inject(ApiService);
+  private readonly cartState = inject(CartStateService);
   private readonly api = inject(CustomerApiClientService);
 
   getCart() {
@@ -110,11 +110,14 @@ export class CustomerCartApiService {
   }
 
   setCartCount(count: number) {
-    this.sharedApi.cartCount.set(count);
+    this.cartState.cartCount.set(count);
   }
 
   refreshCartCount() {
-    this.sharedApi.refreshCartCount();
+    this.getCart().subscribe({
+      next: (cart) => this.cartState.cartCount.set((cart.items || []).length),
+      error: () => {},
+    });
   }
 
   getOrders() {

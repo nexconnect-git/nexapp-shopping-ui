@@ -73,6 +73,17 @@ export class SessionStore {
     );
   }
 
+  getSharedSession(): { access: string; user: unknown } | null {
+    const access = localStorage.getItem(this.tokenKey);
+    const user = localStorage.getItem(this.userKey);
+    if (!access || !user) return null;
+    try {
+      return { access, user: JSON.parse(user) };
+    } catch {
+      return null;
+    }
+  }
+
   getUser<T = unknown>(): T | null {
     const raw = this.getUserRaw();
     if (!raw) return null;

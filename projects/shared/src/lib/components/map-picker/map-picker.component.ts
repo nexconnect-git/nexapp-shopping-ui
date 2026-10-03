@@ -47,6 +47,7 @@ declare const google: any;
 export class MapPickerComponent implements AfterViewInit, OnDestroy {
   @Input() initialLat = 28.6139;
   @Input() initialLng = 77.209;
+  @Input() emitInitialLocation = true;
   @Input() height = '300px';
   @Input() apiKey = '';
   @Input() mapId = '';
@@ -194,7 +195,7 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
 
     const lat = +this.initialLat;
     const lng = +this.initialLng;
-    if (lat !== 28.6139 || lng !== 77.209) {
+    if (this.emitInitialLocation && (lat !== 28.6139 || lng !== 77.209)) {
       this.reverseGeocode(lat, lng);
     }
   }

@@ -17,6 +17,7 @@ export const VENDOR_NAV_GROUPS: VendorNavGroup[] = [
       { label: 'Dashboard', icon: 'space_dashboard', route: '/', exact: true },
       { label: 'Live Orders', icon: 'view_kanban', route: '/live-orders' },
       { label: 'Inventory', icon: 'inventory', route: '/inventory' },
+      { label: 'Order History', icon: 'receipt_long', route: '/orders' },
     ],
   },
   {
@@ -28,7 +29,6 @@ export const VENDOR_NAV_GROUPS: VendorNavGroup[] = [
         icon: 'playlist_add',
         route: '/catalog-requests',
       },
-      { label: 'Orders', icon: 'receipt_long', route: '/orders' },
       {
         label: 'Promotions',
         icon: 'confirmation_number',
@@ -39,9 +39,19 @@ export const VENDOR_NAV_GROUPS: VendorNavGroup[] = [
   {
     label: 'Growth',
     items: [
-      { label: 'Analytics', icon: 'monitoring', route: '/analytics' },
-      { label: 'Payouts', icon: 'payments', route: '/payouts' },
+      { label: 'Analytics', icon: 'bar_chart', route: '/analytics' },
       { label: 'Reviews', icon: 'reviews', route: '/reviews' },
+    ],
+  },
+  {
+    label: 'Finance',
+    items: [
+      { label: 'Payouts', icon: 'payments', route: '/payouts' },
+      {
+        label: 'Transactions',
+        icon: 'account_balance_wallet',
+        route: '/transactions',
+      },
     ],
   },
   {

@@ -1,129 +1,176 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
-  VendorApi,
-  formatFormErrors,
-  parseFormErrors,
-  ToastService,
+  apiErrorMessage,
+  VendorTicket,
+  VendorWorkspaceApi,
 } from '@shared/public-api';
-
+import { vendorListState } from '../../services/vendor-list-state';
+import { WorkspacePagerComponent } from '../../components/workspace-pager.component';
+import { WorkspaceDialogComponent } from '../../components/workspace-dialog.component';
 @Component({
   selector: 'app-support',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    WorkspacePagerComponent,
+    WorkspaceDialogComponent,
+  ],
   templateUrl: './support.component.html',
   styleUrl: './support.component.scss',
 })
 export class SupportComponent implements OnInit {
-  private api = inject(VendorApi);
-  private toast = inject(ToastService);
-
-  tickets = signal<any[]>([]);
-  loading = signal(true);
-  creating = signal(false);
-  createdMessage = signal('');
-  formError = signal('');
-  fieldErrors = signal<Record<string, string>>({});
-
+  private readonly api = inject(VendorWorkspaceApi);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly destroy = inject(DestroyRef);
+  readonly list = vendorListState<VendorTicket>((query) =>
+    this.api.tickets(query)
+  );
+  readonly detail = signal<VendorTicket | null>(null);
+  readonly detailId = signal('');
+  readonly detailLoading = signal(false);
+  readonly detailError = signal('');
+  readonly dialogReturnFocus = signal<HTMLElement | null>(null);
+  readonly creating = signal(false);
+  readonly createOpen = signal(false);
+  readonly formError = signal('');
+  readonly created = signal('');
+  search = '';
+  status = '';
+  category = '';
+  private detailGeneration = 0;
+  private lastListQuery = '';
+  form = { subject: '', category: 'other', message: '', priority: 'medium' };
   readonly categories = [
-    { value: 'other', label: 'General Support' },
-    { value: 'billing', label: 'Billing & Payouts' },
-    { value: 'technical', label: 'Technical Issue' },
-    { value: 'order', label: 'Order Dispute' },
-    { value: 'account', label: 'Account Help' },
+    { key: 'other', label: 'General support' },
+    { key: 'billing', label: 'Billing & payouts' },
+    { key: 'technical', label: 'Technical issue' },
+    { key: 'order', label: 'Order dispute' },
+    { key: 'account', label: 'Account help' },
   ];
-
-  form: any = { subject: '', category: 'other', message: '' };
-
-  ngOnInit() {
-    this.loadTickets();
+  ngOnInit(): void {
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe((params) => {
+        this.list.page.set(Math.max(1, Number(params.get('page')) || 1));
+        this.search = params.get('search') || '';
+        this.status = params.get('status') || '';
+        this.category = params.get('category') || '';
+        const listQuery = JSON.stringify([this.list.page(), this.search, this.status, this.category]);
+        if (listQuery !== this.lastListQuery) {
+          this.lastListQuery = listQuery;
+          this.list.load({ search: this.search, status: this.status, category: this.category });
+        }
+        const ticket = params.get('ticket') || '';
+        this.detailId.set(ticket);
+        if (ticket) this.loadDetail(ticket);
+        else {
+          this.detailGeneration++;
+          this.detail.set(null);
+          this.detailError.set('');
+        }
+      });
   }
-
-  loadTickets() {
-    this.loading.set(true);
-    this.api.getSupportTickets().subscribe({
-      next: (res) => {
-        this.tickets.set(res.results || res);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.toast.show('Failed to load tickets.', 'error');
-        this.loading.set(false);
+  query(page = 1): void {
+    void this.router.navigate([], {
+      queryParams: {
+        page,
+        search: this.search || null,
+        status: this.status || null,
+        category: this.category || null,
+        ticket: null,
       },
     });
   }
-
-  submitTicket() {
-    this.createdMessage.set('');
+  openCreate(event: Event): void {
+    this.dialogReturnFocus.set(event.currentTarget as HTMLElement);
+    this.createOpen.set(true);
+  }
+  open(ticket: VendorTicket, event: Event): void {
+    this.dialogReturnFocus.set(event.currentTarget as HTMLElement);
+    void this.router.navigate([], {
+      queryParams: { ticket: ticket.id },
+      queryParamsHandling: 'merge',
+    });
+  }
+  close(): void {
+    void this.router.navigate([], {
+      queryParams: { ticket: null },
+      queryParamsHandling: 'merge',
+    });
+  }
+  loadDetail(id = this.detailId()): void {
+    const generation = ++this.detailGeneration;
+    this.detail.set(null);
+    this.detailError.set('');
+    this.detailLoading.set(true);
+    this.api
+      .ticket(id)
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: (ticket) => {
+          if (generation !== this.detailGeneration) return;
+          this.detail.set(ticket);
+          this.detailLoading.set(false);
+        },
+        error: (error) => {
+          if (generation === this.detailGeneration) {
+            this.detailError.set(
+              apiErrorMessage(error, 'Ticket detail could not be loaded.')
+            );
+            this.detailLoading.set(false);
+          }
+        },
+      });
+  }
+  submit(): void {
+    if (this.creating()) return;
     this.formError.set('');
-    const validationErrors = this.validateForm();
-    this.fieldErrors.set(validationErrors);
-    if (Object.keys(validationErrors).length) {
-      this.formError.set(
-        'Please fix the highlighted fields before submitting.'
-      );
+    if (!this.form.subject.trim() || !this.form.message.trim()) {
+      this.formError.set('Enter a subject and a message.');
       return;
     }
     this.creating.set(true);
-    const payload = {
-      ...this.form,
-      subject: this.form.subject.trim(),
-      message: this.form.message.trim(),
-      category: this.form.category || 'other',
-    };
-    this.api.createSupportTicket(payload).subscribe({
-      next: () => {
-        this.createdMessage.set(
-          'Support ticket created successfully. Admin replies will appear in conversation history.'
-        );
-        this.toast.show('Support ticket created successfully.', 'success');
-        this.creating.set(false);
-        this.form = { subject: '', category: 'other', message: '' };
-        this.loadTickets();
-      },
-      error: (err) => {
-        const parsed = parseFormErrors(err?.error, { description: 'message' });
-        this.fieldErrors.set(parsed.fieldErrors);
-        const message = formatFormErrors(
-          err?.error,
-          'Failed to create ticket. Please try again.',
-          { description: 'Message' }
-        );
-        this.formError.set(message);
-        this.toast.show(message, 'error');
-        this.creating.set(false);
-      },
-    });
-  }
-
-  clearFieldError(field: string): void {
-    if (!this.fieldErrors()[field]) return;
-    this.fieldErrors.update((current) => {
-      const next = { ...current };
-      delete next[field];
-      return next;
-    });
-    this.formError.set('');
-  }
-
-  fieldError(field: string): string {
-    return this.fieldErrors()[field] || '';
-  }
-
-  canSubmitTicket(): boolean {
-    return (
-      !this.creating() &&
-      Object.keys(this.validateForm()).length === 0 &&
-      Object.keys(this.fieldErrors()).length === 0
-    );
-  }
-
-  private validateForm(): Record<string, string> {
-    const errors: Record<string, string> = {};
-    if (!this.form.category) errors['category'] = 'Category is required.';
-    if (!this.form.subject.trim()) errors['subject'] = 'Subject is required.';
-    if (!this.form.message.trim()) errors['message'] = 'Message is required.';
-    return errors;
+    this.api
+      .createTicket({
+        ...this.form,
+        subject: this.form.subject.trim(),
+        message: this.form.message.trim(),
+      })
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: (ticket) => {
+          this.lastListQuery = '';
+          this.creating.set(false);
+          this.createOpen.set(false);
+          this.form = {
+            subject: '',
+            category: 'other',
+            message: '',
+            priority: 'medium',
+          };
+          this.created.set(
+            'Support ticket created. Its status and admin response are available in ticket details.'
+          );
+          void this.router.navigate([], {
+            queryParams: { ticket: ticket.id, page: 1 },
+            queryParamsHandling: 'merge',
+          });
+        },
+        error: (error) => {
+          this.formError.set(
+            apiErrorMessage(
+              error,
+              'Support ticket was not created. Your message remains for retry.'
+            )
+          );
+          this.creating.set(false);
+        },
+      });
   }
 }

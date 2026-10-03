@@ -1,3 +1,4 @@
+@if(error()){<p class="admin-error" role="alert">{{error()}}<button class="btn btn-secondary" (click)="refresh()">Retry</button></p>}
 @if (profileConfig()) {
   <nc-dynamic-profile-page
     [config]="profileConfig()!"
@@ -5,3 +6,5 @@
     (editSection)="editSection($event)"
   />
 }
+
+<app-profile-context entityType="admin-user" [entityId]="auth.user()?.id || ''" />

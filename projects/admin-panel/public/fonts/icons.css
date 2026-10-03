@@ -1,0 +1,35 @@
+@font-face {
+  font-family: "Material Icons Outlined";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("material-icons-outlined.otf") format("opentype");
+}
+@font-face {
+  font-family: "Material Symbols Rounded";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("material-symbols-rounded.ttf") format("truetype");
+}
+.material-icons-outlined,
+.material-symbols-rounded,
+.fd-icon {
+  display: inline-block;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "liga";
+  font-variant-ligatures: normal;
+}
+.material-icons-outlined { font-family: "Material Icons Outlined"; }
+.material-symbols-rounded, .fd-icon {
+  font-family: "Material Symbols Rounded";
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+}

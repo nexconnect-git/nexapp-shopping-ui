@@ -1,3 +1,6 @@
+import { AdminDialogDirective } from '../../shared/admin-dialog.directive';
+import { toLocalDateTimeInput } from '../../shared/admin-date-input';
+import { AdminCanDirective } from '../../shared/admin-can.directive';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -33,7 +36,7 @@ interface CouponForm {
 @Component({
   selector: 'app-coupons',
   standalone: true,
-  imports: [
+  imports: [AdminDialogDirective,AdminCanDirective,
     CommonModule,
     FormsModule,
     DynamicTableComponent,
@@ -60,14 +63,14 @@ export class CouponsComponent implements OnInit {
   page = 1;
 
   tableColumns = [
-    { key: 'code', label: 'Code', flex: '1fr' },
-    { key: 'details', label: 'Details', flex: '1.5fr' },
-    { key: 'discount', label: 'Discount', flex: '1fr' },
-    { key: 'placement', label: 'Placement', flex: '1fr' },
+    { key: 'code', label: 'Code', flex: '1fr', minWidth: 140 },
+    { key: 'details', label: 'Details', flex: '1.5fr', minWidth: 180 },
+    { key: 'discount', label: 'Discount', flex: '1fr', minWidth: 130 },
+    { key: 'placement', label: 'Placement', flex: '1fr', minWidth: 160 },
     { key: 'scope', label: 'Scope', flex: '1fr' },
     { key: 'limits', label: 'Used / Limit', flex: '1fr' },
-    { key: 'status', label: 'Status', flex: '1.5fr' },
-    { key: 'actions', label: 'Actions', flex: '0.5fr' },
+    { key: 'status', label: 'Status', flex: '1.5fr', minWidth: 160 },
+    { key: 'actions', label: 'Actions', flex: '0.5fr', minWidth: 104 },
   ];
 
   form: CouponForm = this.blankForm();
@@ -91,6 +94,10 @@ export class CouponsComponent implements OnInit {
     { value: 'bolt', label: 'Fast deal' },
     { value: 'redeem', label: 'Reward' },
   ];
+
+  materialIcon(icon: string | null): string {
+    return (icon || 'local_offer').replaceAll('-', '_');
+  }
 
   ngOnInit() {
     this.load();
@@ -130,8 +137,8 @@ export class CouponsComponent implements OnInit {
       max_discount_amount: null,
       usage_limit: null,
       per_user_limit: 1,
-      valid_from: now.toISOString().slice(0, 16),
-      valid_until: later.toISOString().slice(0, 16),
+      valid_from: toLocalDateTimeInput(now),
+      valid_until: toLocalDateTimeInput(later),
       is_active: true,
       vendor: null,
       display_section: 'more',
@@ -161,8 +168,8 @@ export class CouponsComponent implements OnInit {
       max_discount_amount: c.max_discount_amount,
       usage_limit: c.usage_limit,
       per_user_limit: c.per_user_limit,
-      valid_from: c.valid_from?.slice(0, 16) || '',
-      valid_until: c.valid_until?.slice(0, 16) || '',
+      valid_from: toLocalDateTimeInput(c.valid_from),
+      valid_until: toLocalDateTimeInput(c.valid_until),
       is_active: c.is_active,
       vendor: c.vendor || null,
       display_section: c.display_section || 'more',
@@ -241,9 +248,10 @@ export class CouponsComponent implements OnInit {
   }
 
   discountLabel(c: any): string {
-    if (c.discount_type === 'percentage') return `${c.discount_value}% OFF`;
+    const value = Number(c.discount_value);
+    if (c.discount_type === 'percentage') return `${new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 }).format(value)}% OFF`;
     if (c.discount_type === 'free_delivery') return 'FREE DELIVERY';
-    return `Rs.${c.discount_value} OFF`;
+    return `${new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(value)} OFF`;
   }
 
   scopeLabel(c: any): string {

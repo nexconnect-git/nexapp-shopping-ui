@@ -1,117 +1,163 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import {
-  VendorApi,
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import {
+  apiErrorMessage,
   AppCurrencyPipe,
-  ToastService,
   VendorAnalytics,
+  VendorPayoutPage,
+  VendorWorkspaceApi,
 } from '@shared/public-api';
-import { forkJoin } from 'rxjs';
-
 @Component({
   selector: 'app-sales-report',
   standalone: true,
-  imports: [CommonModule, FormsModule, AppCurrencyPipe],
+  imports: [CommonModule, FormsModule, RouterLink, AppCurrencyPipe],
   templateUrl: './sales-report.component.html',
   styleUrl: './sales-report.component.scss',
 })
 export class SalesReportComponent implements OnInit {
-  private api = inject(VendorApi);
-  private toast = inject(ToastService);
-
-  loading = signal(true);
-
-  stats = signal<VendorAnalytics | null>(null);
-  dateRange = signal('30'); // days
-
-  // Settlement summary metrics
-  totalSettled = signal(0);
-  pendingSettled = signal(0);
-  failedSettled = signal(0);
-
-  ngOnInit() {
-    this.loadStats();
+  private readonly api = inject(VendorWorkspaceApi);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly destroy = inject(DestroyRef);
+  private generation = 0;
+  readonly stats = signal<VendorAnalytics | null>(null);
+  readonly days = signal('30');
+  readonly loading = signal(false);
+  readonly error = signal('');
+  readonly finance = signal<VendorPayoutPage | null>(null);
+  readonly financeLoading = signal(false);
+  readonly financeError = signal('');
+  readonly maximumMonthly = computed(() =>
+    Math.max(
+      1,
+      ...(this.stats()?.monthly_data.map((month) => Number(month.revenue)) ||
+        [])
+    )
+  );
+  readonly maximumProduct = computed(() =>
+    Math.max(
+      1,
+      ...(this.stats()?.top_products.map((product) =>
+        Number(product.revenue)
+      ) || [])
+    )
+  );
+  ngOnInit(): void {
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe((params) => {
+        const days = params.get('days') || '30';
+        this.days.set(['7', '30', '90', 'all'].includes(days) ? days : '30');
+        this.loadStats();
+      });
+    this.loadFinance();
   }
-
-  loadStats() {
+  range(value: string): void {
+    void this.router.navigate([], { queryParams: { days: value } });
+  }
+  loadStats(): void {
+    const generation = ++this.generation;
     this.loading.set(true);
-    forkJoin({
-      stats: this.api.getVendorAnalytics({ days: this.dateRange() }),
-      payouts: this.api.getVendorPayouts(),
-    }).subscribe({
-      next: (res: any) => {
-        this.stats.set(res.stats);
-
-        let settled = 0;
-        let pending = 0;
-        let failed = 0;
-
-        const allPayouts = res.payouts.results || res.payouts || [];
-        for (const p of allPayouts) {
-          const amt = parseFloat(p.net_payout || 0);
-          if (p.status === 'paid' || p.status === 'verified') {
-            settled += amt;
-          } else if (p.status === 'failed') {
-            failed += amt;
-          } else {
-            // all other states (pending_approval, scheduled, pending_verify) are pending
-            pending += amt;
+    this.error.set('');
+    this.api
+      .analytics(this.days())
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: (stats) => {
+          if (generation !== this.generation) return;
+          this.stats.set(stats);
+          this.loading.set(false);
+        },
+        error: (failure) => {
+          if (generation === this.generation) {
+            this.loading.set(false);
+            this.error.set(
+              apiErrorMessage(failure, 'Sales analytics could not be loaded.')
+            );
           }
-        }
-
-        this.totalSettled.set(settled);
-        this.pendingSettled.set(pending);
-        this.failedSettled.set(failed);
-
-        this.loading.set(false);
-      },
-      error: () => {
-        this.toast.show('Failed to load sales report.', 'error');
-        this.loading.set(false);
-      },
-    });
+        },
+      });
   }
-
-  onRangeChange() {
-    this.loadStats();
+  loadFinance(): void {
+    this.financeLoading.set(true);
+    this.financeError.set('');
+    this.api
+      .payouts({ page: 1 })
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: (finance) => {
+          this.finance.set(finance);
+          this.financeLoading.set(false);
+        },
+        error: (failure) => {
+          this.financeLoading.set(false);
+          this.financeError.set(
+            apiErrorMessage(failure, 'Settlement summary could not be loaded.')
+          );
+        },
+      });
   }
-
-  mathMax(a: number, b: number): number {
-    return Math.max(a, b);
-  }
-
-  exportCsv() {
+  exportCsv(): void {
     const stats = this.stats();
-    if (!stats) return;
-    const rows = [
+    if (!stats || this.loading() || this.error()) return;
+    const rows: unknown[][] = [
       ['Metric', 'Value'],
       ['Period', stats.period_label],
-      ['Total revenue', stats.total_revenue],
-      ['Total orders', stats.total_orders],
+      ['Delivered revenue', stats.total_revenue],
+      ['Placed orders', stats.total_orders],
       ['Delivered orders', stats.delivered_orders],
-      ['Average order value', stats.average_order_value],
+      ['Average delivered order', stats.average_order_value],
       ['Repeat customers', stats.repeat_customers],
-      ['Coupon revenue influenced', stats.coupon_contribution?.revenue || 0],
-      ['Coupon uses', stats.coupon_contribution?.usage_count || 0],
-      ['Low stock products', stats.low_stock_impact?.low_stock_count || 0],
+      [
+        'Coupon influenced delivered revenue',
+        stats.coupon_contribution.revenue,
+      ],
+      ['Coupon discount', stats.coupon_contribution.discount],
+      ['Coupon uses', stats.coupon_contribution.usage_count],
+      ['Current low stock products', stats.low_stock_impact.low_stock_count],
       [],
-      ['Top product', 'Units sold', 'Revenue'],
-      ...stats.top_products.map((p) => [p.name, p.total_sold, p.revenue]),
+      ['Product', 'Delivered units', 'Revenue'],
+      ...stats.top_products.map((product) => [
+        product.name,
+        product.total_sold,
+        product.revenue,
+      ]),
+      [],
+      ['Month', 'Delivered revenue', 'Delivered orders'],
+      ...stats.monthly_data.map((month) => [
+        month.month,
+        month.revenue,
+        month.orders,
+      ]),
     ];
     const csv = rows
       .map((row) =>
         row
-          .map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`)
-          .join(','),
+          .map((value) => {
+            let text = String(value ?? '');
+            if (/^[=+@\-\t\r]/.test(text)) text = "'" + text;
+            return '"' + text.replaceAll('"', '""') + '"';
+          })
+          .join(',')
       )
-      .join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `vendor-growth-${this.dateRange()}-days.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+      .join('\r\n');
+    const url = URL.createObjectURL(
+        new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' })
+      ),
+      link = document.createElement('a');
+    link.href = url;
+    link.download = `vendor-sales-${this.days()}-days.csv`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 }

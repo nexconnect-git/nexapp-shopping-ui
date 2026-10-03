@@ -1,286 +1,184 @@
-import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
-  VendorApi,
+  apiErrorMessage,
   AppCurrencyPipe,
-  DynamicTableColumn,
-  DynamicTableComponent,
   Product,
-  TableCellDirective,
-  ToastService,
+  VendorProductPage,
+  VendorWorkspaceApi,
 } from '@shared/public-api';
-import { Subscription, timer } from 'rxjs';
-
+import { WorkspaceDialogComponent } from '../../components/workspace-dialog.component';
+import { WorkspacePagerComponent } from '../../components/workspace-pager.component';
+import { vendorListState } from '../../services/vendor-list-state';
+import { VendorContextService } from '../../services/vendor-context.service';
 @Component({
   selector: 'app-products',
   standalone: true,
   imports: [
     CommonModule,
-    RouterLink,
     FormsModule,
+    RouterLink,
     AppCurrencyPipe,
-    DynamicTableComponent,
-    TableCellDirective,
+    WorkspaceDialogComponent,
+    WorkspacePagerComponent,
   ],
   templateUrl: './products.component.html',
   styleUrl: './products.component.scss',
 })
-export class ProductsComponent implements OnInit, OnDestroy {
-  private api = inject(VendorApi);
-  private toast = inject(ToastService);
-
-  readonly columns: DynamicTableColumn[] = [
-    { key: 'product', label: 'Product', flex: 'minmax(260px, 2fr)' },
-    { key: 'category', label: 'Category', flex: 'minmax(140px, 1fr)' },
-    { key: 'price', label: 'Price', flex: 'minmax(120px, .8fr)' },
-    { key: 'stock', label: 'Stock', flex: 'minmax(120px, .8fr)' },
-    { key: 'growth', label: 'Growth', flex: 'minmax(170px, 1.2fr)' },
-    { key: 'status', label: 'Status', flex: '120px' },
-    { key: 'actions', label: 'Actions', flex: '100px', align: 'right' },
+export class ProductsComponent implements OnInit {
+  private readonly api = inject(VendorWorkspaceApi);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly destroy = inject(DestroyRef);
+  private readonly context = inject(VendorContextService);
+  readonly list = vendorListState<Product, VendorProductPage>((query) =>
+    this.api.products(query)
+  );
+  readonly search = signal('');
+  readonly approval = signal('');
+  readonly health = signal('');
+  readonly target = signal<Product | null>(null);
+  readonly dialog = signal<'delete' | 'fixes' | null>(null);
+  readonly pending = signal<ReadonlySet<string>>(new Set());
+  readonly errors = signal<ReadonlyMap<string, string>>(new Map());
+  readonly approvalOptions = [
+    'draft',
+    'pending_approval',
+    'approved',
+    'rejected',
   ];
-
-  products = signal<Product[]>([]);
-  loading = signal(true);
-  lastRefreshed = signal<Date | null>(null);
-  autoReload = signal(true);
-  deleteTarget = signal<Product | null>(null);
-  fixesTarget = signal<Product | null>(null);
-  deleting = signal(false);
-  submittingApproval = signal<string | null>(null);
-  readonly productPlaceholderImage = '/assets/placeholders/product.svg';
-
-  // Pagination
-  page = signal(1);
-  total = signal(0);
-  totalPages = signal(1);
-  readonly pageSize = 20;
-  Math = Math;
-
-  search = '';
-  private searchTimer: any;
-  private reloadSub?: Subscription;
-
-  ngOnInit() {
-    this.reloadSub = timer(0, 15000).subscribe(() => {
-      if (this.autoReload() && !this.deleteTarget()) this.load();
-    });
+  ngOnInit(): void {
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe((params) => {
+        this.search.set(params.get('search') || '');
+        this.approval.set(params.get('approval') || '');
+        this.health.set(params.get('health') || '');
+        this.list.page.set(Math.max(1, Number(params.get('page')) || 1));
+        this.load();
+      });
   }
-
-  ngOnDestroy() {
-    this.reloadSub?.unsubscribe();
-  }
-
-  manualReload() {
-    this.page.set(1);
-    this.load();
-  }
-  toggleAutoReload() {
-    this.autoReload.update((v) => !v);
-  }
-
-  load() {
-    this.loading.set(true);
-    const params: any = { page: this.page() };
-    if (this.search) params.search = this.search;
-    this.api.getVendorProducts(params).subscribe({
-      next: (r) => {
-        this.products.set(r.results || r);
-        this.total.set(r.count || (r.results || r).length);
-        this.totalPages.set(
-          Math.ceil((r.count || (r.results || r).length) / this.pageSize) || 1,
-        );
-        this.loading.set(false);
-        this.lastRefreshed.set(new Date());
-      },
-      error: () => {
-        this.loading.set(false);
-        this.toast.show('Failed to load products.', 'error');
+  query(page = 1): void {
+    void this.router.navigate([], {
+      queryParams: {
+        page,
+        search: this.search() || null,
+        approval: this.approval() || null,
+        health: this.health() || null,
       },
     });
   }
-
-  onSearch() {
-    clearTimeout(this.searchTimer);
-    this.searchTimer = setTimeout(() => {
-      this.page.set(1);
-      this.load();
-    }, 400);
+  load(): void {
+    this.list.load({
+      search: this.search(),
+      approval_status: this.approval(),
+      health: this.health(),
+    });
   }
-
-  setPage(p: number) {
-    if (p >= 1 && p <= this.totalPages()) {
-      this.page.set(p);
-      this.load();
-    }
+  categoryName(product: Product): string {
+    return product.category?.name || 'No category';
   }
-
-  pageNumbers(): number[] {
-    const total = this.totalPages();
-    const cur = this.page();
-    const range: number[] = [];
-    for (let i = Math.max(1, cur - 2); i <= Math.min(total, cur + 2); i++)
-      range.push(i);
-    return range;
-  }
-
-  isLowStock(product: Product): boolean {
+  image(product: Product): string {
     return (
-      product.low_stock_threshold > 0 &&
-      product.stock <= product.low_stock_threshold
+      product.primary_image ||
+      product.images?.[0]?.image ||
+      product.catalog_product?.images?.[0]?.image ||
+      '/assets/placeholders/product.svg'
     );
   }
-
-  productImage(product: Product): string {
-    return product.primary_image || this.productPlaceholderImage;
+  imageError(event: Event): void {
+    const image = event.target as HTMLImageElement;
+    if (!image.src.endsWith('/assets/placeholders/product.svg'))
+      image.src = '/assets/placeholders/product.svg';
   }
-
-  onImageError(event: Event): void {
-    const img = event.target as HTMLImageElement | null;
-    if (!img || img.src.includes(this.productPlaceholderImage)) return;
-    img.src = this.productPlaceholderImage;
+  open(product: Product, dialog: 'delete' | 'fixes'): void {
+    this.setError(product.id, '');
+    this.target.set(product);
+    this.dialog.set(dialog);
   }
-
-  needsAttention(product: Product): boolean {
-    return (
-      product.visibility_status === 'needs_attention' ||
-      !!product.visibility_blockers?.length
-    );
+  close(): void {
+    if (this.target() && this.pending().has(this.target()!.id)) return;
+    this.dialog.set(null);
+    this.target.set(null);
   }
-
-  productHealthLabel(product: Product): string {
-    if (!this.needsAttention(product)) return 'Ready to sell';
-    return `${product.visibility_blockers?.length || 1} fix${(product.visibility_blockers?.length || 1) > 1 ? 'es' : ''} needed`;
-  }
-
-  openFixes(product: Product) {
-    const blockers = product.visibility_blockers || [];
-    if (!blockers.length) {
-      this.toast.show('This product is ready to sell.', 'success');
-      return;
-    }
-    this.fixesTarget.set(product);
-  }
-
-  closeFixes() {
-    this.fixesTarget.set(null);
-  }
-
-  categoryVisibilityLabel(product: Product): string {
-    if (product.category_visibility === 'customer_visible')
-      return 'Customer visible';
-    if (product.category_visibility === 'pending_review')
-      return 'Category pending';
-    return 'No category';
-  }
-
-  approvalClass(product: Product): string {
-    return `approval-chip ${product.approval_status || 'draft'}`;
-  }
-
-  approvalText(product: Product): string {
-    return (
-      product.approval_status_label ||
-      (product.approval_status || 'Draft').replace('_', ' ')
-    );
-  }
-
-  approvalReason(product: Product): string {
-    if (product.approval_status === 'pending_approval')
-      return 'Hidden until admin approval.';
-    if (product.approval_status === 'rejected')
-      return product.rejection_reason || 'Rejected by admin.';
-    if (product.approval_status === 'draft')
-      return 'Draft products are not customer visible.';
-    return product.is_available && product.status === 'active'
-      ? 'Customer visible'
-      : 'Approved but offline.';
-  }
-
-  canSubmitForApproval(product: Product | null): boolean {
-    if (!product) return false;
+  canSubmit(product: Product): boolean {
     return (
       product.approval_status === 'draft' ||
       product.approval_status === 'rejected'
     );
   }
-
-  submitForApproval(product: Product | null) {
-    if (!product || !this.canSubmitForApproval(product)) return;
-    this.submittingApproval.set(product.id);
-    this.api.submitInheritedProducts([product.id]).subscribe({
-      next: (res) => {
-        const submitted = (res?.variants || []).find(
-          (item: Product) => item.id === product.id,
-        );
-        this.products.update((items) =>
-          items.map((item) =>
-            item.id === product.id
-              ? {
-                  ...item,
-                  ...(submitted || {}),
-                  approval_status:
-                    submitted?.approval_status || 'pending_approval',
-                  approval_status_label:
-                    submitted?.approval_status_label || 'Pending Approval',
-                  rejection_reason: submitted?.rejection_reason || '',
-                }
-              : item,
-          ),
-        );
-        if (this.fixesTarget()?.id === product.id) {
-          this.fixesTarget.update((current) =>
-            current
-              ? {
-                  ...current,
-                  ...(submitted || {}),
-                  approval_status:
-                    submitted?.approval_status || 'pending_approval',
-                  approval_status_label:
-                    submitted?.approval_status_label || 'Pending Approval',
-                  rejection_reason: submitted?.rejection_reason || '',
-                }
-              : current,
+  submit(product: Product): void {
+    if (this.pending().has(product.id) || !this.canSubmit(product)) return;
+    this.setPending(product.id, true);
+    this.setError(product.id, '');
+    this.api
+      .submitDrafts([product.id], product.approval_note || '')
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: (items) => {
+          const updated = items.find((item) => item.id === product.id);
+          if (!updated) {
+            this.setError(
+              product.id,
+              'Server did not confirm submission. Refresh before retrying.'
+            );
+          } else {
+            this.target.set(updated);
+            this.load();
+            this.context.refresh();
+          }
+          this.setPending(product.id, false);
+        },
+        error: (failure) => {
+          this.setPending(product.id, false);
+          this.setError(
+            product.id,
+            apiErrorMessage(
+              failure,
+              'Product was not submitted. Review its required details.'
+            )
           );
-        }
-        this.submittingApproval.set(null);
-        this.toast.show('Product submitted for admin approval.', 'success');
-      },
-      error: (err) => {
-        this.submittingApproval.set(null);
-        const raw = err?.error?.error;
-        const message =
-          typeof raw === 'string'
-            ? raw
-            : 'Fix product validation errors before submitting for approval.';
-        this.toast.show(message, 'error');
-      },
+        },
+      });
+  }
+  remove(): void {
+    const product = this.target();
+    if (!product || this.pending().has(product.id)) return;
+    this.setPending(product.id, true);
+    this.setError(product.id, '');
+    this.api
+      .deleteProduct(product.id)
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: () => {
+          this.setPending(product.id, false);
+          this.close();
+          if (this.list.rows().length === 1 && this.list.page() > 1)
+            this.query(this.list.page() - 1);
+          else this.load();
+          this.context.refresh();
+        },
+        error: (failure) => {
+          this.setPending(product.id, false);
+          this.setError(
+            product.id,
+            apiErrorMessage(failure, 'Product was not removed.')
+          );
+        },
+      });
+  }
+  private setPending(id: string, value: boolean): void {
+    this.pending.update((current) => {
+      const next = new Set(current);
+      if (value) next.add(id);
+      else next.delete(id);
+      return next;
     });
   }
-
-  confirmDelete(product: Product) {
-    this.deleteTarget.set(product);
-  }
-  cancelDelete() {
-    this.deleteTarget.set(null);
-  }
-
-  doDelete() {
-    const p = this.deleteTarget();
-    if (!p) return;
-    this.deleting.set(true);
-    this.api.deleteProduct(p.id).subscribe({
-      next: () => {
-        this.deleting.set(false);
-        this.deleteTarget.set(null);
-        this.toast.show(`"${p.name}" deleted.`, 'success');
-        this.load();
-      },
-      error: () => {
-        this.deleting.set(false);
-        this.toast.show('Failed to delete product.', 'error');
-      },
-    });
+  private setError(id: string, message: string): void {
+    this.errors.update((current) => new Map(current).set(id, message));
   }
 }

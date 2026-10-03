@@ -1,7 +1,9 @@
-﻿import { CommonModule } from '@angular/common';
+import { AdminDialogDirective } from '../../shared/admin-dialog.directive';
+import { AdminCanDirective } from '../../shared/admin-can.directive';
+
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ApiService, apiErrorMessage } from '@shared/public-api';
+import { apiErrorMessage, ApiService } from '@shared/public-api';
 
 interface PlatformBanner {
   id: string;
@@ -19,7 +21,7 @@ interface PlatformBanner {
 @Component({
   selector: 'app-banners',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [AdminDialogDirective,AdminCanDirective, FormsModule],
   templateUrl: './banners.component.html',
   styleUrl: './banners.component.scss',
 })
@@ -76,6 +78,7 @@ export class BannersComponent implements OnInit {
   }
 
   save() {
+    if (this.saving()) return;
     if (!this.form.title.trim()) {
       this.error.set('Title is required.');
       return;
@@ -128,7 +131,7 @@ export class BannersComponent implements OnInit {
       subtitle: '',
       badge_text: '',
       cta_label: 'Order Now',
-      cta_url: '/shops',
+      cta_url: '/stores',
       image: null,
       bg_gradient: '#38268E',
       display_order: 0,
@@ -136,4 +139,3 @@ export class BannersComponent implements OnInit {
     };
   }
 }
-

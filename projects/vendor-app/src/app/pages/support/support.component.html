@@ -1,176 +1,188 @@
-<div class="support-page fade-in">
-  <section class="page-hero">
-    <div class="page-hero-copy">
-      <span class="eyebrow">Support</span>
-      <h1>Customer Care</h1>
-      <p>
-        Contact admin support for order disputes, payout issues, catalog
-        questions, or technical help.
-      </p>
-    </div>
-  </section>
-
-  <section class="support-command-strip">
+<div class="workspace-page">
+  <header class="page-heading">
     <div>
-      <span class="material-icons-outlined">support_agent</span>
-      <strong>{{ tickets().length }}</strong>
-      <small>Total tickets</small>
+      <p class="eyebrow">Account</p><h1>Support tickets</h1>
+      <p>Track store issues and read the platform’s response.</p>
     </div>
-    <div>
-      <span class="material-icons-outlined">mark_unread_chat_alt</span>
-      <strong>{{ tickets().length ? "Active" : "Ready" }}</strong>
-      <small>Support desk</small>
-    </div>
-    <div>
-      <span class="material-icons-outlined">schedule</span>
-      <strong>Admin</strong>
-      <small>Response channel</small>
-    </div>
-  </section>
-
-  <div class="support-layout">
-    <!-- Ticket Form -->
-    <div class="card create-ticket-card">
-      <div class="card-header">
-        <div>
-          <h3>New Support Request</h3>
-          <p>Send order, payout, catalog, or technical issues to admin.</p>
-        </div>
-      </div>
-      <div class="card-body">
-        @if (createdMessage()) {
-        <div class="support-alert success">{{ createdMessage() }}</div>
-        } @if (formError()) {
-        <div class="support-alert error">{{ formError() }}</div>
+    <button
+      type="button"
+      class="btn btn-primary"
+      (click)="openCreate($event)"
+    >
+      New ticket
+    </button>
+  </header>
+  @if(created()){
+  <p class="workspace-success" role="status">{{ created() }}</p>
+  }
+  <form class="workspace-toolbar" (ngSubmit)="query()">
+    <label class="workspace-search"
+      ><span class="material-icons-outlined">search</span
+      ><input
+        name="search"
+        [(ngModel)]="search"
+        placeholder="Search tickets"
+        aria-label="Search tickets" /></label
+    ><label class="workspace-field"
+      >Status<select
+        name="status"
+        [(ngModel)]="status"
+        (ngModelChange)="query()"
+      >
+        <option value="">All statuses</option>
+        <option value="open">Open</option>
+        <option value="in_progress">In progress</option>
+        <option value="resolved">Resolved</option>
+        <option value="closed">Closed</option>
+      </select></label
+    ><label class="workspace-field"
+      >Category<select
+        name="category"
+        [(ngModel)]="category"
+        (ngModelChange)="query()"
+      >
+        <option value="">All categories</option>
+        @for(item of categories;track item.key){
+        <option [value]="item.key">{{ item.label }}</option>
         }
-        <form (ngSubmit)="submitTicket()">
-          <div class="form-group">
-            <label class="form-label">Category</label>
-            <select
-              class="form-select w-100"
-              [class.has-error]="fieldError('category')"
-              [(ngModel)]="form.category"
-              name="category"
-              (ngModelChange)="clearFieldError('category')"
-            >
-              @for (category of categories; track category.value) {
-              <option [value]="category.value">{{ category.label }}</option>
-              }
-            </select>
-            @if (fieldError("category")) {
-            <small class="field-error">{{ fieldError("category") }}</small>
-            }
-            <small class="field-hint"
-              >Pick the closest topic so admin can route the ticket
-              faster.</small
-            >
-          </div>
-          <div class="form-group">
-            <label class="form-label"
-              >Subject <span class="required">*</span></label
-            >
-            <input
-              type="text"
-              class="form-input w-100"
-              [class.has-error]="fieldError('subject')"
-              [(ngModel)]="form.subject"
-              name="subject"
-              required
-              placeholder="Brief description of the issue"
-              (ngModelChange)="clearFieldError('subject')"
-            />
-            @if (fieldError("subject")) {
-            <small class="field-error">{{ fieldError("subject") }}</small>
-            }
-            <small class="field-hint"
-              >One clear line, for example "Payout missing for Apr 12".</small
-            >
-          </div>
-          <div class="form-group">
-            <label class="form-label"
-              >Message <span class="required">*</span></label
-            >
-            <textarea
-              class="form-input w-100"
-              [class.has-error]="fieldError('message')"
-              [(ngModel)]="form.message"
-              name="message"
-              rows="5"
-              required
-              placeholder="Explain your issue in detail..."
-              (ngModelChange)="clearFieldError('message')"
-            ></textarea>
-            @if (fieldError("message")) {
-            <small class="field-error">{{ fieldError("message") }}</small>
-            }
-            <small class="field-hint"
-              >Include order ID, payout period, screenshots notes, or steps to
-              reproduce if relevant.</small
-            >
-          </div>
-          <button
-            type="submit"
-            class="btn-primary w-100"
-            [disabled]="!canSubmitTicket()"
-          >
-            @if (creating()) {
-            <span class="spinner-inline"></span> Submitting... } @else {
-            <span class="material-icons-outlined">send</span> Submit Ticket }
-          </button>
-        </form>
-      </div>
-    </div>
-
-    <!-- Ticket History -->
-    <div class="card ticket-history-card">
-      <div class="card-header">
-        <div>
-          <h3>Conversation History</h3>
-          <p>Track every request and admin response.</p>
-        </div>
-      </div>
-      <div class="card-body p-0">
-        @if (loading()) {
-        <div class="p-4 text-center text-muted">Loading tickets...</div>
-        } @else if (!tickets().length) {
-        <div class="p-4 text-center text-muted">
-          You haven't submitted any support tickets yet.
-        </div>
-        } @else {
-        <div class="ticket-list">
-          @for (ticket of tickets(); track ticket.id) {
-          <div class="ticket-item">
-            <div class="ticket-content">
-              <div class="ticket-title-row">
-                <span class="badge" [class]="'badge-' + ticket.status">{{
-                  ticket.status | uppercase
-                }}</span>
-                <span class="ticket-cat"
-                  >[{{ ticket.category | uppercase }}]</span
-                >
-                <strong class="ticket-subj">{{ ticket.subject }}</strong>
-              </div>
-              <p class="ticket-desc">{{ ticket.message }}</p>
-              @if (ticket.admin_response) {
-              <div class="admin-reply">
-                <strong>Admin Reply:</strong>
-                <p>{{ ticket.admin_response }}</p>
-              </div>
-              }
-            </div>
-            <div class="ticket-meta">
-              <span
-                class="material-icons-outlined text-muted"
-                style="font-size: 16px"
-                >schedule</span
-              >
-              <span>{{ ticket.created_at | date : "medium" }}</span>
-            </div>
-          </div>
-          }
-        </div>
-        }
-      </div>
-    </div>
+      </select></label
+    ><button type="submit" class="btn btn-secondary">Search</button>
+  </form>
+  @if(list.error()){
+  <p class="workspace-error" role="alert">
+    {{ list.error() }}
+    <button
+      type="button"
+      class="btn-secondary"
+      [disabled]="list.loading()"
+      (click)="list.reload()"
+    >
+      Retry
+    </button>
+  </p>
+  }@if(list.loading()){
+  <div class="workspace-state" role="status">Loading support tickets…</div>
+  }@else if(!list.error()&&!list.rows().length){
+  <div class="workspace-state">
+    <h3>No matching tickets</h3>
+    <p>Create a ticket if you need help with your store.</p>
   </div>
+  }@else{
+  <div class="workspace-ticket-list">
+    @for(ticket of list.rows();track ticket.id){
+    <article class="workspace-card ticket-row">
+      <div>
+        <h3>{{ ticket.subject }}</h3>
+        <p>
+          {{ ticket.created_at | date : "mediumDate" }} ·
+          {{ ticket.category | titlecase }} ·
+          {{ ticket.priority | titlecase }} priority
+        </p>
+        <span
+          class="status-pill"
+          [class.success]="ticket.status === 'resolved'"
+          >{{ ticket.status.replaceAll("_", " ") | titlecase }}</span
+        >
+      </div>
+      <button type="button" class="btn btn-secondary" (click)="open(ticket, $event)">
+        View ticket
+      </button>
+    </article>
+    }
+  </div>
+  }<nc-vendor-pager
+    [page]="list.page()"
+    [count]="list.count()"
+    [busy]="list.loading()"
+    (pageChange)="query($event)"
+  />
 </div>
+@if(detailId()){<nc-vendor-dialog
+  title="Support ticket detail"
+  [restoreFocusTarget]="dialogReturnFocus()"
+  (dismissed)="close()"
+  >@if(detailLoading()){
+  <p role="status">Loading ticket…</p>
+  }@if(detailError()){
+  <p class="workspace-error" role="alert">{{ detailError() }}</p>
+  <button type="button" class="btn btn-secondary" (click)="loadDetail()">
+    Retry</button
+  >}@if(detail();as ticket){
+  <div>
+    <h3>{{ ticket.subject }}</h3>
+    <p class="workspace-muted">
+      {{ ticket.status.replaceAll("_", " ") | titlecase }} ·
+      {{ ticket.priority | titlecase }} priority
+    </p>
+  </div>
+  <section>
+    <h4>Your message</h4>
+    <p class="ticket-message">{{ ticket.message }}</p>
+    <small class="workspace-muted">{{
+      ticket.created_at | date : "medium"
+    }}</small>
+  </section>
+  <section>
+    <h4>Admin response</h4>
+    <p class="ticket-message">
+      {{
+        ticket.admin_response ||
+          "No response yet. Check this ticket for updates."
+      }}
+    </p>
+    @if(ticket.responded_at){<small class="workspace-muted">{{
+      ticket.responded_at | date : "medium"
+    }}</small
+    >}
+  </section>
+  <button type="button" class="btn btn-secondary" (click)="loadDetail()">
+    Refresh ticket</button
+  >}</nc-vendor-dialog
+>} @if(createOpen()){<nc-vendor-dialog
+  title="Create support ticket"
+  [restoreFocusTarget]="dialogReturnFocus()"
+  [busy]="creating()"
+  (dismissed)="createOpen.set(false)"
+  ><form class="workspace-form" (ngSubmit)="submit()">
+    <label class="workspace-field"
+      >Subject<input
+        name="subject"
+        [(ngModel)]="form.subject"
+        maxlength="255"
+        required /></label
+    ><label class="workspace-field"
+      >Category<select name="category" [(ngModel)]="form.category">
+        @for(item of categories;track item.key){
+        <option [value]="item.key">{{ item.label }}</option>
+        }
+      </select></label
+    ><label class="workspace-field"
+      >Priority<select name="priority" [(ngModel)]="form.priority">
+        <option value="low">Low</option>
+        <option value="medium">Medium</option>
+        <option value="high">High</option>
+      </select></label
+    ><label class="workspace-field"
+      >Message<textarea
+        name="message"
+        [(ngModel)]="form.message"
+        rows="5"
+        required
+      ></textarea></label
+    >@if(formError()){
+    <p class="workspace-error" role="alert">{{ formError() }}</p>
+    }
+    <div class="workspace-actions">
+      <button
+        type="button"
+        class="btn btn-secondary"
+        [disabled]="creating()"
+        (click)="createOpen.set(false)"
+      >
+        Cancel</button
+      ><button type="submit" class="btn btn-primary" [disabled]="creating()">
+        {{ creating() ? "Creating…" : "Create ticket" }}
+      </button>
+    </div>
+  </form></nc-vendor-dialog
+>}

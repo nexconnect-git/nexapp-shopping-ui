@@ -1,13 +1,15 @@
 import { inject, Injectable } from '@angular/core';
 import { switchMap } from 'rxjs';
-import { VendorApi, Order } from '@shared/public-api';
+import { Order, VendorApi } from '@shared/public-api';
+import { VendorOrdersStore } from './vendor-orders.store';
 
 @Injectable({ providedIn: 'root' })
 export class VendorOrderFacade {
   private readonly api = inject(VendorApi);
+  private readonly store = inject(VendorOrdersStore);
 
   loadOrder(orderId: string) {
-    return this.api.getVendorOrder(orderId);
+    return this.store.fetch(orderId);
   }
 
   downloadCustomerInvoice(order: Order) {

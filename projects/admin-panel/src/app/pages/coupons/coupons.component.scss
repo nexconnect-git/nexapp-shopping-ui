@@ -1,4 +1,4 @@
-﻿:host {
+:host {
   display: block;
   padding-bottom: 3rem;
 }
@@ -18,7 +18,7 @@
 }
 .page-title {
   font-size: 2rem;
-  font-weight: 900;
+  font-weight: 600;
   color: var(--text-primary);
   margin: 0 0 0.25rem 0;
   letter-spacing: -0.03em;
@@ -113,7 +113,7 @@
   }
   th {
     padding: 1rem 1.25rem;
-    font-size: 0.75rem;
+    font-size: var(--admin-text-small);
     font-weight: 700;
     color: var(--text-muted);
     text-transform: uppercase;
@@ -137,6 +137,7 @@
 
 /* Cells */
 .code-badge {
+  white-space: nowrap;
   display: inline-block;
   padding: 0.25rem 0.625rem;
   background: rgba(108, 99, 255, 0.08);
@@ -144,7 +145,7 @@
   border: 1.5px dashed var(--primary);
   border-radius: 6px;
   font-size: 0.875rem;
-  font-weight: 900;
+  font-weight: 600;
   letter-spacing: 0.07em;
 }
 
@@ -184,11 +185,11 @@
 .placement-title {
   color: var(--text-primary);
   font-size: 0.8125rem;
-  font-weight: 800;
+  font-weight: 600;
 }
 .placement-meta {
   color: var(--text-muted);
-  font-size: 0.75rem;
+  font-size: var(--admin-text-small);
   font-weight: 600;
 }
 
@@ -196,13 +197,13 @@
   display: inline-block;
   padding: 0.25rem 0.625rem;
   border-radius: var(--radius-full);
-  font-size: 0.75rem;
-  font-weight: 800;
+  font-size: var(--admin-text-small);
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   &.percentage {
     background: #EFECF8;
-    color: #38268E;
+    color: var(--admin-brand);
   }
   &.fixed {
     background: #d1fae5;
@@ -218,8 +219,8 @@
   display: inline-block;
   padding: 0.25rem 0.625rem;
   border-radius: var(--radius-full);
-  font-size: 0.75rem;
-  font-weight: 800;
+  font-size: var(--admin-text-small);
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   &.platform {
@@ -238,8 +239,8 @@
   align-items: center;
   padding: 0.25rem 0.625rem;
   border-radius: var(--radius-full);
-  font-size: 0.7rem;
-  font-weight: 800;
+  font-size: var(--admin-text-small);
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   &.active {
@@ -262,6 +263,11 @@
   font-size: 0.875rem;
   font-weight: 600;
 }
+.coupon-validity {
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+
 .no-expiry {
   color: var(--text-muted);
   font-size: 0.8125rem;
@@ -281,13 +287,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
-  border: 1px solid transparent;
-  color: var(--text-muted);
+  background: white;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
   cursor: pointer;
   transition: all 0.2s;
   .material-icons-outlined {
-    font-size: 18px;
+    font-size: 20px;
   }
   &:hover:not(:disabled) {
     background: var(--surface-hover);
@@ -299,6 +305,7 @@
     color: var(--danger);
     border-color: rgba(239, 68, 68, 0.2);
   }
+  &.danger { color: var(--danger); }
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
@@ -323,7 +330,7 @@
   }
   strong {
     font-size: 1.25rem;
-    font-weight: 800;
+    font-weight: 600;
     color: var(--text-primary);
   }
 }
@@ -396,7 +403,7 @@
   h2 {
     margin: 0;
     font-size: 1.125rem;
-    font-weight: 800;
+    font-weight: 600;
     color: var(--text-primary);
   }
 }
@@ -424,6 +431,9 @@
   }
 }
 .modal-body {
+  display: grid;
+  align-content: start;
+  gap: 16px;
   padding: 1.5rem;
   flex: 1;
   overflow-y: auto;
@@ -594,4 +604,3 @@ textarea.form-input {
     transform: rotate(360deg);
   }
 }
-

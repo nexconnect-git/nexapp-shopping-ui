@@ -1,142 +1,116 @@
-<div class="login-page">
-  <!-- Left Panel — Brand / Hero -->
-  <div class="login-left">
-    <div class="left-content">
-      <div class="brand-icon-wrap">
-        <span class="material-icons-outlined">storefront</span>
-      </div>
+<main class="vendor-auth-page">
+  <section class="vendor-auth-card">
+    <header class="form-card-header">
+      <span class="workspace-eyebrow">Nextou Vendor</span>
+      <h1>Sign in</h1>
+      <p>Use your vendor account to manage your store.</p>
+    </header>
+    @if (error()) {
+    <div class="workspace-error error-msg" role="alert">
+      <span class="material-icons-outlined" aria-hidden="true"
+        >error_outline</span
+      >
+      {{ error() }}
+    </div>
+    }
 
-      <div class="left-heading">
-        <img
-          src="assets/brand/nextou-brand-logo-white.png"
-          alt="Nextou"
-          class="left-brand-wordmark"
-        />
-        <span class="left-app-label">Vendor</span>
+    <form (ngSubmit)="onLogin()" novalidate>
+      <div class="form-group" [class.invalid]="fieldErrors().username">
+        <label class="form-label" for="username">Username</label>
+        <div class="input-icon-wrapper">
+          <span class="material-icons-outlined input-icon" aria-hidden="true"
+            >person_outline</span
+          >
+          <input
+            id="username"
+            class="form-input"
+            type="text"
+            [ngModel]="username"
+            (ngModelChange)="onUsernameInput($event)"
+            name="username"
+            (blur)="validateField('username')"
+            placeholder="Your vendor username"
+            required
+            autocomplete="username"
+            [attr.aria-invalid]="!!fieldErrors().username"
+            [attr.aria-describedby]="
+              fieldErrors().username ? 'vendor-username-error' : null
+            "
+          />
+        </div>
+        @if (fieldErrors().username) {
+        <small id="vendor-username-error" class="field-error">{{
+          fieldErrors().username
+        }}</small>
+        }
+        <small class="field-hint"
+          >Use the vendor username created during registration or by
+          admin.</small
+        >
       </div>
-      <p class="left-subtitle">
-        Your all-in-one portal to manage your store, products and orders.
+      <div class="form-group" [class.invalid]="fieldErrors().password">
+        <label class="form-label" for="password">Password</label>
+        <div class="input-icon-wrapper">
+          <span class="material-icons-outlined input-icon" aria-hidden="true"
+            >lock_outline</span
+          >
+          <input
+            id="password"
+            class="form-input password-input"
+            [type]="showPassword() ? 'text' : 'password'"
+            [ngModel]="password"
+            (ngModelChange)="onPasswordInput($event)"
+            name="password"
+            (blur)="validateField('password')"
+            placeholder="Enter your password"
+            required
+            autocomplete="current-password"
+            [attr.aria-invalid]="!!fieldErrors().password"
+            [attr.aria-describedby]="
+              fieldErrors().password ? 'vendor-password-error' : null
+            "
+          />
+          <button
+            type="button"
+            class="password-visibility"
+            (click)="showPassword.set(!showPassword())"
+            [attr.aria-pressed]="showPassword()"
+            aria-controls="password"
+            [attr.aria-label]="
+              showPassword() ? 'Hide password' : 'Show password'
+            "
+          >
+            <span class="material-icons-outlined" aria-hidden="true">{{
+              showPassword() ? "visibility_off" : "visibility"
+            }}</span>
+          </button>
+        </div>
+        @if (fieldErrors().password) {
+        <small id="vendor-password-error" class="field-error">{{
+          fieldErrors().password
+        }}</small>
+        }
+      </div>
+      <button type="submit" class="signin-btn" [disabled]="!canSubmit()">
+        @if (loading()) {
+        <span class="btn-spinner"></span>
+        Signing in... } @else {
+        <span class="material-icons-outlined" aria-hidden="true">login</span>
+        Sign In }
+      </button>
+    </form>
+
+    <div class="form-footer">
+      <p><a routerLink="/forgot-password">Forgot password?</a></p>
+      <p>
+        Don't have an account?
+        <a
+          href="/register"
+          routerLink="/register"
+          (click)="goToRegister($event)"
+          >Register your store</a
+        >
       </p>
-
-      <ul class="feature-list">
-        <li class="feature-item">
-          <span class="feature-icon material-icons-outlined">inventory_2</span>
-          <div>
-            <strong>Product Catalogue</strong>
-            <span>Manage stock, pricing and categories</span>
-          </div>
-        </li>
-        <li class="feature-item">
-          <span class="feature-icon material-icons-outlined">receipt_long</span>
-          <div>
-            <strong>Order Fulfillment</strong>
-            <span>Track and dispatch orders in real time</span>
-          </div>
-        </li>
-        <li class="feature-item">
-          <span class="feature-icon material-icons-outlined">bar_chart</span>
-          <div>
-            <strong>Store Analytics</strong>
-            <span>Sales reports, revenue and top products</span>
-          </div>
-        </li>
-      </ul>
     </div>
-  </div>
-
-  <!-- Right Panel — Form -->
-  <div class="login-right">
-    <div class="login-form-card">
-      <div class="form-card-header">
-        <h2>Welcome back</h2>
-        <p>Sign in to your vendor account</p>
-      </div>
-
-      @if (error()) {
-      <div class="error-msg">
-        <span class="material-icons-outlined">error_outline</span>
-        {{ error() }}
-      </div>
-      }
-
-      <form (ngSubmit)="onLogin()" novalidate>
-        <div class="form-group" [class.invalid]="fieldErrors().username">
-          <label class="form-label" for="username">Username</label>
-          <div class="input-icon-wrapper">
-            <span class="material-icons-outlined input-icon"
-              >person_outline</span
-            >
-            <input
-              id="username"
-              class="form-input"
-              type="text"
-              [ngModel]="username"
-              (ngModelChange)="onUsernameInput($event)"
-              name="username"
-              placeholder="testvendor"
-              required
-              autocomplete="username"
-              [attr.aria-invalid]="!!fieldErrors().username"
-              aria-describedby="vendor-username-error"
-            />
-          </div>
-          @if (fieldErrors().username) {
-          <small id="vendor-username-error" class="field-error">{{
-            fieldErrors().username
-          }}</small>
-          }
-          <small class="field-hint"
-            >Use the vendor username created during registration or by
-            admin.</small
-          >
-        </div>
-        <div class="form-group" [class.invalid]="fieldErrors().password">
-          <label class="form-label" for="password">Password</label>
-          <div class="input-icon-wrapper">
-            <span class="material-icons-outlined input-icon">lock_outline</span>
-            <input
-              id="password"
-              class="form-input"
-              type="password"
-              [ngModel]="password"
-              (ngModelChange)="onPasswordInput($event)"
-              name="password"
-              placeholder="Enter your password"
-              required
-              autocomplete="current-password"
-              [attr.aria-invalid]="!!fieldErrors().password"
-              aria-describedby="vendor-password-error"
-            />
-          </div>
-          @if (fieldErrors().password) {
-          <small id="vendor-password-error" class="field-error">{{
-            fieldErrors().password
-          }}</small>
-          }
-          <small class="field-hint"
-            >Enter the password for this vendor account.</small
-          >
-        </div>
-        <button type="submit" class="signin-btn" [disabled]="!canSubmit()">
-          @if (loading()) {
-          <span class="btn-spinner"></span>
-          Signing in... } @else {
-          <span class="material-icons-outlined">login</span>
-          Sign In }
-        </button>
-      </form>
-
-      <div class="form-footer">
-        <p>
-          Don't have an account?
-          <a
-            href="/register"
-            routerLink="/register"
-            (click)="goToRegister($event)"
-            >Register your store</a
-          >
-        </p>
-      </div>
-    </div>
-  </div>
-</div>
+  </section>
+</main>

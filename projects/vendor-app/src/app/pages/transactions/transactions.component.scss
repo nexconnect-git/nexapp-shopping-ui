@@ -1,0 +1,32 @@
+:host {
+  display: block;
+}
+.workspace-transaction-list {
+  display: grid;
+  gap: 12px;
+}
+.transaction-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+.transaction-item h3 {
+  font-size: 16px;
+}
+.transaction-item > div:last-child {
+  display: grid;
+  gap: 8px;
+  text-align: right;
+}
+.transaction-item strong {
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 768px) {
+  .transaction-item {
+    display: grid;
+  }
+  .transaction-item > div:last-child {
+    text-align: left;
+  }
+}

@@ -12,6 +12,12 @@ export interface PageFeatureGuardOptions {
   failMode?: PageFeatureFailMode;
 }
 
+export const pageFeatureRouteGuard = (appId: ManagedAppId): CanActivateFn => (_route, state) => {
+  const access=inject(PageFeatureAccessService);
+  const router=inject(Router);
+  return access.loadConfig().pipe(map(()=>access.isRouteEnabled(appId,state.url) ? true : router.createUrlTree(['/feature-unavailable'],{queryParams:{app:appId}})));
+};
+
 export const pageFeatureGuard = (
   appId: ManagedAppId,
   pageId: string,

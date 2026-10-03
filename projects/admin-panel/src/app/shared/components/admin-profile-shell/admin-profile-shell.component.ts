@@ -1,5 +1,4 @@
-﻿import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+﻿import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 export interface AdminProfileBadge {
   label: string;
@@ -24,7 +23,7 @@ export interface AdminProfileTab {
 @Component({
   selector: 'app-admin-profile-shell',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './admin-profile-shell.component.html',
   styleUrl: './admin-profile-shell.component.scss',
 })
@@ -43,4 +42,3 @@ export class AdminProfileShellComponent {
 
   @Output() tabChange = new EventEmitter<string>();
 }
-

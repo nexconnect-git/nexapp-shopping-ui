@@ -1,9 +1,14 @@
-import { Component, inject, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  inject,
+  OnDestroy,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import {
-  VendorApi,
   AuthService,
   formatFormErrors,
   INDIA_PINCODE_PATTERN,
@@ -15,11 +20,11 @@ import {
   parseFormErrors,
   sanitizeDigits,
   sanitizeEmail,
-  sanitizeUsername,
   stripControlCharacters,
-  USERNAME_PATTERN,
+  VendorApi,
 } from '@shared/public-api';
 import { Subscription } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 interface AvailabilityState {
   checking: boolean;
@@ -28,6 +33,8 @@ interface AvailabilityState {
   suggestions: string[];
   value: string;
 }
+
+const USERNAME_PATTERN = /^[\p{L}\p{N}_.@+-]{3,150}$/u;
 
 const VENDOR_STORE_TYPE_OPTIONS = [
   { value: 'wholesale_store', label: 'Wholesale Store' },
@@ -54,7 +61,62 @@ const VENDOR_STORE_TYPE_OPTIONS = [
   templateUrl: './register.component.html',
   styleUrl: './register.component.scss',
 })
-export class RegisterComponent {
+export class RegisterComponent implements OnDestroy {
+  private readonly destroy = inject(DestroyRef);
+  readonly mapVisible = signal(false);
+  readonly steps = ['Account', 'Store profile', 'Pickup location', 'Review'];
+  readonly accountFields = [
+    { key: 'username', label: 'Username', type: 'text', auto: 'username' },
+    { key: 'email', label: 'Account email', type: 'email', auto: 'email' },
+    { key: 'phone', label: 'Mobile number', type: 'tel', auto: 'tel' },
+    {
+      key: 'password',
+      label: 'Password',
+      type: 'password',
+      auto: 'new-password',
+    },
+  ];
+  readonly addressFields = [
+    { key: 'address', label: 'Street address' },
+    { key: 'city', label: 'City' },
+    { key: 'state', label: 'State' },
+    { key: 'postal_code', label: 'Postal code' },
+  ];
+  value(key: string): unknown {
+    return this.form[key];
+  }
+  update(key: string, value: unknown): void {
+    this.form[key] = value;
+    this.clearFieldError(key);
+    if (['username', 'email', 'phone'].includes(key))
+      this.onIdentityInput(key as 'username' | 'email' | 'phone');
+  }
+  ngOnDestroy(): void {
+    Object.values(this.availabilityTimers).forEach(clearTimeout);
+    Object.values(this.availabilitySubs).forEach((subscription) =>
+      subscription.unsubscribe()
+    );
+  }
+  useLocation(): void {
+    if (!navigator.geolocation) {
+      this.error.set(
+        'Location services are unavailable. Enter coordinates manually.'
+      );
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        this.form.latitude = position.coords.latitude;
+        this.form.longitude = position.coords.longitude;
+        this.clearFieldError('location');
+      },
+      () =>
+        this.error.set(
+          'Location could not be obtained. Check permissions or enter coordinates manually.'
+        ),
+      { timeout: 10000 }
+    );
+  }
   private api = inject(VendorApi);
   private auth = inject(AuthService);
   private router = inject(Router);
@@ -70,7 +132,23 @@ export class RegisterComponent {
     {};
   private availabilitySubs: Record<string, Subscription> = {};
 
-  form: any = {
+  form: {
+    [key: string]: unknown;
+    username: string;
+    email: string;
+    password: string;
+    phone: string;
+    store_name: string;
+    vendor_type: string;
+    description: string;
+    address: string;
+    city: string;
+    state: string;
+    postal_code: string;
+    vendor_email: string;
+    latitude: number | null;
+    longitude: number | null;
+  } = {
     username: '',
     email: '',
     password: '',
@@ -97,12 +175,12 @@ export class RegisterComponent {
       this.error.set('Please fix the highlighted fields before continuing.');
       return;
     }
-    this.step.update((s) => s + 1);
+    this.step.update((s) => Math.min(4, s + 1));
   }
 
   prevStep() {
     this.error.set('');
-    this.step.update((s) => s - 1);
+    this.step.update((s) => Math.max(1, s - 1));
   }
 
   onLocationPicked(loc: MapLocation) {
@@ -121,6 +199,15 @@ export class RegisterComponent {
   onImageSelected(kind: 'logo' | 'banner', event: Event) {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] || null;
+    if (
+      file &&
+      (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type) ||
+        file.size > 5 * 1024 * 1024)
+    ) {
+      this.error.set('Choose a PNG, JPEG or WebP up to 5 MB.');
+      input.value = '';
+      return;
+    }
     const fileSignal = kind === 'logo' ? this.logoFile : this.bannerFile;
     const previewSignal =
       kind === 'logo' ? this.logoPreview : this.bannerPreview;
@@ -146,7 +233,12 @@ export class RegisterComponent {
 
   onIdentityInput(field: 'username' | 'email' | 'phone') {
     if (field === 'username')
-      this.form.username = sanitizeUsername(this.form.username);
+      this.form.username = Array.from(this.form.username)
+        .filter(
+          (character) =>
+            character.charCodeAt(0) >= 32 && character.charCodeAt(0) !== 127
+        )
+        .join('');
     if (field === 'email') this.form.email = sanitizeEmail(this.form.email);
     if (field === 'phone')
       this.form.phone = normalizeIndianPhone(this.form.phone);
@@ -164,7 +256,7 @@ export class RegisterComponent {
         errors[field] = 'Username is required.';
       } else if (!USERNAME_PATTERN.test(username)) {
         errors[field] =
-          'Use 3-30 letters, numbers, dots, dashes, or underscores.';
+          'Use 3–150 letters, numbers, dots, @, +, dashes or underscores.';
       } else {
         this.validateFieldAvailability('username', errors);
       }
@@ -250,6 +342,11 @@ export class RegisterComponent {
     return this.availability()[field] || null;
   }
 
+  useFieldSuggestion(field: string, suggestion: string): void {
+    if (field === 'username' || field === 'email' || field === 'phone')
+      this.useSuggestion(field, suggestion);
+  }
+
   useSuggestion(field: 'username' | 'email' | 'phone', suggestion: string) {
     this.form[field] = suggestion;
     this.clearFieldError(field);
@@ -257,6 +354,11 @@ export class RegisterComponent {
   }
 
   onSubmit() {
+    if (this.loading()) return;
+    if (this.step() < 4) {
+      this.nextStep();
+      return;
+    }
     for (const step of [1, 2, 3]) {
       if (!this.validateStep(step)) {
         this.step.set(step);
@@ -287,30 +389,33 @@ export class RegisterComponent {
       ...(this.bannerFile() ? { banner: this.bannerFile() } : {}),
     };
 
-    this.api.registerVendor(payload).subscribe({
-      next: (res) => {
-        if (!this.auth.handleAuthResponse(res)) {
-          this.error.set('This account is not allowed in the vendor app.');
+    this.api
+      .registerVendor(payload)
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: (res) => {
+          if (!this.auth.handleAuthResponse(res)) {
+            this.error.set('This account is not allowed in the vendor app.');
+            this.loading.set(false);
+            return;
+          }
+          localStorage.setItem(
+            this.auth.vendorKey,
+            res.vendor_status || 'pending'
+          );
+          void this.router
+            .navigate(['/pending-approval'])
+            .finally(() => this.loading.set(false));
+        },
+        error: (err) => {
+          const msg = this.applyRegistrationErrors(err?.error || err);
+          this.error.set(msg);
           this.loading.set(false);
-          return;
-        }
-        localStorage.setItem(
-          this.auth.vendorKey,
-          res.vendor_status || 'pending'
-        );
-        void this.router
-          .navigate(['/pending-approval'])
-          .finally(() => this.loading.set(false));
-      },
-      error: (err) => {
-        const msg = this.applyRegistrationErrors(err?.error || err);
-        this.error.set(msg);
-        this.loading.set(false);
-      },
-    });
+        },
+      });
   }
 
-  private applyRegistrationErrors(error: any): string {
+  private applyRegistrationErrors(error: unknown): string {
     const fieldLabels: Record<string, string> = {
       username: 'Username',
       email: 'Email',
@@ -358,7 +463,7 @@ export class RegisterComponent {
       const username = this.form.username.trim();
       if (username && !USERNAME_PATTERN.test(username)) {
         errors['username'] =
-          'Use 3-30 letters, numbers, dots, dashes, or underscores.';
+          'Use 3–150 letters, numbers, dots, @, +, dashes or underscores.';
       }
       const email = sanitizeEmail(this.form.email);
       this.form.email = email;
@@ -408,8 +513,16 @@ export class RegisterComponent {
       ) {
         errors['postal_code'] = 'Enter a valid 6-digit pincode.';
       }
-      if (this.form.latitude === null || this.form.longitude === null) {
-        errors['location'] = 'Please pick your store location on the map.';
+      if (
+        this.form.latitude === null ||
+        this.form.longitude === null ||
+        !Number.isFinite(this.form.latitude) ||
+        !Number.isFinite(this.form.longitude) ||
+        Math.abs(this.form.latitude) > 90 ||
+        Math.abs(this.form.longitude) > 180
+      ) {
+        errors['location'] =
+          'Enter valid coordinates or choose a location on the map.';
       }
     }
 
@@ -597,6 +710,13 @@ export class RegisterComponent {
     if (!this.form.state.trim()) return false;
     if (!INDIA_PINCODE_PATTERN.test(sanitizeDigits(this.form.postal_code, 6)))
       return false;
-    return this.form.latitude !== null && this.form.longitude !== null;
+    return (
+      this.form.latitude !== null &&
+      this.form.longitude !== null &&
+      Number.isFinite(this.form.latitude) &&
+      Number.isFinite(this.form.longitude) &&
+      Math.abs(this.form.latitude) <= 90 &&
+      Math.abs(this.form.longitude) <= 180
+    );
   }
 }

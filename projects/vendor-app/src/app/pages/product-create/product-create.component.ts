@@ -1,5 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { VendorProductCreateComponent } from '../../shared/vendor-product-create/vendor-product-create.component';
 import { VendorProductCreateService } from '../../shared/vendor-product-create/vendor-product-create.service';
 
@@ -10,19 +10,31 @@ import { VendorProductCreateService } from '../../shared/vendor-product-create/v
   templateUrl: './product-create.component.html',
 })
 export class ProductCreateComponent implements OnInit {
+  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly service = inject(VendorProductCreateService);
 
   ngOnInit(): void {
-    this.service.reset();
+    this.service.searchQuery.set(
+      this.route.snapshot.queryParamMap.get('search') || ''
+    );
+    this.service.requestedCatalogId.set(
+      this.route.snapshot.queryParamMap.get('catalog_id') || ''
+    );
+    void this.service.loadDrafts();
     void this.service.loadCatalogItems();
   }
 
   async cancel(): Promise<void> {
-    const canLeave = await this.service.discardDrafts();
-    if (canLeave) void this.router.navigate(['/products']);
+    void this.router.navigate(['/products']);
   }
 
+  hasUnsavedChanges(): boolean {
+    return this.service.dirty();
+  }
+  isSaving(): boolean {
+    return this.service.saving();
+  }
   submitted(): void {
     void this.router.navigate(['/products']);
   }

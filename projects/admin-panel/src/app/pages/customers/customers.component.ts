@@ -1,11 +1,12 @@
+import { AdminCanDirective } from '../../shared/admin-can.directive';
 import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { Subscription, timer } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import {
-  ApiService,
   apiErrorMessage,
+  ApiService,
   isValidEmail,
   isValidIndianPhone,
   normalizeIndianPhone,
@@ -21,7 +22,7 @@ import {
 @Component({
   selector: 'app-customers',
   standalone: true,
-  imports: [
+  imports: [AdminCanDirective,
     CommonModule,
     FormsModule,
     DynamicTableComponent,
@@ -51,7 +52,7 @@ export class CustomersComponent implements OnInit, OnDestroy {
     { key: 'email', label: 'Email', flex: '1.45fr' },
     { key: 'phone', label: 'Phone', flex: '0.9fr' },
     { key: 'verified', label: 'Status', flex: '0.75fr' },
-    { key: 'actions', label: '', flex: '0.55fr', align: 'right' },
+    { key: 'actions', label: 'Actions', flex: '0.55fr', align: 'right', minWidth: 88 },
   ];
 
   lastRefreshed = signal<Date | null>(null);

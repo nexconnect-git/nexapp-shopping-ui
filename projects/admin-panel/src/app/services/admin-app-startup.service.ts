@@ -20,7 +20,6 @@ export class AdminAppStartupService {
         }
         this.startNotificationPolling();
       },
-      { allowSignalWrites: true },
     );
   }
 

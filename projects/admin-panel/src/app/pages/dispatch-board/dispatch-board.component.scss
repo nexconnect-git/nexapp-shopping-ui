@@ -1,4 +1,4 @@
-﻿:host {
+:host {
   display: block;
 }
 
@@ -27,7 +27,7 @@
   strong {
     font-size: 2rem;
     line-height: 1;
-    font-weight: 950;
+    font-weight: 600;
   }
   small {
     color: var(--text-muted);
@@ -38,7 +38,7 @@
     color: #ef4444;
   }
   &.cyan .material-icons-outlined {
-    color: #38268E;
+    color: var(--admin-brand);
   }
   &.green .material-icons-outlined {
     color: #22c55e;
@@ -71,7 +71,7 @@
       flex: 1;
       margin: 0;
       font-size: 0.95rem;
-      font-weight: 950;
+      font-weight: 600;
     }
   }
 }
@@ -92,7 +92,7 @@
   }
   &.picked_up,
   &.on_the_way {
-    background: #38268E;
+    background: var(--admin-brand);
   }
 }
 
@@ -134,12 +134,12 @@
   }
   em {
     font-style: normal;
-    font-weight: 900;
+    font-weight: 600;
   }
   small {
     margin-top: 0.25rem;
     color: var(--text-muted);
-    font-weight: 800;
+    font-weight: 600;
   }
 }
 
@@ -212,3 +212,4 @@
   }
 }
 
+.dispatch-late{color:var(--fd-color-danger)}.partner-capacity-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}.partner-capacity-grid article{display:grid;gap:8px;padding:16px;border:1px solid var(--admin-line);border-radius:8px;font-size:14px}

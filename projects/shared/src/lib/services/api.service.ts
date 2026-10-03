@@ -1,8 +1,11 @@
+import { AdminIdentity, AdminSearchResult, AdminProfileContext, DispatchConsole, FinanceConsole } from '../models/admin-console';
 import { inject, Injectable, signal } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
+import { SKIP_GLOBAL_LOADING } from './global-loading.service';
 import { Observable, shareReplay } from 'rxjs';
 import { API_BASE_URL } from '../tokens/api-url.token';
 import { UploadedFile } from '../models';
+import { CartStateService } from './cart-state.service';
 
 /**
  * Deprecated compatibility wrapper. Use role/domain API clients.
@@ -14,7 +17,7 @@ import { UploadedFile } from '../models';
 export class ApiService {
   private baseUrl = inject(API_BASE_URL);
 
-  readonly cartCount = signal(0);
+  readonly cartCount = inject(CartStateService).cartCount;
   readonly unreadNotifications = signal(0);
   readonly activeIssue = signal<any>(null);
 
@@ -24,6 +27,24 @@ export class ApiService {
   private readonly _STATS_TTL_MS = 30_000;
 
   constructor(private http: HttpClient) {}
+
+  getAdminSupportAssignees(): Observable<any> { return this.http.get(`${this.baseUrl}/admin/support-assignees/`); }
+  getAdminRefundLedger(params: Record<string, string | number> = {}): Observable<any> { return this.http.get(`${this.baseUrl}/admin/refund-ledger/`, {params}); }
+  createAdminRefund(data: Record<string, unknown>): Observable<any> { return this.http.post(`${this.baseUrl}/admin/refund-ledger/`, data); }
+  updateAdminRefund(id: string, data: Record<string, unknown>): Observable<any> { return this.http.patch(`${this.baseUrl}/admin/refund-ledger/${id}/`, data); }
+  exportAdminFinance(type: 'payments' | 'refunds'): Observable<Blob> { return this.http.get(`${this.baseUrl}/admin/exports/finance/`, {params: {type}, responseType: 'blob'}); }
+  retryScheduledTask(id: string): Observable<any> { return this.http.post(`${this.baseUrl}/admin/scheduled-tasks/${encodeURIComponent(id)}/retry/`, {}); }
+  getAdminAccess(): Observable<AdminIdentity> { return this.http.get<AdminIdentity>(`${this.baseUrl}/admin/access/me/`); }
+  searchAdmin(q: string): Observable<{results: AdminSearchResult[]}> { return this.http.get<{results: AdminSearchResult[]}>(`${this.baseUrl}/admin/search/`, {params: {q}}); }
+  getAdminProfileContext(type: string, id: string): Observable<AdminProfileContext> { return this.http.get<AdminProfileContext>(`${this.baseUrl}/admin/profiles/${type}/${id}/context/`); }
+  initiateAdminPasswordReset(id: string, reason: string): Observable<{detail: string}> { return this.http.post<{detail: string}>(`${this.baseUrl}/admin/accounts/${id}/password-reset/`, {reason}); }
+  getAdminFinanceSummary(): Observable<FinanceConsole> { return this.http.get<FinanceConsole>(`${this.baseUrl}/admin/finance/summary/`); }
+  getAdminDispatch(params: Record<string, string | number> = {}): Observable<DispatchConsole> { return this.http.get<DispatchConsole>(`${this.baseUrl}/admin/dispatch/`, {params}); }
+  updateAdminDispatch(id: string, data: Record<string, unknown>): Observable<{detail: string}> { return this.http.post<{detail: string}>(`${this.baseUrl}/admin/dispatch/${id}/commands/`, data); }
+  getAdminRuntimeReadiness(): Observable<any> { return this.http.get(`${this.baseUrl}/admin/runtime-readiness/`); }
+  getAdminPermissionGrants(params: Record<string, string | number> = {}): Observable<any> { return this.http.get(`${this.baseUrl}/admin/permission-grants/`, {params}); }
+  createAdminPermissionGrant(user: string, permission: string): Observable<any> { return this.http.post(`${this.baseUrl}/admin/permission-grants/`, {user, permission, scope: {}}); }
+  revokeAdminPermissionGrant(id: string): Observable<void> { return this.http.delete<void>(`${this.baseUrl}/admin/permission-grants/${id}/`); }
 
   private hasFileValue(data: any): boolean {
     if (!data || typeof File === 'undefined') return false;
@@ -151,8 +172,8 @@ export class ApiService {
     return this.http.post(`${this.baseUrl}/auth/change-password/`, data);
   }
 
-  requestPasswordReset(email: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/auth/password-reset/`, { email });
+  requestPasswordReset(email: string, role = ''): Observable<any> {
+    return this.http.post(`${this.baseUrl}/auth/password-reset/`, { email, role });
   }
 
   confirmPasswordReset(token: string, newPassword: string): Observable<any> {
@@ -1474,10 +1495,11 @@ export class ApiService {
     docId: string,
     action: 'verify' | 'reject',
     rejectionReason?: string,
+    expiresOn?: string,
   ): Observable<any> {
     return this.http.post(
       `${this.baseUrl}/admin/vendors/${vendorId}/documents/${docId}/verify/`,
-      { action, rejection_reason: rejectionReason || '' },
+      { action, rejection_reason: rejectionReason || '', ...(expiresOn ? { expires_on: expiresOn } : {}) },
     );
   }
 
@@ -2114,7 +2136,17 @@ export class ApiService {
   }
 
   // Admin Payouts
-  getAdminVendorPayouts(params?: any): Observable<any> {
+  getAdminFinanceRecipients(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/admin/payouts/recipients/`);
+  }
+
+  getAdminPayoutEstimate(kind: 'vendors' | 'delivery', id: string, startDate: string, endDate: string): Observable<any> {
+    return this.http.get(`${this.baseUrl}/admin/payouts/${kind}/${id}/estimate/`, { params: { start_date: startDate, end_date: endDate } });
+  }
+  downloadAdminPayoutStatement(kind: 'vendors' | 'delivery', id: string): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/admin/payouts/${kind}/${id}/statement/`, { responseType: 'blob' });
+  }
+  getAdminVendorPayouts(params?: any, background = false): Observable<any> {
     let httpParams = new HttpParams();
     if (params) {
       Object.keys(params).forEach((key) => {
@@ -2125,6 +2157,7 @@ export class ApiService {
     }
     return this.http.get(`${this.baseUrl}/admin/payouts/vendors/`, {
       params: httpParams,
+      context: new HttpContext().set(SKIP_GLOBAL_LOADING, background),
     });
   }
 
@@ -2139,7 +2172,7 @@ export class ApiService {
     );
   }
 
-  getAdminDeliveryPayouts(params?: any): Observable<any> {
+  getAdminDeliveryPayouts(params?: any, background = false): Observable<any> {
     let httpParams = new HttpParams();
     if (params) {
       Object.keys(params).forEach((key) => {
@@ -2150,6 +2183,7 @@ export class ApiService {
     }
     return this.http.get(`${this.baseUrl}/admin/payouts/delivery/`, {
       params: httpParams,
+      context: new HttpContext().set(SKIP_GLOBAL_LOADING, background),
     });
   }
 
@@ -2197,10 +2231,10 @@ export class ApiService {
     );
   }
 
-  forceAdminVendorPayoutPaid(id: string): Observable<any> {
+  forceAdminVendorPayoutPaid(id: string, reason = ''): Observable<any> {
     return this.http.post(
       `${this.baseUrl}/admin/payouts/vendors/${id}/force-paid/`,
-      {},
+      { reason },
     );
   }
 
@@ -2222,10 +2256,10 @@ export class ApiService {
     );
   }
 
-  forceAdminDeliveryPayoutPaid(id: string): Observable<any> {
+  forceAdminDeliveryPayoutPaid(id: string, reason = ''): Observable<any> {
     return this.http.post(
       `${this.baseUrl}/admin/payouts/delivery/${id}/force-paid/`,
-      {},
+      { reason },
     );
   }
 

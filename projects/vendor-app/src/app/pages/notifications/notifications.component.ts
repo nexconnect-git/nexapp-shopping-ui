@@ -1,89 +1,106 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  effect,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
-import { Notification, ToastService, VendorApi } from '@shared/public-api';
-
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import {
+  apiErrorMessage,
+  Notification,
+  VendorWorkspaceApi,
+} from '@shared/public-api';
+import { VendorInboxService } from '../../services/vendor-inbox.service';
+import { WorkspacePagerComponent } from '../../components/workspace-pager.component';
 @Component({
   selector: 'app-notifications',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, WorkspacePagerComponent],
   templateUrl: './notifications.component.html',
   styleUrl: './notifications.component.scss',
 })
 export class NotificationsComponent implements OnInit {
-  private api = inject(VendorApi);
-  private toast = inject(ToastService);
-
-  notifications = signal<Notification[]>([]);
-  loading = signal(true);
-  filter = signal('all');
-  filters = [
-    'all',
-    'order',
-    'delivery',
-    'payout',
-    'approval',
-    'support',
-    'system',
-  ];
-
-  filtered = computed(() => {
-    if (this.filter() === 'all') return this.notifications();
-    return this.notifications().filter(
-      (n) => n.notification_type === this.filter(),
-    );
-  });
-  unreadCount = computed(
-    () => this.notifications().filter((n) => !n.is_read).length,
-  );
-
-  ngOnInit() {
-    this.load();
+  readonly inbox = inject(VendorInboxService);
+  private readonly api = inject(VendorWorkspaceApi);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly destroy = inject(DestroyRef);
+  readonly notifications = signal<Notification[]>([]);
+  readonly loading = signal(false);
+  readonly error = signal('');
+  readonly page = signal(1);
+  readonly count = signal(0);
+  readonly filter = signal('all');
+  readonly unreadOnly = signal(false);
+  search = '';
+  private generation = 0;
+  private initialized = false;
+  readonly filters = ['all', 'order', 'delivery', 'payout', 'promo', 'system'];
+  constructor() {
+    effect(() => {
+      this.inbox.revision();
+      if (this.initialized) this.load();
+    });
   }
-
-  load() {
+  ngOnInit(): void {
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe((params) => {
+        this.page.set(Math.max(1, Number(params.get('page')) || 1));
+        this.filter.set(params.get('type') || 'all');
+        this.unreadOnly.set(params.get('unread') === 'true');
+        this.search = params.get('search') || '';
+        this.initialized = true;
+        this.load();
+      });
+  }
+  query(page = 1): void {
+    void this.router.navigate([], {
+      queryParams: {
+        page,
+        type: this.filter() === 'all' ? null : this.filter(),
+        unread: this.unreadOnly() || null,
+        search: this.search || null,
+      },
+    });
+  }
+  setFilter(value: string): void {
+    this.filter.set(value);
+    this.query();
+  }
+  load(): void {
+    const generation = ++this.generation;
     this.loading.set(true);
-    this.api.getNotifications().subscribe({
-      next: (r) => {
-        this.notifications.set(r.results || r);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.loading.set(false);
-        this.toast.show('Failed to load notifications.', 'error');
-      },
-    });
-  }
-
-  setFilter(filter: string) {
-    this.filter.set(filter);
-  }
-
-  markRead(notification: Notification) {
-    this.api.markNotificationRead(notification.id).subscribe({
-      next: () =>
-        this.notifications.update((list) =>
-          list.map((n) =>
-            n.id === notification.id ? { ...n, is_read: true } : n,
-          ),
-        ),
-    });
-  }
-
-  markAllRead() {
-    if (this.unreadCount() === 0) {
-      this.toast.show('You are all caught up.', 'info');
-      return;
-    }
-    this.api.markAllNotificationsRead().subscribe({
-      next: () => {
-        this.notifications.update((list) =>
-          list.map((n) => ({ ...n, is_read: true })),
-        );
-        this.toast.show('All notifications marked as read.', 'success');
-      },
-      error: () =>
-        this.toast.show('Failed to mark notifications as read.', 'error'),
-    });
+    this.api
+      .notifications({
+        page: this.page(),
+        notification_type: this.filter() === 'all' ? null : this.filter(),
+        unread: this.unreadOnly() || null,
+        search: this.search,
+      })
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: (response) => {
+          if (generation !== this.generation) return;
+          this.notifications.set(response.results);
+          this.count.set(response.count);
+          this.inbox.unread.set(response.unread_count ?? this.inbox.unread());
+          this.loading.set(false);
+          this.error.set('');
+        },
+        error: (error) => {
+          if (generation === this.generation) {
+            this.loading.set(false);
+            this.error.set(
+              apiErrorMessage(error, 'Notifications could not be loaded.')
+            );
+          }
+        },
+      });
   }
 }

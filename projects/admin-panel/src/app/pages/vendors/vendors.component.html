@@ -15,7 +15,7 @@
             >Updated {{ lastRefreshed() | date: "HH:mm:ss" }}</span
           >
         }
-        <button
+        <button aria-label="Reload"
           class="btn btn-ghost btn-sm"
           (click)="manualReload()"
           [disabled]="loading()"
@@ -91,7 +91,7 @@
         </div>
         <div>
           <p class="vendor-name vendor-name-link">{{ v.store_name }}</p>
-          <p class="vendor-email text-muted text-sm">{{ v.email }}</p>
+          <p class="vendor-email text-muted text-sm" [title]="v.email">{{ v.email }}</p>
         </div>
       </a>
     </ng-template>
@@ -136,58 +136,24 @@
     <!-- Custom actions column -->
     <ng-template tableCell="actions" let-v>
       <div class="actions">
-        <a
-          class="action-btn"
-          [routerLink]="['/vendors', v.id, 'edit']"
-          title="Edit"
-        >
-          <span class="material-icons-outlined">edit</span>
-        </a>
-        @if (v.status === "pending") {
-          <button
-            class="action-btn approve"
-            [disabled]="actionId() === v.id"
-            (click)="setStatus(v, 'approved')"
-            title="Approve"
-          >
-            <span class="material-icons-outlined">check_circle</span>
-          </button>
-          <button
-            class="action-btn reject"
-            [disabled]="actionId() === v.id"
-            (click)="setStatus(v, 'rejected')"
-            title="Reject"
-          >
-            <span class="material-icons-outlined">cancel</span>
-          </button>
-        }
-        @if (v.status === "approved") {
-          <button
-            class="action-btn suspend"
-            [disabled]="actionId() === v.id"
-            (click)="setStatus(v, 'suspended')"
-            title="Suspend"
-          >
-            <span class="material-icons-outlined">block</span>
-          </button>
-        }
-        @if (v.status === "suspended" || v.status === "rejected") {
-          <button
-            class="action-btn approve"
-            [disabled]="actionId() === v.id"
-            (click)="setStatus(v, 'approved')"
-            title="Restore"
-          >
-            <span class="material-icons-outlined">restore</span>
-          </button>
-        }
-        <button
-          class="action-btn danger"
-          (click)="deleteVendor(v)"
-          title="Delete"
-        >
-          <span class="material-icons-outlined">delete_outline</span>
-        </button>
+        <ng-container *appAdminCan="'vendors.manage'">
+          <a class="action-btn" [routerLink]="['/vendors', v.id, 'edit']" aria-label="Edit vendor" title="Edit vendor"><span class="material-icons-outlined">edit</span></a>
+          <app-admin-row-actions [label]="'More actions for ' + v.store_name">
+            <ng-template>
+              @if (v.status === 'pending') {
+                <button role="menuitem" [disabled]="actionId() === v.id" (click)="setStatus(v, 'approved')"><span class="material-icons-outlined">check_circle</span>Approve vendor</button>
+                <button role="menuitem" class="danger" [disabled]="actionId() === v.id" (click)="setStatus(v, 'rejected')"><span class="material-icons-outlined">cancel</span>Reject vendor</button>
+              }
+              @if (v.status === 'approved') {
+                <button role="menuitem" [disabled]="actionId() === v.id" (click)="setStatus(v, 'suspended')"><span class="material-icons-outlined">block</span>Suspend vendor</button>
+              }
+              @if (v.status === 'suspended' || v.status === 'rejected') {
+                <button role="menuitem" [disabled]="actionId() === v.id" (click)="setStatus(v, 'approved')"><span class="material-icons-outlined">restore</span>Restore vendor</button>
+              }
+              <button role="menuitem" class="danger" (click)="deleteVendor(v)"><span class="material-icons-outlined">delete_outline</span>Delete vendor</button>
+            </ng-template>
+          </app-admin-row-actions>
+        </ng-container>
       </div>
     </ng-template>
   </app-dynamic-table>

@@ -9,7 +9,7 @@
       </p>
     </div>
     <div class="hero-actions">
-      <button
+      <button aria-label="Refresh catalog"
         class="btn-secondary"
         (click)="load()"
         [disabled]="loading()"
@@ -19,10 +19,10 @@
           >refresh</span
         >
       </button>
-      <button class="btn-primary" (click)="openCreate()">
+      <ng-container *appAdminCan="'catalog.manage'"><button class="btn-primary" (click)="openCreate()">
         <span class="material-icons-outlined">add</span>
         New Item
-      </button>
+      </button></ng-container>
     </div>
   </section>
 
@@ -126,24 +126,24 @@
 
     <ng-template tableCell="actions" let-item>
       <div class="actions">
-        <button class="icon-action" (click)="openEdit(item)" title="Edit">
+        <ng-container *appAdminCan="'catalog.manage'"><button aria-label="Edit" class="icon-action" (click)="openEdit(item)" title="Edit">
           <span class="material-icons-outlined">edit</span>
-        </button>
-        <button
+        </button></ng-container>
+        <ng-container *appAdminCan="'catalog.manage'"><button aria-label="Delete"
           class="icon-action danger"
           (click)="delete(item)"
           title="Delete"
         >
           <span class="material-icons-outlined">delete_outline</span>
-        </button>
+        </button></ng-container>
       </div>
     </ng-template>
   </app-dynamic-table>
 </div>
 
 @if (showModal()) {
-  <div class="catalog-modal-backdrop" (click)="closeModal()">
-    <div class="catalog-modal" (click)="$event.stopPropagation()">
+  <div class="catalog-modal-backdrop" (click)="$event.target === $event.currentTarget && (closeModal())" (keydown.escape)="closeModal()" tabindex="-1" role="presentation">
+    <div class="catalog-modal" appAdminDialog (appAdminDialogClose)="closeModal()">
       <div class="modal-header">
         <div>
           <span class="eyebrow">{{
@@ -153,24 +153,24 @@
             {{ editTarget() ? 'Update Catalog Item' : 'New Catalog Item' }}
           </h2>
         </div>
-        <button class="modal-close" (click)="closeModal()" title="Close">
+        <button aria-label="Close" class="modal-close" (click)="closeModal()" title="Close">
           <span class="material-icons-outlined">close</span>
         </button>
       </div>
       <div class="modal-body">
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">Name *</label
-            ><input class="form-input" [(ngModel)]="form.name" />
+            <label for="admin-control-catalog.component-0" class="form-label">Name *</label
+            ><input id="admin-control-catalog.component-0" class="form-input" [(ngModel)]="form.name" />
           </div>
           <div class="form-group">
-            <label class="form-label">Brand</label
-            ><input class="form-input" [(ngModel)]="form.brand" />
+            <label for="admin-control-catalog.component-1" class="form-label">Brand</label
+            ><input id="admin-control-catalog.component-1" class="form-input" [(ngModel)]="form.brand" />
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">Description</label
-          ><textarea
+          <label for="admin-control-catalog.component-2" class="form-label">Description</label
+          ><textarea id="admin-control-catalog.component-2"
             class="form-input"
             rows="3"
             [(ngModel)]="form.description"
@@ -178,8 +178,8 @@
         </div>
         <div class="form-row three">
           <div class="form-group">
-            <label class="form-label">Category</label>
-            <select class="form-input" [(ngModel)]="form.category_id">
+            <label for="admin-control-catalog.component-3" class="form-label">Category</label>
+            <select id="admin-control-catalog.component-3" class="form-input" [(ngModel)]="form.category_id">
               <option [ngValue]="null">None</option>
               @for (cat of categories(); track cat.id) {
                 <option [ngValue]="cat.id">{{ cat.name }}</option>
@@ -187,22 +187,22 @@
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">Unit</label
-            ><input class="form-input" [(ngModel)]="form.unit" />
+            <label for="admin-control-catalog.component-4" class="form-label">Unit</label
+            ><input id="admin-control-catalog.component-4" class="form-input" [(ngModel)]="form.unit" />
           </div>
           <div class="form-group">
-            <label class="form-label">Barcode</label
-            ><input class="form-input" [(ngModel)]="form.barcode" />
+            <label for="admin-control-catalog.component-5" class="form-label">Barcode</label
+            ><input id="admin-control-catalog.component-5" class="form-input" [(ngModel)]="form.barcode" />
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">Search Keywords</label
-            ><input class="form-input" [(ngModel)]="form.search_keywords" />
+            <label for="admin-control-catalog.component-6" class="form-label">Search Keywords</label
+            ><input id="admin-control-catalog.component-6" class="form-input" [(ngModel)]="form.search_keywords" />
           </div>
           <div class="form-group">
-            <label class="form-label">Status</label>
-            <select class="form-input" [(ngModel)]="form.is_active">
+            <label for="admin-control-catalog.component-7" class="form-label">Status</label>
+            <select id="admin-control-catalog.component-7" class="form-input" [(ngModel)]="form.is_active">
               <option [ngValue]="true">Active</option>
               <option [ngValue]="false">Inactive</option>
             </select>
@@ -210,7 +210,7 @@
         </div>
         @if (editTarget()) {
           <div class="form-group image-manager">
-            <label class="form-label">Catalog Images</label>
+            <span class="form-label">Catalog Images</span>
             <div class="image-grid">
               @for (image of modalImages(); track image.id) {
                 <div class="image-tile">
@@ -218,7 +218,7 @@
                   @if (image.is_primary) {
                     <span class="image-badge">Primary</span>
                   }
-                  <button
+                  <ng-container *appAdminCan="'catalog.manage'"><button aria-label="Delete image"
                     class="image-delete"
                     (click)="deleteImage(image.id)"
                     title="Delete image"
@@ -226,7 +226,7 @@
                     <span class="material-icons-outlined"
                       >delete_outline</span
                     >
-                  </button>
+                  </button></ng-container>
                 </div>
               }
               <label class="image-upload">
@@ -259,8 +259,8 @@
           </div>
         }
         <div class="form-group">
-          <label class="form-label">Compliance Notes</label
-          ><textarea
+          <label for="admin-control-catalog.component-10" class="form-label">Compliance Notes</label
+          ><textarea id="admin-control-catalog.component-10"
             class="form-input"
             rows="2"
             [(ngModel)]="form.compliance_notes"
@@ -271,9 +271,9 @@
         <button class="btn-secondary text" (click)="closeModal()">
           Cancel
         </button>
-        <button class="btn-primary" [disabled]="saving()" (click)="save()">
+        <ng-container *appAdminCan="'catalog.manage'"><button class="btn-primary" [disabled]="saving()" (click)="save()">
           {{ saving() ? 'Saving...' : 'Save Item' }}
-        </button>
+        </button></ng-container>
       </div>
     </div>
   </div>

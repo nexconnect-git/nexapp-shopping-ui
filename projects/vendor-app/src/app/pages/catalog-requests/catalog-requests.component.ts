@@ -1,15 +1,18 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { afterNextRender, Component, DestroyRef, ElementRef, inject, Injector, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   apiErrorMessage,
-  VendorApi,
   CatalogProposal,
   Category,
-  ToastService,
+  VendorWorkspaceApi,
 } from '@shared/public-api';
-
-interface ProposalDraftItem {
+import { vendorListState } from '../../services/vendor-list-state';
+import { WorkspacePagerComponent } from '../../components/workspace-pager.component';
+import { WorkspaceDialogComponent } from '../../components/workspace-dialog.component';
+interface ProposalDraft {
   name: string;
   category_id: string | null;
   description: string;
@@ -18,116 +21,187 @@ interface ProposalDraftItem {
   barcode: string;
   sku_hint: string;
 }
-
 @Component({
   selector: 'app-catalog-requests',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink, WorkspacePagerComponent, WorkspaceDialogComponent],
   templateUrl: './catalog-requests.component.html',
   styleUrl: './catalog-requests.component.scss',
 })
 export class CatalogRequestsComponent implements OnInit {
-  private api = inject(VendorApi);
-  private toast = inject(ToastService);
-
-  categories = signal<Category[]>([]);
-  proposals = signal<CatalogProposal[]>([]);
-  loading = signal(false);
-  saving = signal(false);
-  draftItems = signal<ProposalDraftItem[]>([this.emptyItem()]);
-  draftErrors = signal<Record<string, string>>({});
-  readonly unitOptions = [
-    { value: 'piece', label: 'Piece' },
-    { value: 'pcs', label: 'Pieces' },
-    { value: 'pack', label: 'Pack' },
-    { value: 'dozen', label: 'Dozen' },
-    { value: 'box', label: 'Box' },
-    { value: 'bag', label: 'Bag' },
-    { value: 'bottle', label: 'Bottle' },
-    { value: 'tray', label: 'Tray' },
-    { value: 'bunch', label: 'Bunch' },
-    { value: 'pair', label: 'Pair' },
-    { value: 'kg', label: 'Kilogram (kg)' },
-    { value: 'g', label: 'Gram (g)' },
-    { value: 'litre', label: 'Litre' },
-    { value: 'ml', label: 'Millilitre (ml)' },
+  private readonly host: ElementRef<HTMLElement> = inject(ElementRef);
+  private readonly injector = inject(Injector);
+  private readonly api = inject(VendorWorkspaceApi);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly destroy = inject(DestroyRef);
+  readonly list = vendorListState<CatalogProposal>((query) =>
+    this.api.proposals(query)
+  );
+  readonly categories = signal<Category[]>([]);
+  readonly categoryError = signal('');
+  readonly search = signal('');
+  readonly status = signal('');
+  readonly drafts = signal<ProposalDraft[]>([this.blank()]);
+  readonly saving = signal(false);
+  readonly editorOpen = signal(false);
+  readonly submitError = signal('');
+  readonly success = signal('');
+  readonly errors = signal<Record<string, string>>({});
+  readonly fields: {
+    key: 'name' | 'brand' | 'barcode' | 'sku_hint';
+    label: string;
+    max: number;
+  }[] = [
+    { key: 'name', label: 'Item name and pack size', max: 200 },
+    { key: 'brand', label: 'Brand', max: 120 },
+    { key: 'barcode', label: 'Barcode', max: 100 },
+    { key: 'sku_hint', label: 'SKU hint', max: 50 },
   ];
-
-  ngOnInit() {
-    this.api
-      .getVendorCategories()
-      .subscribe({ next: (cats) => this.categories.set(cats) });
-    this.load();
+  readonly statuses = ['pending', 'partially_approved', 'approved', 'rejected'];
+  readonly units = [
+    'piece',
+    'pcs',
+    'pack',
+    'dozen',
+    'box',
+    'bag',
+    'bottle',
+    'tray',
+    'bunch',
+    'pair',
+    'kg',
+    'g',
+    'litre',
+    'ml',
+  ];
+  ngOnInit(): void {
+    this.loadCategories();
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe((params) => {
+        this.list.page.set(Math.max(1, Number(params.get('page')) || 1));
+        this.search.set(params.get('search') || '');
+        this.status.set(params.get('status') || '');
+        this.load();
+      });
   }
-
-  load() {
-    this.loading.set(true);
-    this.api.getVendorCatalogProposals({ page_size: 50 }).subscribe({
-      next: (res) => {
-        this.proposals.set(res.results || res);
-        this.loading.set(false);
+  hasUnsavedChanges(): boolean {
+    return this.drafts().some(
+      (item) =>
+        !!(
+          item.name ||
+          item.brand ||
+          item.description ||
+          item.barcode ||
+          item.sku_hint ||
+          item.category_id
+        )
+    );
+  }
+  isSaving(): boolean {
+    return this.saving();
+  }
+  loadCategories(): void {
+    this.api
+      .categories()
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: (categories) => {
+          this.categories.set(categories);
+          this.categoryError.set('');
+        },
+        error: (failure) =>
+          this.categoryError.set(
+            apiErrorMessage(failure, 'Categories could not be loaded.')
+          ),
+      });
+  }
+  load(): void {
+    this.list.load({ search: this.search(), status: this.status() });
+  }
+  query(page = 1): void {
+    void this.router.navigate([], {
+      queryParams: {
+        page,
+        search: this.search() || null,
+        status: this.status() || null,
       },
-      error: () => this.loading.set(false),
     });
   }
-
-  addItem() {
-    this.draftItems.update((items) => [...items, this.emptyItem()]);
+  add(): void {
+    if (!this.saving() && this.drafts().length < 50)
+      this.drafts.update((items) => [...items, this.blank()]);
   }
-
-  removeItem(index: number) {
-    this.draftItems.update((items) => items.filter((_, i) => i !== index));
+  remove(index: number): void {
+    if (!this.saving() && this.drafts().length > 1)
+      this.drafts.update((items) =>
+        items.filter((_, position) => index !== position)
+      );
   }
-
-  submit() {
-    this.draftErrors.set({});
+  update(
+    index: number,
+    field: keyof ProposalDraft,
+    value: string | null
+  ): void {
+    this.drafts.update((items) =>
+      items.map((item, position) =>
+        position === index ? { ...item, [field]: value } : item
+      )
+    );
+    this.errors.update((errors) => {
+      const next = { ...errors };
+      if (field === 'name' && value?.trim()) delete next[String(index)];
+      return next;
+    });
+    this.success.set('');
+  }
+  submit(): void {
+    if (this.saving()) return;
     const errors: Record<string, string> = {};
-    const items = this.draftItems()
-      .map((item, index) => ({ item, index }))
-      .filter(({ item, index }) => {
-        const hasAnyValue = Object.values(item).some((value) =>
-          String(value || '').trim()
-        );
-        if (hasAnyValue && !item.name.trim()) {
-          errors[this.itemErrorKey(index, 'name')] =
-            'Item name is required when adding proposal details.';
-        }
-        return item.name.trim();
-      })
-      .map((item) => ({
-        name: item.item.name.trim(),
-        category_id: item.item.category_id,
-        description: item.item.description.trim(),
-        brand: item.item.brand.trim(),
-        unit: item.item.unit.trim().toLowerCase() || 'piece',
-        barcode: item.item.barcode.trim().toUpperCase(),
-        sku_hint: item.item.sku_hint.trim().toUpperCase(),
-      }));
-    if (Object.keys(errors).length > 0) {
-      this.draftErrors.set(errors);
-      this.toast.show('Fix catalog item errors before submitting.', 'error');
-      return;
-    }
-    if (items.length === 0) {
-      this.toast.show('Add at least one item name.', 'error');
+    const submitted = this.drafts().filter(item => !!(item.name.trim() || item.brand.trim() || item.description.trim() || item.barcode.trim() || item.sku_hint.trim() || item.category_id));
+    if (!submitted.length) errors['0'] = 'Item name is required.';
+    this.drafts().forEach((item, index) => {
+      if (submitted.includes(item) && !item.name.trim()) errors[String(index)] = 'Item name is required.';
+    });
+    this.errors.set(errors);
+    if (Object.keys(errors).length) {
+      afterNextRender(() => {
+        const invalid = this.host.nativeElement.querySelector<HTMLElement>('[aria-invalid="true"]');
+        invalid?.focus();
+        invalid?.scrollIntoView({ block: 'center' });
+      }, { injector: this.injector });
       return;
     }
     this.saving.set(true);
-    this.api.createVendorCatalogProposal({ items }).subscribe({
-      next: () => {
-        this.toast.show('Catalog request submitted.', 'success');
-        this.draftItems.set([this.emptyItem()]);
-        this.saving.set(false);
-        this.load();
-      },
-      error: (err) => {
-        this.toast.show(apiErrorMessage(err, 'Failed to submit request.'), 'error');
-        this.saving.set(false);
-      },
-    });
+    this.submitError.set('');
+    this.api
+      .createProposal(
+        submitted.map((item) => ({ ...item, name: item.name.trim() }))
+      )
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: (proposal) => {
+          this.saving.set(false);
+          this.success.set(
+            `${proposal.items.length} item${proposal.items.length===1?'':'s'} sent for review.`
+          );
+          this.drafts.set([this.blank()]);
+          this.editorOpen.set(false);
+          this.load();
+        },
+        error: (failure) => {
+          this.saving.set(false);
+          this.submitError.set(
+            apiErrorMessage(
+              failure,
+              'Request was not submitted. Your item details remain available.'
+            )
+          );
+        },
+      });
   }
-
-  private emptyItem(): ProposalDraftItem {
+  private blank(): ProposalDraft {
     return {
       name: '',
       category_id: null,
@@ -137,31 +211,5 @@ export class CatalogRequestsComponent implements OnInit {
       barcode: '',
       sku_hint: '',
     };
-  }
-
-  itemError(index: number, field: string): string {
-    return this.draftErrors()[this.itemErrorKey(index, field)] || '';
-  }
-
-  clearItemError(index: number, field: string) {
-    const key = this.itemErrorKey(index, field);
-    if (!this.draftErrors()[key]) return;
-    this.draftErrors.update((errors) => {
-      const next = { ...errors };
-      delete next[key];
-      return next;
-    });
-  }
-
-  canSubmitRequest(): boolean {
-    return (
-      !this.saving() &&
-      Object.keys(this.draftErrors()).length === 0 &&
-      this.draftItems().some((item) => item.name.trim())
-    );
-  }
-
-  private itemErrorKey(index: number, field: string): string {
-    return `${index}.${field}`;
   }
 }

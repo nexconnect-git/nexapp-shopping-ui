@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { ApiService } from '@shared/public-api';
@@ -52,7 +52,7 @@ function normalizeVendorStoreType(value: unknown): string {
 @Component({
   selector: 'app-onboarding-form',
   standalone: true,
-  imports: [CommonModule, DynamicStepperComponent],
+  imports: [DynamicStepperComponent],
   templateUrl: './onboarding-form.component.html',
   styleUrl: './onboarding-form.component.scss',
 })
@@ -69,13 +69,12 @@ export class OnboardingFormComponent implements OnInit {
   success = signal(false);
   loading = signal(false);
   prefillData = signal<Record<string, any> | null>(null);
-  tempPassword = signal<string | null>(null);
 
   stepperConfig!: StepperConfig;
 
   uniqueChecker = (
     field: StepperField,
-    value: string,
+    value: string
   ): Observable<UniqueValidationResult> => {
     return this.api.checkAdminIdentityAvailability({
       field: field.key,
@@ -87,7 +86,8 @@ export class OnboardingFormComponent implements OnInit {
 
   private readonly VENDOR_DOCUMENT_SECTION: StepperSection = {
     title: 'Documents',
-    description: 'Upload the required licence and KYC files collected during onboarding.',
+    description:
+      'Upload the required licence and KYC files collected during onboarding.',
     fields: [
       {
         key: 'license_document',
@@ -872,7 +872,7 @@ export class OnboardingFormComponent implements OnInit {
               ...step,
               sections: [...step.sections, this.VENDOR_DOCUMENT_SECTION],
             }
-          : step,
+          : step
       ),
     };
   }
@@ -944,7 +944,7 @@ export class OnboardingFormComponent implements OnInit {
       payload.latitude = payload.latitude || 0;
       payload.longitude = payload.longitude || 0;
       payload.commission_percentage = Number(
-        payload.commission_percentage || 0,
+        payload.commission_percentage || 0
       );
       payload.min_order_amount = Number(payload.min_order_amount || 0);
       payload.delivery_radius_km = Number(payload.delivery_radius_km || 0);
@@ -970,54 +970,26 @@ export class OnboardingFormComponent implements OnInit {
     }
 
     request$.subscribe({
-      next: (res: any) => {
+      next: () => {
         this.saving.set(false);
         this.success.set(true);
-        const temporaryPassword = this.extractTemporaryPassword(res);
-        if (temporaryPassword) {
-          this.tempPassword.set(temporaryPassword);
-        } else {
-          // Edit mode or no temp password — redirect automatically
           const dest =
             this.mode === 'vendor-edit'
               ? `/vendors/${this.entityId}`
               : this.mode === 'partner-onboard'
-                ? '/delivery-partners'
-                : '/vendors';
+              ? '/delivery-partners'
+              : '/vendors';
           setTimeout(() => this.router.navigate([dest]), 1800);
-        }
       },
       error: (err: any) => {
         this.saving.set(false);
         this.errors.set(
           err.error || {
             detail: 'Submission failed. Please check all fields.',
-          },
+          }
         );
       },
     });
-  }
-
-  private extractTemporaryPassword(res: any): string {
-    return (
-      res?.temp_password ||
-      res?.temporary_password ||
-      res?.auto_generated_password ||
-      res?.user?.temp_password ||
-      res?.user_info?.temp_password ||
-      ''
-    );
-  }
-
-  copyTempPassword() {
-    const pw = this.tempPassword();
-    if (pw) navigator.clipboard.writeText(pw);
-  }
-
-  proceedAfterPassword() {
-    const dest =
-      this.mode === 'partner-onboard' ? '/delivery-partners' : '/vendors';
-    this.router.navigate([dest]);
   }
 
   private normalizePayload(model: any) {

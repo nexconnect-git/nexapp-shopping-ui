@@ -1,4 +1,4 @@
-﻿:host {
+:host {
   display: block;
   padding-bottom: 3rem;
 }
@@ -55,7 +55,7 @@
     gap: 0.25rem;
     strong {
       font-size: 0.9375rem;
-      font-weight: 800;
+      font-weight: 600;
       color: color-mix(in srgb, #ef4444, black 20%);
     }
     span {
@@ -122,7 +122,7 @@
   gap: 1rem;
   .page-title {
     font-size: 2rem;
-    font-weight: 900;
+    font-weight: 600;
     color: var(--text-primary);
     margin: 0 0 0.25rem 0;
     letter-spacing: -0.03em;
@@ -236,7 +236,7 @@
   justify-content: center;
   overflow: hidden;
   font-size: 3rem;
-  font-weight: 900;
+  font-weight: 600;
   color: white;
   position: relative;
   img {
@@ -325,8 +325,8 @@
   align-items: center;
   padding: 0.375rem 0.75rem;
   border-radius: var(--radius-full);
-  font-size: 0.75rem;
-  font-weight: 800;
+  font-size: var(--admin-text-small);
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   border: 1px solid transparent;
@@ -357,8 +357,8 @@
   background: #fdf4ff;
   color: #a21caf;
   border: 1px solid #f5d0fe;
-  font-size: 0.75rem;
-  font-weight: 800;
+  font-size: var(--admin-text-small);
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -407,12 +407,12 @@
 }
 .hero-stat-value {
   font-size: 1.5rem;
-  font-weight: 800;
+  font-weight: 600;
   color: var(--text-primary);
   letter-spacing: -0.02em;
 }
 .hero-stat-label {
-  font-size: 0.75rem;
+  font-size: var(--admin-text-small);
   font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
@@ -485,7 +485,7 @@
 }
 .info-card-title {
   font-size: 1.125rem;
-  font-weight: 800;
+  font-weight: 600;
   color: var(--text-primary);
   margin: 0 0 1.5rem 0;
   display: flex;
@@ -543,12 +543,12 @@
 }
 .stat-value {
   font-size: 1.25rem;
-  font-weight: 800;
+  font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 0.25rem;
 }
 .stat-label {
-  font-size: 0.75rem;
+  font-size: var(--admin-text-small);
   font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
@@ -604,7 +604,7 @@
 }
 .report-title {
   font-size: 1.25rem;
-  font-weight: 800;
+  font-weight: 600;
   color: var(--text-primary);
   margin: 0;
 }
@@ -667,7 +667,7 @@
 }
 .report-stat-value {
   font-size: 1.5rem;
-  font-weight: 800;
+  font-weight: 600;
   color: var(--text-primary);
   margin: 0;
   letter-spacing: -0.02em;
@@ -690,7 +690,7 @@
 }
 .chart-title {
   font-size: 1.125rem;
-  font-weight: 800;
+  font-weight: 600;
   color: var(--text-primary);
   margin: 0 0 1.5rem 0;
 }
@@ -732,7 +732,7 @@
   transition: height 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .bar-value {
-  font-size: 0.75rem;
+  font-size: var(--admin-text-small);
   font-weight: 700;
   color: var(--text-secondary);
   opacity: 0;
@@ -746,7 +746,7 @@
   color: var(--primary);
 }
 .bar-label {
-  font-size: 0.75rem;
+  font-size: var(--admin-text-small);
   font-weight: 600;
   color: var(--text-muted);
   margin-top: 0.25rem;
@@ -758,8 +758,8 @@
   text-align: left;
   th {
     padding: 1rem 1.5rem;
-    font-size: 0.75rem;
-    font-weight: 800;
+    font-size: var(--admin-text-small);
+    font-weight: 600;
     color: var(--text-muted);
     text-transform: uppercase;
     background: var(--surface-hover);
@@ -971,14 +971,14 @@
       display: block;
       color: var(--text-primary);
       font-size: 1.2rem;
-      font-weight: 950;
+      font-weight: 600;
       line-height: 1.15;
     }
 
     small {
       display: block;
       color: var(--text-muted);
-      font-size: 0.78rem;
+      font-size: var(--admin-text-small);
       font-weight: 650;
       margin-top: 0.2rem;
       overflow: hidden;
@@ -990,8 +990,8 @@
   .intel-label {
     display: block;
     color: var(--text-muted);
-    font-size: 0.68rem;
-    font-weight: 900;
+    font-size: var(--admin-text-small);
+    font-weight: 600;
     letter-spacing: 0.08em;
     margin-bottom: 0.25rem;
     text-transform: uppercase;
@@ -1008,7 +1008,7 @@
 
     &.warm {
       background: rgba(56, 38, 142, 0.13);
-      color: #23117C;
+      color: var(--admin-brand-hover);
     }
     &.green {
       background: rgba(34, 197, 94, 0.12);
@@ -1070,12 +1070,12 @@
     strong {
       color: #fff;
       font-size: 0.9rem;
-      font-weight: 850;
+      font-weight: 600;
     }
 
     small {
       color: rgba(255, 255, 255, 0.68);
-      font-size: 0.78rem;
+      font-size: var(--admin-text-small);
       font-weight: 600;
       line-height: 1.35;
       margin-top: 0.15rem;
@@ -1162,7 +1162,7 @@
       margin: 0;
       color: #fff;
       font-size: 2rem;
-      font-weight: 900;
+      font-weight: 600;
       letter-spacing: 0;
       text-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
     }
@@ -1196,7 +1196,7 @@
   .role-badge {
     border-radius: 4px;
     padding: 0.2rem 0.62rem;
-    font-size: 0.74rem;
+    font-size: var(--admin-text-small);
     letter-spacing: 0;
   }
 
@@ -1398,7 +1398,7 @@
     border: 0;
     border-radius: 4px;
     padding: 2px 10px;
-    font-size: 0.75rem;
+    font-size: var(--admin-text-small);
     font-weight: 600;
     letter-spacing: 0;
   }
@@ -1443,7 +1443,7 @@
 
   .intel-label {
     color: #6b7280;
-    font-size: 0.75rem;
+    font-size: var(--admin-text-small);
     font-weight: 600;
     letter-spacing: 0.06em;
   }
@@ -1456,7 +1456,7 @@
 
   .intel-card small {
     color: #9ca3af;
-    font-size: 0.75rem;
+    font-size: var(--admin-text-small);
   }
 
   .tab-strip {
@@ -1528,7 +1528,7 @@
 
   .info-label {
     color: #9ca3af;
-    font-size: 0.625rem;
+    font-size: var(--admin-text-small);
     font-weight: 700;
     letter-spacing: 0.12em;
   }
@@ -1539,5 +1539,3 @@
     font-weight: 500;
   }
 }
-
-

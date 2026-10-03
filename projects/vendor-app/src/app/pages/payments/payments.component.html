@@ -1,305 +1,224 @@
-<div class="payments-page fade-in">
-  <section class="page-hero">
-    <div class="page-hero-copy">
-      <span class="eyebrow">Finance</span>
-      <h1>Payments &amp; Settlements</h1>
+<div class="workspace-page">
+  <header class="page-heading">
+    <div>
+      <p class="eyebrow">Money</p>
+      <h1>Settlements</h1>
+      <p>Review platform settlements and confirm received credits.</p>
+    </div>
+    <a routerLink="/transactions" class="btn btn-secondary"
+      >Wallet transactions</a
+    >
+  </header>
+  <details class="workspace-card settlement-summary">
+    <summary>All-time totals and payout account</summary>
+  @if(store.context();as context){
+  <section class="workspace-card operating-card">
+    <div>
+      <h3>Payout account</h3>
       <p>
-        Track your revenue payouts, settlement periods, approvals, and credit
-        verification.
+        {{
+          context.verification.bank.configured
+            ? context.verification.bank.bank_name +
+              " · " +
+              context.verification.bank.masked_account
+            : "Bank account not configured"
+        }}
       </p>
     </div>
+    <span
+      class="status-pill"
+      [class.success]="context.verification.bank.verified"
+      >{{
+        context.verification.bank.verified
+          ? "Verified"
+          : "Admin verification pending"
+      }}</span
+    >
   </section>
-
-  <section class="finance-command-strip">
-    <div class="finance-card">
-      <span class="material-icons-outlined">approval</span>
-      <div>
-        <strong>{{ pendingApproval().length }}</strong>
-        <small>Need approval</small>
-      </div>
-    </div>
-    <div class="finance-card">
-      <span class="material-icons-outlined">verified</span>
-      <div>
-        <strong>{{ pendingVerify().length }}</strong>
-        <small>Need verification</small>
-      </div>
-    </div>
-    <div class="finance-card">
-      <span class="material-icons-outlined">account_balance_wallet</span>
-      <div>
-        <strong>{{ filteredPayouts().length }}</strong>
-        <small>In this view</small>
-      </div>
-    </div>
-  </section>
-
-  <section class="payout-setup-card">
-    <div class="setup-copy">
-      <span class="material-icons-outlined">account_balance</span>
-      <div>
-        <h2>Payout readiness</h2>
-        <p>
-          Complete payout setup before your first settlement is due. Bank/KYC
-          collection is not connected in this workspace yet, so use this page to
-          review approvals, schedules, paid transfers, failures, and your
-          ledger.
-        </p>
-      </div>
-    </div>
-    <div class="setup-actions">
-      <button type="button" class="setup-cta" disabled>
-        <span class="material-icons-outlined">lock_clock</span>
-        Complete payout setup
-      </button>
-      <small>Bank setup API pending</small>
-    </div>
-    <div class="setup-checklist">
-      @for (item of payoutSetupItems; track item.title) {
-        <div class="setup-item">
-          <strong>{{ item.title }}</strong>
-          <p>{{ item.description }}</p>
-          <span>{{ item.status }}</span>
-        </div>
-      }
-    </div>
-  </section>
-
-  <!-- ── Approval Banner ─────────────────────────────────────────── -->
-  @if (pendingApproval().length > 0) {
-    <div class="action-banner approval-banner">
-      <span class="banner-icon material-icons-outlined"
-        >notifications_active</span
-      >
-      <div class="banner-body">
-        <p class="banner-title">
-          {{ pendingApproval().length }} Payout{{
-            pendingApproval().length > 1 ? "s" : ""
-          }}
-          Require Your Approval
-        </p>
-        <p class="banner-sub">
-          Review and approve payouts initiated by the platform before they are
-          scheduled for processing.
-        </p>
-      </div>
-    </div>
   }
-
-  <!-- ── Verify Credit Banner ────────────────────────────────────── -->
-  @if (pendingVerify().length > 0) {
-    <div class="action-banner verify-banner">
-      <span class="banner-icon material-icons-outlined">account_balance</span>
-      <div class="banner-body">
-        <p class="banner-title">
-          {{ pendingVerify().length }} Payout{{
-            pendingVerify().length > 1 ? "s" : ""
-          }}
-          Awaiting Credit Verification
-        </p>
-        <p class="banner-sub">
-          The platform has sent your payout. Please verify that you received the
-          credit in your bank account.
-        </p>
-      </div>
-    </div>
-  }
-
-  <!-- ── Payout Table ─────────────────────────────────────────────── -->
-  <div class="card payments-card">
-    <div class="card-header">
+  <section class="workspace-metrics" aria-label="All-time settlement totals">
+    @for(item of summary();track item.status){
+    <article class="workspace-card">
+      <span>{{ item.status.replaceAll('_',' ') | titlecase }}</span
+      ><strong>{{ item.amount | appCurrency }}</strong
+      ><small>{{ item.count }} settlements · All time</small>
+    </article>
+    }
+  </section>
+  </details>
+  <form class="workspace-toolbar" (ngSubmit)="query()">
+    <label class="workspace-search"
+      ><span class="material-icons-outlined">search</span
+      ><input
+        name="search"
+        [(ngModel)]="search"
+        aria-label="Search transaction reference"
+        placeholder="Search transaction reference" /></label
+    ><button type="submit" class="btn btn-secondary">Search</button
+    ><button
+      type="button"
+      class="btn btn-secondary"
+      [disabled]="list.loading()"
+      (click)="load()"
+    >
+      Refresh
+    </button>
+  </form>
+  <div class="workspace-tabs" aria-label="Settlement status">
+    @for(item of statuses;track item.key){<button
+      type="button"
+      [class.active]="status() === item.key"
+      [attr.aria-pressed]="status() === item.key"
+      (click)="filter(item.key)"
+    >
+      {{ item.label }}</button
+    >}
+  </div>
+  @if(list.error()){
+  <p class="workspace-error" role="alert">
+    {{ list.error() }}
+    <button
+      type="button"
+      class="btn-secondary"
+      [disabled]="list.loading()"
+      (click)="list.reload()"
+    >
+      Retry
+    </button>
+  </p>
+  } @if(list.loading()){
+  <div class="workspace-state" role="status">Loading settlements…</div>
+  }@else if(!list.error()&&!list.rows().length){
+  <div class="workspace-state">
+    <h3>No matching settlements</h3>
+    <p>
+      Change filters or check again after the platform generates your next
+      settlement.
+    </p>
+  </div>
+  }@else{
+  <div class="workspace-finance-list">
+    @for(payout of list.rows();track payout.id){
+    <article class="workspace-card settlement-row">
       <div>
-        <h3>Payout Workspace</h3>
-        <p>{{ activeTabDescription() }}</p>
+        <h3>
+          {{ payout.period_start | date : "mediumDate" }} –
+          {{ payout.period_end | date : "mediumDate" }}
+        </h3>
+        <span
+          class="status-pill"
+          [class.success]="payout.status === 'verified'"
+          >{{ label(payout) }}</span
+        >@if(payout.vendor_rejection_reason){
+        <p class="workspace-muted">
+          Decline reason: {{ payout.vendor_rejection_reason }}
+        </p>
+        }@if(payout.transaction_ref){
+        <p class="workspace-muted">Reference {{ payout.transaction_ref }}</p>
+        }
       </div>
-    </div>
-    <div class="payout-tabs">
-      @for (tab of payoutTabs; track tab.key) {
-        <button
-          [class.active]="activeTab() === tab.key"
-          (click)="activeTab.set(tab.key)"
+      <div class="settlement-amount">
+        <span>Net settlement</span>
+        <strong>{{ payout.net_payout | appCurrency }}</strong>
+        <details>
+          <summary>Sales and commission</summary>
+          <dl>
+            <div><dt>Gross sales</dt><dd>{{ payout.gross_sales | appCurrency }}</dd></div>
+            <div><dt>Commission</dt><dd>{{ payout.platform_commission | appCurrency }}</dd></div>
+          </dl>
+        </details>
+      </div>
+      <div class="workspace-actions">
+        @if(payout.status==='pending_approval'){<button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="pending().has(payout.id)"
+          (click)="open(payout, 'approve')"
         >
-          {{ tab.label }}
+          Approve settlement</button
+        ><button
+          type="button"
+          class="btn btn-secondary"
+          [disabled]="pending().has(payout.id)"
+          (click)="open(payout, 'decline')"
+        >
+          Decline settlement</button
+        >}@if(payout.status==='paid'){<button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="pending().has(payout.id)"
+          (click)="open(payout, 'verify-credit')"
+        >
+          Confirm bank receipt</button
+        >}<button
+          type="button"
+          class="btn btn-secondary"
+          [disabled]="pending().has('download:' + payout.id)"
+          (click)="download(payout)"
+        >
+          Download statement
         </button>
+      </div>
+      @if(rowErrors()[payout.id]){
+      <p class="workspace-error" role="alert">{{ rowErrors()[payout.id] }}</p>
       }
-    </div>
-    <div class="card-body p-0">
-      @if (loading()) {
-        <div class="p-4 text-center text-muted">
-          Loading settlement records...
-        </div>
-      } @else if (filteredPayouts().length === 0) {
-        <div class="p-4 text-center text-muted">
-          <span
-            class="material-icons-outlined"
-            style="font-size: 32px; display: block; margin-bottom: 8px"
-            >account_balance_wallet</span
-          >
-          <strong>No payouts in this view</strong>
-          <p>{{ emptyStateMessage() }}</p>
-        </div>
-      } @else {
-        <div class="table-responsive">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Reference ID</th>
-                <th>Period</th>
-                <th>Gross Sales</th>
-                <th>Commission</th>
-                <th>Net Payout</th>
-                <th>Status</th>
-                <th>Paid At</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (payout of filteredPayouts(); track payout.id) {
-                <tr
-                  [class.highlight-row]="
-                    payout.status === 'pending_approval' ||
-                    payout.status === 'paid'
-                  "
-                >
-                  <td class="text-muted">
-                    <small>{{ payout.id.split("-")[0] }}</small>
-                  </td>
-                  <td>
-                    {{ payout.period_start | date: "MMM d, y" }} –
-                    {{ payout.period_end | date: "MMM d, y" }}
-                  </td>
-                  <td>{{ payout.gross_sales | appCurrency }}</td>
-                  <td class="text-danger">
-                    −{{ payout.platform_commission | appCurrency }}
-                  </td>
-                  <td>
-                    <strong>{{ payout.net_payout | appCurrency }}</strong>
-                  </td>
-                  <td>
-                    <span class="badge" [class]="'badge-' + payout.status">{{
-                      statusLabel(payout.status)
-                    }}</span>
-                  </td>
-                  <td>
-                    @if (payout.paid_at) {
-                      <span class="text-muted">{{
-                        payout.paid_at | date: "mediumDate"
-                      }}</span>
-                    } @else {
-                      <span class="text-muted">—</span>
-                    }
-                  </td>
-                  <td class="actions-cell">
-                    <!-- Download Invoice (all statuses) -->
-                    <button
-                      class="btn-icon"
-                      title="Download Invoice"
-                      [disabled]="downloadingId() === payout.id"
-                      (click)="downloadInvoice(payout)"
-                    >
-                      <span class="material-icons-outlined">{{
-                        downloadingId() === payout.id
-                          ? "hourglass_top"
-                          : "download"
-                      }}</span>
-                    </button>
-
-                    <!-- Approval actions -->
-                    @if (payout.status === "pending_approval") {
-                      <button
-                        class="payout-action-btn approve-btn"
-                        [disabled]="actionId() === payout.id"
-                        (click)="approvePayout(payout)"
-                      >
-                        <span class="material-icons-outlined"
-                          >check_circle</span
-                        >
-                        Approve
-                      </button>
-                      <button
-                        class="payout-action-btn decline-btn"
-                        [disabled]="actionId() === payout.id"
-                        (click)="openDeclineModal(payout)"
-                      >
-                        <span class="material-icons-outlined">cancel</span>
-                        Decline
-                      </button>
-                    }
-
-                    <!-- Verify credit -->
-                    @if (payout.status === "paid") {
-                      <button
-                        class="payout-action-btn verify-btn"
-                        [disabled]="actionId() === payout.id"
-                        (click)="verifyCredit(payout)"
-                      >
-                        <span class="material-icons-outlined">verified</span>
-                        Verify Credit
-                      </button>
-                    }
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      }
-    </div>
+    </article>
+    }
   </div>
+  }
+  <nc-vendor-pager
+    [page]="list.page()"
+    [count]="list.count()"
+    [busy]="list.loading()"
+    (pageChange)="query($event)"
+  />
 </div>
-
-<!-- ── Decline Reason Modal ─────────────────────────────────────── -->
-@if (showDeclineModal()) {
-  <div class="modal-backdrop" (click)="closeDeclineModal()">
-    <div class="modal-panel modal-sm" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <div class="modal-header-icon decline-icon">
-          <span class="material-icons-outlined">cancel</span>
-        </div>
-        <div>
-          <h2 class="modal-title">Decline Payout</h2>
-          <p class="modal-sub">Tell us why you're declining this payout</p>
-        </div>
-        <button class="modal-close-btn" (click)="closeDeclineModal()">
-          <span class="material-icons-outlined">close</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <div class="field-group">
-          <label class="field-label">Reason</label>
-          <textarea
-            class="field-input"
-            rows="3"
-            [(ngModel)]="declineReason"
-            placeholder="e.g. Amount looks incorrect, wrong period..."
-          ></textarea>
-          <small class="field-hint"
-            >Explain what looks wrong so admin can correct the payout
-            quickly.</small
-          >
-        </div>
-        <div class="modal-actions">
-          <button
-            type="button"
-            class="cancel-btn"
-            (click)="closeDeclineModal()"
-          >
-            Cancel
-          </button>
-          <button
-            class="payout-action-btn decline-btn"
-            [disabled]="actionId() === decliningPayout()?.id"
-            (click)="confirmDecline()"
-          >
-            <span class="material-icons-outlined">cancel</span>
-            {{
-              actionId() === decliningPayout()?.id
-                ? "Declining..."
-                : "Confirm Decline"
-            }}
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-}
+@if(dialog();as target){<nc-vendor-dialog
+  [title]="
+    target.action === 'approve'
+      ? 'Approve settlement'
+      : target.action === 'decline'
+      ? 'Decline settlement'
+      : 'Confirm received credit'
+  "
+  [busy]="pending().has(target.payout.id)"
+  (dismissed)="dialog.set(null)"
+  ><p>
+    {{ target.payout.net_payout | appCurrency }} for
+    {{ target.payout.period_start | date : "mediumDate" }} –
+    {{ target.payout.period_end | date : "mediumDate" }}.
+  </p>
+  @if(target.action==='verify-credit'){
+  <p>Confirm only after this credit appears in your bank account.</p>
+  }@if(target.action==='decline'){<label class="workspace-field"
+    >Decline reason<textarea
+      [(ngModel)]="reason"
+      maxlength="500"
+      rows="3"
+    ></textarea></label
+  >}@if(rowErrors()[target.payout.id]){
+  <p class="workspace-error" role="alert">
+    {{ rowErrors()[target.payout.id] }}
+  </p>
+  }
+  <div class="workspace-actions">
+    <button
+      type="button"
+      class="btn btn-secondary"
+      [disabled]="pending().has(target.payout.id)"
+      (click)="dialog.set(null)"
+    >
+      Cancel</button
+    ><button
+      type="button"
+      class="btn btn-primary"
+      [disabled]="
+        pending().has(target.payout.id) ||
+        (target.action === 'decline' && !reason.trim())
+      "
+      (click)="act()"
+    >
+      {{ target.action === 'approve' ? 'Approve settlement' : target.action === 'decline' ? 'Decline settlement' : 'Confirm bank receipt' }}
+    </button>
+  </div></nc-vendor-dialog
+>}

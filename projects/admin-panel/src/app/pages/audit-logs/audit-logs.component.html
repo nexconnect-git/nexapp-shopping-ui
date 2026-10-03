@@ -4,15 +4,15 @@
       <h1 class="page-title">Audit Logs</h1>
       <p class="page-subtitle">{{ total() }} recorded admin actions</p>
     </div>
-    <div class="filters">
+    <div class="admin-toolbar audit-filters">
       <input
         class="filter-input"
-        type="search"
+        type="search" aria-label="Search audit summaries"
         [(ngModel)]="search"
         (input)="onSearch()"
         placeholder="Search summaries..."
       />
-      <select
+      <select aria-label="Audit action"
         class="filter-input"
         [(ngModel)]="action"
         (change)="applyFilters()"
@@ -30,85 +30,88 @@
         class="filter-input"
         [(ngModel)]="entityType"
         (input)="onSearch()"
-        placeholder="Entity type"
+        placeholder="Entity type" aria-label="Audit entity type"
       />
     </div>
   </div>
 
   @if (loading()) {
-    <div class="audit-loading">
-      <div class="spinner"></div>
-      <span>Loading audit trail...</span>
-    </div>
+  <div class="audit-loading">
+    <div class="spinner"></div>
+    <span>Loading audit trail...</span>
+  </div>
+  } @else if (error()) {
+  <div class="admin-error" role="alert">{{ error() }} <button class="btn btn-secondary" (click)="load()">Retry</button></div>
   } @else if (logs().length === 0) {
-    <div class="audit-empty">
-      <span class="material-icons-outlined">manage_search</span>
-      <strong>No audit entries found</strong>
-      <p>Try adjusting filters or perform an audited admin action.</p>
-    </div>
+  <div class="audit-empty">
+    <span class="material-icons-outlined">manage_search</span>
+    <strong>No audit entries found</strong>
+    <p>Try adjusting filters or perform an audited admin action.</p>
+  </div>
   } @else {
-    <section class="audit-list">
-      @for (log of logs(); track log.id) {
-        <article class="audit-row">
-          <div class="audit-icon" [class]="log.action">
-            <span class="material-icons-outlined">
-              {{
-                log.action === "settings"
-                  ? "tune"
-                  : log.action === "status_change"
-                    ? "published_with_changes"
-                    : log.action === "payout"
-                      ? "payments"
-                      : "history"
-              }}
-            </span>
-          </div>
-          <div class="audit-main">
-            <div class="audit-title">
-              <strong>{{ log.summary }}</strong>
-              <span>{{ log.created_at | date: "MMM d, y, h:mm a" }}</span>
-            </div>
-            <div class="audit-meta">
-              <span>{{ log.actor_name || "system" }}</span>
-              <span>{{ log.action }}</span>
-              <span
-                >{{ log.entity_type
-                }}{{ log.entity_id ? ":" + log.entity_id : "" }}</span
-              >
-              @if (log.ip_address) {
-                <span>{{ log.ip_address }}</span>
-              }
-            </div>
-            @if (log.metadata && (log.metadata | json) !== "{}") {
-              <details class="metadata-panel">
-                <summary>
-                  <span class="material-icons-outlined">data_object</span>
-                  View metadata
-                </summary>
-                <pre>{{ log.metadata | json }}</pre>
-              </details>
-            }
-          </div>
-        </article>
-      }
-    </section>
+  <section class="audit-list">
+    @for (log of logs(); track log.id) {
+    <article class="audit-row">
+      <div class="audit-icon" [class]="log.action">
+        <span class="material-icons-outlined">
+          {{
+            log.action === "settings"
+              ? "tune"
+              : log.action === "status_change"
+              ? "published_with_changes"
+              : log.action === "payout"
+              ? "payments"
+              : "history"
+          }}
+        </span>
+      </div>
+      <div class="audit-main">
+        <div class="audit-title">
+          <strong>{{ log.summary }}</strong>
+          <span>{{ log.created_at | date : "MMM d, y, h:mm a" }}</span>
+        </div>
+        <div class="audit-meta">
+          <span>{{ log.actor_name || "system" }}</span>
+          <span>{{ log.action }}</span>
+          <span
+            >{{ log.entity_type
+            }}{{ log.entity_id ? ":" + log.entity_id : "" }}</span
+          >
+          @if (log.ip_address) {
+          <span>{{ log.ip_address }}</span>
+          }
+        </div>
+        @if (log.metadata && (log.metadata | json) !== "{}") {
+        <details class="metadata-panel">
+          <summary>
+            <span class="material-icons-outlined">data_object</span>
+            View metadata
+          </summary>
+          <pre>{{ log.metadata | json }}</pre>
+        </details>
+        }
+      </div>
+    </article>
+    }
+  </section>
 
-    <div class="pagination" *ngIf="totalPages > 1">
-      <button
-        class="page-btn"
-        [disabled]="page() === 1"
-        (click)="setPage(page() - 1)"
-      >
-        Prev
-      </button>
-      <span>{{ page() }} / {{ totalPages }}</span>
-      <button
-        class="page-btn"
-        [disabled]="page() === totalPages"
-        (click)="setPage(page() + 1)"
-      >
-        Next
-      </button>
-    </div>
-  }
+  @if (totalPages > 1) {
+  <div class="pagination">
+    <button
+      class="page-btn"
+      [disabled]="page() === 1"
+      (click)="setPage(page() - 1)"
+    >
+      Prev
+    </button>
+    <span>{{ page() }} / {{ totalPages }}</span>
+    <button
+      class="page-btn"
+      [disabled]="page() === totalPages"
+      (click)="setPage(page() + 1)"
+    >
+      Next
+    </button>
+  </div>
+  } }
 </div>

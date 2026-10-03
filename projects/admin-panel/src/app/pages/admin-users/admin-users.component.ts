@@ -7,13 +7,13 @@ import {
   Validators,
 } from '@angular/forms';
 import {
-  ApiService,
   apiErrorMessage,
+  ApiService,
   AuthService,
   ToastService,
 } from '@shared/public-api';
-import { NgClass, NgFor, NgIf } from '@angular/common';
-import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
+import { NgClass } from '@angular/common';
+import { DynamicTableComponent, TableCellDirective, DynamicTableColumn } from '@shared/public-api';
 
 @Component({
   selector: 'app-admin-users',
@@ -21,7 +21,6 @@ import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    NgIf,
     NgClass,
     DynamicTableComponent,
     TableCellDirective,
@@ -44,13 +43,13 @@ export class AdminUsersComponent implements OnInit {
   totalItems = 0;
   page = 1;
 
-  tableColumns = [
-    { key: 'user', label: 'User', flex: '2fr' },
-    { key: 'contact', label: 'Contact Info', flex: '1.5fr' },
-    { key: 'role', label: 'Role', flex: '1fr' },
+  tableColumns: DynamicTableColumn[] = [
+    { key: 'user', label: 'User', flex: '1.5fr', minWidth: 200 },
+    { key: 'contact', label: 'Contact Info', flex: '1.5fr', minWidth: 240 },
+    { key: 'role', label: 'Role', flex: '1fr', minWidth: 130 },
     { key: 'status', label: 'Status', flex: '1fr' },
-    { key: 'joined', label: 'Joined', flex: '1fr' },
-    { key: 'actions', label: 'Actions', flex: '0.5fr' },
+    { key: 'joined', label: 'Joined', flex: '1fr', minWidth: 140 },
+    { key: 'actions', label: 'Actions', flex: '0.5fr', minWidth: 80, align: 'right' },
   ];
 
   constructor() {
@@ -97,7 +96,7 @@ export class AdminUsersComponent implements OnInit {
     if (this.createForm.invalid) {
       this.toast.show(
         'Please fill out all required fields correctly.',
-        'error',
+        'error'
       );
       return;
     }
@@ -114,7 +113,10 @@ export class AdminUsersComponent implements OnInit {
         this.loadUsers();
       },
       error: (err) => {
-        this.toast.show(apiErrorMessage(err, 'Failed to create user.'), 'error');
+        this.toast.show(
+          apiErrorMessage(err, 'Failed to create user.'),
+          'error'
+        );
         this.isSubmitting = false;
         console.error(err);
       },

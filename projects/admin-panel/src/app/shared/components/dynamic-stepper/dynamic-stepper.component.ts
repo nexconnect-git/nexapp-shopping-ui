@@ -8,7 +8,7 @@ import {
   signal,
   SimpleChanges,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { Observable, Subscription } from 'rxjs';
 import {
@@ -106,7 +106,7 @@ export interface UniqueFieldState {
 @Component({
   selector: 'app-dynamic-stepper',
   standalone: true,
-  imports: [CommonModule, FormsModule, MapPickerComponent],
+  imports: [FormsModule, MapPickerComponent],
   templateUrl: './dynamic-stepper.component.html',
   styleUrl: './dynamic-stepper.component.scss',
 })
@@ -122,7 +122,7 @@ export class DynamicStepperComponent implements OnChanges {
   @Input() uniqueChecker?: (
     field: StepperField,
     value: string,
-    model: any,
+    model: any
   ) => Observable<UniqueValidationResult>;
 
   @Output() submitForm = new EventEmitter<any>();
@@ -155,7 +155,7 @@ export class DynamicStepperComponent implements OnChanges {
       for (const key of Object.keys(this.serverErrors)) {
         this.toast.show(
           `${key}: ${this.formatServerError(this.serverErrors[key])}`,
-          'error',
+          'error'
         );
       }
     }
@@ -163,7 +163,7 @@ export class DynamicStepperComponent implements OnChanges {
 
   initializeModel() {
     Object.values(this.uniqueSubscriptions).forEach((subscription) =>
-      subscription.unsubscribe(),
+      subscription.unsubscribe()
     );
     Object.values(this.uniqueTimers).forEach((timer) => clearTimeout(timer));
     this.uniqueStates = {};
@@ -180,8 +180,8 @@ export class DynamicStepperComponent implements OnChanges {
               f.type === 'checkbox'
                 ? false
                 : f.type === 'number' || f.type === 'file'
-                  ? null
-                  : '';
+                ? null
+                : '';
             if (f.type === 'select' && f.options?.length) {
               this.model[f.key] = f.options[0].value;
             }
@@ -193,7 +193,7 @@ export class DynamicStepperComponent implements OnChanges {
         if (section.list) {
           this.model[section.list.key] = [];
           this.listStates[section.list.key] = this.createEmptyListItem(
-            section.list.fields,
+            section.list.fields
           );
         }
       }
@@ -207,10 +207,10 @@ export class DynamicStepperComponent implements OnChanges {
         f.defaultValue !== undefined
           ? f.defaultValue
           : f.type === 'checkbox'
-            ? false
-            : f.type === 'number'
-              ? null
-              : '';
+          ? false
+          : f.type === 'number'
+          ? null
+          : '';
     }
     return item;
   }
@@ -292,7 +292,7 @@ export class DynamicStepperComponent implements OnChanges {
     if (Object.keys(newErrors).length === 0) return true;
 
     const firstInvalidStep = this.config.steps.findIndex((stepConfig) =>
-      this.stepHasError(stepConfig, newErrors),
+      this.stepHasError(stepConfig, newErrors)
     );
     if (firstInvalidStep >= 0) {
       this.step.set(firstInvalidStep + 1);
@@ -310,7 +310,7 @@ export class DynamicStepperComponent implements OnChanges {
     if (Object.keys(newErrors).length === 0) return true;
 
     const firstInvalidStep = this.config.steps.findIndex((stepConfig) =>
-      this.stepHasError(stepConfig, newErrors),
+      this.stepHasError(stepConfig, newErrors)
     );
     if (firstInvalidStep >= 0) this.step.set(firstInvalidStep + 1);
     return false;
@@ -318,7 +318,7 @@ export class DynamicStepperComponent implements OnChanges {
 
   private validateStepFields(
     stepConfig: StepperStep,
-    newErrors: Record<string, string>,
+    newErrors: Record<string, string>
   ) {
     for (const section of stepConfig.sections) {
       if (section.fields) {
@@ -344,7 +344,7 @@ export class DynamicStepperComponent implements OnChanges {
 
     // Check if at least one field has data
     const hasData = Object.values(item).some(
-      (v) => v !== '' && v !== null && v !== false,
+      (v) => v !== '' && v !== null && v !== false
     );
     if (!hasData) {
       this.errors.update((e) => ({
@@ -360,7 +360,7 @@ export class DynamicStepperComponent implements OnChanges {
         f,
         item[f.key],
         this.listFieldKey(listConfig.key, f.key),
-        itemErrors,
+        itemErrors
       );
     }
     if (Object.keys(itemErrors).length > 0) {
@@ -370,7 +370,7 @@ export class DynamicStepperComponent implements OnChanges {
 
     this.model[listConfig.key].push(item);
     this.listStates[listConfig.key] = this.createEmptyListItem(
-      listConfig.fields,
+      listConfig.fields
     );
     this.clearListErrors(listConfig.key);
   }
@@ -495,12 +495,14 @@ export class DynamicStepperComponent implements OnChanges {
       (part, index, list) =>
         !!part &&
         list.findIndex(
-          (candidate) => candidate?.toLowerCase() === part.toLowerCase(),
-        ) === index,
+          (candidate) => candidate?.toLowerCase() === part.toLowerCase()
+        ) === index
     );
 
     if (parts.length) return parts.join(', ');
-    return `Pinned location: ${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}`;
+    return `Pinned location: ${location.lat.toFixed(6)}, ${location.lng.toFixed(
+      6
+    )}`;
   }
 
   onFileSelected(field: StepperField, event: Event) {
@@ -586,7 +588,7 @@ export class DynamicStepperComponent implements OnChanges {
       this.uniqueSubscriptions[key] = this.uniqueChecker!(
         field,
         value,
-        this.model,
+        this.model
       ).subscribe({
         next: (result) => {
           const currentValue = String(this.model[key] ?? '').trim();
@@ -627,7 +629,7 @@ export class DynamicStepperComponent implements OnChanges {
 
   private validateUniqueFields(
     stepConfig: StepperStep,
-    newErrors: Record<string, string>,
+    newErrors: Record<string, string>
   ) {
     for (const section of stepConfig.sections) {
       for (const field of section.fields || []) {
@@ -639,14 +641,16 @@ export class DynamicStepperComponent implements OnChanges {
         const state = this.uniqueStates[field.key];
         if (!state || state.value !== value) {
           this.scheduleUniqueCheck(field, 0);
-          newErrors[field.key] =
-            `Checking ${field.label.toLowerCase()} availability...`;
+          newErrors[
+            field.key
+          ] = `Checking ${field.label.toLowerCase()} availability...`;
           continue;
         }
 
         if (state.checking) {
-          newErrors[field.key] =
-            `Checking ${field.label.toLowerCase()} availability...`;
+          newErrors[
+            field.key
+          ] = `Checking ${field.label.toLowerCase()} availability...`;
           continue;
         }
 
@@ -662,7 +666,7 @@ export class DynamicStepperComponent implements OnChanges {
     field: StepperField,
     value: any,
     errorKey: string,
-    newErrors: Record<string, string>,
+    newErrors: Record<string, string>
   ) {
     const isEmpty = value === '' || value === null || value === undefined;
     if (field.required && isEmpty) {
@@ -719,7 +723,7 @@ export class DynamicStepperComponent implements OnChanges {
 
   private validateAddedListItems(
     listConfig: StepperList,
-    newErrors: Record<string, string>,
+    newErrors: Record<string, string>
   ) {
     const items = this.model[listConfig.key] || [];
     items.forEach((item: any, index: number) => {
@@ -728,7 +732,7 @@ export class DynamicStepperComponent implements OnChanges {
           field,
           item[field.key],
           `${listConfig.key}.${index}.${field.key}`,
-          newErrors,
+          newErrors
         );
       }
     });
@@ -736,7 +740,7 @@ export class DynamicStepperComponent implements OnChanges {
 
   private stepHasError(
     stepConfig: StepperStep,
-    errors: Record<string, string>,
+    errors: Record<string, string>
   ): boolean {
     const keys = Object.keys(errors);
     return stepConfig.sections.some((section) => {
@@ -745,7 +749,7 @@ export class DynamicStepperComponent implements OnChanges {
       return keys.some(
         (key) =>
           fieldKeys.includes(key) ||
-          (!!listKey && key.startsWith(`${listKey}.`)),
+          (!!listKey && key.startsWith(`${listKey}.`))
       );
     });
   }

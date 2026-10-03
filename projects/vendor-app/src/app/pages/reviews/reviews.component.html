@@ -1,170 +1,97 @@
-<div class="rev-wrap">
-  <!-- Top bar -->
-  <section class="page-hero">
-    <div class="page-hero-copy">
-      <span class="eyebrow">Reputation</span>
-      <h1 class="rev-title">Customer Reviews</h1>
-      <p>Track rating trends and identify orders that need follow-up.</p>
+<div class="workspace-page">
+  <header class="page-heading">
+    <div>
+      <p class="eyebrow">Growth</p><h1>Customer reviews</h1>
+      <p>Understand customer feedback across your store.</p>
     </div>
-    <div class="page-hero-actions">
-      <button class="rev-back" (click)="goBack()" title="Go back">
-        <span class="material-icons-outlined">arrow_back</span>
-      </button>
+    <button
+      type="button"
+      class="btn btn-secondary"
+      [disabled]="list.loading()"
+      (click)="load()"
+    >
+      Refresh
+    </button>
+  </header>
+  @if(list.response()?.rating_summary;as summary){
+  <section class="workspace-card review-summary">
+    <div>
+      <strong>{{ summary.average | number : "1.1-1" }}</strong>
+      <p>out of 5 · {{ summary.total }} reviews</p>
+      <small class="workspace-muted">All-time store aggregate</small>
     </div>
-  </section>
-
-  @if (loading()) {
-    <div class="rev-loading">
-      @for (n of [1, 2, 3, 4]; track n) {
-        <div class="rev-skel shimmer"></div>
+    <div class="review-distribution">
+      @for(star of stars;track star){
+      <div>
+        <span>{{ star }} stars</span
+        ><meter
+          [min]="0"
+          [max]="summary.total || 1"
+          [value]="summary.distribution[star] || 0"
+          [attr.aria-label]="star + ' star reviews'"
+        ></meter
+        ><strong>{{ summary.distribution[star] || 0 }}</strong>
+      </div>
       }
     </div>
-  } @else {
-    <section class="review-command-strip">
-      <div>
-        <strong>{{ averageRating() | number: "1.1-1" }}</strong>
-        <span>Average rating</span>
-      </div>
-      <div>
-        <strong>{{ totalReviews() }}</strong>
-        <span>Total reviews</span>
-      </div>
-      <div [class.warn]="lowReviews().length > 0">
-        <strong>{{ lowReviews().length }}</strong>
-        <span>Need follow-up</span>
-      </div>
-    </section>
-
-    <!-- Rating summary card -->
-    <div class="rev-summary">
-      <div class="rev-avg-block">
-        <div class="rev-avg-num">{{ averageRating() | number: "1.1-1" }}</div>
-        <div class="rev-avg-stars">
-          @for (s of stars; track s) {
-            <span
-              class="material-icons-outlined rev-star"
-              [class.filled]="s <= averageRating()"
-              [class.half]="s > averageRating() && s - 0.5 <= averageRating()"
-            >
-              {{
-                s <= averageRating()
-                  ? "star"
-                  : s - 0.5 <= averageRating()
-                    ? "star_half"
-                    : "star_border"
-              }}
-            </span>
-          }
-        </div>
-        <div class="rev-avg-count">
-          {{ totalReviews() }} review{{ totalReviews() !== 1 ? "s" : "" }}
-        </div>
-      </div>
-
-      <div class="rev-breakdown">
-        @for (count of ratingBreakdown(); track $index; let i = $index) {
-          <div class="rev-bar-row">
-            <span class="rev-bar-label">{{ 5 - i }}</span>
-            <span class="material-icons-outlined rev-bar-star">star</span>
-            <div class="rev-bar-track">
-              <div
-                class="rev-bar-fill"
-                [style.width]="
-                  totalReviews() > 0
-                    ? (count / totalReviews()) * 100 + '%'
-                    : '0%'
-                "
-              ></div>
-            </div>
-            <span class="rev-bar-count">{{ count }}</span>
-          </div>
-        }
-      </div>
-    </div>
-
-    @if (lowReviews().length > 0) {
-      <div class="rev-alert">
-        <span class="material-icons-outlined">priority_high</span>
-        <div>
-          <strong
-            >{{ lowReviews().length }} low review{{
-              lowReviews().length === 1 ? "" : "s"
-            }}
-            need attention</strong
-          >
-          <p>
-            Use the product and order context to follow up from support until
-            review replies are enabled.
-          </p>
-        </div>
-      </div>
-    }
-
-    <div class="rev-filters">
-      <button [class.active]="filter() === 'all'" (click)="setFilter('all')">
-        All
-      </button>
-      <button [class.active]="filter() === 'low'" (click)="setFilter('low')">
-        Low reviews
-      </button>
-      <button
-        [class.active]="filter() === 'recent'"
-        (click)="setFilter('recent')"
-      >
-        Recent
-      </button>
-    </div>
-
-    <!-- Review list -->
-    @if (reviews().length === 0) {
-      <div class="rev-empty">
-        <span class="material-icons-outlined">rate_review</span>
-        <p>No reviews yet</p>
-        <span
-          >Reviews from customers will appear here after their orders are
-          delivered.</span
-        >
-      </div>
-    } @else {
-      <div class="rev-list">
-        @for (r of filteredReviews(); track r.id) {
-          <div class="rev-card" [class.needs-followup]="r.rating <= 3">
-            <div class="rev-card-header">
-              <div class="rev-avatar">
-                <span class="material-icons-outlined">person</span>
-              </div>
-              <div class="rev-meta">
-                <div class="rev-customer-name">
-                  {{ r.customer_name || "Customer" }}
-                </div>
-                <div class="rev-date">
-                  {{ r.created_at | date: "MMM d, y" }}
-                </div>
-              </div>
-              <div class="rev-card-stars">
-                @for (s of starsArray(r.rating); track s) {
-                  <span class="material-icons-outlined rev-star filled"
-                    >star</span
-                  >
-                }
-              </div>
-            </div>
-            @if (r.comment) {
-              <p class="rev-comment">{{ r.comment }}</p>
-            }
-            <div class="rev-actions">
-              @if (r.product_name) {
-                <span class="rev-context">Product: {{ r.product_name }}</span>
-              }
-              <span class="rev-context">{{
-                r.rating <= 3
-                  ? "Reply-ready: support follow-up recommended"
-                  : "No action needed"
-              }}</span>
-            </div>
-          </div>
-        }
-      </div>
-    }
+  </section>
   }
+  <div class="workspace-tabs" aria-label="Review filters">
+    <button
+      type="button"
+      [class.active]="filter() === 'all'"
+      [attr.aria-pressed]="filter() === 'all'"
+      (click)="setFilter('all')"
+    >
+      All reviews · newest first</button
+    ><button
+      type="button"
+      [class.active]="filter() === 'low'"
+      [attr.aria-pressed]="filter() === 'low'"
+      (click)="setFilter('low')"
+    >
+      3 stars or below
+    </button>
+  </div>
+  @if(list.error()){
+  <p class="workspace-error" role="alert">
+    {{ list.error() }}
+    <button
+      type="button"
+      class="btn-secondary"
+      [disabled]="list.loading()"
+      (click)="list.reload()"
+    >
+      Retry
+    </button>
+  </p>
+  } @if(list.loading()){
+  <div class="workspace-state" role="status">Loading reviews…</div>
+  }@else if(!list.error()&&!list.rows().length){
+  <div class="workspace-state">
+    <h3>No matching reviews</h3>
+    <p>Customer feedback will appear here when reviews are submitted.</p>
+  </div>
+  }@else{
+  <div class="workspace-review-list">
+    @for(review of list.rows();track review.id){
+    <article class="workspace-card">
+      <header class="workspace-section-heading">
+        <h3>{{ review.customer_name || "Customer" }}</h3>
+        <span class="status-pill">{{ review.rating }} / 5</span>
+      </header>
+      <p>{{ review.comment || "No written comment." }}</p>
+      <small class="workspace-muted">{{
+        review.created_at | date : "mediumDate"
+      }}</small>
+    </article>
+    }
+  </div>
+  }
+  <nc-vendor-pager
+    [page]="list.page()"
+    [count]="list.count()"
+    [busy]="list.loading()"
+    (pageChange)="query($event)"
+  />
 </div>

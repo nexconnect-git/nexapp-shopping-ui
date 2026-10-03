@@ -1,3 +1,8 @@
+import { AdminRowActionsComponent } from '../../shared/admin-row-actions.component';
+import { AdminDialogDirective } from '../../shared/admin-dialog.directive';
+import { toLocalDateTimeInput } from '../../shared/admin-date-input';
+import { AdminAccessService } from '../../services/admin-access.service';
+import { AdminCanDirective } from '../../shared/admin-can.directive';
 import {
   Component,
   computed,
@@ -15,17 +20,18 @@ import {
 } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
-  ApiService,
   apiErrorMessage,
+  ApiService,
   AppCurrencyPipe,
   ToastService,
 } from '@shared/public-api';
-import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
+import { DynamicTableColumn, DynamicTableComponent, TableCellDirective } from '@shared/public-api';
 
 @Component({
   selector: 'app-payouts',
   standalone: true,
-  imports: [
+  imports: [AdminDialogDirective, AdminRowActionsComponent,
+    AdminCanDirective,
     CommonModule,
     FormsModule,
     AppCurrencyPipe,
@@ -39,6 +45,9 @@ import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
   styleUrl: './payouts.component.scss',
 })
 export class PayoutsComponent implements OnInit, OnDestroy {
+  readonly access = inject(AdminAccessService);
+  vendorFilter = '';
+  partnerFilter = '';
   private api = inject(ApiService);
   private toast = inject(ToastService);
 
@@ -49,26 +58,26 @@ export class PayoutsComponent implements OnInit, OnDestroy {
   totalItems = signal(0);
   page = signal(1);
 
-  get tableColumns() {
+  get tableColumns(): DynamicTableColumn[] {
     if (this.activeTab() === 'vendors') {
       return [
-        { key: 'id', label: 'ID', flex: '0.5fr' },
-        { key: 'entity', label: 'Vendor', flex: '1.5fr' },
-        { key: 'period', label: 'Period', flex: '1.5fr' },
-        { key: 'gross', label: 'Gross Sales', flex: '1fr' },
-        { key: 'commission', label: 'Commission', flex: '1fr' },
-        { key: 'net', label: 'Net Payout', flex: '1fr' },
-        { key: 'status', label: 'Status', flex: '1fr' },
-        { key: 'actions', label: 'Actions', flex: '1.5fr' },
+        { key: 'id', label: 'ID', flex: '0.5fr', minWidth: 72 },
+        { key: 'entity', label: 'Vendor', flex: '1.5fr', minWidth: 140 },
+        { key: 'period', label: 'Period', flex: '1.5fr', minWidth: 160 },
+        { key: 'gross', label: 'Gross Sales', flex: '1fr', minWidth: 120, align: 'right' },
+        { key: 'commission', label: 'Commission', flex: '1fr', minWidth: 110, align: 'right' },
+        { key: 'net', label: 'Net Payout', flex: '1fr', minWidth: 120, align: 'right' },
+        { key: 'status', label: 'Status', flex: '1fr', minWidth: 140 },
+        { key: 'actions', label: 'Actions', flex: '0.6fr', minWidth: 100 },
       ];
     } else {
       return [
         { key: 'id', label: 'ID', flex: '0.5fr' },
-        { key: 'entity', label: 'Partner', flex: '1.5fr' },
-        { key: 'period', label: 'Period', flex: '1.5fr' },
-        { key: 'net', label: 'Net Payout', flex: '1fr' },
-        { key: 'status', label: 'Status', flex: '1fr' },
-        { key: 'actions', label: 'Actions', flex: '1.5fr' },
+        { key: 'entity', label: 'Partner', flex: '1.5fr', minWidth: 160 },
+        { key: 'period', label: 'Period', flex: '1.5fr', minWidth: 180 },
+        { key: 'net', label: 'Net Payout', flex: '1fr', minWidth: 140, align: 'right' },
+        { key: 'status', label: 'Status', flex: '1fr', minWidth: 140 },
+        { key: 'actions', label: 'Actions', flex: '0.6fr', minWidth: 100 },
       ];
     }
   }
@@ -83,6 +92,7 @@ export class PayoutsComponent implements OnInit, OnDestroy {
   creating = signal(false);
   isEditMode = signal(false);
   editingId = signal<string | null>(null);
+  private readonly editingCommission = signal<{ gross: number; commission: number } | null>(null);
 
   createFormObj = {
     vendor_id: '',
@@ -103,23 +113,29 @@ export class PayoutsComponent implements OnInit, OnDestroy {
 
   // ── Computed commission values ────────────────────────────────
   commissionPct = computed(() => {
+    const existing = this.editingCommission();
+    if (this.isEditMode() && existing) {
+      return existing.gross > 0 ? existing.commission / existing.gross * 100 : 0;
+    }
     const bank = this.vendorBank();
     return bank ? parseFloat(bank.commission_percentage) : 0;
   });
 
-  commissionAmt = computed(() => {
+  commissionAmt = () => {
     const gross = this.createFormObj.amount ?? 0;
-    return (gross * this.commissionPct()) / 100;
-  });
+    return Number(((gross * this.commissionPct()) / 100).toFixed(2));
+  };
 
-  netPayout = computed(() => {
+  netPayout = () => {
     const gross = this.createFormObj.amount ?? 0;
-    return gross - this.commissionAmt();
-  });
+    return Number((gross - this.commissionAmt()).toFixed(2));
+  };
 
   // ── Invoice state ─────────────────────────────────────────────
   invoicePayout = signal<any | null>(null);
   invoiceBank = signal<any | null>(null);
+  downloadingStatement = signal(false);
+  invoiceBankError = signal('');
   today = new Date();
 
   // ── Send Payment modal ────────────────────────────────────────
@@ -132,6 +148,7 @@ export class PayoutsComponent implements OnInit, OnDestroy {
   showForcePaidModal = signal(false);
   forcePaidPayout = signal<any | null>(null);
   forcingPaid = signal(false);
+  overrideReason = '';
 
   // ── Delivery earnings helpers ─────────────────────────────────
   calculatingDeliveryEarnings = signal(false);
@@ -140,24 +157,28 @@ export class PayoutsComponent implements OnInit, OnDestroy {
   lastRefreshed = signal<Date | null>(null);
   autoReload = signal(true);
   private reloadSub?: Subscription;
+  private estimateSub?: Subscription;
+  private bankSub?: Subscription;
 
   ngOnInit() {
-    this.loadVendors();
-    this.loadPartners();
+    this.loadRecipients();
     this.reloadSub = timer(0, 15000).subscribe(() => {
       if (
         this.autoReload() &&
+          !document.hidden &&
         !this.showModal() &&
         !this.showSendModal() &&
         !this.showForcePaidModal()
       ) {
-        this.loadPayouts();
+        this.loadPayouts(this.lastRefreshed() !== null);
       }
     });
   }
 
   ngOnDestroy() {
     this.reloadSub?.unsubscribe();
+    this.estimateSub?.unsubscribe();
+    this.bankSub?.unsubscribe();
   }
 
   manualReload() {
@@ -181,34 +202,36 @@ export class PayoutsComponent implements OnInit, OnDestroy {
   }
 
   // ── Data loaders ──────────────────────────────────────────────
-  loadVendors() {
+  loadRecipients() {
     this.vendorsLoading.set(true);
-    this.api.getAdminVendors({ page_size: 200 }).subscribe({
-      next: (res: any) => {
-        this.vendors.set(res.results || res);
-        this.vendorsLoading.set(false);
-      },
-      error: () => this.vendorsLoading.set(false),
-    });
-  }
-
-  loadPartners() {
     this.partnersLoading.set(true);
-    this.api.getAdminDeliveryPartners({ page_size: 200 }).subscribe({
+    this.api.getAdminFinanceRecipients().subscribe({
       next: (res: any) => {
-        this.partners.set(res.results || res);
+        this.vendors.set(res.vendors);
+        this.partners.set(res.delivery);
+        this.vendorsLoading.set(false);
         this.partnersLoading.set(false);
       },
-      error: () => this.partnersLoading.set(false),
+      error: error => {
+        this.vendorsLoading.set(false);
+        this.partnersLoading.set(false);
+        this.toast.show(apiErrorMessage(error, 'Payout recipients could not be loaded. Refresh to retry.'), 'error');
+      },
     });
   }
 
-  loadPayouts() {
-    this.loading.set(true);
+  loadPayouts(background = false) {
+    if (!background) this.loading.set(true);
     const req =
       this.activeTab() === 'vendors'
-        ? this.api.getAdminVendorPayouts({ page: this.page() })
-        : this.api.getAdminDeliveryPayouts({ page: this.page() });
+        ? this.api.getAdminVendorPayouts({
+            page: this.page(),
+            ...(this.vendorFilter ? { vendor: this.vendorFilter } : {}),
+          }, background)
+        : this.api.getAdminDeliveryPayouts({
+            page: this.page(),
+            ...(this.partnerFilter ? { partner: this.partnerFilter } : {}),
+          }, background);
 
     req.subscribe({
       next: (res: any) => {
@@ -230,6 +253,7 @@ export class PayoutsComponent implements OnInit, OnDestroy {
   }
 
   onVendorChange(event: Event) {
+    this.bankSub?.unsubscribe();
     const vendorId = (event.target as HTMLSelectElement).value;
     const vendor = this.vendors().find((v: any) => v.id === vendorId);
     this.selectedVendor.set(vendor || null);
@@ -238,7 +262,7 @@ export class PayoutsComponent implements OnInit, OnDestroy {
     if (!vendorId) return;
 
     this.bankLoading.set(true);
-    this.api.getVendorBankDetails(vendorId).subscribe({
+    this.bankSub = this.api.getVendorBankDetails(vendorId).subscribe({
       next: (bank: any) => {
         this.vendorBank.set(bank);
         this.bankLoading.set(false);
@@ -263,6 +287,8 @@ export class PayoutsComponent implements OnInit, OnDestroy {
   }
 
   calculateVendorSales() {
+    this.estimateSub?.unsubscribe();
+    this.loadingSales.set(false);
     const vendorId = this.createFormObj.vendor_id;
     const start = this.createFormObj.period_start;
     const end = this.createFormObj.period_end;
@@ -270,11 +296,11 @@ export class PayoutsComponent implements OnInit, OnDestroy {
 
     this.loadingSales.set(true);
     this.vendorSalesSummary.set(null);
-    this.api.getAdminVendorSalesSummary(vendorId, start, end).subscribe({
+    this.estimateSub = this.api.getAdminPayoutEstimate('vendors', vendorId, start, end).subscribe({
       next: (res: any) => {
         this.vendorSalesSummary.set(res);
-        // Auto-fill with gross sales (revenue from non-cancelled orders)
-        this.createFormObj.amount = res.total_revenue;
+        // Estimate uses completed orders with verified receipts for this period.
+        if (!this.isEditMode()) this.createFormObj.amount = res.total_revenue;
         this.loadingSales.set(false);
       },
       error: () => {
@@ -285,15 +311,17 @@ export class PayoutsComponent implements OnInit, OnDestroy {
   }
 
   calculateDeliveryEarnings() {
+    this.estimateSub?.unsubscribe();
+    this.calculatingDeliveryEarnings.set(false);
     const dpId = this.createFormObj.delivery_partner_id;
     const start = this.createFormObj.period_start;
     const end = this.createFormObj.period_end;
     if (!dpId || !start || !end) return;
 
     this.calculatingDeliveryEarnings.set(true);
-    this.api.getAdminDeliveryPartnerEarnings(dpId, start, end).subscribe({
+    this.estimateSub = this.api.getAdminPayoutEstimate('delivery', dpId, start, end).subscribe({
       next: (res: any) => {
-        this.createFormObj.amount = res.total_amount;
+        if (!this.isEditMode()) this.createFormObj.amount = res.total_amount;
         this.deliveryDeliveriesCount.set(res.total_deliveries);
         this.calculatingDeliveryEarnings.set(false);
       },
@@ -315,17 +343,18 @@ export class PayoutsComponent implements OnInit, OnDestroy {
     this.isEditMode.set(true);
     this.editingId.set(payout.id);
 
-    const pStart = payout.period_start ? payout.period_start.split('T')[0] : '';
-    const pEnd = payout.period_end ? payout.period_end.split('T')[0] : '';
+    const pStart = toLocalDateTimeInput(payout.period_start).slice(0, 10);
+    const pEnd = toLocalDateTimeInput(payout.period_end).slice(0, 10);
 
     if (this.activeTab() === 'vendors') {
+      this.editingCommission.set({ gross: Number(payout.gross_sales), commission: Number(payout.platform_commission) });
       this.createFormObj.vendor_id = payout.vendor;
       this.createFormObj.amount = payout.gross_sales;
     } else {
       const partnerObj = this.partners().find(
         (p: any) =>
           p.user?.id === payout.delivery_partner ||
-          p.id === payout.delivery_partner,
+          p.id === payout.delivery_partner
       );
       this.createFormObj.delivery_partner_id = partnerObj
         ? partnerObj.id
@@ -350,6 +379,11 @@ export class PayoutsComponent implements OnInit, OnDestroy {
   }
 
   resetForm() {
+    this.estimateSub?.unsubscribe();
+    this.bankSub?.unsubscribe();
+    this.loadingSales.set(false);
+    this.calculatingDeliveryEarnings.set(false);
+    this.bankLoading.set(false);
     this.createFormObj = {
       vendor_id: '',
       delivery_partner_id: '',
@@ -362,10 +396,12 @@ export class PayoutsComponent implements OnInit, OnDestroy {
     this.vendorSalesSummary.set(null);
     this.isEditMode.set(false);
     this.editingId.set(null);
+    this.editingCommission.set(null);
   }
 
   // ── Create / update submit ────────────────────────────────────
   submitPayout() {
+    if (this.creating() || this.bankLoading() || this.loadingSales() || this.calculatingDeliveryEarnings()) return;
     const isVendor = this.activeTab() === 'vendors';
     if (isVendor && !this.createFormObj.vendor_id) {
       this.toast.show('Please select a vendor.', 'error');
@@ -376,18 +412,22 @@ export class PayoutsComponent implements OnInit, OnDestroy {
       return;
     }
     if (
-      !this.createFormObj.amount ||
+      !Number.isFinite(Number(this.createFormObj.amount)) || Number(this.createFormObj.amount) <= 0 ||
       !this.createFormObj.period_start ||
       !this.createFormObj.period_end
     ) {
       this.toast.show('Please fill in all required fields.', 'error');
       return;
     }
+    if (this.createFormObj.period_start > this.createFormObj.period_end) {
+      this.toast.show('End date must follow the start date.', 'error');
+      return;
+    }
 
     this.creating.set(true);
     const payload: any = {
-      period_start: this.createFormObj.period_start,
-      period_end: this.createFormObj.period_end,
+      period_start: new Date(`${this.createFormObj.period_start}T00:00:00`).toISOString(),
+      period_end: new Date(`${this.createFormObj.period_end}T23:59:59`).toISOString(),
       status: 'pending_approval',
     };
 
@@ -401,17 +441,20 @@ export class PayoutsComponent implements OnInit, OnDestroy {
       payload.net_payout = parseFloat(net.toFixed(2));
     } else {
       const selected = this.partners().find(
-        (p: any) => p.id === this.createFormObj.delivery_partner_id,
+        (p: any) => p.id === this.createFormObj.delivery_partner_id
       );
       payload.delivery_partner =
         selected?.user?.id || this.createFormObj.delivery_partner_id;
       payload.total_deliveries =
-        this.deliveryDeliveriesCount() > 0 ? this.deliveryDeliveriesCount() : 1;
+        this.deliveryDeliveriesCount();
       payload.total_earnings = this.createFormObj.amount;
     }
 
     let req;
     if (this.isEditMode() && this.editingId()) {
+      delete payload.status;
+      delete payload.vendor;
+      delete payload.delivery_partner;
       req = isVendor
         ? this.api.updateAdminVendorPayout(this.editingId()!, payload)
         : this.api.updateAdminDeliveryPayout(this.editingId()!, payload);
@@ -428,9 +471,9 @@ export class PayoutsComponent implements OnInit, OnDestroy {
           this.isEditMode()
             ? 'Payout updated.'
             : isVendor
-              ? 'Payout created — vendor notified for approval.'
-              : 'Payout created — partner notified.',
-          'success',
+            ? 'Payout created — vendor notified for approval.'
+            : 'Payout created — partner notified.',
+          'success'
         );
         this.creating.set(false);
         this.closeModal();
@@ -441,8 +484,8 @@ export class PayoutsComponent implements OnInit, OnDestroy {
           err.error && typeof err.error === 'object'
             ? Object.values(err.error).flat().join(' ')
             : this.isEditMode()
-              ? 'Failed to update payout.'
-              : 'Failed to create payout.';
+            ? 'Failed to update payout.'
+            : 'Failed to create payout.';
         this.toast.show(msg, 'error');
         this.creating.set(false);
       },
@@ -452,12 +495,11 @@ export class PayoutsComponent implements OnInit, OnDestroy {
   // ── Lifecycle action helpers ──────────────────────────────────
 
   getPayoutAction(
-    payout: any,
+    payout: any
   ): 'schedule' | 'send-payment' | 'awaiting' | 'force-paid' | 'none' {
-    const isDelivery = this.activeTab() === 'delivery';
     switch (payout.status) {
       case 'pending_approval':
-        return isDelivery ? 'schedule' : 'none';
+        return 'none';
       case 'approved':
         return 'schedule';
       case 'scheduled':
@@ -511,7 +553,7 @@ export class PayoutsComponent implements OnInit, OnDestroy {
 
   confirmSendPayment() {
     const payout = this.sendingPaymentPayout();
-    if (!payout) return;
+    if (!payout || this.sendingPayment() || !this.transactionRefInput.trim()) return;
     this.sendingPayment.set(true);
     const isVendor = this.activeTab() === 'vendors';
     const req = isVendor
@@ -520,8 +562,8 @@ export class PayoutsComponent implements OnInit, OnDestroy {
     req.subscribe({
       next: () => {
         this.toast.show(
-          'Payment dispatched — vendor/partner notified to verify.',
-          'success',
+            'External payment reference recorded. No money was transferred by this app.',
+          'success'
         );
         this.sendingPayment.set(false);
         this.closeSendModal();
@@ -535,6 +577,7 @@ export class PayoutsComponent implements OnInit, OnDestroy {
   }
 
   openForcePaidModal(payout: any) {
+    this.overrideReason = '';
     this.forcePaidPayout.set(payout);
     this.showForcePaidModal.set(true);
   }
@@ -546,15 +589,15 @@ export class PayoutsComponent implements OnInit, OnDestroy {
 
   confirmForcePaid() {
     const payout = this.forcePaidPayout();
-    if (!payout) return;
+    if (!payout || this.forcingPaid() || !this.overrideReason.trim()) return;
     this.forcingPaid.set(true);
     const isVendor = this.activeTab() === 'vendors';
     const req = isVendor
-      ? this.api.forceAdminVendorPayoutPaid(payout.id)
-      : this.api.forceAdminDeliveryPayoutPaid(payout.id);
+      ? this.api.forceAdminVendorPayoutPaid(payout.id, this.overrideReason)
+      : this.api.forceAdminDeliveryPayoutPaid(payout.id, this.overrideReason);
     req.subscribe({
       next: () => {
-        this.toast.show('Payout marked as paid.', 'success');
+          this.toast.show('Recipient verification overridden with an audit reason.', 'success');
         this.forcingPaid.set(false);
         this.closeForcePaidModal();
         this.loadPayouts();
@@ -570,12 +613,13 @@ export class PayoutsComponent implements OnInit, OnDestroy {
   viewInvoice(payout: any) {
     this.invoicePayout.set(payout);
     this.invoiceBank.set(null);
+    this.invoiceBankError.set('');
     this.today = new Date();
     const vendorId = payout.vendor;
     if (vendorId) {
       this.api.getVendorBankDetails(vendorId).subscribe({
-        next: (bank: any) => this.invoiceBank.set(bank),
-        error: () => {},
+        next: (bank: any) => this.invoiceBank.set(bank.configured ? bank : null),
+        error: () => this.invoiceBankError.set('Bank details could not be loaded. The statement still shows the stored payout amounts.'),
       });
     }
   }
@@ -587,5 +631,26 @@ export class PayoutsComponent implements OnInit, OnDestroy {
 
   printInvoice() {
     window.print();
+  }
+
+  downloadStatement() {
+    const payout = this.invoicePayout();
+    if (!payout || this.downloadingStatement()) return;
+    this.downloadingStatement.set(true);
+    this.api.downloadAdminPayoutStatement(this.activeTab(), payout.id).subscribe({
+      next: blob => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `settlement-${payout.id}.pdf`;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        this.downloadingStatement.set(false);
+      },
+      error: error => {
+        this.toast.show(apiErrorMessage(error, 'Statement download failed. Please retry.'), 'error');
+        this.downloadingStatement.set(false);
+      },
+    });
   }
 }

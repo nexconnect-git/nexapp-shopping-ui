@@ -1,9 +1,16 @@
+import { AdminAccessService } from '../../services/admin-access.service';
+import { readAllAdminPages } from '../../shared/admin-pagination';
+import { AdminConfirmService } from '../../services/admin-confirm.service';
+import { DialogModule } from 'primeng/dialog';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { DestroyRef } from '@angular/core';
+import { AdminCanDirective } from '../../shared/admin-can.directive';
 import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
-  ApiService,
   apiErrorMessage,
+  ApiService,
   AppCurrencyPipe,
   ToastService,
 } from '@shared/public-api';
@@ -35,7 +42,7 @@ interface ScheduledJob {
 @Component({
   selector: 'app-scheduled-tasks',
   standalone: true,
-  imports: [
+  imports: [DialogModule, AdminCanDirective,
     CommonModule,
     FormsModule,
     DynamicTableComponent,
@@ -46,6 +53,14 @@ interface ScheduledJob {
   styleUrl: './scheduled-tasks.component.scss',
 })
 export class ScheduledTasksComponent implements OnInit, OnDestroy {
+  readonly access = inject(AdminAccessService);
+  private confirmService = inject(AdminConfirmService);
+  private destroy = inject(DestroyRef);
+  error = signal('');
+  queueStatus = signal('Not checked');
+  selectorError = signal('');
+  detail: any = null;
+  detailVisible = false;
   private api = inject(ApiService);
   private toast = inject(ToastService);
 
@@ -57,12 +72,12 @@ export class ScheduledTasksComponent implements OnInit, OnDestroy {
   cancellingId = signal<string | null>(null);
 
   tableColumns = [
-    { key: 'task', label: 'Task', flex: '2fr' },
+    { key: 'task', label: 'Task', flex: '2fr', minWidth: 260 },
     { key: 'category', label: 'Category', flex: '1fr' },
-    { key: 'parameters', label: 'Parameters', flex: '2fr' },
-    { key: 'time', label: 'Time', flex: '1.5fr' },
+    { key: 'parameters', label: 'Parameters', flex: '2fr', minWidth: 180 },
+    { key: 'time', label: 'Time', flex: '1.5fr', minWidth: 140 },
     { key: 'status', label: 'Status', flex: '1fr' },
-    { key: 'actions', label: 'Action', flex: '1fr' },
+    { key: 'actions', label: 'Action', flex: '1fr', minWidth: 140 },
   ];
 
   // Vendor/partner lists for param selects
@@ -85,11 +100,8 @@ export class ScheduledTasksComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.load();
-    this.loadVendors();
-    this.loadPartners();
-    this.loadPendingPayouts();
     // Auto-refresh jobs every 15 seconds
-    this.refreshInterval = setInterval(() => this.loadJobs(), 15000);
+    this.refreshInterval = setInterval(() => {if(!document.hidden&&!this.error())this.loadJobs();}, 15000);
   }
 
   ngOnDestroy() {
@@ -98,8 +110,10 @@ export class ScheduledTasksComponent implements OnInit, OnDestroy {
 
   load() {
     this.loading.set(true);
-    this.api.getScheduledTasks().subscribe({
+    this.error.set('');
+    this.api.getScheduledTasks().pipe(takeUntilDestroyed(this.destroy)).subscribe({
       next: (res) => {
+        this.queueStatus.set(res.queue?.scope || 'Queue connected');
         this.taskDefs.set(res.task_definitions || []);
         const sortedJobs = (res.jobs || []).sort((a: any, b: any) => {
           const ta = new Date(a.scheduled_at || a.enqueued_at || 0).getTime();
@@ -110,15 +124,19 @@ export class ScheduledTasksComponent implements OnInit, OnDestroy {
         this.loading.set(false);
       },
       error: () => {
-        this.toast.show('Failed to load scheduled tasks.', 'error');
+        this.queueStatus.set('Queue unavailable');
+        this.error.set('Background jobs are unavailable. Check Redis and the scheduler, then retry.');
         this.loading.set(false);
       },
     });
   }
 
   loadJobs() {
-    this.api.getScheduledTasks().subscribe({
+    this.api.getScheduledTasks().pipe(takeUntilDestroyed(this.destroy)).subscribe({
       next: (res) => {
+        this.error.set('');
+        this.queueStatus.set(res.queue?.scope || 'Queue connected');
+        this.taskDefs.set(res.task_definitions || []);
         const sortedJobs = (res.jobs || []).sort((a: any, b: any) => {
           const ta = new Date(a.scheduled_at || a.enqueued_at || 0).getTime();
           const tb = new Date(b.scheduled_at || b.enqueued_at || 0).getTime();
@@ -126,19 +144,19 @@ export class ScheduledTasksComponent implements OnInit, OnDestroy {
         });
         this.jobs.set(sortedJobs);
       },
-      error: () => {},
+      error: () => {this.queueStatus.set('Queue unavailable');this.error.set('Could not refresh jobs. Retry to reconnect.');},
     });
   }
 
   loadVendors() {
-    this.api.getAdminVendors({ page_size: 200 }).subscribe({
+    this.api.getAdminVendors({ page_size: 200 }).pipe(takeUntilDestroyed(this.destroy)).subscribe({
       next: (res) => this.vendors.set(res.results || res),
       error: () => {},
     });
   }
 
   loadPartners() {
-    this.api.getAdminDeliveryPartners({ page_size: 200 }).subscribe({
+    this.api.getAdminDeliveryPartners({ page_size: 200 }).pipe(takeUntilDestroyed(this.destroy)).subscribe({
       next: (res) => this.partners.set(res.results || res),
       error: () => {},
     });
@@ -146,35 +164,40 @@ export class ScheduledTasksComponent implements OnInit, OnDestroy {
 
   loadPendingPayouts() {
     // Vendor payouts: show 'approved' ones (vendor has approved, admin needs to schedule/send)
-    this.api.getAdminVendorPayouts().subscribe({
+    this.selectorError.set('');
+    readAllAdminPages<any>(page => this.api.getAdminVendorPayouts({page})).pipe(takeUntilDestroyed(this.destroy)).subscribe({
       next: (res) => {
-        const payouts = (res.results || res).filter(
+        const payouts = res.filter(
           (p: any) =>
-            p.status === 'approved' || p.status === 'pending_approval',
+            p.status === 'approved' || p.status === 'scheduled',
         );
         this.pendingVendorPayouts.set(payouts);
       },
-      error: () => {},
+      error: () => this.selectorError.set('Vendor payouts could not be loaded. Retry before scheduling a payment record.'),
     });
 
     // Delivery payouts: show 'scheduled' ones (no approval step, ready to send payment)
-    this.api.getAdminDeliveryPayouts().subscribe({
+    readAllAdminPages<any>(page => this.api.getAdminDeliveryPayouts({page})).pipe(takeUntilDestroyed(this.destroy)).subscribe({
       next: (res) => {
-        const payouts = (res.results || res).filter(
-          (p: any) => p.status === 'scheduled',
+        const payouts = res.filter(
+          (p: any) => p.status === 'approved' || p.status === 'scheduled',
         );
         this.pendingDeliveryPayouts.set(payouts);
       },
-      error: () => {},
+      error: () => this.selectorError.set('Delivery payouts could not be loaded. Retry before scheduling a payment record.'),
     });
   }
 
+  extraParams(task:TaskDef){return task.params.filter(key=>!['vendor_id','partner_id','payout_id','title','message','target'].includes(key));}
+
   selectTask(def: TaskDef) {
+    if (this.submitting()) return;
     this.selectedTask.set(def);
     this.form.task_key = def.key;
-    this.form.kwargs = {};
+    this.form.kwargs = Object.fromEntries(def.params.map(param => [param, '']));
     // Set defaults for known params
     if (def.params.includes('target')) this.form.kwargs['target'] = 'all';
+    if (def.category === 'payouts' && this.access.can('finance.view')) this.loadPendingPayouts();
   }
 
   clearSelection() {
@@ -191,6 +214,7 @@ export class ScheduledTasksComponent implements OnInit, OnDestroy {
   }
 
   submit() {
+    if (this.submitting()) return;
     const task = this.selectedTask();
     if (!task) {
       this.toast.show('Select a task type first.', 'error');
@@ -220,16 +244,17 @@ export class ScheduledTasksComponent implements OnInit, OnDestroy {
     }
 
     this.submitting.set(true);
-    this.api.createScheduledTask(payload).subscribe({
-      next: (res) => {
+    const scheduleMode = this.form.schedule_mode;
+    this.api.createScheduledTask(payload).pipe(takeUntilDestroyed(this.destroy)).subscribe({
+      next: () => {
         const when =
-          this.form.schedule_mode === 'now'
+          scheduleMode === 'now'
             ? 'queued immediately'
             : `scheduled for ${new Date(payload.scheduled_time).toLocaleString()}`;
         this.toast.show(`"${task.label}" ${when}.`, 'success');
         this.submitting.set(false);
         this.clearSelection();
-        setTimeout(() => this.loadJobs(), 1000);
+        this.loadJobs();
       },
       error: (err) => {
         this.toast.show(apiErrorMessage(err, 'Failed to schedule task.'), 'error');
@@ -238,14 +263,14 @@ export class ScheduledTasksComponent implements OnInit, OnDestroy {
     });
   }
 
-  cancel(jobId: string) {
-    if (!confirm('Cancel this scheduled job?')) return;
+  async cancel(jobId: string) {
+    if (!this.access.can('automation.manage') || !await this.confirmService.ask('Cancel job', 'Cancel this queued or scheduled job?')) return;
     this.cancellingId.set(jobId);
-    this.api.cancelScheduledTask(jobId).subscribe({
+    this.api.cancelScheduledTask(jobId).pipe(takeUntilDestroyed(this.destroy)).subscribe({
       next: () => {
         this.toast.show('Job cancelled.', 'success');
         this.cancellingId.set(null);
-        this.jobs.update((list) => list.filter((j) => j.id !== jobId));
+        this.loadJobs();
       },
       error: () => {
         this.toast.show('Failed to cancel job.', 'error');
@@ -254,11 +279,19 @@ export class ScheduledTasksComponent implements OnInit, OnDestroy {
     });
   }
 
+  async retry(jobId: string) {
+    if(!this.access.can('automation.manage')||!await this.confirmService.ask('Retry task', 'Requeue this failed task for another worker attempt?'))return;
+    this.cancellingId.set(jobId);
+    this.api.retryScheduledTask(jobId).pipe(takeUntilDestroyed(this.destroy)).subscribe({next:()=>{this.cancellingId.set(null);this.toast.show('Retry queued.', 'success');this.loadJobs()},error:err=>{this.cancellingId.set(null);this.toast.show(apiErrorMessage(err,'Retry failed.'),'error')}});
+  }
+
   categoryLabel(cat: string): string {
     const m: Record<string, string> = {
       payouts: 'Payouts',
       reports: 'Reports',
       notifications: 'Notifications',
+      operations: 'Operations',
+      recommendations: 'Recommendations',
     };
     return m[cat] || cat;
   }

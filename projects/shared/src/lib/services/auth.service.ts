@@ -1,6 +1,6 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { catchError, map, Observable, of, shareReplay, tap } from 'rxjs';
+import { catchError, defer, finalize, from, lastValueFrom, map, Observable, of, shareReplay, tap, throwError } from 'rxjs';
 import { AuthApi } from '../api/auth-api.service';
 import { AuthResponse, User } from '../models';
 import { AUTH_PREFIX } from '../tokens/auth-prefix.token';
@@ -21,7 +21,9 @@ export class AuthService {
   private readonly accessToken = signal<string | null>(null);
   private readonly session = inject(SessionStore);
   private refreshRequest$?: Observable<boolean>;
+  private sessionGeneration=0;
 
+  get sessionVersion():number{return this.sessionGeneration;}
   readonly user = this.currentUser.asReadonly();
   readonly isLoggedIn = computed(
     () => !!this.currentUser() && !!this.accessToken(),
@@ -86,6 +88,7 @@ export class AuthService {
         }
         this.currentUser.set(user);
         this.currency.configureFromLocation(user);
+        this.initializePushNotifications();
       } catch {
         this.session.clearUser();
       }
@@ -94,7 +97,7 @@ export class AuthService {
     this.session.setRefreshToken(null);
 
     if (!token && (userData || this.session.hasRefreshSession())) {
-      this.refreshAccessToken().subscribe({ error: () => this.clearSession() });
+      this.refreshAccessToken().subscribe({ error: () => { /* Keep the cookie session available for retry after an outage. */ } });
     }
   }
 
@@ -157,11 +160,13 @@ export class AuthService {
       return false;
     }
 
+    this.sessionGeneration++;
     this.setAccessToken(response.tokens.access);
     this.session.setUser(response.user);
     this.session.markRefreshSession();
     this.currentUser.set(response.user);
     this.currency.configureFromLocation(response.user);
+    this.initializePushNotifications();
     return true;
   }
 
@@ -170,8 +175,11 @@ export class AuthService {
       return this.refreshRequest$;
     }
 
-    this.refreshRequest$ = this.api.refreshToken().pipe(
+    const generation=this.sessionGeneration;
+    const tokenAtStart = this.getToken();
+    const refresh = () => this.api.refreshToken().pipe(
       tap((response) => {
+        if(generation!==this.sessionGeneration)throw new Error('Session changed during refresh.');
         const tokens = response.tokens || response;
         this.setAccessToken(tokens.access);
         this.session.setRefreshToken(tokens.refresh || null);
@@ -184,15 +192,33 @@ export class AuthService {
           this.session.setUser(response.user);
           this.currentUser.set(response.user);
           this.currency.configureFromLocation(response.user);
+          this.initializePushNotifications();
         }
       }),
       map(() => true),
-      catchError(() => {
-        this.clearSession();
+    );
+    // The HttpOnly refresh cookie is shared by tabs and rotates once per request.
+    // Serialize renewal, then reuse a valid access token renewed by another tab.
+    this.refreshRequest$ = defer(() => {
+      if (typeof navigator === 'undefined' || !navigator.locks) return refresh();
+      return from(Promise.resolve(navigator.locks.request(`${this.prefix}-session-refresh`, async () => {
+        if (generation !== this.sessionGeneration) return false;
+        const shared = this.session.getSharedSession();
+        const user = shared?.user as User | undefined;
+        if (shared && shared.access !== tokenAtStart && user?.id === this.user()?.id && this.isPortalUser(user) && this.tokenIsCurrent(shared.access)) {
+          this.setAccessToken(shared.access);
+          return true;
+        }
+        return lastValueFrom(refresh());
+      })));
+    }).pipe(
+      catchError((error) => {
+        if (error?.status !== 400 && error?.status !== 401) return throwError(() => error);
+        if (generation === this.sessionGeneration) this.clearSession();
         return of(false);
       }),
-      tap(() => {
-        this.refreshRequest$ = undefined;
+      finalize(() => {
+        if (generation === this.sessionGeneration) this.refreshRequest$ = undefined;
       }),
       shareReplay(1),
     );
@@ -200,14 +226,27 @@ export class AuthService {
     return this.refreshRequest$;
   }
 
+  private tokenIsCurrent(token: string): boolean {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))) as { exp?: number };
+      return typeof payload.exp === 'number' && payload.exp * 1000 > Date.now() + 1000;
+    } catch {
+      return false;
+    }
+  }
+
   private initializePushNotifications() {
+    const userId = this.currentUser()?.id;
+    if (!userId || !this.accessToken()) return;
     void this.nativePlatform.registerForPushNotifications().then((registration) => {
-      if (!registration) return;
+      if (!registration || this.currentUser()?.id !== userId || !this.accessToken()) return;
       this.api.registerDeviceToken(registration).subscribe({ error: () => {} });
-    });
+    }).catch(() => {});
   }
 
   private clearSession() {
+    this.sessionGeneration++;
+    this.refreshRequest$=undefined;
     this.session.clear();
     this.accessToken.set(null);
     this.currentUser.set(null);

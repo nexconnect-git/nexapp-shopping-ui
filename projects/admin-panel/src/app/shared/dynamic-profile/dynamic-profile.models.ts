@@ -118,6 +118,7 @@ export interface DynamicProfileEntity {
 }
 
 export interface ProfileFormField {
+  readOnly?: boolean;
   key: string;
   label: string;
   type: ProfileFieldType;

@@ -1,15 +1,11 @@
-﻿import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { CommonModule, DecimalPipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { ProfileContextComponent } from '../../shared/profile-context.component';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
+
+
 import { ActivatedRoute, Router } from '@angular/router';
-import { ApiService, AppCurrencyPipe, ToastService } from '@shared/public-api';
-import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
-import {
-  AdminProfileBadge,
-  AdminProfileMetric,
-  AdminProfileShellComponent,
-  AdminProfileTab,
-} from '../../shared/components/admin-profile-shell/admin-profile-shell.component';
+import { ApiService, ToastService } from '@shared/public-api';
+
+import { AdminProfileBadge, AdminProfileMetric, AdminProfileTab } from '../../shared/components/admin-profile-shell/admin-profile-shell.component';
 import { DynamicProfilePageComponent } from '../../shared/dynamic-profile/dynamic-profile-page.component';
 import { EntityProfileAdapterService } from '../../shared/dynamic-profile/entity-profile-adapter.service';
 import { ProfileHeroAction } from '../../shared/dynamic-profile/dynamic-profile.models';
@@ -19,7 +15,7 @@ type Tab = 'overview' | 'orders' | 'loyalty';
 @Component({
   selector: 'app-customer-profile',
   standalone: true,
-  imports: [DynamicProfilePageComponent],
+  imports: [DynamicProfilePageComponent, ProfileContextComponent],
   templateUrl: './customer-profile.component.html',
   styleUrl: './customer-profile.component.scss',
 })
@@ -37,7 +33,7 @@ export class CustomerProfileComponent implements OnInit {
   dynamicProfileConfig = computed(() =>
     this.customer()
       ? this.adapter.buildProfileConfig('customer', this.customer())
-      : null,
+      : null
   );
 
   activeTab = signal<Tab>('overview');
@@ -242,7 +238,7 @@ export class CustomerProfileComponent implements OnInit {
           this.loadCustomer();
           this.toast.show(
             `Account ${isActive ? 'activated' : 'suspended'}.`,
-            isActive ? 'success' : 'info',
+            isActive ? 'success' : 'info'
           );
           this.actionLoading.set(false);
         },
@@ -256,7 +252,7 @@ export class CustomerProfileComponent implements OnInit {
   deleteCustomer() {
     if (
       !confirm(
-        `Delete customer "${this.customer()?.username}"? This is permanent.`,
+        `Delete customer "${this.customer()?.username}"? This is permanent.`
       )
     )
       return;
@@ -277,7 +273,7 @@ export class CustomerProfileComponent implements OnInit {
     if (action.id === 'resetPassword') {
       this.toast.show(
         'Password reset flow is available from auth support tools.',
-        'info',
+        'info'
       );
     }
   }
@@ -354,8 +350,8 @@ export class CustomerProfileComponent implements OnInit {
           c.is_active === false
             ? 'Account suspended'
             : c.is_verified
-              ? 'Verified customer'
-              : 'Verification pending',
+            ? 'Verified customer'
+            : 'Verification pending',
         icon: 'verified_user',
         priority: true,
       },
@@ -396,4 +392,3 @@ export class CustomerProfileComponent implements OnInit {
     return map[s] || '';
   }
 }
-

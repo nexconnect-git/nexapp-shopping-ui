@@ -1,7 +1,8 @@
+import { AdminCanDirective } from '../../shared/admin-can.directive';
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { ApiService, apiErrorMessage } from '@shared/public-api';
+import { apiErrorMessage, ApiService } from '@shared/public-api';
 
 interface IssueGroup {
   key: string;
@@ -43,7 +44,7 @@ interface NodeSettingsForm {
 @Component({
   selector: 'app-fulfillment-ops',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [AdminCanDirective,CommonModule, RouterLink],
   templateUrl: './fulfillment-ops.component.html',
   styleUrl: './fulfillment-ops.component.scss',
 })

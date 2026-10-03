@@ -1,13 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import {
-  apiErrorMessage,
-  AuthService,
-  sanitizeUsername,
-  USERNAME_PATTERN,
-  VendorApi,
-} from '@shared/public-api';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { apiErrorMessage, AuthService, VendorApi } from '@shared/public-api';
 
 @Component({
   selector: 'app-login',
@@ -20,11 +14,17 @@ export class LoginComponent {
   private auth = inject(AuthService);
   private api = inject(VendorApi);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   username = '';
   password = '';
   loading = signal(false);
-  error = signal('');
+  readonly showPassword = signal(false);
+  error = signal(
+    this.route.snapshot.queryParamMap.get('reason') === 'profile_unavailable'
+      ? 'Store approval could not be checked. Your session is retained. Retry sign-in when the service is available.'
+      : ''
+  );
   submitted = signal(false);
   fieldErrors = signal<{ username?: string; password?: string }>({});
 
@@ -33,7 +33,7 @@ export class LoginComponent {
   }
 
   onUsernameInput(value: string): void {
-    this.username = sanitizeUsername(value);
+    this.username = value;
     this.clearFieldError('username');
   }
 
@@ -93,7 +93,16 @@ export class LoginComponent {
               if (res.user.force_password_change) {
                 this.router.navigate(['/change-password']);
               } else {
-                this.router.navigate(['/']);
+                const target =
+                  this.route.snapshot.queryParamMap.get('returnUrl') || '/';
+                const safe =
+                  /^\/(?!\/)/.test(target) &&
+                  !target.includes('\\') &&
+                  !Array.from(target).some((char) => char.charCodeAt(0) < 32) &&
+                  !/^\/(login|register|change-password|forgot-password|reset-password)(\/|\?|$)/.test(
+                    target
+                  );
+                void this.router.navigateByUrl(safe ? target : '/');
               }
             } else {
               this.router.navigate(['/pending-approval']);
@@ -116,9 +125,26 @@ export class LoginComponent {
         });
       },
       error: (err) => {
-        this.error.set(apiErrorMessage(err, 'Invalid credentials. Please try again.'));
+        this.error.set(
+          apiErrorMessage(
+            err,
+            err?.status === 0 || err?.status >= 500
+              ? 'Sign-in service is unavailable. Please retry.'
+              : 'Invalid credentials. Please try again.'
+          )
+        );
         this.loading.set(false);
       },
+    });
+  }
+
+  validateField(field: 'username' | 'password'): void {
+    const message = this.validate()[field];
+    this.fieldErrors.update((errors) => {
+      const next = { ...errors };
+      if (message) next[field] = message;
+      else delete next[field];
+      return next;
     });
   }
 
@@ -127,8 +153,8 @@ export class LoginComponent {
     const username = this.username.trim();
     if (!username) {
       errors.username = 'Username is required.';
-    } else if (!USERNAME_PATTERN.test(username)) {
-      errors.username = 'Use 3-30 letters, numbers, dots, hyphens, or underscores.';
+    } else if (username.length > 150) {
+      errors.username = 'Username must be 150 characters or fewer.';
     }
     if (!this.password) {
       errors.password = 'Password is required.';

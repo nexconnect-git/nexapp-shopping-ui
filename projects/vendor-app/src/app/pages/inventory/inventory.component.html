@@ -1,154 +1,230 @@
-<div class="inventory-page">
-  <section class="page-hero">
-    <div class="page-hero-copy">
-      <span class="eyebrow">Stock control</span>
-      <h1 class="page-title">Inventory</h1>
-      <p>Fast stock, availability, and product-readiness controls.</p>
+<div class="workspace-page">
+  <header class="page-heading">
+    <div>
+      <h1>Inventory</h1>
+      <p>Find a product, update its quantity, and save your changes.</p>
     </div>
-    <div class="page-hero-actions">
-      <button
-        class="btn-primary"
-        (click)="bulkSaveVisible()"
-        [disabled]="!canBulkSaveVisible()"
+  </header>
+  @if(changed().length){
+  <section class="stock-save-bar" aria-label="Unsaved stock changes">
+    <div class="workspace-section-heading">
+      <strong
+        >{{ changed().length }} unsaved stock change{{
+          changed().length === 1 ? "" : "s"
+        }}
+        across all pages</strong
       >
-        <span class="material-icons-outlined">save</span>
-        Save Visible Stock
-      </button>
+      <div class="workspace-actions">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          [disabled]="isSaving()"
+          (click)="discard()"
+        >
+          Discard changes</button
+        ><button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="isSaving()"
+          (click)="saveRows()"
+        >
+          {{ isSaving() ? "Saving…" : "Save changes" }}
+        </button>
+      </div>
     </div>
+    <details>
+      <summary>Review changed quantities</summary>
+      <ul>
+        @for(product of changed();track product.id){
+        <li>
+          <strong>{{ product.name }}</strong
+          >: {{ product.stock }} →
+          {{ draft(product) }}@if(rowErrors()[product.id]){
+          <p class="workspace-error" role="alert">
+            {{ rowErrors()[product.id] }}
+          </p>
+          }@if(conflicts().has(product.id)){
+          <div class="workspace-actions">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              (click)="resolveConflict(product, false)"
+            >
+              Use current stock</button
+            ><button
+              type="button"
+              class="btn btn-secondary"
+              (click)="resolveConflict(product, true)"
+            >
+              Keep my quantity
+            </button>
+          </div>
+          }
+        </li>
+        }
+      </ul>
+    </details>
   </section>
-
-  <div class="segmented-filters" role="tablist" aria-label="Inventory filters">
-    @for (f of filters; track f.key) {
-      <button
-        type="button"
-        [class.active]="filter() === f.key"
-        (click)="setFilter(f.key)"
-      >
-        {{ f.label }}
-      </button>
+  } @if(success()){
+  <p class="workspace-success" role="status">{{ success() }}</p>
+  }
+  <p class="stock-totals">
+    {{ summary()["low"] ?? "—" }} low stock · {{ summary()["out"] ?? "—" }} out
+    of stock across the store.
+  </p>
+  @if (store.context()?.readiness?.stock_review_required &&
+  !store.context()?.readiness?.stock_review_current) {
+  <section class="workspace-card operating-card">
+    <div>
+      <h3>Daily inventory review</h3>
+      <p>
+        {{
+          store.context()?.readiness?.stock_review_current
+            ? "Your current inventory snapshot has been reviewed today."
+            : "Review stock across all pages, save corrections, then confirm you have checked the current inventory."
+        }}
+      </p>
+    </div>
+    <button
+      type="button"
+      class="btn btn-secondary"
+      [disabled]="
+        store.busy() ||
+        hasUnsavedChanges() ||
+        store.context()?.readiness?.stock_review_current
+      "
+      (click)="store.reviewInventory()"
+    >
+      Confirm inventory reviewed
+    </button>
+  </section>
+  } @if (store.error()) {
+  <p class="workspace-error" role="alert">{{ store.error() }}</p>
+  }
+  <form class="workspace-toolbar" (ngSubmit)="query()">
+    <label class="workspace-search"
+      ><span class="material-icons-outlined" aria-hidden="true">search</span
+      ><input
+        name="search"
+        [(ngModel)]="search"
+        aria-label="Search inventory by name, SKU, category or brand"
+        placeholder="Name, SKU, category or brand" /></label
+    ><button type="submit" class="btn btn-secondary">Search</button
+    ><button
+      type="button"
+      class="btn btn-secondary"
+      (click)="load(); store.refresh()"
+      [disabled]="loading()"
+    >
+      Refresh
+    </button>
+  </form>
+  <div class="workspace-tabs" aria-label="Inventory filters">
+    @for (item of filters; track item.key) {<button
+      type="button"
+      [class.active]="filter() === item.key"
+      [attr.aria-pressed]="filter() === item.key"
+      (click)="setFilter(item.key)"
+    >
+      {{ item.label }}</button
+    >}
+  </div>
+  @if (error()) {
+  <p class="workspace-error" role="alert">{{ error() }}</p>
+  } @if (loading() && !products().length) {
+  <div class="workspace-state" role="status">Loading inventory…</div>
+  } @else if (!error()&&!products().length) {
+  <div class="workspace-state">
+    <h3>No matching products</h3>
+    <p>Change your filters or add a catalog product.</p>
+    <a routerLink="/products/new" class="btn btn-primary">Add product</a>
+  </div>
+  } @else {
+  <div class="workspace-inventory-list">
+    @for (product of products(); track product.id) {
+    <article class="workspace-card inventory-item">
+      <div class="inventory-product">
+        <img
+          [src]="image(product)"
+          [alt]="product.name"
+          (error)="imageError($event)"
+          loading="lazy"
+        />
+        <div>
+          <a [routerLink]="['/products', product.id, 'edit']"
+            ><h3>{{ product.name }}</h3></a
+          >
+          <p>
+            SKU: {{ product.sku || "Not assigned" }} ·
+            {{ categoryName(product) }}
+          </p>
+          <span
+            class="status-pill"
+            [class.success]="product.visibility_status === 'ready_to_sell'"
+            >{{
+              product.visibility_status === "ready_to_sell"
+                ? "Ready to sell"
+                : "Needs attention"
+            }}</span
+          >
+          @if(product.visibility_blockers?.length){
+          <p class="attention-reason">{{product.visibility_blockers?.[0]}}</p>
+          } @if((product.visibility_blockers?.length || 0)>1){
+          <details class="visibility-details">
+            <summary>More visibility requirements</summary>
+            <ul>
+              @for(blocker of product.visibility_blockers?.slice(1);track
+              blocker){
+              <li>{{ blocker }}</li>
+              }
+            </ul>
+          </details>
+          }
+        </div>
+      </div>
+      <div class="inventory-controls">
+        <label
+          >Stock<input
+            type="number"
+            min="0"
+            max="2147483647"
+            step="1"
+            [ngModel]="draft(product)"
+            (ngModelChange)="edit(product.id, $event)"
+            [attr.aria-label]="'Stock for ' + product.name"
+            [attr.aria-invalid]="rowErrors()[product.id] ? true : null"
+            [attr.aria-describedby]="rowErrors()[product.id] ? 'stock-error-' + product.id : null" /></label
+        ><button
+          type="button"
+          class="btn btn-secondary"
+          [disabled]="
+            pending().has(product.id) ||
+            draft(product) === stockText(product) ||
+            conflicts().has(product.id)
+          "
+          (click)="save(product)"
+        >
+          Save stock</button
+        ><button
+          type="button"
+          class="btn btn-secondary"
+          [disabled]="pending().has(product.id)"
+          (click)="toggle(product)"
+        >
+          {{ product.is_available ? "Pause listing" : "Resume listing" }}
+        </button>
+      </div>
+      @if (rowErrors()[product.id]) {
+      <p class="workspace-error" role="alert" [id]="'stock-error-' + product.id">{{ rowErrors()[product.id] }}</p>
+      }
+    </article>
     }
   </div>
-
-  @if (loading()) {
-    <div class="state-card">Loading inventory...</div>
-  } @else {
-    <div class="inventory-workbar">
-      <div class="workbar-metric">
-        <span class="material-icons-outlined">inventory_2</span>
-        <div>
-          <strong>{{ filteredProducts().length }}</strong>
-          <small>Visible products</small>
-        </div>
-      </div>
-      <div class="workbar-metric">
-        <span class="material-icons-outlined">filter_alt</span>
-        <div>
-          <strong>{{ filterLabel() }}</strong>
-          <small>Current filter</small>
-        </div>
-      </div>
-      <div class="workbar-metric" [class.warn]="attentionCount() > 0">
-        <span class="material-icons-outlined">health_and_safety</span>
-        <div>
-          <strong>{{ attentionCount() }}</strong>
-          <small>Need attention</small>
-        </div>
-      </div>
-      <button
-        class="btn-primary workbar-save"
-        (click)="bulkSaveVisible()"
-        [disabled]="!canBulkSaveVisible()"
-      >
-        <span class="material-icons-outlined">save</span>
-        Save visible stock
-      </button>
-    </div>
-    <div class="inventory-table">
-      @for (product of filteredProducts(); track product.id) {
-        <article class="inventory-row">
-          <div class="product-main">
-            <div class="thumb">
-              <img
-                [src]="productImage(product)"
-                [alt]="product.name"
-                (error)="onImageError($event)"
-              />
-            </div>
-            <div class="product-copy">
-              <h3>{{ product.name }}</h3>
-              <p>{{ healthLabel(product) }}</p>
-              <div class="tags">
-                @if (isLowStock(product)) {
-                  <span class="warn">Low stock</span>
-                }
-                @if (product.stock <= 0) {
-                  <span class="danger">Out of stock</span>
-                }
-                @if (!product.is_available) {
-                  <span>Paused</span>
-                }
-                @if ((product.image_count ?? product.images.length) === 0) {
-                  <span>Needs photo</span>
-                }
-              </div>
-            </div>
-          </div>
-
-          <div class="stock-edit">
-            <div class="stock-field">
-              <label>Stock</label>
-              <input
-                type="number"
-                min="0"
-                placeholder="e.g. 25"
-                [value]="stockDrafts()[product.id]"
-                (input)="setDraft(product.id, $any($event.target).value)"
-              />
-            </div>
-            <small class="field-hint">Units available for ordering.</small>
-            @if (rowError(product.id)) {
-              <span class="row-error">{{ rowError(product.id) }}</span>
-            }
-            <button
-              class="save-stock-btn"
-              [disabled]="savingId() === product.id"
-              (click)="saveStock(product)"
-            >
-              {{ savingId() === product.id ? "Saving..." : "Save stock" }}
-            </button>
-          </div>
-
-          <div class="row-actions">
-            <button
-              [disabled]="savingId() === product.id"
-              (click)="toggleAvailable(product)"
-            >
-              {{ product.is_available ? "Pause Today" : "Unpause" }}
-            </button>
-            <a [routerLink]="['/products', product.id, 'edit']">Edit</a>
-          </div>
-        </article>
-      } @empty {
-        <div class="state-card inventory-empty">
-          <span class="material-icons-outlined">inventory_2</span>
-          <strong>{{
-            products().length
-              ? "No products match this inventory filter."
-              : "Add your first product"
-          }}</strong>
-          <p>
-            {{
-              products().length
-                ? "Try another filter or review your product catalog."
-                : "Inventory controls appear after you create a product from the catalog."
-            }}
-          </p>
-          <a routerLink="/products/new" class="btn-primary">
-            <span class="material-icons-outlined">add</span>
-            Add your first product
-          </a>
-        </div>
-      }
-    </div>
   }
+  <nc-vendor-pager
+    [page]="page()"
+    [count]="count()"
+    [busy]="loading()"
+    (pageChange)="query($event)"
+  />
 </div>

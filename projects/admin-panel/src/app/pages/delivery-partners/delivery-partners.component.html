@@ -15,7 +15,7 @@
             >Updated {{ lastRefreshed() | date: "HH:mm:ss" }}</span
           >
         }
-        <button
+        <button aria-label="Reload"
           class="btn btn-ghost btn-sm"
           (click)="manualReload()"
           [disabled]="loading()"
@@ -110,7 +110,7 @@
 
     <!-- Custom vehicle column -->
     <ng-template tableCell="vehicle" let-p>
-      <span class="text-muted">{{ p.vehicle_type }}</span>
+      <span class="text-muted">{{ p.vehicle_type || 'Not provided' }}</span>
     </ng-template>
 
     <!-- Custom status column -->
@@ -146,44 +146,28 @@
 
     <!-- Custom actions column -->
     <ng-template tableCell="actions" let-p>
-      <div class="actions" (click)="$event.stopPropagation()">
-        <button class="action-btn" (click)="openEdit(p)" title="Edit">
-          <span class="material-icons-outlined">edit</span>
-        </button>
-        @if (!p.is_approved) {
-          <button
-            class="action-btn approve"
-            [disabled]="actionId() === p.id"
-            (click)="approve(p)"
-            title="Approve"
-          >
-            <span class="material-icons-outlined">check_circle</span>
-          </button>
-        } @else {
-          <button
-            class="action-btn reject"
-            [disabled]="actionId() === p.id"
-            (click)="reject(p)"
-            title="Revoke"
-          >
-            <span class="material-icons-outlined">cancel</span>
-          </button>
-        }
-        <button
-          class="action-btn danger"
-          (click)="deletePartner(p)"
-          title="Delete"
-        >
-          <span class="material-icons-outlined">delete_outline</span>
-        </button>
+      <div class="actions" (click)="$event.stopPropagation()" role="presentation">
+        <ng-container *appAdminCan="'dispatch.manage'">
+          <button aria-label="Edit partner" class="action-btn" (click)="openEdit(p)" title="Edit partner"><span class="material-icons-outlined">edit</span></button>
+          <app-admin-row-actions [label]="'More actions for ' + p.user?.username">
+            <ng-template>
+              @if (!p.is_approved) {
+                <button role="menuitem" [disabled]="actionId() === p.id" (click)="approve(p)"><span class="material-icons-outlined">check_circle</span>Approve partner</button>
+              } @else {
+                <button role="menuitem" [disabled]="actionId() === p.id" (click)="reject(p)"><span class="material-icons-outlined">cancel</span>Revoke approval</button>
+              }
+              <button role="menuitem" class="danger" (click)="deletePartner(p)"><span class="material-icons-outlined">delete_outline</span>Delete partner</button>
+            </ng-template>
+          </app-admin-row-actions>
+        </ng-container>
       </div>
     </ng-template>
   </app-dynamic-table>
 
   <!-- Edit Modal -->
   @if (showModal()) {
-    <div class="modal-backdrop" (click)="closeModal()">
-      <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-backdrop" (click)="$event.target === $event.currentTarget && (closeModal())" (keydown.escape)="closeModal()" tabindex="-1" role="presentation">
+      <div class="modal-content" appAdminDialog (appAdminDialogClose)="closeModal()">
         <div class="modal-header">
           <h2>Edit Delivery Partner</h2>
           <button class="close-btn" (click)="closeModal()">&times;</button>
@@ -191,8 +175,8 @@
         <div class="modal-body">
           <div class="form-row">
             <div class="form-group">
-              <label class="input-label">Vehicle Type</label>
-              <select
+              <label for="admin-delivery-partners.component-3" class="input-label">Vehicle Type</label>
+              <select id="admin-delivery-partners.component-3"
                 class="input-field"
                 [(ngModel)]="editModel().vehicle_type"
               >
@@ -203,8 +187,8 @@
               </select>
             </div>
             <div class="form-group">
-              <label class="input-label">Status</label>
-              <select class="input-field" [(ngModel)]="editModel().status">
+              <label for="admin-delivery-partners.component-4" class="input-label">Status</label>
+              <select id="admin-delivery-partners.component-4" class="input-field" [(ngModel)]="editModel().status">
                 <option value="offline">Offline</option>
                 <option value="available">Available</option>
                 <option value="on_delivery">On Delivery</option>
@@ -213,16 +197,16 @@
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label class="input-label">Vehicle Number</label>
-              <input
+              <label for="admin-delivery-partners.component-5" class="input-label">Vehicle Number</label>
+              <input id="admin-delivery-partners.component-5"
                 class="input-field"
                 type="text"
                 [(ngModel)]="editModel().vehicle_number"
               />
             </div>
             <div class="form-group">
-              <label class="input-label">License Number</label>
-              <input
+              <label for="admin-delivery-partners.component-6" class="input-label">License Number</label>
+              <input id="admin-delivery-partners.component-6"
                 class="input-field"
                 type="text"
                 [(ngModel)]="editModel().license_number"
@@ -240,13 +224,13 @@
           <button class="btn btn-secondary" (click)="closeModal()">
             Cancel
           </button>
-          <button
+          <ng-container *appAdminCan="'dispatch.manage'"><button
             class="btn btn-primary"
             [disabled]="saving()"
             (click)="savePartner()"
           >
             {{ saving() ? "Saving..." : "Save Changes" }}
-          </button>
+          </button></ng-container>
         </div>
       </div>
     </div>

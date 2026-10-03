@@ -8,7 +8,7 @@
     </div>
     <div class="header-actions">
       <div class="filters">
-        <select class="filter-input" [(ngModel)]="typeFilter" (change)="load()">
+        <select class="filter-input" aria-label="Asset type" [(ngModel)]="typeFilter" (change)="load()">
           <option value="">All Types</option>
           @for (t of assetTypes; track t.value) {
             <option [value]="t.value">{{ t.label }}</option>
@@ -16,6 +16,7 @@
         </select>
         <select
           class="filter-input"
+          aria-label="Asset status"
           [(ngModel)]="statusFilter"
           (change)="load()"
         >
@@ -25,10 +26,10 @@
           }
         </select>
       </div>
-      <button class="btn-create" (click)="openCreate()">
+      <ng-container *appAdminCan="'dispatch.manage'"><button class="btn-create" (click)="openCreate()">
         <span class="material-icons-outlined">add</span>
         Add Asset
-      </button>
+      </button></ng-container>
     </div>
   </div>
 
@@ -73,30 +74,30 @@
 
     <ng-template tableCell="actions" let-a>
       <div class="actions">
-        <button class="action-btn" (click)="openEdit(a)" title="Edit">
+        <ng-container *appAdminCan="'dispatch.manage'"><button aria-label="Edit" class="action-btn" (click)="openEdit(a)" title="Edit">
           <span class="material-icons-outlined">edit</span>
-        </button>
-        <button
+        </button></ng-container>
+        <ng-container *appAdminCan="'dispatch.manage'"><button aria-label="Delete"
           class="action-btn danger"
           (click)="deleteAsset(a)"
           title="Delete"
         >
           <span class="material-icons-outlined">delete_outline</span>
-        </button>
+        </button></ng-container>
       </div>
     </ng-template>
   </app-dynamic-table>
 
   <!-- Create / Edit Modal -->
   @if (showModal()) {
-    <div class="modal-backdrop" (click)="closeModal()">
-      <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-backdrop" (click)="$event.target === $event.currentTarget && (closeModal())" (keydown.escape)="closeModal()" tabindex="-1" role="presentation">
+      <div class="modal-content" appAdminDialog aria-labelledby="asset-form-title" (appAdminDialogClose)="closeModal()">
         <div class="modal-header">
           <div class="modal-title-group">
             <span class="material-icons-outlined modal-icon">handyman</span>
-            <h2>{{ isCreating() ? "Add Asset" : "Edit Asset" }}</h2>
+            <h2 id="asset-form-title">{{ isCreating() ? "Add Asset" : "Edit Asset" }}</h2>
           </div>
-          <button class="close-btn" (click)="closeModal()">&times;</button>
+          <button class="close-btn" aria-label="Close dialog" (click)="closeModal()"><span class="material-icons-outlined">close</span></button>
         </div>
 
         <div class="modal-body">
@@ -109,8 +110,8 @@
 
           <div class="form-row">
             <div class="form-group full">
-              <label class="input-label required">Asset Name</label>
-              <input
+              <label for="admin-assets.component-0" class="input-label required">Asset Name</label>
+              <input id="admin-assets.component-0"
                 class="input-field"
                 type="text"
                 [(ngModel)]="editModel().name"
@@ -121,16 +122,16 @@
 
           <div class="form-row">
             <div class="form-group">
-              <label class="input-label required">Type</label>
-              <select class="input-field" [(ngModel)]="editModel().asset_type">
+              <label for="admin-assets.component-1" class="input-label required">Type</label>
+              <select id="admin-assets.component-1" class="input-field" [(ngModel)]="editModel().asset_type">
                 @for (t of assetTypes; track t.value) {
                   <option [value]="t.value">{{ t.label }}</option>
                 }
               </select>
             </div>
             <div class="form-group">
-              <label class="input-label">Serial Number</label>
-              <input
+              <label for="admin-assets.component-2" class="input-label">Serial Number</label>
+              <input id="admin-assets.component-2"
                 class="input-field"
                 type="text"
                 [(ngModel)]="editModel().serial_number"
@@ -141,16 +142,16 @@
 
           <div class="form-row">
             <div class="form-group">
-              <label class="input-label">Status</label>
-              <select class="input-field" [(ngModel)]="editModel().status">
+              <label for="admin-assets.component-3" class="input-label">Status</label>
+              <select id="admin-assets.component-3" class="input-field" [(ngModel)]="editModel().status">
                 @for (s of assetStatuses; track s.value) {
                   <option [value]="s.value">{{ s.label }}</option>
                 }
               </select>
             </div>
             <div class="form-group">
-              <label class="input-label">Purchase Date</label>
-              <input
+              <label for="admin-assets.component-4" class="input-label">Purchase Date</label>
+              <input id="admin-assets.component-4"
                 class="input-field"
                 type="date"
                 [(ngModel)]="editModel().purchase_date"
@@ -160,8 +161,8 @@
 
           <div class="form-row">
             <div class="form-group full">
-              <label class="input-label">Assigned To</label>
-              <select class="input-field" [(ngModel)]="editModel().assigned_to">
+              <label for="admin-assets.component-5" class="input-label">Assigned To</label>
+              <select id="admin-assets.component-5" class="input-field" [(ngModel)]="editModel().assigned_to">
                 <option [ngValue]="null">Unassigned</option>
                 @for (p of deliveryPartners(); track p.id) {
                   <option [value]="p.id">
@@ -174,8 +175,8 @@
           </div>
 
           <div class="form-group">
-            <label class="input-label">Description</label>
-            <textarea
+            <label for="admin-assets.component-6" class="input-label">Description</label>
+            <textarea id="admin-assets.component-6"
               class="input-field input-textarea"
               [(ngModel)]="editModel().description"
               rows="2"
@@ -188,7 +189,7 @@
           <button class="btn btn-secondary" (click)="closeModal()">
             Cancel
           </button>
-          <button
+          <ng-container *appAdminCan="'dispatch.manage'"><button
             class="btn btn-primary"
             [disabled]="saving()"
             (click)="saveAsset()"
@@ -199,7 +200,7 @@
             } @else {
               {{ isCreating() ? "Add Asset" : "Save Changes" }}
             }
-          </button>
+          </button></ng-container>
         </div>
       </div>
     </div>

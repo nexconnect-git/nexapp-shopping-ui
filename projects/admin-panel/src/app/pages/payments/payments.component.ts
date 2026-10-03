@@ -25,7 +25,11 @@ export class PaymentsComponent implements OnInit {
   search = '';
   private searchTimer: any;
 
+  finance = signal<any>(null);
+  financeError = signal('');
+
   ngOnInit() {
+    this.api.getAdminFinanceSummary().subscribe({next:response=>this.finance.set(response.summary),error:()=>this.financeError.set('Finance summary is unavailable. Retry by refreshing the page.')});
     this.load();
   }
 
@@ -70,7 +74,7 @@ export class PaymentsComponent implements OnInit {
 
   statusLabel(p: any): string {
     if (p.status === 'cancelled') return 'Cancelled';
-    if (p.payment_method === 'cod') return 'COD';
+    if (p.payment_method === 'cod') return p.is_payment_verified ? 'COD verified' : 'COD unsettled';
     if (p.is_payment_verified) return 'Paid';
     return 'Pending';
   }

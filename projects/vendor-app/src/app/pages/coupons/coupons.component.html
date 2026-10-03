@@ -1,545 +1,358 @@
-<div class="cp-page">
-  <!-- ── Header ──────────────────────────────────────────── -->
-  <section class="page-hero">
-    <div class="page-hero-copy">
-      <span class="eyebrow">Promotions</span>
-      <h1 class="cp-title">Coupons</h1>
-      <p>Create discount codes, campaign presets, and customer incentives.</p>
+<div class="workspace-page">
+  <header class="page-heading">
+    <div>
+      <p class="eyebrow">Growth</p><h1>Promotions</h1>
+      <p>Create store-wide coupons with clear limits and schedules.</p>
     </div>
-    <div class="page-hero-actions">
-      <button class="cp-create-btn" (click)="openCreate()">
-        <span class="material-icons-outlined">add</span>
-        New Coupon
-      </button>
-    </div>
-  </section>
-
-  <!-- ── Alerts ──────────────────────────────────────────── -->
-  @if (success()) {
-  <div class="cp-alert success">
-    <span class="material-icons-outlined">check_circle</span>{{ success() }}
-  </div>
-  } @if (!loading() && coupons().length > 0) {
-  <div class="cp-presets">
-    <div class="preset-title">
-      <strong>Campaign starters</strong>
-      <span>Pick a proven promotion template</span>
-    </div>
-    @for (preset of campaignPresets; track preset.code) {
-    <button (click)="applyPreset(preset)">
-      <span class="material-icons-outlined">auto_awesome</span>
-      {{ preset.label }}
-    </button>
-    }
-  </div>
-
-  <div class="cp-growth-summary">
-    <div class="cp-summary-item">
-      <span class="material-icons-outlined">campaign</span>
-      <strong>{{ summary().active }}</strong>
-      <span>Active</span>
-    </div>
-    <div class="cp-summary-item">
-      <span class="material-icons-outlined">group</span>
-      <strong>{{ summary().usage }}</strong>
-      <span>Uses</span>
-    </div>
-    <div class="cp-summary-item">
-      <span class="material-icons-outlined">payments</span>
-      <strong>{{ summary().revenue | appCurrency }}</strong>
-      <span>Influenced</span>
-    </div>
-    <div class="cp-summary-item" [class.warn]="summary().warnings > 0">
-      <span class="material-icons-outlined">health_and_safety</span>
-      <strong>{{ summary().warnings }}</strong>
-      <span>Need review</span>
-    </div>
-  </div>
-
-  <div class="cp-filter-row">
-    <span class="filter-label">Show</span>
-    @for ( f of ["all", "active", "upcoming", "expired", "inactive"]; track f )
-    {
-    <button [class.active]="filter() === f" (click)="filter.set($any(f))">
-      {{ f | titlecase }}
-    </button>
-    }
-  </div>
-  }
-
-  <!-- ── Loading ─────────────────────────────────────────── -->
-  @if (loading()) {
-  <div class="cp-loading"><div class="cp-spinner"></div></div>
-  }
-
-  <!-- ── Empty ───────────────────────────────────────────── -->
-  @else if (coupons().length === 0) {
-  <div class="cp-empty">
-    <span class="material-icons-outlined">confirmation_number</span>
-    <h3>No coupons yet</h3>
-    <p>Create your first coupon to attract more customers</p>
-    <button (click)="openCreate()">
-      <span class="material-icons-outlined">add</span>
-      Create Coupon
-    </button>
-  </div>
-  }
-
-  <!-- ── Coupon List ──────────────────────────────────────── -->
-  @else {
-  <div class="cp-list">
-    @for (c of filteredCoupons(); track c.id) {
-    <div
-      class="cp-card"
-      [class.inactive]="!c.is_active"
-      [class.expired]="isExpired(c)"
+    <button
+      type="button"
+      class="btn btn-primary"
+      [disabled]="!zone()"
+      (click)="open()"
     >
-      <div class="cp-card-top">
-        <div class="cp-card-left">
-          <div class="cp-code-badge">{{ c.code }}</div>
-          <div>
-            <div class="cp-card-title">{{ c.title }}</div>
-            <div class="cp-card-discount">{{ discountLabel(c) }}</div>
-          </div>
-        </div>
-        <div class="cp-card-status">
-          @if (isExpired(c)) {
-          <span class="cp-status expired">{{
-            c.status_label || "Expired"
-          }}</span>
-          } @else if (c.is_active) {
-          <span class="cp-status active">{{ c.status_label || "Active" }}</span>
-          } @else {
-          <span class="cp-status inactive">{{
-            c.status_label || "Inactive"
-          }}</span>
-          }
-        </div>
-      </div>
-
-      <div class="cp-card-meta">
-        <span>
-          <span class="material-icons-outlined">shopping_bag</span>
-          Min {{ c.min_order_amount | appCurrency }}
-        </span>
-        <span>
-          <span class="material-icons-outlined">people</span>
-          {{ c.used_count }}{{ c.usage_limit ? "/" + c.usage_limit : "" }} used
-        </span>
-        <span>
-          <span class="material-icons-outlined">payments</span>
-          {{ c.revenue_influenced || 0 | appCurrency }} influenced
-        </span>
-        @if (c.valid_until) {
-        <span>
-          <span class="material-icons-outlined">schedule</span>
-          Until {{ c.valid_until | date : "mediumDate" }}
-        </span>
+      Create coupon
+    </button>
+  </header>
+  @if(!zone()){
+  <p class="workspace-notice">
+    Store timezone is loading.
+    <button type="button" class="btn btn-secondary" (click)="context.refresh()">
+      Retry store context
+    </button>
+  </p>
+  } @if(list.response()?.summary;as summary){
+  <p class="workspace-muted">{{ summary['active'] }} active coupon{{ summary['active'] === 1 ? '' : 's' }} of {{ summary['total'] }} total · {{ summary['uses'] }} recorded use{{ summary['uses'] === 1 ? '' : 's' }}</p>
+  } @if(success()){
+  <p class="workspace-notice" role="status">{{ success() }}</p>
+  }@if(error()&&!editing()&&!deleteCandidate()){
+  <p class="workspace-error" role="alert">{{ error() }}</p>
+  }
+  <form class="workspace-toolbar" (ngSubmit)="query()">
+    <label class="workspace-search"
+      ><span class="material-icons-outlined">search</span
+      ><input
+        name="search"
+        [(ngModel)]="search"
+        aria-label="Search coupon code or title"
+        placeholder="Search code or title" /></label
+    ><button type="submit" class="btn btn-secondary">Search</button
+    ><label class="workspace-field"
+      >Lifecycle<select
+        name="lifecycle"
+        [(ngModel)]="lifecycle"
+        (ngModelChange)="query()"
+      >
+        <option value="">All</option>
+        @for(status of statuses;track status){
+        <option [value]="status">{{ status | titlecase }}</option>
         }
+      </select></label
+    ><button
+      type="button"
+      class="btn btn-secondary"
+      [disabled]="list.loading()"
+      (click)="load()"
+    >
+      Refresh
+    </button>
+  </form>
+  @if(list.error()){
+  <p class="workspace-error" role="alert">
+    {{ list.error() }}
+    <button
+      type="button"
+      class="btn-secondary"
+      [disabled]="list.loading()"
+      (click)="list.reload()"
+    >
+      Retry
+    </button>
+  </p>
+  }@if(list.loading()){
+  <div class="workspace-state" role="status">Loading coupons…</div>
+  }@else if(!list.error()&&!list.rows().length){
+  <div class="workspace-state">
+    <h3>No matching coupons</h3>
+    <p>Create your first coupon or change the filters.</p>
+  </div>
+  }@else{
+  <div class="coupon-grid">
+    @for(coupon of list.rows();track coupon.id){
+    <article class="workspace-card">
+      <div class="coupon-title">
+        <h3>{{ coupon.title }}</h3>
+        <span class="status-pill">{{ coupon.status_label }}</span>
       </div>
-
-      @if (c.health_warnings?.length) {
-      <div class="cp-health">
-        <span class="material-icons-outlined">error_outline</span>
-        <span>{{ c.health_warnings[0] }}</span>
-      </div>
+      <strong class="coupon-code">{{ coupon.code }}</strong>
+      <p>{{ coupon.description }}</p>
+      <dl>
+        <div>
+          <dt>Discount</dt>
+          <dd>
+            @if(coupon.discount_type==='free_delivery'){Free delivery}@else if(coupon.discount_type==='percentage'){{{coupon.discount_value
+            }}%}@else{{{coupon.discount_value|appCurrency}}}
+          </dd>
+        </div>
+        <div>
+          <dt>Minimum order</dt>
+          <dd>{{ coupon.min_order_amount | appCurrency }}</dd>
+        </div>
+        <div>
+          <dt>Uses</dt>
+          <dd>
+            {{ coupon.used_count }} /
+            {{ coupon.usage_limit === null ? "Unlimited" : coupon.usage_limit }}
+          </dd>
+        </div>
+        <div>
+          <dt>Schedule · {{ zone() }}</dt>
+          <dd>
+            {{ local(coupon.valid_from).replace("T", " ") }} →
+            {{
+              coupon.valid_until
+                ? local(coupon.valid_until).replace("T", " ")
+                : "No end date"
+            }}
+          </dd>
+        </div>
+      </dl>
+      @for(warning of coupon.health_warnings;track warning){
+      <p class="workspace-muted">{{ warning }}</p>
       }
-
-      <div class="cp-card-actions">
-        <button class="cp-edit-btn" (click)="openEdit(c)">
-          <span class="material-icons-outlined">edit</span>
-          Edit
-        </button>
-        <button class="cp-edit-btn" (click)="duplicate(c)">
-          <span class="material-icons-outlined">content_copy</span>
-          Duplicate
-        </button>
-        @if (!c.is_active || isExpired(c)) {
-        <button class="cp-edit-btn" (click)="reactivate(c)">
-          <span class="material-icons-outlined">restart_alt</span>
-          Reactivate
-        </button>
-        }
+      <div class="workspace-actions">
         <button
-          class="cp-del-btn"
-          (click)="requestDelete(c)"
-          [disabled]="deleting() === c.id"
+          type="button"
+          class="btn btn-secondary"
+          [disabled]="pending() === coupon.id || !zone()"
+          (click)="open(coupon)"
         >
-          @if (deleting() === c.id) {
-          <span class="cp-spinner-sm"></span>
-          } @else {
-          <span class="material-icons-outlined">delete_outline</span>
-          } Delete
+          Edit</button
+        ><button
+          type="button"
+          class="btn btn-secondary"
+          [disabled]="!!pending()"
+          (click)="command(coupon, 'duplicate')"
+        >
+          Duplicate</button
+        ><button
+          type="button"
+          class="btn btn-secondary"
+          [disabled]="!!pending()"
+          (click)="deleteCandidate.set(coupon); error.set('')"
+        >
+          Delete
         </button>
       </div>
-    </div>
+    </article>
     }
   </div>
-
-  <!-- Pagination -->
-  @if (totalPages() > 1) {
-  <div class="pagination-bar">
-    <span class="pagination-info">
-      Showing {{ (page() - 1) * pageSize + 1 }}–{{
-        Math.min(page() * pageSize, total())
-      }}
-      of {{ total() }} coupons
-    </span>
-    <div class="pagination-controls">
-      <button
-        class="page-btn"
-        (click)="setPage(1)"
-        [disabled]="page() === 1"
-        title="First"
-      >
-        <span class="material-icons-outlined">first_page</span>
-      </button>
-      <button
-        class="page-btn"
-        (click)="setPage(page() - 1)"
-        [disabled]="page() === 1"
-        title="Previous"
-      >
-        <span class="material-icons-outlined">chevron_left</span>
-      </button>
-      @for (n of pageNumbers(); track n) {
-      <button
-        class="page-btn"
-        [class.active]="n === page()"
-        (click)="setPage(n)"
-      >
-        {{ n }}
-      </button>
-      }
-      <button
-        class="page-btn"
-        (click)="setPage(page() + 1)"
-        [disabled]="page() === totalPages()"
-        title="Next"
-      >
-        <span class="material-icons-outlined">chevron_right</span>
-      </button>
-      <button
-        class="page-btn"
-        (click)="setPage(totalPages())"
-        [disabled]="page() === totalPages()"
-        title="Last"
-      >
-        <span class="material-icons-outlined">last_page</span>
-      </button>
-    </div>
-  </div>
-  } }
-
-  <!-- ── Create / Edit Form Modal ────────────────────────── -->
-  @if (showForm()) {
-  <div class="cp-backdrop" (click)="showForm.set(false)"></div>
-  <div class="cp-modal">
-    <div class="cp-modal-header">
-      <h2>{{ editingId() ? "Edit Coupon" : "New Coupon" }}</h2>
-      <button class="cp-modal-close" (click)="showForm.set(false)">
-        <span class="material-icons-outlined">close</span>
-      </button>
-    </div>
-
-    <div class="cp-modal-body">
-      @if (error()) {
-      <div class="cp-alert error">
-        <span class="material-icons-outlined">error_outline</span>{{ error() }}
-      </div>
-      }
-
-      <div class="cp-form-row two">
-        <div class="cp-field">
-          <label>Coupon Code *</label>
-          <input
-            [class.has-error]="fieldError('code')"
-            [(ngModel)]="form.code"
-            (ngModelChange)="clearFieldError('code')"
-            placeholder="e.g. SAVE20"
-            autocapitalize="characters"
-            style="text-transform: uppercase"
-          />
-          @if (fieldError("code")) {
-          <small class="field-error">{{ fieldError("code") }}</small>
-          }
-          <small class="field-hint"
-            >Short code customers type at checkout. Use letters and numbers
-            only.</small
-          >
-        </div>
-        <div class="cp-field">
-          <label>Discount Type *</label>
-          <select [(ngModel)]="form.discount_type">
-            @for (t of discountTypes; track t.value) {
-            <option [value]="t.value">{{ t.label }}</option>
-            }
-          </select>
-          <small class="field-hint"
-            >Choose how the coupon reduces the order total.</small
-          >
-        </div>
-      </div>
-
-      <div class="cp-field">
-        <label>Title *</label>
-        <input
-          [class.has-error]="fieldError('title')"
-          [(ngModel)]="form.title"
-          (ngModelChange)="clearFieldError('title')"
-          placeholder="e.g. 20% off your order"
-        />
-        @if (fieldError("title")) {
-        <small class="field-error">{{ fieldError("title") }}</small>
-        }
-        <small class="field-hint"
-          >Friendly campaign name shown in coupon lists and admin review.</small
-        >
-      </div>
-
-      <div class="cp-field">
-        <label>Description *</label>
-        <textarea
-          [class.has-error]="fieldError('description')"
-          [(ngModel)]="form.description"
-          (ngModelChange)="clearFieldError('description')"
-          rows="2"
-          placeholder="Details customers should know"
-        ></textarea>
-        @if (fieldError("description")) {
-        <small class="field-error">{{ fieldError("description") }}</small>
-        }
-        <small class="field-hint"
-          >Explain the offer, exclusions, or why customers should use it.</small
-        >
-      </div>
-
-      <div class="cp-form-row two">
-        @if (form.discount_type !== "free_delivery") {
-        <div class="cp-field">
-          <label>Discount Value *</label>
-          <input
-            type="number"
-            [class.has-error]="fieldError('discount_value')"
-            [(ngModel)]="form.discount_value"
-            (ngModelChange)="clearFieldError('discount_value')"
-            min="0"
-            [placeholder]="
-              form.discount_type === 'percentage' ? 'e.g. 20' : 'e.g. 500'
-            "
-          />
-          <small class="field-hint">{{
-            form.discount_type === "percentage"
-              ? "Enter a percentage value, such as 20 for 20% off."
-              : "Enter the flat amount to reduce from the order total."
-          }}</small>
-          @if (fieldError("discount_value")) {
-          <small class="field-error">{{ fieldError("discount_value") }}</small>
-          }
-        </div>
-        <div class="cp-field">
-          <label>Max Discount ({{ 0 | appCurrency : true }})</label>
-          <input
-            type="number"
-            [class.has-error]="fieldError('max_discount_amount')"
-            [(ngModel)]="form.max_discount_amount"
-            (ngModelChange)="clearFieldError('max_discount_amount')"
-            min="0"
-            placeholder="Leave blank for unlimited"
-          />
-          @if (fieldError("max_discount_amount")) {
-          <small class="field-error">{{
-            fieldError("max_discount_amount")
-          }}</small>
-          }
-          <small class="field-hint"
-            >Optional cap for percentage discounts so large carts do not
-            over-discount.</small
-          >
-        </div>
-        }
-      </div>
-
-      <div class="cp-form-row two">
-        <div class="cp-field">
-          <label>Min Order Amount ({{ 0 | appCurrency : true }})</label>
-          <input
-            type="number"
-            [class.has-error]="fieldError('min_order_amount')"
-            [(ngModel)]="form.min_order_amount"
-            (ngModelChange)="clearFieldError('min_order_amount')"
-            min="0"
-            placeholder="e.g. 1000"
-          />
-          @if (fieldError("min_order_amount")) {
-          <small class="field-error">{{
-            fieldError("min_order_amount")
-          }}</small>
-          }
-          <small class="field-hint"
-            >Minimum cart value required before this coupon can be
-            applied.</small
-          >
-        </div>
-        <div class="cp-field">
-          <label>Per-User Limit</label>
-          <input
-            type="number"
-            [class.has-error]="fieldError('per_user_limit')"
-            [(ngModel)]="form.per_user_limit"
-            (ngModelChange)="clearFieldError('per_user_limit')"
-            min="1"
-            placeholder="e.g. 1"
-          />
-          @if (fieldError("per_user_limit")) {
-          <small class="field-error">{{ fieldError("per_user_limit") }}</small>
-          }
-          <small class="field-hint"
-            >How many times the same customer can use this coupon.</small
-          >
-        </div>
-      </div>
-
-      <div class="cp-form-row two">
-        <div class="cp-field">
-          <label>Valid From *</label>
-          <input
-            type="datetime-local"
-            [class.has-error]="fieldError('valid_from')"
-            [(ngModel)]="form.valid_from"
-            (ngModelChange)="clearFieldError('valid_from')"
-            title="Choose the date and time this coupon starts"
-          />
-          @if (fieldError("valid_from")) {
-          <small class="field-error">{{ fieldError("valid_from") }}</small>
-          }
-          <small class="field-hint"
-            >Start date and time when the coupon should become usable.</small
-          >
-        </div>
-        <div class="cp-field">
-          <label>Valid Until</label>
-          <input
-            type="datetime-local"
-            [class.has-error]="fieldError('valid_until')"
-            [(ngModel)]="form.valid_until"
-            (ngModelChange)="clearFieldError('valid_until')"
-            title="Choose the date and time this coupon expires"
-          />
-          @if (fieldError("valid_until")) {
-          <small class="field-error">{{ fieldError("valid_until") }}</small>
-          }
-          <small class="field-hint"
-            >Optional expiry date and time. Leave blank for no planned end
-            date.</small
-          >
-        </div>
-      </div>
-
-      <div class="cp-form-row two">
-        <div class="cp-field">
-          <label>Total Usage Limit</label>
-          <input
-            type="number"
-            [class.has-error]="fieldError('usage_limit')"
-            [(ngModel)]="form.usage_limit"
-            (ngModelChange)="clearFieldError('usage_limit')"
-            min="1"
-            placeholder="Blank = unlimited"
-          />
-          @if (fieldError("usage_limit")) {
-          <small class="field-error">{{ fieldError("usage_limit") }}</small>
-          }
-          <small class="field-hint"
-            >Maximum total redemptions across all customers.</small
-          >
-        </div>
-        <div class="cp-field cp-toggle-field">
-          <div>
-            <label>Active</label>
-            <small class="field-hint"
-              >Turn on when customers should be able to use this coupon.</small
-            >
-          </div>
-          <label class="cp-toggle">
-            <input type="checkbox" [(ngModel)]="form.is_active" />
-            <span class="cp-toggle-slider"></span>
-          </label>
-        </div>
-      </div>
-    </div>
-
-    <div class="cp-modal-footer">
-      <button class="cp-cancel-btn" (click)="showForm.set(false)">
-        Cancel
-      </button>
-      <button
-        class="cp-save-btn"
-        (click)="save()"
-        [disabled]="saving() || !isCouponFormValid()"
-      >
-        @if (saving()) {
-        <span class="cp-spinner-sm"></span>
-        }
-        {{ editingId() ? "Save Changes" : "Create Coupon" }}
-      </button>
-    </div>
-  </div>
-  } @if (deleteCandidate()) {
-  <div class="cp-backdrop" (click)="closeDeleteConfirm()"></div>
-  <div
-    class="cp-modal cp-confirm-modal"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="deleteCouponTitle"
-  >
-    <div class="cp-modal-header">
-      <h2 id="deleteCouponTitle">Delete Coupon</h2>
-      <button
-        class="cp-modal-close"
-        (click)="closeDeleteConfirm()"
-        [disabled]="!!deleting()"
-      >
-        <span class="material-icons-outlined">close</span>
-      </button>
-    </div>
-    <div class="cp-modal-body">
-      <div class="delete-warning-icon">
-        <span class="material-icons-outlined">warning</span>
-      </div>
-      <p class="delete-confirm-copy">
-        Delete
-        <strong>{{
-          deleteCandidate()?.code || deleteCandidate()?.title
-        }}</strong
-        >? Customers will no longer be able to use this coupon.
-      </p>
-      @if (error()) {
-      <div class="cp-alert error">
-        <span class="material-icons-outlined">error_outline</span>{{ error() }}
-      </div>
-      }
-    </div>
-    <div class="cp-modal-footer">
-      <button
-        class="cp-cancel-btn"
-        (click)="closeDeleteConfirm()"
-        [disabled]="!!deleting()"
-      >
-        Cancel
-      </button>
-      <button
-        class="cp-del-btn confirm-delete-btn"
-        (click)="confirmDelete()"
-        [disabled]="!!deleting()"
-      >
-        @if (deleting()) {
-        <span class="cp-spinner-sm"></span>
-        } @else {
-        <span class="material-icons-outlined">delete_outline</span>
-        } Delete
-      </button>
-    </div>
-  </div>
   }
+  <nc-vendor-pager
+    [page]="list.page()"
+    [count]="list.count()"
+    [busy]="list.loading()"
+    (pageChange)="query($event)"
+  />
 </div>
+@if(editing()){<nc-vendor-dialog
+  [title]="editId() ? 'Edit coupon' : 'Create coupon'"
+  [busy]="saving()"
+  (dismissed)="close()"
+  ><form (ngSubmit)="save()">
+    <fieldset [disabled]="saving()" class="coupon-fields">
+      <p class="workspace-muted">
+        Times use {{ zone() }}. Coupons apply to the entire store.
+      </p>
+      <div class="workspace-form-grid">
+        <label class="workspace-field"
+          >Code<input
+            name="code"
+            [(ngModel)]="form.code"
+            (blur)="validateField('code')"
+            [attr.aria-invalid]="fieldErrors()['code'] ? true : null"
+            [attr.aria-describedby]="fieldErrors()['code'] ? 'coupon-error-code' : null"
+            maxlength="50"
+            required
+          />@if(fieldErrors()['code']){<small class="workspace-error" id="coupon-error-code">{{
+            fieldErrors()["code"]
+          }}</small
+          >}</label
+        ><label class="workspace-field"
+          >Title<input
+            name="title"
+            [(ngModel)]="form.title"
+            (blur)="validateField('title')"
+            [attr.aria-invalid]="fieldErrors()['title'] ? true : null"
+            [attr.aria-describedby]="fieldErrors()['title'] ? 'coupon-error-title' : null"
+            maxlength="200"
+            required
+          />@if(fieldErrors()['title']){<small class="workspace-error" id="coupon-error-title">{{
+            fieldErrors()["title"]
+          }}</small
+          >}</label
+        >
+      </div>
+      <div class="workspace-form-grid">
+        <label class="workspace-field"
+          >Discount type<select name="type" [(ngModel)]="form.discount_type">
+            <option value="percentage">Percentage</option>
+            <option value="fixed">Fixed amount</option>
+            <option value="free_delivery">Free delivery</option>
+          </select></label
+        >@if(form.discount_type!=='free_delivery'){<label
+          class="workspace-field"
+          >Discount value<input
+            name="value"
+            type="number"
+            min="0"
+            step="0.01"
+            [(ngModel)]="form.discount_value"
+            (blur)="validateField('discount_value')"
+            [attr.aria-invalid]="fieldErrors()['discount_value'] ? true : null"
+            [attr.aria-describedby]="fieldErrors()['discount_value'] ? 'coupon-error-discount_value' : null"
+          />@if(fieldErrors()['discount_value']){<small
+            class="workspace-error" id="coupon-error-discount_value"
+            >{{ fieldErrors()["discount_value"] }}</small
+          >}</label
+        >}<label class="workspace-field"
+          >Starts at<input
+            name="from"
+            type="datetime-local"
+            [(ngModel)]="form.valid_from"
+            (blur)="validateField('valid_from')"
+            [attr.aria-invalid]="fieldErrors()['valid_from'] ? true : null"
+            [attr.aria-describedby]="fieldErrors()['valid_from'] ? 'coupon-error-valid_from' : null"
+            required />@if(fieldErrors()['valid_from']){<small class="workspace-error" id="coupon-error-valid_from">{{ fieldErrors()['valid_from'] }}</small>}</label
+        ><label class="workspace-field"
+          >Ends at (optional)<input
+            name="until"
+            type="datetime-local"
+            [(ngModel)]="form.valid_until"
+            (blur)="validateField('valid_until')"
+            [attr.aria-invalid]="fieldErrors()['valid_until'] ? true : null"
+            [attr.aria-describedby]="fieldErrors()['valid_until'] ? 'coupon-error-valid_until' : null"
+        />@if(fieldErrors()['valid_until']){<small class="workspace-error" id="coupon-error-valid_until">{{ fieldErrors()['valid_until'] }}</small>}</label>
+      </div>
+<label class="workspace-check"
+        ><input name="active" type="checkbox" [(ngModel)]="form.is_active" />
+        Enable coupon within this schedule</label
+      >
+      <details class="optional-limits" [open]="limitsOpen()" (toggle)="limitsOpen.set($any($event.target).open)">
+        <summary>Optional description and coupon limits</summary>
+      <label class="workspace-field"
+        >Description<textarea
+          name="description"
+          rows="2"
+          [(ngModel)]="form.description"
+        ></textarea>
+      </label>
+<div class="workspace-form-grid"><label class="workspace-field"
+          >Minimum order amount<input
+            name="minimum"
+            type="number"
+            min="0"
+            step="0.01"
+            [(ngModel)]="form.min_order_amount"
+            (blur)="validateField('min_order_amount')"
+            [attr.aria-invalid]="fieldErrors()['min_order_amount'] ? true : null"
+            [attr.aria-describedby]="fieldErrors()['min_order_amount'] ? 'coupon-error-min_order_amount' : null" />@if(fieldErrors()['min_order_amount']){<small class="workspace-error" id="coupon-error-min_order_amount">{{ fieldErrors()['min_order_amount'] }}</small>}</label
+        ><label class="workspace-field"
+          >Maximum discount (optional)<input
+            name="maximum"
+            type="number"
+            min="0"
+            step="0.01"
+            [(ngModel)]="form.max_discount_amount"
+            (blur)="validateField('max_discount_amount')"
+            [attr.aria-invalid]="fieldErrors()['max_discount_amount'] ? true : null"
+            [attr.aria-describedby]="fieldErrors()['max_discount_amount'] ? 'coupon-error-max_discount_amount' : null" />@if(fieldErrors()['max_discount_amount']){<small class="workspace-error" id="coupon-error-max_discount_amount">{{ fieldErrors()['max_discount_amount'] }}</small>}</label
+        ><label class="workspace-field"
+          >Total usage limit (optional)<input
+            name="limit"
+            type="number"
+            min="1"
+            step="1"
+            [(ngModel)]="form.usage_limit"
+            (blur)="validateField('usage_limit')"
+            [attr.aria-invalid]="fieldErrors()['usage_limit'] ? true : null"
+            [attr.aria-describedby]="fieldErrors()['usage_limit'] ? 'coupon-error-usage_limit' : null" />@if(fieldErrors()['usage_limit']){<small class="workspace-error" id="coupon-error-usage_limit">{{ fieldErrors()['usage_limit'] }}</small>}</label
+        ><label class="workspace-field"
+          >Uses per customer<input
+            name="perUser"
+            type="number"
+            min="1"
+            step="1"
+            [(ngModel)]="form.per_user_limit"
+            (blur)="validateField('per_user_limit')"
+            [attr.aria-invalid]="fieldErrors()['per_user_limit'] ? true : null"
+            [attr.aria-describedby]="fieldErrors()['per_user_limit'] ? 'coupon-error-per_user_limit' : null" />@if(fieldErrors()['per_user_limit']){<small class="workspace-error" id="coupon-error-per_user_limit">{{ fieldErrors()['per_user_limit'] }}</small>}</label
+        ></div></details>
+      <details class="coupon-preview">
+        <summary>Preview discount</summary>
+        <label class="workspace-field"
+          >Example basket subtotal<input
+            name="preview"
+            type="number"
+            min="0"
+            [(ngModel)]="previewSubtotal" /></label
+        >@if(form.discount_type==='free_delivery'){
+        <p>
+          Waives eligible delivery charges. The exact amount depends on
+          checkout.
+        </p>
+        }@else if(preview()===null){
+        <p>This basket does not meet the minimum order.</p>
+        }@else{
+        <p>Calculated item discount: {{ preview() | appCurrency }}.</p>
+        }
+        <p class="workspace-muted">
+          Illustration only; eligibility and checkout totals are validated by
+          the server.
+        </p>
+      </details>
+      @if(error()){
+      <p class="workspace-error" role="alert">{{ error() }}</p>
+      }
+      <div class="workspace-actions">
+        <button type="button" class="btn btn-secondary" (click)="close()">
+          Cancel</button
+        >@if(hasUnsavedChanges()){<button
+          type="button"
+          class="btn btn-secondary"
+          (click)="discard()"
+        >
+          Discard edits</button
+        >}<button type="submit" class="btn btn-primary">
+          {{ saving() ? "Saving…" : "Save coupon" }}
+        </button>
+      </div>
+    </fieldset>
+  </form></nc-vendor-dialog
+>} @if(deleteCandidate();as coupon){<nc-vendor-dialog
+  title="Delete coupon"
+  [busy]="!!pending()"
+  (dismissed)="deleteCandidate.set(null)"
+  ><p>
+    Delete {{ coupon.code }}? Customers will no longer be able to apply it.
+  </p>
+  @if(error()){
+  <p class="workspace-error" role="alert">{{ error() }}</p>
+  }
+  <div class="workspace-actions">
+    <button
+      type="button"
+      class="btn btn-secondary"
+      [disabled]="!!pending()"
+      (click)="deleteCandidate.set(null)"
+    >
+      Keep coupon</button
+    ><button
+      type="button"
+      class="btn btn-primary"
+      [disabled]="!!pending()"
+      (click)="remove()"
+    >
+      Delete coupon
+    </button>
+  </div></nc-vendor-dialog
+>}

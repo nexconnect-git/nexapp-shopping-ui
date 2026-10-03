@@ -1,13 +1,19 @@
-import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AdminLiveSocket, openAdminLiveSocket } from '../../services/admin-live-socket';
+import { AdminAccessService } from '../../services/admin-access.service';
+import { ActivatedRoute } from '@angular/router';
+import { Component, DestroyRef, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { Subscription, timer } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { AdminDialogDirective } from '../../shared/admin-dialog.directive';
 import {
   API_BASE_URL,
   ApiService,
   AppCurrencyPipe,
   AuthService,
-  openAuthenticatedWebSocket,
+  ToastService,
+  apiErrorMessage,
 } from '@shared/public-api';
 import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
 
@@ -17,6 +23,7 @@ import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
   imports: [
     CommonModule,
     FormsModule,
+    AdminDialogDirective,
     DynamicTableComponent,
     TableCellDirective,
     AppCurrencyPipe,
@@ -25,7 +32,13 @@ import { DynamicTableComponent, TableCellDirective } from '@shared/public-api';
   styleUrl: './issues.component.scss',
 })
 export class IssuesComponent implements OnInit, OnDestroy {
+  access=inject(AdminAccessService);private route=inject(ActivatedRoute);
+  error=signal('');assignees=signal<any[]>([]);assignee='';queue='support';priority='normal';dueAt='';resolutionType='';
+  private destroy=inject(DestroyRef);private listRequest?:Subscription;private detailRequest?:Subscription;
+  orderFilter='';ownerFilter='';queueFilter='';priorityFilter='';dueFilter='';
+  vendorFilter='';customerFilter='';partnerFilter='';
   private api = inject(ApiService);
+  private toast = inject(ToastService);
   private auth = inject(AuthService);
   private apiBaseUrl = inject(API_BASE_URL);
 
@@ -39,7 +52,9 @@ export class IssuesComponent implements OnInit, OnDestroy {
     { key: 'order', label: 'Order', flex: '1.5fr' },
     { key: 'type', label: 'Type', flex: '1fr' },
     { key: 'status', label: 'Status', flex: '1fr' },
-    { key: 'date', label: 'Date', flex: '1fr' },
+    { key: 'ownership', label: 'Owner / queue', flex: '1.2fr' },
+    { key: 'deadline', label: 'Priority / due', flex: '1.2fr' },
+    { key: 'actions', label: 'Action', flex: '.7fr', minWidth: 72 },
   ];
 
   filterType = signal('');
@@ -56,7 +71,7 @@ export class IssuesComponent implements OnInit, OnDestroy {
   newMessage = '';
   sending = signal(false);
   saving = signal(false);
-  private ws: WebSocket | null = null;
+  ws: AdminLiveSocket | null = null;
 
   refundAmount = '';
   refundMethod = '';
@@ -69,6 +84,7 @@ export class IssuesComponent implements OnInit, OnDestroy {
     { value: 'refund', label: 'Refund' },
     { value: 'damage', label: 'Damage' },
     { value: 'mismatch', label: 'Mismatch' },
+    { value: 'late', label: 'Late Delivery' },
   ];
 
   readonly statuses = [
@@ -77,16 +93,20 @@ export class IssuesComponent implements OnInit, OnDestroy {
     { value: 'in_review', label: 'In Review' },
     { value: 'resolved', label: 'Resolved' },
     { value: 'rejected', label: 'Rejected' },
-    { value: 'refund_initiated', label: 'Refund Initiated' },
+    { value: 'refund_initiated', label: 'Refund requested (legacy)' },
+    ...['assigned','investigating','waiting_customer','waiting_vendor','waiting_partner','resolution_pending','closed','escalated'].map(value=>({value,label:value.replaceAll('_',' ')})),
   ];
 
   ngOnInit() {
+    this.api.getAdminSupportAssignees().pipe(takeUntilDestroyed(this.destroy)).subscribe({next:response=>this.assignees.set(response.results),error:()=>this.error.set('Support owners could not be loaded.')});
+    const issue=this.route.snapshot.queryParamMap.get('issue');if(issue)this.openIssue({id:issue});
     this.reloadSub = timer(0, 15000).subscribe(() => {
-      if (this.autoReload() && !this.selectedIssue()) this.load();
+      if (this.autoReload() && !document.hidden && !this.selectedIssue()) this.load();
     });
   }
 
   ngOnDestroy() {
+    clearTimeout(this.timer);
     this.reloadSub?.unsubscribe();
     this.closeWebSocket();
   }
@@ -100,22 +120,25 @@ export class IssuesComponent implements OnInit, OnDestroy {
   }
 
   load() {
+    this.listRequest?.unsubscribe();
+    this.error.set('');
     this.loading.set(true);
-    this.api
+    this.listRequest=this.api
       .getAdminIssues({
         issue_type: this.filterType() || undefined,
         status: this.filterStatus() || undefined,
         search: this.search || undefined,
-        page: this.page(),
+        assignee:this.ownerFilter || undefined, queue:this.queueFilter || undefined, priority:this.priorityFilter || undefined, due:this.dueFilter || undefined,
+        order:this.orderFilter || undefined,page: this.page(),vendor:this.vendorFilter || undefined,customer:this.customerFilter || undefined,delivery_partner:this.partnerFilter || undefined,
       })
-      .subscribe({
+      .pipe(takeUntilDestroyed(this.destroy)).subscribe({
         next: (res) => {
           this.issues.set(res.results || res);
           this.totalCount.set(res.count ?? (res.results ?? res).length);
           this.loading.set(false);
           this.lastRefreshed.set(new Date());
         },
-        error: () => this.loading.set(false),
+        error: () => {this.loading.set(false);this.error.set('Could not load support cases.');},
       });
   }
 
@@ -134,6 +157,7 @@ export class IssuesComponent implements OnInit, OnDestroy {
     this.page.set(1);
     this.load();
   }
+  overdue(issue:any){return issue.due_at && !['resolved','closed','rejected'].includes(issue.status) && new Date(issue.due_at).getTime()<Date.now();}
 
   closeWebSocket() {
     if (this.ws) {
@@ -144,9 +168,9 @@ export class IssuesComponent implements OnInit, OnDestroy {
 
   connectWebSocket(issueId: string) {
     this.closeWebSocket();
-    this.ws = openAuthenticatedWebSocket(
+    this.ws = openAdminLiveSocket(
       `/ws/issues/${issueId}/`,
-      this.auth.getToken(),
+      () => this.auth.getToken(),
       this.apiBaseUrl,
     );
 
@@ -164,27 +188,31 @@ export class IssuesComponent implements OnInit, OnDestroy {
       }
     };
 
-    this.ws.onerror = (err) => console.error('WebSocket error:', err);
   }
 
   openIssue(issue: any) {
     this.loadingDetail.set(true);
     this.selectedIssue.set(null);
-    this.api.getAdminIssue(issue.id).subscribe({
+    this.detailRequest?.unsubscribe();
+    this.detailRequest=this.api.getAdminIssue(issue.id).pipe(takeUntilDestroyed(this.destroy)).subscribe({
       next: (iss) => {
         this.selectedIssue.set(iss);
         this.adminNotes = iss.admin_notes || '';
         this.refundAmount = iss.refund_amount ?? '';
         this.refundMethod = iss.refund_method || '';
-        this.newStatus = iss.status;
+        this.newStatus = iss.status;this.assignee=iss.assignee || '';this.queue=iss.queue || 'support';this.priority=iss.priority || 'normal';this.resolutionType=iss.resolution_type || '';
+        this.dueAt=iss.due_at ? new Date(new Date(iss.due_at).getTime()-new Date(iss.due_at).getTimezoneOffset()*60000).toISOString().slice(0,16) : '';
         this.loadingDetail.set(false);
         this.connectWebSocket(iss.id);
       },
-      error: () => this.loadingDetail.set(false),
+      error: () => {this.loadingDetail.set(false);this.error.set('This support case could not be opened. Retry from the case list.');},
     });
   }
 
   closePanel() {
+    if (this.saving() || this.sending()) return;
+    this.detailRequest?.unsubscribe();
+    this.loadingDetail.set(false);
     this.selectedIssue.set(null);
     this.closeWebSocket();
   }
@@ -193,7 +221,7 @@ export class IssuesComponent implements OnInit, OnDestroy {
     const text = this.newMessage.trim();
     if (!text || this.sending()) return;
     this.sending.set(true);
-    this.api.sendAdminIssueMessage(this.selectedIssue().id, text).subscribe({
+    this.api.sendAdminIssueMessage(this.selectedIssue().id, text).pipe(takeUntilDestroyed(this.destroy)).subscribe({
       next: (msg) => {
         this.selectedIssue.update((iss) => {
           if (!iss || !iss.messages) return iss;
@@ -203,26 +231,28 @@ export class IssuesComponent implements OnInit, OnDestroy {
         this.newMessage = '';
         this.sending.set(false);
       },
-      error: () => this.sending.set(false),
+      error: error => {this.sending.set(false);this.toast.show(apiErrorMessage(error, 'The reply could not be sent. Your text has been retained.'),'error');},
     });
   }
 
   saveResolution() {
+    if(this.saving() || !this.access.can('support.manage'))return;
     this.saving.set(true);
     const payload: any = {
       status: this.newStatus,
-      admin_notes: this.adminNotes,
+      admin_notes: this.adminNotes,assignee:this.assignee || null,queue:this.queue,priority:this.priority,due_at:this.dueAt ? new Date(this.dueAt).toISOString() : null,resolution_type:this.resolutionType,
     };
-    if (this.refundAmount) payload.refund_amount = this.refundAmount;
-    if (this.refundMethod) payload.refund_method = this.refundMethod;
+    payload.refund_amount = this.refundAmount === '' || this.refundAmount === null ? null : this.refundAmount;
+    payload.refund_method = this.refundMethod;
 
-    this.api.updateAdminIssue(this.selectedIssue().id, payload).subscribe({
+    this.api.updateAdminIssue(this.selectedIssue().id, payload).pipe(takeUntilDestroyed(this.destroy)).subscribe({
       next: (iss) => {
         this.selectedIssue.set(iss);
         this.saving.set(false);
+        this.toast.show('Case changes saved. Private notes remain internal.','success');
         this.load();
       },
-      error: () => this.saving.set(false),
+      error: error => {this.saving.set(false);this.toast.show(apiErrorMessage(error, 'Support changes could not be saved. Check the case values.'), 'error');},
     });
   }
 
@@ -232,6 +262,7 @@ export class IssuesComponent implements OnInit, OnDestroy {
       refund: 'Refund',
       damage: 'Damage',
       mismatch: 'Mismatch',
+      late: 'Late delivery',
     };
     return map[type] ?? type;
   }
@@ -242,6 +273,7 @@ export class IssuesComponent implements OnInit, OnDestroy {
       refund: 'payments',
       damage: 'broken_image',
       mismatch: 'compare_arrows',
+      late: 'schedule',
     };
     return map[type] ?? 'help_outline';
   }

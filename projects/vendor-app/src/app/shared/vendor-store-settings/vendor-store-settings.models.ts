@@ -16,8 +16,8 @@ export interface VendorStoreSettings {
   city: string;
   state: string;
   postalCode: string;
-  latitude: number;
-  longitude: number;
+  latitude: number | null;
+  longitude: number | null;
   packagingPreferences: string;
   cancellationRules: string;
 }
@@ -36,6 +36,6 @@ export interface StoreLocationSuggestion {
   city: string;
   state: string;
   postalCode: string;
-  latitude: number;
-  longitude: number;
+  latitude: number | null;
+  longitude: number | null;
 }

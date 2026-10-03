@@ -1,9 +1,11 @@
-﻿<div class="saas-page order-detail-page">
+<div class="saas-page order-detail-page">
+  @if(error()){<div class="admin-error" role="alert">{{error()}} <button class="btn btn-secondary" (click)="loadOrder()">Retry</button></div>}
+  @if(lastRefreshed()){<p class="admin-muted">Order refreshed {{lastRefreshed() | date:'mediumTime'}} · Polling pauses when this tab is hidden</p>}
   <!-- Loading -->
   @if (loading()) {
     <div class="loading-state">
       <div class="spinner"></div>
-      <p>Loading orderâ€¦</p>
+      <p>Loading order…</p>
     </div>
   }
 
@@ -20,30 +22,13 @@
         <p class="page-subtitle">
           <span
             class="material-icons-outlined"
-            style="
-              font-size: 15px;
-              vertical-align: middle;
-              margin-right: 4px;
-              color: #767586;
-            "
             >calendar_today</span
           >
-          {{ order()!.placed_at | date: "MMMM d, y â€” h:mm a" }}
+          {{ order()!.placed_at | date: "MMMM d, y — h:mm a" }}
         </p>
       </div>
 
-      <!-- Admin: status read-only display -->
-      <div class="header-actions">
-        <div class="status-readonly-pill">
-          <span class="material-icons-outlined">flag</span>
-          <span class="status-readonly-label">Status</span>
-          <span
-            [class]="statusBadgeClass(order()!.status)"
-            style="font-size: 0.75rem"
-            >{{ order()!.status | titlecase }}</span
-          >
-        </div>
-      </div>
+
     </div>
 
     <!-- â•â• Live Tracking Banner â•â• -->
@@ -56,7 +41,7 @@
           </div>
           <button
             id="btn-toggle-map"
-            class="btn-map-toggle"
+            class="btn btn-secondary btn-map-toggle"
             (click)="toggleMap()"
           >
             <span class="material-icons-outlined">{{
@@ -68,7 +53,7 @@
 
         @if (showMap()) {
           <div class="map-container">
-            <div id="admin-order-map" class="map-el"></div>
+            @if(mapError()){<p class="admin-error" role="alert">{{mapError()}}</p>}<p class="admin-muted">Tracking connection: {{ws?.state() || 'closed'}}</p><div id="admin-order-map" class="map-el"></div>
             <div class="map-legend">
               <span class="leg-item"
                 ><span class="leg-dot" style="background: #ef4444"></span
@@ -93,7 +78,7 @@
               <span class="partner-meta">
                 {{ order()!.delivery_partner_info!.vehicle_type | titlecase }}
                 @if (order()!.delivery_partner_info!.vehicle_number) {
-                  Â· {{ order()!.delivery_partner_info!.vehicle_number }}
+                  · {{ order()!.delivery_partner_info!.vehicle_number }}
                 }
               </span>
               <span class="partner-rating">
@@ -116,11 +101,12 @@
             <h3>Order Items</h3>
             <span class="chip">{{ order()!.items.length }} item(s)</span>
           </div>
+          <div class="table-scroll" role="region" aria-label="Order items" tabindex="0">
           <table class="items-table">
             <thead>
               <tr>
                 <th>Product</th>
-                <th>Unit Price</th>
+                <th class="money">Unit Price</th>
                 <th>Qty</th>
                 <th style="text-align: right">Subtotal</th>
               </tr>
@@ -129,11 +115,11 @@
               @for (item of order()!.items; track item.id) {
                 <tr>
                   <td class="item-name-cell">{{ item.product_name }}</td>
-                  <td class="text-muted">
+                  <td class="text-muted money">
                     {{ item.product_price | appCurrency }}
                   </td>
                   <td>
-                    <span class="qty-badge">Ã—{{ item.quantity }}</span>
+                    <span class="qty-badge">×{{ item.quantity }}</span>
                   </td>
                   <td class="text-right">
                     <strong>{{ item.subtotal | appCurrency }}</strong>
@@ -142,6 +128,7 @@
               }
             </tbody>
           </table>
+          </div>
           <div class="price-breakdown">
             <div class="price-row">
               <span>Subtotal</span>
@@ -174,6 +161,37 @@
               </h3>
             </div>
             <p class="notes-text">"{{ order()!.notes }}"</p>
+          </div>
+        }
+        <!-- Tracking History -->
+        @if (order()!.tracking && order()!.tracking.length > 0) {
+          <div class="card">
+            <div class="card-header">
+              <h3>
+                <span class="material-icons-outlined">timeline</span>Tracking
+                History
+              </h3>
+            </div>
+            <div class="tracking-list">
+              @for (t of order()!.tracking; track t.id; let last = $last) {
+                <div class="tracking-item">
+                  <div class="t-dot" [class.active]="last"></div>
+                  <div class="t-body">
+                    <span
+                      [class]="statusBadgeClass(t.status)"
+                      style="font-size: var(--admin-text-small); align-self: flex-start"
+                      >{{ t.status | titlecase }}</span
+                    >
+                    @if (t.description) {
+                      <p class="t-desc">{{ t.description }}</p>
+                    }
+                    <span class="t-time">{{
+                      t.timestamp | date: "MMM d, y — h:mm a"
+                    }}</span>
+                  </div>
+                </div>
+              }
+            </div>
           </div>
         }
       </div>
@@ -249,7 +267,7 @@
               <span
                 >{{ order()!.delivery_partner_info!.vehicle_type | titlecase }}
                 @if (order()!.delivery_partner_info!.vehicle_number) {
-                  Â· {{ order()!.delivery_partner_info!.vehicle_number }}
+                  · {{ order()!.delivery_partner_info!.vehicle_number }}
                 }
               </span>
             </p>
@@ -297,39 +315,17 @@
           </div>
         }
 
-        <!-- Tracking History -->
-        @if (order()!.tracking && order()!.tracking.length > 0) {
-          <div class="card">
-            <div class="card-header">
-              <h3>
-                <span class="material-icons-outlined">timeline</span>Tracking
-                History
-              </h3>
-            </div>
-            <div class="tracking-list">
-              @for (t of order()!.tracking; track t.id; let last = $last) {
-                <div class="tracking-item">
-                  <div class="t-dot" [class.active]="last"></div>
-                  <div class="t-body">
-                    <span
-                      [class]="statusBadgeClass(t.status)"
-                      style="font-size: 0.65rem; align-self: flex-start"
-                      >{{ t.status | titlecase }}</span
-                    >
-                    @if (t.description) {
-                      <p class="t-desc">{{ t.description }}</p>
-                    }
-                    <span class="t-time">{{
-                      t.timestamp | date: "MMM d, y â€” h:mm a"
-                    }}</span>
-                  </div>
-                </div>
-              }
-            </div>
-          </div>
-        }
+
       </div>
     </div>
   }
-</div>
 
+  @if(order();as current){
+    <section class="admin-panel"><h2>Operational workspace</h2><div class="header-actions">
+      @if(access.can('dispatch.view')){<a class="btn btn-secondary" routerLink="/dispatch" [queryParams]="{order:current.id}">Review dispatch</a>}
+      @if(access.can('support.view')){<a class="btn btn-secondary" routerLink="/issues" [queryParams]="{order:current.id}">Related support cases</a>}
+      @if(access.can('audit.view')){<a class="btn btn-secondary" routerLink="/audit-logs" [queryParams]="{entity_id:current.id}">Order audit history</a>}
+    </div><p class="admin-muted">Payment method: {{current.payment_method | titlecase}} · {{current.is_payment_verified?'Verified receipt':'Payment unverified'}} · Gateway reference: {{current.payment_metadata?.['razorpay_payment_id'] || current.payment_metadata?.['payment_id'] || 'No reference recorded'}}</p></section>
+    @if(access.can('finance.view')){<app-refund-ledger [orderId]="current.id" />}
+  }
+</div>

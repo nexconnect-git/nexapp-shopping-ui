@@ -1,3 +1,4 @@
+import { pageFeatureRouteGuard } from '@shared/lib/guards/page-feature.guard';
 import { type Routes } from '@angular/router';
 import { customerAuthGuard } from './services/customer-auth.guard';
 import { customerLocationGuard } from './services/customer-location.guard';
@@ -20,14 +21,14 @@ export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    canActivate: [customerLocationGuard],
+    canActivate: [pageFeatureRouteGuard('customer-app'),customerLocationGuard],
     loadComponent: () =>
       import('./pages/home/home.component').then((m) => m.HomeComponent),
   },
   { path: 'new-home', redirectTo: '' },
   {
     path: 'categories',
-    canActivate: [customerLocationGuard],
+    canActivate: [pageFeatureRouteGuard('customer-app'),customerLocationGuard],
     loadComponent: () =>
       import('./pages/categories/categories.component').then(
         (m) => m.CategoriesComponent,
@@ -35,25 +36,25 @@ export const routes: Routes = [
   },
   {
     path: 'explore',
-    canActivate: [customerLocationGuard],
+    canActivate: [pageFeatureRouteGuard('customer-app'),customerLocationGuard],
     loadComponent: () =>
       import('./pages/search/search.component').then((m) => m.SearchComponent),
   },
   {
     path: 'explore/:categoryId',
-    canActivate: [customerLocationGuard],
+    canActivate: [pageFeatureRouteGuard('customer-app'),customerLocationGuard],
     loadComponent: () =>
       import('./pages/search/search.component').then((m) => m.SearchComponent),
   },
   {
     path: 'stores',
-    canActivate: [customerLocationGuard],
+    canActivate: [pageFeatureRouteGuard('customer-app'),customerLocationGuard],
     loadComponent: () =>
       import('./pages/stores/stores.component').then((m) => m.StoresComponent),
   },
   {
     path: 'category/:id',
-    canActivate: [customerLocationGuard],
+    canActivate: [pageFeatureRouteGuard('customer-app'),customerLocationGuard],
     loadComponent: () =>
       import('./pages/category/category.component').then(
         (m) => m.CategoryComponent,
@@ -61,7 +62,7 @@ export const routes: Routes = [
   },
   {
     path: 'store/:id',
-    canActivate: [customerLocationGuard],
+    canActivate: [pageFeatureRouteGuard('customer-app'),customerLocationGuard],
     loadComponent: () =>
       import('./pages/store-detail/store-detail.component').then(
         (m) => m.StoreDetailComponent,
@@ -69,7 +70,7 @@ export const routes: Routes = [
   },
   {
     path: 'product/:id',
-    canActivate: [customerLocationGuard],
+    canActivate: [pageFeatureRouteGuard('customer-app'),customerLocationGuard],
     loadComponent: () =>
       import('./pages/product-detail/product-detail.component').then(
         (m) => m.ProductDetailComponent,
@@ -81,13 +82,13 @@ export const routes: Routes = [
   },
   {
     path: 'cart',
-    canActivate: [customerLocationGuard],
+    canActivate: [pageFeatureRouteGuard('customer-app'),customerLocationGuard],
     loadComponent: () =>
       import('./pages/cart/cart.component').then((m) => m.CartComponent),
   },
   {
     path: 'checkout',
-    canActivate: [customerLocationGuard],
+    canActivate: [pageFeatureRouteGuard('customer-app'),customerLocationGuard],
     loadComponent: () =>
       import('./pages/checkout/checkout.component').then(
         (m) => m.CheckoutComponent,
@@ -95,12 +96,13 @@ export const routes: Routes = [
   },
   {
     path: 'orders',
+    canActivate: [pageFeatureRouteGuard('customer-app')],
     loadComponent: () =>
       import('./pages/orders/orders.component').then((m) => m.OrdersComponent),
   },
   {
     path: 'order-confirmed/:id',
-    canActivate: [customerAuthGuard],
+    canActivate: [pageFeatureRouteGuard('customer-app'),customerAuthGuard],
     loadComponent: () =>
       import('./pages/order-confirmed/order-confirmed.component').then(
         (m) => m.OrderConfirmedComponent,
@@ -108,7 +110,7 @@ export const routes: Routes = [
   },
   {
     path: 'tracking/:id',
-    canActivate: [customerAuthGuard],
+    canActivate: [pageFeatureRouteGuard('customer-app'),customerAuthGuard],
     loadComponent: () =>
       import('./pages/tracking/tracking.component').then(
         (m) => m.TrackingComponent,
@@ -117,7 +119,7 @@ export const routes: Routes = [
   { path: 'completed-order/:id', redirectTo: 'order-finished/:id' },
   {
     path: 'order-finished/:id',
-    canActivate: [customerAuthGuard],
+    canActivate: [pageFeatureRouteGuard('customer-app'),customerAuthGuard],
     loadComponent: () =>
       import('./pages/order-finished/order-finished.component').then(
         (m) => m.OrderFinishedComponent,
@@ -127,7 +129,7 @@ export const routes: Routes = [
   { path: 'order/:id/tracking', redirectTo: 'tracking/:id' },
   {
     path: 'order/:id/rating',
-    canActivate: [customerAuthGuard],
+    canActivate: [pageFeatureRouteGuard('customer-app'),customerAuthGuard],
     loadComponent: () =>
       import('./pages/order-finished/order-finished.component').then(
         (m) => m.OrderFinishedComponent,
@@ -135,6 +137,7 @@ export const routes: Routes = [
   },
   {
     path: 'account',
+    canActivate: [pageFeatureRouteGuard('customer-app')],
     loadComponent: () =>
       import('./pages/profile/profile.component').then(
         (m) => m.ProfileComponent,
@@ -143,6 +146,7 @@ export const routes: Routes = [
   { path: 'profile', redirectTo: 'account' },
   {
     path: 'addresses',
+    canActivate: [pageFeatureRouteGuard('customer-app')],
     loadComponent: () =>
       import('./pages/addresses/addresses.component').then(
         (m) => m.AddressesComponent,
@@ -150,6 +154,7 @@ export const routes: Routes = [
   },
   {
     path: 'notifications',
+    canActivate: [pageFeatureRouteGuard('customer-app')],
     loadComponent: () =>
       import('./pages/notifications/notifications.component').then(
         (m) => m.NotificationsComponent,
@@ -157,6 +162,7 @@ export const routes: Routes = [
   },
   {
     path: 'privacy-policy',
+    canActivate: [pageFeatureRouteGuard('customer-app')],
     loadComponent: () =>
       import('./pages/privacy-policy/privacy-policy.component').then(
         (m) => m.PrivacyPolicyComponent,

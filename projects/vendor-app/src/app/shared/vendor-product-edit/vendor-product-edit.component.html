@@ -1,673 +1,406 @@
-<main class="product-edit-page">
-  <section class="workspace">
-    <div class="content">
-      <header class="page-title">
-        <div>
-          <h1>Edit Product</h1>
-          <p>
-            Update catalog information. Some changes may require admin review
-            before going live.
-          </p>
-        </div>
-        <div class="title-actions">
-          <button type="button" class="outline-btn" (click)="service.preview()">
-            👁 Preview Product
-          </button>
-          <button type="button" class="icon-btn" routerLink="/products">
-            ⋯
-          </button>
-        </div>
-      </header>
-
-      <p class="form-error" *ngIf="service.error()">{{ service.error() }}</p>
-
-      <section class="main-layout">
-        <div class="left-stack">
-          <section class="product-summary card">
-            <div class="product-image">
-              <img
-                [src]="productImage()"
-                [alt]="service.product().productName"
-                (error)="onImageError($event)"
-              />
-            </div>
-
-            <div class="product-info">
-              <h2>{{ service.product().productName }}</h2>
-              <div class="chips">
-                <span class="success">● {{ service.product().status }}</span>
-                <span
-                  >▣
-                  {{
-                    service.product().stock > 0 ? "In Stock" : "No Stock"
-                  }}</span
-                >
-              </div>
-
-              <div class="summary-grid">
-                <article>
-                  <small>Category</small>
-                  <b>{{ service.product().category }}</b>
-                </article>
-                <article>
-                  <small>Brand</small>
-                  <b>{{ service.product().brand }}</b>
-                </article>
-                <article>
-                  <small>SKU</small>
-                  <b>{{ service.product().sku }}</b>
-                </article>
-                <article>
-                  <small>Unit</small>
-                  <b>{{ service.product().unit }}</b>
-                </article>
-              </div>
-            </div>
-
-            <aside class="overview-box">
-              <h3>Overview</h3>
-              <p>
-                <span>Selling Price</span
-                ><b>{{ service.product().price | appCurrency }}</b>
-              </p>
-              <p>
-                <span>Stock Available</span
-                ><b>{{ service.product().stock }} Packs</b>
-              </p>
-              <p>
-                <span>Low Stock Threshold</span
-                ><b>{{ service.product().lowStockThreshold }} Packs</b>
-              </p>
-              <p>
-                <span>Min. Order Quantity</span
-                ><b>{{ service.product().minOrderQuantity }} Pack</b>
-              </p>
-            </aside>
-          </section>
-
-          <section class="card form-section">
-            <header>
-              <span>1</span>
-              <div>
-                <h2>Selling Controls</h2>
-                <p>Fields you can update anytime.</p>
-              </div>
-            </header>
-
-            <div class="form-grid four">
-              <label>
-                <span>Selling Price <i>*</i></span>
-                <div
-                  class="money-input"
-                  [class.has-error]="service.fieldError('price')"
-                >
-                  <b>{{ 0 | appCurrency: true }}</b
-                  ><input
-                    type="number"
-                    placeholder="e.g. 120.00"
-                    [ngModel]="service.product().price"
-                    (ngModelChange)="update('price', +$event)"
-                  />
-                </div>
-                <small
-                  >Price customers pay before coupons or delivery
-                  charges.</small
-                >
-                <small
-                  class="field-error"
-                  *ngIf="service.fieldError('price')"
-                  >{{ service.fieldError("price") }}</small
-                >
-              </label>
-
-              <label>
-                <span>Compare Price</span>
-                <div
-                  class="money-input"
-                  [class.has-error]="service.fieldError('comparePrice')"
-                >
-                  <b>{{ 0 | appCurrency: true }}</b
-                  ><input
-                    type="number"
-                    placeholder="e.g. 150.00"
-                    [ngModel]="service.product().comparePrice"
-                    (ngModelChange)="
-                      update('comparePrice', $event ? +$event : null)
-                    "
-                  />
-                </div>
-                <small>Optional old price for discount comparison.</small>
-                <small
-                  class="field-error"
-                  *ngIf="service.fieldError('comparePrice')"
-                  >{{ service.fieldError("comparePrice") }}</small
-                >
-              </label>
-
-              <label>
-                <span>Stock <i>*</i></span>
-                <input
-                  type="number"
-                  placeholder="e.g. 50"
-                  [class.has-error]="service.fieldError('stock')"
-                  [ngModel]="service.product().stock"
-                  (ngModelChange)="update('stock', +$event)"
-                />
-                <small>Available units customers can order now.</small>
-                <small
-                  class="field-error"
-                  *ngIf="service.fieldError('stock')"
-                  >{{ service.fieldError("stock") }}</small
-                >
-              </label>
-
-              <label>
-                <span>Low Stock Threshold</span>
-                <input
-                  type="number"
-                  placeholder="e.g. 5"
-                  [class.has-error]="service.fieldError('lowStockThreshold')"
-                  [ngModel]="service.product().lowStockThreshold"
-                  (ngModelChange)="update('lowStockThreshold', +$event)"
-                />
-                <small>Alert level to warn you to restock.</small>
-                <small
-                  class="field-error"
-                  *ngIf="service.fieldError('lowStockThreshold')"
-                  >{{ service.fieldError("lowStockThreshold") }}</small
-                >
-              </label>
-
-              <label>
-                <span>Min. Order Quantity <i>*</i></span>
-                <input
-                  type="number"
-                  placeholder="e.g. 1"
-                  [class.has-error]="service.fieldError('minOrderQuantity')"
-                  [ngModel]="service.product().minOrderQuantity"
-                  (ngModelChange)="update('minOrderQuantity', +$event)"
-                />
-                <small>Smallest quantity a customer can add to cart.</small>
-                <small
-                  class="field-error"
-                  *ngIf="service.fieldError('minOrderQuantity')"
-                  >{{ service.fieldError("minOrderQuantity") }}</small
-                >
-              </label>
-
-              <label>
-                <span>Prep Time (Minutes)</span>
-                <input
-                  type="number"
-                  placeholder="e.g. 15"
-                  [class.has-error]="service.fieldError('prepTimeMinutes')"
-                  [ngModel]="service.product().prepTimeMinutes"
-                  (ngModelChange)="update('prepTimeMinutes', +$event)"
-                />
-                <small>Time needed before item is ready.</small>
-                <small
-                  class="field-error"
-                  *ngIf="service.fieldError('prepTimeMinutes')"
-                  >{{ service.fieldError("prepTimeMinutes") }}</small
-                >
-              </label>
-
-              <label>
-                <span>Status</span>
-                <select
-                  [class.has-error]="service.fieldError('status')"
-                  [ngModel]="service.product().status"
-                  (ngModelChange)="update('status', $event)"
-                >
-                  <option
-                    *ngFor="let status of service.statuses"
-                    [value]="status"
-                  >
-                    {{ status }}
-                  </option>
-                </select>
-                <small>Controls product visibility for customers.</small>
-                <small
-                  class="field-error"
-                  *ngIf="service.fieldError('status')"
-                  >{{ service.fieldError("status") }}</small
-                >
-              </label>
-
-              <div class="switch-stack">
-                <button
-                  type="button"
-                  class="check-row"
-                  [class.enabled]="service.product().availableForSale"
-                  (click)="toggle('availableForSale')"
-                >
-                  <span></span> Available for sale
-                </button>
-                <button
-                  type="button"
-                  class="check-row"
-                  [class.enabled]="service.product().instantDelivery"
-                  (click)="toggle('instantDelivery')"
-                >
-                  <span></span> Instant delivery
-                </button>
-                <button
-                  type="button"
-                  class="check-row"
-                  [class.enabled]="service.product().scheduledDelivery"
-                  (click)="toggle('scheduledDelivery')"
-                >
-                  <span></span> Scheduled delivery
-                </button>
-              </div>
-            </div>
-          </section>
-
-          <section class="card form-section">
-            <header>
-              <span>2</span>
-              <div>
-                <h2>Catalog Details <em>(Requires Admin Approval)</em></h2>
-                <p>Core catalog information. Changes may require review.</p>
-              </div>
-            </header>
-
-            <div class="form-grid three">
-              <label>
-                <span>Product Name <i>*</i></span>
-                <input
-                  type="text"
-                  placeholder="e.g. Fresh Paneer 500 g"
-                  [class.has-error]="service.fieldError('productName')"
-                  [ngModel]="service.product().productName"
-                  (ngModelChange)="update('productName', $event)"
-                />
-                <small>Use the exact customer-facing product name.</small>
-                <small
-                  class="field-error"
-                  *ngIf="service.fieldError('productName')"
-                  >{{ service.fieldError("productName") }}</small
-                >
-              </label>
-
-              <label>
-                <span>Brand <i>*</i></span>
-                <input
-                  type="text"
-                  placeholder="e.g. Nandini, Amul, or your store brand"
-                  [class.has-error]="service.fieldError('brand')"
-                  [ngModel]="service.product().brand"
-                  (ngModelChange)="update('brand', $event)"
-                />
-                <small>Manufacturer or store brand.</small>
-                <small
-                  class="field-error"
-                  *ngIf="service.fieldError('brand')"
-                  >{{ service.fieldError("brand") }}</small
-                >
-              </label>
-
-              <label>
-                <span>SKU</span>
-                <input
-                  type="text"
-                  placeholder="e.g. PANEER-500G"
-                  [class.has-error]="service.fieldError('sku')"
-                  [ngModel]="service.product().sku"
-                  (ngModelChange)="update('sku', $event)"
-                />
-                <small>Internal code for stock records.</small>
-                <small class="field-error" *ngIf="service.fieldError('sku')">{{
-                  service.fieldError("sku")
-                }}</small>
-              </label>
-
-              <label>
-                <span>Category</span>
-                <select
-                  [class.has-error]="service.fieldError('category')"
-                  [ngModel]="service.product().category"
-                  (ngModelChange)="update('category', $event)"
-                >
-                  <option
-                    *ngFor="let category of service.categories"
-                    [value]="category"
-                  >
-                    {{ category }}
-                  </option>
-                </select>
-                <small
-                  >Choose the category customers browse in the
-                  storefront.</small
-                >
-                <small
-                  class="field-error"
-                  *ngIf="service.fieldError('category')"
-                  >{{ service.fieldError("category") }}</small
-                >
-              </label>
-
-              <label>
-                <span>Quantity / Pack Size <i>*</i></span>
-                <input
-                  type="text"
-                  placeholder="e.g. 500 g, 1 litre, 6 pcs"
-                  [class.has-error]="service.fieldError('quantityPackSize')"
-                  [ngModel]="service.product().quantityPackSize"
-                  (ngModelChange)="update('quantityPackSize', $event)"
-                />
-                <small>Visible pack size customers compare.</small>
-                <small
-                  class="field-error"
-                  *ngIf="service.fieldError('quantityPackSize')"
-                  >{{ service.fieldError("quantityPackSize") }}</small
-                >
-              </label>
-
-              <label>
-                <span>Unit <i>*</i></span>
-                <select
-                  [class.has-error]="service.fieldError('unit')"
-                  [ngModel]="service.product().unit"
-                  (ngModelChange)="update('unit', $event)"
-                >
-                  <option *ngFor="let unit of service.units" [value]="unit">
-                    {{ unit }}
-                  </option>
-                </select>
-                <small>Measurement unit for this product.</small>
-                <small class="field-error" *ngIf="service.fieldError('unit')">{{
-                  service.fieldError("unit")
-                }}</small>
-              </label>
-
-              <label class="full">
-                <span>Description <i>*</i></span>
-                <textarea
-                  rows="3"
-                  placeholder="Describe quality, use, freshness, origin, or key benefits."
-                  [class.has-error]="service.fieldError('description')"
-                  [ngModel]="service.product().description"
-                  (ngModelChange)="update('description', $event)"
-                ></textarea>
-                <small
-                  >Short customer-facing details that help shoppers choose
-                  confidently.</small
-                >
-                <small
-                  class="field-error"
-                  *ngIf="service.fieldError('description')"
-                  >{{ service.fieldError("description") }}</small
-                >
-              </label>
-            </div>
-          </section>
-
-          <section class="card form-section">
-            <header>
-              <span>3</span>
-              <div>
-                <h2>Product Attributes</h2>
-                <p>Additional information and handling details.</p>
-              </div>
-            </header>
-
-            <div class="form-grid three">
-              <label class="wide">
-                <span>Ingredients</span>
-                <textarea
-                  rows="3"
-                  placeholder="e.g. Wheat flour, yeast, salt, sugar"
-                  [class.has-error]="service.fieldError('ingredients')"
-                  [ngModel]="service.product().ingredients"
-                  (ngModelChange)="update('ingredients', $event)"
-                ></textarea>
-                <small
-                  >List ingredients when relevant for food, grocery, or packaged
-                  items.</small
-                >
-                <small
-                  class="field-error"
-                  *ngIf="service.fieldError('ingredients')"
-                  >{{ service.fieldError("ingredients") }}</small
-                >
-              </label>
-
-              <label class="wide">
-                <span>Compliance Notes</span>
-                <textarea
-                  rows="3"
-                  placeholder="e.g. FSSAI/license details, sourcing notes, or admin review context"
-                  [class.has-error]="service.fieldError('complianceNotes')"
-                  [ngModel]="service.product().complianceNotes"
-                  (ngModelChange)="update('complianceNotes', $event)"
-                ></textarea>
-                <small
-                  >Admin review notes such as licenses, sourcing, or safety
-                  information.</small
-                >
-                <small
-                  class="field-error"
-                  *ngIf="service.fieldError('complianceNotes')"
-                  >{{ service.fieldError("complianceNotes") }}</small
-                >
-              </label>
-
-              <label>
-                <span>Allergens</span>
-                <input
-                  type="text"
-                  placeholder="e.g. Milk, nuts, gluten"
-                  [class.has-error]="service.fieldError('allergens')"
-                  [ngModel]="service.product().allergens"
-                  (ngModelChange)="update('allergens', $event)"
-                />
-                <small
-                  >List allergens customers should know before ordering.</small
-                >
-                <small
-                  class="field-error"
-                  *ngIf="service.fieldError('allergens')"
-                  >{{ service.fieldError("allergens") }}</small
-                >
-              </label>
-
-              <label>
-                <span>Shelf Life</span>
-                <input
-                  type="text"
-                  placeholder="e.g. 3 days refrigerated"
-                  [class.has-error]="service.fieldError('shelfLife')"
-                  [ngModel]="service.product().shelfLife"
-                  (ngModelChange)="update('shelfLife', $event)"
-                />
-                <small
-                  >How long the product remains usable after packing.</small
-                >
-                <small
-                  class="field-error"
-                  *ngIf="service.fieldError('shelfLife')"
-                  >{{ service.fieldError("shelfLife") }}</small
-                >
-              </label>
-
-              <label>
-                <span>Packaging Instructions</span>
-                <input
-                  type="text"
-                  placeholder="e.g. Seal in paper bag, keep upright"
-                  [class.has-error]="
-                    service.fieldError('packagingInstructions')
-                  "
-                  [ngModel]="service.product().packagingInstructions"
-                  (ngModelChange)="update('packagingInstructions', $event)"
-                />
-                <small
-                  >Tell staff how this item should be packed for
-                  delivery.</small
-                >
-                <small
-                  class="field-error"
-                  *ngIf="service.fieldError('packagingInstructions')"
-                  >{{ service.fieldError("packagingInstructions") }}</small
-                >
-              </label>
-
-              <div class="attribute-grid full">
-                <button
-                  type="button"
-                  class="check-row"
-                  [class.enabled]="service.product().perishable"
-                  (click)="toggle('perishable')"
-                >
-                  <span></span> Perishable
-                </button>
-                <button
-                  type="button"
-                  class="check-row"
-                  [class.enabled]="service.product().coldStorage"
-                  (click)="toggle('coldStorage')"
-                >
-                  <span></span> Cold storage
-                </button>
-                <button
-                  type="button"
-                  class="check-row"
-                  [class.enabled]="service.product().fragile"
-                  (click)="toggle('fragile')"
-                >
-                  <span></span> Fragile
-                </button>
-                <button
-                  type="button"
-                  class="check-row"
-                  [class.enabled]="service.product().ageRestricted"
-                  (click)="toggle('ageRestricted')"
-                >
-                  <span></span> Age restricted
-                </button>
-                <button
-                  type="button"
-                  class="check-row"
-                  [class.enabled]="service.product().returnable"
-                  (click)="toggle('returnable')"
-                >
-                  <span></span> Returnable
-                </button>
-              </div>
-            </div>
-          </section>
-        </div>
-
-        <aside class="right-rail">
-          <section class="rail-card">
-            <h3>Product Visibility</h3>
-            <p>
-              {{
-                service.product().availableForSale
-                  ? "This product can appear to customers when approved and in stock."
-                  : "This product is currently hidden from customers."
-              }}
-            </p>
-            <ul>
-              <li [class.done]="service.product().status === 'Active'">
-                Active status
-              </li>
-              <li [class.done]="service.product().availableForSale">
-                Available for sale
-              </li>
-              <li [class.done]="service.product().stock > 0">
-                In stock ({{ service.product().stock }} units)
-              </li>
-            </ul>
-            <button type="button" (click)="service.preview()">
-              View on storefront ↗
-            </button>
-          </section>
-
-          <section class="rail-card">
-            <h3>Readiness Checklist</h3>
-            <div class="score">
-              <b>{{ readinessScore() }}/{{ readiness().length }}</b>
-              <span>All set! Product looks good.</span>
-            </div>
-            <ul>
-              <li
-                *ngFor="let item of readiness()"
-                [class.done]="item.completed"
-              >
-                {{ item.label }}
-              </li>
-            </ul>
-          </section>
-
-          <section class="rail-card approval">
-            <h3>Approval Status</h3>
-            <span>{{
-              service.product().approvalStatusLabel ||
-                (service.product().requiresApproval
-                  ? "Requires Review"
-                  : "Approved")
-            }}</span>
-            <p *ngIf="service.product().requiresApproval">
-              Changes to catalog-controlled fields may be reviewed by admin
-              before going live.
-            </p>
-            <p *ngIf="!service.product().requiresApproval">
-              This product is approved. Selling controls can be updated
-              normally.
-            </p>
-            <p *ngIf="service.product().rejectionReason">
-              <b>Reason:</b> {{ service.product().rejectionReason }}
-            </p>
-          </section>
-
-          <section class="rail-card">
-            <h3>Last Updated</h3>
-            <p>
-              {{ service.product().lastUpdatedAt }}<br />by
-              {{ service.product().updatedBy }} (you)
-            </p>
-          </section>
-
-          <section class="rail-card tips">
-            <h3>Quick Tips</h3>
-            <p>
-              Keep descriptions clear and accurate. Complete attributes improve
-              discoverability.
-            </p>
-            <button type="button" routerLink="/support">
-              Learn more about catalog guidelines ↗
-            </button>
-          </section>
-        </aside>
-      </section>
+<div class="workspace-page">
+  <header class="page-heading">
+    <div>
+      <p class="eyebrow">Catalog</p>
+      <h1>Edit product</h1>
+      <p>
+        Operational changes save directly. Changes to product identity and
+        handling require admin review.
+      </p>
     </div>
-
-    <footer class="sticky-actions">
-      <button type="button" class="outline-btn" (click)="cancelEdit.emit()">
-        Cancel
-      </button>
-      <div>
-        <button
-          type="button"
-          class="outline-btn"
-          [disabled]="service.saving()"
-          (click)="save('draft')"
-        >
-          ▣ Save Draft
-        </button>
-        <button
-          type="button"
-          class="primary-btn"
-          [disabled]="service.saving()"
-          (click)="save('changes')"
-        >
-          ▣ {{ service.saving() ? "Saving..." : "Save Changes" }}
-        </button>
-      </div>
-    </footer>
+    <button
+      class="btn-secondary"
+      [disabled]="service.saving()"
+      (click)="cancelEdit.emit()"
+    >
+      Back to products
+    </button>
+  </header>
+  @if(service.error()){
+  <p class="error-banner" role="alert">{{ service.error() }}</p>
+  @if(!service.snapshot() && service.canRetryLoad()){
+  <button
+    type="button"
+    class="btn-secondary"
+    [disabled]="service.loading()"
+    (click)="service.retryLoad()"
+  >
+    Retry loading product
+  </button>
+  } }@if(service.loading()){
+  <p role="status">Loading product…</p>
+  } @if(service.snapshot();as snapshot){
+  <section class="workspace-card product-summary">
+    <div>
+      <h2>{{ snapshot.name }}</h2>
+      <p>Catalog category: {{ service.product().category }}</p>
+      <span class="status-chip" [attr.data-status]="snapshot.approval_status">{{
+        service.product().approvalStatusLabel
+      }}</span
+      >@if(snapshot.rejection_reason){
+      <p class="row-error">{{ snapshot.rejection_reason }}</p>
+      }
+    </div>
+    <div>
+      <h3>Customer visibility</h3>
+      @if(snapshot.visibility_blockers?.length){
+      <ul>
+        @for(blocker of snapshot.visibility_blockers;track blocker){
+        <li>{{ blocker }}</li>
+        }
+      </ul>
+      }@else{
+      <p>Ready to sell according to the last saved server state.</p>
+      }<small>Unsaved changes are not part of this assessment.</small>
+    </div>
   </section>
+  @if(snapshot.approval_status==='pending_approval'){
+  <p class="info-banner">
+    Product identity and images are locked while review is pending. Pricing,
+    stock and selling controls can still be saved.
+  </p>
+  }
+  <fieldset [disabled]="service.saving()">
+    <section class="workspace-card">
+      <h2>Selling and inventory</h2>
+      <div class="flag-grid listing-enable">
+        <label
+          ><input
+            type="checkbox"
+            [ngModel]="service.product().availableForSale"
+            (ngModelChange)="update('availableForSale', $event)"
+          />Listing enabled</label
+        >
+      </div>
+      <div class="form-grid">
+        @for(field of sellingFields;track field.key){<label
+          [for]="'edit-' + field.key"
+          >{{ field.label
+          }}<input
+            [id]="'edit-' + field.key"
+            [attr.aria-invalid]="service.fieldError(field.key) ? true : null"
+            [attr.aria-describedby]="
+              service.fieldError(field.key) ? 'error-' + field.key : null
+            "
+            (blur)="service.validateField(field.key)"
+            type="number"
+            [min]="field.min"
+            [step]="field.step"
+            [disabled]="service.identityLocked(field.key)"
+            [ngModel]="service.product()[field.key]"
+            (ngModelChange)="update(field.key, $event)"
+          />@if(service.fieldError(field.key)){<small
+            class="field-error"
+            [id]="'error-' + field.key"
+            >{{ service.fieldError(field.key) }}</small
+          >}</label
+        >}<label for="product-status"
+          >Listing status<select
+            id="product-status"
+            [attr.aria-invalid]="service.fieldError('status') ? true : null"
+            [attr.aria-describedby]="
+              service.fieldError('status') ? 'error-status' : null
+            "
+            [ngModel]="service.product().status"
+            (ngModelChange)="update('status', $event)"
+          >
+            @for(status of service.statuses;track status){
+            <option [value]="status">{{ status }}</option>
+            } @if(service.product().status === 'Archived' ||
+            service.product().status === 'Coming Soon'){
+            <option [value]="service.product().status">
+              {{ service.product().status }}
+            </option>
+            }</select
+          >@if(service.fieldError('status')){<small
+            class="field-error"
+            id="error-status"
+            >{{ service.fieldError("status") }}</small
+          >}</label
+        ><label for="product-unit"
+          >Unit<select
+            id="product-unit"
+            [attr.aria-invalid]="service.fieldError('unit') ? true : null"
+            [attr.aria-describedby]="
+              service.fieldError('unit') ? 'error-unit' : null
+            "
+            [disabled]="service.identityLocked('unit')"
+            [ngModel]="service.product().unit"
+            (ngModelChange)="update('unit', $event)"
+          >
+            @for(unit of service.units;track unit){
+            <option [value]="unit">{{ unit }}</option>
+            }</select
+          >@if(service.fieldError('unit')){<small
+            class="field-error"
+            id="error-unit"
+            >{{ service.fieldError("unit") }}</small
+          >}</label
+        >
+      </div>
+    </section>
+    <section
+      class="workspace-card"
+      [attr.inert]="snapshot.approval_status === 'pending_approval' ? '' : null"
+    >
+      <h2>Product details</h2>
+      <p>
+        Catalog category is inherited. Name, brand, pack size, description, and
+        handling changes may temporarily hide the product pending review.
+      </p>
+      <div class="form-grid">
+        @for(field of identityFields;track field.key){<label
+          [for]="'edit-' + field.key"
+          [class.wide]="field.multiline"
+          >{{ field.label }}@if(field.multiline){<textarea
+            [id]="'edit-' + field.key"
+            [attr.aria-invalid]="service.fieldError(field.key) ? true : null"
+            [attr.aria-describedby]="
+              service.fieldError(field.key) ? 'error-' + field.key : null
+            "
+            (blur)="service.validateField(field.key)"
+            [disabled]="service.identityLocked(field.key)"
+            [ngModel]="service.product()[field.key]"
+            (ngModelChange)="update(field.key, $event)"
+          ></textarea
+          >}@else{<input
+            [id]="'edit-' + field.key"
+            [attr.aria-invalid]="service.fieldError(field.key) ? true : null"
+            [attr.aria-describedby]="
+              service.fieldError(field.key) ? 'error-' + field.key : null
+            "
+            (blur)="service.validateField(field.key)"
+            [disabled]="service.identityLocked(field.key)"
+            [ngModel]="service.product()[field.key]"
+            (ngModelChange)="update(field.key, $event)"
+          />}@if(service.fieldError(field.key)){<small
+            class="field-error"
+            [id]="'error-' + field.key"
+            >{{ service.fieldError(field.key) }}</small
+          >}</label
+        >}
+      </div>
+    </section>
 
-  <div class="toast" *ngIf="service.toast()">{{ service.toast() }}</div>
-</main>
+    <section class="workspace-card">
+      <h2>Product images</h2>
+      @if(service.imageEditBlocked()){
+      <p role="status">
+        Save or discard your field changes before changing images. Image changes
+        save immediately and may lock the product for review.
+      </p>
+      }
+      <label for="image-policy"
+        >Customer image source<select
+          id="image-policy"
+          [disabled]="service.identityLocked('inheritanceMode')"
+          [ngModel]="service.product().inheritanceMode"
+          (ngModelChange)="update('inheritanceMode', $event)"
+        >
+          <option value="base_image">Catalog images</option>
+          <option value="vendor_image_only">Vendor images only</option>
+          <option value="mixed">Vendor and catalog images</option>
+        </select></label
+      >
+      <p>
+        Uploaded files and catalog files are shown below. The saved image source
+        controls which images customers see.
+      </p>
+      <div class="image-list">
+        @for(image of snapshot.images;track image.id){
+        <figure>
+          <img [src]="image.image" alt="Uploaded product image" />
+          <figcaption>
+            {{ image.is_primary ? "Primary vendor image" : "Vendor image" }}
+          </figcaption>
+          <button
+            type="button"
+            class="btn-secondary"
+            [disabled]="
+              service.saving() ||
+              service.imageEditBlocked() ||
+              snapshot.approval_status === 'pending_approval' ||
+              image.is_primary
+            "
+            (click)="service.imageCommand(image.id, 'primary')"
+          >
+            Make primary</button
+          ><button
+            type="button"
+            class="btn-secondary"
+            [disabled]="
+              service.saving() ||
+              service.imageEditBlocked() ||
+              snapshot.approval_status === 'pending_approval'
+            "
+            (click)="removeImage.set(image.id)"
+          >
+            Remove image
+          </button>
+        </figure>
+        }@if(snapshot.catalog_product;as catalog){@for(image of
+        catalog.images;track image.id){
+        <figure>
+          <img [src]="image.image" alt="Inherited catalog image" />
+          <figcaption>Catalog image</figcaption>
+        </figure>
+        }}
+      </div>
+      <label for="edit-image"
+        >Upload another product image<input
+          id="edit-image"
+          type="file"
+          [disabled]="
+            service.imageEditBlocked() ||
+            snapshot.approval_status === 'pending_approval'
+          "
+          accept="image/png,image/jpeg,image/webp"
+          (change)="imageSelected($event)" /></label
+      ><small
+        >PNG, JPEG, or WebP up to 5 MB. An image change on an approved product
+        triggers review.</small
+      >
+    </section>
+    <details
+      class="workspace-card advanced-fields"
+      [open]="advancedOpen()"
+      (toggle)="advancedToggled($event)"
+    >
+      <summary>Optional pricing, identifiers and handling</summary>
+      <div class="form-grid">
+        @for(field of optionalNumbers;track field.key){<label
+          [for]="'edit-' + field.key"
+          >{{ field.label
+          }}<input
+            [id]="'edit-' + field.key"
+            [attr.aria-invalid]="service.fieldError(field.key) ? true : null"
+            [attr.aria-describedby]="
+              service.fieldError(field.key) ? 'error-' + field.key : null
+            "
+            (blur)="service.validateField(field.key)"
+            type="number"
+            [min]="field.min"
+            [step]="field.step"
+            [disabled]="service.identityLocked(field.key)"
+            [ngModel]="service.product()[field.key]"
+            (ngModelChange)="update(field.key, $event)"
+          />@if(service.fieldError(field.key)){<small
+            class="field-error"
+            [id]="'error-' + field.key"
+            >{{ service.fieldError(field.key) }}</small
+          >}</label
+        >} @for(field of optionalText;track field.key){<label
+          [for]="'edit-' + field.key"
+          [class.wide]="field.multiline"
+          >{{ field.label }}@if(field.multiline){<textarea
+            [id]="'edit-' + field.key"
+            [attr.aria-invalid]="service.fieldError(field.key) ? true : null"
+            [attr.aria-describedby]="
+              service.fieldError(field.key) ? 'error-' + field.key : null
+            "
+            (blur)="service.validateField(field.key)"
+            [disabled]="service.identityLocked(field.key)"
+            [ngModel]="service.product()[field.key]"
+            (ngModelChange)="update(field.key, $event)"
+          ></textarea
+          >}@else{<input
+            [id]="'edit-' + field.key"
+            [attr.aria-invalid]="service.fieldError(field.key) ? true : null"
+            [attr.aria-describedby]="
+              service.fieldError(field.key) ? 'error-' + field.key : null
+            "
+            (blur)="service.validateField(field.key)"
+            [disabled]="service.identityLocked(field.key)"
+            [ngModel]="service.product()[field.key]"
+            (ngModelChange)="update(field.key, $event)"
+          />}@if(service.fieldError(field.key)){<small
+            class="field-error"
+            [id]="'error-' + field.key"
+            >{{ service.fieldError(field.key) }}</small
+          >}</label
+        >}
+      </div>
+      <div class="flag-grid">
+        @for(flag of deliveryFlags;track flag.key){<label
+          ><input
+            type="checkbox"
+            [disabled]="service.identityLocked(flag.key)"
+            [id]="'edit-' + flag.key"
+            [attr.aria-invalid]="(flag.key === 'instantDelivery' || flag.key === 'scheduledDelivery') && service.fieldError('instantDelivery') ? true : null"
+            [attr.aria-describedby]="(flag.key === 'instantDelivery' || flag.key === 'scheduledDelivery') && service.fieldError('instantDelivery') ? 'error-delivery-options' : null"
+            [ngModel]="service.product()[flag.key]"
+            (ngModelChange)="update(flag.key, $event)"
+          />{{ flag.label }}</label
+        >}
+      </div>
+      @if(service.fieldError('instantDelivery')) {
+      <p class="field-error" id="error-delivery-options">{{ service.fieldError("instantDelivery") }}</p>
+      }
+    </details>
+  </fieldset>
+  <footer class="editor-actions">
+    <div class="save-status">
+      <span
+        >{{ service.dirty() ? "Unsaved changes" : "Saved state" }} · Updated
+        {{ service.product().lastUpdatedAt }}</span
+      >
+      @if(service.dirty() &&
+      (snapshot.approval_status==='draft'||snapshot.approval_status==='rejected')){<small
+        >Save your changes before submitting for approval.</small
+      >}
+    </div>
+    <div class="save-actions">
+      @if(service.dirty()){<button
+        type="button"
+        class="btn-secondary"
+        [disabled]="service.saving()"
+        (click)="service.discard()"
+      >
+        Discard changes</button
+      >} @if(!service.dirty() &&
+      (snapshot.approval_status==='draft'||snapshot.approval_status==='rejected')){<button
+        type="button"
+        class="btn-primary"
+        [disabled]="service.saving()"
+        (click)="service.submit()"
+      >
+        {{ service.saving() ? "Submitting…" : "Submit for approval" }}</button
+      >} @else{<button
+        type="button"
+        class="btn-primary"
+        [disabled]="service.saving() || !service.dirty()"
+        (click)="save('changes')"
+      >
+        {{ service.saving() ? "Saving…" : "Save changes" }}</button
+      >}
+    </div>
+  </footer>
+  }
+</div>
+
+@if(removeImage()){<nc-vendor-dialog
+  title="Remove product image"
+  [busy]="service.saving()"
+  (dismissed)="removeImage.set(null)"
+  ><p>Remove this vendor image? Approved product changes require review.</p>
+  @if(service.error()){
+  <p class="workspace-error" role="alert">{{ service.error() }}</p>
+  }
+  <div class="workspace-actions">
+    <button
+      type="button"
+      class="btn-secondary"
+      [disabled]="service.saving()"
+      (click)="removeImage.set(null)"
+    >
+      Keep image</button
+    ><button
+      type="button"
+      class="btn-primary"
+      [disabled]="service.saving()"
+      (click)="confirmImageRemoval()"
+    >
+      Remove image
+    </button>
+  </div></nc-vendor-dialog
+>}

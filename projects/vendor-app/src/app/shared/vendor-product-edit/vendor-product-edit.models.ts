@@ -1,6 +1,7 @@
-export type ProductStatus = 'Active' | 'Draft' | 'Paused' | 'Out of Stock';
+export type ProductStatus = 'Active' | 'Draft' | 'Out of Stock' | 'Archived' | 'Coming Soon';
 
 export interface VendorProductEdit {
+  inheritanceMode: 'base_image' | 'vendor_image_only' | 'mixed';
   id: string;
   productName: string;
   brand: string;

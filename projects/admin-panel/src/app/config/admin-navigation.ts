@@ -12,15 +12,15 @@ export interface AdminNavSection {
 export const ADMIN_QUICK_LINKS: AdminNavItem[] = [
   { route: '/orders', icon: 'receipt_long', label: 'Orders' },
   { route: '/dispatch', icon: 'route', label: 'Dispatch' },
-  { route: '/vendors/onboard', icon: 'storefront', label: 'Vendor' },
+  { route: '/vendors/onboard', icon: 'add', label: 'New vendor' },
 ];
 
 export const ADMIN_BASE_NAV_SECTIONS: AdminNavSection[] = [
   {
-    label: 'Operate',
+    label: 'Operations',
     items: [
-      { route: '/', icon: 'speed', label: 'Command Center' },
-      { route: '/orders', icon: 'receipt_long', label: 'Live Orders' },
+      { route: '/', icon: 'space_dashboard', label: 'Overview' },
+      { route: '/orders', icon: 'receipt_long', label: 'Orders' },
       { route: '/dispatch', icon: 'route', label: 'Dispatch Board' },
       {
         route: '/fulfillment-ops',
@@ -30,15 +30,16 @@ export const ADMIN_BASE_NAV_SECTIONS: AdminNavSection[] = [
       {
         route: '/delivery-partners',
         icon: 'two_wheeler',
-        label: 'Dispatch Fleet',
+        label: 'Delivery Partners',
       },
-      { route: '/issues', icon: 'support_agent', label: 'Exceptions' },
+      { route: '/assets', icon: 'handyman', label: 'Assets' },
+      { route: '/issues', icon: 'support_agent', label: 'Order Issues' },
     ],
   },
   {
     label: 'Marketplace',
     items: [
-      { route: '/vendors', icon: 'storefront', label: 'Stores' },
+      { route: '/vendors', icon: 'storefront', label: 'Vendors' },
       { route: '/catalog', icon: 'inventory_2', label: 'Master Catalog' },
       {
         route: '/catalog-requests',
@@ -58,19 +59,19 @@ export const ADMIN_BASE_NAV_SECTIONS: AdminNavSection[] = [
   {
     label: 'Growth',
     items: [
-      { route: '/coupons', icon: 'local_activity', label: 'Promotions' },
+      { route: '/coupons', icon: 'local_activity', label: 'Coupons' },
       { route: '/banners', icon: 'view_carousel', label: 'Home Banners' },
       {
         route: '/customer-content',
         icon: 'dashboard_customize',
-        label: 'Customer Templates',
+        label: 'Customer Content',
       },
       { route: '/notifications', icon: 'campaign', label: 'Notifications' },
-      { route: '/assets', icon: 'handyman', label: 'Assets' },
+
     ],
   },
   {
-    label: 'Money',
+    label: 'Finance',
     items: [
       { route: '/payments', icon: 'credit_card', label: 'Payments' },
       { route: '/payouts', icon: 'account_balance_wallet', label: 'Payouts' },
@@ -79,21 +80,19 @@ export const ADMIN_BASE_NAV_SECTIONS: AdminNavSection[] = [
         icon: 'fact_check',
         label: 'Reconciliation',
       },
-      {
-        route: '/scheduled-tasks',
-        icon: 'event_repeat',
-        label: 'Automation',
-      },
+
     ],
   },
 ];
+
+ADMIN_BASE_NAV_SECTIONS.push({label:'Automation',items:[{route:'/scheduled-tasks',icon:'event_repeat',label:'Scheduled Tasks'}]});
 
 export const ADMIN_GOVERN_NAV_ITEMS: AdminNavItem[] = [
   { route: '/platform-settings', icon: 'tune', label: 'Platform Settings' },
   {
     route: '/settings/page-feature-management',
     icon: 'toggle_on',
-    label: 'Page & Feature Mgmt',
+    label: 'Pages & Features',
   },
   { route: '/audit-logs', icon: 'manage_search', label: 'Audit Logs' },
   { route: '/production-readiness', icon: 'verified', label: 'Readiness' },
