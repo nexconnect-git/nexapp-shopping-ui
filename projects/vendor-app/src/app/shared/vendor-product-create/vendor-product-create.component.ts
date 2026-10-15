@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, effect, inject, output, signal } from '@angular/core';
+import { afterNextRender, Component, effect, ElementRef, inject, Injector, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AppCurrencyPipe } from '@shared/public-api';
@@ -25,6 +25,8 @@ import { VendorProductCreateService } from './vendor-product-create.service';
   styleUrl: './vendor-product-create.component.scss',
 })
 export class VendorProductCreateComponent {
+  private readonly host: ElementRef<HTMLElement> = inject(ElementRef);
+  private readonly injector = inject(Injector);
   readonly cancelCreate = output<void>();
   readonly submitted = output<CreateProductSubmitPayload>();
   readonly service = inject(VendorProductCreateService);
@@ -32,6 +34,12 @@ export class VendorProductCreateComponent {
   readonly advancedOpen = signal(false);
   constructor() {
     effect(() => {
+      const errors = this.service.fieldErrors();
+      const first = Object.keys(errors)[0];
+      if (first) {
+        this.service.activeStep.set(['comparePrice','prepTime','instantDelivery'].includes(first) ? 'fulfillment' : 'variants');
+        afterNextRender(() => { const field = this.host.nativeElement.querySelector<HTMLElement>('[aria-invalid="true"]'); field?.focus(); field?.scrollIntoView({block:'center'}); }, {injector:this.injector});
+      }
       if (this.service.fieldError('comparePrice') || this.service.fieldError('prepTime')) this.advancedOpen.set(true);
     });
   }

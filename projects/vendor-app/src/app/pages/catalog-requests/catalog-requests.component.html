@@ -1,7 +1,7 @@
 <div class="workspace-page">
   <header class="page-heading">
     <div>
-      <h1>Catalog requests</h1>
+      <p class="eyebrow">Catalog requests</p><h1>Something missing?</h1>
       <p>
         Request an item missing from your available catalog, then track its
         review.
@@ -53,8 +53,8 @@
       {{ list.error()
       }}<button class="btn-secondary" (click)="load()">Retry history</button>
     </p>
-    }@if(list.loading()){
-    <p role="status">Loading request history…</p>
+    }@if(list.loading() && !list.response()){
+    <nc-counter-state kind="loading" title="Loading request history…" />
     }
     <div class="proposal-history">
       @for(proposal of list.rows();track proposal.id){
@@ -79,54 +79,18 @@
             proposal.status.replaceAll("_", " ") | titlecase
           }}</span>
         </div>
-        @if(proposal.admin_notes){
-        <p class="pre-wrap">{{ proposal.admin_notes }}</p>
-        }
-        <ng-template #requestedItems>
-          @for(item of proposal.items;track item.id){
-          <div class="proposal-item">
-            <div>
-              <strong>{{ item.name }}</strong>
-              <p>
-                @if(item.brand){ {{ item.brand }} · }{{ item.unit }} ·
-                {{ item.category?.name || "Category not supplied" }}
-              </p>
-              @if(proposal.items.length>1 ||
-              item.status!==proposal.status){<span
-                class="status-chip"
-                [attr.data-status]="item.status"
-                >{{ item.status | titlecase }}</span
-              >}@if(item.rejection_reason){
-              <p class="row-error">{{ item.rejection_reason }}</p>
-              }@if(item.created_catalog_product;as catalog){
-              @if(catalog.name !== item.name){<small>Catalog: {{ catalog.name }}</small>}
-              <a
-                routerLink="/products/new"
-                [queryParams]="{ search: catalog.name, catalog_id: catalog.id }"
-                >Add a variant from this item</a
-              >}
-            </div>
-          </div>
-          }
-        </ng-template>
-        @if(proposal.items.length > 1){
-        <details class="request-items" [open]="true">
-          <summary>Requested items and outcomes</summary>
-          <ng-container [ngTemplateOutlet]="requestedItems" />
-        </details>
-        }@else{<ng-container [ngTemplateOutlet]="requestedItems" />}
-
+        <button class="btn-secondary" (click)="selected.set(proposal)">View request</button>
       </article>
       }@empty{@if(!list.loading()&&!list.error()){
       <p>No matching requests.</p>
       }}
     </div>
-    <nc-vendor-pager
+    @if(list.response()){<nc-vendor-pager
       [page]="list.page()"
       [count]="list.count()"
       [busy]="list.loading()"
       (pageChange)="query($event)"
-    />
+    />}
   </section>
 </div>
 
@@ -243,3 +207,46 @@
   </form>
 </nc-vendor-dialog>
 }
+
+@if(selected(); as proposal){
+<nc-vendor-dialog title="Request details" mode="drawer" (dismissed)="selected.set(null)">
+<p class="eyebrow">Request {{ proposal.id.slice(0,8) }}</p><h2>{{ proposal.items.length }} requested items</h2>
+<p>Submitted {{ proposal.submitted_at | date:'medium' }}</p><span class="status-chip" [attr.data-status]="proposal.status">{{ proposal.status.replaceAll('_',' ') | titlecase }}</span>
+        @if(proposal.admin_notes){
+        <p class="pre-wrap">{{ proposal.admin_notes }}</p>
+        }
+        <ng-template #requestedItems>
+          @for(item of proposal.items;track item.id){
+          <div class="proposal-item">
+            <div>
+              <strong>{{ item.name }}</strong>
+              <p>
+                @if(item.brand){ {{ item.brand }} · }{{ item.unit }} ·
+                {{ item.category?.name || "Category not supplied" }}
+              </p>
+              @if(proposal.items.length>1 ||
+              item.status!==proposal.status){<span
+                class="status-chip"
+                [attr.data-status]="item.status"
+                >{{ item.status | titlecase }}</span
+              >}@if(item.rejection_reason){
+              <p class="row-error">{{ item.rejection_reason }}</p>
+              }@if(item.created_catalog_product;as catalog){
+              @if(catalog.name !== item.name){<small>Catalog: {{ catalog.name }}</small>}
+              <a
+                routerLink="/products/new"
+                [queryParams]="{ search: catalog.name, catalog_id: catalog.id }"
+                >Add a variant from this item</a
+              >}
+            </div>
+          </div>
+          }
+        </ng-template>
+        @if(proposal.items.length > 1){
+        <details class="request-items" [open]="true">
+          <summary>Requested items and outcomes</summary>
+          <ng-container [ngTemplateOutlet]="requestedItems" />
+        </details>
+        }@else{<ng-container [ngTemplateOutlet]="requestedItems" />}
+
+</nc-vendor-dialog>}

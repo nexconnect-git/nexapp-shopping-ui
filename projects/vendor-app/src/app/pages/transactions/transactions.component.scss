@@ -1,32 +1,53 @@
 :host {
-  display: block;
-}
+  display:block}
+.money-slab {
+  display:block;
+  padding:26px 30px;
+  border-radius:18px;
+  background:var(--ink);
+  color:var(--paper);
+  margin:24px 0}
+.money-slab h3 {
+  font-size:13px;
+  margin:0 0 12px}
+.money-slab>strong {
+  font:42px Georgia,serif}
+.money-slab .workspace-muted {
+  color:#c4cbbb;
+  font-size:12px}
 .workspace-transaction-list {
-  display: grid;
-  gap: 12px;
-}
+  border-top:1px solid var(--ink)}
 .transaction-item {
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
-}
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 270px;
+  align-items:center;
+  gap:26px;
+  border:0;
+  border-bottom:1px solid var(--line);
+  border-radius:0;
+  background:none;
+  padding:22px 0}
 .transaction-item h3 {
-  font-size: 16px;
-}
-.transaction-item > div:last-child {
-  display: grid;
-  gap: 8px;
-  text-align: right;
-}
+  font-size:14px;
+  margin:0 0 8px}
+.transaction-item p,.transaction-item small {
+  font-size:12px;
+  color:var(--muted)}
+.transaction-item>div:last-child {
+  text-align:right}
 .transaction-item strong {
-  font-size: 20px;
-  font-variant-numeric: tabular-nums;
-}
-@media (max-width: 768px) {
+  font:24px Georgia,serif;
+  margin-left:12px}
+@media(max-width:900px) {
   .transaction-item {
-    display: grid;
-  }
-  .transaction-item > div:last-child {
-    text-align: left;
-  }
+  grid-template-columns:minmax(0,1fr) 210px}
+}
+@media(max-width:650px) {
+  .transaction-item {
+  grid-template-columns:1fr;
+  gap:12px}
+.transaction-item>div:last-child {
+  text-align:left}
+.money-slab {
+  padding:24px}
 }

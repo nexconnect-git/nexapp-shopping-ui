@@ -1,13 +1,15 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, effect, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
-import { AppCurrencyPipe } from '@shared/lib/pipes/currency.pipe';
+import { Router, RouterLink } from '@angular/router';
+import { CustomerIconComponent } from '../../shared/customer-icon/customer-icon.component';
+import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
+import { CustomerCurrencyPipe as AppCurrencyPipe } from '../../shared/customer-currency/customer-currency.pipe';
 import { normalizeOrderStatus } from '@shared/lib/models/adapters';
 import { OrderService } from '../../services/order.service';
 import { UiService } from '../../services/ui.service';
-import { AppStateService } from '../../services/app-state.service';
 import { DisplayOrderIdPipe } from '../../shared/display-order-id.pipe';
-import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
+import { CustomerPageHeaderComponent } from '../../shared/customer-page-header/customer-page-header.component';
+import { CustomerStateComponent } from '../../shared/customer-state/customer-state.component';
 import { Order } from '../../models';
 import { AuthService } from '../../services/auth.service';
 import { CustomerLockedStateComponent } from '../../shared/customer-locked-state/customer-locked-state.component';
@@ -16,8 +18,11 @@ import { CustomerLockedStateComponent } from '../../shared/customer-locked-state
   standalone: true,
   imports: [
     FormsModule,
-    RouterLink,
+    CustomerIconComponent,
     BreadcrumbsComponent,
+    RouterLink,
+    CustomerPageHeaderComponent,
+    CustomerStateComponent,
     AppCurrencyPipe,
     DisplayOrderIdPipe,
     CustomerLockedStateComponent,
@@ -29,53 +34,78 @@ export class OrdersComponent {
   activeTab = signal('All Orders');
   searchQuery = signal('');
   tabs = ['All Orders', 'Active', 'Delivered', 'Cancelled'];
-  Math = Math;
+  private searchTimer?: ReturnType<typeof setTimeout>;
+  chooseTab(tab: string): void {
+    clearTimeout(this.searchTimer);
+    this.activeTab.set(tab);
+    this.orders.loadOrders(
+      1,
+      tab === 'All Orders' ? '' : tab.toLowerCase(),
+      this.searchQuery()
+    );
+  }
+  search(value: string): void {
+    this.searchQuery.set(value);
+    clearTimeout(this.searchTimer);
+    this.searchTimer = setTimeout(
+      () =>
+        this.orders.loadOrders(
+          1,
+          this.activeTab() === 'All Orders'
+            ? ''
+            : this.activeTab().toLowerCase(),
+          value
+        ),
+      250
+    );
+  }
+  ngOnDestroy(): void {
+    clearTimeout(this.searchTimer);
+  }
 
   constructor(
     public orders: OrderService,
     public ui: UiService,
-    private state: AppStateService,
     public auth: AuthService,
-  ) {}
-
-  filteredOrders = computed(() => {
-    const tab = this.activeTab();
-    const query = this.searchQuery().trim().toLowerCase();
-    return this.orders.orders().filter((order) => {
-      if (tab !== 'All Orders' && this.statusBucket(order) !== tab) return false;
-      if (!query) return true;
-      const haystack = [
-        order.id,
-        order.raw?.order_number,
-        order.status,
-        order.payment,
-        ...order.items.map((item) => item.name),
-      ]
-        .map((value) => String(value || '').toLowerCase())
-        .join(' ');
-      return haystack.includes(query);
+    private router: Router
+  ) {
+    effect(() => {
+      if (this.auth.currentUser()) untracked(() => this.retryLoad());
     });
-  });
-  totalSpent = computed(() =>
-    this.orders.orders().reduce((total, order) => total + order.amount, 0),
-  );
-
-  count(tab: string): number {
-    if (tab === 'All Orders') return this.orders.orders().length;
-    return this.orders.orders().filter((order) => this.statusBucket(order) === tab)
-      .length;
   }
 
-  chooseDateRange(): void {
-    this.state.showToast('Showing recent orders');
+  filteredOrders = computed(() => this.orders.orders());
+
+  itemCount(order: Order): number | null {
+    const items = order.raw?.items;
+    if (!items?.length || items.some(item => !Number.isFinite(Number(item.quantity)) || Number(item.quantity) <= 0)) return null;
+    return items.reduce((total, item) => total + Number(item.quantity), 0);
+  }
+
+  itemDescription(order: Order): string {
+    return order.items.map((item,index) => { const quantity=Number(order.raw?.items?.[index]?.quantity); return Number.isFinite(quantity) && quantity>0 ? `${quantity} × ${item.name}` : item.name; }).join(' · ');
+  }
+
+  submitSearch(): void {
+    clearTimeout(this.searchTimer);
+    this.retryLoad();
+  }
+
+  browseStores(): void { this.router.navigate(['/stores']); }
+
+  count(tab: string): number {
+    return (
+      this.orders.summary()[tab === 'All Orders' ? 'all' : tab.toLowerCase()] ??
+      0
+    );
   }
 
   retryLoad(): void {
-    this.orders.loadOrders();
+    this.orders.loadOrders(1,this.activeTab() === 'All Orders' ? '' : this.activeTab().toLowerCase(),this.searchQuery());
   }
 
-  reorder(order: Order): void {
-    this.orders.reorder(order);
+  reorder(order: Order, event: Event): void {
+    this.orders.reorder(order, event.currentTarget instanceof HTMLElement ? event.currentTarget : null);
   }
 
   storeName(order: Order): string {
@@ -141,7 +171,7 @@ export class OrdersComponent {
 
   private statusKey(order: Order): string {
     return normalizeOrderStatus(
-      order.raw?.normalized_status || order.raw?.status || order.status,
+      order.raw?.normalized_status || order.raw?.status || order.status
     );
   }
 }

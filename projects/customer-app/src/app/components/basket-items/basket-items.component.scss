@@ -1,0 +1,4 @@
+:host { display:block; }
+.item-art img { width:67px; height:70px; object-fit:contain; }
+.grow a { color:var(--ink); } .grow h3 { overflow-wrap:anywhere; }
+@media(max-width:760px) { .item-art img { max-width:100%; max-height:100%; } }

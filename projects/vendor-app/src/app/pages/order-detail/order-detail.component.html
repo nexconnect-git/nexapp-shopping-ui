@@ -22,9 +22,142 @@
   }@if(invoiceError()){
   <p class="error-banner" role="alert">{{ invoiceError() }}</p>
   }@if(loading()){
-  <p role="status">Refreshing order…</p>
+  <nc-counter-state kind="loading" title="Refreshing order…" />
   } @if(order();as current){
-  <section class="workspace-card command-bar">
+<div class="detail-grid"><section><nav class="tabs" aria-label="Order workspace sections">
+<button class="tab" type="button" [class.active]="tab()==='details'" [attr.aria-pressed]="tab()==='details'" (click)="tab.set('details')">Order details</button>
+<button class="tab" type="button" [class.active]="tab()==='delivery'" [attr.aria-pressed]="tab()==='delivery'" (click)="tab.set('delivery')">Delivery</button>
+<button class="tab" type="button" [class.active]="tab()==='activity'" [attr.aria-pressed]="tab()==='activity'" (click)="tab.set('activity')">Activity</button></nav>@if(tab()==='details'){      <section class="surface flat">
+        <h2>Items and payment</h2>
+        <div class="items">
+          @for(item of current.items;track item.id){
+          <div class="item">
+            <div>
+              <strong>{{ item.product_name }}</strong>
+              <p>
+                {{ item.quantity }} × {{ item.product_price | appCurrency }}
+              </p>
+              @if(item.pack_size){<small>{{ item.pack_size }}</small
+              >}
+            </div>
+            <strong>{{ item.subtotal | appCurrency }}</strong>
+          </div>
+          }
+        </div>
+        <dl class="amounts">
+          <div>
+            <dt>Subtotal</dt>
+            <dd>{{ current.subtotal | appCurrency }}</dd>
+          </div>
+          <div>
+            <dt>Delivery</dt>
+            <dd>{{ current.delivery_fee | appCurrency }}</dd>
+          </div>
+          <div>
+            <dt>Discount</dt>
+            <dd>−{{ current.discount | appCurrency }}</dd>
+          </div>
+          <div class="total">
+            <dt>Total</dt>
+            <dd>{{ current.total | appCurrency }}</dd>
+          </div>
+        </dl>
+        <p>
+          Payment: {{ current.payment_method | titlecase }} ·
+          {{ current.is_payment_verified ? "Verified" : "Not verified" }}
+        </p>
+        @if(current.notes){
+        <h3>Customer notes</h3>
+        <p class="pre-wrap">{{ current.notes }}</p>
+        }
+      </section>
+}@else if(tab()==='delivery'){      <section class="surface flat">
+        <h2>Customer and delivery</h2>
+        <p>
+          <strong>{{ current.customer_name }}</strong>
+        </p>
+        @if(current.delivery_address;as address){
+        <address>
+          {{ address.full_name }}<br />{{ address.address_line1 }}
+          {{ address.address_line2 }}<br />{{ address.city }},
+          {{ address.state }} {{ address.postal_code }}<br /><a
+            [href]="'tel:' + address.phone"
+            >{{ address.phone }}</a
+          >
+        </address>
+        }@if(current.delivery_partner_info;as partner){
+        <h3>Delivery partner</h3>
+        <p>
+          {{ partner.name }} · {{ partner.vehicle_type | titlecase }}
+          {{ partner.vehicle_number }}
+        </p>
+        @if(partner.phone){
+        <a [href]="'tel:' + partner.phone">{{ partner.phone }}</a>
+        }}
+      </section>      @if(trackingEligible()){
+      <section class="surface tracking">
+        <h2>Delivery tracking</h2>
+        <p role="status">{{ trackingState() }}</p>
+        @if(locationAge()!==null){
+        <p [class.row-error]="locationAge()! > 60">
+          Last location {{ locationAge() }} seconds ago{{
+            locationAge()! > 60 ? " · Location may be stale" : ""
+          }}
+        </p>
+        }@else{
+        <p>{{ location() ? 'Last known driver location; update time is unavailable.' : 'No driver coordinates received yet.' }}</p>
+        }@if(eta()!==null){
+        <p>Last estimated arrival: {{ eta() }} minutes</p>
+        }@if(mapError()){
+        <p>{{ mapError() }}</p>
+        }@if(mapsReady()&&center()){<google-map
+          height="280px"
+          width="100%"
+          [center]="center()!"
+          [zoom]="14"
+          [options]="mapOptions"
+          (mapInitialized)="onMapReady($event)"
+          >@if(vendorPosition()){<map-marker
+            [position]="vendorPosition()!"
+            [options]="vendorMarker"
+          />}@if(customerPosition()){<map-marker
+            [position]="customerPosition()!"
+            [options]="customerMarker"
+          />}@if(location()){<map-marker
+            [position]="location()!"
+            [options]="driverMarker"
+          />}</google-map
+        >}
+        <dl class="coordinates">
+          @if(vendorPosition();as point){
+          <dt>Store</dt>
+          <dd>{{ point.lat }}, {{ point.lng }}</dd>
+          }@if(customerPosition();as point){
+          <dt>Destination</dt>
+          <dd>{{ point.lat }}, {{ point.lng }}</dd>
+          }@if(location();as point){
+          <dt>Driver</dt>
+          <dd>{{ point.lat }}, {{ point.lng }}</dd>
+          }
+        </dl>
+      </section>
+      }
+}@else{      <section class="surface flat">
+        <h2>Order timeline</h2>
+        <ol class="timeline">
+          @for(event of current.tracking;track event.id){
+          <li>
+            <strong>{{ event.status.replaceAll("_", " ") | titlecase }}</strong
+            ><small>{{ event.timestamp | date : "medium" }}</small
+            >@if(event.description){
+            <p>{{ event.description }}</p>
+            }
+          </li>
+          }@empty{
+          <li>No tracking events recorded.</li>
+          }
+        </ol>
+      </section>}</section><aside class="action-rail"><div class="eyebrow">Next, at the counter</div>  <section class="surface flat command-bar">
     <div>
       <span class="status-chip" [attr.data-status]="current.status">{{
         current.status.replaceAll("_", " ") | titlecase
@@ -70,7 +203,7 @@
     }
   </section>
       @if(current.status==='ready'){
-      <section class="workspace-card dispatch">
+      <section class="rule-section dispatch">
         <h2>Dispatch</h2>
         <p>
           {{
@@ -123,144 +256,7 @@
         }
       </section>
       }
-  <div class="detail-grid">
-    <div class="detail-column">
-      <section class="workspace-card">
-        <h2>Items and payment</h2>
-        <div class="items">
-          @for(item of current.items;track item.id){
-          <div class="item">
-            <div>
-              <strong>{{ item.product_name }}</strong>
-              <p>
-                {{ item.quantity }} × {{ item.product_price | appCurrency }}
-              </p>
-              @if(item.pack_size){<small>{{ item.pack_size }}</small
-              >}
-            </div>
-            <strong>{{ item.subtotal | appCurrency }}</strong>
-          </div>
-          }
-        </div>
-        <dl class="amounts">
-          <div>
-            <dt>Subtotal</dt>
-            <dd>{{ current.subtotal | appCurrency }}</dd>
-          </div>
-          <div>
-            <dt>Delivery</dt>
-            <dd>{{ current.delivery_fee | appCurrency }}</dd>
-          </div>
-          <div>
-            <dt>Discount</dt>
-            <dd>−{{ current.discount | appCurrency }}</dd>
-          </div>
-          <div class="total">
-            <dt>Total</dt>
-            <dd>{{ current.total | appCurrency }}</dd>
-          </div>
-        </dl>
-        <p>
-          Payment: {{ current.payment_method | titlecase }} ·
-          {{ current.is_payment_verified ? "Verified" : "Not verified" }}
-        </p>
-        @if(current.notes){
-        <h3>Customer notes</h3>
-        <p class="pre-wrap">{{ current.notes }}</p>
-        }
-      </section>
-      <section class="workspace-card">
-        <h2>Order timeline</h2>
-        <ol class="timeline">
-          @for(event of current.tracking;track event.id){
-          <li>
-            <strong>{{ event.status.replaceAll("_", " ") | titlecase }}</strong
-            ><small>{{ event.timestamp | date : "medium" }}</small
-            >@if(event.description){
-            <p>{{ event.description }}</p>
-            }
-          </li>
-          }@empty{
-          <li>No tracking events recorded.</li>
-          }
-        </ol>
-      </section>
-    </div>
-    <div class="detail-column">
-      <section class="workspace-card">
-        <h2>Customer and delivery</h2>
-        <p>
-          <strong>{{ current.customer_name }}</strong>
-        </p>
-        @if(current.delivery_address;as address){
-        <address>
-          {{ address.full_name }}<br />{{ address.address_line1 }}
-          {{ address.address_line2 }}<br />{{ address.city }},
-          {{ address.state }} {{ address.postal_code }}<br /><a
-            [href]="'tel:' + address.phone"
-            >{{ address.phone }}</a
-          >
-        </address>
-        }@if(current.delivery_partner_info;as partner){
-        <h3>Delivery partner</h3>
-        <p>
-          {{ partner.name }} · {{ partner.vehicle_type | titlecase }}
-          {{ partner.vehicle_number }}
-        </p>
-        <a [href]="'tel:' + partner.phone">{{ partner.phone }}</a
-        >}
-      </section>
-      @if(trackingEligible()){
-      <section class="workspace-card tracking">
-        <h2>Delivery tracking</h2>
-        <p role="status">{{ trackingState() }}</p>
-        @if(locationAge()!==null){
-        <p [class.row-error]="locationAge()! > 60">
-          Last location {{ locationAge() }} seconds ago{{
-            locationAge()! > 60 ? " · Location may be stale" : ""
-          }}
-        </p>
-        }@else{
-        <p>{{ location() ? 'Last known driver location; update time is unavailable.' : 'No driver coordinates received yet.' }}</p>
-        }@if(eta()!==null){
-        <p>Last estimated arrival: {{ eta() }} minutes</p>
-        }@if(mapError()){
-        <p>{{ mapError() }}</p>
-        }@if(mapsReady()&&center()){<google-map
-          height="280px"
-          width="100%"
-          [center]="center()!"
-          [zoom]="14"
-          [options]="mapOptions"
-          (mapInitialized)="onMapReady($event)"
-          >@if(vendorPosition()){<map-marker
-            [position]="vendorPosition()!"
-            [options]="vendorMarker"
-          />}@if(customerPosition()){<map-marker
-            [position]="customerPosition()!"
-            [options]="customerMarker"
-          />}@if(location()){<map-marker
-            [position]="location()!"
-            [options]="driverMarker"
-          />}</google-map
-        >}
-        <dl class="coordinates">
-          @if(vendorPosition();as point){
-          <dt>Store</dt>
-          <dd>{{ point.lat }}, {{ point.lng }}</dd>
-          }@if(customerPosition();as point){
-          <dt>Destination</dt>
-          <dd>{{ point.lat }}, {{ point.lng }}</dd>
-          }@if(location();as point){
-          <dt>Driver</dt>
-          <dd>{{ point.lat }}, {{ point.lng }}</dd>
-          }
-        </dl>
-      </section>
-      }
-    </div>
-  </div>
-  } @if(cancel()){<nc-vendor-dialog
+</aside></div>  } @if(cancel()){<nc-vendor-dialog
     [title]="can('reject') ? 'Reject order' : 'Cancel order'"
     [busy]="pending()"
     (dismissed)="cancel.set(false)"

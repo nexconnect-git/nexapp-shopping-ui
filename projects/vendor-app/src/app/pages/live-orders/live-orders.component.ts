@@ -9,6 +9,7 @@ import {
 } from '@shared/public-api';
 import { VendorOrdersStore } from '../../services/vendor-orders.store';
 import { WorkspaceDialogComponent } from '../../components/workspace-dialog.component';
+import { CounterStateComponent } from '../../components/counter-state.component';
 
 @Component({
   selector: 'app-live-orders',
@@ -19,6 +20,7 @@ import { WorkspaceDialogComponent } from '../../components/workspace-dialog.comp
     FormsModule,
     AppCurrencyPipe,
     WorkspaceDialogComponent,
+    CounterStateComponent,
   ],
   templateUrl: './live-orders.component.html',
   styleUrl: './live-orders.component.scss',
@@ -26,15 +28,15 @@ import { WorkspaceDialogComponent } from '../../components/workspace-dialog.comp
 export class LiveOrdersComponent {
   readonly store = inject(VendorOrdersStore);
   readonly lane = signal('all');
-  readonly compact = signal(window.matchMedia('(max-width: 1200px)').matches);
+  readonly compact = signal(window.matchMedia('(max-width: 1150px)').matches);
   readonly selectedLane = computed(() => this.compact() && this.lane() === 'all' ? 'placed' : this.lane());
   readonly rejectTarget = signal<VendorOrderSnapshot | null>(null);
   reason = '';
   readonly lanes = [
     { key: 'placed', label: 'New' },
     { key: 'preparing', label: 'Preparing' },
-    { key: 'ready', label: 'Ready for pickup' },
-    { key: 'dispatched', label: 'On the way' },
+    { key: 'ready', label: 'Ready / Handoff' },
+    { key: 'dispatched', label: 'In delivery' },
   ];
   readonly orders = computed(() =>
     this.store
@@ -69,7 +71,7 @@ export class LiveOrdersComponent {
     { key: 'cancel_delivery_search', label: 'Cancel search' },
   ];
   @HostListener('window:resize')
-  resize(): void { this.compact.set(window.matchMedia('(max-width: 1200px)').matches); }
+  resize(): void { this.compact.set(window.matchMedia('(max-width: 1150px)').matches); }
   stateLabel(order: VendorOrderSnapshot): string {
     if (order.status === 'confirmed') return 'Accepted · not started';
     if (order.status === 'ready') return order.delivery_partner ? 'Driver assigned · awaiting pickup' : order.assignment_status === 'searching' || order.assignment_status === 'notified' ? 'Finding a driver' : 'Ready · needs a driver';

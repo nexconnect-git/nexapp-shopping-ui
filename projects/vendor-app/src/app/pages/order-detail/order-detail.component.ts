@@ -27,6 +27,7 @@ import { environment } from '../../../environments/environment';
 import { VendorOrdersStore } from '../../services/vendor-orders.store';
 import { VendorOrderFacade } from '../../services/vendor-order.facade';
 import { WorkspaceDialogComponent } from '../../components/workspace-dialog.component';
+import { CounterStateComponent } from '../../components/counter-state.component';
 function coordinate(value: unknown, bound: number): number | null {
   if (value === null || value === undefined || value === '') return null;
   const number = Number(value);
@@ -42,11 +43,14 @@ function coordinate(value: unknown, bound: number): number | null {
     AppCurrencyPipe,
     GoogleMapsModule,
     WorkspaceDialogComponent,
+    CounterStateComponent,
   ],
   templateUrl: './order-detail.component.html',
   styleUrl: './order-detail.component.scss',
 })
 export class OrderDetailComponent implements OnInit {
+  readonly tab = signal<'details' | 'delivery' | 'activity'>('details');
+
   private readonly route = inject(ActivatedRoute);
   private readonly destroy = inject(DestroyRef);
   private readonly auth = inject(AuthService);

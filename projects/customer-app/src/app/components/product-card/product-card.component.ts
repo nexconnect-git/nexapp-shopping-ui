@@ -1,6 +1,7 @@
+import { CustomerIconComponent } from '../../shared/customer-icon/customer-icon.component';
 import { Component, Input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { AppCurrencyPipe } from '@shared/lib/pipes/currency.pipe';
+import { CustomerCurrencyPipe as AppCurrencyPipe } from '../../shared/customer-currency/customer-currency.pipe';
 import { Product } from '../../models';
 import { CustomerCartFacade } from '../../services/facades/customer-cart.facade';
 import { CatalogService } from '../../services/catalog.service';
@@ -31,7 +32,7 @@ type ProductMeta = Record<string, unknown> & {
 @Component({
   selector: 'fd-product-card',
   standalone: true,
-  imports: [RouterLink, AppCurrencyPipe],
+  imports: [CustomerIconComponent,RouterLink, AppCurrencyPipe],
   templateUrl: './product-card.component.html',
   styleUrls: ['./product-card.component.scss'],
 })
@@ -43,7 +44,7 @@ export class ProductCardComponent {
   constructor(
     public cart: CustomerCartFacade,
     private catalog: CatalogService,
-    private state: AppStateService,
+    public state: AppStateService
   ) {}
 
   productName(): string {
@@ -64,9 +65,12 @@ export class ProductCardComponent {
     return Number.isFinite(mrp) && mrp > this.productPrice();
   }
 
-  stockBadge(): { label: string; tone: 'success' | 'warning' | 'danger' } | null {
+  stockBadge(): {
+    label: string;
+    tone: 'success' | 'warning' | 'danger';
+  } | null {
     const raw = (this.product?.raw || {}) as ProductMeta;
-    const stock = Number(raw.available_quantity ?? raw.stock ?? 0);
+    const stock = Number(raw.available_quantity ?? raw.stock ?? NaN);
     const lowStockThreshold = Number(raw?.low_stock_threshold ?? 5);
     const state = String(raw.stock_state || '').toLowerCase();
     const available =
@@ -94,9 +98,8 @@ export class ProductCardComponent {
             item.id === this.product.id ||
             item.apiId === this.product.id ||
             item.id === this.product.apiId ||
-            item.apiId === this.product.apiId,
-        )?.quantity ??
-      0
+            item.apiId === this.product.apiId
+        )?.quantity ?? 0
     );
   }
 
@@ -117,11 +120,13 @@ export class ProductCardComponent {
       vendor.eta_label ||
       vendor.delivery_time ||
       '';
-    return String(eta || 'Fast');
+    return String(eta || '');
   }
 
   categoryLabel(): string {
-    return this.product?.category || this.product?.storeName || 'Daily essential';
+    return (
+      this.product?.category || this.product?.storeName || 'Daily essential'
+    );
   }
 
   storeClosed(): boolean {

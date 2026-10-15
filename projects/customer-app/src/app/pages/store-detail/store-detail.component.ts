@@ -1,287 +1,88 @@
-import { Location } from '@angular/common';
-import { Component, computed, effect, signal } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { FormsModule } from '@angular/forms';
-import { CustomSelectComponent } from '@shared/lib/components/custom-select/custom-select.component';
+import { Component, ElementRef, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CatalogService } from '../../services/catalog.service';
 import { AppStateService } from '../../services/app-state.service';
 import { UiService } from '../../services/ui.service';
 import { ProductCardComponent } from '../../components/product-card/product-card.component';
-import { categoryIconFor } from '../../shared/category-icons';
-import { CustomerContentConfigService } from '../../services/customer-content-config.service';
 import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
+import { CustomerIconComponent } from '../../shared/customer-icon/customer-icon.component';
+import { CustomerStateComponent } from '../../shared/customer-state/customer-state.component';
 
 @Component({
   standalone: true,
-  imports: [
-    FormsModule,
-    BreadcrumbsComponent,
-    ProductCardComponent,
-    CustomSelectComponent,
-  ],
+  imports: [RouterLink, BreadcrumbsComponent, CustomerIconComponent, ProductCardComponent, CustomerStateComponent],
   templateUrl: './store-detail.component.html',
   styleUrls: ['./store-detail.component.scss'],
 })
 export class StoreDetailComponent {
-  activeCategory = signal('All');
-  storeQuery = signal('');
-  sortBy = signal('Sort: Relevance');
-
-  constructor(
-    private route: ActivatedRoute,
-    private location: Location,
-    private router: Router,
-    public catalog: CatalogService,
-    public state: AppStateService,
-    public ui: UiService,
-    public content: CustomerContentConfigService,
-  ) {
-    const initialSearch = this.route.snapshot.queryParamMap.get('q');
-    if (initialSearch) this.storeQuery.set(initialSearch);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  readonly catalog = inject(CatalogService);
+  readonly state = inject(AppStateService);
+  readonly ui = inject(UiService);
+  private readonly routeParams = toSignal(this.route.paramMap);
+  private readonly sortControl = viewChild<ElementRef<HTMLSelectElement>>('sortControl');
+  readonly activeCategory = signal('All');
+  readonly storeQuery = signal('');
+  readonly sortBy = signal('relevance');
+  constructor() {
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe(params => {
+      this.storeQuery.set(params.get('q') || '');
+      this.activeCategory.set(params.get('category') || 'All');
+      const sort = params.get('sort') || 'relevance';
+      this.sortBy.set(['relevance', 'price_asc', 'price_desc', 'rating'].includes(sort) ? sort : 'relevance');
+    });
     effect(() => {
-      const storeId = this.route.snapshot.paramMap.get('id') || this.store().id;
-      const address = this.state.activeAddress();
-      if (!storeId) return;
-      this.catalog.loadStoreProducts(storeId, {
-        ...this.addressQuery(address),
-        ...this.storeProductQuery(),
-      });
+      const storeId = this.routeParams()?.get('id');
+      if (storeId) this.catalog.loadStoreProducts(storeId, this.requestParams());
     });
   }
-
-  store = computed(() =>
-    this.catalog.getStore(this.route.snapshot.paramMap.get('id')),
-  );
-  storeLoaded = computed(() => Boolean(this.store().raw));
-  storeTitle = computed(() =>
-    this.storeLoaded() ? this.store().name : 'This store',
-  );
-  storeCategoryLabel = computed(() =>
-    this.storeLoaded()
-      ? this.store().category || 'Nextou store'
-      : 'Store unavailable',
-  );
-  storeOfferPromo = computed(() => {
-    const store = this.store();
-    if (store.offer) {
-      return {
-        eyebrow: 'Running offer',
-        title: store.offer,
-        subtitle:
-          'Vendor offer eligibility is validated with your cart at checkout.',
-        icon: 'local_offer',
-      };
-    }
-    const fallback = this.content.ads().storeDetail[0];
-    return {
-      eyebrow: fallback?.eyebrow || 'Store offer',
-      title: fallback?.title || 'Live vendor deals',
-      subtitle:
-        fallback?.subtitle || 'Final discounts are confirmed at checkout.',
-      icon: fallback?.icon || 'sell',
-    };
-  });
-  storeUnavailableReason = computed(() => {
-    if (this.state.deliveryUnavailable()) {
-      return (
-        this.state.serviceability()?.message ||
-        'Delivery is not available for your selected location. Choose another location to continue.'
-      );
-    }
-    if (
-      !this.storeLoaded() &&
-      !this.catalog.isStoreProductsLoading(this.store().id)
-    ) {
-      return 'This store is unavailable for your selected location or could not be found.';
-    }
-    const raw = (this.store().raw as any) || {};
-    if (raw?.is_serviceable === false) {
-      return raw?.serviceability_error || 'This store is not serviceable for your selected location.';
-    }
-    if ((raw?.is_open_now ?? raw?.is_open) === false) {
-      return this.closingLabel() || 'This store is currently closed.';
-    }
-    if (raw?.is_accepting_orders === false) {
-      return 'This store is temporarily not accepting orders.';
-    }
+  readonly store = computed(() => this.catalog.getStoreDetail(this.routeParams()?.get('id') || ''));
+  readonly storeLoaded = computed(() => Boolean(this.store().raw));
+  readonly storeTitle = computed(() => this.storeLoaded() ? this.store().name : 'This store');
+  readonly storeCategoryLabel = computed(() => this.store().category || '');
+  readonly availability = computed(() => {
+    const raw = this.store().raw;
+    if (raw?.is_open === false) return 'closed';
+    if (raw?.is_accepting_orders === false) return 'paused';
+    if (raw?.is_open_now === false) return 'closed';
+    if (raw?.is_serviceable === false) return 'area';
+    if (this.state.deliveryUnavailable()) return 'area';
     return '';
   });
-  canOrderFromStore = computed(() => !this.storeUnavailableReason());
-
-  availableStoreProducts = computed(() => {
-    if (!this.canOrderFromStore()) return [];
-    const store = this.store();
-    return this.catalog
-      .productsByStore(store.id)
-      .filter((product) => this.isProductAvailable(product));
+  readonly storeUnavailableReason = computed(() => {
+    if (this.availability() === 'area') return this.store().raw?.serviceability_error || this.state.serviceability()?.message || 'This store cannot deliver to your current location. Choose another area or another store.';
+    if (this.availability() === 'closed') return 'This store is closed right now. Ordering is unavailable until the store is open and accepting orders.';
+    if (this.availability() === 'paused') return 'This store is open, but it has paused new orders. Existing orders are unaffected.';
+    return '';
   });
-
-  categories = computed(() => {
-    const serverCategories = ((this.store().raw as any)?.available_categories ||
-      []) as Array<{ name?: string }>;
-    if (serverCategories.length) {
-      const unique = new Set<string>();
-      const labels = (serverCategories
-        .map((category) => category.name)
-        .filter(Boolean) as string[])
-        .map((label) => this.normalizeLabel(label))
-        .filter((label) => {
-          if (!label || unique.has(label.toLowerCase())) return false;
-          unique.add(label.toLowerCase());
-          return true;
-        });
-      return ['All', ...labels];
-    }
-    const names = new Set<string>();
-    this.availableStoreProducts()
-      .map((product) => this.normalizeLabel(product.category || ''))
-      .filter(Boolean)
-      .forEach((label) => names.add(label));
-    return ['All', ...names];
+  readonly availabilityLabel = computed(() => ({area: 'Outside delivery area', closed: 'Closed', paused: 'Intake paused', '': 'Accepting orders'}[this.availability()] || 'Accepting orders'));
+  readonly availableStoreProducts = computed(() => this.catalog.productsForStoreDetail(this.store().id));
+  readonly categories = computed(() => {
+    const server = this.store().raw?.available_categories || [];
+    const labels = server.length ? server.map(category => category.name) : this.availableStoreProducts().map(product => product.category);
+    return ['All', ...new Set(labels.map(label => String(label || '').replace(/\s+/g, ' ').trim()).filter(Boolean))];
   });
-  isOpen = computed(
-    () => this.store().raw?.is_open_now ?? this.store().raw?.is_open,
-  );
-  closingLabel = computed(() =>
-    this.store().raw?.closing_time
-      ? `Closes at ${this.store().raw?.closing_time}`
-      : this.store().raw?.availability_note || '',
-  );
-  filteringCategories = computed(() =>
-    this.catalog.isStoreProductsLoading(this.store().id),
-  );
-
-  groupedProducts = computed(() => {
-    const all = this.availableStoreProducts();
-    const groups = new Map<string, typeof all>();
-    for (const product of all) {
-      const name = product.category || 'Products';
-      groups.set(name, [...(groups.get(name) || []), product]);
-    }
-    return [...groups.entries()].map(([name, items]) => ({
-      name,
-      items: items.slice(0, 12),
-    }));
-  });
-  stockSummary = computed(() => {
-    const all = this.catalog.productsByStore(this.store().id);
-    const available = all.filter((product) => this.isProductAvailable(product));
-    const lowStock = available.filter((product) => {
-      const raw = (product.raw as any) || {};
-      const stock = Number(raw?.stock ?? 0);
-      const threshold = Number(raw?.low_stock_threshold ?? 5);
-      return Number.isFinite(stock) && stock > 0 && stock <= threshold;
-    });
-    return {
-      total: all.length,
-      available: available.length,
-      lowStock: lowStock.length,
-    };
-  });
-  inventoryDeliveryPromise = computed(() => {
-    const eta = this.store().eta?.trim();
-    if (eta) return `Delivery in ${eta}`;
-    return 'Delivery promise confirmed at checkout';
-  });
-
-  clearStoreSearch(): void {
-    this.storeQuery.set('');
-    this.activeCategory.set('All');
-  }
-
-  setStoreQuery(value: string): void {
-    this.storeQuery.set(value);
-  }
-
-  setSortBy(value: string): void {
-    this.sortBy.set(value);
-  }
-
-  setCategory(category: string): void {
-    this.activeCategory.set(category);
-  }
-
+  readonly filteringCategories = computed(() => this.catalog.isStoreProductsLoading(this.store().id));
+  categoryImage(label: string): string { return this.catalog.categories().find(category => category.label === label)?.image || ''; }
+  retry(): void { this.catalog.loadStoreProducts(this.store().id, this.requestParams()); }
+  clearStoreSearch(): void { this.storeQuery.set(''); this.activeCategory.set('All'); this.sortBy.set('relevance'); this.sync(); }
+  setStoreQuery(value: string): void { this.storeQuery.set(value); this.sync(); }
+  setSortBy(value: string): void { this.sortBy.set(value); this.sync(); }
+  setCategory(category: string): void { this.activeCategory.set(category); this.sync(); }
+  focusSort(): void { this.sortControl()?.nativeElement.focus(); }
   shareStore(): void {
     const store = this.store();
     const url = `${location.origin}/store/${store.id}`;
-    if (navigator.share) {
-      navigator
-        .share({
-          title: store.name,
-          text: `Shop ${store.name} on Nextou`,
-          url,
-        })
-        .catch(() => {});
-    } else {
-      navigator.clipboard?.writeText(url);
-      this.state.showToast('Store link copied');
-    }
+    if (navigator.share) { void navigator.share({title: store.name, text: `Shop ${store.name} on Nextou`, url}).catch(() => {}); }
+    else if (navigator.clipboard) { void navigator.clipboard.writeText(url).then(() => this.state.showToast('Store link copied')).catch(() => this.state.showToast('Could not copy store link')); }
+    else this.state.showToast('Sharing is unavailable in this browser');
   }
-
-  showAllInGroup(groupName: string): void {
-    this.activeCategory.set(groupName);
-    this.state.showToast(`Showing ${groupName}`);
+  private sync(): void {
+    void this.router.navigate([], {relativeTo: this.route, queryParams: {q: this.storeQuery() || null, category: this.activeCategory() === 'All' ? null : this.activeCategory(), sort: this.sortBy() === 'relevance' ? null : this.sortBy()}});
   }
-
-  icon(cat: string): string {
-    return categoryIconFor(
-      this.catalog.categories().find((category) => category.label === cat) ||
-        cat,
-    );
-  }
-
-  goBack(): void {
-    if (history.length > 1) {
-      this.location.back();
-      return;
-    }
-    this.router.navigateByUrl('/explore');
-  }
-
-  changeLocation(): void {
-    this.ui.openLocation();
-  }
-
-  private isProductAvailable(product: any): boolean {
-    const raw = product?.raw || product || {};
-    if (raw.is_available === false || raw.in_stock === false) return false;
-    if (raw.status && raw.status !== 'active') return false;
-    if (raw.approval_status && raw.approval_status !== 'approved') return false;
-    const stock = Number(raw.stock);
-    return !Number.isFinite(stock) || stock > 0;
-  }
-
-  private addressQuery(
-    address: ReturnType<AppStateService['activeAddress']>,
-  ): Record<string, any> {
-    if (!address) return this.state.customerLocationQuery();
-    const params: Record<string, any> = {
-      state: address.state || '',
-      city: address.city || '',
-      postal_code: address.pincode || '',
-    };
-    if (address.latitude != null && address.longitude != null) {
-      params['lat'] = Number(address.latitude);
-      params['lng'] = Number(address.longitude);
-    }
-    return params;
-  }
-
-  private storeProductQuery(): Record<string, any> {
-    const params: Record<string, any> = {};
-    const query = this.storeQuery().trim();
-    const category = this.activeCategory();
-    if (query) params['product_search'] = query;
-    if (category && category !== 'All') params['product_category'] = category;
-    if (this.sortBy() === 'Sort: Price Low to High')
-      params['product_sort'] = 'price_asc';
-    if (this.sortBy() === 'Sort: Rating') params['product_sort'] = 'rating';
-    return params;
-  }
-
-  private normalizeLabel(value: string): string {
-    return String(value || '')
-      .replace(/\s+/g, ' ')
-      .trim();
+  private requestParams(): Record<string, any> {
+    return {...this.state.customerLocationQuery(), product_search: this.storeQuery().trim() || undefined, product_category: this.activeCategory() === 'All' ? undefined : this.activeCategory(), product_sort: this.sortBy()};
   }
 }

@@ -1,71 +1,11 @@
 <div class="workspace-page">
   <header class="page-heading">
     <div>
-      <h1>Inventory</h1>
-      <p>Find a product, update its quantity, and save your changes.</p>
+      <p class="eyebrow">Catalog / Inventory</p><h1>Keep your shelves ready.</h1>
+      <p>Change quantities, then save only what changed.</p>
     </div>
   </header>
-  @if(changed().length){
-  <section class="stock-save-bar" aria-label="Unsaved stock changes">
-    <div class="workspace-section-heading">
-      <strong
-        >{{ changed().length }} unsaved stock change{{
-          changed().length === 1 ? "" : "s"
-        }}
-        across all pages</strong
-      >
-      <div class="workspace-actions">
-        <button
-          type="button"
-          class="btn btn-secondary"
-          [disabled]="isSaving()"
-          (click)="discard()"
-        >
-          Discard changes</button
-        ><button
-          type="button"
-          class="btn btn-primary"
-          [disabled]="isSaving()"
-          (click)="saveRows()"
-        >
-          {{ isSaving() ? "Saving…" : "Save changes" }}
-        </button>
-      </div>
-    </div>
-    <details>
-      <summary>Review changed quantities</summary>
-      <ul>
-        @for(product of changed();track product.id){
-        <li>
-          <strong>{{ product.name }}</strong
-          >: {{ product.stock }} →
-          {{ draft(product) }}@if(rowErrors()[product.id]){
-          <p class="workspace-error" role="alert">
-            {{ rowErrors()[product.id] }}
-          </p>
-          }@if(conflicts().has(product.id)){
-          <div class="workspace-actions">
-            <button
-              type="button"
-              class="btn btn-secondary"
-              (click)="resolveConflict(product, false)"
-            >
-              Use current stock</button
-            ><button
-              type="button"
-              class="btn btn-secondary"
-              (click)="resolveConflict(product, true)"
-            >
-              Keep my quantity
-            </button>
-          </div>
-          }
-        </li>
-        }
-      </ul>
-    </details>
-  </section>
-  } @if(success()){
+ @if(success()){
   <p class="workspace-success" role="status">{{ success() }}</p>
   }
   <p class="stock-totals">
@@ -103,8 +43,7 @@
   }
   <form class="workspace-toolbar" (ngSubmit)="query()">
     <label class="workspace-search"
-      ><span class="material-icons-outlined" aria-hidden="true">search</span
-      ><input
+      >Search inventory<input
         name="search"
         [(ngModel)]="search"
         aria-label="Search inventory by name, SKU, category or brand"
@@ -119,10 +58,10 @@
       Refresh
     </button>
   </form>
-  <div class="workspace-tabs" aria-label="Inventory filters">
+  <div class="filter-chips" aria-label="Inventory filters">
     @for (item of filters; track item.key) {<button
       type="button"
-      [class.active]="filter() === item.key"
+      class="chip" [class.active]="filter() === item.key"
       [attr.aria-pressed]="filter() === item.key"
       (click)="setFilter(item.key)"
     >
@@ -132,7 +71,7 @@
   @if (error()) {
   <p class="workspace-error" role="alert">{{ error() }}</p>
   } @if (loading() && !products().length) {
-  <div class="workspace-state" role="status">Loading inventory…</div>
+  <nc-counter-state kind="loading" title="Loading inventory" />
   } @else if (!error()&&!products().length) {
   <div class="workspace-state">
     <h3>No matching products</h3>
@@ -140,9 +79,9 @@
     <a routerLink="/products/new" class="btn btn-primary">Add product</a>
   </div>
   } @else {
-  <div class="workspace-inventory-list">
+  <div class="workspace-inventory-list"><div class="inventory-column-headings"><span>Product / health</span><span>Stock units / actions</span></div>
     @for (product of products(); track product.id) {
-    <article class="workspace-card inventory-item">
+    <article class="inventory-item" [class.dirty]="draft(product) !== stockText(product)" [class.rowerror]="!!rowErrors()[product.id]">
       <div class="inventory-product">
         <img
           [src]="image(product)"
@@ -221,10 +160,73 @@
     }
   </div>
   }
-  <nc-vendor-pager
+  @if(loaded()){<nc-vendor-pager
     [page]="page()"
     [count]="count()"
     [busy]="loading()"
     (pageChange)="query($event)"
-  />
+  />}
+  @if(changed().length){
+  <section class="stock-save-bar" aria-label="Unsaved stock changes">
+    <div class="workspace-section-heading">
+      <strong
+        >{{ changed().length }} unsaved stock change{{
+          changed().length === 1 ? "" : "s"
+        }}
+        across all pages</strong
+      >
+      <div class="workspace-actions">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          [disabled]="isSaving()"
+          (click)="discard()"
+        >
+          Discard changes</button
+        ><button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="isSaving()"
+          (click)="saveRows()"
+        >
+          {{ isSaving() ? "Saving…" : "Save changes" }}
+        </button>
+      </div>
+    </div>
+<button class="btn text" type="button" (click)="reviewChanges.set(true)">Review changed quantities</button>
+  </section>
+  }
 </div>
+
+@if(reviewChanges()){<nc-vendor-dialog title="Review stock changes" mode="drawer" [busy]="isSaving()" (dismissed)="reviewChanges.set(false)"><p>Changed quantities remain editable across pages. Successful rows are saved independently.</p>@if(success()){<p class="success-banner" role="status">{{ success() }}</p>}
+
+      <ul>
+        @for(product of changed();track product.id){
+        <li>
+          <strong>{{ product.name }}</strong
+          >: {{ currentStock(product) }} →
+          {{ draft(product) }}@if(rowErrors()[product.id]){
+          <p class="workspace-error" role="alert">
+            {{ rowErrors()[product.id] }}
+          </p>
+          }@if(conflicts().has(product.id)){
+          <div class="workspace-actions">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              (click)="resolveConflict(product, false)"
+            >
+              Use current stock</button
+            ><button
+              type="button"
+              class="btn btn-secondary"
+              (click)="resolveConflict(product, true)"
+            >
+              Keep my quantity
+            </button>
+          </div>
+          }
+        </li>
+        }
+      </ul>
+<div class="dialog-actions"><button class="btn" type="button" [disabled]="isSaving()" (click)="reviewChanges.set(false)">Back to inventory</button><button class="btn primary" type="button" [disabled]="isSaving() || !changed().length" (click)="saveRows()">Save changed rows</button></div></nc-vendor-dialog>}

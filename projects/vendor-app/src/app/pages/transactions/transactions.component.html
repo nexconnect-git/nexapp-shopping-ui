@@ -1,13 +1,13 @@
 <div class="workspace-page">
   <header class="page-heading">
     <div>
-      <p class="eyebrow">Money</p><h1>Wallet transactions</h1>
+      <p class="eyebrow">Money</p><h1>Every entry, in order.</h1>
       <p>Credits, debits, and running balances from your wallet ledger.</p>
     </div>
     <a routerLink="/payouts" class="btn btn-secondary">Settlements</a>
   </header>
   @if(context.context();as store){
-  <section class="workspace-card">
+  <section class="money-slab">
     <h3>Current wallet balance</h3>
     <strong>{{ store.vendor.wallet_balance | appCurrency }}</strong>
     <p class="workspace-muted">
@@ -55,8 +55,8 @@
       Retry
     </button>
   </p>
-  }@if(list.loading()){
-  <div class="workspace-state" role="status">Loading wallet transactions…</div>
+  }@if(list.loading() && !list.response()){
+  <nc-counter-state kind="loading" title="Loading wallet transactions…" />
   }@else if(!list.error()&&!list.rows().length){
   <div class="workspace-state">
     <h3>No matching transactions</h3>
@@ -89,10 +89,10 @@
     </article>
     }
   </div>
-  }<nc-vendor-pager
+  }@if(list.response()){<nc-vendor-pager
     [page]="list.page()"
     [count]="list.count()"
     [busy]="list.loading()"
     (pageChange)="query($event)"
-  />
+  />}
 </div>

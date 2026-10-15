@@ -18,13 +18,14 @@ import {
   VendorOrderCommand,
 } from '@shared/public-api';
 import { VendorOrdersStore } from '../../services/vendor-orders.store';
+import { CounterStateComponent } from '../../components/counter-state.component';
 interface Checklist {
   [id: string]: { signature: string; checked: boolean };
 }
 @Component({
   selector: 'app-order-prep',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, CounterStateComponent],
   templateUrl: './order-prep.component.html',
   styleUrl: './order-prep.component.scss',
 })

@@ -5,6 +5,7 @@ export interface CustomerNavItem {
   featureRoute?: string;
   exact?: boolean;
   badge?: boolean;
+  activeRoutes?: string[];
 }
 
 export const CUSTOMER_MOBILE_NAV_ITEMS: CustomerNavItem[] = [
@@ -14,6 +15,7 @@ export const CUSTOMER_MOBILE_NAV_ITEMS: CustomerNavItem[] = [
     label: 'Stores',
     route: '/stores',
     featureRoute: '/explore',
+    activeRoutes: ['/stores', '/store'],
   },
   {
     icon: 'search',
@@ -21,11 +23,12 @@ export const CUSTOMER_MOBILE_NAV_ITEMS: CustomerNavItem[] = [
     route: '/explore',
     featureRoute: '/explore',
   },
-  { icon: 'shopping_bag', label: 'Cart', route: '/cart', badge: true },
+  { icon: 'shopping_bag', label: 'Cart', route: '/cart', badge: true, activeRoutes: ['/cart', '/checkout'] },
   {
     icon: 'person',
     label: 'Account',
     route: '/account',
     featureRoute: '/account',
+    activeRoutes: ['/account', '/orders', '/order-confirmed', '/tracking', '/order-finished', '/addresses', '/notifications', '/privacy-policy', '/help', '/issues'],
   },
 ];

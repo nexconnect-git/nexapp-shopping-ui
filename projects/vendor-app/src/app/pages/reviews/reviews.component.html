@@ -1,7 +1,7 @@
 <div class="workspace-page">
   <header class="page-heading">
     <div>
-      <p class="eyebrow">Growth</p><h1>Customer reviews</h1>
+      <p class="eyebrow">Growth</p><h1>What your customers say.</h1>
       <p>Understand customer feedback across your store.</p>
     </div>
     <button
@@ -14,7 +14,7 @@
     </button>
   </header>
   @if(list.response()?.rating_summary;as summary){
-  <section class="workspace-card review-summary">
+  <section class="rating-slab review-summary">
     <div>
       <strong>{{ summary.average | number : "1.1-1" }}</strong>
       <p>out of 5 · {{ summary.total }} reviews</p>
@@ -23,7 +23,7 @@
     <div class="review-distribution">
       @for(star of stars;track star){
       <div>
-        <span>{{ star }} stars</span
+        <span>{{ star }} star{{ star === 1 ? '' : 's' }}</span
         ><meter
           [min]="0"
           [max]="summary.total || 1"
@@ -65,8 +65,8 @@
       Retry
     </button>
   </p>
-  } @if(list.loading()){
-  <div class="workspace-state" role="status">Loading reviews…</div>
+  } @if(list.loading() && !list.response()){
+  <nc-counter-state kind="loading" title="Loading reviews…" />
   }@else if(!list.error()&&!list.rows().length){
   <div class="workspace-state">
     <h3>No matching reviews</h3>
@@ -75,7 +75,7 @@
   }@else{
   <div class="workspace-review-list">
     @for(review of list.rows();track review.id){
-    <article class="workspace-card">
+    <article class="review-record">
       <header class="workspace-section-heading">
         <h3>{{ review.customer_name || "Customer" }}</h3>
         <span class="status-pill">{{ review.rating }} / 5</span>
@@ -88,10 +88,10 @@
     }
   </div>
   }
-  <nc-vendor-pager
+  @if(list.response()){<nc-vendor-pager
     [page]="list.page()"
     [count]="list.count()"
     [busy]="list.loading()"
     (pageChange)="query($event)"
-  />
+  />}
 </div>

@@ -1,0 +1,87 @@
+{
+  "environment": "Isolated loopback QA SQLite copy; no production writes",
+  "observed_at": "2026-10-08T16:15:52.410404",
+  "customer_id": "6594fc142dd04bcfb3063bfc5a2c3a9e",
+  "orders": [
+    {
+      "id": "e25e82596a3744e5b22a38ef44245aaa",
+      "order_number": "ORD-9423425F",
+      "status": "picked_up",
+      "payment_method": "cod",
+      "is_payment_verified": 0,
+      "total": 270,
+      "client_idempotency_key": "95becbb8-d8bb-4df3-bfe6-f8c8d8cc61ec"
+    },
+    {
+      "id": "e1fc20d2ea044702b2c7e986b260e5a0",
+      "order_number": "ORD-494EC279",
+      "status": "cancelled",
+      "payment_method": "cod",
+      "is_payment_verified": 0,
+      "total": 270,
+      "client_idempotency_key": "590aef33-d584-422e-a4bb-5e4bee1f2d09"
+    },
+    {
+      "id": "a2e5dbf03e8b408b811d72284d7e1107",
+      "order_number": "ORD-0BCCB3E7",
+      "status": "delivered",
+      "payment_method": "cod",
+      "is_payment_verified": 0,
+      "total": 270,
+      "client_idempotency_key": "6624e0a0-c3aa-4018-bf73-d5dee94b00fe"
+    },
+    {
+      "id": "b5232eb737dd46899cbe8a55dc606590",
+      "order_number": "ORD-48B6CE14",
+      "status": "placed",
+      "payment_method": "cod",
+      "is_payment_verified": 0,
+      "total": 90,
+      "client_idempotency_key": "d6d52f13-2cf3-4a9e-87ed-ec958b7f059a"
+    }
+  ],
+  "addresses": [
+    {
+      "id": "40f81a8c04e54701a5becfb412428cc8",
+      "label": "home",
+      "is_default": 1,
+      "address_line1": "QA fixture address, central Bengaluru"
+    },
+    {
+      "id": "69e421db56d244f48819b7c5783ab947",
+      "label": "work",
+      "is_default": 0,
+      "address_line1": "Isolated QA office address, edited"
+    }
+  ],
+  "ratings": [
+    {
+      "order_id": "a2e5dbf03e8b408b811d72284d7e1107",
+      "vendor_rating": 4,
+      "vendor_comment": "Isolated QA feedback verifying persistence and duplicate protection."
+    }
+  ],
+  "issues": [
+    {
+      "id": "02dc875a5b414929aa7b502d2dff06b4",
+      "order_id": "e25e82596a3744e5b22a38ef44245aaa",
+      "status": "in_review",
+      "description": "Isolated QA verification: check the redesigned issue form and persisted conversation. No live customer request."
+    }
+  ],
+  "stock": [
+    {
+      "id": "0e336767de0343dfbe6629ca91de3261",
+      "stock": 99,
+      "price": 60
+    },
+    {
+      "id": "c5ac101995d84a8d8bcfbbb32191d594",
+      "stock": 96,
+      "price": 120
+    }
+  ],
+  "order_count": 4,
+  "default_count": 1,
+  "duplicate_order_keys": []
+}

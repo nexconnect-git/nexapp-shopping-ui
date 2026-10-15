@@ -1,9 +1,196 @@
-:host { display: block; }
-.stock-save-bar { padding: 16px; border: 1px solid #b6a7e4; border-radius: 10px; background: #f5f2ff; }
-.stock-save-bar .workspace-section-heading { flex-wrap: wrap; margin-bottom: 10px; }
-.stock-save-bar summary { cursor: pointer; padding: 8px 0; font-size: 15px; }
-.stock-save-bar li { margin: 12px 0; line-height: 1.6; overflow-wrap: anywhere; }
-.stock-save-bar ul { list-style: none; margin: 0; padding: 0; }
-.stock-totals { margin: 0; font-size: 14px; color: #626779; }
-.visibility-details summary { cursor: pointer; padding: 10px 0; min-height: 44px; font-size: 14px; }
-.visibility-details ul { padding-left: 20px; font-size: 14px; line-height: 1.6; }
+:host  {
+   display: block;
+   }
+
+.workspace-inventory-list  {
+   border: 1px solid var(--line);
+   border-radius: 14px;
+   background: var(--surface);
+   }
+
+.inventory-column-headings  {
+   display: grid;
+   grid-template-columns: minmax(0,1fr) 390px;
+   gap: 24px;
+   padding: 15px 18px;
+   background: #f1f2e9;
+   border-radius: 14px 14px 0 0;
+   color: var(--muted);
+   font-size: 11px;
+   letter-spacing: 1.1px;
+   text-transform: uppercase;
+   }
+
+.inventory-item  {
+   display: grid;
+   grid-template-columns: minmax(0,1fr) 390px;
+   gap: 24px;
+   align-items: center;
+   padding: 15px 18px;
+   border-bottom: 1px solid var(--line);
+   transition: background 140ms;
+   }
+
+.inventory-item:last-child  {
+   border: 0;
+   }
+
+.inventory-item.dirty  {
+   background: #f6f2ff;
+   }
+
+.inventory-item.rowerror  {
+   background: #fff3ed;
+   }
+
+.inventory-product  {
+   display: flex;
+   gap: 12px;
+   align-items: center;
+   min-width: 0;
+   }
+
+.inventory-product img  {
+   width: 43px;
+   height: 43px;
+   object-fit: cover;
+   border-radius: 10px;
+   flex: none;
+   }
+
+.inventory-product a  {
+   text-decoration: none;
+   color: var(--ink);
+   }
+
+.inventory-product h3  {
+   font-size: 14px;
+   margin-bottom: 4px;
+   }
+
+.inventory-product p  {
+   font-size: 11px;
+   color: var(--muted);
+   margin: 4px 0;
+   }
+
+.inventory-product .status-pill  {
+   font-size: 10px;
+   padding: 4px 6px;
+   }
+
+.inventory-controls  {
+   display: grid;
+   grid-template-columns: 86px 1fr 1fr;
+   gap: 10px;
+   align-items: end;
+   }
+
+.inventory-controls label  {
+   font-size: 11px;
+   color: var(--muted);
+   }
+
+.inventory-controls input  {
+   min-height: 42px;
+   }
+
+.inventory-controls button  {
+   min-height: 42px;
+   font-size: 12px;
+   padding: 8px 10px;
+   }
+
+.inventory-item > .workspace-error  {
+   grid-column: 1/-1;
+   }
+
+.stock-save-bar  {
+   background: var(--ink);
+   color: var(--surface);
+   border-radius: 14px;
+   padding: 18px;
+   margin: 20px 0;
+   }
+
+.stock-save-bar .workspace-section-heading  {
+   flex-wrap: wrap;
+   margin-bottom: 5px;
+   }
+
+.stock-save-bar .btn-secondary  {
+   color: white;
+   border-color: #697165;
+   }
+
+.stock-save-bar .btn-primary  {
+   background: var(--lime);
+   border-color: var(--lime);
+   color: var(--ink);
+   }
+
+.stock-save-bar > .btn  {
+   color: var(--lime);
+   }
+
+.stock-totals  {
+   color: var(--muted);
+   font-size: 12px;
+   margin: 16px 0;
+   }
+
+.visibility-details  {
+   font-size: 11px;
+   margin-top: 5px;
+   }
+
+.operating-card  {
+   display: flex;
+   align-items: center;
+   gap: 20px;
+   justify-content: space-between;
+   margin: 16px 0;
+   }
+
+.operating-card p  {
+   font-size: 12px;
+   color: var(--muted);
+   }
+
+@media(max-width:900px)  {
+   .inventory-column-headings,.inventory-item  {
+   grid-template-columns: minmax(0,1fr) 320px;
+   gap: 18px;
+   }
+ }
+
+@media(max-width:650px)  {
+   .workspace-inventory-list  {
+   border: 0;
+   background: none;
+   }
+ .inventory-column-headings  {
+   display: none;
+   }
+ .inventory-item  {
+   grid-template-columns: 1fr;
+   gap: 16px;
+   margin-bottom: 14px;
+   background: var(--surface);
+   border: 1px solid var(--line);
+   border-radius: 14px;
+   padding: 18px;
+   }
+ .inventory-item:last-child  {
+   border: 1px solid var(--line);
+   }
+ .inventory-controls  {
+   grid-template-columns: 86px 1fr 1fr;
+   }
+ .operating-card  {
+   flex-wrap: wrap;
+   }
+ .stock-save-bar strong  {
+   font-size: 13px;
+   }
+ }

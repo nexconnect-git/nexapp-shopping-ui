@@ -1,403 +1,236 @@
-@if (!auth.isLoggedIn()) {
-  <fd-customer-locked-state
-    title="Login to manage addresses"
-    description="Sign in to add delivery locations, pin map spots and pick a default checkout address."
-    icon="location_on"
-  />
-} @else {
-<div class="desktop-customer-view">
-  <main class="fd-content">
-    <fd-breadcrumbs [items]="[{ label: 'Addresses' }]" />
-    <div class="fd-page-header">
-      <div>
-        <h1 class="fd-title">Saved Addresses</h1>
-        <p class="fd-subtitle">Manage your delivery locations</p>
-      </div>
-      <button type="button" class="fd-btn primary" (click)="openModal()">
-        <span class="material-symbols-rounded">add</span> Add Address
-      </button>
-    </div>
-    <section class="address-grid">
-      @for (address of addresses(); track address.id) {
-      <article class="fd-card">
-        <div class="top">
-          <span>{{ address.label }}</span>
-          @if (address.isDefault) {
-          <b>Default</b>
-          }
-        </div>
-        <h3>{{ address.name }}</h3>
-        <p>{{ address.line }}</p>
-        <small>{{ address.phone }}</small>
-        <div class="actions">
-          <button type="button" (click)="edit(address)">Edit</button
-          ><button type="button" (click)="remove(address.id)">Remove</button
-          ><button type="button" (click)="makeDefault(address.id)">
-            Make Default
-          </button>
-        </div>
-      </article>
-      } @empty {
-      <section class="fd-card">
-        <h2>No addresses yet</h2>
-        <p>Add a delivery address to checkout faster.</p>
-      </section>
-      }
-    </section>
-
-    @if (showModal()) {
-    <div class="modal">
-      <form class="fd-card" (submit)="save($event)">
-        <header class="modal-head">
-          <div>
-            <h2>{{ editing() ? "Edit Address" : "Add Address" }}</h2>
-            <p>
-              Pin the delivery location and complete the required address
-              details.
-            </p>
-          </div>
-          <button
-            type="button"
-            class="modal-close"
-            aria-label="Close address form"
-            (click)="closeModal()"
-          >
-            <span class="material-symbols-rounded">close</span>
-          </button>
-        </header>
-        @if (formError()) {
-        <div class="form-error">{{ formError() }}</div>
-        }
-        <label class="address-field">
-          <span>Address label</span>
-          <input
-            class="fd-input"
-            [class.has-error]="fieldError('label')"
-            placeholder="Home, Work, Other"
-            [value]="form.label"
-            (input)="
-              form.label = $any($event.target).value; clearFieldError('label')
-            "
-          />
-          @if (fieldError("label")) {
-          <small class="field-error">{{ fieldError("label") }}</small>
-          }
-        </label>
-        <label class="address-field">
-          <span>Receiver name</span>
-          <input
-            class="fd-input"
-            [class.has-error]="fieldError('name')"
-            placeholder="Who will receive the order?"
-            [value]="form.name"
-            (input)="
-              form.name = $any($event.target).value; clearFieldError('name')
-            "
-          />
-          @if (fieldError("name")) {
-          <small class="field-error">{{ fieldError("name") }}</small>
-          }
-        </label>
-        <app-map-picker
-          [initialLat]="form.latitude || 28.6139"
-          [initialLng]="form.longitude || 77.209"
-          height="220px"
-          (locationPicked)="onMapLocationPicked($event)"
-        />
-        <label class="address-field full">
-          <span>Full address</span>
-          <textarea
-            class="fd-input"
-            [class.has-error]="fieldError('line')"
-            placeholder="House number, building, street, landmark"
-            [value]="form.line"
-            (input)="
-              form.line = $any($event.target).value; clearFieldError('line')
-            "
-          ></textarea>
-          @if (fieldError("line")) {
-          <small class="field-error">{{ fieldError("line") }}</small>
-          }
-        </label>
-        <label class="address-field">
-          <span>City</span>
-          <input
-            class="fd-input"
-            [class.has-error]="fieldError('city')"
-            placeholder="City"
-            [value]="form.city || ''"
-            (input)="
-              form.city = $any($event.target).value; clearFieldError('city')
-            "
-          />
-          @if (fieldError("city")) {
-          <small class="field-error">{{ fieldError("city") }}</small>
-          }
-        </label>
-        <label class="address-field">
-          <span>State</span>
-          <input
-            class="fd-input"
-            [class.has-error]="fieldError('state')"
-            placeholder="State"
-            [value]="form.state || ''"
-            (input)="
-              form.state = $any($event.target).value; clearFieldError('state')
-            "
-          />
-          @if (fieldError("state")) {
-          <small class="field-error">{{ fieldError("state") }}</small>
-          }
-        </label>
-        <label class="address-field">
-          <span>PIN code</span>
-          <input
-            class="fd-input"
-            [class.has-error]="fieldError('pincode')"
-            placeholder="PIN code"
-            [value]="form.pincode || ''"
-            (input)="onPincodeInput($any($event.target).value)"
-            inputmode="numeric"
-            pattern="[0-9]*"
-            maxlength="6"
-            (keydown)="blockInvalidNumberKey($event)"
-          />
-          @if (fieldError("pincode")) {
-          <small class="field-error">{{ fieldError("pincode") }}</small>
-          }
-        </label>
-        <label class="address-field">
-          <span>Receiver phone</span>
-          <input
-            class="fd-input"
-            [class.has-error]="fieldError('phone')"
-            placeholder="Receiver phone number"
-            [value]="form.phone"
-            (input)="onPhoneInput($any($event.target).value)"
-            inputmode="numeric"
-            pattern="[0-9]*"
-            maxlength="10"
-            (keydown)="blockInvalidNumberKey($event)"
-          />
-          @if (fieldError("phone")) {
-          <small class="field-error">{{ fieldError("phone") }}</small>
-          }
-        </label>
-        <div class="modal-actions">
-          <button type="button" class="fd-btn outline" (click)="closeModal()">
-            Cancel</button
-          ><button
-            type="submit"
-            class="fd-btn primary"
-            [disabled]="saving() || !isAddressFormValid()"
-          >
-            {{ saving() ? "Saving..." : "Save" }}
-          </button>
-        </div>
-      </form>
-    </div>
+@if(!auth.isLoggedIn()){<fd-customer-locked-state title="Your places, remembered." description="Sign in to manage complete delivery addresses and choose a default." icon="lock" /> }@else{
+<main class="fd-content">
+  <fd-breadcrumbs [items]="[{label:'Account',link:'/account'},{label:'Saved addresses'}]" />
+  <fd-customer-page-header eyebrow="Your account / Addresses" title="Places you call yours." description="Save an address once. Make the next delivery a little easier."><button headerActions class="btn primary" type="button" (click)="openModal()"><svg customerIcon="plus"></svg>Add an address</button></fd-customer-page-header>
+  @if(state.addressError()){<div class="notice error space-sm" role="alert"><svg customerIcon="alert"></svg><div>{{ state.addressError() }}<button class="btn text" type="button" (click)="state.loadAddresses()">Retry addresses</button></div></div>}
+  @if(state.addressLoading()&&!addresses().length){<div class="skeleton card-skeleton" aria-label="Loading addresses"></div>}
+  <div class="address-grid space">@for(address of addresses();track address.id){<article class="address-card" [class.default]="address.isDefault"><div class="row between"><div class="row"><svg [customerIcon]="address.label==='Office'||address.label==='Work'?'store':'home'"></svg><h3>{{ address.label }}</h3></div>@if(address.isDefault){<span class="tag green">Default</span>}</div><p><strong>{{ address.name }}</strong><br>{{ address.line }}<br>{{ address.city }}, {{ address.state }} {{ address.pincode }}<br>{{ address.phone }}</p><div class="row wrap-row"><button class="btn sm" type="button" (click)="edit(address)"><svg customerIcon="edit"></svg>Edit</button><button class="btn sm" type="button" (click)="remove(address.id)"><svg customerIcon="trash"></svg>Delete</button>@if(!address.isDefault){<button class="btn sm soft" type="button" [disabled]="!!state.addressPending()" (click)="makeDefault(address.id, $event)">{{ state.addressPending()===address.id?'Saving…':'Make default' }}</button>}</div>@if(returnUrl){<button class="btn primary wide space" type="button" (click)="choose(address)">Choose for checkout</button>}</article>}</div>
+  @if(!addresses().length&&!state.addressLoading()&&!state.addressError()){<fd-customer-state title="Where should your next order go?" description="Add a complete delivery address with receiver details and a confirmed location." icon="pin" artTone="green" action="Add your first address" (retry)="openModal()" />}
+</main>
+@if(showModal()){<fd-nx-modal-shell [footer]="true"
+  [open]="true"
+  [title]="
+    editing() ? 'Edit this little place.' : 'A place for your everyday.'
+  "
+  [eyebrow]="editing()?'Edit address':'Add delivery address'"
+  subtitle="Complete receiver details and the delivery location before saving."
+  width="490px"
+  [dismissible]="!saving()"
+  (closed)="closeModal()"
+  ><form id="customer-address-form" class="address-form" (submit)="save($event)" novalidate>
+    @if(formError()){
+    <div class="notice error form-wide" role="alert"><svg customerIcon="alert"></svg><div>{{ formError() }}</div></div>
     }
-  </main>
-</div>
-
-<div class="mobile-customer-view">
-  <main class="mobile-page addresses-page">
-    <header class="simple-head">
-      <div>
-        <small>Delivery locations</small>
-        <h1>Addresses</h1>
-      </div>
-      <button type="button" (click)="openModal()">
-        <span class="material-symbols-rounded">add</span>
-      </button>
-    </header>
-
-    <section class="mobile-list">
-      @for (address of addresses(); track address.id) {
-      <article class="address-card">
-        <span class="material-symbols-rounded">home_pin</span>
-        <div>
-          <b>{{ address.label || address.name || "Address" }}</b>
-          <p>{{ address.line }}, {{ address.city }} {{ address.pincode }}</p>
-          <small>{{ address.phone }}</small>
-        </div>
-        <footer>
-          <button type="button" (click)="makeDefault(address.id)">
-            Default
-          </button>
-          <button type="button" (click)="edit(address)">Edit</button>
-          <button type="button" class="danger" (click)="remove(address.id)">
-            Delete
-          </button>
-        </footer>
-      </article>
-      } @empty {
-      <section class="empty-panel">
-        <span class="material-symbols-rounded">location_off</span>
-        <h2>No addresses yet</h2>
-        <p>Add a delivery address to checkout faster.</p>
-        <button type="button" class="mobile-cta" (click)="openModal()">
-          Add address
-        </button>
-      </section>
+    <div class="field" [class.error]="!!fieldError('label')">
+      <label for="address-label">Address label</label
+      ><select
+        id="address-label"
+        name="label"
+        [(ngModel)]="form.label"
+        (ngModelChange)="clearFieldError('label')"
+        [attr.aria-invalid]="!!fieldError('label')"
+        aria-describedby="address-label-error"
+      >
+        <option>Home</option>
+        <option>Office</option>
+        <option>Other</option></select
+      >@if(fieldError('label')){<small
+        id="address-label-error"
+        class="field-error"
+        >{{ fieldError("label") }}</small
+      >}
+    </div>
+    <div class="field" [class.error]="!!fieldError('name')">
+      <label for="address-name">Receiver name</label
+      ><input
+        id="address-name"
+        name="name"
+        type="text"
+        autocomplete="name"
+        [(ngModel)]="form.name"
+        (ngModelChange)="clearFieldError('name')"
+        [attr.aria-invalid]="!!fieldError('name')"
+        aria-describedby="address-name-help address-name-error"
+      /><small id="address-name-help"></small>@if(fieldError('name')){<small
+        id="address-name-error"
+        class="field-error"
+        >{{ fieldError("name") }}</small
+      >}
+    </div>
+    <div class="field" [class.error]="!!fieldError('phone')">
+      <label for="address-phone">Receiver mobile</label
+      ><input
+        id="address-phone"
+        name="phone"
+        type="tel"
+        autocomplete="tel"
+        [ngModel]="form.phone"
+        (ngModelChange)="onPhoneInput($event)"
+        inputmode="numeric"
+        maxlength="10"
+        [attr.aria-invalid]="!!fieldError('phone')"
+        aria-describedby="address-phone-help address-phone-error"
+      /><small id="address-phone-help">Indian mobile number, 10 digits.</small
+      >@if(fieldError('phone')){<small
+        id="address-phone-error"
+        class="field-error"
+        >{{ fieldError("phone") }}</small
+      >}
+    </div>
+    <div class="field" [class.error]="!!fieldError('pincode')">
+      <label for="address-pincode">PIN code</label
+      ><input
+        id="address-pincode"
+        name="pincode"
+        type="text"
+        autocomplete="postal-code"
+        [ngModel]="form.pincode"
+        (ngModelChange)="onPincodeInput($event)"
+        inputmode="numeric"
+        maxlength="6"
+        [attr.aria-invalid]="!!fieldError('pincode')"
+        aria-describedby="address-pincode-help address-pincode-error"
+      /><small id="address-pincode-help">Six-digit Indian PIN code.</small
+      >@if(fieldError('pincode')){<small
+        id="address-pincode-error"
+        class="field-error"
+        >{{ fieldError("pincode") }}</small
+      >}
+    </div>
+    <div class="field form-wide" [class.error]="!!fieldError('line')">
+      <label for="address-line">Address line</label
+      ><input
+        id="address-line"
+        name="line"
+        type="text"
+        autocomplete="street-address"
+        [(ngModel)]="form.line"
+        (ngModelChange)="clearFieldError('line')"
+        [attr.aria-invalid]="!!fieldError('line')"
+        aria-describedby="address-line-help address-line-error"
+      /><small id="address-line-help">Building, street and area.</small
+      >@if(fieldError('line')){<small
+        id="address-line-error"
+        class="field-error"
+        >{{ fieldError("line") }}</small
+      >}
+    </div>
+    <div class="field" [class.error]="!!fieldError('city')">
+      <label for="address-city">City</label
+      ><input
+        id="address-city"
+        name="city"
+        type="text"
+        autocomplete="address-level2"
+        [(ngModel)]="form.city"
+        (ngModelChange)="clearFieldError('city')"
+        [attr.aria-invalid]="!!fieldError('city')"
+        aria-describedby="address-city-help address-city-error"
+      /><small id="address-city-help"></small>@if(fieldError('city')){<small
+        id="address-city-error"
+        class="field-error"
+        >{{ fieldError("city") }}</small
+      >}
+    </div>
+    <div class="field" [class.error]="!!fieldError('state')">
+      <label for="address-state">State</label
+      ><input
+        id="address-state"
+        name="state"
+        type="text"
+        autocomplete="address-level1"
+        [(ngModel)]="form.state"
+        (ngModelChange)="clearFieldError('state')"
+        [attr.aria-invalid]="!!fieldError('state')"
+        aria-describedby="address-state-help address-state-error"
+      /><small id="address-state-help"></small>@if(fieldError('state')){<small
+        id="address-state-error"
+        class="field-error"
+        >{{ fieldError("state") }}</small
+      >}
+    </div>
+    <div class="form-wide location-tools">
+        <button class="btn soft wide" type="button" (click)="mapOpen.set(!mapOpen())"><svg customerIcon="pin"></svg>
+          {{ mapOpen() ? "Hide map" : "Choose delivery pin" }}</button
+        >
+      @if(form.latitude != null && form.longitude != null){
+        <div class="notice success space-sm"><svg customerIcon="check"></svg><div>Delivery point selected: {{ form.latitude }}, {{ form.longitude }}. Availability is checked at checkout.</div></div>
+      }@else{
+        <div class="notice purple space-sm"><svg customerIcon="info"></svg><div>Confirm a location for a reliable serviceability check. Use the map, selected delivery area or coordinates below.</div></div>
       }
-    </section>
-  </main>
-
-  <fd-mobile-bottom-sheet
-    [open]="showModal()"
-    [title]="editing() ? 'Edit address' : 'Add address'"
-    (closed)="closeModal()"
-  >
-    <form class="mobile-form" (submit)="save($event)">
-      @if (formError()) {
-      <div class="form-error">{{ formError() }}</div>
-      }
-      <section class="form-section map-section map-section-top">
-        <div class="form-section-head">
-          <span class="material-symbols-rounded">my_location</span>
-          <div>
-            <b>Pin delivery spot</b>
-            <small>Search or move the pin first</small>
-          </div>
-        </div>
-        <app-map-picker
-          [initialLat]="form.latitude || 12.9716"
-          [initialLng]="form.longitude || 77.5946"
-          height="178px"
-          (locationPicked)="onMapLocationPicked($event)"
-        />
-      </section>
-
-      <section class="form-section">
-        <div class="form-section-head">
-          <span class="material-symbols-rounded">person_pin_circle</span>
-          <div>
-            <b>Receiver details</b>
-            <small>Who should we contact at delivery?</small>
-          </div>
-        </div>
-        <label>
-          <span>Label</span>
-          <input
-            name="label"
-            [class.has-error]="fieldError('label')"
-            [(ngModel)]="form.label"
-            (ngModelChange)="clearFieldError('label')"
-            placeholder="Home, Work"
-          />
-          @if (fieldError("label")) {
-          <small class="field-error">{{ fieldError("label") }}</small> }</label
-        >
-        <div class="field-pair">
-          <label>
-            <span>Name</span>
-            <input
-              name="name"
-              [class.has-error]="fieldError('name')"
-              [(ngModel)]="form.name"
-              (ngModelChange)="clearFieldError('name')"
-              placeholder="Receiver name"
-            />
-            @if (fieldError("name")) {
-            <small class="field-error">{{ fieldError("name") }}</small> }</label
-          >
-          <label>
-            <span>Phone</span>
-            <input
-              name="phone"
-              [class.has-error]="fieldError('phone')"
-              [(ngModel)]="form.phone"
-              (ngModelChange)="onPhoneInput($event)"
-              placeholder="10-digit mobile number"
-              inputmode="numeric"
-              pattern="[0-9]*"
-              maxlength="10"
-              (keydown)="blockInvalidNumberKey($event)"
-            />
-            @if (fieldError("phone")) {
-            <small class="field-error">{{ fieldError("phone") }}</small> }</label
-          >
-        </div>
-      </section>
-
-      <section class="form-section">
-        <div class="form-section-head">
-          <span class="material-symbols-rounded">home_pin</span>
-          <div>
-            <b>Address details</b>
-            <small>Flat, street, city and PIN code</small>
-          </div>
-        </div>
-        <label>
-          <span>Address</span>
-          <textarea
-            name="line"
-            [class.has-error]="fieldError('line')"
-            [(ngModel)]="form.line"
-            (ngModelChange)="clearFieldError('line')"
-            placeholder="House, street, area"
-          ></textarea>
-          @if (fieldError("line")) {
-          <small class="field-error">{{ fieldError("line") }}</small> }</label
-        >
-        <div class="field-pair">
-          <label>
-            <span>City</span>
-            <input
-              name="city"
-              [class.has-error]="fieldError('city')"
-              [(ngModel)]="form.city"
-              (ngModelChange)="clearFieldError('city')"
-              placeholder="City"
-            />
-            @if (fieldError("city")) {
-            <small class="field-error">{{ fieldError("city") }}</small> }</label
-          >
-          <label>
-            <span>State</span>
-            <input
-              name="state"
-              [class.has-error]="fieldError('state')"
-              [(ngModel)]="form.state"
-              (ngModelChange)="clearFieldError('state')"
-              placeholder="State"
-            />
-            @if (fieldError("state")) {
-            <small class="field-error">{{ fieldError("state") }}</small> }</label
-          >
-        </div>
-        <label>
-          <span>PIN code</span>
-          <input
-            name="pincode"
-            [class.has-error]="fieldError('pincode')"
-            [(ngModel)]="form.pincode"
-            (ngModelChange)="onPincodeInput($event)"
-            placeholder="6 digit PIN"
-            inputmode="numeric"
-            pattern="[0-9]*"
-            maxlength="6"
-            (keydown)="blockInvalidNumberKey($event)"
-          />
-          @if (fieldError("pincode")) {
-          <small class="field-error">{{ fieldError("pincode") }}</small> }</label
-        >
-      </section>
-
-      <div class="mobile-form-actions">
-        <button type="button" class="mobile-cta secondary" (click)="closeModal()">
-          Cancel
+      <button class="btn text space-sm" type="button" (click)="useDeliveryArea()">
+          Use selected delivery area
         </button>
-        <button
-          type="submit"
-          class="mobile-cta"
-          [disabled]="saving() || !isAddressFormValid()"
-        >
-          {{ saving() ? "Saving..." : "Save address" }}
-        </button>
-      </div>
+    </div>
+    @if(mapOpen()){@defer(when mapOpen()){
+    <div class="form-wide">
+      <app-map-picker
+        [initialLat]="form.latitude ?? null"
+        [initialLng]="form.longitude ?? null"
+        [emitInitialLocation]="false"
+        [showConfigurationHelp]="false"
+        height="250px"
+        (locationPicked)="onMapLocationPicked($event)"
+      />
+    </div>
+    }}
+    <div class="field" [class.error]="!!fieldError('latitude')">
+      <label for="address-latitude">Latitude (optional)</label
+      ><input
+        id="address-latitude"
+        type="number"
+        step="any"
+        name="latitude"
+        [(ngModel)]="form.latitude"
+        (ngModelChange)="clearFieldError('latitude')"
+        [attr.aria-invalid]="!!fieldError('latitude')"
+        aria-describedby="address-latitude-error"
+      />@if(fieldError('latitude')){<small
+        class="field-error"
+        id="address-latitude-error"
+        >{{ fieldError("latitude") }}</small
+      >}
+    </div>
+    <div class="field" [class.error]="!!fieldError('longitude')">
+      <label for="address-longitude">Longitude (optional)</label
+      ><input
+        id="address-longitude"
+        type="number"
+        step="any"
+        name="longitude"
+        [(ngModel)]="form.longitude"
+        (ngModelChange)="clearFieldError('longitude')"
+        [attr.aria-invalid]="!!fieldError('longitude')"
+        aria-describedby="address-longitude-error"
+      />@if(fieldError('longitude')){<small
+        class="field-error"
+        id="address-longitude-error"
+        >{{ fieldError("longitude") }}</small
+      >}
+    </div>
+    <label class="choice-card form-wide"
+      ><input
+        type="checkbox"
+        name="isDefault"
+        [(ngModel)]="form.isDefault"
+      /><span
+        ><strong>Make this my default address</strong
+        ><p>The default changes only after saving succeeds.</p></span
+      ></label
+    >
     </form>
-</fd-mobile-bottom-sheet>
-</div>
-}
+<div dialogFooter class="row wide between">
+      <button
+        class="btn"
+        type="button"
+        [disabled]="saving()"
+        (click)="closeModal()"
+      >
+        Cancel</button
+      ><button class="btn primary" type="button" (click)="save($event)" [disabled]="saving()">
+        <svg customerIcon="check"></svg>
+        {{ saving() ? "Saving…" : "Save address" }}
+      </button>
+    </div>
+  </fd-nx-modal-shell
+>}}

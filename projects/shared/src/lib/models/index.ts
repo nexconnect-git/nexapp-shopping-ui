@@ -114,6 +114,7 @@ export interface Vendor {
   matched_products_preview?: string[];
   has_previously_ordered?: boolean;
   products?: Product[];
+  available_categories?: Category[];
   vendor_tier?: string;
   user_info?: User;
 }

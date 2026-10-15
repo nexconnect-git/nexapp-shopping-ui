@@ -1,10 +1,12 @@
 <div class="workspace-page">
   <header class="page-heading">
     <div>
-      <h1>Store settings</h1>
+      <p class="eyebrow">Your store / Settings</p><h1>Make this space yours.</h1>
       <p>Manage your storefront, pickup address and account.</p>
     </div>
   </header>
+  <nav class="settings-nav" aria-label="Settings sections">@for(name of sectionNames;track name){<button type="button" class="chip" [class.active]="activeSection()===name" [attr.aria-pressed]="activeSection()===name" (click)="activeSection.set(name)">{{ name }}</button>}</nav>
+<div class="settings-layout"><section class="form-container">
   @if(service.result()){
   <p class="workspace-notice" role="status">{{ service.result() }}</p>
   } @if(service.loading()){
@@ -16,7 +18,7 @@
       Retry
     </button>
   </div>
-  }@else if(service.loaded()){ @if(service.store.context();as context){
+  }@else if(service.loaded()){ @if(activeSection()==='Hours and intake'){ @if(service.store.context();as context){
   <section class="workspace-card">
     <h3>Operating status</h3>
     <nc-vendor-operating-status [showAction]="true" />
@@ -25,14 +27,10 @@
     }
   </section>
   }
+  }
   <fieldset [disabled]="service.saving()" class="settings-fields">
-    @for(section of sections;track section.title){
-    <details
-      class="workspace-card settings-section"
-      [open]="sectionOpen()[section.title]"
-      (toggle)="sectionToggled(section.title, $event)"
-    >
-      <summary>{{ section.title }}</summary>
+    @for(section of sections;track section.title){ @if(activeSection()===section.title){
+    <section class="settings-section"><h2>{{ section.title }}</h2>
       <div class="workspace-form-grid">
         @for(field of section.fields;track field.key){<label
           class="workspace-field"
@@ -43,8 +41,8 @@
             [step]="field.type === 'number' ? 'any' : null"
             [ngModel]="value(field.key)"
             (ngModelChange)="update(field.key, $event)"
-            [attr.aria-invalid]="error(field.key) ? true : null"
-          />@if(error(field.key)){<small class="workspace-error">{{
+            [attr.aria-invalid]="error(field.key) ? true : null" [attr.aria-describedby]="error(field.key) ? 'settings-error-'+field.key : null"
+          />@if(error(field.key)){<small class="workspace-error" [id]="'settings-error-'+field.key">{{
             error(field.key)
           }}</small
           >}</label
@@ -60,7 +58,7 @@
           error("description")
         }}</small
         >}</label
-      >} @if(section.title==='Hours and fulfilment'){<label
+      >} @if(section.title==='Hours and intake'){<p class="workspace-muted">Business timezone: {{ service.store.context()?.timezone }}</p><label
         class="workspace-check"
         ><input
           type="checkbox"
@@ -100,9 +98,9 @@
         a valid coordinate.
       </p>
       }
-    </details>
-    }
-    <details class="workspace-card settings-section">
+    </section>
+    }}
+    @if(activeSection()==='Delivery'){<details class="workspace-card settings-section">
       <summary>Packaging and cancellation guidance</summary>
       <label class="workspace-field"
         >Packaging preferences<textarea
@@ -121,10 +119,10 @@
         Guidance is informational; order transitions remain subject to platform
         rules.
       </p>
-    </details>
+    </details>}
   </fieldset>
-  <details class="workspace-card settings-section">
-    <summary>Store images</summary>
+  @if(activeSection()==='Store profile'){<section class="settings-section">
+    <h2>Store images</h2>
     @if(service.store.context();as context){
     <div class="store-media">
       @if(context.vendor.logo){<img
@@ -159,13 +157,9 @@
     }@if(service.mediaError()){
     <p class="workspace-error" role="alert">{{ service.mediaError() }}</p>
     }
-  </details>
+  </section>}
   }
-  <details
-    class="workspace-card settings-section"
-    [open]="!!service.accountError()"
-  >
-    <summary>Account and security</summary>
+  @if(activeSection()==='Account and security'){<section class="settings-section"><h2>Account and security</h2>
     @if(service.account();as account){
     <p class="workspace-muted">
       Username: {{ account.username }} · Store contact and account contact are
@@ -225,8 +219,9 @@
     >
       Reload account</button
     >}
-  </details>
-  @if(service.loaded()){
+  </section>}
+  @if(activeSection()==='Verification'){ @if(service.store.context();as context){<section class="rule-section"><h2>Verification and readiness</h2><p class="notice">These values are managed by the platform.</p><dl><div><dt>Store approval</dt><dd>{{ context.vendor.status | titlecase }}</dd></div><div><dt>Bank destination</dt><dd>{{ context.verification.bank.masked_account || 'Not configured' }}</dd></div><div><dt>Bank verification</dt><dd>{{ context.verification.bank.verified ? 'Verified' : 'Pending verification' }}</dd></div></dl><a routerLink="/support">Contact support</a></section>}}
+  @if(service.loaded() && !['Account and security','Verification'].includes(activeSection())){
   <footer class="settings-save-area">
     <span>{{
       service.dirty() ? "Unsaved store changes" : "Store settings saved"
@@ -251,4 +246,4 @@
     </div>
   </footer>
   }
-</div>
+</section><aside class="aside-note"><p class="eyebrow">Your settings</p><h2>{{ activeSection() }}</h2><p>Business details, location, operating controls and account identity have distinct purposes. Your edits stay available when switching sections.</p>@if(activeSection()==='Hours and intake'){<p>Hours follow the store timezone. A closing time before opening means an overnight window.</p>}@if(activeSection()==='Account and security'){<p>Account changes save separately from storefront changes.</p>}</aside></div></div>

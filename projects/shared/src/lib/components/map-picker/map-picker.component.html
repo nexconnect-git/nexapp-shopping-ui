@@ -71,11 +71,11 @@
       </span>
       <div class="map-unavailable-copy">
         <strong>Google Maps is unavailable</strong>
-        <p>{{ placesError() }}</p>
-        <small>
+        <p>{{ showConfigurationHelp ? placesError() : "Map search is unavailable. Use your current location or enter location details manually." }}</p>
+        @if (showConfigurationHelp) {<small>
           Check the Google Maps API key, enabled APIs, billing, and allowed
           website referrers for this domain.
-        </small>
+        </small>}
       </div>
     </div>
   }

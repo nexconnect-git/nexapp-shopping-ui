@@ -116,3 +116,7 @@ projects/customer-app/src/assets/mockups/
 .agent/
 .codex-artifacts/
 
+
+# Counter design inventory and factual verification report.
+!docs/counter-migration.md
+!docs/counter-implementation-report.md

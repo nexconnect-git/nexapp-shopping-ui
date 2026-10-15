@@ -1,3 +1,4 @@
+import { CounterStateComponent } from '../../components/counter-state.component';
 import {
   Component,
   DestroyRef,
@@ -20,7 +21,7 @@ import { WorkspacePagerComponent } from '../../components/workspace-pager.compon
 @Component({
   selector: 'app-reviews',
   standalone: true,
-  imports: [CommonModule, WorkspacePagerComponent],
+  imports: [CounterStateComponent,CommonModule, WorkspacePagerComponent],
   templateUrl: './reviews.component.html',
   styleUrl: './reviews.component.scss',
 })

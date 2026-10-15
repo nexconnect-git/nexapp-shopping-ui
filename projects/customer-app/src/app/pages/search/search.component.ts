@@ -1,330 +1,187 @@
-import { Location } from '@angular/common';
-import { Component, computed, effect, OnDestroy, signal } from '@angular/core';
+import { CustomerIconComponent } from '../../shared/customer-icon/customer-icon.component';
+import { Component, computed, effect, inject, OnDestroy, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { buildStoreSelectionTarget } from '@nexconnect/customer-search';
-import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
-import { AppCurrencyPipe } from '@shared/lib/pipes/currency.pipe';
-import { CustomSelectComponent } from '@shared/lib/components/custom-select/custom-select.component';
 import { CatalogService } from '../../services/catalog.service';
-import { UiService } from '../../services/ui.service';
 import { AppStateService } from '../../services/app-state.service';
+import { UiService } from '../../services/ui.service';
 import { ProductCardComponent } from '../../components/product-card/product-card.component';
 import { StoreCardComponent } from '../../components/store-card/store-card.component';
-import {
-  CustomerContentConfigService,
-  CustomerPromoCard,
-  CustomerQuickFilter,
-} from '../../services/customer-content-config.service';
-
+import { CustomerPageHeaderComponent } from '../../shared/customer-page-header/customer-page-header.component';
+import { CustomerStateComponent } from '../../shared/customer-state/customer-state.component';
 @Component({
   standalone: true,
-  imports: [
-    FormsModule,
+  imports: [CustomerIconComponent,
     RouterLink,
     ProductCardComponent,
     StoreCardComponent,
-    AppCurrencyPipe,
-    CustomSelectComponent,
+    CustomerPageHeaderComponent,
+    CustomerStateComponent,
   ],
   templateUrl: './search.component.html',
   styleUrls: ['./search.component.scss'],
 })
 export class SearchComponent implements OnDestroy {
-  private readonly recentSearchStorageKey = 'nextou.customer.recent_searches';
-  query = signal(this.route.snapshot.queryParamMap.get('q') ?? '');
-  category = signal(
-    this.route.snapshot.paramMap.get('categoryId') ||
-      this.route.snapshot.queryParamMap.get('category') ||
-      '',
-  );
-  activeTab = signal<'All' | 'Stores' | 'Products' | 'Categories'>('All');
-  sortBy = signal(
-    `Sort by: ${this.content.filters().sortOptions[0] || 'Relevance'}`,
-  );
-  activeFilters = signal<string[]>([]);
-  recentSearches = signal<string[]>(this.readRecentSearches());
-  trendingSearches = computed(() => {
-    const fromCategories = this.catalog
-      .categories()
-      .filter((category) => category.id !== 'all')
-      .map((category) => category.label)
-      .slice(0, 6);
-    if (fromCategories.length) return fromCategories;
-    return ['Milk', 'Vegetables', 'Snacks', 'Fruits', 'Bakery', 'Pharmacy'];
+  readonly catalog = inject(CatalogService);
+  readonly state = inject(AppStateService);
+  readonly ui = inject(UiService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  readonly query = signal('');
+  readonly category = signal('');
+  readonly sort = signal('relevance');
+  readonly inStock = signal(false);
+  readonly offers = signal(false);
+  readonly maxPrice = signal('');
+  readonly rating = signal('');
+  readonly deliveryTime = signal('');
+  readonly minDiscount = signal('');
+  readonly isBrowse = computed(() => !this.query() && !this.category() && !this.inStock() && !this.offers() && !this.maxPrice() && !this.rating() && !this.deliveryTime() && !this.minDiscount() && this.activeTab()==='All');
+  readonly noResults = computed(() => !this.searchPending() && !this.catalog.productsLoading() && !this.catalog.exploreError() && !this.isBrowse() && !this.catalog.exploreResults().products.length && !this.catalog.exploreResults().stores.length && !this.catalog.exploreResults().categories.length);
+  readonly resultLabel = computed(() => {
+    const summary = this.catalog.exploreSummary();
+    const type = this.activeTab() === 'Stores' ? 'store' : this.activeTab() === 'Categories' ? 'category' : 'product';
+    const count = type === 'store' ? summary?.store_count : type === 'category' ? summary?.category_count : summary?.product_count;
+    return count == null ? 'Checking results' : `${count} ${count === 1 ? type : type === 'category' ? 'categories' : type + 's'}`;
   });
-  tabs = computed(() => this.content.search().tabs);
-  searchPromo = computed(() => this.content.ads().search[0] || null);
-  hasQuery = computed(() => !!this.query().trim());
-  recommendedCategories = computed(() => {
-    const categories = this.catalog
-      .categories()
-      .filter((category) => category.id !== 'all');
-    const preferred = new Set(
-      this.state
-        .cart()
-        .map((item) => this.normalizeKey(item.category))
-        .filter(Boolean),
-    );
-    return [...categories]
-      .sort((a, b) => {
-        const aPreferred = preferred.has(this.normalizeKey(a.label));
-        const bPreferred = preferred.has(this.normalizeKey(b.label));
-        if (aPreferred === bPreferred) return a.label.localeCompare(b.label);
-        return aPreferred ? -1 : 1;
+  readonly searchPending = signal(true);
+  readonly recent = signal<string[]>(this.readRecent());
+  readonly activeTab = signal('All');
+  readonly tabs = ['All', 'Stores', 'Products', 'Categories'];
+  private timer?: ReturnType<typeof setTimeout>;
+  private readonly subscriptions = new Subscription();
+  constructor() {
+    this.subscriptions.add(
+      this.route.queryParamMap.subscribe((p) => {
+        this.query.set(p.get('q') || '');
+        this.category.set(
+          p.get('category') ||
+            this.route.snapshot.paramMap.get('categoryId') ||
+            ''
+        );
+        this.sort.set(p.get('sort') || 'relevance');
+        this.inStock.set(p.get('in_stock') === 'true');
+        this.offers.set(p.get('offers') === 'true');
+        this.maxPrice.set(p.get('max_price') || '');
+        this.rating.set(p.get('rating') || '');
+        this.deliveryTime.set(p.get('delivery_time') || '');
+        this.minDiscount.set(p.get('min_discount') || '');
+        this.activeTab.set(this.tabs.includes(p.get('tab') || '') ? p.get('tab')! : 'All');
       })
-      .slice(0, 8);
-  });
-  private readonly routeSub: Subscription;
-  private searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
-
-  constructor(
-    private route: ActivatedRoute,
-    private router: Router,
-    private location: Location,
-    public catalog: CatalogService,
-    public state: AppStateService,
-    public ui: UiService,
-    public content: CustomerContentConfigService,
-  ) {
+    );
     effect(() => {
-      const q = this.query();
-      if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer);
-      this.searchDebounceTimer = setTimeout(() => {
-        this.catalog.loadExplore({
-          ...this.activeLocation(),
-          q,
-          category: this.category(),
-          sort: this.sortValue(),
-        });
+      const params = this.params();
+      clearTimeout(this.timer);
+      this.searchPending.set(true);
+      this.timer = setTimeout(() => {
+        this.catalog.loadExplore(params);
+        this.searchPending.set(false);
       }, 250);
     });
-    this.routeSub = this.route.queryParamMap.subscribe((params) => {
-      const next = params.get('q') ?? '';
-      if (next !== this.query()) this.query.set(next);
-      const category = params.get('category') || this.route.snapshot.paramMap.get('categoryId') || '';
-      if (category !== this.category()) this.category.set(category);
-    });
-    this.routeSub.add(
-      this.route.paramMap.subscribe((params) => {
-        const category = params.get('categoryId') || this.route.snapshot.queryParamMap.get('category') || '';
-        if (category !== this.category()) this.category.set(category);
-      }),
-    );
   }
-
-  results = computed(() => this.catalog.search(this.query()));
-  categoryProducts = computed(() =>
-    this.category() ? this.catalog.productsByCategory(this.category()) : [],
-  );
-  browseStores = computed(() => {
-    const stores = this.catalog
-      .stores()
-      .filter((store) => (store.raw as any)?.is_serviceable !== false);
-    if (!this.category()) return stores.slice(0, 8);
-    const storeIds = new Set(
-      this.categoryProducts()
-        .map((product) => product.storeId)
-        .filter(Boolean),
-    );
-    if (!storeIds.size) return [];
-    return stores.filter((store) => storeIds.has(store.id)).slice(0, 8);
-  });
-  browseProducts = computed(() => {
-    const source = this.category()
-      ? this.categoryProducts()
-      : this.catalog.recommendedProducts().length
-        ? this.catalog.recommendedProducts()
-        : this.catalog.topProducts();
-    const storeIds = new Set(this.browseStores().map((store) => store.id));
-    return source
-      .filter((product) => !product.storeId || storeIds.has(product.storeId))
-      .slice(0, 12);
-  });
-  visibleResults = computed(() =>
-    this.hasQuery()
-      ? this.results()
-      : {
-          stores: this.browseStores(),
-          products: this.browseProducts(),
-          categories: this.recommendedCategories(),
-        },
-  );
-  noVisibleResults = computed(
-    () =>
-      !this.catalog.productsLoading() &&
-      !this.catalog.storesLoading() &&
-      this.count(this.activeTab()) === 0,
-  );
-
-  count(tab: string): number {
-    const r = this.visibleResults();
-    if (tab === 'Stores') return r.stores.length;
-    if (tab === 'Products') return r.products.length;
-    if (tab === 'Categories') return r.categories.length;
-    return r.stores.length + r.products.length + r.categories.length;
+  private params(): Record<string, any> {
+    return {
+      ...this.state.customerLocationQuery(),
+      q: this.query(),
+      category: this.category(),
+      sort: this.sort(),
+      in_stock: this.inStock(),
+      offers: this.offers(),
+      max_price: this.maxPrice() || undefined,
+      rating: this.rating() || undefined,
+      delivery_time: this.deliveryTime() || undefined,
+      min_discount: this.minDiscount() || undefined,
+    };
   }
-
-  applyQuickFilter(filter: CustomerQuickFilter): void {
-    const label = filter.label;
-    this.activeFilters.update((current) =>
-      current.includes(label) ? current : [...current, label],
-    );
-    if (filter.action === 'fast_delivery') {
-      this.activeTab.set('Stores');
-      return;
-    }
-    if (filter.action === 'rating_4_plus') {
-      this.activeTab.set('Stores');
-      return;
-    }
-    if (filter.action === 'under_budget') {
-      this.activeTab.set('Products');
-    }
+  retry(): void {
+    this.catalog.loadExplore(this.params());
   }
-
-  updateQuery(value: string): void {
-    this.query.set(value);
-  }
-
-  submitSearch(event: Event): void {
+  search(event: Event): void {
     event.preventDefault();
-    this.persistRecentSearch(this.query());
-    this.syncUrl();
-  }
-
-  clearSearch(): void {
-    this.query.set('');
-    this.syncUrl();
-  }
-
-  goBack(): void {
-    if (history.length > 1) {
-      this.location.back();
-      return;
+    const query = this.query().trim();
+    if (query) {
+      const history = [
+        query,
+        ...this.recent().filter((item) => item !== query),
+      ].slice(0, 8);
+      this.recent.set(history);
+      try {
+        localStorage.setItem(
+          'nextou.customer.recentSearches',
+          JSON.stringify(history)
+        );
+      } catch {}
     }
-    this.router.navigateByUrl('/');
+    this.sync();
   }
-
-  clearFilters(): void {
-    this.activeFilters.set([]);
-    this.activeTab.set('All');
-  }
-
-  setSort(value: string): void {
-    this.sortBy.set(value);
-  }
-
-  handleSearchPromo(promo: CustomerPromoCard): void {
-    if (promo.ctaUrl) {
-      this.router.navigateByUrl(promo.ctaUrl);
-      return;
-    }
-    this.ui.openFilter();
-  }
-
-  selectStore(event: Event, store: unknown): void {
-    event.preventDefault();
-    event.stopPropagation();
-    this.persistRecentSearch(this.query());
-    const target = buildStoreSelectionTarget(store as any, {
-      searchQuery: this.query(),
-    });
-    if (!target) return;
-    this.router.navigate(['/store', target.storeId], {
-      queryParams: target.searchQuery ? { q: target.searchQuery } : undefined,
-    });
-  }
-
-  ngOnDestroy(): void {
-    if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer);
-    this.routeSub.unsubscribe();
-  }
-
-  searchFor(term: string): void {
-    const next = String(term || '').trim();
-    if (!next) return;
-    this.query.set(next);
-    this.persistRecentSearch(next);
-    this.syncUrl();
-  }
-
-  removeRecentSearch(term: string, event?: Event): void {
-    event?.preventDefault();
-    event?.stopPropagation();
-    this.recentSearches.update((current) =>
-      current.filter((item) => item !== term),
-    );
-    this.writeRecentSearches(this.recentSearches());
-  }
-
-  clearRecentSearches(): void {
-    this.recentSearches.set([]);
-    this.writeRecentSearches([]);
-  }
-
-  private syncUrl(): void {
-    const q = this.query().trim();
-    this.query.set(q);
-    this.router.navigate(['/explore'], {
-      queryParams: {
-        ...(q ? { q } : {}),
-        ...(this.category() ? { category: this.category() } : {}),
-      },
-    });
-  }
-
-  private sortValue(): string {
-    const value = this.sortBy().toLowerCase();
-    if (value.includes('price') && value.includes('low')) return 'price_low_high';
-    if (value.includes('rating')) return 'rating';
-    if (value.includes('offer')) return 'offers';
-    return 'relevance';
-  }
-
-  private activeLocation(): Record<string, any> {
-    return this.state.customerLocationQuery();
-  }
-
-  private normalizeKey(value: string | null | undefined): string {
-    return String(value || '')
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-  }
-
-  private persistRecentSearch(term: string): void {
-    const normalized = String(term || '').trim();
-    if (!normalized) return;
-    const next = [normalized, ...this.recentSearches().filter((item) => item !== normalized)].slice(
-      0,
-      8,
-    );
-    this.recentSearches.set(next);
-    this.writeRecentSearches(next);
-  }
-
-  private readRecentSearches(): string[] {
+  private readRecent(): string[] {
     try {
-      const value = localStorage.getItem(this.recentSearchStorageKey);
-      if (!value) return [];
-      const parsed = JSON.parse(value);
-      if (!Array.isArray(parsed)) return [];
-      return parsed
-        .map((item) => String(item || '').trim())
-        .filter(Boolean)
+      return JSON.parse(
+        localStorage.getItem('nextou.customer.recentSearches') || '[]'
+      )
+        .filter((item: any) => typeof item === 'string')
         .slice(0, 8);
     } catch {
       return [];
     }
   }
-
-  private writeRecentSearches(items: string[]): void {
+  clearRecent(): void {
+    this.recent.set([]);
     try {
-      localStorage.setItem(this.recentSearchStorageKey, JSON.stringify(items));
-    } catch {
-      // Storage can be unavailable in some browsers/privacy modes.
-    }
+      localStorage.removeItem('nextou.customer.recentSearches');
+    } catch {}
+  }
+  tabKey(event: KeyboardEvent, tab: string): void {
+    if (event.altKey || event.ctrlKey || event.metaKey) return;
+    const index = this.tabs.indexOf(tab);
+    const next =
+      event.key === 'ArrowRight'
+        ? (index + 1) % this.tabs.length
+        : event.key === 'ArrowLeft'
+        ? (index + this.tabs.length - 1) % this.tabs.length
+        : event.key === 'Home'
+        ? 0
+        : event.key === 'End'
+        ? this.tabs.length - 1
+        : -1;
+    if (next < 0) return;
+    event.preventDefault();
+    this.setTab(this.tabs[next]);
+    const buttons = (
+      event.currentTarget as HTMLElement
+    ).parentElement?.querySelectorAll<HTMLButtonElement>('[role=tab]');
+    buttons?.[next]?.focus();
+  }
+  setTab(tab: string): void {
+    this.activeTab.set(tab);
+    this.router.navigate([], {relativeTo:this.route, queryParams:{tab:tab==='All' ? null : tab},queryParamsHandling:'merge'});
+  }
+  toggleRating(): void { this.rating.set(this.rating() ? '' : '4.8'); this.sync(); }
+  toggleQuick(): void { this.deliveryTime.set(this.deliveryTime() ? '' : '30'); this.sync(); }
+  toggleDiscount(): void { this.minDiscount.set(this.minDiscount() ? '' : '15'); this.sync(); }
+  clearFilters(clearQuery=false): void {
+    this.category.set('');this.inStock.set(false);this.offers.set(false);this.maxPrice.set('');this.rating.set('');this.deliveryTime.set('');this.minDiscount.set('');this.sort.set('relevance');
+    if(clearQuery) this.query.set('');
+    this.sync();
+  }
+  sync(): void {
+    this.router.navigate(['/explore'], {
+      queryParams: {
+        q: this.query() || null,
+        category: this.category() || null,
+        sort: this.sort(),
+        in_stock: this.inStock() || null,
+        offers: this.offers() || null,
+        max_price: this.maxPrice() || null,
+        rating: this.rating() || null,
+        delivery_time: this.deliveryTime() || null,
+        min_discount: this.minDiscount() || null,
+        tab: this.activeTab()==='All' ? null : this.activeTab(),
+      },
+    });
+  }
+  ngOnDestroy(): void {
+    clearTimeout(this.timer);
+    this.subscriptions.unsubscribe();
   }
 }

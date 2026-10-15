@@ -1,216 +1,43 @@
-<div class="desktop-customer-view">
 <main class="fd-content">
-  <fd-breadcrumbs [items]="[{ label: 'Stores' }]" />
-  <section class="fd-two-col">
-    <div>
-      <header class="fd-page-header">
-        <div>
-          <h1 class="fd-title">All Stores</h1>
-          <p class="fd-subtitle">
-            Showing stores delivering to <b>your selected location</b>
-          </p>
-        </div>
-        <div class="header-actions">
-          <button
-            type="button"
-            class="fd-btn outline info"
-            (click)="ui.openFilter()"
-          >
-            <span class="material-symbols-rounded">tune</span> Filters
-          </button>
-          <button type="button" class="fd-btn outline orange" (click)="viewMap()">
-            <span class="material-symbols-rounded">location_on</span> Change
-            location
-          </button>
-        </div>
-      </header>
-
-      <form class="store-search" role="search" (submit)="$event.preventDefault()">
-        <span class="material-symbols-rounded">search</span>
-        <input
-          type="search"
-          placeholder="Search stores, categories, or city"
-          [value]="searchQuery()"
-          (input)="setSearchQuery($event)"
-          aria-label="Search stores"
-        />
-        @if (searchQuery()) {
-          <button type="button" aria-label="Clear search" (click)="clearSearch()">
-            <span class="material-symbols-rounded">close</span>
-          </button>
-        }
-      </form>
-
-      <div class="filters">
-        @if (catalog.categoriesLoading()) {
-          <div class="filter-loading" role="status" aria-live="polite">
-            <span class="loading-spinner"></span>
-            <span>Loading categories for your selected address</span>
-          </div>
-        }
-        @for (filter of filters(); track filter) {
-          <button
-            type="button"
-            class="fd-pill"
-            [disabled]="catalog.categoriesLoading() || catalog.storesLoading()"
-            [class.active]="active() === filter"
-            [attr.aria-label]="filter"
-            (click)="setFilter(filter)"
-          >
-            <span class="material-symbols-rounded">{{
-              filterIcon(filter)
-            }}</span>
-            <span class="filter-label">{{ filter }}</span>
-          </button>
-        }
-        <fd-custom-select
-          class="mobile-sort-control"
-          ariaLabel="Sort stores"
-          icon="sort"
-          [disabled]="catalog.storesLoading()"
-          [value]="sortBy()"
-          [options]="['Relevance', 'Rating', 'Delivery Time']"
-          (valueChange)="setSort($event)"
-        />
-      </div>
-
-      <section class="store-offer-strip" aria-label="Store savings">
-        @for (promo of storePromos(); track promo.id) {
-          <a
-            routerLink="/stores"
-            class="store-offer"
-            [class.green]="promo.tone === 'green'"
-            [class.orange]="promo.tone === 'orange'"
-            [class.blue]="promo.tone === 'blue'"
-          >
-            <span class="material-symbols-rounded">{{
-              promo.icon || "local_offer"
-            }}</span>
-            <div>
-              <small>{{ promo.eyebrow }}</small>
-              <b>{{ promo.title }}</b>
-              <em>{{ promo.subtitle }}</em>
-            </div>
-          </a>
-        }
-      </section>
-
-      @if (catalog.storesLoading()) {
-        <section
-          class="nc-skeleton-center"
-          role="status"
-          aria-live="polite"
-          aria-label="Loading stores"
-        >
-          <div class="nc-skeleton-list">
-            @for (item of [1, 2, 3, 4]; track item) {
-              <div class="nc-skeleton-card">
-                <span class="nc-skeleton-media"></span>
-                <span class="nc-skeleton-copy">
-                  <span class="nc-skeleton-line medium"></span>
-                  <span class="nc-skeleton-line long"></span>
-                  <span class="nc-skeleton-line short"></span>
-                </span>
-              </div>
-            }
-          </div>
-        </section>
-      } @else {
-        <section class="store-list">
-          @for (store of filteredStores(); track store.id) {
-            <fd-store-card [store]="store" />
-          } @empty {
-            <div class="empty-state">
-              <b>No stores found</b>
-              <p>Try another category or change your delivery location.</p>
-            </div>
-          }
-        </section>
-        @if (catalog.storesHasMore()) {
-          <div class="load-more-row">
-            <button type="button" class="fd-btn info" (click)="loadMore()">
-              Load more stores
-            </button>
-          </div>
-        }
-      }
-    </div>
-  </section>
-</main>
-</div>
-
-<div class="mobile-customer-view">
-<main class="mobile-page stores-page">
-  <header class="stores-head">
-    <div>
-      <small>Nearby shops</small>
-      <h1>Stores around you</h1>
-    </div>
-    <button type="button" aria-label="Map location" (click)="viewMap()">
-      <span class="material-symbols-rounded">my_location</span>
-    </button>
-  </header>
-
-  <section class="store-promo">
-    <span class="material-symbols-rounded">local_offer</span>
-    <div>
-      <b>{{ storePromo().title }}</b>
-      <small>{{ storePromo().subtitle }}</small>
-    </div>
-  </section>
-
-  <form class="mobile-store-search" role="search" (submit)="$event.preventDefault()">
-    <span class="material-symbols-rounded">search</span>
-    <input
-      type="search"
-      placeholder="Search stores"
-      [value]="searchQuery()"
-      (input)="setSearchQuery($event)"
-      aria-label="Search stores"
-    />
-    @if (searchQuery()) {
-      <button type="button" aria-label="Clear search" (click)="clearSearch()">
-        <span class="material-symbols-rounded">close</span>
-      </button>
+  <fd-breadcrumbs [items]="[{label:'Nearby stores'}]" />
+  <fd-customer-page-header [eyebrow]="'Local favourites / ' + state.location()" [title]="'Good stores.\nJust around the corner.'" description="Discover the neighbourhood shops that make everyday a little better."><button class="btn" (click)="ui.openLocation()"><svg customerIcon="pin"></svg>Change area</button></fd-customer-page-header>
+  <div class="toolbar"><form class="search-field" (submit)="search($event)"><svg customerIcon="search"></svg><input type="search" aria-label="Search nearby stores" [value]="query()" (input)="query.set($any($event.target).value)" placeholder="Search stores by name or category" /><button type="submit" aria-label="Search"><svg customerIcon="arrow"></svg></button></form><button class="btn" type="button" aria-label="Filters" (click)="ui.openFilter()"><svg customerIcon="filter"></svg><span>Filters</span></button></div>
+  <div class="chip-row"><button class="btn chip" [class.active]="!category()" (click)="setFilter('')">All stores</button>@for(c of categories();track c.id){<button class="btn chip" [class.active]="category()===(c.raw?.slug || c.id)" (click)="setFilter(c.raw?.slug || c.id)">{{ c.label }}</button>}<button class="btn chip" [class.active]="sort()==='rating'" (click)="setSort('rating')"><svg customerIcon="star"></svg>Top rated</button></div>
+  @if(catalog.storeResults().length&&!catalog.storesError()){<div class="result-count"><span>{{ catalog.storesCount()===null ? 'Nearby stores' : catalog.storesCount() + (catalog.storesCount()===1 ? ' store' : ' stores') }} · delivery to {{ state.location() }}</span><label>Sort: <select aria-label="Sort stores" [value]="sort()" (change)="setSort($any($event.target).value)"><option value="relevance">Recommended</option><option value="rating">Top rated</option><option value="delivery_time">Fastest delivery</option><option value="distance">Nearest first</option></select></label></div>}
+  @if(catalog.storesError()){<fd-customer-state
+    title="The stores could not load."
+    description="We could not retrieve nearby stores. Your delivery area is unchanged."
+    icon="wifi"
+    tone="error"
+    action="Retry stores"
+    (retry)="retry()"
+  />} @else if(catalog.storesLoading()&&!catalog.storeResults().length){
+  <div class="store-grid" aria-label="Loading stores" aria-busy="true">
+    @for(i of [1,2,3];track i){
+    <div class="skeleton store-skeleton"></div>
     }
-  </form>
-
-  <section class="mobile-section">
-    <div class="mobile-chip-row">
-      @for (filter of filters(); track filter) {
-        <button type="button" class="mobile-chip" [class.active]="active() === filter" (click)="setFilter(filter)">
-          <span class="material-symbols-rounded">{{ filterIcon(filter) }}</span>{{ filter }}
-        </button>
-      }
-    </div>
-    <fd-custom-select
-      class="sort-row"
-      ariaLabel="Sort stores"
-      icon="sort"
+  </div>
+  }@else{
+  <div class="store-grid">
+    @for(store of catalog.storeResults();track store.id){<fd-store-card
+      [store]="store"
+    />}
+  </div>
+  @if(!catalog.storeResults().length&&!catalog.storesError()){<fd-customer-state
+    title="No stores match that search."
+    description="Try a broader search or change your delivery area."
+    icon="store"
+    action="Clear store search"
+    (retry)="clearFilters()"
+  />}} @if(catalog.storesHasMore()&&!catalog.storesError()){
+  <div class="load-more">
+    <button
+      class="btn"
       [disabled]="catalog.storesLoading()"
-      [value]="sortBy()"
-      [options]="['Relevance', 'Rating', 'Delivery Time']"
-      (valueChange)="setSort($event)"
-    />
-  </section>
-
-  <section class="mobile-section">
-    <div class="mobile-section-head">
-      <h2>{{ active() }} stores</h2>
-      <span>{{ filteredStores().length }} open</span>
-    </div>
-    <div class="mobile-list">
-      @for (store of filteredStores(); track store.id) {
-        <fd-store-card [store]="store" />
-      } @empty {
-        <section class="empty-panel">
-          <span class="material-symbols-rounded">storefront</span>
-          <b>No stores found</b>
-          <small>Update your location or clear the category filter.</small>
-        </section>
-      }
-    </div>
-    <button type="button" class="mobile-cta secondary" (click)="loadMore()">Load more stores</button>
-  </section>
+      (click)="catalog.loadMoreStores()"
+    >
+      {{ catalog.storesLoading() ? "Loading…" : "More nearby stores" }}
+    </button>
+  </div>
+  }
 </main>
-</div>

@@ -1,7 +1,7 @@
 <div class="workspace-page">
   <header class="page-heading">
     <div>
-      <p class="eyebrow">Orders</p>
+      <p class="eyebrow">Daily work / Preparation</p>
       <h1>Prepare order {{ order() ? "#" + order()!.order_number : "" }}</h1>
       <p>Checklist progress is saved on this device for your account.</p>
     </div>
@@ -11,13 +11,13 @@
   <p class="workspace-error" role="alert">{{ error() }}</p>
   <button type="button" class="btn btn-secondary" (click)="load()">Retry</button
   >}@if(loading()&&!order()){
-  <div class="workspace-state" role="status">Loading preparation…</div>
+  <nc-counter-state kind="loading" title="Loading preparation…" />
   }@if(order();as current){
-  <section class="workspace-card operating-card">
+  <section class="preparation-context">
     <div>
       <h3>{{ current.customer_name || "Customer" }}</h3>
       <p>
-        {{ elapsed() }} minutes since placed
+        {{ elapsed() }} {{ elapsed() === 1 ? 'minute' : 'minutes' }} since placed
       </p>
     </div>
     <span class="status-pill">{{
@@ -27,8 +27,8 @@
   @if(storageError()){
   <p class="workspace-error" role="alert">{{ storageError() }}</p>
   }
-  <div class="workspace-two-column">
-    <section class="workspace-card">
+  <div class="detail-grid">
+    <section class="rule-section">
       <header class="workspace-section-heading">
         <h3>Item checklist</h3>
         <strong>{{ progress() }}%</strong>
@@ -46,7 +46,7 @@
             current.status === 'delivered' || current.status === 'cancelled'
           "
           (change)="toggle(item.id, $any($event.target).checked)"
-        /><span
+        /><span class="quantity">{{ item.quantity }}</span><span
           ><strong>{{ item.product_name }}</strong
           ><small
             >{{ item.quantity }} units @if(item.pack_size){ · {{ item.pack_size }} }</small
@@ -58,8 +58,8 @@
         stock or update the server.
       </p>
     </section>
-    <section class="workspace-card">
-      <h3>Next actions</h3>
+    <aside class="action-rail">
+      <div class="eyebrow">Next action</div><h3>Ready when you are</h3>
       <div class="workspace-actions">
         @for(action of actions;track
         action.key){@if(store.can(current,action.key)){<button
@@ -112,14 +112,15 @@
       <p class="workspace-muted">
         Driver search: {{ current.assignment_status || "Not started" }}
       </p>
-    </section>
+    </aside>
   </div>
-  <section class="workspace-card">
-    <h3>Customer notes</h3>
+  <section class="notice neutral">
+    <div><h3>Customer notes</h3>
     <p>{{ current.notes || "No customer notes." }}</p>
     <a class="btn btn-secondary" [routerLink]="['/orders', current.id]"
       >Open full order details</a
     >
+    </div>
   </section>
   }
 </div>

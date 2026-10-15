@@ -1,0 +1,8 @@
+<div class="customer-toast-stack" aria-live="polite" aria-atomic="false">
+  @for(toast of toastService.toasts();track toast.id){<div class="toast" role="status">
+    <svg [customerIcon]="toast.type==='success'?'check':toast.type==='error'?'alert':'bell'"></svg>
+    <span>{{ toast.message }}</span>
+    @if(toast.actionLabel && toast.actionUrl){<button type="button" class="toast-action" (click)="performAction(toast.actionUrl,toast.id)">{{ toast.actionLabel }}</button>}
+    <button type="button" class="toast-close" aria-label="Dismiss notification" (click)="toastService.remove(toast.id)"><svg customerIcon="close"></svg></button>
+  </div>}
+</div>

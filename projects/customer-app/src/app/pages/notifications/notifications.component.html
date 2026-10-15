@@ -1,106 +1,19 @@
-@if (!auth.isLoggedIn()) {
-  <fd-customer-locked-state
-    title="Login to view notifications"
-    description="Sign in to see order alerts, delivery updates, offers and account messages in one inbox."
-    icon="notifications"
-  />
-} @else {
-<div class="desktop-customer-view">
-  <main class="fd-content notifications-desktop">
-    <fd-breadcrumbs [items]="[{ label: 'Account', link: '/account' }, { label: 'Notifications' }]" />
-
-    <section class="notifications-shell">
-      <header class="notifications-hero fd-card">
-        <span class="material-symbols-rounded">notifications_active</span>
-        <div>
-          <small>Nextou updates</small>
-          <h1>Notifications</h1>
-          <p>Track order alerts, delivery changes, offers, and account messages from one clean inbox.</p>
-        </div>
-        <button type="button" class="mark-read" [disabled]="loading() || !notifications().length" (click)="markAllRead()">
-          Mark all as read
-        </button>
-      </header>
-
-      <section class="notification-list" aria-label="Notifications">
-        @if (loading()) {
-          @for (item of [1, 2, 3]; track item) {
-            <article class="notification-row skeleton fd-card">
-              <span></span>
-              <div><b></b><p></p><small></small></div>
-            </article>
-          }
-        } @else {
-          @for (item of notifications(); track item.id) {
-            <button
-              type="button"
-              class="notification-row fd-card"
-              [class.unread]="!item.read"
-              (click)="open(item)"
-            >
-              <span class="material-symbols-rounded">{{ item.orderId ? 'local_shipping' : 'notifications' }}</span>
-              <div>
-                <b>{{ item.title }}</b>
-                <p>{{ item.message }}</p>
-                <small>{{ item.timestamp }}</small>
-              </div>
-              <i>{{ item.type }}</i>
-            </button>
-          } @empty {
-            <article class="empty-inbox fd-card">
-              <span class="material-symbols-rounded">notifications_off</span>
-              <b>No notifications yet</b>
-              <p>When orders or offers change, updates will show here.</p>
-            </article>
-          }
-        }
-      </section>
-    </section>
-  </main>
-</div>
-
-<div class="mobile-customer-view">
-  <main class="mobile-page notifications-page">
-    <header class="mobile-notification-head">
-      <div>
-        <small>Nextou updates</small>
-        <h1>Notifications</h1>
-      </div>
-      <button type="button" [disabled]="loading() || !notifications().length" (click)="markAllRead()">Mark all</button>
-    </header>
-
-    <section class="notification-list" aria-label="Notifications">
-      @if (loading()) {
-        @for (item of [1, 2, 3]; track item) {
-          <article class="notification-row skeleton">
-            <span></span>
-            <div><b></b><p></p><small></small></div>
-          </article>
-        }
-      } @else {
-        @for (item of notifications(); track item.id) {
-          <button
-            type="button"
-            class="notification-row"
-            [class.unread]="!item.read"
-            (click)="open(item)"
-          >
-            <span class="material-symbols-rounded">{{ item.orderId ? 'local_shipping' : 'notifications' }}</span>
-            <div>
-              <b>{{ item.title }}</b>
-              <p>{{ item.message }}</p>
-              <small>{{ item.timestamp }}</small>
-            </div>
-          </button>
-        } @empty {
-          <article class="empty-inbox">
-            <span class="material-symbols-rounded">notifications_off</span>
-            <b>No notifications yet</b>
-            <p>Order and account updates will appear here.</p>
-          </article>
-        }
-      }
-    </section>
-  </main>
-</div>
-}
+<main class="fd-content">
+  @if(!auth.isLoggedIn()){<fd-customer-locked-state [embedded]="true" title="Your updates, all together." description="Sign in to load your notifications. The feed refreshes after login without needing to leave this screen." icon="lock" />}
+  @else{
+    <fd-breadcrumbs [items]="[{label:'Account',link:'/account'},{label:'Notifications'}]" />
+    <fd-customer-page-header eyebrow="Notifications" title="The latest,
+just for you." description="Order updates and useful reminders, without the noise."><button headerActions class="btn" type="button" [disabled]="!!pending()||loading()||!total()" (click)="markAllRead()"><svg customerIcon="check"></svg>{{ pending()==='all'?'Updating…':'Mark all read' }}</button></fd-customer-page-header>
+    @if(error()){<fd-customer-state title="Your updates could not load." [description]="error()" icon="wifi" action="Retry notifications" (retry)="loadNotifications(page())" />}
+    @else if(loading()){<div class="stack" aria-busy="true">@for(i of [1,2,3];track i){<div class="skeleton" style="height:110px"></div>}</div>}
+    @else{
+      @if(writeError()){<div class="notice error space" role="alert"><svg customerIcon="alert"></svg>{{ writeError() }}</div>}
+      @if(allRead()){<div class="notice success space" role="status"><svg customerIcon="check"></svg>All caught up. Your notifications are marked as read.</div>}
+      @if(total()){
+        <div class="tabs" aria-label="Notification filter">@for(t of tabs;track t){<button class="btn tab" type="button" [class.active]="tab()===t" [attr.aria-pressed]="tab()===t" (click)="tab.set(t)">{{ t }}</button>}</div>
+        <div class="notification-list space">@for(item of visible();track item.id){<button class="notification" type="button" [class.unread]="!item.read" [disabled]="!!pending()" (click)="open(item)"><span class="notice-icon"><svg [customerIcon]="item.type==='promo'?'tag':item.type==='order'||item.type==='delivery'?'bag':'bell'"></svg></span><div class="grow"><h3>{{ item.title }}</h3><p>{{ item.message }}</p><small>{{ item.timestamp }}@if(pending()===item.id){ · Updating…}</small></div>@if(!item.read){<span class="unread-dot" aria-label="Unread"></span>}<svg customerIcon="chev"></svg></button>}@empty{<p class="small muted">No notifications match this filter on this page.</p>}
+        <div class="pagination"><span>Notifications {{ pageStart() }}–{{ pageEnd() }} of {{ total() }}</span><div class="row"><button class="btn sm" type="button" [disabled]="page()===1||loading()" (click)="loadNotifications(page()-1)">Previous</button><button class="btn sm" type="button" [disabled]="!hasMore()||loading()" (click)="loadNotifications(page()+1)">Next</button></div></div></div>
+      }@else{<fd-customer-state title="A quiet little moment." description="You have no notifications yet. Order updates will appear here when available." icon="bell" artTone="green" action="Explore your neighbourhood" (retry)="explore()" />}
+    }
+  }
+</main>

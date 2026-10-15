@@ -1,102 +1,69 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, effect, inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AppCurrencyPipe } from '@shared/lib/pipes/currency.pipe';
-import { categoryFilterKey } from '@nexconnect/customer-core';
-import { buildProductFilterQuery } from '@nexconnect/customer-search';
-import { buildCustomerLocationQuery } from '@nexconnect/customer-location';
 import { UiService } from '../../services/ui.service';
-import { AppStateService } from '../../services/app-state.service';
 import { CatalogService } from '../../services/catalog.service';
-import { NxButtonComponent } from '../ui/nx-button/nx-button.component';
-import { CustomerContentConfigService } from '../../services/customer-content-config.service';
-
+import { CustomerIconComponent } from '../customer-icon/customer-icon.component';
+import { NxModalShellComponent } from '../ui/nx-modal-shell/nx-modal-shell.component';
 @Component({
   selector: 'fd-filter-slider',
   standalone: true,
-  imports: [NxButtonComponent, AppCurrencyPipe],
+  imports: [FormsModule, NxModalShellComponent, CustomerIconComponent],
   templateUrl: './filter-slider.component.html',
   styleUrls: ['./filter-slider.component.scss'],
 })
 export class FilterSliderComponent {
-  delivery = computed(() => [
-    'Any',
-    ...Array.from(
-      new Set(
-        this.catalog
-          .stores()
-          .map((store) => store.delivery)
-          .filter(Boolean),
-      ),
-    ).slice(0, 6),
-  ]);
-  sort = computed(() => this.content.filters().sortOptions);
-  categories = computed(() => [
-    'All',
-    ...this.catalog
-      .categories()
-      .filter((category) => category.id !== 'all')
-      .map((category) => category.label)
-      .slice(0, 10),
-  ]);
-  selectedDelivery = signal('Any');
-  selectedSort = signal('Relevance');
-  selectedCategory = signal('All');
-  price = signal(1000);
-
-  constructor(
-    public ui: UiService,
-    private state: AppStateService,
-    private catalog: CatalogService,
-    private router: Router,
-    public content: CustomerContentConfigService,
-  ) {}
-
-  reset(): void {
-    this.selectedDelivery.set('Any');
-    this.selectedSort.set(this.sort()[0] || 'Relevance');
-    this.selectedCategory.set('All');
-    this.price.set(1000);
-  }
-
-  apply(): void {
-    const address = this.state.activeAddress();
-    const selectedCategory = this.selectedCategory();
-    const category = this.catalog
-      .categories()
-      .find((item) => item.label === selectedCategory);
-    const sort =
-      this.selectedSort() === 'Rating'
-        ? 'rating'
-        : this.selectedSort() === 'Delivery Time'
-          ? 'distance'
-          : this.selectedSort() === 'Price Low to High'
-            ? 'min_order_asc'
-            : 'relevance';
-    const params = buildProductFilterQuery(
-      {
-        category:
-          selectedCategory === 'All'
-            ? ''
-            : category
-              ? categoryFilterKey(category as any)
-              : selectedCategory,
-        maxPrice: this.price(),
-        offersOnly: false,
-        sort,
-      },
-      buildCustomerLocationQuery({
-        lat: address?.latitude,
-        lng: address?.longitude,
-        state: address?.state,
-        city: address?.city,
-      }),
-    );
-    this.catalog.loadStores(params);
-    this.router.navigate(['/explore'], {
-      queryParams:
-        selectedCategory === 'All' ? {} : { category: params['category'] },
+  readonly ui = inject(UiService);
+  readonly catalog = inject(CatalogService);
+  private router = inject(Router);
+  private params = new URLSearchParams(this.router.url.split('?')[1] || '');
+  storeMode = false;
+  category = this.params.get('category') || '';
+  sort = this.params.get('sort') || 'relevance';
+  offers = this.params.get('offers') === 'true';
+  inStock = this.params.get('in_stock') === 'true';
+  maxPrice = this.params.get('max_price') || '';
+  rating = this.params.get('rating') === '4.8';
+  quick = this.params.get('delivery_time') === '30';
+  discount = this.params.get('min_discount') === '15';
+  constructor() {
+    effect(() => {
+      if (!this.ui.filterSliderOpen()) return;
+      this.storeMode = this.router.url.split('?')[0] === '/stores';
+      this.params = new URLSearchParams(this.router.url.split('?')[1] || '');
+      this.category = this.params.get('category') || '';
+      this.sort = this.params.get('sort') || 'relevance';
+      this.offers = this.params.get('offers') === 'true';
+      this.inStock = this.params.get('in_stock') === 'true';
+      this.maxPrice = this.params.get('max_price') || '';
+      this.rating = this.params.get('rating') === '4.8';
+      this.quick = this.params.get('delivery_time') === '30';
+      this.discount = this.params.get('min_discount') === '15';
     });
-    this.state.showToast('Filters applied');
+  }
+  reset(): void {
+    this.category = '';
+    this.sort = 'relevance';
+    this.offers = false;
+    this.inStock = false;
+    this.maxPrice = '';
+    this.rating = false; this.quick = false; this.discount = false;
+  }
+  apply(): void {
+    this.router.navigate([this.storeMode ? '/stores' : '/explore'], {
+      queryParams: {
+        q: this.params.get('q') || null,
+        category: this.category || null,
+        sort: this.sort,
+        offers: this.offers || null,
+        in_stock: this.inStock || null,
+        max_price: this.maxPrice || null,
+        rating: this.storeMode ? (this.params.get('rating') || null) : this.rating ? '4.8' : null,
+        delivery_time: this.storeMode ? (this.params.get('delivery_time') || null) : this.quick ? '30' : null,
+        min_discount: this.storeMode ? null : this.discount ? '15' : null,
+        tab: this.params.get('tab') || null,
+      },
+    });
     this.ui.closeFilter();
   }
 }

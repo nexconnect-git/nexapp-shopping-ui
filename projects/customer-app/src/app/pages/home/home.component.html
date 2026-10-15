@@ -1,536 +1,165 @@
-<div class="desktop-customer-view">
-<main class="fd-content home-content desktop-home">
-  <fd-breadcrumbs [items]="[{ label: 'Instant Delivery' }]" />
-  @if (!hasLocation()) {
-    <section class="location-guard fd-card">
-      <div>
-        <h2>Select your location</h2>
-        <p>{{ content.messages().locationPrompt }}</p>
+<main class="fd-content home-content">
+  @if(state.deliveryUnavailable()){
+    <fd-customer-state title="Not in your neighbourhood. Yet." description="Delivery is unavailable for this selected area. Choose another location to see stores that can deliver there." icon="pin" artTone="orange" action="Choose another location" (retry)="ui.openLocation()" />
+  }@else if(catalog.homeLoading() && !catalog.homeResolved()){
+    <div aria-busy="true" aria-label="Loading your neighbourhood"><div class="skeleton title-skeleton"></div><div class="skeleton text-skeleton"></div><div class="skeleton hero-skeleton space"></div><div class="product-grid section">@for(i of [1,2,3,4];track i){<div class="skeleton card-skeleton"></div>}</div><p class="demo-note space" role="status">Loading catalog, stores and recommendations.</p></div>
+  }@else{
+  <section class="hero">
+    <div class="hero-copy">
+      <div class="eyebrow">A little local. A lot to love.</div>
+      <h1>Good things.<br /> <em>Close to home.</em></h1>
+      <p>
+        Fresh finds and everyday essentials from the stores around you. A nicer
+        way to get what you need.
+      </p>
+      <div class="row wrap-row">
+        <a class="btn primary" routerLink="/stores"
+          ><svg customerIcon="arrow"></svg><span>Explore nearby stores</span></a
+        ><a class="btn" routerLink="/categories"><svg customerIcon="grid"></svg><span>Browse categories</span></a>
       </div>
-      <button type="button" class="fd-btn primary" (click)="openLocationPicker()">
-        Set location
-      </button>
-    </section>
-  } @else if (noServiceableStores()) {
-    <section class="location-guard out-of-service fd-card">
-      <div>
-        <h2>Service not available here yet</h2>
-        <p>We could not find nearby serviceable stores for your selected location.</p>
+      <div class="hero-meta">
+        <span><svg customerIcon="store"></svg>Neighbourhood stores</span>
+        <span><svg customerIcon="bag"></svg>Everyday essentials</span>
+        <span><svg customerIcon="shield"></svg>Clear, upfront charges</span>
       </div>
-      <button type="button" class="fd-btn warning" (click)="openLocationPicker()">
-        Change location
-      </button>
-    </section>
-  } @else {
-  <section class="home-layout">
-    <div class="main-area">
-      <section
-        class="insta-hero animate-in glass-panel  hover-lift"
-        [style.background]="heroBackground()"
-      >
-        <div class="hero-copy">
-          <div class="speed-line bounce-tap">
-            <span class="material-symbols-rounded">bolt</span>
-            {{ heroBadge() }}
-          </div>
-          <h1>{{ heroTitle() }}</h1>
-          <p class="hero-subtitle">{{ heroSubtitle() }}</p>
-          @if (heroStore(); as store) {
-            <div class="hero-offer">
-              <b>{{ store.name }}</b>
-              <span>{{ store.category }}</span>
-            </div>
-          }
-          <a
-            [routerLink]="routePath(heroCtaUrl())"
-            [queryParams]="routeQuery(heroCtaUrl())"
-            class="shop-btn bounce-tap"
-            >{{ heroCtaLabel() }}
-            <span class="material-symbols-rounded">arrow_forward</span></a
-          >
-        </div>
-
-        <div class="hero-visual">
-          <img [src]="heroImage()" alt="Featured store" class="bounce-tap" />
-          <div class="clock">
-            <span class="material-symbols-rounded">schedule</span>
-          </div>
-          <div class="time-chip">{{ heroBadge() }}</div>
-          <div class="speed-lines one"></div>
-          <div class="speed-lines two"></div>
-        </div>
-      </section>
-
-      <section class="promo-strip stagger">
-        @for (coupon of promoCoupons(); track coupon.id) {
-          <a routerLink="/explore" class="mini-banner red">
-            <span class="material-symbols-rounded">{{
-              coupon.iconName || "local_offer"
-            }}</span>
-            <div>
-              <b>{{ coupon.badgeText || coupon.title }}</b
-              ><small>{{ coupon.description }}</small>
-            </div>
-          </a>
-        }
-        @for (category of promoCategories(); track category.id) {
-          <a
-            [routerLink]="['/explore', category.id]"
-            class="mini-banner purple"
-          >
-            <span
-              class="category-emoji material-symbols-rounded"
-              aria-hidden="true"
-              >{{ categoryIcon(category) }}</span
-            >
-            <div>
-              <b>{{ category.label }}</b
-              ><small>{{ content.home().categoryPromoCopy }}</small>
-            </div>
-          </a>
-        }
-        @if (!promoCoupons().length && !promoCategories().length) {
-          <a routerLink="/explore" class="mini-banner purple">
-            <span class="material-symbols-rounded">storefront</span>
-            <div>
-              <b>{{ content.home().loadingCatalogTitle }}</b
-              ><small>{{ content.home().loadingCatalogSubtitle }}</small>
-            </div>
-          </a>
-        }
-      </section>
-
-      <section class="category-strip stagger">
-        @for (cat of desktopCategories(); track cat.id) {
-          <a [routerLink]="['/explore']" [queryParams]="{ category: cat.id }" class="insta-category">
-            <span [style.background]="cat.bg">
-              @if (cat.image) {
-                <img [src]="cat.image" alt="" />
-              } @else {
-                <b
-                  class="category-emoji material-symbols-rounded"
-                  aria-hidden="true"
-                  >{{ categoryIcon(cat) }}</b
-                >
-              }
-            </span>
-            <small>{{ cat.label }}</small>
-          </a>
-        }
-        <a routerLink="/explore" class="insta-category view-all">
-          <span class="material-symbols-rounded">apps</span>
-          <small>View All</small>
-        </a>
-      </section>
-
-      <section class="mobile-vibe-strip" aria-label="Shopping highlights">
-        <a routerLink="/explore">
-          <span class="material-symbols-rounded">local_offer</span>
-          <b>Nearby deals</b>
-          <small>Store savings</small>
-        </a>
-        <a routerLink="/explore">
-          <span class="material-symbols-rounded">storefront</span>
-          <b>Nearby shops</b>
-          <small>Live catalog</small>
-        </a>
-        <a routerLink="/explore" [queryParams]="{ q: 'milk' }">
-          <span class="material-symbols-rounded">local_drink</span>
-          <b>Daily basics</b>
-          <small>Quick basket</small>
-        </a>
-      </section>
-
-      <div class="fd-section-title compact">
-        <h2>{{ content.home().sectionTitles.topStores }}</h2>
-        <a routerLink="/explore">See all</a>
-      </div>
-
-      <section class="top-store-row stagger">
-        @if (catalog.storesLoading()) {
-          <div
-            class="nc-skeleton-list grid"
-            role="status"
-            aria-live="polite"
-            aria-label="Loading top stores"
-          >
-            @for (item of [1, 2, 3]; track item) {
-              <div class="nc-skeleton-card">
-                <span class="nc-skeleton-media"></span>
-                <span class="nc-skeleton-copy">
-                  <span class="nc-skeleton-line medium"></span>
-                  <span class="nc-skeleton-line long"></span>
-                  <span class="nc-skeleton-line short"></span>
-                </span>
-              </div>
-            }
-          </div>
-        } @else {
-          @for (store of serviceableStores().slice(0, 5); track store.id) {
-            <fd-store-card [store]="store" />
-          }
-        }
-        @if (serviceableStores().length > 5) {
-        <a routerLink="/explore" class="row-next"
-          ><span class="material-symbols-rounded">chevron_right</span></a
-        >
-        }
-      </section>
-
-      <section class="ad-container" aria-label="Promotions">
-        @for (promo of homePromos(); track promo.id) {
-          <a
-            class="ad-card"
-            [class.red]="promo.tone === 'red'"
-            [class.green]="promo.tone === 'green'"
-            [class.orange]="promo.tone === 'orange'"
-            [class.blue]="promo.tone === 'blue'"
-            [class.purple]="!promo.tone || promo.tone === 'purple'"
-            [routerLink]="routePath(promo.ctaUrl || '/explore')"
-            [queryParams]="routeQuery(promo.ctaUrl || '/explore')"
-          >
-            <span class="ad-icon material-symbols-rounded">{{
-              promo.icon || "local_offer"
-            }}</span>
-            <small>{{ promo.eyebrow }}</small>
-            <b>{{ promo.title }}</b>
-            <span>{{ promo.subtitle }}</span>
-            <em>{{ promo.ctaLabel }}</em>
-          </a>
-        }
-      </section>
-
-      @if (engagementBanner(); as banner) {
-        <a class="club-banner" [routerLink]="routePath(banner.ctaUrl)" [queryParams]="routeQuery(banner.ctaUrl)">
-          <span class="material-symbols-rounded">{{
-            banner.icon || "workspace_premium"
-          }}</span>
-          <div>
-            <small>{{ banner.eyebrow }}</small>
-            <b>{{ banner.title }}</b>
-            <p>{{ banner.subtitle }}</p>
-          </div>
-          <em>{{ banner.ctaLabel }}</em>
-        </a>
-      }
-
-      <div class="fd-section-title compact">
-        <h2>{{ content.home().sectionTitles.recommended }}</h2>
-        <a routerLink="/explore">See all</a>
-      </div>
-
-      @if (flashDealProducts().length) {
-        <section class="deal-shelf">
-          <div class="deal-copy">
-            <small>Limited-time picks</small>
-            <h2>Flash deals</h2>
-            <p>Fresh savings from stores around you.</p>
-          </div>
-          <div class="deal-grid">
-            @for (product of flashDealProducts().slice(0, 4); track product.id) {
-              <fd-product-card [product]="product" />
-            }
-          </div>
-        </section>
-      }
-
-      <section class="recommended-row stagger">
-        @if (catalog.productsLoading()) {
-          <div
-            class="nc-skeleton-list grid"
-            role="status"
-            aria-live="polite"
-            aria-label="Loading recommended products"
-          >
-            @for (item of [1, 2, 3, 4]; track item) {
-              <div class="nc-skeleton-card">
-                <span class="nc-skeleton-media"></span>
-                <span class="nc-skeleton-copy">
-                  <span class="nc-skeleton-line medium"></span>
-                  <span class="nc-skeleton-line long"></span>
-                  <span class="nc-skeleton-line short"></span>
-                </span>
-              </div>
-            }
-          </div>
-        } @else {
-          @for (product of homeProducts().slice(0, 6); track product.id) {
-            <fd-product-card [product]="product" />
-          }
-        }
-        @if (homeProducts().length > 6) {
-        <a routerLink="/explore" class="row-next product-next"
-          ><span class="material-symbols-rounded">chevron_right</span></a
-        >
-        }
-      </section>
-
-      @if (
-        recentlyOrderedProducts().length ||
-        trendingProducts().length ||
-        newArrivalProducts().length ||
-        bestSellerProducts().length
-      ) {
-        <section class="discovery-rails" aria-label="Product discovery">
-          @if (recentlyOrderedProducts().length) {
-            <article class="product-rail">
-              <div class="fd-section-title compact">
-                <h2>Recently ordered</h2>
-                <a routerLink="/orders">Reorder</a>
-              </div>
-              <div class="compact-product-strip">
-                @for (product of recentlyOrderedProducts(); track product.id) {
-                  <fd-product-card [product]="product" />
-                }
-              </div>
-            </article>
-          }
-
-          @if (trendingProducts().length) {
-            <article class="product-rail">
-              <div class="fd-section-title compact">
-                <h2>Trending near you</h2>
-                <a routerLink="/explore" [queryParams]="{ sort: 'trending' }"
-                  >See all</a
-                >
-              </div>
-              <div class="compact-product-strip">
-                @for (product of trendingProducts(); track product.id) {
-                  <fd-product-card [product]="product" />
-                }
-              </div>
-            </article>
-          }
-
-          @if (newArrivalProducts().length) {
-            <article class="product-rail">
-              <div class="fd-section-title compact">
-                <h2>New arrivals</h2>
-                <a routerLink="/explore" [queryParams]="{ sort: 'newest' }"
-                  >See all</a
-                >
-              </div>
-              <div class="compact-product-strip">
-                @for (product of newArrivalProducts(); track product.id) {
-                  <fd-product-card [product]="product" />
-                }
-              </div>
-            </article>
-          }
-
-          @if (bestSellerProducts().length) {
-            <article class="product-rail">
-              <div class="fd-section-title compact">
-                <h2>Bestsellers</h2>
-                <a routerLink="/explore" [queryParams]="{ sort: 'bestseller' }"
-                  >See all</a
-                >
-              </div>
-              <div class="compact-product-strip">
-                @for (product of bestSellerProducts(); track product.id) {
-                  <fd-product-card [product]="product" />
-                }
-              </div>
-            </article>
-          }
-        </section>
-      }
+    </div>
+    <div class="hero-art">
+      <img src="/assets/local-everyday-hero.svg" alt="Illustrated bag of local everyday essentials" />
+      <div class="art-stamp">Local finds.<br />Lovely days.</div>
+      <div class="art-caption"><strong>Picked nearby. Brought to you.</strong>Your everyday, a little easier.</div>
     </div>
   </section>
-  }
-</main>
-</div>
-
-<div class="mobile-customer-view">
-<main class="mobile-page home-page">
-  @if (!hasLocation()) {
-    <section class="location-guard mobile fd-card">
-      <div>
-        <h2>Select your location</h2>
-        <p>{{ content.messages().locationPrompt }}</p>
-      </div>
-      <button type="button" class="mobile-cta" (click)="openLocationPicker()">
-        Set location
-      </button>
-    </section>
-  } @else if (noServiceableStores()) {
-    <section class="location-guard mobile out-of-service fd-card">
-      <div>
-        <h2>Service not available here yet</h2>
-        <p>Try another address to discover nearby stores.</p>
-      </div>
-      <button type="button" class="mobile-cta secondary" (click)="openLocationPicker()">
-        Change location
-      </button>
-    </section>
-  } @else {
-  <section class="hero-card" [style.background]="heroBackground() || null">
+  @if (state.serviceabilityError()) {
+  <div class="notice warning" role="status">
     <div>
-      <span>{{ heroBadge() }}</span>
-      <h1>{{ heroTitle() }}</h1>
-      <p>{{ heroSubtitle() }}</p>
-      <a [routerLink]="routePath(heroCtaUrl())" [queryParams]="routeQuery(heroCtaUrl())">{{ heroCtaLabel() }}</a>
+      <strong>Delivery availability needs checking</strong
+      >{{ state.serviceabilityError() }}
     </div>
-    <img [src]="heroImage()" [alt]="heroTitle()" />
-  </section>
-
-  <section class="mobile-section">
-    <div class="mobile-section-head">
-      <h2>Shop by need</h2>
-      <a routerLink="/explore">View all</a>
+    <button class="btn" (click)="ui.openLocation()">Check location</button>
+  </div>
+  }
+  <div class="home-strip" [class.single]="!catalog.topCoupons().length">
+    @if (catalog.topCoupons()[0]; as coupon) {
+    <div class="promo-mini">
+      <div class="promo-icon"><svg customerIcon="tag"></svg></div>
+      <div class="grow"><h3>A little extra for your everyday.</h3><p>{{ coupon.description }} <strong>{{ coupon.code }}</strong></p></div>
+      <a class="btn sm" routerLink="/cart" [queryParams]="{coupons:1}">See offer</a>
     </div>
-    <div class="category-icons">
-      @for (category of mobileCategories(); track category.id) {
-        <a [routerLink]="['/explore']" [queryParams]="{ category: category.id }">
-          <span class="material-symbols-rounded">{{ categoryIcon(category) }}</span>
-          <b>{{ category.label }}</b>
-        </a>
-      }
+    }
+    @if (state.activeOrder(); as order) {
+    <div class="active-strip">
+      <svg customerIcon="truck"></svg>
+      <div class="grow"><h3>{{ order.status === 'picked_up' || order.status === 'out_for_delivery' ? 'Your order is on its way' : 'Your order is coming together' }}</h3><p>{{ order.order_number }} · {{ order.status }}</p></div>
+      <a class="btn sm soft" [routerLink]="['/tracking',order.id]">Track →</a>
     </div>
-  </section>
-
-  <section class="promo-row">
-    @for (promo of homePromos(); track promo.id) {
-      <a [routerLink]="routePath(promo.ctaUrl || '/explore')" [queryParams]="routeQuery(promo.ctaUrl || '/explore')" class="promo-card">
-        <span class="material-symbols-rounded">{{ promo.icon || 'local_offer' }}</span>
-        <b>{{ promo.title }}</b>
-        <small>{{ promo.subtitle }}</small>
-      </a>
-    } @empty {
-      @for (coupon of promoCoupons(); track coupon.id) {
-        <button type="button" class="promo-card" (click)="state.applyCoupon(coupon.code)">
-          <span class="material-symbols-rounded">local_offer</span>
-          <b>{{ coupon.title }}</b>
-          <small>{{ coupon.description }}</small>
-        </button>
-      }
+    } @else {
+    <div class="active-strip">
+      <svg customerIcon="leaf"></svg>
+      <div class="grow"><h3>Every good day starts nearby.</h3><p>Meet the stores that make your neighbourhood yours.</p></div>
+      <a class="btn sm soft" routerLink="/stores">Meet them →</a>
+    </div>
+    }
+  </div>
+  @if(state.activeOrderError()){
+  <div class="notice warning" role="alert">
+    <svg customerIcon="info"></svg><div class="grow"><strong>Your order update could not load.</strong>{{ state.activeOrderError() }} Your shopping sections are still available.</div>
+    <button class="btn" type="button" (click)="state.loadActiveOrder()"><svg customerIcon="refresh"></svg>Retry order update</button>
+  </div>
+  }
+ @if (catalog.homeError()) {
+  <div class="notice error" role="alert">
+    <div class="grow">
+      <strong>A refresh did not complete</strong>{{ catalog.homeError() }}
+    </div>
+    <button class="btn" (click)="catalog.retryHome()">Retry</button>
+  </div>
+  } @if (catalog.categoriesLoading() && !categories().length) {
+  <section
+    class="loading-grid"
+    aria-label="Loading categories"
+    aria-busy="true"
+  >
+    @for (i of [1,2,3,4];track i){
+    <div class="skeleton"></div>
     }
   </section>
-
-  @if (flashDealProducts().length) {
-    <section class="mobile-section flash-mobile">
-      <div class="mobile-section-head">
-        <h2>Flash deals</h2>
-        <a routerLink="/explore" [queryParams]="{ offers: true }">See all</a>
+  }@else if(categories().length){
+  <section class="section">
+    <div class="section-head">
+      <div>
+        <h2>What is on your list?</h2>
       </div>
-      <div class="mobile-grid-2">
-        @for (product of flashDealProducts().slice(0, 4); track product.id) {
-          <fd-product-card [product]="product" />
-        }
-      </div>
-    </section>
-  }
-
-  <section class="mobile-section">
-    <fd-mobile-quick-action-grid [actions]="quickActions()" />
+      <a class="btn text" routerLink="/categories"><svg customerIcon="arrow"></svg>All categories</a>
+    </div>
+    <div class="categories-grid">
+      @for(category of categories();track category.id){<a
+        class="category-tile"
+        [routerLink]="['/category', category.id]"
+        ><span class="category-art"
+          >@if(category.image){<img
+            [src]="category.image"
+            alt=""
+            loading="lazy"
+          />}@else{<svg customerIcon="grid"
+            ></svg>}</span
+        >{{ category.label }}</a
+      >}
+    </div>
   </section>
-
-  @if (catalog.storesLoading() || serviceableStores().length) {
-    <section class="mobile-section">
-      <div class="mobile-section-head">
-        <h2>Top stores</h2>
-        <a routerLink="/explore">See all</a>
-      </div>
-      <div class="store-scroller">
-        @for (store of serviceableStores().slice(0, 8); track store.id) {
-          <fd-store-card [store]="store" />
-        }
-      </div>
-    </section>
   }
-
-  @if (catalog.productsLoading() || homeProducts().length) {
-    <section class="mobile-section">
-      <div class="mobile-section-head">
-        <h2>Recommended</h2>
-        <a routerLink="/explore">Search more</a>
+  <section class="section">
+    <div class="section-head">
+      <div>
+        <h2>The neighbourhood favourites</h2>
+        <p>Good people. Great everyday finds.</p>
       </div>
-        <div class="mobile-list">
-        @for (product of homeProducts().slice(0, 3); track product.id) {
-          <fd-mobile-product-row
-            [image]="product.image"
-            [name]="product.name"
-            [subtitle]="product.storeName || product.category || 'Fresh pick'"
-            [price]="product.price"
-            [mrp]="product.mrp"
-            (pressed)="openProduct(product.id)"
-            (add)="state.addToCart(product)"
-          />
-        }
+      <a class="btn text" routerLink="/stores"><svg customerIcon="arrow"></svg>See all stores</a>
+    </div>
+    @if(catalog.storesLoading()&&!stores().length){
+    <div class="store-grid" aria-busy="true">
+      @for(i of [1,2,3];track i){
+      <div class="skeleton store-skeleton"></div>
+      }
+    </div>
+    }@else{
+    <div class="store-grid">
+      @for(store of stores();track store.id){<fd-store-card [store]="store" />}
+    </div>
+    @if(!stores().length&&!catalog.homeError()&&!state.deliveryUnavailable()){<fd-customer-state
+      title="No stores nearby yet"
+      description="Try another delivery area to see what is available."
+      action="Change location"
+      (retry)="ui.openLocation()"
+    />}}
+  </section>
+  <section class="section">
+    <div class="section-head">
+      <div>
+        <h2>Your everyday edit</h2>
+        <p>{{ buyAgain().length ? "Buy again from your order history." : "A few good things for your basket." }}</p>
       </div>
-      <div class="mobile-grid-2">
-        @for (product of homeProducts().slice(3, 8); track product.id) {
-          <fd-product-card [product]="product" />
-        }
-      </div>
-    </section>
-  }
-
-  @if (recentlyOrderedProducts().length) {
-    <section class="mobile-section">
-      <div class="mobile-section-head">
-        <h2>Recently ordered</h2>
-        <a routerLink="/orders">Reorder</a>
-      </div>
-      <div class="mobile-list">
-        @for (product of recentlyOrderedProducts().slice(0, 3); track product.id) {
-          <fd-mobile-product-row
-            [image]="product.image"
-            [name]="product.name"
-            [subtitle]="product.storeName || product.category || 'Quick reorder'"
-            [price]="product.price"
-            [mrp]="product.mrp"
-            (pressed)="openProduct(product.id)"
-            (add)="state.addToCart(product)"
-          />
-        }
-      </div>
-    </section>
-  }
-
-  @if (trendingProducts().length) {
-    <section class="mobile-section">
-      <div class="mobile-section-head">
-        <h2>Trending near you</h2>
-        <a routerLink="/explore" [queryParams]="{ sort: 'trending' }">See all</a>
-      </div>
-      <div class="mobile-grid-2">
-        @for (product of trendingProducts().slice(0, 4); track product.id) {
-          <fd-product-card [product]="product" />
-        }
-      </div>
-    </section>
-  }
-
-  @if (newArrivalProducts().length) {
-    <section class="mobile-section">
-      <div class="mobile-section-head">
-        <h2>New arrivals</h2>
-        <a routerLink="/explore" [queryParams]="{ sort: 'newest' }">See all</a>
-      </div>
-      <div class="mobile-grid-2">
-        @for (product of newArrivalProducts().slice(0, 4); track product.id) {
-          <fd-product-card [product]="product" />
-        }
-      </div>
-    </section>
-  }
-
-  @if (bestSellerProducts().length) {
-    <section class="mobile-section">
-      <div class="mobile-section-head">
-        <h2>Bestsellers</h2>
-        <a routerLink="/explore" [queryParams]="{ sort: 'bestseller' }"
-          >See all</a
-        >
-      </div>
-      <div class="mobile-grid-2">
-        @for (product of bestSellerProducts().slice(0, 4); track product.id) {
-          <fd-product-card [product]="product" />
-        }
-      </div>
-    </section>
-  }
+      <a class="btn text" routerLink="/explore"><svg customerIcon="arrow"></svg>Explore more</a>
+    </div>
+    @if(catalog.productsLoading()&&!products().length){
+    <div class="product-grid five" aria-busy="true">
+      @for(i of [1,2,3,4,5];track i){
+      <div class="skeleton product-skeleton"></div>
+      }
+    </div>
+    }@else{
+    <div class="product-grid five">
+      @for(product of products();track product.id){<fd-product-card
+        [product]="product"
+      />}
+    </div>
+    }
+  </section>
+  <section class="section">
+    <div class="section-head"><h2>A little inspiration</h2></div>
+    <div class="callout">
+      <div><div class="eyebrow">Breakfast, beautifully simple</div><div class="serif">Make room for a slow morning.</div><p>Fresh bread, your favourite milk, and all the little things that start the day right.</p></div>
+      <a class="btn ink" routerLink="/explore" [queryParams]="{q:'breakfast'}"><svg customerIcon="arrow"></svg>Shop breakfast</a>
+    </div>
+  </section>
   }
 </main>
-</div>

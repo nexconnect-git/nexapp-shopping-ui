@@ -1,75 +1,78 @@
 <article class="product-card" [class.compact]="compact">
-  <a [routerLink]="['/product', product.id]" class="image-wrap">
-          <img
-            [src]="product.image || placeholderImage"
-            [alt]="productName()"
-            [attr.loading]="product.image ? 'lazy' : 'eager'"
-            [attr.fetchpriority]="product.image ? null : 'high'"
-            (error)="onImageError($event)"
-          />
-    @if (product.discount) {
-      <span class="discount">{{ product.discount }}</span>
-    }
-    <span class="eta-chip">
-      <span class="material-symbols-rounded">bolt</span>
-      {{ deliveryBadge() }}
-    </span>
-  </a>
-  <div class="body">
-    <small class="category">{{ categoryLabel() }}</small>
-    <a [routerLink]="['/product', product.id]" class="name">{{
+  <a [routerLink]="['/product', product.id]" class="product-image"
+    ><img
+      [src]="product.image || placeholderImage"
+      [alt]="productName()"
+      loading="lazy"
+      (error)="onImageError($event)"
+    />@if (stockBadge(); as badge) {
+    <span
+      class="tag"
+      [class.warning]="badge.tone === 'warning'"
+      [class.danger]="badge.tone === 'danger'"
+      >{{ badge.label }}</span
+    >
+    }@else if (product.discount) {
+    <span class="tag">{{ product.discount }}</span> }</a
+  >
+  <div class="product-body">
+    <p class="store-label"><svg customerIcon="store"></svg>{{ product.storeName || categoryLabel() }}</p>
+    <a [routerLink]="['/product', product.id]" class="product-name">{{
       productName()
     }}</a>
-    <small class="unit">{{ productUnit() }}</small>
-    @if (stockBadge(); as badge) {
-      <span class="stock-badge" [class.warning]="badge.tone === 'warning'" [class.danger]="badge.tone === 'danger'">
-        {{ badge.label }}
-      </span>
-    }
-    <div class="bottom">
-      <div class="price">
-        <b>{{ productPrice() | appCurrency }}</b>
-        @if (showMrp()) {
-          <del>{{ product.mrp | appCurrency }}</del>
-        }
+    <p class="product-unit">{{ productUnit() }}</p>
+    <div class="product-price">
+      <div>
+        <strong>{{ productPrice() | appCurrency }}</strong
+        >@if (showMrp()) { <del>{{ product.mrp | appCurrency }}</del> }
       </div>
       @if (quantity()) {
-        <div class="qty">
-          <button
-            type="button"
-            aria-label="Decrease quantity"
-            (click)="cart.updateQuantity(product.id, -1)"
-          >
-            <span class="material-symbols-rounded">remove</span>
-          </button>
-          <b>{{ quantity() }}</b>
-          <button
-            type="button"
-            aria-label="Increase quantity"
-            (click)="cart.updateQuantity(product.id, 1)"
-          >
-            <span class="material-symbols-rounded">add</span>
-          </button>
-        </div>
-      } @else if (isUnavailable()) {
-        <button type="button" class="add closed" disabled>
-          {{ unavailableLabel() }}
-        </button>
-      } @else if (deliveryUnavailable()) {
-        <button type="button" class="add closed" disabled>
-          Delivery unavailable
-        </button>
-      } @else if (storeClosed()) {
-        <button type="button" class="add closed" disabled>Store closed</button>
-      } @else {
+      <div class="qty">
         <button
           type="button"
-          class="add"
-          [attr.aria-label]="'Add ' + productName() + ' to cart'"
-          (click)="cart.addToCart(product)"
+          [attr.aria-label]="'Remove one ' + productName()"
+          (click)="cart.updateQuantity(product.id, -1)"
         >
-          Add
+          <svg customerIcon="minus"></svg></button
+        ><span>{{ quantity() }}</span
+        ><button
+          type="button"
+          [attr.aria-label]="'Add one ' + productName()"
+          [disabled]="
+            isUnavailable() ||
+            deliveryUnavailable() ||
+            storeClosed() ||
+            state.pendingProducts().includes(product.apiId || product.id)
+          "
+          (click)="cart.updateQuantity(product.id, 1)"
+        >
+          <svg customerIcon="plus"></svg>
         </button>
+      </div>
+      } @else {
+      <button
+        type="button"
+        class="btn"
+        [disabled]="
+          isUnavailable() ||
+          deliveryUnavailable() ||
+          storeClosed() ||
+          state.pendingProducts().includes(product.apiId || product.id)
+        "
+        [attr.aria-label]="'Add ' + productName() + ' to basket'"
+        (click)="cart.addToCart(product)"
+      >
+        @if(!isUnavailable()&&!deliveryUnavailable()&&!storeClosed()){<svg customerIcon="plus"></svg>}
+        {{
+          isUnavailable()
+            ? "Sold out"
+            : deliveryUnavailable()
+            ? "Unavailable"
+            : storeClosed()
+            ? "Unavailable"
+            : "Add"
+        }}
+      </button>
       }
     </div>
   </div>

@@ -18,11 +18,15 @@ import {
 } from '@shared/public-api';
 import { WorkspacePagerComponent } from '../../components/workspace-pager.component';
 import { VendorContextService } from '../../services/vendor-context.service';
+import { WorkspaceDialogComponent } from '../../components/workspace-dialog.component';
+import { CounterStateComponent } from '../../components/counter-state.component';
 
 @Component({
   selector: 'app-inventory',
   standalone: true,
   imports: [
+    WorkspaceDialogComponent,
+    CounterStateComponent,
     CommonModule,
     FormsModule,
     RouterLink,
@@ -32,6 +36,7 @@ import { VendorContextService } from '../../services/vendor-context.service';
   styleUrl: './inventory.component.scss',
 })
 export class InventoryComponent implements OnInit {
+  readonly reviewChanges = signal(false);
   private readonly api = inject(VendorWorkspaceApi);
   private readonly legacy = inject(VendorApi);
   private readonly destroy = inject(DestroyRef);
@@ -39,6 +44,7 @@ export class InventoryComponent implements OnInit {
   private readonly router = inject(Router);
   readonly store = inject(VendorContextService);
   readonly products = signal<Product[]>([]);
+  readonly loaded = signal(false);
   readonly loading = signal(false);
   readonly error = signal('');
   readonly count = signal(0);
@@ -112,6 +118,7 @@ export class InventoryComponent implements OnInit {
       .subscribe({
         next: (result) => {
           if (generation !== this.generation) return;
+          this.loaded.set(true);
           this.products.set(result.results);
           this.count.set(result.count);
           this.summary.set(result.summary || {});
@@ -261,6 +268,9 @@ export class InventoryComponent implements OnInit {
   discard(): void {
     if (this.isSaving()) return;
     this.drafts.set({}); this.editedProducts.set(new Map()); this.rowErrors.set({}); this.conflicts.set(new Set()); this.error.set('');
+  }
+  currentStock(product: Product): number {
+    return this.products().find(row => row.id === product.id)?.stock ?? product.stock;
   }
   resolveConflict(product: Product, keepEdit: boolean): void {
     const latest = this.products().find(row => row.id === product.id);

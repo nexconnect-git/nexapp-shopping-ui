@@ -31,6 +31,8 @@ export class SalesReportComponent implements OnInit {
   private readonly destroy = inject(DestroyRef);
   private generation = 0;
   readonly stats = signal<VendorAnalytics | null>(null);
+  readonly section = signal<'sales' | 'settlements'>('sales');
+  readonly chartView = signal<'chart' | 'table'>('chart');
   readonly days = signal('30');
   readonly loading = signal(false);
   readonly error = signal('');

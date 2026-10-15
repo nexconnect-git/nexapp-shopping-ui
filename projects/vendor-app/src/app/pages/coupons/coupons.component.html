@@ -1,7 +1,7 @@
 <div class="workspace-page">
   <header class="page-heading">
     <div>
-      <p class="eyebrow">Growth</p><h1>Promotions</h1>
+      <p class="eyebrow">Growth</p><h1>Give them a reason to return.</h1>
       <p>Create store-wide coupons with clear limits and schedules.</p>
     </div>
     <button
@@ -68,8 +68,8 @@
       Retry
     </button>
   </p>
-  }@if(list.loading()){
-  <div class="workspace-state" role="status">Loading coupons…</div>
+  }@if(list.loading() && !list.response()){
+  <nc-counter-state kind="loading" title="Loading coupons…" />
   }@else if(!list.error()&&!list.rows().length){
   <div class="workspace-state">
     <h3>No matching coupons</h3>
@@ -78,81 +78,24 @@
   }@else{
   <div class="coupon-grid">
     @for(coupon of list.rows();track coupon.id){
-    <article class="workspace-card">
+    <article class="promotion-record">
       <div class="coupon-title">
         <h3>{{ coupon.title }}</h3>
         <span class="status-pill">{{ coupon.status_label }}</span>
       </div>
       <strong class="coupon-code">{{ coupon.code }}</strong>
       <p>{{ coupon.description }}</p>
-      <dl>
-        <div>
-          <dt>Discount</dt>
-          <dd>
-            @if(coupon.discount_type==='free_delivery'){Free delivery}@else if(coupon.discount_type==='percentage'){{{coupon.discount_value
-            }}%}@else{{{coupon.discount_value|appCurrency}}}
-          </dd>
-        </div>
-        <div>
-          <dt>Minimum order</dt>
-          <dd>{{ coupon.min_order_amount | appCurrency }}</dd>
-        </div>
-        <div>
-          <dt>Uses</dt>
-          <dd>
-            {{ coupon.used_count }} /
-            {{ coupon.usage_limit === null ? "Unlimited" : coupon.usage_limit }}
-          </dd>
-        </div>
-        <div>
-          <dt>Schedule · {{ zone() }}</dt>
-          <dd>
-            {{ local(coupon.valid_from).replace("T", " ") }} →
-            {{
-              coupon.valid_until
-                ? local(coupon.valid_until).replace("T", " ")
-                : "No end date"
-            }}
-          </dd>
-        </div>
-      </dl>
-      @for(warning of coupon.health_warnings;track warning){
-      <p class="workspace-muted">{{ warning }}</p>
-      }
-      <div class="workspace-actions">
-        <button
-          type="button"
-          class="btn btn-secondary"
-          [disabled]="pending() === coupon.id || !zone()"
-          (click)="open(coupon)"
-        >
-          Edit</button
-        ><button
-          type="button"
-          class="btn btn-secondary"
-          [disabled]="!!pending()"
-          (click)="command(coupon, 'duplicate')"
-        >
-          Duplicate</button
-        ><button
-          type="button"
-          class="btn btn-secondary"
-          [disabled]="!!pending()"
-          (click)="deleteCandidate.set(coupon); error.set('')"
-        >
-          Delete
-        </button>
-      </div>
+<div class="offer-line">@if(coupon.discount_type==='free_delivery'){Free delivery}@else if(coupon.discount_type==='percentage'){ {{ coupon.discount_value }}% off }@else{ {{ coupon.discount_value | appCurrency }} off } · {{ coupon.used_count }} uses</div><button class="btn-secondary" (click)="selected.set(coupon)">Manage offer</button>
     </article>
     }
   </div>
   }
-  <nc-vendor-pager
+  @if(list.response()){<nc-vendor-pager
     [page]="list.page()"
     [count]="list.count()"
     [busy]="list.loading()"
     (pageChange)="query($event)"
-  />
+  />}
 </div>
 @if(editing()){<nc-vendor-dialog
   [title]="editId() ? 'Edit coupon' : 'Create coupon'"
@@ -287,7 +230,7 @@
             [attr.aria-invalid]="fieldErrors()['per_user_limit'] ? true : null"
             [attr.aria-describedby]="fieldErrors()['per_user_limit'] ? 'coupon-error-per_user_limit' : null" />@if(fieldErrors()['per_user_limit']){<small class="workspace-error" id="coupon-error-per_user_limit">{{ fieldErrors()['per_user_limit'] }}</small>}</label
         ></div></details>
-      <details class="coupon-preview">
+      <details class="coupon-preview" open>
         <summary>Preview discount</summary>
         <label class="workspace-field"
           >Example basket subtotal<input
@@ -356,3 +299,62 @@
     </button>
   </div></nc-vendor-dialog
 >}
+
+@if(selected();as coupon){<nc-vendor-dialog title="Promotion details" mode="drawer" (dismissed)="selected.set(null)"><p class="eyebrow">{{ coupon.code }}</p><h2>{{ coupon.title }}</h2>      <dl>
+        <div>
+          <dt>Discount</dt>
+          <dd>
+            @if(coupon.discount_type==='free_delivery'){Free delivery}@else if(coupon.discount_type==='percentage'){{{coupon.discount_value
+            }}%}@else{{{coupon.discount_value|appCurrency}}}
+          </dd>
+        </div>
+        <div>
+          <dt>Minimum order</dt>
+          <dd>{{ coupon.min_order_amount | appCurrency }}</dd>
+        </div>
+        <div>
+          <dt>Uses</dt>
+          <dd>
+            {{ coupon.used_count }} /
+            {{ coupon.usage_limit === null ? "Unlimited" : coupon.usage_limit }}
+          </dd>
+        </div>
+        <div>
+          <dt>Schedule · {{ zone() }}</dt>
+          <dd>
+            {{ local(coupon.valid_from).replace("T", " ") }} →
+            {{
+              coupon.valid_until
+                ? local(coupon.valid_until).replace("T", " ")
+                : "No end date"
+            }}
+          </dd>
+        </div>
+      </dl>
+      @for(warning of coupon.health_warnings;track warning){
+      <p class="workspace-muted">{{ warning }}</p>
+      }
+      <div class="workspace-actions">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          [disabled]="pending() === coupon.id || !zone()"
+          (click)="selected.set(null);open(coupon)"
+        >
+          Edit</button
+        ><button
+          type="button"
+          class="btn btn-secondary"
+          [disabled]="!!pending()"
+          (click)="command(coupon, 'duplicate')"
+        >
+          Duplicate</button
+        ><button
+          type="button"
+          class="btn btn-secondary"
+          [disabled]="!!pending()"
+          (click)="selected.set(null);deleteCandidate.set(coupon); error.set('')"
+        >
+          Delete
+        </button>
+      </div>@if(!coupon.is_active){<button class="btn-primary" [disabled]="!!pending()" (click)="command(coupon,'reactivate');selected.set(null)">Reactivate</button>}</nc-vendor-dialog>}

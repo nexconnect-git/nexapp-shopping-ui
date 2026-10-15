@@ -1,331 +1,70 @@
-<div class="desktop-customer-view">
 <main class="fd-content">
-  <section class="product-layout">
-    <div class="media-col">
-      <section class="gallery">
-        @if (product().discount) {
-          <span class="gallery-badge">{{ product().discount }}</span>
-        }
-        <div class="thumbs">
-          @for (i of [1, 2, 3, 4]; track i) {
-            <button
-              type="button"
-              [class.active]="activeImage() === i"
-              (click)="activeImage.set(i)"
-            >
-              <img [src]="product().image" alt="" />
-            </button>
-          }
-        </div>
-        <div class="main-img">
-          <img [src]="product().image" [alt]="product().name" />
-          <button
-            type="button"
-            class="zoom"
-            aria-label="Preview image"
-            (click)="zoomImage()"
-          >
-            <span class="material-symbols-rounded">zoom_in</span>
-          </button>
-        </div>
-        <div class="gallery-promises">
-          <span><i class="material-symbols-rounded">verified</i>Fresh checked</span>
-          <span><i class="material-symbols-rounded">bolt</i>{{ deliveryLabel() }}</span>
-          <span><i class="material-symbols-rounded">storefront</i>{{ store()?.name || product().storeName || 'Partner store' }}</span>
-        </div>
-      </section>
+  @if(catalog.productErrors()[detailId]){<fd-customer-state
+    title="This product could not load"
+    [description]="catalog.productErrors()[detailId]"
+    tone="error"
+    action="Retry"
+    (retry)="retry()"
+  />} @if(product().raw && !catalog.productErrors()[detailId]){
+  <nav class="crumb" aria-label="Breadcrumb"><a class="btn text" routerLink="/">Home</a><svg customerIcon="chev"></svg><a class="btn text" [routerLink]="['/store',product().storeId]">{{ product().storeName || 'Store' }}</a><svg customerIcon="chev"></svg><span>{{ product().name }}</span></nav>
+  <section class="product-detail">
+    <div>
+      <div class="product-stage">
+        <img [src]="gallery()[activeImage()-1] || product().image" [alt]="product().name" />
+        <span class="tag" [class.red]="!stockState().canBuy" [class.orange]="stockState().tone === 'warning'">{{ stockState().label }}</span>
+        <button class="btn icon-btn" type="button" aria-label="Open product image" (click)="zoomImage()"><svg customerIcon="zoom"></svg></button>
+      </div>
+      <div class="product-thumbnails">@for(url of gallery();track url;let i=$index){<button type="button" [attr.aria-label]="'View image ' + (i+1)" [class.active]="activeImage() === i+1" (click)="activeImage.set(i+1)"><img [src]="url" alt="" /></button>}</div>
     </div>
-
-    <aside class="buy-panel fd-card">
-      <div class="buy-top">
-        <div class="store-context">
-          <span class="material-symbols-rounded">storefront</span>
-          <b>{{ store()?.name || product().storeName || 'Nearby partner' }}</b>
-          <small>{{ deliveryLabel() }}</small>
-        </div>
-        <span class="deal-pill">{{ product().discount || "Fresh deal" }}</span>
-        <h1>{{ product().name }}</h1>
-        <p>
-          {{
-            product().raw?.description ||
-              "Description updates when the store provides it."
-          }}
-        </p>
-        <div class="meta-row">
-          <span class="rating">
-            <i class="material-symbols-rounded">star</i>
-            {{ product().rating || "New" }} rating
-          </span>
-          @if (product().category) {
-            <span class="category-pill">{{ product().category }}</span>
-          }
-        </div>
+    <div class="product-description">
+      <div class="row wrap-row"><a class="btn text" [routerLink]="['/store',product().storeId]"><svg customerIcon="store"></svg>{{ product().storeName }}</a>@if(product().rating>0){<span class="tag"><svg customerIcon="star"></svg>{{ product().rating }}</span>}</div>
+      <h1>{{ product().name }}</h1>
+      <p>{{ product().unit }} · {{ product().category }}</p>
+      <div class="detail-price"><strong>{{ product().price | appCurrency }}</strong>@if(product().mrp>product().price){<del>{{ product().mrp | appCurrency }}</del><span class="tag green">{{ Math.round((product().mrp-product().price)/product().mrp*100) }}% off</span>}</div>
+      <p class="small muted">Product price; delivery and other fees confirmed at checkout.</p>
+      <div class="rule"><h3 class="small">Available pack</h3><div class="pack-option"><svg customerIcon="check"></svg><strong>{{ product().unit }}</strong><span>{{ product().price | appCurrency }}</span></div><p class="demo-note space-sm">This is the sellable item shown. No cosmetic size selector.</p></div>
+      @if(!storeOrderState().canOrder){<div class="notice warning space-sm" role="status"><svg customerIcon="info"></svg>{{ storeOrderState().message }}</div>}
+      @if(state.cartMutationError()){<div class="notice error space-sm" role="alert"><svg customerIcon="alert"></svg>{{ state.cartMutationError() }}</div>}
+      @if(stockState().tone === 'warning'){<div class="notice warning space-sm" role="status"><svg customerIcon="info"></svg>{{ stockState().label }}. Quantity is limited to current stock.</div>}
+      <div class="detail-actions">
+        <div class="qty large"><button type="button" aria-label="Decrease quantity" [disabled]="qty()<=1" (click)="qty.set(Math.max(1,qty()-1))"><svg customerIcon="minus"></svg></button><span>{{ qty() }}</span><button type="button" aria-label="Increase quantity" (click)="increase()"><svg customerIcon="plus"></svg></button></div>
+        <button type="button" class="btn primary" [disabled]="!canPurchase() || state.pendingProducts().includes(product().apiId || product().id)" (click)="addToCart()"><svg customerIcon="bag"></svg>{{ state.pendingProducts().includes(product().apiId || product().id) ? 'Adding…' : 'Add to basket' }}</button>
+        <button type="button" class="btn" [disabled]="!canPurchase() || state.pendingProducts().includes(product().apiId || product().id)" (click)="buyNow()"><svg customerIcon="arrow"></svg>Buy now</button>
       </div>
-
-      <div class="status-row">
-        <div class="stock-state" [class.warning]="stockState().tone === 'warning'" [class.danger]="stockState().tone === 'danger'">
-          <span class="material-symbols-rounded">inventory_2</span>
-          {{ stockState().label }}
-        </div>
-        <span class="store-pill">{{ store()?.name || product().storeName || 'Partner store' }}</span>
-      </div>
-      @if (!storeOrderState().canOrder) {
-        <p class="availability-warning">{{ storeOrderState().message }}</p>
-      }
-      <div class="price-card">
-        <div class="price">
-          <b>{{ product().price | appCurrency }}</b>
-          @if (product().mrp > product().price) {
-            <del>{{ product().mrp | appCurrency }}</del>
-          }
-          @if (product().discount) {
-            <em>{{ product().discount }}</em>
-          }
-        </div>
-        <small>Inclusive of all taxes</small>
-      </div>
-
-      <h3 class="field-label">Choose pack</h3>
-      <div class="sizes">
-        @for (size of sizes(); track size.label) {
-          <button
-            type="button"
-            [class.active]="selectedSize() === size.label"
-            (click)="selectedSize.set(size.label)"
-          >
-            <b>{{ size.label }}</b
-            ><span>{{ size.price | appCurrency }}</span
-            ><del>{{ size.mrp | appCurrency }}</del>
-          </button>
-        }
-      </div>
-
-      <h3 class="field-label">Quantity</h3>
-      <div class="qty">
-        <button type="button" (click)="qty.set(Math.max(1, qty() - 1))">
-          <span class="material-symbols-rounded">remove</span></button
-        ><b>{{ qty() }}</b
-        ><button type="button" (click)="qty.set(qty() + 1)">
-          <span class="material-symbols-rounded">add</span></button
-        ><span>{{ selectedSize() || product().unit }}</span>
-      </div>
-
-      <div class="buy-actions">
-        <button
-          type="button"
-          class="fd-btn outline"
-          [disabled]="!canPurchase()"
-          (click)="addToCart()"
-        >
-          <span class="material-symbols-rounded">shopping_cart</span> Add to
-          Cart
-        </button>
-        <button type="button" class="fd-btn primary" [disabled]="!canPurchase()" (click)="buyNow()">
-          <span class="material-symbols-rounded">bolt</span> Buy Now
-        </button>
-      </div>
-
-      <section class="delivery">
-        <h3>
-          <span class="material-symbols-rounded">bolt</span>
-          {{ deliveryLabel() }}
-        </h3>
-        <p>
-          Delivering to <b>{{ state.location() }}</b>
-          <button type="button" (click)="ui.openLocation()">Change</button>
-        </p>
-      </section>
-
-      <section class="pdp-assurance" aria-label="Shopping assurances">
-        <article>
-          <span class="material-symbols-rounded">schedule</span>
-          <div>
-            <b>{{ deliveryLabel() }}</b>
-            <small>{{ deliveryPromise() }}</small>
-          </div>
-        </article>
-        <article>
-          <span class="material-symbols-rounded">verified_user</span>
-          <div>
-            <b>Secure checkout</b>
-            <small>Payment options load at checkout</small>
-          </div>
-        </article>
-        <article>
-          <span class="material-symbols-rounded">check_circle</span>
-          <div>
-            <b>Product highlights</b>
-            @for (h of shortHighlights(); track h) {
-              <small>{{ h }}</small>
-            }
-          </div>
-        </article>
-      </section>
-    </aside>
-
-    <section class="details fd-card">
-      <nav>
-        @for (panel of detailPanels(); track panel.id) {
-          <button
-            type="button"
-            [class.active]="activePanel() === panel.id"
-            (click)="activePanel.set(panel.id)"
-          >
-            {{ resolvePanelLabel(panel.id) }}
-          </button>
-        }
-      </nav>
-      <p>{{ selectedPanel().intro }}</p>
-      @if (selectedPanel().items.length) {
-        <ul>
-          @for (item of selectedPanel().items; track item.label) {
-            <li><b>{{ item.label }}:</b> {{ item.value }}</li>
-          }
-        </ul>
-      }
-    </section>
-
-    @if (similarFromStore().length) {
-      <div class="fd-section-title suggestion-title">
-        <h3>More from {{ store()?.name || "this store" }}</h3>
-      </div>
-      <section class="suggestions">
-        @for (p of similarFromStore(); track p.id) {
-          <fd-product-card [product]="p" />
-        }
-      </section>
-    }
-    @if (similarFromCategory().length) {
-      <div class="fd-section-title suggestion-title">
-        <h3>Similar from nearby stores</h3>
-      </div>
-      <section class="suggestions">
-        @for (p of similarFromCategory(); track p.id) {
-          <fd-product-card [product]="p" />
-        }
-      </section>
-    }
-  </section>
-</main>
-</div>
-
-<div class="mobile-customer-view">
-<main class="mobile-page product-detail-page">
-  <section class="product-hero">
-    <div class="product-mobile-tags">
-      @if (product().discount) {
-        <span class="discount">{{ product().discount }}</span>
-      }
-      <span><i class="material-symbols-rounded">bolt</i>{{ deliveryLabel() }}</span>
-    </div>
-    <button type="button" class="image-button" (click)="zoomImage()">
-      <img [src]="product().image" [alt]="product().name" />
-    </button>
-    <div class="hero-store-chip">
-      <span class="material-symbols-rounded">storefront</span>
-      <b>{{ store()?.name || product().storeName || 'Partner store' }}</b>
+      <div class="detail-features">@if(deliveryLabel()){<div><svg customerIcon="clock"></svg><span><strong>{{ deliveryLabel() }}</strong>Delivery estimate</span></div>}<div><svg customerIcon="store"></svg><span><strong>Nearby store</strong>{{ product().storeName }}</span></div><div><svg customerIcon="shield"></svg><span><strong>Clear charges</strong>Before you pay</span></div></div>
+      @for(panel of detailPanels();track panel.id){<details class="accordion"><summary>{{ panel.id === 'details' ? 'About this product' : panel.id === 'reviews' ? 'Ratings' : panel.title }}</summary><p>{{ panel.intro }}</p><dl>@for(item of panel.items;track item.label){<div class="kv"><dt>{{ item.label }}</dt><dd>{{ item.value }}</dd></div>}</dl></details>}
     </div>
   </section>
-
-  <section class="product-info">
-    @if (product().discount) {
-      <span class="discount">{{ product().discount }}</span>
-    }
-    <h1>{{ product().name }}</h1>
-    <p>{{ product().unit }} - {{ product().category }}</p>
-    <div class="price-row">
-      <b>{{ product().price | appCurrency }}</b>
-      @if (product().mrp > product().price) {
-        <del>{{ product().mrp | appCurrency }}</del>
-      }
-      @if (product().discount) {
-        <em>{{ product().discount }}</em>
-      }
+  @if(similarFromStore().length){
+  <section class="section">
+    <div class="section-head">
+      <h2>A few good things together</h2>
+      <a class="btn text" [routerLink]="['/store', product().storeId]"
+        >Browse the store →</a
+      >
     </div>
-    <div class="benefits">
-      <span><i class="material-symbols-rounded">schedule</i>{{ deliveryLabel() }}</span>
-      <span><i class="material-symbols-rounded">storefront</i>{{ store()?.name || product().storeName || 'Partner store' }}</span>
-      <span><i class="material-symbols-rounded">verified</i>{{ deliveryMode() }}</span>
-      <span><i class="material-symbols-rounded">bolt</i>{{ deliveryPromise() }}</span>
-    </div>
-    <div class="stock-state" [class.warning]="stockState().tone === 'warning'" [class.danger]="stockState().tone === 'danger'">
-      {{ stockState().label }}
-    </div>
-    @if (!storeOrderState().canOrder) {
-      <p class="availability-warning">{{ storeOrderState().message }}</p>
-    }
-
-    <section class="product-action-card detail-cta" aria-label="Product purchase actions">
-      <div class="cta-copy">
-        <small>Total</small>
-        <b>{{ product().price * qty() | appCurrency }}</b>
-      </div>
-      <div class="qty">
-        <button type="button" aria-label="Decrease quantity" (click)="qty.set(Math.max(1, qty() - 1))">
-          <span class="material-symbols-rounded">remove</span>
-        </button>
-        <b>{{ qty() }}</b>
-        <button type="button" aria-label="Increase quantity" (click)="qty.set(qty() + 1)">
-          <span class="material-symbols-rounded">add</span>
-        </button>
-      </div>
-      <button type="button" class="mobile-cta" [disabled]="!canPurchase()" (click)="addToCart()">{{ canPurchase() ? 'Add to cart' : 'Unavailable' }}</button>
-    </section>
-  </section>
-
-  <section class="mobile-section">
-    <div class="mobile-section-head"><h2>Choose pack</h2></div>
-    <div class="mobile-chip-row">
-      @for (size of sizes(); track size.label) {
-        <button type="button" class="mobile-chip" [class.active]="selectedSize() === size.label || (!selectedSize() && $index === 0)" (click)="selectedSize.set(size.label)">
-          {{ size.label }} - {{ size.price | appCurrency }}
-        </button>
-      }
+    <div class="product-grid">
+      @for(p of similarFromStore();track p.id){<fd-product-card
+        [product]="p"
+      />}
     </div>
   </section>
-
-  <section class="details-card">
-    <div class="mobile-chip-row">
-      @for (panel of detailPanels(); track panel.id) {
-        <button type="button" class="mobile-chip" [class.active]="activePanel() === panel.id" (click)="activePanel.set(panel.id)">
-          {{ panel.title }}
-        </button>
-      }
-    </div>
-    <p>{{ selectedPanel().intro }}</p>
-    @for (item of selectedPanel().items; track item.label) {
-      <dl>
-        <dt>{{ item.label }}</dt>
-        <dd>{{ item.value }}</dd>
-      </dl>
-    }
-  </section>
-
-  @if (similarFromStore().length) {
-    <section class="mobile-section">
-      <div class="mobile-section-head">
-        <h2>More from {{ store()?.name }}</h2>
-      </div>
-      <div class="mobile-grid-2">
-        @for (item of similarFromStore().slice(0, 4); track item.id) {
-          <fd-product-card [product]="item" />
-        }
-      </div>
-    </section>
+  }}@else if(!catalog.productErrors()[detailId]){
+  <div
+    class="skeleton"
+    style="height: 380px"
+    aria-label="Loading product"
+  ></div>
   }
-
-  @if (similarFromCategory().length) {
-    <section class="mobile-section">
-      <div class="mobile-section-head">
-        <h2>Similar nearby</h2>
-      </div>
-      <div class="mobile-grid-2">
-        @for (item of similarFromCategory().slice(0, 4); track item.id) {
-          <fd-product-card [product]="item" />
-        }
-      </div>
-    </section>
-  }
-
 </main>
-</div>
+<fd-nx-modal-shell variant="center" [footer]="true" eyebrow="Product image"
+  [open]="imageOpen()"
+  [title]="product().name"
+  width="740px"
+  (closed)="imageOpen.set(false)"
+  ><div class="product-stage"><img
+    [src]="gallery()[activeImage() - 1] || product().image"
+    [alt]="product().name"
+/></div><p class="small muted space-sm">Enlarged product image.</p>
+<button dialogFooter type="button" class="btn primary" (click)="imageOpen.set(false)">Done</button>
+</fd-nx-modal-shell>

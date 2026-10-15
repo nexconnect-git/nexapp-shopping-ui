@@ -1,3 +1,4 @@
+import { CounterStateComponent } from '../../components/counter-state.component';
 import { CommonModule } from '@angular/common';
 import { afterNextRender, Component, DestroyRef, ElementRef, inject, Injector, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -24,7 +25,7 @@ interface ProposalDraft {
 @Component({
   selector: 'app-catalog-requests',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, WorkspacePagerComponent, WorkspaceDialogComponent],
+  imports: [CounterStateComponent,CommonModule, FormsModule, RouterLink, WorkspacePagerComponent, WorkspaceDialogComponent],
   templateUrl: './catalog-requests.component.html',
   styleUrl: './catalog-requests.component.scss',
 })
@@ -45,6 +46,7 @@ export class CatalogRequestsComponent implements OnInit {
   readonly drafts = signal<ProposalDraft[]>([this.blank()]);
   readonly saving = signal(false);
   readonly editorOpen = signal(false);
+  readonly selected = signal<CatalogProposal | null>(null);
   readonly submitError = signal('');
   readonly success = signal('');
   readonly errors = signal<Record<string, string>>({});

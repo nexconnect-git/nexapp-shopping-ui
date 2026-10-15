@@ -1,0 +1,47 @@
+<div class="basket-items" [attr.aria-busy]="state.pendingProducts().length > 0">
+  @for(item of state.cart();track item.id){
+  <article class="cart-item">
+    <a class="item-art" [routerLink]="['/product', item.apiId || item.id]"
+      ><img [src]="item.image" [alt]="item.name"
+    /></a>
+    <div class="grow">
+      <h3>
+        <a [routerLink]="['/product', item.apiId || item.id]">{{
+          item.name
+        }}</a>
+      </h3>
+      <p>{{ item.unit }} · {{ item.price | appCurrency }} each</p>
+      <div class="qty">
+        <button
+          type="button"
+          [attr.aria-label]="'Decrease ' + item.name + ' quantity'"
+          [disabled]="state.cartItemPending(item) || !!state.cartError()"
+          (click)="state.updateQuantity(item.id, -1)"
+        >
+          <svg customerIcon="minus"></svg></button
+        ><span aria-live="polite">{{ item.quantity }}</span
+        ><button
+          type="button"
+          [attr.aria-label]="'Increase ' + item.name + ' quantity'"
+          [disabled]="!state.canIncreaseCartItem(item) || !!state.cartError()"
+          (click)="state.updateQuantity(item.id, 1)"
+        >
+          <svg customerIcon="plus"></svg>
+        </button>
+      </div>
+    </div>
+    <div class="item-price">
+      <strong>{{ item.price * item.quantity | appCurrency }}</strong
+      ><button
+        type="button"
+        class="btn text"
+        [attr.aria-label]="'Remove ' + item.name"
+        [disabled]="state.cartItemPending(item) || !!state.cartError()"
+        (click)="state.removeItem(item.id)"
+      >
+        Remove
+      </button>
+    </div>
+  </article>
+  }
+</div>

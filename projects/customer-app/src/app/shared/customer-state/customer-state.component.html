@@ -1,0 +1,5 @@
+<section class="empty-state" [attr.role]="tone === 'error' ? 'alert' : 'status'">
+  <div class="state-art" [class.orange]="artTone==='orange' || tone==='warning'" [class.green]="artTone==='green'"><svg [customerIcon]="icon"></svg></div>
+  <h2>{{ title }}</h2><p>{{ description }}</p>
+  <div class="row">@if(action){<button type="button" class="btn primary" (click)="retry.emit()">{{ action }}</button>}<ng-content /></div>
+</section>

@@ -1,0 +1,3 @@
+<p-dialog [visible]="true" [modal]="true" [header]="title()" closeAriaLabel="Close panel" [closable]="!busy()" [closeOnEscape]="!busy()" [dismissableMask]="false" [draggable]="false" [resizable]="false" [blockScroll]="true" [position]="phone() ? 'bottom' : mode() === 'drawer' ? 'right' : 'center'" [styleClass]="mode() === 'drawer' ? 'counter-dialog counter-drawer' : 'counter-dialog'" (visibleChange)="onVisibilityChange($event)">
+  <div class="workspace-dialog-body"><ng-content /></div>
+</p-dialog>

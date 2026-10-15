@@ -1,3 +1,4 @@
+import { CounterStateComponent } from '../../components/counter-state.component';
 import { CommonModule } from '@angular/common';
 import { afterNextRender, Component, DestroyRef, effect, ElementRef, inject, Injector, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -30,7 +31,7 @@ interface CouponForm {
 @Component({
   selector: 'app-coupons',
   standalone: true,
-  imports: [
+  imports: [CounterStateComponent,
     CommonModule,
     FormsModule,
     AppCurrencyPipe,
@@ -41,6 +42,7 @@ interface CouponForm {
   styleUrl: './coupons.component.scss',
 })
 export class CouponsComponent implements OnInit {
+  readonly selected = signal<VendorCoupon | null>(null);
   private readonly host: ElementRef<HTMLElement> = inject(ElementRef);
   private readonly injector = inject(Injector);
   private readonly api = inject(VendorWorkspaceApi);

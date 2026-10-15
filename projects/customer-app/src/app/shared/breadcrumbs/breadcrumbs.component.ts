@@ -1,3 +1,4 @@
+import { CustomerIconComponent } from '../customer-icon/customer-icon.component';
 import { Component, Input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
@@ -9,7 +10,7 @@ export interface BreadcrumbItem {
 @Component({
   selector: 'fd-breadcrumbs',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink,CustomerIconComponent],
   templateUrl: './breadcrumbs.component.html',
   styleUrls: ['./breadcrumbs.component.scss'],
 })

@@ -1,105 +1,14 @@
-@if (ui.filterSliderOpen()) {
-  <button
-    type="button"
-    class="overlay"
-    aria-label="Close filters"
-    (click)="ui.closeFilter()"
-  ></button>
-  <aside
-    class="filter-slider animate-slide"
-    role="dialog"
-    aria-modal="true"
-    aria-label="Filters"
-    (click)="$event.stopPropagation()"
-  >
-    <div class="sheet-handle" aria-hidden="true"></div>
-    <header>
-      <div>
-        <h2>{{ content.filters().title }}</h2>
-        <p>{{ content.filters().subtitle }}</p>
-      </div>
-      <button
-        type="button"
-        class="close"
-        aria-label="Close filters"
-        (click)="ui.closeFilter()"
-      >
-        <span class="material-symbols-rounded">close</span>
-      </button>
-    </header>
-
-    <div class="scroll">
-      <section>
-        <h3>{{ content.filters().deliveryTitle }}</h3>
-        <div class="chips">
-          @for (item of delivery(); track item) {
-            <button
-              type="button"
-              [class.active]="selectedDelivery() === item"
-              (click)="selectedDelivery.set(item)"
-            >
-              {{ item }}
-            </button>
-          }
-        </div>
-      </section>
-
-      <section>
-        <h3>{{ content.filters().sortTitle }}</h3>
-        <div class="chips">
-          @for (item of sort(); track item) {
-            <button
-              type="button"
-              [class.active]="selectedSort() === item"
-              (click)="selectedSort.set(item)"
-            >
-              {{ item }}
-            </button>
-          }
-        </div>
-      </section>
-
-      <section>
-        <h3>{{ content.filters().categoriesTitle }}</h3>
-        <div class="chips">
-          @for (item of categories(); track item) {
-            <button
-              type="button"
-              [class.active]="selectedCategory() === item"
-              (click)="selectedCategory.set(item)"
-            >
-              {{ item }}
-            </button>
-          }
-        </div>
-      </section>
-
-      <section>
-        <h3>{{ content.filters().priceTitle }}</h3>
-        <div class="range-head">
-          <b>{{ 0 | appCurrency }}</b
-          ><b>{{ price() | appCurrency }}</b>
-        </div>
-        <input
-          type="range"
-          min="0"
-          max="1500"
-          [value]="price()"
-          (input)="price.set(+$any($event.target).value)"
-        />
-        <div class="range-line">
-          <span [style.width.%]="price() / 15"></span>
-        </div>
-      </section>
-    </div>
-
-    <footer>
-      <fd-nx-button variant="outline" [full]="true" (clicked)="reset()">{{
-        content.filters().resetLabel
-      }}</fd-nx-button>
-      <fd-nx-button variant="primary" [full]="true" (clicked)="apply()">{{
-        content.filters().applyLabel
-      }}</fd-nx-button>
-    </footer>
-  </aside>
-}
+<fd-nx-modal-shell [footer]="true" eyebrow="Filters & sort" [open]="ui.filterSliderOpen()" title="Find your kind of everyday." width="490px" (closed)="ui.closeFilter()">
+  <p>Choose your filters, then apply them together to update the results in your delivery area.</p>
+  <form id="customer-filter-form" (submit)="$event.preventDefault(); apply()">
+    <h3>Category</h3><div class="chip-row"><button class="btn chip" type="button" [class.active]="!category" (click)="category=''">All</button>@for(c of catalog.categories();track c.id){@if(c.id!=='all'){<button class="btn chip" type="button" [class.active]="category===(c.raw?.slug || c.id)" (click)="category=c.raw?.slug || c.id">{{ c.label }}</button>}}</div>
+    @if(!storeMode){<h3 class="space">Useful little filters</h3>
+      <label class="choice-card"><input name="rating" type="checkbox" [checked]="rating" (change)="rating=$any($event.target).checked" /><span><strong>Rated 4.8 and above</strong><p>Filter the returned product rating.</p></span></label>
+      <label class="choice-card"><input name="quick" type="checkbox" [checked]="quick" (change)="quick=$any($event.target).checked" /><span><strong>Under 30 minutes</strong><p>Use the current store delivery estimate.</p></span></label>
+      <label class="choice-card"><input name="discount" type="checkbox" [checked]="discount" (change)="discount=$any($event.target).checked" /><span><strong>15% off or more</strong><p>Compare current item price with its MRP.</p></span></label>
+    }
+    <div class="field space"><label for="filter-sort">Sort results</label><select id="filter-sort" name="sort" [(ngModel)]="sort"><option value="relevance">Recommended</option>@if(storeMode){<option value="rating">Top rated</option><option value="delivery_time">Fastest delivery</option><option value="distance">Nearest first</option>}@else{<option value="price_low_high">Price: low to high</option><option value="price_high_low">Price: high to low</option><option value="rating">Top rated</option><option value="offers">Offers</option>}</select></div>
+    @if(!storeMode){<details class="accordion space"><summary>More filters</summary><div class="field space-sm"><label for="filter-price">Maximum price (optional)</label><input id="filter-price" name="price" type="number" min="0" step="1" [(ngModel)]="maxPrice" /></div><label class="choice-card"><input name="stock" type="checkbox" [checked]="inStock" (change)="inStock=$any($event.target).checked" /><span><strong>In-stock items</strong></span></label><label class="choice-card"><input name="offers" type="checkbox" [checked]="offers" (change)="offers=$any($event.target).checked" /><span><strong>Items with offers</strong></span></label></details>}
+  </form>
+  <ng-container dialogFooter><button class="btn" type="button" (click)="reset()">Reset filters</button><button class="btn primary" type="button" (click)="apply()"><svg customerIcon="arrow"></svg>Show matching results</button></ng-container>
+</fd-nx-modal-shell>

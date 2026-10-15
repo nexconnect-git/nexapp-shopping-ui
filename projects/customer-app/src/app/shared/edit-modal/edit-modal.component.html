@@ -1,155 +1,62 @@
-@if (ui.editModal()) {
-  <button
-    type="button"
-    class="overlay"
-    aria-label="Close editor"
-    (click)="ui.closeEdit()"
-  ></button>
-  <form class="edit-modal" (submit)="save($event)">
-    <header>
-      <div>
-        <small>{{ subtitle() }}</small>
-        <h2>{{ title() }}</h2>
-      </div>
-      <button type="button" aria-label="Close editor" (click)="ui.closeEdit()">
-        <span class="material-symbols-rounded">close</span>
-      </button>
-    </header>
-
-    @if (ui.editModal() === "profile") {
-      @if (formError()) {
-        <div class="form-error">{{ formError() }}</div>
-      }
-      <section class="edit-summary">
-        <span>{{ (name || "N").slice(0, 1).toUpperCase() }}</span>
-        <div>
-          <b>{{ name || "Nextou customer" }}</b>
-          <small>{{ email || phone || "Profile details" }}</small>
-        </div>
-      </section>
-      <section class="field-group">
-        <label for="edit-name">
-          <span>Name</span>
-          <input
-            id="edit-name"
-            class="fd-input"
-            [class.has-error]="fieldError('name')"
-            [(ngModel)]="name"
-            (ngModelChange)="clearFieldError('name')"
-            name="name"
-            placeholder="Nikhil Pradeep"
-          />
-          @if (fieldError("name")) {
-            <small class="field-error">{{ fieldError("name") }}</small>
-          }
-        </label>
-        <label for="edit-email">
-          <span>Email</span>
-          <input
-            id="edit-email"
-            class="fd-input"
-            [class.has-error]="fieldError('email')"
-            [ngModel]="email"
-            (ngModelChange)="onEmailInput($event)"
-            name="email"
-            type="email"
-            autocomplete="email"
-            placeholder="name@example.com"
-          />
-          @if (fieldError("email")) {
-            <small class="field-error">{{ fieldError("email") }}</small>
-          }
-        </label>
-        <label for="edit-phone">
-          <span>Phone</span>
-          <input
-            id="edit-phone"
-            class="fd-input"
-            [class.has-error]="fieldError('phone')"
-            [ngModel]="phone"
-            (ngModelChange)="onPhoneInput($event)"
-            name="phone"
-            type="tel"
-            inputmode="numeric"
-            pattern="[0-9]*"
-            maxlength="10"
-            autocomplete="tel"
-            placeholder="9876543210"
-          />
-          @if (fieldError("phone")) {
-            <small class="field-error">{{ fieldError("phone") }}</small>
-          }
-        </label>
-      </section>
+<fd-nx-modal-shell [footer]="true" eyebrow="Edit your profile"
+  [open]="!!ui.editModal()"
+  title="Make yourself at home."
+  subtitle="Update the details used for your customer account."
+  width="490px"
+  [dismissible]="!saving()"
+  (closed)="close()"
+  >@if(formError()){
+    <div class="notice error" role="alert"><svg customerIcon="alert"></svg><div>{{ formError() }}</div></div>
     }
-
-    @if (ui.editModal() === "address") {
-      <section class="field-group">
-        <label for="edit-address-label">
-          <span>Address Label</span>
-          <input
-            id="edit-address-label"
-            class="fd-input"
-            [(ngModel)]="addressLabel"
-            name="addressLabel"
-            placeholder="Home, Office, Parents Home"
-          />
-        </label>
-        <label for="edit-address-line">
-          <span>Full Address</span>
-          <textarea
-            id="edit-address-line"
-            class="fd-input"
-            [(ngModel)]="addressLine"
-            name="addressLine"
-            placeholder="House number, building, street, landmark"
-          ></textarea>
-        </label>
-        <label for="edit-address-phone">
-          <span>Contact Number</span>
-          <input
-            id="edit-address-phone"
-            class="fd-input"
-            [(ngModel)]="phone"
-            name="addressPhone"
-            placeholder="Receiver phone number"
-          />
-        </label>
-      </section>
-    }
-
-    @if (ui.editModal() === "payment") {
-      <section class="field-group">
-        <label for="edit-payment-name">
-          <span>Card / UPI Name</span>
-          <input
-            id="edit-payment-name"
-            class="fd-input"
-            [(ngModel)]="paymentName"
-            name="paymentName"
-            placeholder="Payment method name"
-          />
-        </label>
-        <label for="edit-payment-id">
-          <span>Payment ID</span>
-          <input
-            id="edit-payment-id"
-            class="fd-input"
-            [(ngModel)]="paymentId"
-            name="paymentId"
-            placeholder="UPI ID or payment reference"
-          />
-        </label>
-      </section>
-    }
-
-    <footer>
-      <button type="button" class="fd-btn outline" (click)="ui.closeEdit()">
-        Cancel
+    <form id="customer-profile-form" class="form-grid" (submit)="save($event)" novalidate>
+    <div class="field"><label for="edit-first-name">First name</label><input id="edit-first-name" name="firstName" autocomplete="given-name" [(ngModel)]="firstName" (ngModelChange)="clearFieldError('firstName')" [attr.aria-invalid]="!!fieldError('firstName')" aria-describedby="first-name-error" required maxlength="150"><small class="field-error" id="first-name-error">{{ fieldError('firstName') }}</small></div>
+    <div class="field"><label for="edit-last-name">Last name</label><input id="edit-last-name" name="lastName" autocomplete="family-name" [(ngModel)]="lastName" maxlength="150"></div>
+    <div class="field">
+      <label for="edit-email">Email address</label
+      ><input
+        id="edit-email"
+        name="email"
+        type="email"
+        autocomplete="email"
+        [ngModel]="email"
+        (ngModelChange)="onEmailInput($event)"
+        [attr.aria-invalid]="!!fieldError('email')"
+        aria-describedby="email-help email-error"
+        required
+      /><small id="email-help">Sign-in OTPs are delivered to your email.</small
+      ><small class="field-error" id="email-error">{{
+        fieldError("email")
+      }}</small>
+    </div>
+    <div class="field">
+      <label for="edit-phone">Mobile number</label
+      ><input
+        id="edit-phone"
+        name="phone"
+        type="tel"
+        inputmode="tel"
+        autocomplete="tel-national"
+        maxlength="10"
+        [ngModel]="phone"
+        (ngModelChange)="onPhoneInput($event)"
+        [attr.aria-invalid]="!!fieldError('phone')"
+        aria-describedby="phone-help phone-error"
+        required
+      /><small id="phone-help"
+        >A 10-digit Indian mobile number for delivery contact.</small
+      ><small class="field-error" id="phone-error">{{
+        fieldError("phone")
+      }}</small>
+    </div>
+    </form>
+  <p class="demo-note space">Your profile updates are saved to your account after you select Save changes.</p>
+<div dialogFooter class="row wide between">
+      <button class="btn" type="button" [disabled]="saving()" (click)="close()">
+        Cancel</button
+      ><button id="profile-save" class="btn primary" type="button" (click)="save($event)" [disabled]="saving()">
+        <svg customerIcon="check"></svg>
+        {{ saving() ? "Saving profile…" : "Save changes" }}
       </button>
-      <button class="fd-btn primary" [disabled]="!canSave()">
-        {{ saving() ? "Saving..." : "Save Changes" }}
-      </button>
-    </footer>
-  </form>
-}
+    </div>
+  </fd-nx-modal-shell
+>

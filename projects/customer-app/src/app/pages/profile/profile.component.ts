@@ -1,12 +1,12 @@
 import { Component, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Router } from '@angular/router';
-import { AppCurrencyPipe } from '@shared/lib/pipes/currency.pipe';
 import { UiService } from '../../services/ui.service';
 import { AppStateService } from '../../services/app-state.service';
 import { AuthService } from '../../services/auth.service';
 import { OrderService } from '../../services/order.service';
 import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
+import { CustomerIconComponent } from '../../shared/customer-icon/customer-icon.component';
 import { CustomerLockedStateComponent } from '../../shared/customer-locked-state/customer-locked-state.component';
 
 @Component({
@@ -14,7 +14,7 @@ import { CustomerLockedStateComponent } from '../../shared/customer-locked-state
   imports: [
     RouterLink,
     BreadcrumbsComponent,
-    AppCurrencyPipe,
+    CustomerIconComponent,
     CustomerLockedStateComponent,
   ],
   templateUrl: './profile.component.html',
@@ -22,81 +22,47 @@ import { CustomerLockedStateComponent } from '../../shared/customer-locked-state
 })
 export class ProfileComponent {
   quickLinks = [
-    {
-      icon: 'shopping_bag',
-      label: 'Orders',
-      sub: 'History, reorder, invoices',
-      path: '/orders',
-    },
-    {
-      icon: 'location_on',
-      label: 'Addresses',
-      sub: 'Manage delivery locations',
-      path: '/addresses',
-    },
-    {
-      icon: 'shopping_cart',
-      label: 'Cart',
-      sub: 'Review your current basket',
-      path: '/cart',
-    },
-    {
-      icon: 'notifications',
-      label: 'Notifications',
-      sub: 'Order and account updates',
-      path: '/notifications',
-    },
-    {
-      icon: 'local_offer',
-      label: 'Offers',
-      sub: 'Browse active deals',
-      path: '/explore',
-    },
-    {
-      icon: 'favorite',
-      label: 'Wishlist',
-      sub: 'Saved items appear here soon',
-      path: '/account',
-      disabled: true,
-    },
-    {
-      icon: 'account_balance_wallet',
-      label: 'Wallet',
-      sub: 'Credits and refunds coming soon',
-      path: '/account',
-      disabled: true,
-    },
-    {
-      icon: 'support_agent',
-      label: 'Help',
-      sub: 'Use order tracking for support',
-      path: '/orders',
-    },
-    {
-      icon: 'privacy_tip',
-      label: 'Privacy Policy',
-      sub: 'How customer data is handled',
-      path: '/privacy-policy',
-    },
+    {icon:'orders',label:'Your orders',sub:'Track, reorder and find your receipts.',path:'/orders'},
+    {icon:'pin',label:'Saved addresses',sub:'The places that matter to you.',path:'/addresses'},
+    {icon:'bell',label:'Notifications',sub:'A little update, right when it matters.',path:'/notifications'},
+    {icon:'bag',label:'Your basket',sub:'Pick up where you left off.',path:'/cart'},
+    {icon:'tag',label:'Explore offers',sub:'Eligible savings from nearby stores.',path:'/explore'},
+    {icon:'help',label:'Order help',sub:'Your order issues and messages.',path:'/help'},
   ];
+  readonly firstName=computed(()=>this.auth.currentUser()?.name?.trim().split(/\s+/)[0] || 'there');
+  readonly initials=computed(()=>this.auth.currentUser()?.name?.trim().split(/\s+/).slice(0,2).map(part=>part[0]).join('').toUpperCase() || 'N');
 
-  totalOrders = computed(
-    () =>
-      this.orders.orders().length ||
-      this.auth.currentUser()?.ordersDelivered ||
-      0,
-  );
+  totalOrders = computed(() => this.orders.summary()['all'] ?? 0);
 
   constructor(
     public ui: UiService,
     public state: AppStateService,
     public auth: AuthService,
     public orders: OrderService,
-    private router: Router,
+    private router: Router
   ) {}
 
   editAddress(): void {
-    this.ui.openEdit('address');
+    this.router.navigate(['/addresses']);
+  }
+  async logout(): Promise<void> {
+    if (
+      await this.ui.confirm({
+        title: 'Sign out of this device?',
+        eyebrow:'Your account',
+        confirmIcon:'logout',
+        message:
+          'You can sign in again with an email OTP.',
+        notice: 'Your saved orders and addresses stay with your account.',
+        noticeTone: 'purple',
+        confirmText: 'Sign out',
+        cancelText: 'Stay signed in',
+        tone: 'warning',
+      })
+    ) {
+      this.auth.logout();
+      this.router.navigate(['/account']);
+    }
   }
 
   editProfile(): void {

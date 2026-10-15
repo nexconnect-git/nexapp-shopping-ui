@@ -21,8 +21,6 @@ import {
   createCheckoutPayload,
   deliveryFeeFromPreview,
   deliveryFeeLabel as formatDeliveryFeeLabel,
-  getDeliveryPromotion,
-  handlingFeeForItems,
   normalizeAddress as normalizeSharedAddress,
   normalizeOrder as normalizeSharedOrder,
   readApiError,
@@ -39,14 +37,22 @@ import {
   type CustomerAnalyticsEventName,
   type CustomerAnalyticsPayloads,
 } from '@nexconnect/customer-analytics';
-import { map, Observable, throwError } from 'rxjs';
+import {
+  catchError,
+  concatMap,
+  defer,
+  finalize,
+  map,
+  Observable,
+  throwError,
+} from 'rxjs';
 import {
   type Address as ApiAddress,
   type Cart as ApiCart,
   type CartItem as ApiCartItem,
 } from '@shared/lib/models';
 import { CurrencyService } from '@shared/lib/services/currency.service';
-import { LocationService } from '@shared/lib/services/location.service';
+import { LocationService, type UserLocation } from '@shared/lib/services/location.service';
 import { AuthService as SharedAuthService } from '@shared/lib/services/auth.service';
 import { ToastService } from '@shared/lib/services/toast.service';
 import {
@@ -70,6 +76,11 @@ export type ToastTone = 'success' | 'error' | 'info' | 'warning';
 export interface AppToast {
   message: string;
   tone: ToastTone;
+}
+
+interface CheckoutSession {
+  userId: string;
+  version: number;
 }
 
 interface GuestCartPayload {
@@ -107,6 +118,39 @@ export class AppStateService {
   private authenticatedBootstrapComplete = false;
   private toastTimer: number | null = null;
   private cartFulfillmentPromptOpen = false;
+  private previousAreaChoice: {
+    address: Address | null;
+    location: UserLocation | null;
+    label: string;
+  } | null = null;
+
+  private rememberCurrentArea(): void {
+    if (!this.cart().length || this.cartFulfillmentPromptOpen) return;
+    const node = this.currentServiceabilityNode();
+    if (!node.id || node.id !== this.cartFulfillmentNodeId()) return;
+    this.previousAreaChoice = {
+      address: this.activeAddress(),
+      location: this.locationService.location(),
+      label: this.location(),
+    };
+  }
+
+  private restoreAreaChoice(choice: NonNullable<AppStateService['previousAreaChoice']>): void {
+    if (choice.address) {
+      this.selectAddress(choice.address.id);
+      return;
+    }
+    this.activeAddress.set(null);
+    if (choice.location) {
+      this.locationService.setManualLocation(choice.location);
+      this.refreshCatalogForLocation(choice.location);
+    } else {
+      this.locationService.clearStoredLocation();
+      this.refreshCatalogForLocation({});
+    }
+    this.updateLocation(choice.label);
+    this.refreshDeliveryFeePreview();
+  }
   private cartFulfillmentRefreshInFlight = false;
   private lastCartFulfillmentRefreshKey = '';
 
@@ -119,17 +163,74 @@ export class AppStateService {
   readonly coupon = signal('');
   readonly couponDiscount = signal(0);
   readonly toast = signal<AppToast | null>(null);
-  readonly miniCartOpen = signal(false);
+  readonly miniCartOpen = this.ui.miniCartOpen;
   readonly lastAddedProductId = signal('');
   readonly checkoutSubmitting = signal(false);
   readonly lastCheckoutError = signal('');
+  readonly checkoutStage = signal('idle');
+  readonly checkoutStageLabel = computed(
+    () =>
+      ((
+        {
+          quote: 'Checking the latest order quote…',
+          'creating-session': 'Creating a secure payment session…',
+          'provider-loading': 'Loading secure payment…',
+          'provider-open': 'Complete payment in the provider window.',
+          finalizing: 'Confirming your order…',
+          unknown:
+            'The submission outcome is unknown. Check the existing request before paying again.',
+        } as Record<string, string>
+      )[this.checkoutStage()] || this.lastCheckoutError())
+  );
+  readonly hasCheckoutRecovery = signal(false);
+  private recoveryPayload: Record<string, any> | null = null;
+  private readonly recoveryByCustomer = new Map<string, Record<string, any>>();
+  private deliveryPreviewRequest = 0;
+  private checkoutPreviewRequest = 0;
+  private interruptedCheckout = false;
   readonly deliveryFeePreview = signal<any>(null);
   readonly checkoutPriceBreakup = signal<Record<string, any> | null>(null);
+  readonly checkoutPreviewError = signal('');
+  readonly checkoutPreviewErrorCode = signal('');
+  readonly checkoutPreviewLoading = signal(false);
+  retryCheckoutPreview(): void {
+    const request = ++this.checkoutPreviewRequest;
+    const sessionVersion = this.auth.sessionVersion;
+    this.checkoutPriceBreakup.set(null);
+    this.checkoutPreviewError.set('');
+    this.checkoutPreviewErrorCode.set('');
+    this.checkoutPreviewLoading.set(true);
+    this.refreshDeliveryAvailability().subscribe({
+      next: () => {
+        if (request !== this.checkoutPreviewRequest || sessionVersion !== this.auth.sessionVersion) return;
+        this.refreshCheckoutPreview();
+      },
+      error: (error) => {
+        if (request !== this.checkoutPreviewRequest || sessionVersion !== this.auth.sessionVersion) return;
+        this.checkoutPreviewLoading.set(false);
+        this.checkoutPreviewErrorCode.set(this.extractApiErrorCode(error?.body || error?.error || error));
+        this.checkoutPreviewError.set(this.explainApiError(error, 'Delivery and fees could not be confirmed. Try again.'));
+      },
+    });
+  }
   readonly requiresFarDeliveryConfirmation = signal(false);
   private readonly deliveryFeePreviewReadyAddressId = signal('');
   readonly cartLoaded = signal(false);
+  readonly cartError = signal('');
+  readonly profileError = signal('');
+  readonly profileLoading = signal(false);
+  readonly addressError = signal('');
+  readonly addressLoading = signal(false);
+  readonly addressPending = signal('');
+  readonly guestMergeError = signal('');
+  readonly guestMergeRemaining = signal(0);
+  private guestMergeInFlight = false;
+  readonly cartMutationError = signal('');
+  readonly pendingProducts = signal<string[]>([]);
   readonly serviceability = signal<CustomerServiceability | null>(null);
   readonly serviceabilityLoading = signal(false);
+  readonly serviceabilityError = signal('');
+  private serviceabilityRequest = 0;
   readonly deliveryUnavailable = computed(() =>
     this.isDeliveryUnavailableResponse(this.serviceability())
   );
@@ -148,40 +249,14 @@ export class AppStateService {
   readonly deliveryFeeKnown = computed(() => {
     const address = this.activeAddress();
     if (!this.cart().length) return true;
-    return !!address?.id && this.deliveryFeePreviewReadyAddressId() === address.id;
+    return (
+      !!address?.id && this.deliveryFeePreviewReadyAddressId() === address.id
+    );
   });
   readonly deliveryFee = computed(() =>
     this.deliveryFeeKnown()
       ? deliveryFeeFromPreview(this.deliveryFeePreview(), !!this.cart().length)
       : 0
-  );
-  readonly freeDeliveryThreshold = computed(() => {
-    const previewThreshold = this.moneyValue(
-      this.deliveryFeePreview()?.free_delivery_above
-    );
-    if (previewThreshold > 0) return previewThreshold;
-    const breakupThreshold = this.moneyValue(
-      this.checkoutPriceBreakup()?.['free_delivery_above']
-    );
-    if (breakupThreshold > 0) return breakupThreshold;
-    return 300;
-  });
-  readonly deliveryPromotion = computed(() =>
-    getDeliveryPromotion({
-      subtotal: this.subtotal(),
-      deliveryFee: this.deliveryFeeKnown() ? this.deliveryFee() : 1,
-      hasItems: !!this.cart().length,
-      threshold: this.freeDeliveryThreshold(),
-    })
-  );
-  readonly freeDeliveryUnlocked = computed(
-    () => this.deliveryPromotion().unlocked
-  );
-  readonly freeDeliveryRemaining = computed(
-    () => this.deliveryPromotion().remaining
-  );
-  readonly freeDeliveryProgress = computed(
-    () => this.deliveryPromotion().progress
   );
   readonly deliveryFeeLabel = computed(() => {
     if (!this.cart().length) return formatDeliveryFeeLabel(0);
@@ -223,14 +298,20 @@ export class AppStateService {
     const remaining = this.cartMinimumOrderRemaining();
     if (remaining > 0) {
       const storeName =
-        this.cartStore()?.['store_name'] || this.cart()[0]?.storeName || 'this store';
-      return `Add ${this.currency.format(remaining)} more to meet ${storeName}'s minimum order.`;
+        this.cartStore()?.['store_name'] ||
+        this.cart()[0]?.storeName ||
+        'this store';
+      return `Add ${this.currency.format(
+        remaining
+      )} more to meet ${storeName}'s minimum order.`;
     }
     const storeIssue = this.cartStoreAvailabilityIssue();
     if (storeIssue) return storeIssue;
     return '';
   });
-  readonly cartFulfillmentMismatch = computed(() => !!this.cartFulfillmentIssue());
+  readonly cartFulfillmentMismatch = computed(
+    () => !!this.cartFulfillmentIssue()
+  );
   readonly cartFulfillmentMismatchMessage = computed(
     () => this.cartFulfillmentIssue() || ''
   );
@@ -238,11 +319,7 @@ export class AppStateService {
   readonly platformFee = computed(() =>
     this.priceBreakupAmount('platform_fee')
   );
-  readonly handlingFee = computed(() =>
-    this.checkoutPriceBreakup()
-      ? this.priceBreakupAmount('packaging_fee')
-      : handlingFeeForItems(this.cart())
-  );
+  readonly handlingFee = computed(() => this.priceBreakupAmount('packaging_fee'));
   readonly smallCartFee = computed(() =>
     this.priceBreakupAmount('small_cart_fee')
   );
@@ -276,15 +353,35 @@ export class AppStateService {
     effect(() => {
       const loggedIn = this.auth.isLoggedIn();
       if (loggedIn) {
+        this.restoreCheckoutRecovery();
         this.bootstrapAuthenticatedState();
       } else {
+        this.ui.resolveConfirm(false);
+        this.guestMergeInFlight = false;
+        this.guestMergeError.set('');
+        this.guestMergeRemaining.set(0);
         this.authenticatedBootstrapComplete = false;
+        this.profileLoading.set(false);
+        this.recoveryPayload = null;
+        this.hasCheckoutRecovery.set(false);
+        this.checkoutStage.set('idle');
+        this.checkoutSubmitting.set(false);
+        this.lastCheckoutError.set('');
+        this.ui.closeEdit();
+        this.ui.closeLocation();
+        this.addressPending.set('');
+        this.pendingProducts.set([]);
+        this.couponPending.set(false);
+        this.couponError.set('');
         this.loadGuestCart();
         this.addresses.set([]);
         this.paymentMethods.set([]);
         this.activeAddress.set(null);
+        this.previousAreaChoice = null;
         this.selectedPaymentMethod.set('');
         this.activeOrder.set(null);
+        ++this.activeOrderRequest;
+        this.activeOrderError.set('');
       }
     });
     effect(() => {
@@ -298,27 +395,44 @@ export class AppStateService {
   }
 
   private bootstrapAuthenticatedState(): void {
+    const sessionVersion = this.auth.sessionVersion;
     if (this.authenticatedBootstrapComplete) return;
     this.authenticatedBootstrapComplete = true;
+    this.profileLoading.set(true);
+    this.profileError.set('');
     this.accountApi.getProfile().subscribe({
       next: (user) => {
+        if (sessionVersion !== this.auth.sessionVersion) return;
+        this.profileLoading.set(false);
+        this.profileError.set('');
         this.auth.updateUserData(user);
         this.mergeGuestCartIntoBackend(() => this.loadCart());
         this.loadAddresses();
         this.loadPaymentMethods();
         this.loadActiveOrder();
       },
-      error: () => {
-        this.auth.clearInvalidSession();
-        this.cart.set([]);
-        this.cartLoaded.set(true);
-        this.addresses.set([]);
-        this.paymentMethods.set([]);
-        this.activeAddress.set(null);
-        this.selectedPaymentMethod.set('');
-        this.activeOrder.set(null);
+      error: (error) => {
+        if (sessionVersion !== this.auth.sessionVersion) return;
+        this.profileLoading.set(false);
+        this.authenticatedBootstrapComplete = false;
+        this.profileError.set(
+          this.explainApiError(
+            error,
+            'Your profile could not load. Retry to restore account details.'
+          )
+        );
+        if (error?.status === 401) this.auth.clearInvalidSession();
       },
     });
+  }
+
+  retryProfile(): void {
+    this.bootstrapAuthenticatedState();
+  }
+
+  retryGuestMerge(): void {
+    if (!this.auth.isLoggedIn() || this.guestMergeInFlight) return;
+    this.mergeGuestCartIntoBackend(() => this.loadCart());
   }
 
   private refreshCatalogForLocation(location: {
@@ -345,7 +459,34 @@ export class AppStateService {
     this.checkServiceability(params);
   }
 
-  addToCart(product: Product, quantity = 1): boolean {
+  addToCart(
+    product: Product,
+    quantity = 1,
+    complete?: (success: boolean) => void
+  ): boolean {
+    const sessionVersion = this.auth.sessionVersion;
+    const id = product.apiId || product.id;
+    if (this.pendingProducts().includes(id) || this.cartError()) {
+      complete?.(false);
+      return false;
+    }
+    this.cartMutationError.set('');
+    const trigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const stock = Number(product.raw?.stock);
+    const current =
+      this.cart().find((item) => (item.apiId || item.id) === id)?.quantity || 0;
+    if (Number.isFinite(stock) && current + quantity > stock) {
+      this.cartMutationError.set(
+        'The requested quantity exceeds current stock.'
+      );
+      complete?.(false);
+      return false;
+    }
+    const finish = (success: boolean) => {
+      if (sessionVersion !== this.auth.sessionVersion) return;
+      this.pendingProducts.update((ids) => ids.filter((key) => key !== id));
+      complete?.(success);
+    };
     const serviceability = this.serviceability();
     if (this.isDeliveryUnavailableResponse(serviceability)) {
       this.catalog.clearDeliverableCatalog();
@@ -354,34 +495,50 @@ export class AppStateService {
           'Delivery is not available for your selected location. Choose another location to continue.',
         'warning'
       );
+      complete?.(false);
       return false;
     }
     if (!this.isStoreOpenForProduct(product)) {
       this.showToast(this.storeClosedMessage(product));
+      complete?.(false);
       return false;
     }
     if (!this.auth.isLoggedIn()) {
-      this.addToGuestCart(product, quantity);
+      this.pendingProducts.update((ids) => [...ids, id]);
+      this.addToGuestCart(product, quantity, finish);
       return true;
     }
+    this.pendingProducts.update((ids) => [...ids, id]);
     const productId = product.apiId || product.id;
-    this.cartApi.addToCart(productId, quantity, this.cartFulfillmentContext()).subscribe({
-      next: () => {
-        this.lastAddedProductId.set(product.id);
-        this.loadCart();
-        if (this.shouldAutoOpenMiniCart()) this.openMiniCart();
-        this.showToast(`${product.name} added to cart`);
-      },
-      error: (error) => this.handleAddToCartError(error, product, quantity),
-    });
+    this.cartApi
+      .addToCart(productId, quantity, this.cartFulfillmentContext())
+      .subscribe({
+        next: () => {
+          if (sessionVersion !== this.auth.sessionVersion) return;
+          this.lastAddedProductId.set(product.id);
+          this.loadCart(
+            () => finish(true),
+            () => finish(false)
+          );
+          if (this.shouldAutoOpenMiniCart()) this.openMiniCart();
+          this.showToast(`${product.name} added to cart`);
+        },
+        error: (error) => {
+          if (sessionVersion !== this.auth.sessionVersion) return;
+          this.handleAddToCartError(error, product, quantity, finish, trigger);
+        },
+      });
     return true;
   }
 
   private handleAddToCartError(
     error: any,
     product: Product,
-    quantity: number
+    quantity: number,
+    complete?: (success: boolean) => void,
+    trigger?: HTMLElement | null
   ): void {
+    const sessionVersion = this.auth.sessionVersion;
     const body = error?.body || error?.error || {};
     const message = this.explainApiError(error, 'Could not add item to cart');
     const conflictCode = body?.code || body?.error_code;
@@ -400,14 +557,15 @@ export class AppStateService {
         body?.incoming_fulfillment_node_name ||
         product.storeName ||
         'this store';
-      const confirmMessage =
-        body?.message ||
-        `Your basket has items from ${existingStore}. To order from ${incomingStore}, replace basket?`;
       const conflictPayload = {
         existingNodeId: String(body?.existing_fulfillment_node_id || ''),
-        existingNodeName: String(body?.existing_fulfillment_node_name || existingStore || ''),
+        existingNodeName: String(
+          body?.existing_fulfillment_node_name || existingStore || ''
+        ),
         incomingNodeId: String(body?.incoming_fulfillment_node_id || ''),
-        incomingNodeName: String(body?.incoming_fulfillment_node_name || incomingStore || ''),
+        incomingNodeName: String(
+          body?.incoming_fulfillment_node_name || incomingStore || ''
+        ),
         trigger: 'add_to_cart' as const,
         itemCount: this.itemCount(),
       };
@@ -417,13 +575,21 @@ export class AppStateService {
       );
       this.ui
         .confirm({
-          title: 'Replace cart?',
-          message: confirmMessage,
-          confirmText: 'Clear and add',
-          cancelText: 'Keep basket',
+          title: conflictCode === 'cart_fulfillment_conflict' ? 'A new area. A fresh basket?' : 'Switch to a different store?',
+          eyebrow: 'Keep your basket clear',
+          message: conflictCode === 'cart_fulfillment_conflict'
+            ? `This delivery point uses ${incomingStore}. Keep your current area and basket, or explicitly start a new basket here.`
+            : `Your basket is from ${existingStore}. The new item belongs to ${incomingStore}. We do not mix stores in one order.`,
+          artIcon: conflictCode === 'cart_fulfillment_conflict' ? 'pin' : 'bag',
+          basketComparison: {count:this.itemCount(),subtotal:this.subtotal()},
+          notice: 'Replacing a basket is a separate, explicit action. Cancelling this dialog leaves the original basket unchanged.',
+          confirmText: 'Start new basket',
+          confirmIcon: 'arrow',
+          cancelText: 'Keep my basket',
           tone: 'warning',
-        })
+        }, trigger)
         .then((confirmed) => {
+          if (sessionVersion !== this.auth.sessionVersion) return;
           if (!confirmed) {
             this.trackCartFulfillmentEvent(
               CustomerAnalyticsEvents.CartFulfillmentKept,
@@ -436,6 +602,7 @@ export class AppStateService {
                 itemCount: this.itemCount(),
               }
             );
+            complete?.(false);
             return;
           }
           this.trackCartFulfillmentEvent(
@@ -450,42 +617,85 @@ export class AppStateService {
             }
           );
           const productId = product.apiId || product.id;
-          this.cartApi.replaceCart(productId, quantity, this.cartFulfillmentContext()).subscribe({
-            next: () => {
-              this.lastAddedProductId.set(product.id);
-              this.loadCart();
-              if (this.shouldAutoOpenMiniCart()) this.openMiniCart();
-              this.showToast(`${product.name} added to cart`);
-            },
-            error: (replaceError) =>
-              this.showToast(
-                this.explainApiError(replaceError, 'Could not replace cart')
-              ),
-          });
+          this.cartApi
+            .replaceCart(productId, quantity, this.cartFulfillmentContext())
+            .subscribe({
+              next: () => {
+                if (sessionVersion !== this.auth.sessionVersion) return;
+                this.lastAddedProductId.set(product.id);
+                this.loadCart(
+                  () => complete?.(true),
+                  () => complete?.(false)
+                );
+                if (this.shouldAutoOpenMiniCart()) this.openMiniCart();
+                this.showToast(`${product.name} added to cart`);
+              },
+              error: (replaceError) => {
+                if (sessionVersion !== this.auth.sessionVersion) return;
+                this.cartMutationError.set(
+                  this.explainApiError(replaceError, 'Could not replace basket')
+                );
+                complete?.(false);
+              },
+            });
         });
       return;
     }
-    this.showToast(message);
+    this.cartMutationError.set(message);
+    this.showToast(message, 'error');
+    complete?.(false);
+  }
+
+  cartItemPending(item: CartItem): boolean {
+    return this.pendingProducts().includes(item.apiId || item.id);
+  }
+
+  canIncreaseCartItem(item: CartItem): boolean {
+    const stock = Number(item.raw?.stock);
+    return (
+      !this.cartItemPending(item) &&
+      (!Number.isFinite(stock) || item.quantity < stock)
+    );
   }
 
   updateQuantity(productId: string, delta: number): void {
     const item = this.cart().find(
       (entry) => entry.id === productId || entry.apiId === productId
     );
-    if (!item) return;
+    if (!item || this.cartItemPending(item) || this.cartError()) return;
+    this.cartMutationError.set('');
     const nextQuantity = item.quantity + delta;
+    if (delta > 0 && !this.canIncreaseCartItem(item)) {
+      this.cartMutationError.set(
+        'The requested quantity exceeds current stock.'
+      );
+      return;
+    }
     if (!this.auth.isLoggedIn() || !item.cartItemId) {
       this.updateGuestCartItem(item, nextQuantity);
       return;
     }
+    const id = item.apiId || item.id;
+    const sessionVersion = this.auth.sessionVersion;
+    this.pendingProducts.update((ids) => [...ids, id]);
+    const finish = () =>
+      this.pendingProducts.update((ids) => ids.filter((key) => key !== id));
     const request =
       nextQuantity <= 0
         ? this.cartApi.removeCartItem(item.cartItemId)
         : this.cartApi.updateCartItem(item.cartItemId, nextQuantity);
     request.subscribe({
-      next: () => this.loadCart(),
-      error: (error) =>
-        this.showToast(this.explainApiError(error, 'Could not update cart')),
+      next: () => {
+        if (sessionVersion === this.auth.sessionVersion)
+          this.loadCart(finish, finish);
+      },
+      error: (error) => {
+        if (sessionVersion !== this.auth.sessionVersion) return;
+        finish();
+        this.cartMutationError.set(
+          this.explainApiError(error, 'Could not update your basket.')
+        );
+      },
     });
   }
 
@@ -493,20 +703,7 @@ export class AppStateService {
     const item = this.cart().find(
       (entry) => entry.id === productId || entry.apiId === productId
     );
-    if (!item) return;
-    if (!this.auth.isLoggedIn() || !item.cartItemId) {
-      this.updateGuestCartItem(item, 0);
-      this.showToast('Item removed');
-      return;
-    }
-    this.cartApi.removeCartItem(item.cartItemId).subscribe({
-      next: () => {
-        this.loadCart();
-        this.showToast('Item removed');
-      },
-      error: (error) =>
-        this.showToast(this.explainApiError(error, 'Could not remove item')),
-    });
+    if (item) this.updateQuantity(productId, -item.quantity);
   }
 
   clearCart(): void {
@@ -514,14 +711,18 @@ export class AppStateService {
       this.commitGuestCart([]);
       return;
     }
+    const sessionVersion = this.auth.sessionVersion;
     this.cartApi.clearCart().subscribe({
       next: () => {
+        if (sessionVersion !== this.auth.sessionVersion) return;
         this.cart.set([]);
         this.setCartFulfillmentLock('', '');
         this.cartApi.refreshCartCount();
       },
-      error: (error) =>
-        this.showToast(this.explainApiError(error, 'Could not clear cart')),
+      error: (error) => {
+        if (sessionVersion === this.auth.sessionVersion)
+          this.showToast(this.explainApiError(error, 'Could not clear cart'));
+      },
     });
   }
 
@@ -541,20 +742,24 @@ export class AppStateService {
     this.clearCart();
   }
 
+  couponError = signal('');
+  couponPending = signal(false);
   applyCoupon(code: string): void {
+    if (this.couponPending()) return;
+    this.couponError.set('');
     const validationError = validateCode(code, 'Coupon code');
     if (validationError) {
-      this.showToast(validationError);
+      this.couponError.set(validationError);
       return;
     }
-    const normalized = compact(code).toUpperCase();
     if (!this.auth.isLoggedIn()) {
+      this.couponError.set('Sign in to apply a coupon.');
       this.ui.openLogin();
-      this.showToast('Sign in to apply coupons');
       return;
     }
-    this.coupon.set(normalized);
-    this.couponDiscount.set(0);
+    this.couponPending.set(true);
+    const sessionVersion = this.auth.sessionVersion;
+    const normalized = compact(code).toUpperCase();
     this.cartApi
       .validateCoupon(
         normalized,
@@ -563,16 +768,17 @@ export class AppStateService {
       )
       .subscribe({
         next: (coupon) => {
+          if (sessionVersion !== this.auth.sessionVersion) return;
+          this.couponPending.set(false);
           this.coupon.set(coupon.code || normalized);
           this.couponDiscount.set(Number(coupon.discount || 0));
           this.refreshCheckoutPreview();
           this.showToast(`${this.coupon()} applied`);
         },
         error: (error) => {
-          this.coupon.set('');
-          this.couponDiscount.set(0);
-          this.refreshCheckoutPreview();
-          this.showToast(this.explainCouponError(error), 'warning');
+          if (sessionVersion !== this.auth.sessionVersion) return;
+          this.couponPending.set(false);
+          this.couponError.set(this.explainCouponError(error));
         },
       });
   }
@@ -669,7 +875,8 @@ export class AppStateService {
     if (!cartNodeId || !currentNode.id || cartNodeId === currentNode.id) {
       return '';
     }
-    const cartNodeName = this.cartFulfillmentNodeName() || 'your previous delivery area';
+    const cartNodeName =
+      this.cartFulfillmentNodeName() || 'your previous delivery area';
     const nextNodeName = currentNode.name || 'this delivery area';
     return `Your cart belongs to ${cartNodeName}. Clear it to shop from ${nextNodeName}.`;
   }
@@ -677,16 +884,21 @@ export class AppStateService {
   private reconcileCartForServiceability(
     serviceability: CustomerServiceability | null
   ): void {
-    if (!serviceability?.is_serviceable || !this.cart().length) return;
+    if (this.serviceabilityLoading() || !serviceability?.is_serviceable || !this.cart().length) return;
     const cartNodeId = this.cartFulfillmentNodeId();
     const currentNode = this.currentServiceabilityNode();
     if (!cartNodeId || !currentNode.id || cartNodeId === currentNode.id) {
+      this.previousAreaChoice = null;
       this.refreshCartFulfillmentForServiceability(serviceability);
       return;
     }
     if (this.cartFulfillmentPromptOpen) return;
     this.cartFulfillmentPromptOpen = true;
-    const cartNodeName = this.cartFulfillmentNodeName() || 'your previous delivery area';
+    const previousChoice = this.previousAreaChoice;
+    const request = this.serviceabilityRequest;
+    const sessionVersion = this.auth.sessionVersion;
+    const cartNodeName =
+      this.cartFulfillmentNodeName() || 'your previous delivery area';
     const nextNodeName = currentNode.name || 'this delivery area';
     const eventPayload = {
       previousNodeId: cartNodeId,
@@ -708,14 +920,21 @@ export class AppStateService {
     );
     this.ui
       .confirm({
-        title: 'Clear cart for new location?',
-        message: `Your cart is locked to ${cartNodeName}. Your selected location is served by ${nextNodeName}. Clear the cart to shop here?`,
-        confirmText: 'Clear cart',
-        cancelText: 'Keep cart',
+        eyebrow: 'Keep your basket clear',
+        artIcon: 'pin',
+        title: 'A new area. A fresh basket?',
+        message: `This delivery point is served by ${nextNodeName}, while your basket belongs to ${cartNodeName}. Keep your current area and basket, or explicitly start a new basket here.`,
+        confirmText: 'Start new basket',
+        cancelText: 'Keep my basket',
+        basketComparison: { count: this.itemCount(), subtotal: this.subtotal() },
+        notice: 'Replacing a basket is a separate, explicit action. Cancelling this dialog leaves the original basket unchanged.',
+        confirmIcon: 'arrow',
         tone: 'warning',
       })
       .then((confirmed) => {
         this.cartFulfillmentPromptOpen = false;
+        if (sessionVersion !== this.auth.sessionVersion || request !== this.serviceabilityRequest) return;
+        this.previousAreaChoice = null;
         if (confirmed) {
           this.trackCartFulfillmentEvent(
             CustomerAnalyticsEvents.CartFulfillmentInvalidated,
@@ -734,7 +953,8 @@ export class AppStateService {
             trigger: 'location_change',
           }
         );
-        this.showToast('Keeping your existing cart', 'warning');
+        if (previousChoice) this.restoreAreaChoice(previousChoice);
+        this.showToast('Keeping your current area and basket');
       });
   }
 
@@ -744,7 +964,11 @@ export class AppStateService {
     if (!serviceability?.is_serviceable || !this.cart().length) return;
     const fulfillment = this.currentServiceabilityFulfillment();
     const cartNodeId = this.cartFulfillmentNodeId();
-    if (!cartNodeId || !fulfillment.nodeId || cartNodeId !== fulfillment.nodeId) {
+    if (
+      !cartNodeId ||
+      !fulfillment.nodeId ||
+      cartNodeId !== fulfillment.nodeId
+    ) {
       return;
     }
     if (!fulfillment.promiseId && !fulfillment.expiresAt) return;
@@ -791,52 +1015,53 @@ export class AppStateService {
       return;
     }
 
-    this.cartApi.refreshFulfillmentLock(this.cartFulfillmentContext()).subscribe({
-      next: (cart: ApiCart) => {
-        this.setCartFulfillmentLock(
-          String((cart as any).fulfillment_node_id || fulfillment.nodeId),
-          String((cart as any).fulfillment_node_name || fulfillment.nodeName),
-          String((cart as any).fulfillment_promise_id || fulfillment.promiseId),
-          String(
-            (cart as any).fulfillment_promise_expires_at ||
-              fulfillment.expiresAt
-          )
-        );
-        this.trackCartFulfillmentEvent(
-          CustomerAnalyticsEvents.CartFulfillmentRehydrated,
-          {
-            nodeId: this.cartFulfillmentNodeId(),
-            nodeName: this.cartFulfillmentNodeName(),
-            promiseId: this.cartFulfillmentPromiseId(),
-            expiresAt: this.cartFulfillmentPromiseExpiresAt(),
-            itemCount: this.itemCount(),
-          }
-        );
-        this.cartFulfillmentRefreshInFlight = false;
-      },
-      error: (error) => {
-        this.lastCartFulfillmentRefreshKey = '';
-        this.cartFulfillmentRefreshInFlight = false;
-        const reason = this.explainApiError(
-          error,
-          'Could not refresh delivery promise'
-        );
-        this.trackCartFulfillmentEvent(
-          CustomerAnalyticsEvents.CartFulfillmentRefreshFailed,
-          {
-            nodeId: fulfillment.nodeId,
-            nodeName: fulfillment.nodeName,
-            promiseId: fulfillment.promiseId,
-            reason,
-            itemCount: this.itemCount(),
-          }
-        );
-        this.showToast(
-          reason,
-          'warning'
-        );
-      },
-    });
+    this.cartApi
+      .refreshFulfillmentLock(this.cartFulfillmentContext())
+      .subscribe({
+        next: (cart: ApiCart) => {
+          this.setCartFulfillmentLock(
+            String((cart as any).fulfillment_node_id || fulfillment.nodeId),
+            String((cart as any).fulfillment_node_name || fulfillment.nodeName),
+            String(
+              (cart as any).fulfillment_promise_id || fulfillment.promiseId
+            ),
+            String(
+              (cart as any).fulfillment_promise_expires_at ||
+                fulfillment.expiresAt
+            )
+          );
+          this.trackCartFulfillmentEvent(
+            CustomerAnalyticsEvents.CartFulfillmentRehydrated,
+            {
+              nodeId: this.cartFulfillmentNodeId(),
+              nodeName: this.cartFulfillmentNodeName(),
+              promiseId: this.cartFulfillmentPromiseId(),
+              expiresAt: this.cartFulfillmentPromiseExpiresAt(),
+              itemCount: this.itemCount(),
+            }
+          );
+          this.cartFulfillmentRefreshInFlight = false;
+        },
+        error: (error) => {
+          this.lastCartFulfillmentRefreshKey = '';
+          this.cartFulfillmentRefreshInFlight = false;
+          const reason = this.explainApiError(
+            error,
+            'Could not refresh delivery promise'
+          );
+          this.trackCartFulfillmentEvent(
+            CustomerAnalyticsEvents.CartFulfillmentRefreshFailed,
+            {
+              nodeId: fulfillment.nodeId,
+              nodeName: fulfillment.nodeName,
+              promiseId: fulfillment.promiseId,
+              reason,
+              itemCount: this.itemCount(),
+            }
+          );
+          this.showToast(reason, 'warning');
+        },
+      });
   }
 
   private trackCartFulfillmentEvent<TName extends CustomerAnalyticsEventName>(
@@ -850,9 +1075,11 @@ export class AppStateService {
     }
     if (!this.auth.isLoggedIn()) return;
     const eventType = String(name).replace(/^customer_/, '');
-    this.cartApi.recordFulfillmentEvent(eventType, payload as Record<string, unknown>).subscribe({
-      error: () => undefined,
-    });
+    this.cartApi
+      .recordFulfillmentEvent(eventType, payload as Record<string, unknown>)
+      .subscribe({
+        error: () => undefined,
+      });
   }
 
   selectMapLocation(location: {
@@ -863,6 +1090,8 @@ export class AppStateService {
     state?: string;
     postal_code?: string;
   }): void {
+    this.rememberCurrentArea();
+    this.activeAddress.set(null);
     const name = location.address || location.city || 'Selected location';
     this.locationService.setManualLocation({
       lat: Number(location.lat),
@@ -885,13 +1114,17 @@ export class AppStateService {
   }
 
   useCurrentLocation(): void {
+    this.rememberCurrentArea();
+    const sessionVersion = this.auth.sessionVersion;
     this.locationService
       .initializeLocation(true)
       .then((location) => {
+        if (sessionVersion !== this.auth.sessionVersion) return;
         if (!location) {
           this.showToast('Could not detect your location');
           return;
         }
+        this.activeAddress.set(null);
         this.refreshCatalogForLocation(location);
         this.updateLocation(this.formatLocation(location.name, location.city));
         this.showToast('Location updated');
@@ -901,7 +1134,6 @@ export class AppStateService {
   }
 
   openMiniCart(): void {
-    this.miniCartOpen.set(true);
     this.ui.openMiniCart();
   }
 
@@ -950,14 +1182,18 @@ export class AppStateService {
     );
   }
 
-  loadCart(): void {
+  loadCart(onDone?: () => void, onError?: () => void): void {
+    const sessionVersion = this.auth.sessionVersion;
+    this.cartError.set('');
     if (!this.auth.isLoggedIn()) {
       this.loadGuestCart();
+      onDone?.();
       return;
     }
     this.cartLoaded.set(false);
     this.cartApi.getCart().subscribe({
       next: (cart: ApiCart) => {
+        if (sessionVersion !== this.auth.sessionVersion) return;
         const items = (cart.items || []).map((item) => this.mapCartItem(item));
         this.cart.set(items);
         this.setCartFulfillmentLock(
@@ -970,23 +1206,43 @@ export class AppStateService {
         this.cartLoaded.set(true);
         this.reconcileCartForServiceability(this.serviceability());
         this.refreshDeliveryFeePreview();
+        onDone?.();
+        if (
+          this.interruptedCheckout &&
+          !this.guestMergeError() &&
+          !this.cartCheckoutBlockReason()
+        )
+          this.proceedToCheckout();
       },
       error: () => {
-        this.cart.set([]);
-        this.setCartFulfillmentLock('', '');
-        this.cartApi.setCartCount(0);
+        if (sessionVersion !== this.auth.sessionVersion) return;
+        this.cartError.set(
+          'Your basket could not refresh. Try again before making another change.'
+        );
+        onError?.();
         this.cartLoaded.set(true);
       },
     });
   }
 
+  private addressRequest = 0;
   loadAddresses(): void {
+    const request = ++this.addressRequest;
+    const sessionVersion = this.auth.sessionVersion;
     if (!this.auth.isLoggedIn()) return;
+    this.addressLoading.set(true);
+    this.addressError.set('');
     this.accountApi.getAddresses().subscribe({
       next: (response) => {
+        if (
+          sessionVersion !== this.auth.sessionVersion ||
+          request !== this.addressRequest
+        )
+          return;
         const addresses = this.unwrap<ApiAddress>(response).map((address) =>
           this.mapAddress(address)
         );
+        this.addressLoading.set(false);
         this.addresses.set(addresses);
         const currentLocation = this.locationService.location();
         const nearby =
@@ -1013,6 +1269,9 @@ export class AppStateService {
               )?.source || null
             : null;
         const active =
+          addresses.find(
+            (address) => address.id === this.activeAddress()?.id
+          ) ||
           nearby ||
           addresses.find((address) => address.isDefault) ||
           addresses[0] ||
@@ -1038,8 +1297,13 @@ export class AppStateService {
         this.refreshDeliveryFeePreview();
       },
       error: () => {
-        this.addresses.set([]);
-        this.activeAddress.set(null);
+        if (
+          sessionVersion !== this.auth.sessionVersion ||
+          request !== this.addressRequest
+        )
+          return;
+        this.addressLoading.set(false);
+        this.addressError.set('Saved addresses could not load. Try again.');
       },
     });
   }
@@ -1052,13 +1316,16 @@ export class AppStateService {
       this.ui.openLogin();
       return;
     }
+    const sessionVersion = this.auth.sessionVersion;
     this.accountApi.createAddress(this.addressPayload(address)).subscribe({
       next: () => {
+        if (sessionVersion !== this.auth.sessionVersion) return;
         this.loadAddresses();
         this.showToast('Address saved');
         callbacks.next?.();
       },
       error: (error) => {
+        if (sessionVersion !== this.auth.sessionVersion) return;
         this.showToast(this.explainApiError(error, 'Could not save address'));
         callbacks.error?.(error);
       },
@@ -1069,16 +1336,19 @@ export class AppStateService {
     address: Address,
     callbacks: { next?: () => void; error?: (error: any) => void } = {}
   ): void {
+    const sessionVersion = this.auth.sessionVersion;
     if (!address.id) return;
     this.accountApi
       .updateAddress(address.id, this.addressPayload(address))
       .subscribe({
         next: () => {
+          if (sessionVersion !== this.auth.sessionVersion) return;
           this.loadAddresses();
           this.showToast('Address updated');
           callbacks.next?.();
         },
         error: (error) => {
+          if (sessionVersion !== this.auth.sessionVersion) return;
           this.showToast(
             this.explainApiError(error, 'Could not update address')
           );
@@ -1088,23 +1358,28 @@ export class AppStateService {
   }
 
   deleteAddress(id: string): void {
+    const sessionVersion = this.auth.sessionVersion;
     this.accountApi.deleteAddress(id).subscribe({
       next: () => {
+        if (sessionVersion !== this.auth.sessionVersion) return;
         this.loadAddresses();
         this.showToast('Address removed');
       },
-      error: (error) =>
-        this.showToast(this.explainApiError(error, 'Could not remove address')),
+      error: (error) => {
+        if (sessionVersion === this.auth.sessionVersion)
+          this.showToast(
+            this.explainApiError(error, 'Could not remove address')
+          );
+      },
     });
   }
 
   selectAddress(id: string): void {
     const address = this.addresses().find((item) => item.id === id);
     if (!address) return;
+    this.rememberCurrentArea();
     this.activeAddress.set(address);
-    this.addresses.update((items) =>
-      items.map((item) => ({ ...item, isDefault: item.id === id }))
-    );
+
     this.configureCurrencyFromAddress(address);
     if (address.latitude != null && address.longitude != null) {
       this.locationService.setManualLocation({
@@ -1133,17 +1408,47 @@ export class AppStateService {
     this.updateLocation(
       [address.label, address.city].filter(Boolean).join(', ')
     );
-    if (address.raw)
-      this.accountApi
-        .updateAddress(id, { ...address.raw, is_default: true })
-        .subscribe({ error: () => {} });
+
     this.refreshDeliveryFeePreview();
   }
 
+  setDefaultAddress(id: string, retryTrigger?: HTMLElement): void {
+    if (this.addressPending()) return;
+    const sessionVersion = this.auth.sessionVersion;
+    this.addressPending.set(id);
+    this.addressError.set('');
+    this.accountApi.makeDefaultAddress(id).subscribe({
+      next: () => {
+        if (sessionVersion !== this.auth.sessionVersion) return;
+        this.addressPending.set('');
+        this.loadAddresses();
+        this.showToast('Default address updated');
+      },
+      error: (error) => {
+        if (sessionVersion !== this.auth.sessionVersion) return;
+        this.addressPending.set('');
+        this.addressError.set(
+          this.explainApiError(error, 'Could not change the default address.')
+        );
+          requestAnimationFrame(() => {
+            if (sessionVersion === this.auth.sessionVersion && retryTrigger?.isConnected) retryTrigger.focus();
+          });
+      },
+    });
+  }
+
+  paymentMethodsLoading = signal(false);
+  paymentMethodsError = signal('');
+  activeOrderError = signal('');
   loadPaymentMethods(): void {
+    const sessionVersion = this.auth.sessionVersion;
     if (!this.auth.isLoggedIn()) return;
+    this.paymentMethodsLoading.set(true);
+    this.paymentMethodsError.set('');
     this.accountApi.getPaymentMethods().subscribe({
       next: (response) => {
+        if (sessionVersion !== this.auth.sessionVersion) return;
+        this.paymentMethodsLoading.set(false);
         const methods =
           response.enabled_payment_methods || response.methods || [];
         const paymentMethods: PaymentMethod[] = methods.map(
@@ -1159,16 +1464,23 @@ export class AppStateService {
         );
       },
       error: () => {
-        this.paymentMethods.set([]);
-        this.selectedPaymentMethod.set('');
+        if (sessionVersion !== this.auth.sessionVersion) return;
+        this.paymentMethodsLoading.set(false);
+        this.paymentMethodsError.set(
+          'Payment methods could not refresh. Please retry before submitting.'
+        );
       },
     });
   }
 
   checkServiceability(params?: Record<string, any>): void {
+    const request = ++this.serviceabilityRequest;
+    this.serviceability.set(null);
+    this.serviceabilityError.set('');
     this.serviceabilityLoading.set(true);
     this.catalogApi.checkServiceability(params).subscribe({
       next: (response) => {
+        if (request !== this.serviceabilityRequest) return;
         this.serviceability.set(response || null);
         if (this.isDeliveryUnavailableResponse(response || null)) {
           this.catalog.clearDeliverableCatalog();
@@ -1176,21 +1488,76 @@ export class AppStateService {
         this.serviceabilityLoading.set(false);
         this.reconcileCartForServiceability(response || null);
       },
-      error: () => {
-        this.catalog.clearDeliverableCatalog();
-        this.serviceability.set({
-          is_serviceable: false,
-          message: 'Could not verify delivery availability for this location.',
-          nearby_store_count: 0,
-          instant_store_count: 0,
-          eta_label: '',
-        });
+      error: (error) => {
+        if (request !== this.serviceabilityRequest) return;
+        this.serviceability.set(null);
+        this.serviceabilityError.set(
+          this.explainApiError(
+            error,
+            'Could not check this delivery area. Try again.'
+          )
+        );
         this.serviceabilityLoading.set(false);
       },
     });
   }
 
+  refreshDeliveryAvailability(): Observable<any> {
+    const sessionVersion = this.auth.sessionVersion;
+    const locationQuery = this.customerLocationQuery();
+    const current = () => sessionVersion === this.auth.sessionVersion && JSON.stringify(locationQuery) === JSON.stringify(this.customerLocationQuery());
+    return this.catalogApi
+      .checkServiceability(locationQuery)
+      .pipe(
+        concatMap((response) => {
+          if (!current()) return throwError(() => new Error('Delivery address or customer session changed. Retry for the current address.'));
+          if (!response?.is_serviceable)
+            return throwError(
+              () =>
+                new Error(
+                  response?.message ||
+                    'Delivery is unavailable for this address.'
+                )
+            );
+          const nodeId = String(
+            response.promise?.fulfillment_node_id ||
+              response.fulfillment_node?.id ||
+              ''
+          );
+          if (
+            this.cartFulfillmentNodeId() &&
+            nodeId !== this.cartFulfillmentNodeId()
+          )
+            return throwError(
+              () =>
+                new Error(
+                  'This basket belongs to another delivery area. Review your basket before continuing.'
+                )
+            );
+          this.serviceability.set(response);
+          return this.cartApi
+            .refreshFulfillmentLock(this.cartFulfillmentContext())
+            .pipe(
+              map((cart) => {
+                if (!current()) throw new Error('Delivery address or customer session changed. Retry for the current address.');
+                this.setCartFulfillmentLock(
+                  String(cart.fulfillment_node_id || nodeId),
+                  String(cart.fulfillment_node_name || ''),
+                  String(cart.fulfillment_promise_id || ''),
+                  String(cart.fulfillment_promise_expires_at || '')
+                );
+                return response;
+              })
+            );
+        })
+      );
+  }
+
+  private activeOrderRequest = 0;
   loadActiveOrder(): void {
+    const request = ++this.activeOrderRequest;
+    this.activeOrderError.set('');
+    const sessionVersion = this.auth.sessionVersion;
     if (!this.auth.isLoggedIn()) {
       this.activeOrder.set(null);
       return;
@@ -1198,9 +1565,16 @@ export class AppStateService {
     this.customerApi
       .toObservable<any>(this.customerApi.client.orders.activeOrder())
       .subscribe({
-        next: (response) =>
-          this.activeOrder.set(response?.active_order || null),
-        error: () => this.activeOrder.set(null),
+        next: (response) => {
+          if (request === this.activeOrderRequest && sessionVersion === this.auth.sessionVersion) {
+            this.activeOrderError.set('');
+            this.activeOrder.set(response?.active_order || null);
+          }
+        },
+        error: () => {
+          if (request === this.activeOrderRequest && sessionVersion === this.auth.sessionVersion)
+            this.activeOrderError.set('Active order could not refresh.');
+        },
       });
   }
 
@@ -1256,18 +1630,98 @@ export class AppStateService {
     if (selectedPayment === 'cod')
       payload['cod_upi_confirmed'] = !!options.codUpiConfirmed;
 
+    if (this.checkoutSubmitting() || this.hasCheckoutRecovery())
+      return throwError(
+        () =>
+          new Error(
+            'Check the existing submission before starting another order.'
+          )
+      );
+    payload['client_idempotency_key'] = crypto.randomUUID();
+    const session = this.checkoutSession();
     this.checkoutSubmitting.set(true);
-    if (payload['payment_method'] === 'razorpay') {
-      return this.placeRazorpayOrder(payload);
-    }
-    return this.cartApi
-      .createOrder(payload)
-      .pipe(map((response) => this.finishPlacedOrder(response)));
+    this.checkoutStage.set('quote');
+    const shownQuote = this.checkoutPriceBreakup();
+    return this.getCheckoutPreview(
+      selectedPayment,
+      !!options.codUpiConfirmed,
+      options.scheduledFor
+    ).pipe(
+      concatMap((preview) => {
+        if (!this.isCheckoutSessionCurrent(session))
+          return throwError(
+            () =>
+              new Error(
+                'Your customer session changed. Sign in again before continuing.'
+              )
+          );
+        const latest = preview.price_breakup;
+        if (!latest)
+          return throwError(
+            () => new Error('Order charges could not be confirmed.')
+          );
+        if (
+          shownQuote &&
+          this.quoteSignature(shownQuote) !== this.quoteSignature(latest)
+        ) {
+          this.checkoutPriceBreakup.set(latest);
+          return throwError(() => ({
+            error: {
+              code: 'quote_changed',
+              error:
+                'Your order charges changed. Review the updated quote before continuing.',
+            },
+          }));
+        }
+        this.checkoutPriceBreakup.set(latest);
+        payload['client_price_breakup'] = latest;
+        return this.submitCheckoutPayload(payload, session);
+      }),
+      catchError((error) => {
+        if (this.isCheckoutSessionCurrent(session))
+          this.lastCheckoutError.set(this.checkoutFailureMessage(error));
+        return throwError(() => error);
+      }),
+      finalize(() => {
+        if (this.isCheckoutSessionCurrent(session))
+          this.checkoutSubmitting.set(false);
+      })
+    );
   }
 
-  private placeRazorpayOrder(payload: Record<string, any>): Observable<Order> {
+  private quoteSignature(quote: Record<string, any>): string {
+    return [
+      'item_subtotal',
+      'coupon_discount',
+      'delivery_fee',
+      'platform_fee',
+      'packaging_fee',
+      'small_cart_fee',
+      'tax_amount',
+      'surge_fee',
+      'final_payable',
+    ]
+      .map((key) => `${key}:${Number(quote[key] || 0).toFixed(2)}`)
+      .join('|');
+  }
+
+  private submitCheckoutPayload(
+    payload: Record<string, any>,
+    session: CheckoutSession
+  ): Observable<Order> {
+    if (payload['payment_method'] === 'razorpay') {
+      return this.placeRazorpayOrder(payload, session);
+    }
+    return this.finalizeCheckout(payload, session);
+  }
+
+  private placeRazorpayOrder(
+    payload: Record<string, any>,
+    session: CheckoutSession
+  ): Observable<Order> {
     return new Observable<Order>((subscriber) => {
-      this.cartApi
+      this.checkoutStage.set('creating-session');
+      const subscription = this.cartApi
         .initiateCheckoutPayment({
           delivery_address_id: String(payload['delivery_address_id']),
           coupon_code: payload['coupon_code'],
@@ -1276,54 +1730,223 @@ export class AppStateService {
         })
         .subscribe({
           next: (payment) => {
+            if (!this.isCheckoutSessionCurrent(session)) {
+              subscriber.error(
+                new Error(
+                  'Your customer session changed. Sign in again before continuing.'
+                )
+              );
+              return;
+            }
+            if (
+              Number(payment.amount) !==
+              Math.round(
+                Number(payload['client_price_breakup'].final_payable) * 100
+              )
+            ) {
+              subscriber.error({
+                error: {
+                  code: 'quote_changed',
+                  error:
+                    'Your total changed before payment. Review the current quote.',
+                },
+              });
+              return;
+            }
+            this.checkoutStage.set('provider-loading');
             this.paymentAdapter
-              .open(payment, 'Order payment')
-              .then((response: any) => {
-                this.cartApi
-                  .createOrder({
-                    ...payload,
-                    payment_method: 'razorpay',
-                    razorpay_order_id: payment.razorpay_order_id,
-                    razorpay_payment_id: response.razorpay_payment_id,
-                    razorpay_signature: response.razorpay_signature,
-                  })
-                  .subscribe({
-                    next: (orderResponse) => {
-                      subscriber.next(this.finishPlacedOrder(orderResponse));
-                      subscriber.complete();
-                    },
-                    error: (error) => {
-                      this.checkoutSubmitting.set(false);
-                      subscriber.error(error);
-                    },
-                  });
+              .open(
+                payment,
+                'Order payment',
+                undefined,
+                (stage) =>
+                  this.isCheckoutSessionCurrent(session) &&
+                  this.checkoutStage.set(stage)
+              )
+              .then((proof) => {
+                const finalPayload = {
+                  ...payload,
+                  payment_method: 'razorpay',
+                  razorpay_order_id: payment.razorpay_order_id,
+                  razorpay_payment_id: proof.razorpay_payment_id,
+                  razorpay_signature: proof.razorpay_signature,
+                };
+                if (!this.isCheckoutSessionCurrent(session)) {
+                  this.saveCheckoutRecovery(finalPayload, session.userId);
+                  subscriber.error(
+                    new Error(
+                      'Sign back into the original customer account to check this payment and order.'
+                    )
+                  );
+                  return;
+                }
+                this.finalizeCheckout(finalPayload, session).subscribe({
+                  next: (order) => subscriber.next(order),
+                  complete: () => subscriber.complete(),
+                  error: (error) => subscriber.error(error),
+                });
               })
-              .catch(() => {
-                this.checkoutSubmitting.set(false);
-                subscriber.error(
-                  new Error(
-                    'Online payment is not available in this browser session.'
-                  )
-                );
+              .catch((error) => {
+                if (this.isCheckoutSessionCurrent(session))
+                  this.checkoutStage.set(
+                    error.code === 'provider_cancelled'
+                      ? 'cancelled'
+                      : error.code === 'provider_script_unavailable'
+                      ? 'script-unavailable'
+                      : 'failed'
+                  );
+                subscriber.error(error);
               });
           },
           error: (error) => {
-            this.checkoutSubmitting.set(false);
+            if (this.isCheckoutSessionCurrent(session))
+              this.checkoutStage.set('failed');
             subscriber.error(error);
           },
         });
+      return () => subscription.unsubscribe();
     });
+  }
+
+  private checkoutSession(): CheckoutSession {
+    return {
+      userId: this.auth.user()?.id || '',
+      version: this.auth.sessionVersion,
+    };
+  }
+
+  private isCheckoutSessionCurrent(session: CheckoutSession): boolean {
+    return (
+      this.auth.isLoggedIn() &&
+      session.version === this.auth.sessionVersion &&
+      session.userId === this.auth.user()?.id
+    );
+  }
+
+  private recoveryKey(userId = this.auth.user()?.id || ''): string {
+    return `nextou.customer.checkoutRecovery.${userId}`;
+  }
+
+  private saveCheckoutRecovery(
+    payload: Record<string, any>,
+    userId = this.auth.user()?.id || ''
+  ): void {
+    this.recoveryByCustomer.set(userId, payload);
+    if (this.auth.isLoggedIn() && userId === this.auth.user()?.id) {
+      this.recoveryPayload = payload;
+      this.hasCheckoutRecovery.set(true);
+    }
+    try {
+      sessionStorage.setItem(this.recoveryKey(userId), JSON.stringify(payload));
+    } catch {
+      /* Keep the paid submission in memory even if browser storage is unavailable. */
+    }
+  }
+
+  private restoreCheckoutRecovery(): void {
+    try {
+      this.recoveryPayload =
+        this.recoveryByCustomer.get(this.auth.user()?.id || '') ||
+        JSON.parse(sessionStorage.getItem(this.recoveryKey()) || 'null');
+      this.hasCheckoutRecovery.set(!!this.recoveryPayload);
+      if (this.recoveryPayload) this.checkoutStage.set('unknown');
+    } catch {
+      this.recoveryPayload = null;
+      this.hasCheckoutRecovery.set(false);
+    }
+  }
+
+  private clearCheckoutRecovery(userId = this.auth.user()?.id || ''): void {
+    this.recoveryByCustomer.delete(userId);
+    try {
+      sessionStorage.removeItem(this.recoveryKey(userId));
+    } catch {
+      /* In-memory recovery still clears after confirmed success. */
+    }
+    if (userId === this.auth.user()?.id) {
+      this.recoveryPayload = null;
+      this.hasCheckoutRecovery.set(false);
+    }
+  }
+
+  private finalizeCheckout(
+    payload: Record<string, any>,
+    session = this.checkoutSession()
+  ): Observable<Order> {
+    if (!this.isCheckoutSessionCurrent(session))
+      return throwError(
+        () =>
+          new Error(
+            'Your customer session changed. Return to the original account to check the existing submission.'
+          )
+      );
+    this.saveCheckoutRecovery(payload, session.userId);
+    this.checkoutStage.set('finalizing');
+    return this.cartApi.createOrder(payload).pipe(
+      map((response) => {
+        this.clearCheckoutRecovery(session.userId);
+        if (!this.isCheckoutSessionCurrent(session))
+          throw new Error(
+            'Your order was saved for the original customer. Sign back into that account to view it.'
+          );
+        this.checkoutStage.set('success');
+        return this.finishPlacedOrder(response);
+      }),
+      catchError((error) => {
+        if (!this.isCheckoutSessionCurrent(session))
+          return throwError(() => error);
+        const paid = !!payload['razorpay_payment_id'];
+        const uncertain = paid || !error?.status || error.status >= 500;
+        if (uncertain) {
+          this.checkoutStage.set('unknown');
+          this.lastCheckoutError.set(
+            'Your order submission has not been confirmed. Check the existing submission before starting another payment.'
+          );
+        } else {
+          this.clearCheckoutRecovery();
+          this.checkoutStage.set('failed');
+        }
+        return throwError(() => error);
+      })
+    );
+  }
+
+  recoverCheckout(): Observable<Order> {
+    if (this.checkoutSubmitting() || !this.recoveryPayload)
+      return throwError(
+        () => new Error('No existing submission is available to check.')
+      );
+    const session = this.checkoutSession();
+    this.checkoutSubmitting.set(true);
+    // Retry the same authenticated, idempotent creation request, including the original proof.
+    return this.finalizeCheckout(this.recoveryPayload, session).pipe(
+      finalize(() => {
+        if (this.isCheckoutSessionCurrent(session)) this.checkoutSubmitting.set(false);
+      })
+    );
+  }
+
+  private checkoutFailureMessage(error: any): string {
+    return (
+      error?.error?.error ||
+      error?.error?.detail ||
+      error?.body?.error ||
+      error?.message ||
+      'Could not confirm the order. Please retry.'
+    );
   }
 
   private finishPlacedOrder(response: any): Order {
     const raw = Array.isArray(response) ? response[0] : response;
     this.checkoutSubmitting.set(false);
+    this.interruptedCheckout = false;
     this.loadCart();
     this.loadActiveOrder();
     return this.mapOrder(raw);
   }
 
   private refreshDeliveryFeePreview(): void {
+    const request = ++this.deliveryPreviewRequest;
     const address = this.activeAddress();
     if (!this.auth.isLoggedIn() || !address?.id || !this.cart().length) {
       this.deliveryFeePreview.set(null);
@@ -1334,6 +1957,11 @@ export class AppStateService {
     this.deliveryFeePreviewReadyAddressId.set('');
     this.cartApi.getDeliveryFeePreview(address.id).subscribe({
       next: (preview) => {
+        if (
+          request !== this.deliveryPreviewRequest ||
+          this.activeAddress()?.id !== address.id
+        )
+          return;
         this.deliveryFeePreview.set(preview);
         this.requiresFarDeliveryConfirmation.set(
           !!preview.requires_far_delivery_confirmation
@@ -1342,6 +1970,7 @@ export class AppStateService {
         this.refreshCheckoutPreview();
       },
       error: () => {
+        if (request !== this.deliveryPreviewRequest) return;
         this.deliveryFeePreview.set(null);
         this.deliveryFeePreviewReadyAddressId.set('');
         this.checkoutPriceBreakup.set(null);
@@ -1372,7 +2001,21 @@ export class AppStateService {
     });
   }
 
+  acceptCheckoutPreview(preview: any): void {
+    ++this.checkoutPreviewRequest;
+    this.checkoutPreviewLoading.set(false);
+    this.checkoutPreviewError.set('');
+    this.checkoutPreviewErrorCode.set('');
+    this.checkoutPriceBreakup.set(preview?.price_breakup || null);
+  }
+
   private refreshCheckoutPreview(): void {
+    const request = ++this.checkoutPreviewRequest;
+    const sessionVersion = this.auth.sessionVersion;
+    this.checkoutPreviewError.set('');
+    this.checkoutPreviewErrorCode.set('');
+    this.checkoutPreviewLoading.set(false);
+    this.checkoutPriceBreakup.set(null);
     const address = this.activeAddress();
     if (!this.auth.isLoggedIn() || !address?.id || !this.cart().length) {
       this.checkoutPriceBreakup.set(null);
@@ -1382,6 +2025,7 @@ export class AppStateService {
       this.checkoutPriceBreakup.set(null);
       return;
     }
+    this.checkoutPreviewLoading.set(true);
     this.cartApi
       .getCheckoutPreview({
         delivery_address_id: address.id,
@@ -1394,9 +2038,17 @@ export class AppStateService {
       })
       .subscribe({
         next: (preview) => {
+          if (request !== this.checkoutPreviewRequest || sessionVersion !== this.auth.sessionVersion) return;
+          this.checkoutPreviewLoading.set(false);
           this.checkoutPriceBreakup.set(preview?.price_breakup || null);
+          if(!preview?.price_breakup) this.checkoutPreviewError.set('The server did not return a complete fee breakdown. Try again.');
         },
-        error: () => this.checkoutPriceBreakup.set(null),
+        error: (error) => {
+          if (request !== this.checkoutPreviewRequest || sessionVersion !== this.auth.sessionVersion) return;
+          this.checkoutPreviewLoading.set(false);
+          this.checkoutPreviewErrorCode.set(this.extractApiErrorCode(error?.body || error?.error || error));
+        this.checkoutPreviewError.set(this.explainApiError(error, 'Delivery and fees could not be confirmed. Try again.'));
+        },
       });
   }
 
@@ -1406,6 +2058,8 @@ export class AppStateService {
 
   proceedToCheckout(): boolean {
     if (!this.auth.isLoggedIn()) {
+      this.interruptedCheckout = true;
+      this.closeMiniCart();
       this.ui.openLogin();
       return false;
     }
@@ -1414,6 +2068,7 @@ export class AppStateService {
       this.showToast(reason, 'warning');
       return false;
     }
+    this.interruptedCheckout = false;
     this.router.navigate(['/checkout']);
     return true;
   }
@@ -1441,7 +2096,9 @@ export class AppStateService {
     const loadedStore = first.storeId
       ? this.catalog.stores().find((store) => store.id === first.storeId)
       : null;
-    return rawVendor || raw['store'] || productVendor || loadedStore?.raw || null;
+    return (
+      rawVendor || raw['store'] || productVendor || loadedStore?.raw || null
+    );
   }
 
   private cartStoreAvailabilityIssue(): string {
@@ -1449,12 +2106,18 @@ export class AppStateService {
     if (!vendor) return '';
     const isOpen = (vendor?.['is_open_now'] ?? vendor?.['is_open']) !== false;
     const acceptingOrders = vendor?.['is_accepting_orders'] !== false;
-    const storeName = vendor?.['store_name'] || this.cart()[0]?.storeName || 'Store';
+    const storeName =
+      vendor?.['store_name'] || this.cart()[0]?.storeName || 'Store';
+    if (vendor?.['is_open'] !== false && !acceptingOrders)
+      return `${storeName} is temporarily not accepting orders.`;
     if (!isOpen) {
       const first = this.cart()[0];
-      return first ? this.storeClosedMessage(first) : `${storeName} is closed right now.`;
+      return first
+        ? this.storeClosedMessage(first)
+        : `${storeName} is closed right now.`;
     }
-    if (!acceptingOrders) return `${storeName} is temporarily not accepting orders.`;
+    if (!acceptingOrders)
+      return `${storeName} is temporarily not accepting orders.`;
     return '';
   }
 
@@ -1463,7 +2126,11 @@ export class AppStateService {
     return Number.isFinite(amount) ? amount : 0;
   }
 
-  private addToGuestCart(product: Product, quantity: number): void {
+  private addToGuestCart(
+    product: Product,
+    quantity: number,
+    complete?: (success: boolean) => void
+  ): void {
     const incoming = this.guestCartItem(product, quantity);
     const current = this.cart();
     const currentNode = this.currentServiceabilityNode();
@@ -1493,6 +2160,7 @@ export class AppStateService {
       this.lastAddedProductId.set(incoming.id);
       if (this.shouldAutoOpenMiniCart()) this.openMiniCart();
       this.showToast(`${incoming.name} added to cart`);
+      complete?.(true);
     };
 
     if (differentFulfillment) {
@@ -1509,6 +2177,7 @@ export class AppStateService {
         })
         .then((confirmed) => {
           if (confirmed) addItem([incoming]);
+          else complete?.(false);
         });
       return;
     }
@@ -1526,6 +2195,7 @@ export class AppStateService {
         })
         .then((confirmed) => {
           if (confirmed) addItem([incoming]);
+          else complete?.(false);
         });
       return;
     }
@@ -1682,6 +2352,9 @@ export class AppStateService {
   }
 
   private mergeGuestCartIntoBackend(done: () => void): void {
+    if (this.guestMergeInFlight || !this.auth.isLoggedIn()) return;
+    const sessionVersion = this.auth.sessionVersion;
+    const isCurrentSession = () => this.auth.isLoggedIn() && sessionVersion === this.auth.sessionVersion;
     const payload = this.readGuestCartPayload();
     this.setCartFulfillmentLock(
       payload?.fulfillment?.nodeId || '',
@@ -1689,18 +2362,36 @@ export class AppStateService {
       payload?.fulfillment?.promiseId || '',
       payload?.fulfillment?.expiresAt || ''
     );
-    const guestItems = this.readGuestCartItems(payload);
-    if (!guestItems.length) {
+    const items = this.readGuestCartItems(payload);
+    if (!items.length) {
+      this.guestMergeRemaining.set(0);
       done();
       return;
     }
-
-    const addNext = (index: number) => {
-      const item = guestItems[index];
+    const acknowledged: CartItem[] = [];
+    this.guestMergeInFlight = true;
+    this.guestMergeError.set('');
+    this.guestMergeRemaining.set(items.length);
+    const finish = (message = '') => {
+      if (!isCurrentSession()) return;
+      this.guestMergeInFlight = false;
+      this.guestMergeError.set(message);
+      done();
+    };
+    const acknowledge = (item: CartItem, remaining: CartItem[]) => {
+      if (!isCurrentSession()) return;
+      acknowledged.push(item);
+      // Persist each acknowledged addition immediately. A retry starts with unsynced items only.
+      this.writeGuestCartItems(remaining);
+      this.guestMergeRemaining.set(remaining.length);
+      addNext(remaining);
+    };
+    const addNext = (remaining: CartItem[]) => {
+      if (!isCurrentSession()) return;
+      const item = remaining[0];
       if (!item) {
-        this.writeGuestCartItems([]);
-        this.showToast('Cart synced to your account');
-        done();
+        finish();
+        this.showToast('Guest basket synced to your account');
         return;
       }
       this.cartApi
@@ -1710,110 +2401,73 @@ export class AppStateService {
           this.cartFulfillmentContext()
         )
         .subscribe({
-        next: () => addNext(index + 1),
-        error: (error) =>
-          this.handleGuestCartMergeError(error, item, index, addNext, done),
-      });
-    };
-
-    addNext(0);
-  }
-
-  private handleGuestCartMergeError(
-    error: any,
-    item: CartItem,
-    index: number,
-    addNext: (index: number) => void,
-    done: () => void
-  ): void {
-    const body = error?.body || error?.error || {};
-    const message = this.explainApiError(error, 'Could not sync guest cart');
-    const conflictCode = body?.code || body?.error_code;
-    const isConflict =
-      conflictCode === 'cart_store_conflict' ||
-      conflictCode === 'cart_fulfillment_conflict' ||
-      message.toLowerCase().includes('cart has items from');
-    if (!isConflict) {
-      this.showToast(message);
-      done();
-      return;
-    }
-
-    const existingStore =
-      body?.existing_store_name ||
-      body?.existingStoreName ||
-      body?.existing_fulfillment_node_name ||
-      'your saved cart';
-    const incomingStore =
-      body?.incoming_store_name ||
-      body?.incoming_fulfillment_node_name ||
-      item.storeName ||
-      'your guest cart';
-    const conflictPayload = {
-      existingNodeId: String(body?.existing_fulfillment_node_id || ''),
-      existingNodeName: String(body?.existing_fulfillment_node_name || existingStore || ''),
-      incomingNodeId: String(body?.incoming_fulfillment_node_id || ''),
-      incomingNodeName: String(body?.incoming_fulfillment_node_name || incomingStore || ''),
-      trigger: 'add_to_cart' as const,
-      itemCount: this.itemCount(),
-    };
-    this.trackCartFulfillmentEvent(
-      CustomerAnalyticsEvents.CartFulfillmentConflict,
-      conflictPayload
-    );
-    this.ui
-      .confirm({
-        title: 'Replace saved basket?',
-        message: `Your saved basket has items from ${existingStore}. Replace it with your guest basket from ${incomingStore}?`,
-        confirmText: 'Replace basket',
-        cancelText: 'Keep saved basket',
-        tone: 'warning',
-      })
-      .then((confirmed) => {
-        if (!confirmed) {
-          this.trackCartFulfillmentEvent(
-            CustomerAnalyticsEvents.CartFulfillmentKept,
-            {
-              previousNodeId: conflictPayload.existingNodeId,
-              previousNodeName: conflictPayload.existingNodeName,
-              nextNodeId: conflictPayload.incomingNodeId,
-              nextNodeName: conflictPayload.incomingNodeName,
-              trigger: 'replace_cart',
-              itemCount: this.itemCount(),
+          next: () => acknowledge(item, remaining.slice(1)),
+          error: (error) => {
+            if (!isCurrentSession()) return;
+            const body = error?.body || error?.error || {};
+            const code = body.code || body.error_code;
+            if (
+              code !== 'cart_store_conflict' &&
+              code !== 'cart_fulfillment_conflict'
+            ) {
+              const message = `${this.explainApiError(error, 'Some items could not sync.')} ${remaining.length} guest item(s) remain saved for retry.`;
+              finish(message);
+              if (acknowledged.length) {
+                this.ui.confirm({
+                  title: remaining.length === 1 ? 'One item needs another try.' : 'Some items need another try.',
+                  eyebrow: 'Basket synchronization',
+                  message: 'The completed items are already in your account basket. The remaining guest items have not completed.',
+                  syncRows: [
+                    ...acknowledged.map((synced) => ({id: synced.id, label: `${synced.name}, quantity ${synced.quantity}`, status: 'Already synced', tone: 'green' as const})),
+                    ...remaining.map((pending, index) => ({id: pending.id, label: `${pending.name}, quantity ${pending.quantity}`, status: index === 0 ? 'Retry needed' : 'Not yet synced', tone: index === 0 ? 'orange' as const : 'neutral' as const})),
+                  ],
+                  notice: 'Your merge progress is kept. Only the remaining guest items are retried; already-synced quantities are not added again.',
+                  confirmText: 'Retry remaining items',
+                  confirmIcon: 'refresh',
+                  cancelText: 'Keep for later',
+                }).then((retry) => { if (retry && isCurrentSession()) this.retryGuestMerge(); });
+              }
+              return;
             }
-          );
-          done();
-          return;
-        }
-        this.trackCartFulfillmentEvent(
-          CustomerAnalyticsEvents.CartFulfillmentInvalidated,
-          {
-            previousNodeId: conflictPayload.existingNodeId,
-            previousNodeName: conflictPayload.existingNodeName,
-            nextNodeId: conflictPayload.incomingNodeId,
-            nextNodeName: conflictPayload.incomingNodeName,
-            trigger: 'replace_cart',
-            itemCount: this.itemCount(),
-          }
-        );
-        this.cartApi
-          .replaceCart(
-            item.apiId || item.id,
-            item.quantity,
-            this.cartFulfillmentContext()
-          )
-          .subscribe({
-            next: () => addNext(index + 1),
-            error: () => {
-              this.showToast('Could not replace saved cart');
-              done();
-            },
-          });
-      });
+            this.cartApi.getCart().subscribe({
+              next: (savedCart: ApiCart) => {
+                if (!isCurrentSession()) return;
+                const savedItems = (savedCart.items || []).map((savedItem) => this.mapCartItem(savedItem));
+                this.ui.confirm({
+                  title: 'Which basket should we keep?',
+                  eyebrow: 'After sign-in / Basket sync',
+                  message: 'Your saved account basket and guest basket cannot be merged automatically. Choose which basket to keep.',
+                  basketChoices: [
+                    {title: 'Saved account basket', store: savedItems[0]?.storeName || body.existing_store_name || 'Saved store', items: savedItems.map((savedItem) => `${savedItem.quantity} ${savedItem.name}`).join(' + '), subtotal: cartSubtotal(savedItems)},
+                    {title: 'Guest basket', store: item.storeName || 'Your chosen store', items: remaining.map((guestItem) => `${guestItem.quantity} ${guestItem.name}`).join(' + '), subtotal: cartSubtotal(remaining)},
+                  ],
+                  notice: 'No items are silently replaced, and quantities are not replayed twice.',
+                  noticeTone: 'purple',
+                  confirmText: 'Use guest basket',
+                  cancelText: 'Keep saved basket',
+                }).then((confirmed) => {
+                  if (!isCurrentSession()) return;
+                  if (!confirmed) {
+                    finish('Your saved basket is unchanged. Your guest items remain saved; retry when you are ready to choose.');
+                    return;
+                  }
+                  this.cartApi.replaceCart(item.apiId || item.id, item.quantity, this.cartFulfillmentContext()).subscribe({
+                    next: () => acknowledge(item, remaining.slice(1)),
+                    error: (replaceError) => finish(this.explainApiError(replaceError, 'Could not replace the saved basket. Guest items are still saved.')),
+                  });
+                });
+              },
+              error: (snapshotError) => finish(this.explainApiError(snapshotError, 'Could not load the saved basket for comparison. Guest items are still saved.')),
+            });
+          },
+        });
+    };
+    addNext(items);
   }
 
   private mapAddress(address: ApiAddress): Address {
-    return normalizeSharedAddress(address as any) as Address;
+    const mapped = normalizeSharedAddress(address as any) as Address;
+    return { ...mapped, line: address.address_line1 || mapped.line };
   }
 
   private mapPaymentMethod(
@@ -1828,7 +2482,18 @@ export class AppStateService {
   }
 
   private addressPayload(address: Address): Record<string, any> {
-    return createAddressPayload(address as any);
+    return {
+      ...createAddressPayload(address as any),
+      is_default: !!address.isDefault,
+      latitude:
+        address.latitude == null || String(address.latitude).trim() === ''
+          ? null
+          : Number(address.latitude),
+      longitude:
+        address.longitude == null || String(address.longitude).trim() === ''
+          ? null
+          : Number(address.longitude),
+    };
   }
 
   private unwrap<T>(response: any): T[] {
@@ -1877,8 +2542,7 @@ export class AppStateService {
   }
 
   private explainCouponError(error: any): string {
-    if (error?.status === 401)
-      return 'Sign in again to apply this coupon.';
+    if (error?.status === 401) return 'Sign in again to apply this coupon.';
 
     const payload = error?.error || error;
     const message = readApiError(payload).trim();
@@ -1939,6 +2603,8 @@ export class AppStateService {
       : null;
     const vendor = raw['vendor'] || raw['store'] || loadedStore?.raw || {};
     const storeName = vendor?.store_name || product.storeName || 'Store';
+    if (vendor?.is_open !== false && vendor?.is_accepting_orders === false)
+      return `${storeName} is temporarily not accepting orders.`;
     const opening = this.formatClockTime(vendor?.opening_time);
     const closing = this.formatClockTime(vendor?.closing_time);
     if (opening && closing) {

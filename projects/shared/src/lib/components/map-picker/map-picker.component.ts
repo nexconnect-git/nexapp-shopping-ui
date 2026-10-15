@@ -45,12 +45,13 @@ declare const google: any;
   styleUrl: './map-picker.component.scss',
 })
 export class MapPickerComponent implements AfterViewInit, OnDestroy {
-  @Input() initialLat = 28.6139;
-  @Input() initialLng = 77.209;
+  @Input() initialLat: number | null = 28.6139;
+  @Input() initialLng: number | null = 77.209;
   @Input() emitInitialLocation = true;
   @Input() height = '300px';
   @Input() apiKey = '';
   @Input() mapId = '';
+  @Input() showConfigurationHelp = true;
   @Output() locationPicked = new EventEmitter<MapLocation>();
 
   @ViewChild('mapContainer') mapContainerRef!: ElementRef;
@@ -147,9 +148,12 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
   }
 
   private async createMap(container: HTMLElement) {
-    const center = { lat: +this.initialLat, lng: +this.initialLng };
-    this.currentLat.set(center.lat);
-    this.currentLng.set(center.lng);
+    const hasInitialPoint = this.initialLat !== null && this.initialLng !== null && Number.isFinite(this.initialLat) && Number.isFinite(this.initialLng);
+    // With no delivery point, show the world without a pin. The viewport origin
+    // is never emitted or used as a customer location.
+    const center = hasInitialPoint ? { lat: Number(this.initialLat), lng: Number(this.initialLng) } : { lat: 0, lng: 0 };
+    this.currentLat.set(hasInitialPoint ? center.lat : null);
+    this.currentLng.set(hasInitialPoint ? center.lng : null);
     const mapsLibrary = await this.importGoogleLibrary('maps');
     const MapCtor = mapsLibrary?.Map || google?.maps?.Map;
     if (typeof MapCtor !== 'function') {
@@ -159,7 +163,7 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
     const mapId = this.effectiveMapId;
     const mapOptions: Record<string, unknown> = {
       center,
-      zoom: 13,
+      zoom: hasInitialPoint ? 13 : 2,
       mapTypeControl: false,
       streetViewControl: false,
       fullscreenControl: false,
@@ -168,7 +172,7 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
     if (mapId) mapOptions['mapId'] = mapId;
     this.map = new MapCtor(container, mapOptions);
 
-    await this.createMarker(center);
+    if (hasInitialPoint) await this.createMarker(center);
 
     const geocodingLibrary = await this.importGoogleLibrary('geocoding');
     const GeocoderCtor = geocodingLibrary?.Geocoder || google?.maps?.Geocoder;
@@ -177,10 +181,7 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
     }
     this.geocoder = new GeocoderCtor();
 
-    this.marker.addListener('dragend', () => {
-      const pos = this.getMarkerPosition();
-      if (pos) this.ngZone.run(() => this.reverseGeocode(pos.lat, pos.lng));
-    });
+    this.listenForMarkerDrag();
 
     this.map.addListener('click', (e: any) => {
       const lat = e.latLng.lat();
@@ -193,9 +194,9 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
     this.mapUnavailable.set(false);
     this.refreshMapCanvas(center);
 
-    const lat = +this.initialLat;
-    const lng = +this.initialLng;
-    if (this.emitInitialLocation && (lat !== 28.6139 || lng !== 77.209)) {
+    const lat = Number(this.initialLat);
+    const lng = Number(this.initialLng);
+    if (hasInitialPoint && this.emitInitialLocation && (lat !== 28.6139 || lng !== 77.209)) {
       this.reverseGeocode(lat, lng);
     }
   }
@@ -249,6 +250,13 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
     });
   }
 
+  private listenForMarkerDrag(): void {
+    this.marker?.addListener('dragend', () => {
+      const pos = this.getMarkerPosition();
+      if (pos) this.ngZone.run(() => this.reverseGeocode(pos.lat, pos.lng));
+    });
+  }
+
   private handleGoogleMapsAuthFailure() {
     this.map = null;
     this.marker = null;
@@ -261,6 +269,10 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
   private setMarkerPosition(position: { lat: number; lng: number }) {
     this.currentLat.set(position.lat);
     this.currentLng.set(position.lng);
+    if (!this.marker) {
+      if (this.map) this.createMarker(position).then(() => this.listenForMarkerDrag()).catch(() => this.setMapUnavailable());
+      return;
+    }
     if (typeof this.marker?.setPosition === 'function') {
       this.marker.setPosition(position);
       return;
@@ -709,8 +721,8 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
   }
 
   private setMapUnavailable(message = 'Google Maps could not be loaded.') {
-    this.currentLat.set(+this.initialLat);
-    this.currentLng.set(+this.initialLng);
+    this.currentLat.set(this.initialLat);
+    this.currentLng.set(this.initialLng);
     this.mapReady.set(false);
     this.mapUnavailable.set(true);
     this.placesError.set(message);

@@ -236,6 +236,8 @@ export class VendorProductCreateService {
   back(): void {
     if (this.activeStep() === 'review') {
       this.activeVariantIndex.set(Math.max(0, this.variants().length - 1));
+      this.activeStep.set('fulfillment');
+    } else if (this.activeStep() === 'fulfillment') {
       this.activeStep.set('variants');
     } else if (this.activeVariantIndex() > 0)
       this.activeVariantIndex.update((index) => index - 1);
@@ -250,7 +252,10 @@ export class VendorProductCreateService {
     if (await this.saveDraft()) {
       if (this.activeVariantIndex() < this.variants().length - 1)
         this.activeVariantIndex.update((index) => index + 1);
-      else this.setStep('review');
+      else {
+        const enteringFulfillment = this.activeStep() === 'variants';
+        this.setStep(enteringFulfillment ? 'fulfillment' : 'review', enteringFulfillment ? 0 : undefined);
+      }
     }
   }
   updateVariant(patch: Partial<VendorVariantDraft>): void {
@@ -289,6 +294,8 @@ export class VendorProductCreateService {
       );
       if (!this.current(generation, session)) return;
       result.variants.forEach((product) => this.resume(product));
+      if (result.variants.length)
+        this.activeVariantIndex.set(this.variants().findIndex(variant => variant.id === result.variants[0].id));
       this.success.set(
         `${result.variants.length} drafts saved. Configure their details before submission.`
       );

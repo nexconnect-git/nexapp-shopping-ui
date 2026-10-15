@@ -1,115 +1,14 @@
-﻿@if (state.miniCartOpen() || ui.miniCartOpen()) {
-  <button
-    type="button"
-    class="overlay"
-    aria-label="Close cart"
-    (click)="close()"
-  ></button>
-  <aside class="cart-panel" [class.enter]="state.miniCartOpen()">
-    <header>
-      <div>
-        <h2>{{ content.cart().miniCartTitle }}</h2>
-        <p>{{ state.itemCount() }} items · {{ state.total() | appCurrency }}</p>
-      </div>
-      <button type="button" aria-label="Close cart" (click)="close()">
-        <span class="material-symbols-rounded">close</span>
-      </button>
-    </header>
-
-    <div class="cart-scroll">
-      <section
-        class="progress"
-        [class.unlocked]="state.freeDeliveryUnlocked()"
-        [class.pending]="!state.deliveryFeeKnown() && state.freeDeliveryRemaining() <= 0"
-      >
-        <span class="progress-icon material-symbols-rounded">{{
-          state.freeDeliveryUnlocked() ? "celebration" : "local_shipping"
-        }}</span>
-        <div>
-          <b>{{ state.deliveryPromotion().title }}</b>
-          <small>{{ state.deliveryPromotion().description }}</small>
-          <div class="progress-track">
-            <span [style.width.%]="state.freeDeliveryProgress()"></span>
-          </div>
-        </div>
-      </section>
-
-      @if (state.cartMinimumOrderRemaining() > 0) {
-        <section class="cart-rule">
-          <span class="material-symbols-rounded">shopping_bag</span>
-          <div>
-            <b>Minimum order not met</b>
-            <small>{{ state.cartCheckoutBlockReason() }}</small>
-          </div>
-        </section>
-      }
-
-      <section class="items">
-        @for (item of state.cart(); track item.id) {
-          <article [class.flash]="state.lastAddedProductId() === item.id">
-            <img [src]="item.image" [alt]="item.name" />
-            <div>
-              <b>{{ item.name }}</b>
-              <small>{{ item.unit }}</small>
-              <strong>{{ item.price * item.quantity | appCurrency }}</strong>
-            </div>
-            <div class="qty">
-              <button
-                type="button"
-                aria-label="Decrease quantity"
-                (click)="state.updateQuantity(item.id, -1)"
-              >
-                <span class="material-symbols-rounded">remove</span>
-              </button>
-              <span>{{ item.quantity }}</span>
-              <button
-                type="button"
-                aria-label="Increase quantity"
-                (click)="state.updateQuantity(item.id, 1)"
-              >
-                <span class="material-symbols-rounded">add</span>
-              </button>
-            </div>
-          </article>
-        } @empty {
-          <p class="empty">
-            {{ content.cart().emptyTitle }}. {{ content.cart().emptyDescription }}
-          </p>
-        }
-      </section>
-    </div>
-
-    <footer>
-      @if (state.itemCount()) {
-        <div class="summary-lines">
-          <div>
-            <span>Subtotal</span><b>{{ state.subtotal() | appCurrency }}</b>
-          </div>
-          <div>
-            <span>Delivery</span><b>{{ state.deliveryFeeLabel() }}</b>
-          </div>
-          <div class="total">
-            <span>To Pay</span><b>{{ state.total() | appCurrency }}</b>
-          </div>
-        </div>
-        <div class="footer-actions">
-          <a routerLink="/cart" (click)="close()" class="fd-btn outline"
-            >View Cart</a
-          >
-          <button
-            type="button"
-            class="fd-btn primary"
-            [disabled]="!state.canCheckoutCart()"
-            (click)="checkout()"
-          >
-            Checkout
-          </button>
-        </div>
-      } @else {
-        <a routerLink="/explore" (click)="close()" class="fd-btn primary">{{
-          content.cart().browseCta
-        }}</a>
-      }
-    </footer>
-  </aside>
-}
+<fd-nx-modal-shell [open]="state.miniCartOpen()||ui.miniCartOpen()" title="A few good things." [eyebrow]="'Your basket / ' + state.itemCount() + (state.itemCount()===1 ? ' item' : ' items')" [footer]="true" (closed)="close()">
+  @if(state.cartError()){<div class="notice error" role="alert"><div class="grow">{{ state.cartError() }}</div><button class="btn" (click)="state.loadCart()">Retry</button></div>}
+  @if(state.cartMutationError()){<div class="notice error" role="alert">{{ state.cartMutationError() }}</div>}
+  @if(state.cart().length){
+    <div class="cart-store-head"><svg customerIcon="store"></svg><div><h3>{{ state.cart()[0]?.storeName }}</h3><p>Single-store basket · {{ state.itemCount() }} {{ state.itemCount()===1 ? 'item' : 'items' }}</p></div></div>
+    <fd-basket-items />
+    <div class="summary-total"><span>Item subtotal</span><span>{{ state.subtotal() | appCurrency }}</span></div><p class="demo-note space-sm">Delivery, fees, taxes and eligible discounts are confirmed at checkout.</p>
+    @if(state.cartCheckoutBlockReason()){<div class="notice warning space-sm">{{ state.cartCheckoutBlockReason() }}</div>}
+  }@else if(!state.cartError()){<fd-customer-state title="Your basket is empty." description="Add something from a neighbourhood store." icon="bag"><a class="btn primary" routerLink="/stores" (click)="close()">Browse stores</a></fd-customer-state>}
+  <ng-container dialogFooter>
+    @if(state.cart().length){<a class="btn" routerLink="/cart" (click)="close()">View basket</a><button class="btn primary" type="button" [disabled]="!state.canCheckoutCart()||!!state.cartError()||state.pendingProducts().length>0" (click)="checkout()"><svg customerIcon="arrow"></svg>{{ auth.isLoggedIn() ? 'Checkout' : 'Sign in to checkout' }}</button>}
+    @else{<button class="btn primary" type="button" (click)="close()">Done</button>}
+  </ng-container>
+</fd-nx-modal-shell>

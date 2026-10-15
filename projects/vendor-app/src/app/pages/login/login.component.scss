@@ -1,25 +1,67 @@
-// Sign-in uses the same bounded security surface as recovery and password change.
-:host { display: block; }
-.form-card-header { margin-bottom: 24px; }
-.form-card-header h1 { margin: 8px 0; }
-.form-card-header p { color: var(--nc-muted); line-height: 1.6; }
-.form-group { margin-bottom: 20px; }
-.form-label { display: block; margin-bottom: 8px; font-size: 15px; font-weight: 700; }
-.input-icon-wrapper { position: relative; }
-.input-icon { position: absolute; left: 14px; top: 14px; color: var(--nc-muted); font-size: 22px; pointer-events: none; }
-.form-input { width: 100%; min-height: 50px; box-sizing: border-box; padding: 12px 14px 12px 44px; border: 1px solid var(--nc-line); border-radius: 8px; background: white; color: var(--nc-text-primary); font: inherit; font-size: 16px; }
-.password-input { padding-right: 54px; }
-.password-visibility { position: absolute; right: 3px; top: 3px; width: 44px; height: 44px; display: grid; place-items: center; background: transparent; border: 0; border-radius: 6px; color: var(--nc-muted); cursor: pointer; }
-.form-input:focus-visible, .password-visibility:focus-visible { outline: 2px solid var(--nc-primary); outline-offset: 2px; }
-.invalid .form-input { border-color: var(--nc-danger); }
-.field-error, .field-hint { display: block; margin-top: 8px; font-size: 14px; line-height: 1.5; }
-.field-error { color: var(--nc-danger); }
-.field-hint { color: var(--nc-muted); }
-.error-msg { display: flex; align-items: start; gap: 8px; overflow-wrap: anywhere; }
-.signin-btn { width: 100%; min-height: 50px; display: inline-flex; justify-content: center; align-items: center; gap: 8px; border: 0; border-radius: 8px; background: var(--nc-primary); color: white; font: inherit; font-weight: 700; cursor: pointer; }
-.signin-btn:disabled { opacity: .65; cursor: wait; }
-.form-footer { display: grid; gap: 12px; margin-top: 20px; font-size: 15px; line-height: 1.6; }
-.form-footer p { margin: 0; }
-.form-footer a { color: var(--nc-primary); }
-.btn-spinner { width: 18px; height: 18px; border: 2px solid #ffffff66; border-top-color: white; border-radius: 50%; animation: spin .8s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
+:host {
+  display:block}
+.auth-layout {
+  max-width:1200px;
+  margin:0 auto}
+.vendor-auth-card {
+  background:none;
+  border:0;
+  box-shadow:none;
+  border-radius:0}
+.form-card-header {
+  margin-bottom:28px}
+.form-card-header h2 {
+  font:36px/1.1 Georgia,serif;
+  margin:12px 0}
+.form-card-header p {
+  font-size:13px;
+  color:var(--muted);
+  line-height:1.6}
+.form-group {
+  margin-bottom:24px}
+.form-label {
+  display:block;
+  font-size:13px;
+  margin-bottom:8px}
+.input-icon-wrapper {
+  position:relative}
+.input-icon {
+  position:absolute;
+  left:13px;
+  top:14px;
+  color:var(--muted)}
+.vendor-auth-card .form-input {
+  padding-left:42px}
+.vendor-auth-card .password-input {
+  padding-right:50px}
+.password-visibility {
+  position:absolute;
+  right:4px;
+  top:4px;
+  width:38px;
+  height:38px;
+  display:grid;
+  place-items:center;
+  background:none;
+  border:0;
+  color:var(--muted)}
+.field-error,.field-hint {
+  display:block;
+  margin-top:8px;
+  font-size:11px;
+  line-height:1.6}
+.field-hint {
+  color:var(--muted)}
+.form-footer {
+  border-top:1px solid var(--line);
+  margin-top:24px;
+  padding-top:12px;
+  font-size:13px}
+.full-width {
+  width:100%}
+@media(max-width:650px) {
+  .auth-layout {
+  margin:0}
+.form-card-header h2 {
+  font-size:30px}
+}

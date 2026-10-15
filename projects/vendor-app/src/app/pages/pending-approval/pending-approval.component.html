@@ -2,7 +2,7 @@
   <header class="page-heading">
     <div>
       <p class="eyebrow">Vendor onboarding</p>
-      <h1>Store approval</h1>
+      <h1>{{ context()?.vendor?.status === 'rejected' ? 'Your application needs a next step.' : context()?.vendor?.status === 'suspended' || context()?.vendor?.status === 'hold' ? 'Store access is restricted.' : 'Your store is under review.' }}</h1>
       <p>Review the platform status and complete requested corrections.</p>
     </div>
     <div class="heading-actions">
@@ -20,7 +20,7 @@
   }@if(actionError()){
   <p class="error-banner" role="alert">{{ actionError() }}</p>
   } @if(context();as current){
-  <section class="workspace-card approval-summary">
+  <section class="status-panel approval-summary">
     <span class="material-icons-outlined">storefront</span>
     <div>
       <h2>{{ current.vendor.store_name }}</h2>
@@ -42,7 +42,7 @@
     </div>
   </section>
   @if(current.allowed_actions.correct_details){
-  <section class="workspace-card">
+  <section class="rule-section">
     <h2>Requested business corrections</h2>
     <form (ngSubmit)="saveDetails()">
       <fieldset [disabled]="saving()">
@@ -62,7 +62,7 @@
     </form>
   </section>
   }
-  <section class="workspace-card">
+  <section class="rule-section">
     <h2>Document history</h2>
     @if(docError()){
     <p class="error-banner" role="alert">{{ docError() }}</p>
@@ -115,7 +115,7 @@
     }
   </section>
   @if(current.allowed_actions.contact){
-  <section class="workspace-card">
+  <section class="rule-section">
     <h2>Contact onboarding support</h2>
     <p>
       Ask about a review note or required correction. This creates an account

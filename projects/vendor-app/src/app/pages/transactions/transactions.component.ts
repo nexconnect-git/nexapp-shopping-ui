@@ -1,3 +1,4 @@
+import { CounterStateComponent } from '../../components/counter-state.component';
 import { Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
@@ -8,7 +9,7 @@ import { VendorContextService } from '../../services/vendor-context.service';
 import { vendorListState } from '../../services/vendor-list-state';
 import { WorkspacePagerComponent } from '../../components/workspace-pager.component';
 
-@Component({selector:'app-transactions',standalone:true,imports:[CommonModule,FormsModule,RouterLink,AppCurrencyPipe,WorkspacePagerComponent],templateUrl:'./transactions.component.html',styleUrl:'./transactions.component.scss'})
+@Component({selector:'app-transactions',standalone:true,imports:[CounterStateComponent,CommonModule,FormsModule,RouterLink,AppCurrencyPipe,WorkspacePagerComponent],templateUrl:'./transactions.component.html',styleUrl:'./transactions.component.scss'})
 export class TransactionsComponent implements OnInit {
   private readonly api=inject(VendorWorkspaceApi);private readonly route=inject(ActivatedRoute);private readonly router=inject(Router);private readonly destroy=inject(DestroyRef);
   readonly context=inject(VendorContextService);

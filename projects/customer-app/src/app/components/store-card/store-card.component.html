@@ -1,35 +1,30 @@
 <article class="store-card">
-  <a [routerLink]="['/store', store.id]" class="store-img">
-    <img
+  <a [routerLink]="['/store', store.id]" class="store-cover"
+    ><img
       [src]="store.image || placeholderImage"
       [alt]="storeName()"
       loading="lazy"
       (error)="onImageError($event)"
-    />
-    <span class="eta-badge">
-      <span class="material-symbols-rounded">bolt</span>
-      {{ etaLabel() }}
-    </span>
-    @if (store.offer) {
-      <span class="offer-badge">{{ store.offer }}</span>
-    }
-  </a>
-  <div class="info">
-    <small class="category">{{ store.category || "Store" }}</small>
-    <a [routerLink]="['/store', store.id]" class="name">{{ storeName() }}</a>
-    <div class="meta-row">
-      <span><span class="material-symbols-rounded">star</span>{{ ratingLabel() }}</span>
-      <span><span class="material-symbols-rounded">near_me</span>{{ store.distance || "Nearby" }}</span>
-    </div>
-    <div class="status-row">
+    /><span class="tag" [class.green]="isStoreOpen()" [class.warning]="!isStoreOpen()"><svg customerIcon="clock"></svg>{{
+      storeStatusText()
+    }}</span></a
+  >
+  <div class="store-card-body">
+    <div class="row between"><a [routerLink]="['/store',store.id]"><h3>{{ storeName() }}</h3></a><a class="btn text" [routerLink]="['/store',store.id]" [attr.aria-label]="'Browse ' + storeName()"><svg customerIcon="arrow"></svg></a></div>
+    <p>{{ store.category }}</p>
+    <div class="store-meta">
+      @if (store.rating > 0) {
       <span
-        class="status-pill"
-        [class.open]="isStoreOpen()"
-        [class.closed]="!isStoreOpen()"
+        ><svg customerIcon="star"></svg>{{ ratingLabel() }}</span
       >
-        {{ storeStatusText() }}
-      </span>
-      <small>{{ ratingsCountLabel() }} ratings</small>
+      }@if (store.eta) { <span><svg customerIcon="clock"></svg>{{ store.eta }}</span> }@if (store.distance) {
+      <span><svg customerIcon="pin"></svg>{{ store.distance }}</span> }
     </div>
+    @if (store.offer) {
+    <p class="store-offer">
+      <svg customerIcon="tag"
+        ></svg>{{ store.offer }}
+    </p>
+    }
   </div>
 </article>

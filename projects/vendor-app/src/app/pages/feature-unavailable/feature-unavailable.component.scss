@@ -1,0 +1,29 @@
+.system-state {
+  text-align:center;
+  max-width:560px;
+  margin:70px auto;
+  padding:30px}
+.system-state>.material-icons-outlined {
+  width:64px;
+  height:64px;
+  border-radius:50%;
+  background:var(--purple-soft);
+  color:var(--purple);
+  display:grid;
+  place-items:center;
+  margin:0 auto 24px}
+.system-state h1 {
+  font:42px/1.1 Georgia,serif;
+  letter-spacing:-1px}
+.system-state>p:not(.eyebrow) {
+  font-size:13px;
+  color:var(--muted);
+  line-height:1.7;
+  margin:20px 0 26px}
+@media(max-width:650px) {
+  .system-state {
+  margin:30px auto;
+  padding:20px}
+.system-state h1 {
+  font-size:32px}
+}

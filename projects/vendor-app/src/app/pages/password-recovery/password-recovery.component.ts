@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { afterNextRender, Component, DestroyRef, ElementRef, inject, Injector, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -13,8 +13,11 @@ import {
   standalone: true,
   imports: [FormsModule, RouterLink],
   templateUrl: './password-recovery.component.html',
+  styleUrl: './password-recovery.component.scss',
 })
 export class PasswordRecoveryComponent {
+  private readonly host: ElementRef<HTMLElement> = inject(ElementRef);
+  private readonly injector = inject(Injector);
   private readonly route = inject(ActivatedRoute);
   private readonly api = inject(VendorWorkspaceApi);
   private readonly auth = inject(AuthService);
@@ -28,8 +31,10 @@ export class PasswordRecoveryComponent {
   readonly error = signal('');
   readonly success = signal(false);
   readonly message = signal('');
+  readonly submitted = signal(false);
   submit(): void {
     if (this.loading()) return;
+    this.submitted.set(true);
     this.error.set('');
     if (
       this.reset &&
@@ -38,10 +43,12 @@ export class PasswordRecoveryComponent {
       this.error.set(
         'Enter matching passwords with at least eight characters.'
       );
+      this.focusInvalid();
       return;
     }
     if (!this.reset && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.email)) {
       this.error.set('Enter a valid registered email.');
+      this.focusInvalid();
       return;
     }
     this.loading.set(true);
@@ -64,5 +71,11 @@ export class PasswordRecoveryComponent {
         this.loading.set(false);
       },
     });
+  }
+
+  private focusInvalid(): void {
+    afterNextRender(() => {
+      this.host.nativeElement.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+    }, { injector: this.injector });
   }
 }

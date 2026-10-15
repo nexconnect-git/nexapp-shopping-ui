@@ -1,55 +1,41 @@
-<div
-  class="fd-page"
-  [class.fd-page--home]="isHomeRoute()"
-  [class.fd-page--app]="!isHomeRoute()"
-  [class.fd-overlay-open]="hasBlockingOverlay()"
->
-  <fd-app-loader />
-  <fd-topbar class="desktop-shell-only" [homeMode]="isHomeRoute()" />
-  @if (showMobileTopbar()) {
-  <fd-mobile-topbar class="mobile-shell-only" />
+<a href="#customer-main" class="skip-link" (click)="skipToContent($event)">Skip to shopping content</a>
+<div class="customer-surface" [class.has-assist]="showCartAssist() && state.itemCount()>0" [attr.inert]="hasBlockingOverlay() ? '' : null">
+  <fd-topbar />
+  @if(systemVisible()){
+    <main class="fd-content"><div style="padding:25px 0">
+      @if(offline()){<fd-customer-state title="You are offline. Your basket stays." description="Reconnect to refresh availability, charges and order updates. Purchases are not queued offline." icon="wifi" artTone="orange" action="Try reconnecting" (retry)="retryOnline()" />}
+      @else if(auth.sessionRenewalError()){<fd-customer-state title="Let us restore your session." description="A temporary renewal issue does not automatically mean your credentials are invalid. Retry before starting sign-in again." icon="shield" artTone="green" action="Retry session check" (retry)="retrySession()"><button class="btn" type="button" (click)="ui.openLogin()"><svg customerIcon="user"></svg>Sign in again</button></fd-customer-state>@if(auth.sessionRenewalLoading()){<div class="center" role="status"><span class="spinner"></span> Checking session…</div>}}
+      @else{<fd-customer-state title="Getting your neighbourhood ready." description="Restoring your session, delivery point and the essential application configuration." icon="leaf" artTone="green" /><div class="center" role="status"><span class="spinner"></span></div>}
+    </div></main>
   }
-  @if (loading()) {
-  <fd-mobile-loader label="Loading page" />
-  }
-  <router-outlet />
-  @defer (when ui.loginSliderOpen()) {
-  <fd-login-slider />
-  } @defer (when state.miniCartOpen() || ui.miniCartOpen()) {
-  <fd-mini-cart />
-  } @defer (when ui.filterSliderOpen()) {
-  <fd-filter-slider />
-  }
-  @defer (when ui.locationModalOpen()) {
-  <fd-location-modal />
-  }
-  @defer (when ui.editModal()) {
-  <fd-edit-modal />
-  } @defer (when ui.confirmDialog()) {
-  <fd-confirm-dialog />
-  } @if (showActiveOrderCard() && state.activeOrder(); as activeOrder) {
-  <a class="active-order-card" [routerLink]="['/tracking', activeOrder.id]">
-    <span class="material-symbols-rounded" aria-hidden="true">near_me</span>
-    <div>
-      <b>Track active order</b>
-      <small>
-        {{
-          activeOrder.store?.store_name ||
-            activeOrder.store?.name ||
-            "Your order"
-        }}
-        @if (activeOrder.eta_label) {
-        <span> - {{ activeOrder.eta_label }}</span>
-        }
-      </small>
+  <div id="customer-main" tabindex="-1" [hidden]="systemVisible()"><router-outlet /></div>
+  <footer class="app-footer">
+    <a class="brand" routerLink="/"
+      ><span class="brand-seal" aria-hidden="true">n</span
+      ><span
+        ><b class="brand-name">nextou</b
+        ><small class="brand-note">GOOD THINGS, NEARBY.</small></span
+      ></a
+    >
+    <span>From your neighbourhood. For your everyday.</span>
+    <div class="row">
+      <a class="btn text" routerLink="/privacy-policy">Privacy</a
+      ><a class="btn text" routerLink="/help">Help</a>
     </div>
-    <em>{{ activeOrder.status }}</em>
-  </a>
-  }
-  <fd-mobile-sticky-cart-bar [visible]="showCartAssist()" />
-  <fd-mobile-bottom-nav class="mobile-shell-only" />
-  <app-global-loading />
-  <app-page-feature-loading />
-  <app-toast />
-  <fd-mobile-toast [toast]="state.toast()" />
+  </footer>
+  @if(showCartAssist() && state.itemCount()>0){<button class="basket-assist" (click)="ui.openMiniCart()"><span>{{ state.itemCount() }} {{ state.itemCount()===1 ? 'item' : 'items' }} · {{ state.subtotal() | appCurrency }}<small>From {{ state.cartStore()?.['store_name'] || state.cart()[0]?.storeName }} · fees at checkout</small></span><span>View basket <svg customerIcon="arrow"></svg></span></button>}
+  <fd-mobile-bottom-nav />
 </div>
+@defer (when ui.loginSliderOpen()) { <fd-login-slider /> } @defer (when
+state.miniCartOpen() || ui.miniCartOpen()) { <fd-mini-cart /> } @defer (when
+ui.filterSliderOpen()) { <fd-filter-slider /> } @defer (when
+ui.locationModalOpen()) { <fd-location-modal /> } @defer (when ui.editModal()) {
+<fd-edit-modal /> } @defer (when ui.confirmDialog()) { <fd-confirm-dialog /> }
+@if(ui.mobileSidebarOpen()){
+  <fd-nx-modal-shell [open]="true" variant="center" width="740px" eyebrow="Explore Nextou" title="Where shall we go?" subtitle="A place for your everyday shopping, orders and account." [footer]="true" (closed)="ui.closeMobileSidebar()">
+    <nav class="nav-grid" aria-label="All destinations">@for(item of customerDestinations;track item.route){<a [routerLink]="item.route" (click)="ui.closeMobileSidebar()"><svg [customerIcon]="item.icon"></svg>{{ item.label }}</a>}</nav>
+    <button dialogFooter class="btn primary" type="button" (click)="ui.closeMobileSidebar()">Done</button>
+  </fd-nx-modal-shell>
+}
+
+<fd-customer-toast />

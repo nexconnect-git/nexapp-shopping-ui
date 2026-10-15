@@ -1,73 +1,77 @@
 :host {
-  display: block;
-}
+  display:block}
+.settings-nav {
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin:28px 0}
+.settings-layout {
+  display:grid;
+  grid-template-columns:minmax(0,1.65fr) minmax(240px,.65fr);
+  gap:36px}
+.form-container {
+  min-width:0}
 .settings-fields {
-  border: 0;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  gap: 20px;
-  min-width: 0;
-}
-.workspace-card h3 {
-  margin: 0 0 16px;
-}
-.store-media {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
-}
-.store-media img {
-  height: 100px;
-  max-width: 100%;
-  object-fit: contain;
-  border: 1px solid var(--workspace-border);
-  border-radius: 10px;
-}
-.workspace-field {
-  margin-bottom: 12px;
-}
-.settings-section summary {
-  cursor: pointer;
-  min-height: 44px;
-  padding: 10px 0;
-  font-size: 18px;
-  font-weight: 700;
-}
-.settings-section[open] summary {
-  margin-bottom: 16px;
-}
+  display:block;
+  border:0;
+  padding:0;
+  margin:0}
+.settings-section {
+  border:0;
+  border-radius:0;
+  background:none;
+  padding:0;
+  margin:0 0 26px}
+.settings-section>summary {
+  font-size:20px;
+  font-weight:500;
+  pointer-events:none;
+  list-style:none;
+  margin-bottom:22px}
+.settings-section>summary::-webkit-details-marker {
+  display:none}
+.wide {
+  grid-column:1/-1}
 .settings-save-area {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-  padding: 16px 0;
-  border-top: 1px solid var(--workspace-border);
+  display:flex;
+  justify-content:space-between;
+  gap:20px;
+  align-items:center;
+  border-top:1px solid var(--line);
+  padding-top:22px;
+  margin-top:28px;
+  font-size:12px;
+  color:var(--muted)}
+.store-media {
+  display:flex;
+  gap:18px;
+  margin:18px 0}
+.store-media img {
+  height:100px;
+  max-width:180px;
+  object-fit:contain}
+.workspace-check {
+  display:flex;
+  gap:12px;
+  align-items:center;
+  margin:20px 0}
+.rule-section {
+  border-top:1px solid var(--ink);
+  padding-top:20px}
+@media(max-width:900px) {
+  .settings-layout {
+  grid-template-columns:1fr}
+.aside-note {
+  display:none}
 }
-.settings-save-area > span {
-  font-size: 14px;
-  color: var(--workspace-muted);
-}
-
-.settings-fields .workspace-form-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
-  gap: 16px;
-  align-items: start;
-}
-.settings-section > :is(.workspace-form-grid, .workspace-field) {
-  max-width: 960px;
-}
-.settings-fields .workspace-field {
-  margin: 0;
-  min-width: 0;
-}
-.settings-fields .wide {
-  grid-column: 1/-1;
-}
-.settings-section > .workspace-field {
-  margin-top: 16px;
+@media(max-width:650px) {
+  .settings-nav {
+  gap:7px}
+.settings-nav button {
+  font-size:11px}
+.settings-save-area {
+  align-items:stretch;
+  flex-direction:column}
+.settings-save-area button {
+  flex:1}
 }

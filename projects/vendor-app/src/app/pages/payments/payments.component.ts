@@ -1,3 +1,4 @@
+import { CounterStateComponent } from '../../components/counter-state.component';
 import {
   Component,
   computed,
@@ -25,7 +26,7 @@ type PayoutAction = 'approve' | 'decline' | 'verify-credit';
 @Component({
   selector: 'app-payments',
   standalone: true,
-  imports: [
+  imports: [CounterStateComponent,
     CommonModule,
     FormsModule,
     RouterLink,
@@ -46,6 +47,7 @@ export class PaymentsComponent implements OnInit {
     this.api.payouts(query)
   );
   readonly status = signal('');
+  readonly selected = signal<VendorPayout | null>(null);
   readonly pending = signal<ReadonlySet<string>>(new Set());
   readonly rowErrors = signal<Record<string, string>>({});
   readonly dialog = signal<{

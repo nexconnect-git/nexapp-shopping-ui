@@ -1,331 +1,45 @@
-<div class="desktop-customer-view">
 <main class="fd-content">
-  <section class="tracking-layout">
-    <div>
-      <header class="track-title">
-        <a routerLink="/orders" class="back-link"
-          ><span class="material-symbols-rounded">arrow_back</span> Back</a
-        >
-        <div>
-          <h1 class="fd-title">Order Tracking</h1>
-          <p class="fd-subtitle">Live updates on your order</p>
-        </div>
-      </header>
-      @if (isLoadingOrder()) {
-        <section class="loading-note">
-          <span class="material-symbols-rounded">hourglass_top</span>
-          <p>Fetching your latest tracking updates...</p>
-        </section>
-      }
-      @if (trackingError()) {
-        <section class="loading-note error">
-          <span class="material-symbols-rounded">wifi_off</span>
-          <p>{{ trackingError() }}</p>
-          <button type="button" class="fd-btn outline" (click)="retryTracking()">
-            Retry
-          </button>
-        </section>
-      }
-
-      <section class="status-card fd-card">
-        <div class="order-panel">
-          <small>ORDER ID</small>
-          <h2>#{{ order() | displayOrderId }}</h2>
-          <p>Placed on<br />{{ order().date }}, {{ order().time }}</p>
-          <div class="order-actions">
-            <a [routerLink]="['/orders']" class="fd-btn outline">View Orders</a>
-            <button
-              type="button"
-              class="fd-btn outline"
-              (click)="downloadInvoice()"
-              [disabled]="invoiceDownloading()"
-            >
-              {{ invoiceDownloading() ? 'Preparing...' : 'Receipt' }}
-            </button>
-          </div>
-        </div>
-        <div class="eta-panel">
-          <small>Estimated Arrival</small>
-          <h2>{{ estimatedArrivalLabel() }}</h2>
-          <p>Today</p>
-          <span class="status-pill">{{ statusLabel() }}</span>
-          <small class="refresh-note">{{ trackingFreshnessLabel() }}</small>
-        </div>
-        <div class="progress">
-          @for (step of progressSteps(); track step.status) {
-            <div [class.current]="step.current">
-              <b [class.done]="step.done"
-                ><span class="material-symbols-rounded">{{
-                  step.icon
-                }}</span></b
-              ><span>{{ step.label }}</span
-              ><small>{{ step.time }}</small>
-            </div>
-          }
-        </div>
-      </section>
-
-      <section class="map-block fd-card">
-        <div class="map">
-          <div
-            #trackingMap
-            class="google-map"
-            [class.hidden]="mapUnavailable() || !mapReady()"
-          ></div>
-          @if (mapUnavailable() || !mapReady()) {
-            <div class="map-fallback">
-              <span class="material-symbols-rounded">my_location</span>
-              <b>{{ mapUnavailable() ? 'Tracking map unavailable' : 'Preparing map' }}</b>
-              <small>{{
-                mapUnavailable()
-                  ? 'Open route will use your maps app when available.'
-                  : 'Live location will appear in a moment.'
-              }}</small>
-            </div>
-          }
-          <button
-            type="button"
-            aria-label="Open map"
-            (click)="mapAction('zoom-in')"
-          >
-            <span class="material-symbols-rounded">open_in_new</span>
-          </button>
-          @if (directionsUrl()) {
-            <a
-              class="map-open"
-              [href]="directionsUrl()"
-              target="_blank"
-              rel="noopener"
-              ><span class="material-symbols-rounded">route</span> Open route</a
-            >
-          }
-        </div>
-        <aside class="partner-panel">
-          <h3>Delivery Partner</h3>
-          @if (partner()) {
-            <div class="partner">
-              @if (partnerImage()) {
-                <img [src]="partnerImage()" alt="" />
-              } @else {
-                <span class="partner-icon material-symbols-rounded"
-                  >two_wheeler</span
-                >
-              }
-              <div>
-                <b>{{ partner()?.name || "Delivery partner" }}</b
-                ><span>{{ partner()?.average_rating || "New" }} rating</span
-                ><small>{{
-                  partner()?.vehicle_type || "Nextou Express"
-                }}</small>
-              </div>
-            </div>
-            <button
-              type="button"
-              class="fd-btn outline"
-              (click)="callPartner()"
-            >
-              <span class="material-symbols-rounded">call</span> Call Partner
-            </button>
-            <p>
-              <b>Vehicle Number</b><br />{{
-                partner()?.vehicle_number || "Assigned soon"
-              }}
-            </p>
-          } @else {
-            <section class="partner-pending">
-              <span class="material-symbols-rounded">schedule</span>
-              <b>Partner assignment pending</b>
-              <small
-                >Delivery partner details will appear here once a partner
-                accepts this order.</small
-              >
-            </section>
-          }
-          <section class="help">
-            Need help with your order?<button
-              type="button"
-              routerLink="/orders"
-            >
-              View orders
-            </button>
-          </section>
-        </aside>
-      </section>
-
-      <div class="promo-row">
-        <section>
-          <div class="promo-copy">
-            <b>Enjoying fast deliveries?</b>
-            <span>Review your account details</span>
-          </div>
-          <button type="button" (click)="joinOne()">Open Account</button>
-        </section>
-        <section>
-          <div class="promo-copy">
-            <b>Need more essentials?</b>
-            <span>Browse nearby stores while this order moves.</span>
-          </div>
-          <button type="button" routerLink="/explore">Browse Stores</button>
-        </section>
-      </div>
-    </div>
-
-    <aside class="summary fd-card">
-      <div class="head">
-        <h2>Order Summary</h2>
-        <button type="button" class="invoice-link" (click)="downloadInvoice()">
-          Download Invoice
-        </button>
-      </div>
-      @for (item of order().items.slice(0, 5); track item.id) {
-        <div class="item">
-          <img [src]="item.image" alt="" />
-          <div>
-            <b>{{ item.name }}</b
-            ><small>{{ item.unit }}</small
-            ><strong>{{ item.price | appCurrency }}</strong>
-          </div>
-          <span>Qty {{ itemQuantity(item) }}</span>
-        </div>
-      } @empty {
-        <section class="partner-pending">
-          <span class="material-symbols-rounded">inventory_2</span>
-          <b>Order items are loading</b>
-          <small>Item details will appear in a moment.</small>
-        </section>
-      }
-      <button type="button" class="invoice-copy" (click)="downloadInvoice()">
-        Download invoice copy
-      </button>
-      <hr />
-      <p>
-        <span>Item Total</span><b>{{ order().amount | appCurrency }}</b>
-      </p>
-      <p>
-        <span>Delivery Fee</span
-        ><b class="green">{{ order().raw?.delivery_fee || 0 | appCurrency }}</b>
-      </p>
-      <p>
-        <span>{{ order().payment }}</span
-        ><b class="green">{{ order().amount | appCurrency }}</b>
-      </p>
-      <p class="total">
-        <span>Total Paid</span><b>{{ order().amount | appCurrency }}</b>
-      </p>
-      <section class="issue">
-        <h3>Facing an issue?</h3>
-        <a [routerLink]="['/order', order().id, 'issue']">Order delayed</a
-        ><a [routerLink]="['/order', order().id, 'issue']"
-          >Wrong or missing item</a
-        ><a [routerLink]="['/order', order().id, 'issue']">Cancel Order</a>
-      </section>
-    </aside>
-  </section>
-</main>
-</div>
-
-<div class="mobile-customer-view">
-<main class="mobile-page tracking-page">
-  <header class="tracking-head">
-    <div>
-      <small>Order #{{ order() | displayOrderId }}</small>
-      <h1>{{ mapStageLabel() }}</h1>
-    </div>
-  </header>
-
-  <section class="map-card">
-    <div #trackingMap class="tracking-map" [class.unavailable]="mapUnavailable()">
-      @if (mapUnavailable()) {
-        <span class="material-symbols-rounded">map</span>
-        <p>Map is not available right now.</p>
-      }
-    </div>
-    <small class="map-note">{{ trackingFreshnessLabel() }}</small>
-    @if (trackingError()) {
-      <button type="button" class="mobile-cta secondary" (click)="retryTracking()">
-        Retry tracking
-      </button>
-    }
-  </section>
-
-  <section class="store-card">
-    <span class="material-symbols-rounded">storefront</span>
-    <div>
-      <small>Ordered from</small>
-      <b>{{ storeName() }}</b>
-      <em>{{ storeCategory() }}</em>
-    </div>
-  </section>
-
-  @if (partner()) {
-    <section class="partner-card">
-      @if (partnerImage()) {
-        <img [src]="partnerImage()" alt="Delivery partner" />
-      } @else {
-        <span class="avatar material-symbols-rounded">person</span>
-      }
-      <div>
-        <b>{{ partner()?.name || 'Delivery partner' }}</b>
-        <small>{{ partner()?.vehicle_number || partner()?.phone || 'Assigned partner' }}</small>
-      </div>
-      <button type="button" (click)="callPartner()">
-        <span class="material-symbols-rounded">call</span>
-      </button>
-    </section>
+  @if(detailError() && !isLoadingOrder()){
+    <div class="notice warning space" role="alert"><svg customerIcon="info"></svg><div>{{ detailError() }} The last saved order is shown.<button class="btn text" (click)="retryTracking()"><svg customerIcon="refresh"></svg>Retry order</button></div></div>
   }
-
-  <section class="timeline-card">
-    <h2>Tracking timeline</h2>
-    <div class="timeline">
-      @for (step of steps(); track step.name) {
-        <article [class.done]="step.done" [class.current]="step.current">
-          <span class="material-symbols-rounded">{{ step.icon }}</span>
-          <div>
-            <b>{{ step.name }}</b>
-            <small>{{ step.time || (step.current ? 'In progress' : 'Updating soon') }}</small>
-          </div>
-        </article>
-      } @empty {
-        <section class="partner-pending">
-          <span class="material-symbols-rounded">pending</span>
-          <b>No timeline updates yet</b>
-          <small>Tracking checkpoints will appear here automatically.</small>
-        </section>
-      }
-    </div>
-  </section>
-
-  <section class="items-card">
-    <div class="mobile-section-head">
-      <h2>Order items</h2>
-      <strong>{{ order().amount | appCurrency }}</strong>
-    </div>
-    @for (item of order().items; track item.id) {
-      <div class="order-item">
-        <img [src]="item.image" [alt]="item.name" />
-        <span
-          ><b>{{ item.name }}</b
-          ><small>{{ item.unit }} · Qty {{ itemQuantity(item) }}</small></span
-        >
+  @if(detailError() && isLoadingOrder()){
+    <fd-customer-state [title]="detailError().startsWith('This order') ? detailError() : 'Your order could not load.'" [description]="detailError().startsWith('This order') ? 'No order details are displayed. Check your orders or return to shopping.' : detailError()" [icon]="detailError() === 'This order could not be found.' ? 'search' : 'lock'" action="Retry order" (retry)="retryTracking()"><a class="btn" routerLink="/orders">Go to your orders</a></fd-customer-state>
+  }@else if(isLoadingOrder()){
+    <fd-customer-page-header eyebrow="Delivery updates" title="Your neighbourhood.
+On its way." description="Checking your order…" /><div class="skeleton hero-skeleton" aria-label="Loading order"></div>
+  }@else if(terminal()){
+    <fd-breadcrumbs [items]="[{label:'Your orders',link:'/orders'},{label:'Order #'+(order() | displayOrderId)}]" />
+    <section class="success-head"><div class="state-art terminal-art" [class.orange]="currentStatus()==='cancelled'" [class.green]="currentStatus()!=='cancelled'"><svg [customerIcon]="currentStatus()==='refunded'?'money':currentStatus()==='delivered'?'check':'info'"></svg></div><h1>{{ currentStatus()==='refunded'?'Your refund is recorded.':currentStatus()==='delivered'?'Delivered, with care.':'This order is cancelled.' }}</h1><p>{{ currentStatus()==='delivered'?'Delivery has been recorded. Your receipt and feedback are available in order details.':'Preparation and tracking updates have stopped. Payment and refund outcomes follow the saved payment record.' }}</p></section>
+    <div class="confirmation-box card"><div class="kv"><span>Order</span><strong>#{{ order() | displayOrderId }}</strong></div><div class="kv"><span>Historical order amount</span><strong>{{ order().amount | appCurrency }}</strong></div><div class="kv"><span>Status</span><strong>{{ statusLabel() }}</strong></div><div class="kv"><span>Payment</span><strong>{{ order().raw?.payment_status }}</strong></div><div class="row wrap-row space"><a class="btn primary" routerLink="/orders">Your orders<svg customerIcon="arrow"></svg></a>@if(currentStatus()==='delivered'){<a class="btn" [routerLink]="['/order-finished',order().id]">Order details</a>}<a class="btn text" [routerLink]="['/order',order().id,'issue']"><svg customerIcon="help"></svg>Get help</a><button class="btn text"  (click)="downloadInvoice()"><svg customerIcon="download"></svg>Download receipt</button></div>@if(receiptError()){<div class="notice error space" role="alert">{{ receiptError() }}</div>}</div>
+  }@else{
+    <fd-breadcrumbs [items]="[{label:'Your orders',link:'/orders'},{label:'Order #'+(order() | displayOrderId)}]" />
+    <fd-customer-page-header eyebrow="Delivery updates" title="Your neighbourhood.
+On its way." [description]="'#'+(order() | displayOrderId)+' · '+storeName()"><button headerActions class="btn" type="button" (click)="showDetails.set(!showDetails())"><svg customerIcon="orders"></svg>Order details</button></fd-customer-page-header>
+    <div class="tracking-grid"><section>
+      <div class="tracking-intro"><div class="eyebrow">{{ hasPickedUp() ? 'On the way' : partner() ? 'Pickup pending' : ['searching','notified'].includes(order().raw?.assignment_status || '') ? 'Partner search' : 'Store preparation' }}</div><h2>{{ stageCopy() }}</h2><p>{{ stageDescription() }}</p><div class="eta"><svg customerIcon="clock"></svg><span>Delivery estimate: <strong>{{ estimatedArrivalLabel() }}</strong></span></div></div>
+      <div class="card"><h3>Your order journey</h3><div class="timeline space">@for(step of journeySteps();track step.name){<div class="timeline-row" [class.done]="step.done" [class.current]="step.current"><span class="timeline-dot"><svg [customerIcon]="step.done ? 'check' : step.current ? 'clock' : 'more'"></svg></span><div><strong>{{ step.name }}</strong><p>{{ step.time }}</p></div></div>}</div>
+        @if(['ready','ready_for_pickup','delivery_assigned'].includes(currentStatus())){<div class="notice purple"><svg customerIcon="truck"></svg>{{ stageDescription() }}</div>}
+        <details class="accordion" [open]="showDetails()"><summary>Items &amp; bill</summary><div class="mini-list">@for(item of order().items;track item.id){<div class="mini-row"><div class="item-art"><img [src]="item.image || '/assets/placeholders/product.svg'" [alt]="item.name" loading="lazy"></div><div class="grow"><strong>{{ item.name }}</strong><p>{{ itemQuantity(item) }} × {{ itemUnit(item) }}</p></div><strong>{{ item.price * itemQuantity(item) | appCurrency }}</strong></div>}</div><div class="kv"><span>Historical order total</span><strong>{{ order().amount | appCurrency }}</strong></div><div class="kv"><span>Payment</span><strong>{{ order().raw?.payment_method==='cod'?'UPI at delivery':order().raw?.payment_method }} · {{ order().raw?.payment_status }}</strong></div></details>
+        <div class="order-help"><h3>Need a hand?</h3><a [routerLink]="['/order',order().id,'issue']"><span>Get help with this order</span><svg customerIcon="chev"></svg></a><button type="button" (click)="canCancel() ? cancelOpen.set(true) : cancellationBlocked.set(true)"><span>Cancellation options</span><svg customerIcon="chev"></svg></button><button type="button"  (click)="downloadInvoice()"><span>Download receipt</span><svg customerIcon="download"></svg></button></div>
+        @if(receiptError()){<div class="notice error space" role="alert">{{ receiptError() }}</div>}
       </div>
-    } @empty {
-      <section class="partner-pending">
-        <span class="material-symbols-rounded">inventory_2</span>
-        <b>Items are still loading</b>
-        <small>We'll show your ordered items here shortly.</small>
-      </section>
-    }
-  </section>
-
-  <section class="mobile-sticky-cta">
-    @if (directionsUrl()) {
-      <a [href]="directionsUrl()" target="_blank" rel="noopener" class="mobile-cta secondary">Open route</a>
-    } @else {
-      <a [routerLink]="ordersLink()" class="mobile-cta secondary">View orders</a>
-    }
-    <button type="button" class="mobile-cta" [disabled]="invoiceDownloading()" (click)="downloadInvoice()">
-      {{ invoiceDownloading() ? 'Preparing...' : 'Invoice' }}
-    </button>
-  </section>
+    </section><aside>
+      <div class="map"><div #trackingMap class="google-map" [class.hidden]="mapUnavailable() || !mapReady()"></div>@if(mapUnavailable() || !mapReady()){<div class="map-fallback"><svg customerIcon="pin"></svg><h3>{{ mapUnavailable()?'Tracking map unavailable':'Waiting for location' }}</h3><p>{{ gpsLabel() }}</p><p class="small">Order status updates continue separately.</p></div>}<span class="map-label">{{ mapStageLabel() }}</span><div class="map-status"><svg customerIcon="truck"></svg><span>{{ gpsLabel() }}</span></div></div>
+      <p class="small muted space-sm">{{ trackingFreshnessLabel() }} · {{ connection() }}</p>
+      @if(trackingError()){<div class="notice warning space-sm" role="alert"><div>{{ trackingError() }}<button class="btn text" (click)="retryTracking()"><svg customerIcon="refresh"></svg>Retry updates</button></div></div>}@else if(gpsStale()){<div class="notice warning space-sm"><svg customerIcon="clock"></svg><div>Driver location is older than expected. The last order status stays visible.<button class="btn text" (click)="retryTracking()"><svg customerIcon="refresh"></svg>Refresh tracking</button></div></div>}@else if(connection().includes('interrupted')){<div class="notice warning space-sm"><svg customerIcon="wifi"></svg><div>Live location connection interrupted. Status refresh continues.<button class="btn text" (click)="retryTracking()"><svg customerIcon="refresh"></svg>Retry connection</button></div></div>}
+      @if(directionsUrl()){<a class="btn text space-sm" [href]="directionsUrl()" target="_blank" rel="noopener">Open route in Maps<svg customerIcon="arrow"></svg></a>}
+      @if(partner();as driver){<div class="partner-card"><div class="avatar">@if(partnerImage()){<img [src]="partnerImage()" [alt]="driver.name || 'Delivery partner'">}@else{<svg customerIcon="user"></svg>}</div><div class="grow"><h3>{{ driver.name || 'Delivery partner' }}</h3><p>Your delivery partner · {{ hasPickedUp()?'order picked up':'pickup pending' }}</p></div>@if(driver.phone){<a class="icon-btn" [href]="'tel:'+driver.phone" aria-label="Call delivery partner"><svg customerIcon="phone"></svg></a>}</div>}@else{<div class="partner-card"><svg customerIcon="truck"></svg><div><h3>No partner assigned yet</h3><p>A placed order does not start driver search automatically.</p></div></div>}
+      <div class="card space"><div class="eyebrow">Your destination</div>@if(order().raw?.delivery_address;as address){<h3>{{ address.label || 'Delivery address' }}</h3><p class="card-sub space-sm">{{ address.full_name }} · {{ address.phone }}<br>{{ address.address_line1 }}@if(address.address_line2){, {{ address.address_line2 }}}<br>{{ address.city }} {{ address.postal_code }}</p>}@else{<p class="card-sub space-sm">Delivery address details are unavailable.</p>}
+        @if(order().raw?.delivery_otp){<div class="notice space"><svg customerIcon="shield"></svg><div><strong>Delivery OTP: {{ order().raw?.delivery_otp }}</strong><p class="small">Share only with your delivery partner when receiving your order.</p></div></div>}
+      </div>
+    </aside></div>
+  }
 </main>
-</div>
+<fd-nx-modal-shell variant="center" [footer]="true" [open]="cancelOpen()" title="Cancel this order?" eyebrow="Order action" width="520px" [dismissible]="!cancelling()" (closed)="cancelOpen.set(false)">
+  <p>Eligibility is checked against the current order policy and confirmed by the server.</p><div class="space"><div class="kv"><span>Order</span><strong>#{{ order() | displayOrderId }}</strong></div><div class="kv"><span>Eligibility</span><span class="tag" [class.green]="canCancel()">{{ canCancel()?'Allowed under the current policy':'No longer available' }}</span></div></div><div class="notice warning space"><svg customerIcon="info"></svg>Any applicable fee or refund follows the actual order and payment record. No refund deadline or free cancellation promise is implied.</div>
+  <form id="cancel-order-form" (submit)="$event.preventDefault(); cancel()"><div class="form-grid single"><div class="field"><label for="cancel-reason">Reason</label><select id="cancel-reason" name="reason" [disabled]="cancelling()" [ngModel]="cancelReason()" (ngModelChange)="cancelReason.set($event); cancelError.set('')" [attr.aria-invalid]="!!cancelError()" aria-describedby="cancel-error"><option value="">Choose a reason</option><option>Placed by mistake</option><option>Delivery timing no longer works</option><option>Need to change my order</option><option>Other</option></select><small id="cancel-error" class="field-error">{{ cancelError() }}</small></div></div></form>
+  <div dialogFooter class="row wide between"><button class="btn" [disabled]="cancelling()" (click)="cancelOpen.set(false)">Keep order</button><button class="btn danger" type="button" [disabled]="cancelling() || !canCancel()" (click)="cancel()">{{ cancelling()?'Confirming cancellation…':'Confirm cancellation' }}</button></div>
+</fd-nx-modal-shell>
+<fd-nx-modal-shell variant="center" [footer]="true" [open]="cancellationBlocked()" title="Cancellation is not available." eyebrow="Current order policy" width="520px" (closed)="cancellationBlocked.set(false)"><p>The current order policy does not allow customer cancellation. No cancellation command has been sent.</p><div class="notice warning space"><svg customerIcon="info"></svg>You can still get help with this order. Creating an issue is a separate action.</div><div dialogFooter class="row wide between"><button class="btn" (click)="cancellationBlocked.set(false)">Back to tracking</button><a class="btn primary" [routerLink]="['/order',order().id,'issue']"><svg customerIcon="help"></svg>Get order help</a></div></fd-nx-modal-shell>
+
+@defer(when receiptOpen()){<fd-customer-receipt [open]="receiptOpen()" [order]="order()" [orderId]="order().id" [orderNumber]="order().raw?.order_number || ''" [invoiceId]="knownInvoiceId()" (closed)="receiptOpen.set(false)" (failed)="receiptError.set($event)" (recovered)="receiptError.set('')" (downloaded)="receiptDownloaded()" />}

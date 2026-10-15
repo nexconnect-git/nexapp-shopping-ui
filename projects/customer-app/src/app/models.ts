@@ -205,6 +205,4 @@ export interface UserProfile {
   email: string;
   phone: string;
   memberSince: string;
-  ordersDelivered: number;
-  prime: boolean;
 }

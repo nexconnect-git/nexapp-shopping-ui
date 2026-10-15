@@ -78,11 +78,11 @@ export class PageFeatureAccessService {
 
   constructor(private api: FeatureConfigApi) {}
 
-  loadConfig(force = false): Observable<PageFeatureConfig> {
+  loadConfig(force = false, userInitiated = false): Observable<PageFeatureConfig> {
     if (this.loading$) return this.loading$;
     if (!force && this.resolved()) return of(this.config());
     if (
-      force &&
+      force && !userInitiated &&
       this.resolved() &&
       Date.now() - this.lastLoadedAt < this.minRefreshIntervalMs
     ) {

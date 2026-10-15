@@ -2,15 +2,15 @@
   <header class="page-heading">
     <div>
       <p class="eyebrow">Money</p>
-      <h1>Settlements</h1>
+      <h1>Your money, accounted for.</h1>
       <p>Review platform settlements and confirm received credits.</p>
     </div>
     <a routerLink="/transactions" class="btn btn-secondary"
       >Wallet transactions</a
     >
   </header>
-  <details class="workspace-card settlement-summary">
-    <summary>All-time totals and payout account</summary>
+  <section class="settlement-summary"><details>
+    <summary>Payout account</summary>
   @if(store.context();as context){
   <section class="workspace-card operating-card">
     <div>
@@ -36,16 +36,17 @@
     >
   </section>
   }
-  <section class="workspace-metrics" aria-label="All-time settlement totals">
+  </details>
+  <section class="metric-strip" aria-label="All-time settlement totals">
     @for(item of summary();track item.status){
-    <article class="workspace-card">
+    <article class="metric">
       <span>{{ item.status.replaceAll('_',' ') | titlecase }}</span
       ><strong>{{ item.amount | appCurrency }}</strong
       ><small>{{ item.count }} settlements · All time</small>
     </article>
     }
   </section>
-  </details>
+  </section>
   <form class="workspace-toolbar" (ngSubmit)="query()">
     <label class="workspace-search"
       ><span class="material-icons-outlined">search</span
@@ -86,8 +87,8 @@
       Retry
     </button>
   </p>
-  } @if(list.loading()){
-  <div class="workspace-state" role="status">Loading settlements…</div>
+  } @if(list.loading() && !list.response()){
+  <nc-counter-state kind="loading" title="Loading settlements…" />
   }@else if(!list.error()&&!list.rows().length){
   <div class="workspace-state">
     <h3>No matching settlements</h3>
@@ -97,81 +98,28 @@
     </p>
   </div>
   }@else{
-  <div class="workspace-finance-list">
-    @for(payout of list.rows();track payout.id){
-    <article class="workspace-card settlement-row">
-      <div>
-        <h3>
-          {{ payout.period_start | date : "mediumDate" }} –
-          {{ payout.period_end | date : "mediumDate" }}
-        </h3>
-        <span
-          class="status-pill"
-          [class.success]="payout.status === 'verified'"
-          >{{ label(payout) }}</span
-        >@if(payout.vendor_rejection_reason){
-        <p class="workspace-muted">
-          Decline reason: {{ payout.vendor_rejection_reason }}
-        </p>
-        }@if(payout.transaction_ref){
-        <p class="workspace-muted">Reference {{ payout.transaction_ref }}</p>
-        }
-      </div>
-      <div class="settlement-amount">
-        <span>Net settlement</span>
-        <strong>{{ payout.net_payout | appCurrency }}</strong>
-        <details>
-          <summary>Sales and commission</summary>
-          <dl>
-            <div><dt>Gross sales</dt><dd>{{ payout.gross_sales | appCurrency }}</dd></div>
-            <div><dt>Commission</dt><dd>{{ payout.platform_commission | appCurrency }}</dd></div>
-          </dl>
-        </details>
-      </div>
-      <div class="workspace-actions">
-        @if(payout.status==='pending_approval'){<button
-          type="button"
-          class="btn btn-primary"
-          [disabled]="pending().has(payout.id)"
-          (click)="open(payout, 'approve')"
-        >
-          Approve settlement</button
-        ><button
-          type="button"
-          class="btn btn-secondary"
-          [disabled]="pending().has(payout.id)"
-          (click)="open(payout, 'decline')"
-        >
-          Decline settlement</button
-        >}@if(payout.status==='paid'){<button
-          type="button"
-          class="btn btn-primary"
-          [disabled]="pending().has(payout.id)"
-          (click)="open(payout, 'verify-credit')"
-        >
-          Confirm bank receipt</button
-        >}<button
-          type="button"
-          class="btn btn-secondary"
-          [disabled]="pending().has('download:' + payout.id)"
-          (click)="download(payout)"
-        >
-          Download statement
-        </button>
-      </div>
-      @if(rowErrors()[payout.id]){
-      <p class="workspace-error" role="alert">{{ rowErrors()[payout.id] }}</p>
-      }
-    </article>
-    }
+  <div class="table-wrap">
+    <table class="table settlement-table">
+      <thead><tr><th>Settlement</th><th class="money">Gross</th><th class="money">Commission</th><th class="money">Net</th><th>Status</th><th>Action</th></tr></thead>
+      <tbody>@for(payout of list.rows();track payout.id){
+      <tr>
+        <td data-label="Settlement"><strong>{{ payout.transaction_ref || 'Reference not recorded' }}</strong><small class="settlement-period">{{ payout.period_start | date:'mediumDate' }} – {{ payout.period_end | date:'mediumDate' }}</small></td>
+        <td class="money" data-label="Gross">{{ payout.gross_sales | appCurrency }}</td>
+        <td class="money" data-label="Commission">{{ payout.platform_commission | appCurrency }}</td>
+        <td class="money net" data-label="Net">{{ payout.net_payout | appCurrency }}</td>
+        <td data-label="Status"><span class="status-pill" [class.success]="payout.status==='verified'">{{ label(payout) }}</span>@if(payout.vendor_rejection_reason){<p class="small">Decline reason: {{ payout.vendor_rejection_reason }}</p>}</td>
+        <td data-label="Action"><button type="button" class="btn sm" (click)="selected.set(payout)">View settlement</button>@if(rowErrors()[payout.id]){<p class="workspace-error" role="alert">{{ rowErrors()[payout.id] }}</p>}</td>
+      </tr>
+      }</tbody>
+    </table>
   </div>
   }
-  <nc-vendor-pager
+  @if(list.response()){<nc-vendor-pager
     [page]="list.page()"
     [count]="list.count()"
     [busy]="list.loading()"
     (pageChange)="query($event)"
-  />
+  />}
 </div>
 @if(dialog();as target){<nc-vendor-dialog
   [title]="
@@ -222,3 +170,47 @@
     </button>
   </div></nc-vendor-dialog
 >}
+
+@if(selected();as payout){<nc-vendor-dialog title="Settlement details" mode="drawer" (dismissed)="selected.set(null)">
+<p class="eyebrow">{{ label(payout) }}</p><h2>{{ payout.net_payout | appCurrency }}</h2><p>{{ payout.period_start | date:'mediumDate' }} – {{ payout.period_end | date:'mediumDate' }}</p>
+<dl><div><dt>Gross sales</dt><dd>{{ payout.gross_sales | appCurrency }}</dd></div><div><dt>Commission</dt><dd>{{ payout.platform_commission | appCurrency }}</dd></div><div><dt>Reference</dt><dd>{{ payout.transaction_ref || 'Not recorded' }}</dd></div></dl>
+<dl class="settlement-audit">
+  <div><dt>Payment sent</dt><dd>{{ payout.payment_sent_at ? (payout.payment_sent_at | date:'medium') : 'Not recorded' }}</dd></div>
+  <div><dt>Paid record</dt><dd>{{ payout.paid_at ? (payout.paid_at | date:'medium') : 'Not recorded' }}</dd></div>
+  <div><dt>Receipt acknowledged</dt><dd>{{ payout.vendor_verified_at ? (payout.vendor_verified_at | date:'medium') : 'Not recorded' }}</dd></div>
+</dl>
+@if(rowErrors()[payout.id]){<p class="workspace-error" role="alert">{{ rowErrors()[payout.id] }}</p>}
+@if(payout.vendor_rejection_reason){<p class="notice">{{ payout.vendor_rejection_reason }}</p>}
+<p class="notice">Approval accepts the settlement statement. Receipt confirmation records your acknowledgement of a bank credit.</p>
+      <div class="workspace-actions">
+        @if(payout.status==='pending_approval'){<button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="pending().has(payout.id)"
+          (click)="selected.set(null); open(payout, 'approve')"
+        >
+          Approve settlement</button
+        ><button
+          type="button"
+          class="btn btn-secondary"
+          [disabled]="pending().has(payout.id)"
+          (click)="selected.set(null); open(payout, 'decline')"
+        >
+          Decline settlement</button
+        >}@if(payout.status==='paid'){<button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="pending().has(payout.id)"
+          (click)="selected.set(null); open(payout, 'verify-credit')"
+        >
+          Confirm bank receipt</button
+        >}<button
+          type="button"
+          class="btn btn-secondary"
+          [disabled]="pending().has('download:' + payout.id)"
+          (click)="download(payout)"
+        >
+          Download statement
+        </button>
+      </div>
+</nc-vendor-dialog>}

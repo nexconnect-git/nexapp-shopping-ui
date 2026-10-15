@@ -1,90 +1,121 @@
-import { Component, computed, effect, signal } from '@angular/core';
+import { CustomerIconComponent } from '../../shared/customer-icon/customer-icon.component';
+import { NxModalShellComponent } from '../../shared/ui/nx-modal-shell/nx-modal-shell.component';
+import { CustomerReceiptComponent } from '../../shared/customer-receipt/customer-receipt.component';
+import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
+import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { AppCurrencyPipe } from '@shared/lib/pipes/currency.pipe';
+import { CustomerCurrencyPipe as AppCurrencyPipe } from '../../shared/customer-currency/customer-currency.pipe';
 import { AuthService as SharedAuthService } from '@shared/lib/services/auth.service';
 import { OrderService } from '../../services/order.service';
 import { AppStateService } from '../../services/app-state.service';
 import { DisplayOrderIdPipe } from '../../shared/display-order-id.pipe';
-import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
+import { CustomerStateComponent } from '../../shared/customer-state/customer-state.component';
+import { FormsModule } from '@angular/forms';
 import { CustomerOrderApiService } from '../../services/customer-order-api.service';
 
 @Component({
   standalone: true,
-  imports: [
+  imports: [CustomerIconComponent, NxModalShellComponent, CustomerReceiptComponent,
     AppCurrencyPipe,
     RouterLink,
-    BreadcrumbsComponent,
+    CustomerStateComponent,
+    FormsModule,
     DisplayOrderIdPipe,
   ],
   templateUrl: './order-finished.component.html',
   styleUrls: ['./order-finished.component.scss'],
 })
 export class OrderFinishedComponent {
-  vendorRating = signal(5);
-  deliveryRating = signal(5);
+  private readonly destroyRef = inject(DestroyRef);
+  readonly ratingOpen = signal(false);
+  readonly receiptOpen = signal(false);
+  readonly knownInvoiceId = computed(() => String((this.order().raw as any)?.invoice_id || ''));
+  private authSession = -1;
+  readonly storeName = computed(() => this.order().raw?.vendor_name || this.order().raw?.vendor_info?.store_name || 'Store');
+  readonly timeline = computed(() => (this.order().raw?.tracking || []).map((event:any) => ({status:String(event.status || '').replace(/_/g,' '),time:event.timestamp ? new Date(event.timestamp).toLocaleString() : 'Time unavailable'})));
+  private readonly routeParams = toSignal(this.route.paramMap);
+  vendorRating = signal(0);
+  deliveryRating = signal(0);
   vendorComment = signal('');
   deliveryComment = signal('');
   coupons = signal<any[]>([]);
-  invoiceDownloading = signal(false);
+  receiptError = signal('');
   ratingSubmitting = signal(false);
-  private couponsLoaded = false;
+  ratingError = signal('');
+  ratingSaved = signal(false);
+  readonly stars = [1, 2, 3, 4, 5];
+  detailError = computed(
+    () => this.orders.detailErrors()[this.routeParams()?.get('id') || ''] || ''
+  );
+  delivered = computed(() => this.order().raw?.status === 'delivered');
+  alreadyRated = computed(
+    () => this.ratingSaved() || !!this.order().raw?.has_rating
+  );
+  deliveredAt = computed(() => {
+    const value =
+      this.order().raw?.actual_delivery_time ||
+      this.order().raw?.tracking?.find(
+        (entry: any) => entry.status === 'delivered'
+      )?.timestamp;
+    return value
+      ? new Date(value).toLocaleString()
+      : 'Delivery time unavailable';
+  });
+  retry(): void {
+    this.orders.refreshOrder(this.routeParams()?.get('id') || '');
+  }
 
   constructor(
     private route: ActivatedRoute,
     private orderApi: CustomerOrderApiService,
     private auth: SharedAuthService,
     public orders: OrderService,
-    public state: AppStateService,
+    public state: AppStateService
   ) {
+    this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      this.vendorRating.set(0);
+      this.deliveryRating.set(0);
+      this.vendorComment.set('');
+      this.deliveryComment.set('');
+      this.ratingSaved.set(false);
+      this.ratingOpen.set(false);this.receiptOpen.set(false);this.receiptError.set('');
+      this.ratingError.set('');
+      this.orders.refreshOrder(params.get('id') || '');
+    });
     effect(() => {
-      if (!this.auth.isLoggedIn()) {
-        this.couponsLoaded = false;
-        this.coupons.set([]);
-        return;
-      }
-      if (this.couponsLoaded) return;
-      this.couponsLoaded = true;
-      this.orderApi.getCoupons().subscribe({
-        next: (response) => this.coupons.set(this.unwrap(response)),
-        error: () => this.coupons.set([]),
+      this.auth.user();
+      if(this.authSession===this.auth.sessionVersion)return;
+      this.authSession=this.auth.sessionVersion;
+      this.ratingOpen.set(false);this.receiptOpen.set(false);this.ratingSubmitting.set(false);
+      this.vendorRating.set(0);this.deliveryRating.set(0);this.vendorComment.set('');this.deliveryComment.set('');this.ratingError.set('');this.ratingSaved.set(false);
+      this.coupons.set([]);
+      if(!this.auth.isLoggedIn())return;
+      const session=this.auth.sessionVersion;
+      this.orderApi.getCoupons().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next:response=>{if(session===this.auth.sessionVersion)this.coupons.set(this.unwrap(response));},
+        error:()=>{if(session===this.auth.sessionVersion)this.coupons.set([]);},
       });
     });
   }
 
   order = computed(() =>
-    this.orders.getOrder(this.route.snapshot.paramMap.get('id')),
+    this.orders.getOrder(this.routeParams()?.get('id') || null)
   );
-  steps = computed(() => {
-    const order = this.order();
-    const tracking =
-      (order.raw as any)?.tracking || (order.raw as any)?.status_history || [];
-    if (Array.isArray(tracking) && tracking.length) {
-      return tracking.map((entry: any) => ({
-        title: this.labelFor(entry.status || entry.title),
-        time: entry.timestamp
-          ? new Date(entry.timestamp).toLocaleTimeString([], {
-              hour: '2-digit',
-              minute: '2-digit',
-            })
-          : '',
-      }));
-    }
-    return [
-      { title: 'Order Confirmed', time: order.time || '' },
-      {
-        title: order.status === 'Delivered' ? 'Delivered' : 'Latest status',
-        time: order.status === 'Delivered' ? order.time : order.status,
-      },
-    ];
-  });
   partnerImage = computed(
     () =>
       (this.order().raw as any)?.delivery_partner_info?.photo ||
       (this.order().raw as any)?.delivery_partner_info?.avatar ||
-      '',
+      ''
   );
   nextCoupon = computed(() => this.coupons()[0] || null);
 
+  itemUnit(item: any): string {
+    return item.raw?.product_unit || item.raw?.unit || 'item';
+  }
+  itemQuantity(item: any): number {
+    const quantity=Number(item.raw?.quantity ?? item.quantity);
+    return Number.isFinite(quantity) && quantity>0 ? quantity : 0;
+  }
   ratingLabel(): string {
     if (this.vendorRating() >= 5) return 'Excellent';
     if (this.vendorRating() >= 4) return 'Good';
@@ -92,12 +123,35 @@ export class OrderFinishedComponent {
     return 'Needs improvement';
   }
 
-  submitRating(): void {
+  submitRating(event?: Event): void {
     if (this.ratingSubmitting()) return;
-    if ((this.order().raw as any)?.has_rating) {
+    this.ratingError.set('');
+    if (!this.delivered()) {
+      this.ratingError.set('Only delivered orders can be rated.');
+      return;
+    }
+    if (
+      !this.vendorRating() ||
+      (this.hasDeliveryPartner() && !this.deliveryRating())
+    ) {
+      this.ratingError.set(
+        'Choose a rating for the store' +
+          (this.hasDeliveryPartner() ? ' and delivery partner.' : '.')
+      );
+      requestAnimationFrame(() =>
+        document
+          .querySelector<HTMLElement>('[aria-label="Rate the store"] button')
+          ?.focus()
+      );
+      return;
+    }
+    if (this.alreadyRated()) {
       this.state.showToast('You already reviewed this order', 'info');
       return;
     }
+    const session=this.auth.sessionVersion,id=this.order().id;
+    const retryTrigger = event?.currentTarget instanceof HTMLElement
+      ? event.currentTarget : document.querySelector<HTMLElement>('#rating-submit');
     this.ratingSubmitting.set(true);
     this.orders
       .submitRating(this.order().id, {
@@ -110,16 +164,25 @@ export class OrderFinishedComponent {
           ? this.deliveryComment().trim()
           : undefined,
       })
-      .subscribe({
+      .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: () => {
+          if(session!==this.auth.sessionVersion || id!==this.routeParams()?.get('id'))return;
           this.state.showToast('Thanks for sharing your review', 'success');
-          const raw = this.order().raw as any;
-          if (raw) raw.has_rating = true;
+          this.ratingSaved.set(true);this.ratingOpen.set(false);
+          this.retry();
           this.ratingSubmitting.set(false);
         },
-        error: () => {
-          this.state.showToast('Could not submit rating', 'error');
+        error: (error) => {
+          if(session!==this.auth.sessionVersion || id!==this.routeParams()?.get('id'))return;
+          this.ratingError.set(
+            error.body?.error ||
+              error.error?.error ||
+              'Your review could not be saved. Your ratings are kept here for retry.'
+          );
           this.ratingSubmitting.set(false);
+          requestAnimationFrame(() => {
+            if (session === this.auth.sessionVersion && id === this.routeParams()?.get('id') && this.ratingOpen() && retryTrigger?.isConnected) retryTrigger.focus();
+          });
         },
       });
   }
@@ -128,75 +191,42 @@ export class OrderFinishedComponent {
     return Boolean((this.order().raw as any)?.delivery_partner_info);
   }
 
-  downloadInvoice(): void {
-    if (this.invoiceDownloading()) return;
-    const order = this.order();
-    const orderId = String(order?.id || '');
-    if (!orderId || orderId === 'loading') {
-      this.state.showToast('Order details are still loading', 'info');
-      return;
-    }
-
-    const knownInvoiceId = String((order.raw as any)?.invoice_id || '').trim();
-    this.invoiceDownloading.set(true);
-    this.state.showToast('Preparing your invoice', 'info');
-
-    const downloadById = (invoiceId: string): void => {
-      this.orderApi.downloadInvoice(invoiceId).subscribe({
-        next: (blob) => {
-          this.triggerFileDownload(
-            blob,
-            `receipt-${(order.raw as any)?.order_number || orderId}.pdf`,
-          );
-          this.state.showToast('Invoice downloaded', 'success');
-          this.invoiceDownloading.set(false);
-        },
-        error: () => {
-          this.state.showToast('Could not download invoice right now', 'error');
-          this.invoiceDownloading.set(false);
-        },
-      });
-    };
-
-    if (knownInvoiceId) {
-      downloadById(knownInvoiceId);
-      return;
-    }
-
-    this.orderApi
-      .generateInvoice({ order: orderId, invoice_type: 'customer_receipt' })
-      .subscribe({
-        next: (invoice: any) => {
-          const invoiceId = String(invoice?.id || '').trim();
-          if (!invoiceId) {
-            this.state.showToast('Invoice is not ready yet', 'warning');
-            this.invoiceDownloading.set(false);
-            return;
-          }
-          downloadById(invoiceId);
-        },
-        error: () => {
-          this.state.showToast('Could not prepare invoice right now', 'error');
-          this.invoiceDownloading.set(false);
-        },
-      });
+  downloadInvoice():void {
+    if(this.order().id==='loading'||!this.auth.isLoggedIn())return;
+    this.receiptError.set('');this.receiptOpen.set(true);
+  }
+  receiptDownloaded():void {this.state.showToast('Receipt downloaded','success');}
+  receiptFailed(message:string):void {
+    this.receiptError.set(message);
+    this.receiptOpen.set(false);
+  }
+  itemSubtotal(item:any):number|string|null {
+    if(item.raw?.subtotal!==undefined&&item.raw?.subtotal!==null)return item.raw.subtotal;
+    return this.itemQuantity(item)>0 ? item.price*this.itemQuantity(item) : null;
   }
 
   reorder(): void {
     this.orders.reorder(this.order());
   }
 
-  copyCoupon(): void {
+  async copyCoupon(): Promise<void> {
     const coupon = this.nextCoupon();
     const code = String(
-      coupon?.code || coupon?.coupon_code || '',
+      coupon?.code || coupon?.coupon_code || ''
     ).toUpperCase();
     if (!code) {
       this.state.showToast('No coupon available right now', 'warning');
       return;
     }
-    navigator.clipboard?.writeText(code);
-    this.state.showToast(`Coupon ${code} copied`, 'success');
+    try {
+      await navigator.clipboard.writeText(code);
+      this.state.showToast(`Coupon ${code} copied`, 'success');
+    } catch {
+      this.state.showToast(
+        'Could not copy this code. You can select and copy it manually.',
+        'warning'
+      );
+    }
   }
 
   couponCode(coupon: any): string {
@@ -209,10 +239,6 @@ export class OrderFinishedComponent {
     );
   }
 
-  orderFee(field: 'delivery_fee' | 'handling_fee' | 'discount_amount'): number {
-    return Number((this.order().raw as any)?.[field] || 0);
-  }
-
   private unwrap(response: any): any[] {
     if (Array.isArray(response)) return response;
     if (Array.isArray(response?.results)) return response.results;
@@ -220,22 +246,4 @@ export class OrderFinishedComponent {
     return [];
   }
 
-  private labelFor(status: string): string {
-    return String(status || 'Update')
-      .replace(/_/g, ' ')
-      .replace(/\b\w/g, (char) => char.toUpperCase());
-  }
-
-  private triggerFileDownload(blob: Blob, fileName: string): void {
-    const safeName = String(fileName || 'invoice.pdf').replace(/[^\w.-]+/g, '_');
-    const link = document.createElement('a');
-    const objectUrl = window.URL.createObjectURL(blob);
-    link.href = objectUrl;
-    link.download = safeName;
-    link.style.display = 'none';
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(objectUrl);
-  }
 }

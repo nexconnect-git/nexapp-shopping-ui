@@ -1,3 +1,4 @@
+import { CounterStateComponent } from '../../components/counter-state.component';
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
@@ -17,7 +18,7 @@ import { VendorContextService } from '../../services/vendor-context.service';
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [
+  imports: [CounterStateComponent,
     CommonModule,
     FormsModule,
     RouterLink,
@@ -38,6 +39,7 @@ export class ProductsComponent implements OnInit {
     this.api.products(query)
   );
   readonly search = signal('');
+  readonly filtersOpen = signal(false);
   readonly approval = signal('');
   readonly health = signal('');
   readonly target = signal<Product | null>(null);
@@ -62,6 +64,7 @@ export class ProductsComponent implements OnInit {
       });
   }
   query(page = 1): void {
+    this.filtersOpen.set(false);
     void this.router.navigate([], {
       queryParams: {
         page,

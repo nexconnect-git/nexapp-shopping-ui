@@ -1,66 +1,20 @@
-<main class="confirmed-page">
-  @if (loading()) {
-    <section class="confirmed-card loading">
-      <span class="pulse"></span>
-      <h1>Confirming your order</h1>
-      <p>Pulling the latest ETA and payment status.</p>
-    </section>
-  } @else if (error()) {
-    <section class="confirmed-card">
-      <span class="material-symbols-rounded error" aria-hidden="true">error</span>
-      <h1>Order confirmation unavailable</h1>
-      <p>{{ error() }}</p>
-      <a routerLink="/" class="secondary">Continue shopping</a>
-    </section>
-  } @else if (summary(); as order) {
-    <section class="confirmed-card">
-      <div class="success-animation" aria-hidden="true">
-        <span class="success-ring"></span>
-        <span class="success-spark spark-one"></span>
-        <span class="success-spark spark-two"></span>
-        <span class="success-spark spark-three"></span>
-        <span class="success-mark material-symbols-rounded">check</span>
+<main class="fd-content">
+  @if(loading()){
+    <section class="success-head" role="status"><span class="spinner"></span><h1 class="space">Finding your order.</h1><p>Loading confirmation for the requested order identity.</p></section>
+    <div class="skeleton hero-skeleton" aria-label="Loading order confirmation"></div>
+  }@else if(error()){
+    <fd-customer-state title="We could not open the confirmation." [description]="error()" icon="info" action="Retry confirmation" (retry)="load()"><a class="btn" routerLink="/orders">Your orders</a></fd-customer-state>
+  }@else if(summary();as order){
+    <section class="success-head"><div class="success-symbol"><svg [customerIcon]="order.status==='cancelled' || order.status==='refunded' ? 'info' : 'check'"></svg></div><div class="eyebrow">Order #{{ order.order_number }}</div><h1>{{ heading() }}</h1><p>{{ order.can_track ? 'We have sent it to '+(order.store?.store_name || order.store?.name || 'your store')+'. Follow along as your neighbourhood favourites make their way to you.' : 'Your saved order and payment details are shown below.' }}</p></section>
+    <div class="confirmation-box"><div class="confirmation-top"><div><h3>{{ order.store?.store_name || order.store?.name }}</h3><p>{{ statusLabel() }}</p></div><span class="tag" [class.green]="order.payment_method==='cod' || order.payment_status==='verified' || order.payment_status==='paid'">{{ paymentLabel() }}</span></div>
+      <div class="confirmation-body"><div class="two-col equal"><div>
+        <div class="eyebrow">Delivering to</div>
+        @if(order.delivery_address;as address){<h3>{{ address.label || 'Delivery address' }}</h3><p class="small muted space-sm">{{ address.full_name }} · {{ address.phone }}<br>{{ address.address_line1 }}@if(address.address_line2){, {{ address.address_line2 }}}<br>{{ address.city }} {{ address.postal_code }}</p>}@else{<p class="small muted">The saved delivery address is unavailable.</p>}
+        <div class="space"><div class="kv"><span>Order number</span><strong>#{{ order.order_number }}</strong></div><div class="kv"><span>Delivery estimate</span><strong>{{ order.eta_label || 'Updates after confirmation' }}</strong></div><div class="kv"><span>Order total</span><strong>{{ order.total | appCurrency }}</strong></div></div>
+      </div><div><h3>Your order</h3><div class="mini-list">@for(item of order.items_preview || [];track item.id){<div class="mini-row"><div class="item-art"><img [src]="item.image || '/assets/placeholders/product.svg'" [alt]="item.name" loading="lazy"></div><div class="grow"><strong>{{ item.name }}</strong><p>{{ item.quantity }} × item</p></div><strong>{{ item.subtotal | appCurrency }}</strong></div>}</div>@if(order.remaining_items_count){<p class="small muted space-sm">{{ order.remaining_items_count }} more items in your order details.</p>}</div></div>
+        <div class="notice space"><svg customerIcon="info"></svg><div><strong>What happens next?</strong>{{ nextStatus() }}</div></div>
+        <div class="row wrap-row space">@if(order.can_track){<a class="btn primary" [routerLink]="['/tracking',order.id]">Track your order<svg customerIcon="arrow"></svg></a>}@else{<a class="btn primary" [routerLink]="['/order-finished',order.id]">Order details<svg customerIcon="orders"></svg></a>}<a class="btn" routerLink="/"><svg customerIcon="home"></svg>Back to Home</a><a class="btn text" routerLink="/orders">Your orders</a></div>
       </div>
-      <p class="eyebrow">Order placed</p>
-      <h1>We are getting your basket ready</h1>
-      <div class="order-number">#{{ order.order_number }}</div>
-
-      <dl class="summary-grid">
-        <div>
-          <dt>Payment</dt>
-          <dd>{{ order.payment_status || order.payment_method }}</dd>
-        </div>
-        <div>
-          <dt>ETA</dt>
-          <dd>{{ order.eta_label || 'Preparing ETA' }}</dd>
-        </div>
-        <div>
-          <dt>Store</dt>
-          <dd>{{ order.store?.store_name || order.store?.name || 'Selected store' }}</dd>
-        </div>
-        <div>
-          <dt>Total</dt>
-          <dd>{{ orderTotal() | appCurrency }}</dd>
-        </div>
-      </dl>
-
-      @if (order.delivery_address) {
-        <article class="address">
-          <span class="material-symbols-rounded" aria-hidden="true">location_on</span>
-          <div>
-            <b>Delivering to</b>
-            <small>{{ order.delivery_address.address_line1 || order.delivery_address.line || order.delivery_address.city }}</small>
-          </div>
-        </article>
-      }
-
-      <div class="actions">
-        @if (order.can_track) {
-          <a [routerLink]="['/tracking', order.id]" class="primary">Track order</a>
-        }
-        <a routerLink="/" class="secondary">Continue shopping</a>
-        <a routerLink="/orders" class="text-link">View orders</a>
-      </div>
-    </section>
+    </div>
   }
 </main>

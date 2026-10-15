@@ -1,388 +1,50 @@
-<div class="desktop-customer-view">
 <main class="fd-content">
-  <fd-breadcrumbs [items]="[{ label: 'Cart' }]" />
-  <section class="cart-layout">
-    <div>
-      <h1 class="fd-title">
-        Your Cart <small>({{ state.itemCount() }} items)</small>
-      </h1>
-      @if (!state.cart().length) {
-        <section class="empty fd-card">
-          <h2><span class="material-symbols-rounded">shopping_cart</span></h2>
-          <h3>{{ content.cart().emptyTitle }}</h3>
-          <p>{{ content.cart().emptyDescription }}</p>
-          <a routerLink="/explore" class="fd-btn primary">{{
-            content.cart().emptyCta
-          }}</a>
-        </section>
-      } @else {
-        <section class="store-context fd-card">
-          <div>
-            <small>Ordering from</small>
-            <b>{{ cartStoreName() }}</b>
-            <p>{{ cartStoreStatus() }}</p>
-          </div>
-          @if (hasMixedStoreItems()) {
-            <span class="store-warning">
-              <span class="material-symbols-rounded">warning</span>
-              Cart contains items from multiple stores.
-            </span>
-          } @else {
-            <span class="store-note">
-              <span class="material-symbols-rounded">verified</span>
-              Store-specific cart confirmed
-            </span>
-          }
-        </section>
-
-        @if (state.cartFulfillmentMismatch()) {
-          <section class="fulfillment-alert fd-card">
-            <span class="material-symbols-rounded">sync_problem</span>
-            <div>
-              <b>Cart needs your selected delivery area</b>
-              <p>{{ state.cartFulfillmentMismatchMessage() }}</p>
-            </div>
-            <button
-              type="button"
-              class="fd-btn outline"
-              (click)="state.clearStaleFulfillmentCart()"
-            >
-              Clear cart
-            </button>
-          </section>
-        }
-
-        <section class="cart-table fd-card">
-          <div class="table-head">
-            <span>Item</span><span>Price</span><span>Quantity</span
-            ><span>Subtotal</span><span></span>
-          </div>
-          @for (item of state.cart(); track item.id) {
-            <div class="cart-row">
-              <div class="item">
-                <img [src]="item.image" [alt]="item.name" />
-                <div>
-                  <b>{{ item.name }}</b
-                  ><small>{{ item.unit }}</small>
-                </div>
-              </div>
-              <div class="price-col">
-                <b>{{ item.price | appCurrency }}</b
-                ><del>{{ item.mrp | appCurrency }}</del>
-              </div>
-              <div class="qty">
-                <button
-                  type="button"
-                  (click)="state.updateQuantity(item.id, -1)"
-                >
-                  <span class="material-symbols-rounded">remove</span></button
-                ><b>{{ item.quantity }}</b
-                ><button
-                  type="button"
-                  (click)="state.updateQuantity(item.id, 1)"
-                >
-                  <span class="material-symbols-rounded">add</span>
-                </button>
-              </div>
-              <b class="subtotal-col">{{
-                item.price * item.quantity | appCurrency
-              }}</b>
-              <div class="row-actions">
-                <button type="button" (click)="state.removeItem(item.id)">
-                  <span class="material-symbols-rounded">delete</span>
-                  Remove</button>
-              </div>
-            </div>
-          }
-        </section>
-
-        <div class="coupon-row">
-          <section class="coupon fd-card">
-            <b
-              ><span class="material-symbols-rounded">local_offer</span> Have a
-              coupon code?</b
-            ><input
-              class="fd-input"
-              placeholder="Enter coupon code"
-              #coupon
-            /><button
-              type="button"
-              class="fd-btn outline"
-              (click)="applyCoupon(coupon.value)"
-            >
-              Apply
-            </button>
-          </section>
-          <section class="saving fd-card">
-            <span class="material-symbols-rounded">celebration</span> You're
-            saving {{ state.discount() | appCurrency }} on this order with
-            cart savings
-          </section>
-          @if (bestCoupon()?.best_coupon && !state.coupon()) {
-            <section class="coupon fd-card best-coupon">
-              <b><span class="material-symbols-rounded">auto_awesome</span>
-                Best coupon: {{ bestCoupon().best_coupon.code }}</b>
-              <button type="button" class="fd-btn outline" (click)="applyBestCoupon()">
-                Apply
-              </button>
-            </section>
-          }
+  <fd-breadcrumbs [items]="[{label:'Your basket'}]" />
+  @if(state.cart().length){<fd-customer-page-header [eyebrow]="'Basket / ' + state.itemCount() + (state.itemCount()===1 ? ' item' : ' items')" title="Your everyday basket." description="A few good things, all from one neighbourhood store."><a class="btn text" [routerLink]="['/store',state.cart()[0].storeId]"><svg customerIcon="arrow"></svg>Keep browsing</a></fd-customer-page-header>}
+  @if(state.cartError()){<div class="notice error" role="alert"><div class="grow">{{ state.cartError() }}</div><button class="btn" (click)="state.loadCart()">Retry basket</button></div>}
+  @if(state.guestMergeError()){<div class="notice warning" role="alert"><div class="grow">{{ state.guestMergeError() }}</div><button class="btn" (click)="state.retryGuestMerge()">Retry guest items</button></div>}
+  @if(state.cartMutationError()){<div class="notice error" role="alert">{{ state.cartMutationError() }}</div>}
+  @if(!state.cartLoaded()&&!state.cart().length){<div class="skeleton" style="height:250px" aria-label="Loading basket"></div>}
+  @else if(!state.cart().length&&!state.cartError()){
+    <fd-customer-state title="Good things belong here." description="Your basket is empty. Find something fresh, useful or simply delicious from a store nearby." icon="shopping_bag" artTone="green"><a class="btn primary" routerLink="/stores">Explore stores</a><a class="btn" routerLink="/categories"><svg customerIcon="grid"></svg>Browse categories</a></fd-customer-state>
+  } @else if(state.cart().length){
+    @if(state.couponError()){<div id="coupon-error" class="notice error space-sm" role="alert"><svg customerIcon="warning"></svg><div>{{ state.couponError() }} Your basket prices are unchanged.</div></div>}
+    @if(state.cartMinimumOrderRemaining()>0){<div class="notice warning space-sm" role="status"><svg customerIcon="info"></svg><div>This basket is below the store minimum of {{ state.cartMinimumOrderAmount() | appCurrency }}. Add {{ state.cartMinimumOrderRemaining() | appCurrency }} to continue.</div></div>}
+    @if(state.checkoutPreviewErrorCode()==='fulfillment_node_stock_unavailable'){
+      <div class="notice warning space-sm" role="status"><svg customerIcon="info"></svg><div>Stock changed@if(stockChangedItem();as item){ for {{ item.name }}}. Review the allowed quantity before continuing. Other items stay in your basket.</div></div>
+      @if(stockChangedItem();as item){<button type="button" class="btn text" [disabled]="state.cartItemPending(item) || !!state.cartError()" (click)="useAvailableQuantity()"><svg customerIcon="check"></svg>Use available quantity</button>}
+      @else{<button type="button" class="btn text" (click)="state.retryCheckoutPreview()">Retry current quote</button>}
+    }@else if(state.checkoutPreviewError() && state.checkoutPreviewErrorCode()!=='minimum_order_not_met'){<div class="notice error space-sm" role="alert"><svg customerIcon="warning"></svg><div>We could not confirm delivery and fees. We will not replace the final quote with a partial local calculation.</div></div><button type="button" class="btn text" (click)="state.retryCheckoutPreview()"><svg customerIcon="refresh"></svg>Retry current quote</button>}
+    <div class="two-col space">
+      <section>
+        <div class="card">
+          <div class="cart-store-head"><svg customerIcon="store"></svg><div class="grow"><h3>{{ cartStoreName() }}</h3><p>One store · delivery to {{ state.location() }}</p><p>{{ cartStoreStatus() }}</p></div>@if(state.serviceability()?.eta_label){<span class="tag green"><svg customerIcon="clock"></svg>{{ state.serviceability()?.eta_label }}</span>}</div>
+          <fd-basket-items />
+          <div class="coupon-input"><input #coupon aria-label="Coupon code" placeholder="Have a coupon code?" [value]="state.coupon()" [attr.aria-invalid]="!!state.couponError()" aria-describedby="coupon-error" /><button class="btn soft" type="button" [disabled]="state.couponPending()" (click)="applyCoupon(coupon.value)">{{ state.couponPending() ? 'Checking…' : 'Apply' }}</button></div>
+          <div class="row between wrap-row space-sm"><button class="btn text" (click)="openCoupons()"><svg customerIcon="tag"></svg>Browse available coupons</button><button class="btn text" type="button" (click)="clear()">Clear basket</button></div>
+          @if(bestCouponError()){<div class="notice error space-sm" role="alert"><div class="grow">{{ bestCouponError() }}</div><button class="btn sm" (click)="retryBestCoupon()">Retry coupon eligibility</button></div>}
+          @if(bestCoupon()?.best_coupon&&!state.coupon()){<div class="row between wrap-row"><p class="small muted">{{ bestCoupon().best_coupon.code }} is eligible for this basket.</p><button class="btn text" type="button" (click)="applyBestCoupon()">Apply coupon</button></div>}
+          @if(state.discount()>0){<p class="small savings">Your item and coupon savings: {{ state.discount() | appCurrency }}</p>}
         </div>
-      }
-
-      <div class="fd-section-title"><h2>You might also need</h2></div>
-      <section class="product-grid">
-        @for (p of (cartSuggestions().length ? cartSuggestions() : catalog.products().slice(9, 14)); track p.id) {
-          <fd-product-card [product]="p" />
-        }
+        @if(!auth.isLoggedIn()){<div class="notice purple space"><svg customerIcon="info"></svg><div>Your guest basket stays editable. Sign in to apply a coupon or continue to checkout.</div></div>}
+        <div class="notice space"><div><strong>One store. One clear delivery.</strong>A change of store or delivery area requires a clear basket confirmation. We never silently mix stores.</div></div>
+        @if(state.cartCheckoutBlockReason() && !state.cartMinimumOrderRemaining()){<div class="notice warning space-sm" role="status">{{ state.cartCheckoutBlockReason() }}</div>}
+        @if(state.cartFulfillmentMismatch()){<button class="btn text" type="button" (click)="state.clearStaleFulfillmentCart()">Resolve delivery area conflict</button>}
       </section>
+      <fd-basket-summary><button class="btn primary wide" type="button" [disabled]="!state.canCheckoutCart() || !!state.cartError() || state.pendingProducts().length>0 || !!state.checkoutPreviewError() || state.checkoutPreviewLoading()" (click)="checkout()"><svg customerIcon="arrow"></svg>{{ auth.isLoggedIn() ? 'Continue to checkout' : 'Sign in to checkout' }}</button></fd-basket-summary>
     </div>
-
-    @if (state.cart().length) {
-      <aside class="summary-col">
-        <section class="fd-card address">
-          <h3>
-            <span class="material-symbols-rounded">location_on</span> Delivering
-            to
-            <span>{{
-              state.activeAddress()?.label || "Selected location"
-            }}</span>
-          </h3>
-          <p>{{ state.activeAddress()?.line || state.location() }}</p>
-          <button type="button" (click)="ui.openLocation()">Change</button>
-        </section>
-
-        <section class="progress-promo">
-          @if (state.freeDeliveryUnlocked()) {
-            <b>{{ state.deliveryPromotion().title }}</b>
-            <p>{{ state.deliveryPromotion().description }}</p>
-          } @else if (state.freeDeliveryRemaining() > 0) {
-            <b>{{ state.deliveryPromotion().title }}</b>
-            <p>{{ state.deliveryPromotion().description }}</p>
-          } @else {
-            <b>{{ state.deliveryPromotion().title }}</b>
-            <p>{{ state.deliveryPromotion().description }}</p>
-          }
-          <div>
-            <span [style.width.%]="state.freeDeliveryProgress()"></span>
-          </div>
-        </section>
-
-        @if (state.cartCheckoutBlockReason()) {
-          <section class="checkout-rule">
-            <span class="material-symbols-rounded">rule</span>
-            <div>
-              <b>Checkout requirement</b>
-              <p>{{ state.cartCheckoutBlockReason() }}</p>
-            </div>
-          </section>
-        }
-
-        <section class="fd-card price">
-          <h3>Price Details</h3>
-          <p>
-            <span>Item Total ({{ state.itemCount() }} items)</span
-            ><b>{{ state.subtotal() | appCurrency }}</b>
-          </p>
-          <p>
-            <span>MRP Total</span><b>{{ state.mrpTotal() | appCurrency }}</b>
-          </p>
-          <p>
-            <span>Total Savings</span
-            ><b class="green">- {{ state.discount() | appCurrency }}</b>
-          </p>
-          <hr />
-          <p>
-            <span>Delivery Fee</span><b>{{ state.deliveryFeeLabel() }}</b>
-          </p>
-          <p>
-            <span>Handling Fee</span
-            ><b>{{ state.handlingFee() | appCurrency }}</b>
-          </p>
-          <p class="total">
-            <span>To Pay</span><b>{{ state.total() | appCurrency }}</b>
-          </p>
-          <p class="server-note">
-            <span class="material-symbols-rounded">sync</span>
-            Final stock, price, and coupon checks are revalidated at checkout.
-          </p>
-          <button
-            type="button"
-            class="fd-btn primary"
-            [disabled]="!state.canCheckoutCart()"
-            (click)="checkout()"
-          >
-            Proceed to Checkout
-          </button>
-          <small
-            ><span class="material-symbols-rounded">verified_user</span>
-            {{ content.cart().securePayment }}</small
-          >
-        </section>
-      </aside>
-    }
-  </section>
-</main>
-</div>
-
-<div class="mobile-customer-view">
-<main class="mobile-page cart-page">
-  <header class="cart-head">
-    <div>
-      <small>{{ state.itemCount() }} items</small>
-      <h1>Your cart</h1>
-    </div>
-    @if (state.itemCount()) {
-      <button type="button" (click)="state.clearCart()">Clear</button>
-    }
-  </header>
-
-  @if (state.itemCount()) {
-    <section class="store-context mobile">
-      <small>Ordering from</small>
-      <b>{{ cartStoreName() }}</b>
-      <p>{{ cartStoreStatus() }}</p>
-    </section>
-
-    @if (state.cartFulfillmentMismatch()) {
-      <section class="fulfillment-alert mobile">
-        <span class="material-symbols-rounded">sync_problem</span>
-        <div>
-          <b>Delivery area changed</b>
-          <small>{{ state.cartFulfillmentMismatchMessage() }}</small>
-        </div>
-        <button type="button" (click)="state.clearStaleFulfillmentCart()">
-          Clear
-        </button>
-      </section>
-    }
-
-    @if (state.discount()) {
-      <section class="savings-banner">
-        <span class="material-symbols-rounded">savings</span>
-        <b>You saved {{ state.discount() | appCurrency }} on this cart</b>
-      </section>
-    }
-
-    <section class="mobile-list">
-      @for (item of state.cart(); track item.id) {
-        <article class="cart-item">
-          <img [src]="item.image" [alt]="item.name" />
-          <div>
-            <b>{{ item.name }}</b>
-            <small>{{ item.unit }} - {{ item.storeName }}</small>
-            <span>{{ item.price | appCurrency }}</span>
-          </div>
-          <div class="cart-actions">
-            <button type="button" aria-label="Remove item" (click)="state.removeItem(item.id)">
-              <span class="material-symbols-rounded">delete</span>
-            </button>
-            <div class="qty">
-              <button type="button" (click)="state.updateQuantity(item.id, -1)">
-                <span class="material-symbols-rounded">remove</span>
-              </button>
-              <b>{{ item.quantity }}</b>
-              <button type="button" (click)="state.updateQuantity(item.id, 1)">
-                <span class="material-symbols-rounded">add</span>
-              </button>
-            </div>
-          </div>
-        </article>
-      }
-    </section>
-
-    <section class="coupon-card">
-      <span class="material-symbols-rounded">local_offer</span>
-      <input #couponCode type="text" placeholder="Enter coupon code" [value]="state.coupon()" />
-      <button type="button" (click)="applyCoupon(couponCode.value)">Apply</button>
-    </section>
-    @if (bestCoupon()?.best_coupon && !state.coupon()) {
-      <section class="coupon-card best-coupon-mobile">
-        <span class="material-symbols-rounded">auto_awesome</span>
-        <b>{{ bestCoupon().best_coupon.code }}</b>
-        <button type="button" (click)="applyBestCoupon()">Apply best</button>
-      </section>
-    }
-
-    @if (state.cartCheckoutBlockReason()) {
-      <section class="mobile-rule-card">
-        <span class="material-symbols-rounded">rule</span>
-        <div>
-          <b>Checkout requirement</b>
-          <small>{{ state.cartCheckoutBlockReason() }}</small>
-        </div>
-      </section>
-    }
-
-    <section class="mobile-checkout-card">
-      <button
-        type="button"
-        class="mobile-cta"
-        [disabled]="!state.canCheckoutCart()"
-        (click)="checkout()"
-      >
-        Checkout - {{ state.total() | appCurrency }}
-        <small>{{ state.itemCount() }} {{ state.itemCount() === 1 ? 'item' : 'items' }}</small>
-      </button>
-    </section>
-
-    <section class="mobile-order-details">
-      <div class="mobile-section-head">
-        <h2>Order details</h2>
-        <span>{{ state.itemCount() }} items</span>
-      </div>
-      <p>
-        <span>MRP total</span>
-        <b>{{ state.mrpTotal() | appCurrency }}</b>
-      </p>
-      <p>
-        <span>Item total</span>
-        <b>{{ state.subtotal() | appCurrency }}</b>
-      </p>
-      <p>
-        <span>Total savings</span>
-        <b class="green">-{{ state.discount() | appCurrency }}</b>
-      </p>
-      @if (state.coupon()) {
-        <p>
-          <span>{{ state.coupon() }} coupon</span>
-          <b class="green">-{{ state.couponDiscount() | appCurrency }}</b>
-        </p>
-      }
-      <p>
-        <span>Delivery fee</span>
-        <b>{{ state.deliveryFeeLabel() }}</b>
-      </p>
-      <p>
-        <span>Handling fee</span>
-        <b>{{ state.handlingFee() | appCurrency }}</b>
-      </p>
-      <p class="total">
-        <span>To pay</span>
-        <b>{{ state.total() | appCurrency }}</b>
-      </p>
-      <small>
-        <span class="material-symbols-rounded">verified_user</span>
-        Final stock, price, and coupon checks are revalidated at checkout.
-      </small>
-    </section>
-
-    <section class="mobile-section">
-      <div class="mobile-section-head"><h2>Add a little more</h2></div>
-      <div class="mobile-grid-2">
-        @for (product of (cartSuggestions().length ? cartSuggestions() : catalog.topProducts().slice(0, 4)); track product.id) {
-          <fd-product-card [product]="product" />
-        }
-      </div>
-    </section>
-
-  } @else {
-    <section class="empty-cart">
-      <span class="material-symbols-rounded">shopping_bag</span>
-      <h2>{{ content.cart().emptyTitle }}</h2>
-      <p>{{ content.cart().emptyDescription }}</p>
-      <a routerLink="/explore" class="mobile-cta">{{ content.cart().emptyCta }}</a>
-    </section>
+    @if(suggestionsError()){<div class="notice error space" role="alert"><div class="grow">{{ suggestionsError() }}</div><button class="btn sm" (click)="retrySuggestions()">Retry suggestions</button></div>}
+    @if(cartSuggestions().length){<section class="section"><div class="section-head"><div><h2>Good together</h2><p>Optional additions from the same store.</p></div><a class="btn text" [routerLink]="['/store',state.cart()[0].storeId]"><svg customerIcon="arrow"></svg>More from this store</a></div><div class="product-grid">@for(p of cartSuggestions();track p.id){<fd-product-card [product]="p" />}</div></section>}
   }
 </main>
-</div>
+<fd-nx-modal-shell [open]="couponsOpen()" title="A little more for less." eyebrow="Offers for your basket" [footer]="true" (closed)="couponsOpen.set(false)">
+  <p>Eligibility is checked against your basket, address and current order conditions.</p>
+  @if(catalog.couponsError()) {<div class="notice error" role="alert"><div class="grow">{{ catalog.couponsError() }}</div><button class="btn sm" (click)="catalog.loadCoupons()">Retry</button></div>}
+  @if(catalog.couponsLoading() && !catalog.coupons().length) {<div class="skeleton" aria-label="Loading available coupons" aria-busy="true" style="height:140px"></div>}
+  @for(coupon of catalog.coupons();track coupon.id) {
+    <article class="coupon-card"><div class="row between"><strong>{{ coupon.code }}</strong><span class="tag green">@if(coupon.badgeText){ {{ coupon.badgeText }} }@else if(coupon.discountType==='fixed'){ {{ coupon.discountValue | appCurrency }} off }@else if(coupon.discountType==='percentage'){ {{ coupon.discountValue }}% off }@else{ {{ coupon.title }} }</span></div><p>{{ coupon.description }}</p>@if(coupon.validUntil){<small>Valid until {{ coupon.validUntil | date:"medium" }}</small>}<div class="space-sm"><button class="btn primary" [disabled]="state.couponPending() || state.coupon()===coupon.code" (click)="state.applyCoupon(coupon.code)">{{ state.coupon() === coupon.code ? 'Applied' : 'Apply coupon' }}</button></div></article>
+  } @empty { @if(!catalog.couponsLoading()&&!catalog.couponsError()){<p>No available coupons at the moment.</p>} }
+  <div class="coupon-input"><input #offerCode aria-label="Enter a coupon code" placeholder="Enter another code" /><button class="btn soft" [disabled]="state.couponPending()" (click)="state.applyCoupon(offerCode.value)">Apply</button></div>
+  @if(state.couponError()){<div class="notice error space-sm" role="alert">{{ state.couponError() }}</div>}
+  <button dialogFooter type="button" class="btn primary" (click)="couponsOpen.set(false)">Done</button>
+</fd-nx-modal-shell>

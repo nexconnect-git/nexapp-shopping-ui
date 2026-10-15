@@ -11,11 +11,16 @@ import {
 import { VendorContextService } from '../../services/vendor-context.service';
 import { OperatingStatusComponent } from '../../components/operating-status.component';
 import { timer } from 'rxjs';
+import { VendorOrdersStore } from '../../services/vendor-orders.store';
+import { CounterStateComponent } from '../../components/counter-state.component';
+import { WorkspaceDialogComponent } from '../../components/workspace-dialog.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
   imports: [
+    CounterStateComponent,
+    WorkspaceDialogComponent,
     OperatingStatusComponent,
     CommonModule,
     RouterLink,
@@ -25,6 +30,10 @@ import { timer } from 'rxjs';
   styleUrl: './dashboard.component.scss',
 })
 export class DashboardComponent implements OnInit {
+  readonly orders = inject(VendorOrdersStore);
+  readonly manage = signal(false);
+  readonly closing = signal(false);
+  readonly today = new Date();
   readonly store = inject(VendorContextService);
   private readonly api = inject(VendorApi);
   private readonly destroy = inject(DestroyRef);

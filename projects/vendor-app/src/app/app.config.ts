@@ -9,27 +9,19 @@ import {
   AUTH_PREFIX,
   authInterceptor,
   cacheInterceptor,
-  DYNAMIC_TABLE_DEFAULTS,
 } from '@shared/public-api';
 import { routes } from './app.routes';
 import { environment } from '../environments/environment';
+import { providePrimeNG } from 'primeng/config';
+import { CounterTheme } from './counter-theme';
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    providePrimeNG({ theme: { preset: CounterTheme, options: { darkModeSelector: false, cssLayer: { name: 'primeng', order: 'primeng, counter' } } } }),
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
     provideHttpClient(withInterceptors([authInterceptor, cacheInterceptor])),
     { provide: API_BASE_URL, useValue: environment.apiBaseUrl },
     { provide: AUTH_PREFIX, useValue: 'vendor' },
-    {
-      provide: DYNAMIC_TABLE_DEFAULTS,
-      useValue: {
-        emptyIcon: 'inventory_2',
-        emptyMessage: 'Nothing to show yet',
-        emptySubMessage: 'Add or sync records to populate this table.',
-        itemsPerPage: 20,
-        hasPagination: true,
-      },
-    },
   ],
 };

@@ -1,7 +1,10 @@
 import {
+  afterNextRender,
   Component,
   DestroyRef,
+  ElementRef,
   inject,
+  Injector,
   OnDestroy,
   signal,
 } from '@angular/core';
@@ -62,6 +65,8 @@ const VENDOR_STORE_TYPE_OPTIONS = [
   styleUrl: './register.component.scss',
 })
 export class RegisterComponent implements OnDestroy {
+  private readonly host: ElementRef<HTMLElement> = inject(ElementRef);
+  private readonly injector = inject(Injector);
   private readonly destroy = inject(DestroyRef);
   readonly mapVisible = signal(false);
   readonly steps = ['Account', 'Store profile', 'Pickup location', 'Review'];
@@ -173,6 +178,7 @@ export class RegisterComponent implements OnDestroy {
     this.error.set('');
     if (!this.validateStep(this.step())) {
       this.error.set('Please fix the highlighted fields before continuing.');
+      this.focusInvalid();
       return;
     }
     this.step.update((s) => Math.min(4, s + 1));
@@ -363,6 +369,7 @@ export class RegisterComponent implements OnDestroy {
       if (!this.validateStep(step)) {
         this.step.set(step);
         this.error.set('Please fix the highlighted fields before continuing.');
+        this.focusInvalid();
         return;
       }
     }
@@ -441,11 +448,20 @@ export class RegisterComponent implements OnDestroy {
       this.stepFieldKeys(step).some((field) => !!parsed.fieldErrors[field])
     );
     if (firstStepWithError) this.step.set(firstStepWithError);
+    this.focusInvalid();
     return formatFormErrors(
       error,
       'Registration failed. Please try again.',
       fieldLabels
     );
+  }
+
+  private focusInvalid(): void {
+    afterNextRender(() => {
+      const field = this.host.nativeElement.querySelector<HTMLElement>('[aria-invalid="true"]:not(:disabled)');
+      field?.focus();
+      field?.scrollIntoView({ block: 'center' });
+    }, { injector: this.injector });
   }
 
   private validateStep(step: number): boolean {

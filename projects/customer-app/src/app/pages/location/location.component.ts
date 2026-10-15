@@ -1,62 +1,86 @@
+import { CustomerIconComponent } from '../../shared/customer-icon/customer-icon.component';
 import { Component, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   type MapLocation,
   MapPickerComponent,
 } from '@shared/lib/components/map-picker/map-picker.component';
 
+import { CustomerStateComponent } from '../../shared/customer-state/customer-state.component';
+import { CustomerPageHeaderComponent } from '../../shared/customer-page-header/customer-page-header.component';
 import { AppStateService } from '../../services/app-state.service';
+import { UiService } from '../../services/ui.service';
 
 @Component({
   standalone: true,
-  imports: [FormsModule, MapPickerComponent],
+  imports: [RouterLink, CustomerIconComponent,FormsModule, MapPickerComponent, CustomerPageHeaderComponent, CustomerStateComponent],
   templateUrl: './location.component.html',
   styleUrls: ['./location.component.scss'],
 })
 export class LocationComponent {
+  editLocation = signal(false);
+  pointChosen = signal(false);
+  confirmedPoint = computed(() => this.pointChosen() && this.state.serviceability()?.is_serviceable === true);
+  error = signal('');
   label = signal('');
   city = signal('');
   stateName = signal('');
   postalCode = signal('');
   latitude = signal('');
   longitude = signal('');
-  returnUrl = computed(() => this.route.snapshot.queryParamMap.get('returnUrl') || '/');
-  canContinue = computed(() => !!this.state.serviceability()?.is_serviceable);
-  mapInitialLat = computed(() => {
-    const address = this.state.activeAddress();
-    const lat = Number(address?.latitude || this.latitude() || 12.9716);
-    return Number.isFinite(lat) ? lat : 12.9716;
-  });
-  mapInitialLng = computed(() => {
-    const address = this.state.activeAddress();
-    const lng = Number(address?.longitude || this.longitude() || 77.5946);
-    return Number.isFinite(lng) ? lng : 77.5946;
-  });
+  returnUrl = computed(
+    () => this.route.snapshot.queryParamMap.get('returnUrl') || '/'
+  );
+  canContinue = computed(
+    () =>
+      !this.state.serviceabilityLoading() &&
+      !!this.state.serviceability()?.is_serviceable
+  );
+  mapInitialLat = computed(() => this.mapCoordinate(this.latitude().trim() || this.state.customerLocationQuery()['lat']));
+  mapInitialLng = computed(() => this.mapCoordinate(this.longitude().trim() || this.state.customerLocationQuery()['lng']));
+  private mapCoordinate(value: unknown): number | null {
+    if (value === null || value === undefined || String(value).trim() === '') return null;
+    const coordinate = Number(value);
+    return Number.isFinite(coordinate) ? coordinate : null;
+  }
 
   constructor(
     public state: AppStateService,
+    public ui: UiService,
     private route: ActivatedRoute,
-    private router: Router,
+    private router: Router
   ) {}
 
   useCurrentLocation(): void {
     this.state.useCurrentLocation();
-    window.setTimeout(() => this.finishIfServiceable(), 900);
   }
 
   selectAddress(id: string): void {
+    this.pointChosen.set(true);
+    this.editLocation.set(false);
     this.state.selectAddress(id);
-    window.setTimeout(() => this.finishIfServiceable(), 300);
   }
 
   applyManualLocation(): void {
     const lat = Number(this.latitude());
     const lng = Number(this.longitude());
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-      this.state.showToast('Add valid map coordinates for this location.');
+    this.error.set('');
+    if (
+      !this.latitude().trim() ||
+      !this.longitude().trim() ||
+      !Number.isFinite(lat) ||
+      !Number.isFinite(lng) ||
+      Math.abs(lat) > 90 ||
+      Math.abs(lng) > 180
+    ) {
+      this.error.set(
+        'Enter a latitude between -90 and 90 and a longitude between -180 and 180.'
+      );
       return;
     }
+    this.pointChosen.set(true);
+    this.editLocation.set(false);
     this.state.selectMapLocation({
       lat,
       lng,
@@ -65,10 +89,11 @@ export class LocationComponent {
       state: this.stateName(),
       postal_code: this.postalCode(),
     });
-    window.setTimeout(() => this.finishIfServiceable(), 500);
   }
 
   onMapLocationPicked(location: MapLocation): void {
+    this.pointChosen.set(true);
+    this.editLocation.set(false);
     this.latitude.set(String(location.lat));
     this.longitude.set(String(location.lng));
     if (location.address) this.label.set(location.address);
@@ -88,18 +113,26 @@ export class LocationComponent {
   continueShopping(): void {
     if (!this.canContinue()) {
       this.state.showToast(
-        this.state.serviceability()?.message || 'Select a serviceable location.',
+        this.state.serviceability()?.message || 'Select a serviceable location.'
       );
       return;
     }
-    this.router.navigateByUrl(this.returnUrl());
+    const destination = this.returnUrl();
+    this.router.navigateByUrl(
+      destination.startsWith('/') && !destination.startsWith('//')
+        ? destination
+        : '/'
+    );
   }
 
-  addressLine(address: { line?: string; city?: string; pincode?: string }): string {
-    return [address.line, address.city, address.pincode].filter(Boolean).join(', ');
+  addressLine(address: {
+    line?: string;
+    city?: string;
+    pincode?: string;
+  }): string {
+    return [address.line, address.city, address.pincode]
+      .filter(Boolean)
+      .join(', ');
   }
 
-  private finishIfServiceable(): void {
-    if (this.canContinue()) this.continueShopping();
-  }
 }

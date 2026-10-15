@@ -1,9 +1,12 @@
 import { CommonModule } from '@angular/common';
 import {
+  afterNextRender,
   Component,
   effect,
+  ElementRef,
   EventEmitter,
   inject,
+  Injector,
   OnInit,
   Output,
   signal,
@@ -28,8 +31,12 @@ import { VendorStoreSettings } from './vendor-store-settings.models';
   styleUrl: './vendor-store-settings.component.scss',
 })
 export class VendorStoreSettingsComponent implements OnInit {
+  private readonly host: ElementRef<HTMLElement> = inject(ElementRef);
+  private readonly injector = inject(Injector);
   @Output() saved = new EventEmitter<void>();
   readonly mapVisible = signal(false);
+  readonly activeSection = signal('Store profile');
+  readonly sectionNames = ['Store profile','Pickup address','Hours and intake','Delivery','Account and security','Verification'];
   readonly sections = [
     {
       title: 'Store profile',
@@ -40,10 +47,14 @@ export class VendorStoreSettingsComponent implements OnInit {
       ],
     },
     {
-      title: 'Hours and fulfilment',
+      title: 'Hours and intake',
       fields: [
         { key: 'openingTime', label: 'Opening time', type: 'time' },
         { key: 'closingTime', label: 'Closing time', type: 'time' },
+
+      ],
+    },
+    { title: 'Delivery', fields: [
         { key: 'minimumOrder', label: 'Minimum order amount', type: 'number' },
         {
           key: 'basePrepMinutes',
@@ -60,8 +71,7 @@ export class VendorStoreSettingsComponent implements OnInit {
           label: 'Instant radius (km)',
           type: 'number',
         },
-      ],
-    },
+      ] },
     {
       title: 'Pickup address',
       fields: [
@@ -75,9 +85,6 @@ export class VendorStoreSettingsComponent implements OnInit {
     },
   ];
   readonly service = inject(VendorStoreSettingsService);
-  readonly sectionOpen = signal<Record<string, boolean>>({
-    'Store profile': true,
-  });
   constructor() {
     effect(() => {
       const errors = this.service.errors();
@@ -86,19 +93,9 @@ export class VendorStoreSettingsComponent implements OnInit {
           ...section.fields.map((field) => field.key),
           ...(section.title === 'Store profile' ? ['description'] : []),
         ];
-        if (keys.some((key) => !!errors[key]))
-          this.sectionOpen.update((open) => ({
-            ...open,
-            [section.title]: true,
-          }));
+        if (keys.some((key) => !!errors[key])) { this.activeSection.set(section.title); break; }
       }
     });
-  }
-  sectionToggled(title: string, event: Event): void {
-    this.sectionOpen.update((open) => ({
-      ...open,
-      [title]: (event.target as HTMLDetailsElement).open,
-    }));
   }
   ngOnInit(): void {
     void this.service.load();
@@ -132,5 +129,6 @@ export class VendorStoreSettingsComponent implements OnInit {
   }
   async save(): Promise<void> {
     if (await this.service.save()) this.saved.emit();
+    else afterNextRender(() => { const field = this.host.nativeElement.querySelector<HTMLElement>('[aria-invalid="true"]'); field?.focus(); field?.scrollIntoView({block:'center'}); }, {injector:this.injector});
   }
 }

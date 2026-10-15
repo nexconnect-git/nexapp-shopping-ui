@@ -20,10 +20,14 @@ import { timer } from 'rxjs';
 import { VendorOrdersStore } from '../../services/vendor-orders.store';
 import { vendorListState } from '../../services/vendor-list-state';
 import { WorkspacePagerComponent } from '../../components/workspace-pager.component';
+import { WorkspaceDialogComponent } from '../../components/workspace-dialog.component';
+import { CounterStateComponent } from '../../components/counter-state.component';
 @Component({
   selector: 'app-orders',
   standalone: true,
   imports: [
+    WorkspaceDialogComponent,
+    CounterStateComponent,
     CommonModule,
     FormsModule,
     RouterLink,
@@ -34,6 +38,7 @@ import { WorkspacePagerComponent } from '../../components/workspace-pager.compon
   styleUrl: './orders.component.scss',
 })
 export class OrdersComponent implements OnInit {
+  readonly filtersOpen = signal(false);
   private readonly api = inject(VendorWorkspaceApi);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -86,6 +91,7 @@ export class OrdersComponent implements OnInit {
       return;
     }
     this.filterError.set('');
+    this.filtersOpen.set(false);
     void this.router.navigate([], {
       queryParams: {
         page,

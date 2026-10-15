@@ -1,4 +1,4 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { computed, effect, inject, Injectable, signal, untracked } from '@angular/core';
 import {
   listFromResponse,
   normalizeBanner as normalizeSharedBanner,
@@ -31,6 +31,7 @@ import {
   Store,
 } from '../models';
 import { CustomerCatalogApiService } from './customer-catalog-api.service';
+import { AuthService } from './auth.service';
 
 const FALLBACK_PRODUCT_IMAGE = '/assets/placeholders/product.svg';
 const FALLBACK_STORE_IMAGE = '/assets/placeholders/store.svg';
@@ -38,8 +39,29 @@ const FALLBACK_STORE_IMAGE = '/assets/placeholders/store.svg';
 @Injectable({ providedIn: 'root' })
 export class CatalogService {
   private readonly api = inject(CustomerCatalogApiService);
+  private readonly auth = inject(AuthService);
+  private homeSession = this.auth.sessionVersion;
+  constructor() {
+    effect(() => {
+      this.auth.currentUser();
+      const session = this.auth.sessionVersion;
+      if (session === this.homeSession) return;
+      this.homeSession = session;
+      untracked(() => {
+        ++this.homeRequest;
+        this.productDetailRequests.clear();
+        this.productDetailLoading.set({});
+        this._buyAgainProducts.set([]);
+        this._products.set([]);
+        this.homeResolved.set(false);
+        if (Object.keys(this.homeParams).length) this.loadHome(this.homeParams);
+      });
+    });
+  }
   private readonly _categories = signal<Category[]>([]);
   private readonly _stores = signal<Store[]>([]);
+  readonly storeResults = signal<Store[]>([]);
+  readonly homeStores = signal<Store[]>([]);
   private readonly _products = signal<Product[]>([]);
   private readonly _buyAgainProducts = signal<Product[]>([]);
   private readonly _recommendedProducts = signal<Product[]>([]);
@@ -56,12 +78,77 @@ export class CatalogService {
   >({});
   private readonly loadedStoreRequestKeys = new Map<string, string>();
   private storeRequestSequence = 0;
-  private readonly productDetailRequests = new Set<string>();
+  private storeDetailSequence = 0;
+  private catalogContext = 0;
+  private categoryRequest = 0;
+  private recommendationRequest = 0;
+  private searchRequest = 0;
+  private readonly productDetailRequests = new Map<string, {sequence:number;context:string}>();
+  private productDetailSequence = 0;
+  readonly productDetailLoading = signal<Record<string, boolean>>({});
   private lastStoreFilters: Record<string, any> = {};
   private nextStorePage = signal<number | null>(null);
   private lastSearchQuery = '';
 
+  readonly storeErrors = signal<Record<string, string>>({});
+  readonly productErrors = signal<Record<string, string>>({});
+  readonly homeError = signal('');
+  readonly homeLoading = signal(false);
+  readonly homeResolved = signal(false);
+  readonly categoriesError = signal('');
+  readonly storesError = signal('');
+  readonly storesCount = signal<number | null>(null);
+  readonly productsError = signal('');
+  readonly collectionProducts = signal<Product[]>([]);
+  readonly collectionCount = signal<number | null>(null);
+  readonly productsHasMore = signal(false);
+  private productRequest = 0;
+  private productParams: Record<string, any> = {};
+  private productPage = 1;
+  loadMoreProducts(): void {
+    if (this.productsHasMore() && !this.productsLoading())
+      this.loadProducts(
+        { ...this.productParams, page: this.productPage + 1 },
+        true
+      );
+  }
+  readonly exploreResults = signal<{
+    products: Product[];
+    stores: Store[];
+    categories: Category[];
+  }>({ products: [], stores: [], categories: [] });
+  readonly exploreError = signal('');
+  readonly exploreSummary = signal<{product_count?:number;store_count?:number;category_count?:number} | null>(null);
+  readonly exploreHasMore = signal(false);
+  private exploreRequest = 0;
+  private exploreParams: Record<string, any> = {};
+  private explorePage = 1;
+  moreExplore(): void {
+    if (this.exploreHasMore() && !this.productsLoading())
+      this.loadExplore(
+        { ...this.exploreParams, page: this.explorePage + 1 },
+        true
+      );
+  }
+  private homeRequest = 0;
+  private homeParams: Record<string, any> = {};
+  retryHome(): void {
+    this.loadHome(this.homeParams);
+  }
+
   readonly categories = this._categories.asReadonly();
+  readonly allCategories = computed(() => {
+    const result: Category[] = [];
+    const visit = (category: Category) => {
+      result.push(category);
+      for (const child of category.raw?.children || []) {
+        if (child.is_active !== false && child.show_in_customer_ui !== false)
+          visit(this.mapCategory(child, result.length));
+      }
+    };
+    for (const category of this._categories()) visit(category);
+    return result;
+  });
   readonly stores = this._stores.asReadonly();
   readonly products = this._products.asReadonly();
   readonly buyAgainProducts = this._buyAgainProducts.asReadonly();
@@ -71,7 +158,7 @@ export class CatalogService {
   readonly homeHero = this._homeHero.asReadonly();
   readonly homeSections = this._homeSections.asReadonly();
   readonly categoriesLoading = computed(
-    () => this._categoryLoadingRequests() > 0,
+    () => this._categoryLoadingRequests() > 0
   );
   readonly storesLoading = computed(() => this._storeLoadingRequests() > 0);
   readonly storesHasMore = computed(() => this.nextStorePage() !== null);
@@ -79,40 +166,64 @@ export class CatalogService {
   readonly featuredStores = computed(() =>
     this._stores()
       .filter((store) => store.isExpress)
-      .slice(0, 8),
+      .slice(0, 8)
   );
   readonly topProducts = computed(() => this._products().slice(0, 12));
   readonly topCoupons = computed(() => this._coupons().slice(0, 6));
 
-  constructor() {
-    this.loadBanners();
-    this.loadCoupons();
-    this.loadCategories();
-  }
+  readonly bannersError = signal('');
+  readonly couponsError = signal('');
+  readonly couponsLoading = signal(false);
+  private couponRequest = 0;
+  private bannerRequest = 0;
 
   loadBanners(): void {
+    const request = ++this.bannerRequest;
+    this.bannersError.set('');
     this.api.getBanners().subscribe({
-      next: (response) =>
-        this._banners.set(
-          this.unwrap<any>(response).map((banner) => this.mapBanner(banner)),
-        ),
-      error: () => this._banners.set([]),
+      next: response => { if(request === this.bannerRequest) this._banners.set(this.unwrap<any>(response).map(banner => this.mapBanner(banner))); },
+      error: () => { if(request === this.bannerRequest) this.bannersError.set('Offers could not refresh. Try again.'); },
     });
   }
 
   loadCoupons(): void {
-    this.api.getCoupons().subscribe({
-      next: (response) =>
-        this._coupons.set(
-          this.unwrap<any>(response).map((coupon) => this.mapCoupon(coupon)),
-        ),
-      error: () => this._coupons.set([]),
+    if(this.couponsLoading()) return;
+    const request = ++this.couponRequest;
+    this.couponsLoading.set(true);
+    this.couponsError.set('');
+    this.api.getCoupons().pipe(finalize(() => { if(request === this.couponRequest) this.couponsLoading.set(false); })).subscribe({
+      next: response => { if(request === this.couponRequest) this._coupons.set(this.unwrap<any>(response).map(coupon => this.mapCoupon(coupon))); },
+      error: () => { if(request === this.couponRequest) this.couponsError.set('Available coupons could not load. Try again.'); },
     });
   }
 
   clearDeliverableCatalog(): void {
+    ++this.catalogContext;
+    ++this.couponRequest;
+    ++this.bannerRequest;
+    this.homeLoading.set(false);
+    this.homeResolved.set(true);
+    this.homeError.set('');
+    this.categoriesError.set('');
+    this.storesError.set('');
+    this.productsError.set('');
+    this.exploreError.set('');
+    this.couponsLoading.set(false);
+    this.couponsError.set('');
+    this.bannersError.set('');
+    this.productDetailRequests.clear();
+    this.productDetailLoading.set({});
     this._stores.set([]);
+    this.storeResults.set([]);
+    this.homeStores.set([]);
+    this.storesCount.set(null);
     this._products.set([]);
+    this.collectionProducts.set([]);
+    this.collectionCount.set(null);
+    this.productsHasMore.set(false);
+    this.exploreResults.set({products: [], stores: [], categories: []});
+    this.exploreSummary.set(null);
+    this.exploreHasMore.set(false);
     this._buyAgainProducts.set([]);
     this._recommendedProducts.set([]);
     this._storeProducts.set({});
@@ -122,27 +233,53 @@ export class CatalogService {
     this._homeSections.set([]);
     this.nextStorePage.set(null);
     this.loadedStoreRequestKeys.clear();
+    // Public storefront content is separate from deliverable shopping inventory.
+    // Home can declare shopping unavailable after the current detail has loaded;
+    // retain its readable products just as we retain its public store metadata.
+    // A new detail response replaces this list with its location-scoped products.
+    this.lastSearchQuery = '';
+  }
+
+  private currentCatalogContext(): () => boolean {
+    const context = this.catalogContext;
+    const session = this.auth.sessionVersion;
+    return () => context === this.catalogContext && session === this.auth.sessionVersion;
   }
 
   loadHome(params: Record<string, any> = {}): void {
+    const request = ++this.homeRequest;
+    const current = this.currentCatalogContext();
+    this.homeParams = params;
+    this.homeError.set('');
+    this.homeLoading.set(true);
     this.setCategoriesLoading(true);
     this.setStoresLoading(true);
     this.setProductsLoading(true);
     this.api
       .getHome(params)
-      .pipe(finalize(() => {
-        this.setCategoriesLoading(false);
-        this.setStoresLoading(false);
-        this.setProductsLoading(false);
-      }))
+      .pipe(
+        finalize(() => {
+          if (request === this.homeRequest && current()) {
+            this.homeLoading.set(false);
+            this.homeResolved.set(true);
+          }
+          this.setCategoriesLoading(false);
+          this.setStoresLoading(false);
+          this.setProductsLoading(false);
+        })
+      )
       .subscribe({
         next: (response) => {
-          const isServiceable = response?.serviceability?.is_serviceable !== false;
-          const categories = this.unwrap<ApiCategory>(response?.categories || [])
+          if (request !== this.homeRequest || !current()) return;
+          const isServiceable =
+            response?.serviceability?.is_serviceable !== false;
+          const categories = this.unwrap<ApiCategory>(
+            response?.categories || []
+          )
             .filter(
               (category) =>
                 category.show_in_customer_ui !== false &&
-                category.is_active !== false,
+                category.is_active !== false
             )
             .map((category, index) => this.mapCategory(category, index));
           this._categories.set([
@@ -157,59 +294,71 @@ export class CatalogService {
             ]);
             return;
           }
-          const stores = this.unwrap<ApiVendor>(response?.nearby_stores || []).map(
-            (vendor) => this.mapStore(vendor),
-          ).filter((store) => this.isServiceableStore(store));
-          this._stores.set(stores);
+          const stores = this.unwrap<ApiVendor>(response?.nearby_stores || [])
+            .map((vendor) => this.mapStore(vendor))
+            .filter((store) => this.isServiceableStore(store));
+          this.homeStores.set(stores);
+          this.mergeStores(stores);
           const recommended = this.unwrap<ApiProduct>(
-            response?.recommended_products || [],
+            response?.recommended_products || []
           )
             .map((product) => this.mapProduct(product))
             .filter((product) => this.isProductFromOpenStore(product));
-          const flashDeals = this.unwrap<ApiProduct>(response?.flash_deals || []).map(
-            (product) => this.mapProduct(product),
-          ).filter((product) => this.isProductFromOpenStore(product));
-          const buyAgain = this.unwrap<ApiProduct>(response?.buy_again || []).map(
-            (product) => this.mapProduct(product),
-          ).filter((product) => this.isProductFromOpenStore(product));
+          const flashDeals = this.unwrap<ApiProduct>(
+            response?.flash_deals || []
+          )
+            .map((product) => this.mapProduct(product))
+            .filter((product) => this.isProductFromOpenStore(product));
+          const buyAgain = this.unwrap<ApiProduct>(this.auth.isLoggedIn() ? response?.buy_again || [] : [])
+            .map((product) => this.mapProduct(product))
+            .filter((product) => this.isProductFromOpenStore(product));
           this._buyAgainProducts.set(buyAgain);
           this.replaceProducts([...recommended, ...flashDeals, ...buyAgain]);
           this._recommendedProducts.set(recommended);
           this._coupons.set(
             this.unwrap<any>(response?.coupons || []).map((coupon) =>
-              this.mapCoupon(coupon),
-            ),
+              this.mapCoupon(coupon)
+            )
           );
           this._banners.set(
             this.unwrap<any>(response?.banners || []).map((banner) =>
-              this.mapBanner(banner),
-            ),
+              this.mapBanner(banner)
+            )
           );
           this._homeHero.set(this.mapHomeHero(response?.hero));
           this._homeSections.set(this.mapHomeSections(response?.sections));
         },
-        error: () => {},
+        error: () => {
+          if (request === this.homeRequest && current())
+            this.homeError.set(
+              'Your neighbourhood could not refresh. Try again.'
+            );
+        },
       });
   }
 
   loadCategories(params: Record<string, any> = {}): void {
+    const request = ++this.categoryRequest;
+    const current = this.currentCatalogContext();
+    this.categoriesError.set('');
     this.setCategoriesLoading(true);
     this.api
       .getCategories(params)
       .pipe(finalize(() => this.setCategoriesLoading(false)))
       .subscribe({
         next: (response) => {
+          if (request !== this.categoryRequest || !current()) return;
           const categories = this.unwrap<ApiCategory>(response)
             .filter(
               (category) =>
                 category.show_in_customer_ui !== false &&
-                category.is_active !== false,
+                category.is_active !== false
             )
             .map((category, index) => this.mapCategory(category, index));
           const seen = new Set<string>();
           const uniqueCategories = categories.filter((category) => {
             const key = normalizeKey(
-              category.raw?.slug || category.label || category.id,
+              category.raw?.slug || category.label || category.id
             );
             if (!key || seen.has(key)) return false;
             seen.add(key);
@@ -220,10 +369,10 @@ export class CatalogService {
             ...uniqueCategories,
           ]);
         },
-        error: () =>
-          this._categories.set([
-            { id: 'all', label: 'All', icon: 'grid_view', bg: '#f8fafc' },
-          ]),
+        error: () => {
+          if (request === this.categoryRequest && current())
+            this.categoriesError.set('Categories could not load. Try again.');
+        },
       });
   }
 
@@ -234,11 +383,13 @@ export class CatalogService {
       page?: number;
       pageSize?: number;
       allowFallback?: boolean;
-    } = {},
+    } = {}
   ): void {
     const page = Number(options.page || params['page'] || 1);
     const pageSize = Number(options.pageSize || params['page_size'] || 12);
     const requestId = ++this.storeRequestSequence;
+    const current = this.currentCatalogContext();
+    this.storesError.set('');
     const { primary, fallback } = buildStoreDiscoveryQueryPlan(
       params,
       {
@@ -248,18 +399,18 @@ export class CatalogService {
         city: params['city'],
         postal_code: params['postal_code'],
       },
-      { page, pageSize, fallbackToState: options.allowFallback === true },
+      { page, pageSize, fallbackToState: options.allowFallback === true }
     );
     this.lastStoreFilters = { ...params, page_size: pageSize };
     this.setStoresLoading(true);
     this.api.getVendors(primary).subscribe({
       next: (response) => {
-        if (requestId !== this.storeRequestSequence) {
+        if (requestId !== this.storeRequestSequence || !current()) {
           this.setStoresLoading(false);
           return;
         }
         const stores = this.unwrap<ApiVendor>(response).map((vendor) =>
-          this.mapStore(vendor),
+          this.mapStore(vendor)
         );
         if (
           !stores.length &&
@@ -271,12 +422,14 @@ export class CatalogService {
             .pipe(finalize(() => this.setStoresLoading(false)))
             .subscribe({
               next: (fallbackResponse) => {
-                if (requestId !== this.storeRequestSequence) return;
+                if (requestId !== this.storeRequestSequence || !current()) return;
                 this.applyStoreResponse(fallbackResponse, !!options.append);
               },
               error: () => {
-                if (requestId === this.storeRequestSequence)
-                  this.applyStoreResponse([], !!options.append);
+                if (requestId === this.storeRequestSequence && current())
+                  this.storesError.set(
+                    'Stores could not load. Please try again.'
+                  );
               },
             });
           return;
@@ -285,11 +438,11 @@ export class CatalogService {
         this.setStoresLoading(false);
       },
       error: () => {
-        if (requestId !== this.storeRequestSequence) {
+        if (requestId !== this.storeRequestSequence || !current()) {
           this.setStoresLoading(false);
           return;
         }
-        this.applyStoreResponse([], !!options.append);
+        this.storesError.set('Stores could not load. Please try again.');
         this.setStoresLoading(false);
       },
     });
@@ -306,6 +459,8 @@ export class CatalogService {
   }
 
   loadBestDealRecommendations(storeId?: string): void {
+    const request = ++this.recommendationRequest;
+    const current = this.currentCatalogContext();
     const id = storeId || this._stores()[0]?.id;
     if (!id) {
       this._recommendedProducts.set([]);
@@ -313,108 +468,185 @@ export class CatalogService {
     }
     this.api.vendorRecommendations(id).subscribe({
       next: (response) => {
+        if (request !== this.recommendationRequest || !current()) return;
         const products = normalizeRecommendationResponse(
           response,
           (product, context) =>
             this.mapProduct(
               product as ApiProduct,
-              { id: context?.storeId, store_name: context?.storeName } as any,
-            ),
+              { id: context?.storeId, store_name: context?.storeName } as any
+            )
         ).map((item) => item.product);
         this._recommendedProducts.set(products);
         this.mergeProducts(products);
       },
-      error: () => this._recommendedProducts.set([]),
+      error: () => {
+        if (request === this.recommendationRequest && current()) this._recommendedProducts.set([]);
+      },
     });
   }
 
-  loadProducts(params: Record<string, any> = {}): void {
+  loadProducts(params: Record<string, any> = {}, append = false): void {
+    const request = ++this.productRequest;
+    const current = this.currentCatalogContext();
+    this.productParams = params;
+    this.productsError.set('');
     this.setProductsLoading(true);
     this.api
       .getProducts(params)
       .pipe(finalize(() => this.setProductsLoading(false)))
       .subscribe({
-        next: (response) =>
-          this.mergeProducts(
-            this.unwrap<ApiProduct>(response).map((product) =>
-              this.mapProduct(product),
-            ),
-          ),
-        error: () => this._products.set([]),
+        next: (response) => {
+          if (request !== this.productRequest || !current()) return;
+          const products = this.unwrap<ApiProduct>(response).map((product) =>
+            this.mapProduct(product)
+          );
+          this.collectionProducts.set(
+            append
+              ? [
+                  ...this.collectionProducts(),
+                  ...products.filter(
+                    (p) =>
+                      !this.collectionProducts().some((old) => old.id === p.id)
+                  ),
+                ]
+              : products
+          );
+          this.mergeProducts(products);
+          this.productPage = Number(params['page'] || 1);
+          this.productsHasMore.set(!!response?.next);
+          this.collectionCount.set(
+            Number.isFinite(Number(response?.count))
+              ? Number(response.count)
+              : null
+          );
+        },
+        error: () => {
+          if (request === this.productRequest && current())
+            this.productsError.set(
+              'Products could not load. Please try again.'
+            );
+        },
       });
   }
 
-  loadExplore(params: Record<string, any> = {}): void {
+  loadExplore(params: Record<string, any> = {}, append = false): void {
+    const request = ++this.exploreRequest;
+    const current = this.currentCatalogContext();
+    this.exploreParams = params;
+    this.exploreError.set('');
     this.setProductsLoading(true);
-    this.setStoresLoading(true);
-    this.setCategoriesLoading(true);
     this.api
       .explore(params)
-      .pipe(finalize(() => {
-        this.setProductsLoading(false);
-        this.setStoresLoading(false);
-        this.setCategoriesLoading(false);
-      }))
+      .pipe(finalize(() => this.setProductsLoading(false)))
       .subscribe({
         next: (response) => {
-          if (response?.serviceability?.is_serviceable === false) {
-            this.clearDeliverableCatalog();
-            this._categories.set([
-              { id: 'all', label: 'All', icon: 'grid_view', bg: '#f8fafc' },
-            ]);
-            return;
-          }
-          const categories = this.unwrap<ApiCategory>(response?.categories || [])
-            .filter(
-              (category) =>
-                category.show_in_customer_ui !== false &&
-                category.is_active !== false,
-            )
-            .map((category, index) => this.mapCategory(category, index));
-          this._categories.set([
-            { id: 'all', label: 'All', icon: 'grid_view', bg: '#f8fafc' },
-            ...categories,
-          ]);
-          this._stores.set(
-            this.unwrap<ApiVendor>(response?.stores || [])
-              .map((vendor) => this.mapStore(vendor))
-              .filter((store) => this.isServiceableStore(store)),
+          if (request !== this.exploreRequest || !current()) return;
+          this.exploreSummary.set(response?.summary || null);
+          const products = this.unwrap<ApiProduct>(
+            response?.products || []
+          ).map((p) => this.mapProduct(p));
+          const stores = this.unwrap<ApiVendor>(response?.stores || []).map(
+            (v) => this.mapStore(v)
           );
-          this.mergeProducts(
-            this.unwrap<ApiProduct>(response?.products || [])
-              .map((product) => this.mapProduct(product))
-              .filter((product) => this.isProductFromOpenStore(product)),
-          );
-          this._coupons.set(
-            this.unwrap<any>(response?.offers || []).map((coupon) =>
-              this.mapCoupon(coupon),
-            ),
-          );
+          const categories = this.unwrap<ApiCategory>(
+            response?.categories || []
+          ).map((c, i) => this.mapCategory(c, i));
+          const old = this.exploreResults();
+          this.exploreResults.set({
+            products: append
+              ? [
+                  ...old.products,
+                  ...products.filter(
+                    (p) => !old.products.some((o) => o.id === p.id)
+                  ),
+                ]
+              : products,
+            stores: append
+              ? [
+                  ...old.stores,
+                  ...stores.filter(
+                    (p) => !old.stores.some((o) => o.id === p.id)
+                  ),
+                ]
+              : stores,
+            categories: append
+              ? [
+                  ...old.categories,
+                  ...categories.filter(
+                    (p) => !old.categories.some((o) => o.id === p.id)
+                  ),
+                ]
+              : categories,
+          });
+          this.mergeProducts(products);
+          this.explorePage = Number(params['page'] || 1);
+          this.exploreHasMore.set(!!response?.next_page);
         },
-        error: () => {},
+        error: () => {
+          if (request === this.exploreRequest && current())
+            this.exploreError.set(
+              'Search could not complete. Your query is still here.'
+            );
+        },
       });
+  }
+
+  private readonly storeDetails = signal<Record<string, Store>>({});
+  private readonly storeDetailProducts = signal<Record<string, Product[]>>({});
+  private readonly latestStoreRequestKeys = new Map<string, string>();
+
+  productsForStoreDetail(id: string): Product[] {
+    return this.storeDetailProducts()[id] || this.productsByStore(id);
+  }
+
+  getStoreDetail(id: string): Store {
+    return this.storeDetails()[id] || this.getStore(id);
   }
 
   loadStoreProducts(storeId: string, params: Record<string, any> = {}): void {
     if (!storeId) return;
     const requestKey = this.requestKey(params);
+    const current = this.currentCatalogContext();
     if (this.loadedStoreRequestKeys.get(storeId) === requestKey) return;
+    const detailRequest = `${++this.storeDetailSequence}:${requestKey}`;
+    this.storeErrors.update((errors) => ({ ...errors, [storeId]: '' }));
     this.loadedStoreRequestKeys.set(storeId, requestKey);
-    this.setStoreProductsLoading(storeId, requestKey);
+    this.latestStoreRequestKeys.set(storeId, detailRequest);
+    this.setStoreProductsLoading(storeId, detailRequest);
     this.api.getVendor(storeId, params).subscribe({
       next: (vendor) => {
+        if (this.latestStoreRequestKeys.get(storeId) !== detailRequest) return;
         const products = (vendor.products || []).map((product: ApiProduct) =>
-          this.mapProduct(product, vendor),
+          this.mapProduct(product, vendor)
         );
-        this.mergeStores([this.mapStore(vendor)]);
-        this.setStoreProducts(storeId, products);
-        this.mergeProducts(products);
-        this.clearStoreProductsLoading(storeId, requestKey);
+        const detail = this.mapStore(vendor);
+        this.storeDetails.update(current => ({...current, [storeId]: detail}));
+        this.storeDetailProducts.update(current => ({...current, [storeId]: products}));
+        // Public store details remain readable when Home declares the area unavailable.
+        // Only the current shopping context may repopulate deliverable inventory.
+        if (current() && this.loadedStoreRequestKeys.get(storeId) === requestKey) {
+          this.mergeStores([detail]);
+          this.setStoreProducts(storeId, products);
+          this.mergeProducts(products);
+        }
+        this.clearStoreProductsLoading(storeId, detailRequest);
       },
-      error: () => {
+      error: (error) => {
+        if (this.latestStoreRequestKeys.get(storeId) !== detailRequest) return;
+        const status = error?.status;
+        this.storeErrors.update((errors) => ({
+          ...errors,
+          [storeId]:
+            status === 404
+              ? 'This store could not be found.'
+              : status === 403
+              ? 'This store is not accessible.'
+              : 'This store could not load. Try again.',
+        }));
         if (this.loadedStoreRequestKeys.get(storeId) === requestKey)
           this.loadedStoreRequestKeys.delete(storeId);
-        this.clearStoreProductsLoading(storeId, requestKey);
+        this.clearStoreProductsLoading(storeId, detailRequest);
       },
     });
   }
@@ -434,7 +666,7 @@ export class CatalogService {
   getProduct(id: string | null): Product {
     const key = String(id || '');
     const product = this._products().find(
-      (item) => item.id === key || item.apiId === key,
+      (item) => item.id === key || item.apiId === key
     );
     return product || this.emptyProduct(key);
   }
@@ -442,28 +674,56 @@ export class CatalogService {
   ensureProductLoaded(
     id: string | null,
     params: Record<string, any> = {},
+    force = false
   ): void {
     const key = String(id || '');
+    const session = this.auth.sessionVersion;
+    const context = JSON.stringify([session, params]);
     if (
       !key ||
-      this.productDetailRequests.has(key) ||
-      this._products().some((item) => item.id === key || item.apiId === key)
+      this.productDetailRequests.get(key)?.context === context ||
+      (!force &&
+        this._products().some((item) => item.id === key || item.apiId === key))
     )
       return;
-    this.productDetailRequests.add(key);
+    this.productErrors.update((errors) => ({ ...errors, [key]: '' }));
+    const sequence = ++this.productDetailSequence;
+    this.productDetailRequests.set(key, {sequence,context});
+    this.productDetailLoading.update(loading => ({...loading,[key]:true}));
+    const current = () => this.productDetailRequests.get(key)?.sequence === sequence && session === this.auth.sessionVersion;
     this.setProductsLoading(true);
     this.api
       .getProduct(key, params)
-      .pipe(finalize(() => this.setProductsLoading(false)))
+      .pipe(finalize(() => {
+        this.setProductsLoading(false);
+        if(current()){
+          this.productDetailRequests.delete(key);
+          this.productDetailLoading.update(loading => ({...loading,[key]:false}));
+        }
+      }))
       .subscribe({
-        next: (response) => this.mergeProducts([this.mapProduct(response)]),
-        error: () => this.productDetailRequests.delete(key),
+        next: (response) => {
+          if(!current())return;
+          this.mergeProducts([this.mapProduct(response)]);
+        },
+        error: (error) => {
+          if(!current())return;
+          this.productErrors.update((errors) => ({
+            ...errors,
+            [key]:
+              error?.status === 404
+                ? 'Product not found.'
+                : error?.status === 403
+                ? 'You cannot access this product.'
+                : 'Product could not load. Please try again.',
+          }));
+        },
       });
   }
 
   ensureStoreProductsLoaded(
     storeId: string | null,
-    params: Record<string, any> = {},
+    params: Record<string, any> = {}
   ): void {
     const key = String(storeId || '');
     if (!key) return;
@@ -480,11 +740,11 @@ export class CatalogService {
   productsByCategory(category: string): Product[] {
     const keys = this.categoryKeys(category);
     const products = this._products().filter((product) =>
-      this.isProductFromOpenStore(product),
+      this.isProductFromOpenStore(product)
     );
     if (!keys.size || keys.has('all')) return products;
     return products.filter((product) =>
-      this.productCategoryKeys(product).some((key) => keys.has(key)),
+      this.productCategoryKeys(product).some((key) => keys.has(key))
     );
   }
 
@@ -494,40 +754,40 @@ export class CatalogService {
     categories: Category[];
   } {
     const terms = parseMultiSearchQuery(query).map((term) =>
-      term.value.toLowerCase(),
+      term.value.toLowerCase()
     );
     if (!terms.length) return { stores: [], products: [], categories: [] };
     const matchesAny = (value: string | null | undefined) =>
       terms.some((term) =>
         String(value || '')
           .toLowerCase()
-          .includes(term),
+          .includes(term)
       );
     return {
       stores: terms
         .flatMap((q) =>
           searchVendors(
             this._stores().map((store) => store.raw || store),
-            q,
-          ).map((store) => this.mapStore(store as ApiVendor)),
+            q
+          ).map((store) => this.mapStore(store as ApiVendor))
         )
         .filter((store) => this.isServiceableStore(store))
         .filter(
           (store, index, all) =>
-            all.findIndex((item) => item.id === store.id) === index,
+            all.findIndex((item) => item.id === store.id) === index
         )
         .slice(0, 8),
       products: terms
         .flatMap((q) =>
           searchProducts(
             this._products().map((product) => product.raw || product) as any[],
-            q,
-          ).map((product) => this.mapProduct(product as ApiProduct)),
+            q
+          ).map((product) => this.mapProduct(product as ApiProduct))
         )
         .filter((product) => this.isProductFromOpenStore(product))
         .filter(
           (product, index, all) =>
-            all.findIndex((item) => item.id === product.id) === index,
+            all.findIndex((item) => item.id === product.id) === index
         )
         .slice(0, 12),
       categories: this._categories()
@@ -542,22 +802,28 @@ export class CatalogService {
       .map((term) => term.value)
       .join(',');
     if (!q) {
+      ++this.searchRequest;
       this.lastSearchQuery = '';
       return;
     }
-    if (q === this.lastSearchQuery) return;
-    this.lastSearchQuery = q;
+    const key = this.requestKey({...params, search: q});
+    if (key === this.lastSearchQuery) return;
+    this.lastSearchQuery = key;
+    const request = ++this.searchRequest;
+    const current = this.currentCatalogContext();
     this.setProductsLoading(true);
     this.api
-      .getProducts({ search: q })
+      .getProducts({ ...params, search: q })
       .pipe(finalize(() => this.setProductsLoading(false)))
       .subscribe({
-        next: (response) =>
+        next: (response) => {
+          if (request !== this.searchRequest || !current()) return;
           this.mergeProducts(
             this.unwrap<ApiProduct>(response).map((product) =>
-              this.mapProduct(product),
-            ),
-          ),
+              this.mapProduct(product)
+            )
+          );
+        },
         error: () => {},
       });
     this.setStoresLoading(true);
@@ -566,6 +832,7 @@ export class CatalogService {
       .pipe(finalize(() => this.setStoresLoading(false)))
       .subscribe({
         next: (response) => {
+          if (request !== this.searchRequest || !current()) return;
           const vendors = this.unwrap<ApiVendor>(response);
           const stores = vendors
             .map((vendor) => this.mapStore(vendor))
@@ -573,11 +840,13 @@ export class CatalogService {
           const serviceableStoreIds = new Set(stores.map((store) => store.id));
           this.mergeStores(stores);
           this.mergeProducts(
-            vendors.filter((vendor) => serviceableStoreIds.has(String(vendor.id))).flatMap((vendor) =>
-              (vendor.products || []).map((product) =>
-                this.mapProduct(product, vendor),
-              ),
-            ),
+            vendors
+              .filter((vendor) => serviceableStoreIds.has(String(vendor.id)))
+              .flatMap((vendor) =>
+                (vendor.products || []).map((product) =>
+                  this.mapProduct(product, vendor)
+                )
+              )
           );
         },
         error: () => {},
@@ -588,7 +857,7 @@ export class CatalogService {
     return normalizeSharedProduct(
       product as any,
       vendor as any,
-      FALLBACK_PRODUCT_IMAGE,
+      FALLBACK_PRODUCT_IMAGE
     ) as Product;
   }
 
@@ -611,8 +880,12 @@ export class CatalogService {
       title: String(heroRecord['title'] || ''),
       subtitle: String(heroRecord['subtitle'] || ''),
       badge: String(heroRecord['badge'] || ''),
-      cta_label: String(heroRecord['cta_label'] || heroRecord['ctaLabel'] || 'Shop now'),
-      cta_url: String(heroRecord['cta_url'] || heroRecord['ctaUrl'] || '/explore'),
+      cta_label: String(
+        heroRecord['cta_label'] || heroRecord['ctaLabel'] || 'Shop now'
+      ),
+      cta_url: String(
+        heroRecord['cta_url'] || heroRecord['ctaUrl'] || '/explore'
+      ),
       image: String(heroRecord['image'] || ''),
       store: heroRecord['store'] || null,
       coupon: heroRecord['coupon'] || null,
@@ -622,8 +895,13 @@ export class CatalogService {
   private mapHomeSections(sections: unknown): CustomerHomeSection[] {
     if (!Array.isArray(sections)) return [];
     return sections.map((section) => {
-      const sectionRecord = section && typeof section === 'object' ? (section as Record<string, unknown>) : {};
-      const items = Array.isArray(sectionRecord['items']) ? sectionRecord['items'] : [];
+      const sectionRecord =
+        section && typeof section === 'object'
+          ? (section as Record<string, unknown>)
+          : {};
+      const items = Array.isArray(sectionRecord['items'])
+        ? sectionRecord['items']
+        : [];
       return {
         key: String(sectionRecord['key'] || ''),
         title: String(sectionRecord['title'] || ''),
@@ -641,13 +919,17 @@ export class CatalogService {
   private mergeProducts(incoming: Product[]): void {
     const merged = new Map<string, Product>();
     for (const product of this._products()) merged.set(product.id, product);
-    for (const product of incoming) merged.set(product.id, product);
+    for (const product of incoming) {
+      const previous = merged.get(product.id);
+      merged.set(product.id, { ...product, raw: product.raw ? { ...previous?.raw, ...product.raw } : previous?.raw });
+    }
     this._products.set([...merged.values()]);
   }
 
   private replaceProducts(incoming: Product[]): void {
+    const previous = new Map(this._products().map(product => [product.id, product]));
     const merged = new Map<string, Product>();
-    for (const product of incoming) merged.set(product.id, product);
+    for (const product of incoming) merged.set(product.id, { ...product, raw: product.raw ? { ...previous.get(product.id)?.raw, ...product.raw } : previous.get(product.id)?.raw });
     this._products.set([...merged.values()]);
   }
 
@@ -662,19 +944,22 @@ export class CatalogService {
     const stores = this.unwrap<ApiVendor>(response)
       .map((vendor) => this.mapStore(vendor))
       .filter((store) => this.isServiceableStore(store));
-    if (append) this.mergeStores(stores);
-    else this._stores.set(stores);
+    this.mergeStores(stores);
+    this.storeResults.update(current => append
+      ? [...current, ...stores.filter(store => !current.some(existing => existing.id === store.id))]
+      : stores);
     const serviceableStoreIds = new Set(stores.map((store) => store.id));
     const storeProducts = this.unwrap<ApiVendor>(response)
       .filter((vendor) => serviceableStoreIds.has(String(vendor.id)))
       .flatMap((vendor) =>
-      (vendor.products || []).map((product) =>
-        this.mapProduct(product, vendor),
-      ),
-    );
+        (vendor.products || []).map((product) =>
+          this.mapProduct(product, vendor)
+        )
+      );
     if (storeProducts.length) this.mergeProducts(storeProducts);
+    this.storesCount.set(Number.isFinite(Number(response?.count)) ? Number(response.count) : null);
     this.nextStorePage.set(this.readNextPage(response));
-    this.loadBestDealRecommendations((append ? this._stores() : stores)[0]?.id);
+    this.loadBestDealRecommendations(this.storeResults()[0]?.id);
   }
 
   private isServiceableStore(store: Store): boolean {
@@ -752,7 +1037,9 @@ export class CatalogService {
         raw['name'],
         raw['title'],
       ];
-      if (!candidates.some((candidate) => this.normalizeValue(candidate) === key)) {
+      if (
+        !candidates.some((candidate) => this.normalizeValue(candidate) === key)
+      ) {
         continue;
       }
       for (const candidate of candidates) {
@@ -785,7 +1072,7 @@ export class CatalogService {
       ...new Set(
         candidates
           .map((candidate) => this.normalizeValue(candidate))
-          .filter(Boolean),
+          .filter(Boolean)
       ),
     ];
   }
@@ -801,13 +1088,13 @@ export class CatalogService {
           (key) =>
             params[key] !== undefined &&
             params[key] !== null &&
-            params[key] !== '',
+            params[key] !== ''
         )
         .sort()
         .reduce<Record<string, any>>((result, key) => {
           result[key] = params[key];
           return result;
-        }, {}),
+        }, {})
     );
   }
 
@@ -820,19 +1107,19 @@ export class CatalogService {
 
   private setCategoriesLoading(loading: boolean): void {
     this._categoryLoadingRequests.update((count) =>
-      Math.max(0, count + (loading ? 1 : -1)),
+      Math.max(0, count + (loading ? 1 : -1))
     );
   }
 
   private setStoresLoading(loading: boolean): void {
     this._storeLoadingRequests.update((count) =>
-      Math.max(0, count + (loading ? 1 : -1)),
+      Math.max(0, count + (loading ? 1 : -1))
     );
   }
 
   private setProductsLoading(loading: boolean): void {
     this._productLoadingRequests.update((count) =>
-      Math.max(0, count + (loading ? 1 : -1)),
+      Math.max(0, count + (loading ? 1 : -1))
     );
   }
 
@@ -849,7 +1136,7 @@ export class CatalogService {
     return {
       id: id || 'loading',
       name: 'Loading product',
-      unit: '1 unit',
+      unit: '',
       price: 0,
       mrp: 0,
       discount: '',
@@ -871,7 +1158,7 @@ export class CatalogService {
       eta: '',
       distance: '',
       offer: '',
-      delivery: 'Express delivery',
+      delivery: '',
       image: FALLBACK_STORE_IMAGE,
       hero: FALLBACK_STORE_IMAGE,
       tags: [],

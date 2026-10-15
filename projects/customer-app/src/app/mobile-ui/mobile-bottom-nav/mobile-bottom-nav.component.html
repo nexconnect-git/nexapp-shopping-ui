@@ -1,16 +1,16 @@
-<nav class="mobile-bottom-nav" aria-label="Nextou navigation">
+<nav class="dock" aria-label="Nextou navigation">
   @for (item of visibleItems(); track item.route) {
     <a
       [routerLink]="item.route"
-      routerLinkActive="active"
-      [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
+      [class.active]="isActive(item)"
+      [attr.aria-current]="isActive(item) ? 'page' : null"
       [attr.aria-label]="item.label"
     >
-      <span class="material-symbols-rounded">{{ item.icon }}</span>
+      <svg [customerIcon]="item.icon"></svg>
       @if (item.badge && state.itemCount()) {
-        <i>{{ state.itemCount() }}</i>
+        <span class="badge">{{ state.itemCount() }}</span>
       }
-      <b>{{ item.label }}</b>
+      <span>{{ item.label }}</span>
     </a>
   }
 </nav>

@@ -1,9 +1,5 @@
 <div class="register-page">
-  <header class="register-intro">
-    <a routerLink="/login" class="register-brand"
-      ><span class="material-icons-outlined" aria-hidden="true">storefront</span
-      >Nextou Vendor</a
-    >
+<header class="page-heading"><div><p class="eyebrow">Join Nextou</p><h1>A store worth discovering.</h1><p>Create your account, then introduce your business.</p></div><a routerLink="/login" class="btn-secondary">Sign in instead</a></header><header class="register-intro">
     <ol aria-label="Registration progress">
       @for(label of steps;track label;let index=$index){
       <li
@@ -16,10 +12,10 @@
       }
     </ol>
   </header>
-  <main class="register-form">
+  <div class="wizard-layout"><main class="register-form">
     <header>
       <p class="workspace-eyebrow">Step {{ step() }} of 4</p>
-      <h1>{{ steps[step() - 1] }}</h1>
+      <h2>{{ steps[step() - 1] }}</h2>
       <p>Save accurate details so the platform can review your store.</p>
     </header>
     @if(error()){
@@ -186,6 +182,8 @@
           >}<label class="workspace-field"
             >Latitude<input
               name="latitude"
+              [attr.aria-invalid]="fieldError('location') ? true : null"
+              [attr.aria-describedby]="fieldError('location') ? 'register-error-location' : null"
               type="number"
               min="-90"
               max="90"
@@ -196,6 +194,8 @@
           ><label class="workspace-field"
             >Longitude<input
               name="longitude"
+              [attr.aria-invalid]="fieldError('location') ? true : null"
+              [attr.aria-describedby]="fieldError('location') ? 'register-error-location' : null"
               type="number"
               min="-180"
               max="180"
@@ -206,7 +206,7 @@
           /></label>
         </div>
         @if(fieldError('location')){
-        <p class="workspace-error">{{ fieldError("location") }}</p>
+        <p class="workspace-error" id="register-error-location">{{ fieldError("location") }}</p>
         }
         <div class="workspace-actions">
           <button
@@ -312,5 +312,5 @@
     <p class="workspace-muted">
       Already registered? <a routerLink="/login">Log in</a>
     </p>
-  </main>
+  </main><aside class="aside-note"><p class="eyebrow">Step {{ step() }}</p><h2>{{ steps[step()-1] }}</h2><p>{{ step()===1 ? 'Your account identity is separate from your public storefront.' : step()===2 ? 'Introduce your business with accurate public contact details.' : step()===3 ? 'Make pickup reliable. Manual address entry remains available.' : 'Check the details before submitting. Approval is a separate platform decision.' }}</p></aside></div>
 </div>

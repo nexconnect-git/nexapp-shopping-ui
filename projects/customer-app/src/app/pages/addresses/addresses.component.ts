@@ -1,4 +1,11 @@
-import { Component, computed, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { effect, untracked } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
+import { CustomerPageHeaderComponent } from '../../shared/customer-page-header/customer-page-header.component';
+import { CustomerStateComponent } from '../../shared/customer-state/customer-state.component';
+import { NxModalShellComponent } from '../../shared/ui/nx-modal-shell/nx-modal-shell.component';
+import { UiService } from '../../services/ui.service';
+import { Component, HostListener, computed, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import {
@@ -18,8 +25,8 @@ import {
 } from '@shared/lib/utils/form-field-errors';
 import { Address } from '../../models';
 import { AppStateService } from '../../services/app-state.service';
-import { MobileBottomSheetComponent } from '../../mobile-ui/mobile-bottom-sheet/mobile-bottom-sheet.component';
 import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
+import { CustomerIconComponent } from '../../shared/customer-icon/customer-icon.component';
 import { AuthService } from '../../services/auth.service';
 import { CustomerLockedStateComponent } from '../../shared/customer-locked-state/customer-locked-state.component';
 
@@ -28,8 +35,11 @@ import { CustomerLockedStateComponent } from '../../shared/customer-locked-state
   imports: [
     FormsModule,
     BreadcrumbsComponent,
+    CustomerIconComponent,
+    CustomerPageHeaderComponent,
+    CustomerStateComponent,
+    NxModalShellComponent,
     MapPickerComponent,
-    MobileBottomSheetComponent,
     CustomerLockedStateComponent,
   ],
   templateUrl: './addresses.component.html',
@@ -42,15 +52,56 @@ export class AddressesComponent {
   saving = signal(false);
   formError = signal('');
   fieldErrors = signal<Record<string, string>>({});
+  mapOpen = signal(false);
+  private originalForm = '';
+  returnUrl = '';
   form: Address = { id: '', label: '', name: '', line: '', phone: '' };
 
   constructor(
     public state: AppStateService,
     private route: ActivatedRoute,
     public auth: AuthService,
+    private ui: UiService,
+    private router: Router
   ) {
-    this.route.queryParamMap.subscribe((params) => {
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      const destination = params.get('returnUrl') || '';
+      this.returnUrl =
+        destination.startsWith('/') && !destination.startsWith('//')
+          ? destination
+          : '';
       if (params.get('add') === '1') this.openModal();
+    });
+    effect(() => {
+      const signedIn = this.auth.isLoggedIn();
+      untracked(() => {
+        if (signedIn) this.state.loadAddresses();
+        else {
+          this.showModal.set(false);
+          this.saving.set(false);
+          this.editing.set(null);
+          this.mapOpen.set(false);
+          this.formError.set('');
+          this.fieldErrors.set({});
+          this.form = { id: '', label: '', name: '', line: '', phone: '' };
+          this.originalForm = '';
+        }
+      });
+    });
+  }
+
+  private draftSignature(): string {
+    return JSON.stringify({
+      label: this.form.label || '',
+      name: this.form.name || '',
+      line: this.form.line || '',
+      phone: this.form.phone || '',
+      city: this.form.city || '',
+      state: this.form.state || '',
+      pincode: this.form.pincode || '',
+      latitude: this.form.latitude ?? null,
+      longitude: this.form.longitude ?? null,
+      isDefault: !!this.form.isDefault,
     });
   }
 
@@ -58,7 +109,16 @@ export class AddressesComponent {
     this.editing.set(null);
     this.formError.set('');
     this.fieldErrors.set({});
-    this.form = { id: '', label: '', name: '', line: '', phone: '' };
+    this.form = {
+      id: '',
+      label: 'Home',
+      name: '',
+      line: '',
+      phone: '',
+      isDefault: this.state.addresses().length === 0,
+    };
+    this.originalForm = this.draftSignature();
+    this.mapOpen.set(false);
     this.showModal.set(true);
   }
 
@@ -67,11 +127,14 @@ export class AddressesComponent {
     this.formError.set('');
     this.fieldErrors.set({});
     this.form = { ...address };
+    this.originalForm = this.draftSignature();
+    this.mapOpen.set(false);
     this.showModal.set(true);
   }
 
   save(event: Event): void {
     event.preventDefault();
+    if (this.saving()) return;
     this.form = {
       ...this.form,
       label: stripControlCharacters(this.form.label),
@@ -86,6 +149,9 @@ export class AddressesComponent {
     this.fieldErrors.set(errors);
     if (Object.keys(errors).length) {
       this.formError.set('Please fix the highlighted address fields.');
+      requestAnimationFrame(() =>
+        document.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus()
+      );
       return;
     }
     this.formError.set('');
@@ -94,6 +160,7 @@ export class AddressesComponent {
       next: () => {
         this.saving.set(false);
         this.showModal.set(false);
+        if (this.returnUrl) this.router.navigateByUrl(this.returnUrl);
       },
       error: (error: any) => {
         this.saving.set(false);
@@ -105,19 +172,67 @@ export class AddressesComponent {
   }
 
   remove(id: string): void {
-    this.state.deleteAddress(id);
+    const address = this.addresses().find((item) => item.id === id);
+    this.ui
+      .confirm({
+        title: 'Remove this saved address?',
+        eyebrow:'Address change',
+        notice:'Deleting a saved address does not rewrite an existing order address.',
+        confirmIcon:'trash',
+        message: `${
+          address?.label || 'This address'
+        } will be removed from your saved addresses.`,
+        confirmText: 'Delete address',
+        cancelText: 'Keep address',
+        tone: 'danger',
+      })
+      .then((yes) => {
+        if (yes) this.state.deleteAddress(id);
+      });
   }
 
-  makeDefault(id: string): void {
-    this.state.selectAddress(id);
-    this.state.showToast('Default address updated');
+  makeDefault(id: string, event?: Event): void {
+    this.state.setDefaultAddress(id, event?.currentTarget instanceof HTMLElement ? event.currentTarget : undefined);
+  }
+
+  @HostListener('window:beforeunload', ['$event'])
+  warnBeforeUnload(event: BeforeUnloadEvent): void {
+    if (!(this.saving() || (this.showModal() && this.draftSignature() !== this.originalForm))) return;
+    event.preventDefault();
+    event.returnValue = '';
+  }
+
+  async canLeave(): Promise<boolean> {
+    if (this.saving()) return false;
+    if (!this.showModal() || this.draftSignature() === this.originalForm)
+      return true;
+    return this.ui.confirmDiscardDraft();
   }
 
   closeModal(): void {
+    if (this.saving()) return;
+    if (this.draftSignature() !== this.originalForm) {
+      this.ui.confirmDiscardDraft()
+        .then((yes) => {
+          if (yes) this.showModal.set(false);
+        });
+      return;
+    }
     this.showModal.set(false);
-    this.saving.set(false);
-    this.formError.set('');
-    this.fieldErrors.set({});
+  }
+
+  choose(address: Address): void {
+    this.state.selectAddress(address.id);
+    if (this.returnUrl) this.router.navigateByUrl(this.returnUrl);
+  }
+
+  useDeliveryArea(): void {
+    const location = this.state.customerLocationQuery();
+    if (location['lat'] == null || location['lng'] == null) return;
+    this.form.latitude = Number(location['lat']);
+    this.form.longitude = Number(location['lng']);
+    this.clearFieldError('latitude');
+    this.clearFieldError('longitude');
   }
 
   fieldError(field: string): string {
@@ -188,11 +303,25 @@ export class AddressesComponent {
     else if (!INDIA_PINCODE_PATTERN.test(pincode))
       errors['pincode'] = 'Enter a valid 6-digit PIN code.';
 
+    for (const [field, limit] of [
+      ['latitude', 90],
+      ['longitude', 180],
+    ] as const) {
+      const value = this.form[field];
+      if (
+        value != null &&
+        String(value).trim() !== '' &&
+        (!Number.isFinite(Number(value)) || Math.abs(Number(value)) > limit)
+      )
+        errors[field] = `Enter a coordinate between -${limit} and ${limit}.`;
+    }
     return errors;
   }
 
   private applyBackendErrors(error: any): void {
     const parsed = parseFormErrors(error?.error || error, {
+      full_name: 'name',
+      address_line1: 'line',
       postal_code: 'pincode',
       postalCode: 'pincode',
       zip_code: 'pincode',

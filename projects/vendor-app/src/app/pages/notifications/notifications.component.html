@@ -1,7 +1,7 @@
 <div class="workspace-page">
   <header class="page-heading">
     <div>
-      <p class="eyebrow">Account</p><h1>Notifications</h1>
+      <p class="eyebrow">Account</p><h1>Your store, kept in the loop.</h1>
       <p>{{ inbox.unread() }} unread update{{ inbox.unread() === 1 ? '' : 's' }} across your inbox.</p>
     </div>
     <button
@@ -51,7 +51,7 @@
   @if(error() || inbox.error()){
   <p class="workspace-error" role="alert">{{ error() || inbox.error() }}</p>
   } @if(loading()){
-  <div class="workspace-state" role="status">Loading notifications…</div>
+  <nc-counter-state kind="loading" title="Loading notifications…" />
   }@else if(!error()&&!notifications().length){
   <div class="workspace-state">
     <h3>No matching notifications</h3>
@@ -98,10 +98,10 @@
     }
   </div>
   }
-  <nc-vendor-pager
+  @if(loaded()){<nc-vendor-pager
     [page]="page()"
     [count]="count()"
     [busy]="loading()"
     (pageChange)="query($event)"
-  />
+  />}
 </div>

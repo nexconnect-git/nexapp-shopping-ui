@@ -1,8 +1,10 @@
+import { ButtonDirective } from 'primeng/button';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 @Component({
   selector: 'fd-nx-button',
   standalone: true,
+  imports: [ButtonDirective],
   templateUrl: './nx-button.component.html',
   styleUrls: ['./nx-button.component.scss'],
 })

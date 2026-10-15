@@ -1,28 +1,23 @@
-import { Component, computed, effect, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { CustomerIconComponent } from '../../shared/customer-icon/customer-icon.component';
+import { BasketSummaryComponent } from '../../components/basket-summary/basket-summary.component';
+import { CustomerPageHeaderComponent } from '../../shared/customer-page-header/customer-page-header.component';
+import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import {
-  buildDeliveryFeeChangeConfirmation,
-  COD_UPI_CONFIRMATION_MESSAGE,
-  DEFAULT_UPI_APPS,
-  isUpiPaymentMethod,
-  paymentIconFor,
-  paymentPanelTitle,
-} from '@nexconnect/customer-checkout';
+import { checkoutPaymentMethodForBackend } from '@nexconnect/customer-checkout';
 import { isCustomerAddressComplete } from '@nexconnect/customer-validation';
 import { Address, PaymentMethod } from '../../models';
 import { AppStateService } from '../../services/app-state.service';
 import { OrderService } from '../../services/order.service';
 import { CustomerCartApiService } from '../../services/customer-cart-api.service';
-import { OrderSummaryComponent } from '../../components/order-summary/order-summary.component';
-import { ProductCardComponent } from '../../components/product-card/product-card.component';
-import { CatalogService } from '../../services/catalog.service';
 import { UiService } from '../../services/ui.service';
-import { AppCurrencyPipe } from '@shared/lib/pipes/currency.pipe';
+import { CustomerCurrencyPipe as AppCurrencyPipe } from '../../shared/customer-currency/customer-currency.pipe';
 import { CurrencyService } from '@shared/lib/services/currency.service';
 import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
-import { MobileCheckoutStepperComponent } from '../../mobile-ui/mobile-checkout-stepper/mobile-checkout-stepper.component';
 import { AuthService } from '../../services/auth.service';
+import { NxModalShellComponent } from '../../shared/ui/nx-modal-shell/nx-modal-shell.component';
+import { CustomerStateComponent } from '../../shared/customer-state/customer-state.component';
 import { CustomerLockedStateComponent } from '../../shared/customer-locked-state/customer-locked-state.component';
 
 interface AddressPreviewState {
@@ -37,37 +32,91 @@ interface AddressPreviewState {
   standalone: true,
   imports: [
     FormsModule,
-    RouterLink,
     BreadcrumbsComponent,
-    OrderSummaryComponent,
-    ProductCardComponent,
+    CustomerIconComponent,
+    RouterLink,
+    CustomerPageHeaderComponent,
+    BasketSummaryComponent,
     AppCurrencyPipe,
-    MobileCheckoutStepperComponent,
     CustomerLockedStateComponent,
+    CustomerStateComponent,
+    NxModalShellComponent,
   ],
   templateUrl: './checkout.component.html',
   styleUrls: ['./checkout.component.scss'],
 })
 export class CheckoutComponent {
-  mobileSection = signal<'address' | 'slot' | 'payment' | 'review'>(
-    'address',
-  );
+  private readonly destroyRef = inject(DestroyRef);
+  readonly activeAddressPreview = computed<AddressPreviewState | undefined>(() => this.addressPreviews()[this.state.activeAddress()?.id || '']);
+  readonly activeAddressUnavailable = computed(() => {
+    const preview = this.activeAddressPreview();
+    return preview?.code === 'delivery_not_serviceable' || preview?.preview?.same_state === false || !!this.blockingDeliveryQuote(preview?.preview);
+  });
+  readonly serviceableAlternativeAddress = computed(() => this.state.addresses().find(address => address.id !== this.state.activeAddress()?.id && !this.addressDisabledReason(address)));
+  mobileSection = signal<'address' | 'slot' | 'payment' | 'review'>('address');
   selectedAddress = signal('');
+  readonly addressChangeLoading = signal(false);
+  private addressSelectionRequest = 0;
   deliveryMode = signal<'now' | 'scheduled'>('now');
   scheduledDate = signal(this.defaultScheduleDate());
-  scheduledTime = signal(this.defaultScheduleTime());
   selectedPayment = signal('');
   addressPreviews = signal<Record<string, AddressPreviewState>>({});
   maxScheduleDate = this.offsetDateValue(7);
-  readonly upiApps = [
-    { name: 'Google Pay', logo: 'G', className: 'gpay' },
-    { name: 'PhonePe', logo: 'पे', className: 'phonepe' },
-    { name: 'Paytm', logo: 'Paytm', className: 'paytm' },
-    { name: 'Amazon Pay', logo: 'a', className: 'amazonpay' },
-    { name: 'BHIM', logo: 'BHIM', className: 'bhim' },
-    { name: 'Other UPI', logo: 'UPI', className: 'upi' },
-  ];
-  readonly sharedUpiApps = DEFAULT_UPI_APPS;
+  readonly steps = [
+    { id: 'address', label: 'Address' },
+    { id: 'slot', label: 'Delivery' },
+    { id: 'payment', label: 'Payment' },
+    { id: 'review', label: 'Review' },
+  ] as const;
+  readonly stepIndex = computed(() =>
+    this.steps.findIndex((step) => step.id === this.mobileSection())
+  );
+  readonly stepTitle = computed(
+    () =>
+      [
+        'Where should we deliver?',
+        'Now or a little later?',
+        'Choose how to pay.',
+        'One last look.',
+      ][this.stepIndex()]
+  );
+  readonly quoteLoading = signal(false);
+  readonly quoteError = signal('');
+  readonly quote = signal<any>(null);
+  readonly inlineError = signal('');
+  readonly codConfirmationOpen = signal(false);
+  readonly codAcknowledged = signal(false);
+  readonly paymentError = signal<'cancelled' | 'declined' | 'script' | ''>('');
+  readonly recoveryDismissed = signal(false);
+  readonly paymentProgress = computed(() => {
+    if (!this.state.checkoutSubmitting()) return '';
+    const stage = this.state.checkoutStage();
+    if (stage === 'creating-session' || stage === 'provider-loading') return 'processing';
+    if (stage === 'finalizing') return 'finalizing';
+    return '';
+  });
+  readonly paymentErrorTitle = computed(() => ({cancelled:'Payment cancelled. Basket kept.',declined:'Payment did not go through.',script:'Secure checkout did not load.'})[this.paymentError() as 'cancelled' | 'declined' | 'script'] || '');
+  readonly paymentErrorDescription = computed(() => this.paymentError() === 'cancelled' ? 'You closed the secure gateway. No successful payment is recorded by this checkout. Your basket stays.' : this.paymentError() === 'declined' ? 'The payment provider reported a failed payment. No paid order has been confirmed. Your basket stays.' : 'The gateway script could not load. This is separate from a declined payment. Your basket stays.');
+  readonly slots = signal<any[]>([]);
+  readonly slotsLoading = signal(false);
+  readonly slotsError = signal('');
+  readonly selectedSlot = signal('');
+  readonly deliveryTiming = computed(() =>
+    this.deliveryMode() === 'now'
+      ? 'As soon as possible'
+      : this.slots().find((slot) => slot.start === this.selectedSlot())
+          ?.displayLabel || 'Choose delivery time'
+  );
+  readonly scheduleAvailable = computed(
+    () =>
+      this.state.cart().length > 0 &&
+      this.state
+        .cart()
+        .every((item) => item.raw?.is_scheduled_delivery === true)
+  );
+  private quoteRequest = 0;
+  private slotsRequest = 0;
+  private addressRequest = 0;
   hasAddresses = computed(() => this.state.addresses().length > 0);
   hasPaymentMethods = computed(() => this.state.paymentMethods().length > 0);
   selectedPaymentId = computed(
@@ -75,38 +124,24 @@ export class CheckoutComponent {
       this.selectedPayment() ||
       this.state.selectedPaymentMethod() ||
       this.state.paymentMethods()[0]?.id ||
-      '',
+      ''
   );
   selectedPaymentMeta = computed<PaymentMethod>(() => {
     const selected = this.selectedPaymentId();
     return (
       this.state.paymentMethods().find((method) => method.id === selected) ||
-      this.state.paymentMethods()[0] ||
-      {
-        id: 'cod',
-        label: 'Cash on delivery',
-        description: 'Pay using UPI at delivery',
-        icon: '₹',
-        isDefault: true,
+      this.state.paymentMethods()[0] || {
+        id: '',
+        label: 'Choose a payment method',
+        description: '',
+        icon: '',
+        isDefault: false,
       }
     );
   });
-  vendorSchedule = computed(() => {
-    const vendor = this.state.cart()[0]?.raw?.vendor as any;
-    return {
-      name: vendor?.store_name || this.state.cart()[0]?.storeName || 'Store',
-      opening: vendor?.opening_time || '',
-      closing: vendor?.closing_time || '',
-      buffer: Number(vendor?.scheduled_buffer_min || vendor?.base_prep_time_min || 30),
-    };
-  });
   scheduledFor = computed(() => {
     if (this.deliveryMode() !== 'scheduled') return null;
-    const date = this.scheduledDate();
-    const time = this.scheduledTime();
-    if (!date || !time) return null;
-    const value = new Date(`${date}T${time}:00`);
-    return Number.isNaN(value.getTime()) ? null : value.toISOString();
+    return this.selectedSlot() || null;
   });
   activeStoreAvailability = computed(() => {
     const vendor = this.state.cart()[0]?.raw?.vendor as any;
@@ -125,30 +160,37 @@ export class CheckoutComponent {
     const message =
       vendor?.availability_note ||
       (!isOpen && opening && closing
-        ? `'${vendor?.store_name || 'Store'}' is closed right now. Open ${opening} - ${closing}.`
+        ? `'${
+            vendor?.store_name || 'Store'
+          }' is closed right now. Open ${opening} - ${closing}.`
         : !isOpen
-          ? `'${vendor?.store_name || 'Store'}' is closed right now.`
-          : '');
+        ? `'${vendor?.store_name || 'Store'}' is closed right now.`
+        : '');
     return {
       isOpen,
       message,
     };
   });
-  canPlaceOrder = computed(
-    () => {
-      const activeAddress = this.state.activeAddress();
-      const addressReady =
-        !!activeAddress && !this.addressDisabledReason(activeAddress);
-      return (
-        !this.state.checkoutSubmitting() &&
-        !this.state.cartCheckoutBlockReason() &&
-        this.hasPaymentMethods() &&
-        this.activeStoreAvailability().isOpen &&
-        !this.scheduleError() &&
-        addressReady
-      );
-    },
-  );
+  canPlaceOrder = computed(() => {
+    const activeAddress = this.state.activeAddress();
+    const addressReady =
+      !!activeAddress && !this.addressDisabledReason(activeAddress);
+    return (
+      !this.state.paymentMethodsLoading() &&
+      !this.state.paymentMethodsError() &&
+      !this.state.checkoutSubmitting() &&
+      !this.addressChangeLoading() &&
+      !this.state.hasCheckoutRecovery() &&
+      !!this.quote()?.price_breakup &&
+      !this.quoteLoading() &&
+      !this.quoteError() &&
+      !this.state.cartCheckoutBlockReason() &&
+      this.hasPaymentMethods() &&
+      this.activeStoreAvailability().isOpen &&
+      !this.scheduleError() &&
+      addressReady
+    );
+  });
   checkoutBlockingReason = computed(() => {
     const cartIssue = this.state.cartCheckoutBlockReason();
     if (cartIssue) return cartIssue;
@@ -174,22 +216,27 @@ export class CheckoutComponent {
     if (section === 'address') {
       return {
         label: this.hasAddresses()
-          ? 'Continue to payment'
+          ? 'Continue to delivery'
           : 'Add delivery address',
-        disabled: false,
+        disabled:
+          this.hasAddresses() &&
+          (this.addressChangeLoading() || !this.state.activeAddress() ||
+            !!this.addressDisabledReason(this.state.activeAddress()!) ||
+            this.state.checkoutPreviewLoading() || !!this.state.checkoutPreviewError() || !this.state.checkoutPriceBreakup()),
       };
     }
     if (section === 'slot') {
-      const blocked = !this.activeStoreAvailability().isOpen || !!this.scheduleError();
+      const blocked =
+        !this.activeStoreAvailability().isOpen || !!this.scheduleError();
       return {
-        label: blocked ? 'Fix delivery slot' : 'Continue to payment',
+        label: 'Continue to payment',
         disabled: blocked,
       };
     }
     if (section === 'payment') {
       const blocked = !this.selectedPaymentId() || !this.hasPaymentMethods();
       return {
-        label: blocked ? 'Select a payment method' : 'Review order',
+        label: 'Review order',
         disabled: blocked,
       };
     }
@@ -202,85 +249,80 @@ export class CheckoutComponent {
   });
   scheduleError = computed(() => {
     if (this.deliveryMode() !== 'scheduled') return '';
-    const date = this.scheduledDate();
-    const time = this.scheduledTime();
-    if (!date || !time) return 'Select a delivery date and time.';
-    const selected = new Date(`${date}T${time}:00`);
-    if (Number.isNaN(selected.getTime())) return 'Select a valid delivery time.';
-    const min = new Date(Date.now() + this.vendorSchedule().buffer * 60000);
-    if (selected <= min)
-      return `Pick a time at least ${this.vendorSchedule().buffer} minutes from now.`;
-    const { opening, closing } = this.vendorSchedule();
-    if (opening && closing) {
-      const selectedTime = this.timeToMinutes(time);
-      if (
-        selectedTime < this.timeToMinutes(opening) ||
-        selectedTime > this.timeToMinutes(closing)
-      ) {
-        return `Pick a time between ${this.formatClock(opening)} and ${this.formatClock(closing)}.`;
-      }
-    }
+    if (!this.scheduleAvailable())
+      return 'Scheduled delivery is unavailable for this basket.';
+    if (this.slotsLoading()) return 'Checking delivery times.';
+    if (this.slotsError()) return this.slotsError();
+    if (!this.selectedSlot()) return 'Choose an available delivery time.';
+    if (
+      !this.slots().some(
+        (slot) => slot.start === this.selectedSlot() && slot.available === true
+      )
+    )
+      return 'This delivery time is no longer available.';
     return '';
   });
-  sameStoreSuggestions = computed(() => {
-    const cart = this.state.cart();
-    const storeId = cart[0]?.storeId;
-    const cartIds = new Set(cart.map((item) => item.id));
-    if (!storeId) return [];
-    return this.catalog
-      .products()
-      .filter(
-        (product) => product.storeId === storeId && !cartIds.has(product.id),
-      )
-      .slice(0, 4);
-  });
-  otherStoreSuggestions = computed(() => {
-    const cart = this.state.cart();
-    const storeId = cart[0]?.storeId;
-    const cartIds = new Set(cart.map((item) => item.id));
-    const categories = new Set(
-      cart.map((item) => item.category).filter(Boolean),
-    );
-    if (!storeId || !categories.size) return [];
-    return this.catalog
-      .products()
-      .filter(
-        (product) =>
-          product.storeId !== storeId &&
-          categories.has(product.category) &&
-          !cartIds.has(product.id),
-      )
-      .slice(0, 4);
-  });
-
   private previewKey = '';
+  private customerSession = -1;
 
   constructor(
     public state: AppStateService,
-    public catalog: CatalogService,
     private orders: OrderService,
     private router: Router,
     private cartApi: CustomerCartApiService,
     private ui: UiService,
     private currency: CurrencyService,
-    public auth: AuthService,
+    public auth: AuthService
   ) {
     effect(() => {
-      if (!this.auth.isLoggedIn()) return;
-      if (this.state.cartLoaded() && !this.state.itemCount()) {
+      this.selectedAddress.set(this.state.activeAddress()?.id || '');
+    });
+    effect(() => {
+      this.auth.currentUser();
+      if (this.customerSession !== this.auth.sessionVersion) {
+        this.customerSession = this.auth.sessionVersion;
+        this.codConfirmationOpen.set(false);
+        this.codAcknowledged.set(false);
+        this.paymentError.set('');
+        this.recoveryDismissed.set(false);
+        this.mobileSection.set('address');
+        this.selectedPayment.set('');
+        ++this.addressSelectionRequest;
+        this.addressChangeLoading.set(false);
+        this.previewKey = '';
+      }
+      if (!this.auth.isLoggedIn()) {
+        ++this.addressRequest; ++this.quoteRequest; ++this.slotsRequest;
+        this.addressPreviews.set({}); this.quote.set(null); this.previewKey='';
+        return;
+      }
+      if (
+        !this.state.hasCheckoutRecovery() &&
+        this.state.cartLoaded() &&
+        !this.state.itemCount()
+      ) {
         this.state.showToast('Your cart is empty. Add items before checkout.');
         this.router.navigate(['/cart']);
         return;
       }
       const cartIssue = this.state.cartCheckoutBlockReason();
-      if (this.state.cartLoaded() && this.state.itemCount() && cartIssue) {
+      if (
+        !this.state.hasCheckoutRecovery() &&
+        this.state.cartLoaded() &&
+        this.state.itemCount() &&
+        cartIssue &&
+        !this.state.deliveryUnavailable()
+      ) {
         this.state.showToast(cartIssue, 'warning');
         this.router.navigate(['/cart']);
         return;
       }
-      const key = `${this.state.itemCount()}::${this.state
+      const key = `${this.auth.currentUser() ? this.auth.sessionVersion : ''}::${this.state
+        .cart()
+        .map((item) => item.id + ':' + item.quantity)
+        .join('|')}::${this.state
         .addresses()
-        .map((address) => address.id)
+        .map((address) => JSON.stringify(address))
         .join('|')}`;
       if (key === this.previewKey) return;
       this.previewKey = key;
@@ -293,6 +335,25 @@ export class CheckoutComponent {
         this.state.selectPayment(selected);
       }
     });
+    effect(() => {
+      this.state.activeAddress()?.id;
+      this.selectedPaymentId();
+      this.deliveryMode();
+      this.selectedSlot();
+      this.state.coupon();
+      this.state
+        .cart()
+        .map((item) => item.id + ':' + item.quantity)
+        .join('|');
+      this.quote.set(null);
+      this.quoteError.set('');
+      ++this.quoteRequest;
+      if (
+        this.mobileSection() === 'review' &&
+        !this.state.hasCheckoutRecovery()
+      )
+        this.refreshQuote();
+    });
   }
 
   selectAddress(id: string, dropdown?: HTMLDetailsElement): void {
@@ -300,31 +361,69 @@ export class CheckoutComponent {
     if (!address) return;
     const reason = this.addressDisabledReason(address);
     if (reason) {
+      this.selectedAddress.set(this.state.activeAddress()?.id || '');
       this.state.showToast(reason);
       return;
     }
+    this.selectedAddress.set(id);
+    const trigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const session = this.auth.sessionVersion;
     const currentAddress = this.state.activeAddress();
     const currentFee = currentAddress?.id
       ? this.previewFee(currentAddress.id)
-      : this.state.deliveryFee();
+      : this.state.deliveryFeeKnown() ? this.state.deliveryFee() : null;
     const nextFee = this.previewFee(id);
     if (
       currentAddress?.id &&
       currentAddress.id !== id &&
-      currentFee !== nextFee
+      (currentFee === null || nextFee === null || currentFee !== nextFee)
     ) {
-      this.ui
-        .confirm(
-          buildDeliveryFeeChangeConfirmation({
-            currentFee,
-            nextFee,
-            currentAddress,
-            nextAddress: address,
-          }),
-        )
-        .then((confirmed) => {
-          if (confirmed) this.applyAddressSelection(id, dropdown);
-        });
+      const request = ++this.addressSelectionRequest;
+      this.addressChangeLoading.set(true);
+      const preview = this.addressPreviews()[id]?.preview;
+      this.cartApi.getCheckoutPreview({
+        delivery_address_id: id,
+        payment_method: checkoutPaymentMethodForBackend(this.selectedPaymentId()),
+        coupon_code: this.state.coupon(),
+        confirm_far_delivery: !!this.primaryDeliveryQuote(preview)?.requires_far_delivery_confirmation,
+        cod_upi_confirmed: true,
+        scheduled_for: this.scheduledFor(),
+      }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: (quote) => {
+          if (request !== this.addressSelectionRequest || session !== this.auth.sessionVersion) return;
+          this.addressChangeLoading.set(false);
+          const fee = Number(quote?.price_breakup?.delivery_fee);
+          const payable = Number(quote?.price_breakup?.final_payable);
+          if (!Number.isFinite(fee) || !Number.isFinite(payable)) {
+            this.selectedAddress.set(this.state.activeAddress()?.id || '');
+            this.state.showToast('The updated order charges could not be confirmed. Retry this address.', 'error');
+            return;
+          }
+          this.ui.confirm({
+            title: 'Your delivery fee changed.',
+            eyebrow: 'Review the current quote',
+            message: 'The selected address has a different delivery fee. Confirm the updated charge before continuing.',
+            rows: [
+              { label: 'Previous delivery fee', value: currentFee ?? 'Not confirmed', currency: currentFee !== null },
+              { label: 'New delivery fee', value: fee, currency: true },
+              { label: 'New payable', value: payable, currency: true },
+            ],
+            notice: 'This change requires a new confirmed quote. An older address response must not overwrite the current one.',
+            cancelText: 'Keep previous address',
+            confirmText: 'Accept updated quote',
+          }, trigger).then((confirmed) => {
+            if (this.destroyRef.destroyed || request !== this.addressSelectionRequest || session !== this.auth.sessionVersion) return;
+            if (confirmed) this.applyAddressSelection(id, dropdown);
+            else this.selectedAddress.set(this.state.activeAddress()?.id || '');
+          });
+        },
+        error: (error) => {
+          if (request !== this.addressSelectionRequest || session !== this.auth.sessionVersion) return;
+          this.addressChangeLoading.set(false);
+          this.selectedAddress.set(this.state.activeAddress()?.id || '');
+          this.state.showToast(this.checkoutErrorMessage(error), 'error');
+        },
+      });
       return;
     }
     this.applyAddressSelection(id, dropdown);
@@ -339,19 +438,15 @@ export class CheckoutComponent {
     return this.state.activeAddress()?.id === id;
   }
 
-  isUpiPayment(id: string): boolean {
-    return isUpiPaymentMethod(id);
-  }
-
-  paymentPanelTitle(id: string): string {
-    return paymentPanelTitle(id);
-  }
-
-  paymentIcon(id: string): string {
-    return paymentIconFor(id);
-  }
-
   placeOrder(): void {
+    if (!this.canPlaceOrder()) {
+      this.inlineError.set(
+        this.checkoutBlockingReason() ||
+          this.quoteError() ||
+          'Confirm a current quote before placing your order.'
+      );
+      return;
+    }
     const cartIssue = this.state.cartCheckoutBlockReason();
     if (cartIssue) {
       this.state.showToast(cartIssue, 'warning');
@@ -361,7 +456,7 @@ export class CheckoutComponent {
     const availability = this.activeStoreAvailability();
     if (!availability.isOpen) {
       this.state.showToast(
-        availability.message || 'This store is closed right now.',
+        availability.message || 'This store is closed right now.'
       );
       return;
     }
@@ -372,57 +467,202 @@ export class CheckoutComponent {
     const selectedPayment =
       this.selectedPayment() || this.state.selectedPaymentMethod() || 'cod';
     if (selectedPayment === 'cod') {
-      this.ui
-        .confirm({
-          title: 'Confirm COD payment',
-          message: COD_UPI_CONFIRMATION_MESSAGE,
-          confirmText: 'I understand',
-          cancelText: 'Cancel',
-          tone: 'warning',
-        })
-        .then((confirmed) => {
-          if (confirmed) this.submitOrder(selectedPayment, true);
-        });
+      this.codAcknowledged.set(false);
+      this.codConfirmationOpen.set(true);
       return;
     }
     this.submitOrder(selectedPayment, true);
   }
 
+  confirmCodOrder(): void {
+    if (!this.codAcknowledged() || !this.canPlaceOrder()) return;
+    this.codConfirmationOpen.set(false);
+    this.submitOrder('cod', true);
+  }
+
+  changePayment(): void {
+    if (this.state.checkoutSubmitting()) return;
+    this.codConfirmationOpen.set(false);
+    this.paymentError.set('');
+    this.mobileSection.set('payment');
+  }
+
   private submitOrder(selectedPayment: string, codUpiConfirmed: boolean): void {
+    const session = this.auth.sessionVersion;
+    this.paymentError.set('');
+    this.recoveryDismissed.set(false);
     this.orders
       .placeOrder(selectedPayment, {
         codUpiConfirmed,
         scheduledFor: this.scheduledFor(),
       })
       .subscribe({
-        next: (order) => this.router.navigate(['/order-confirmed', order.id]),
+        next: (order) => { if (!this.destroyRef.destroyed && session === this.auth.sessionVersion) this.router.navigate(['/order-confirmed', order.id]); },
         error: (error) => {
+          if (this.destroyRef.destroyed || session !== this.auth.sessionVersion) return;
           this.applyCheckoutError(error);
-          this.state.showToast(this.checkoutErrorMessage(error));
+          this.inlineError.set(this.checkoutErrorMessage(error));
+          const code = error?.error?.code || error?.body?.code || error?.code;
+          this.paymentError.set(code === 'provider_cancelled' ? 'cancelled' : code === 'provider_failed' ? 'declined' : code === 'provider_script_unavailable' ? 'script' : '');
+          if (!this.state.hasCheckoutRecovery() && !this.paymentError() && code !== 'quote_changed') {
+            ++this.quoteRequest;
+            this.quote.set(null);
+            this.quoteLoading.set(false);
+            this.quoteError.set(this.checkoutErrorMessage(error));
+          }
+          if (code === 'delivery_not_serviceable')
+            this.mobileSection.set('address');
+          if (code === 'quote_changed') {
+            this.quote.set(null);
+            this.quoteLoading.set(true);
+            this.state.loadCart(
+              () => this.refreshQuote(),
+              () => {
+                this.quoteLoading.set(false);
+                this.quoteError.set('Your basket could not refresh. Retry the delivery quote before continuing.');
+              }
+            );
+          }
         },
       });
   }
 
-  selectUpiApp(app: string): void {
-    this.selectPayment('razorpay_upi');
-    this.state.showToast(`${app} selected for payment`);
-  }
-
   goAddresses(): void {
-    this.router.navigate(['/addresses']);
+    this.router.navigate(['/addresses'], {
+      queryParams: { add: '1', returnUrl: '/checkout' },
+    });
   }
 
   openMobileSection(section: 'address' | 'slot' | 'payment' | 'review'): void {
+    const index = this.steps.findIndex((step) => step.id === section);
+    if (index > this.stepIndex() || this.state.checkoutSubmitting()) return;
     this.mobileSection.set(section);
+    this.inlineError.set('');
+  }
+
+  goBasket(): void {
+    this.router.navigate(['/cart']);
+  }
+
+  back(): void {
+    if (this.stepIndex() > 0)
+      this.openMobileSection(this.steps[this.stepIndex() - 1].id);
+  }
+
+  retryQuote(): void {
+    this.inlineError.set('');
+    const session = this.auth.sessionVersion;
+    this.quoteLoading.set(true);
+    this.quoteError.set('');
+    this.state.refreshDeliveryAvailability().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => { if (session === this.auth.sessionVersion) this.refreshQuote(); },
+      error: (error) => {
+        if (session !== this.auth.sessionVersion) return;
+        this.quoteLoading.set(false);
+        this.quoteError.set(this.checkoutErrorMessage(error));
+      },
+    });
+  }
+
+  refreshQuote(): void {
+    const request = ++this.quoteRequest;
+    const session = this.auth.sessionVersion;
+    this.quoteLoading.set(true);
+    this.quoteError.set('');
+    this.quote.set(null);
+    this.state
+      .getCheckoutPreview(this.selectedPaymentId(), true, this.scheduledFor())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (preview) => {
+          if (request !== this.quoteRequest || session !== this.auth.sessionVersion) return;
+          this.quoteLoading.set(false);
+          if(!preview?.price_breakup){ this.quoteError.set('The server did not confirm a complete fee breakdown. Retry before continuing.'); return; }
+          this.quote.set(preview);
+          this.state.acceptCheckoutPreview(preview);
+        },
+        error: (error) => {
+          if (request !== this.quoteRequest || session !== this.auth.sessionVersion) return;
+          this.quoteLoading.set(false);
+          this.quoteError.set(this.checkoutErrorMessage(error));
+        },
+      });
+  }
+
+  setDeliveryMode(mode: 'now' | 'scheduled'): void {
+    this.deliveryMode.set(mode);
+    this.inlineError.set('');
+    if (mode === 'scheduled') this.loadSlots();
+  }
+
+  loadSlots(): void {
+    const request = ++this.slotsRequest;
+    const session = this.auth.sessionVersion;
+    this.slotsLoading.set(true);
+    this.slotsError.set('');
+    this.selectedSlot.set('');
+    this.cartApi
+      .getAvailableSlots({ date: this.scheduledDate(), days: 1 })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (response) => {
+          if (request !== this.slotsRequest || session !== this.auth.sessionVersion) return;
+          this.slots.set(
+            (response.results || []).map((slot: any) => ({
+              ...slot,
+              windowLabel: new Date(slot.start).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit',hour12:false}) + ' – ' + new Date(slot.end).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',hour12:false}),
+              dayLabel: new Date(slot.start).toLocaleDateString([], {day:'numeric',month:'short'}) + ' ' + new Date(slot.start).toLocaleTimeString([], {timeZoneName:'short'}).split(' ').slice(-1)[0],
+              displayLabel:
+                new Date(slot.start).toLocaleString(undefined, {
+                  weekday: 'short',
+                  day: 'numeric',
+                  month: 'short',
+                  hour: 'numeric',
+                  minute: '2-digit',
+                }) +
+                ' – ' +
+                new Date(slot.end).toLocaleTimeString(undefined, {
+                  hour: 'numeric',
+                  minute: '2-digit',
+                  timeZoneName: 'short',
+                }),
+            }))
+          );
+          this.slotsLoading.set(false);
+        },
+        error: (error) => {
+          if (request !== this.slotsRequest || session !== this.auth.sessionVersion) return;
+          this.slotsLoading.set(false);
+          this.slotsError.set(this.checkoutErrorMessage(error));
+        },
+      });
+  }
+
+  retryAddressQuotes(): void {
+    this.refreshAddressPreviews();
+  }
+
+  recover(): void {
+    const session = this.auth.sessionVersion;
+    this.state
+      .recoverCheckout()
+      .subscribe({
+        next: (order) => { if (!this.destroyRef.destroyed && session === this.auth.sessionVersion) this.router.navigate(['/order-confirmed', order.id]); },
+        error: (error) => { if (!this.destroyRef.destroyed && session === this.auth.sessionVersion) this.inlineError.set(this.checkoutErrorMessage(error)); },
+      });
   }
 
   runMobileStickyAction(): void {
     if (this.mobileSection() === 'review') {
       if (this.canPlaceOrder()) this.placeOrder();
-      else this.state.showToast(this.checkoutBlockingReason() || 'Please review checkout details.');
+      else
+        this.state.showToast(
+          this.checkoutBlockingReason() || 'Please review checkout details.'
+        );
       return;
     }
     if (this.mobileSection() === 'address') {
+      if (this.mobileStickyState().disabled) return;
       if (!this.hasAddresses()) {
         this.goAddresses();
         return;
@@ -432,15 +672,20 @@ export class CheckoutComponent {
         return;
       }
       if (this.addressDisabledReason(this.state.activeAddress()!)) {
-        this.state.showToast(this.addressDisabledReason(this.state.activeAddress()!));
+        this.state.showToast(
+          this.addressDisabledReason(this.state.activeAddress()!)
+        );
         return;
       }
-      this.mobileSection.set('payment');
+      this.mobileSection.set('slot');
       return;
     }
     if (this.mobileSection() === 'slot') {
+      if (this.mobileStickyState().disabled) return;
       if (!this.activeStoreAvailability().isOpen) {
-        this.state.showToast(this.activeStoreAvailability().message || 'Store is currently closed.');
+        this.state.showToast(
+          this.activeStoreAvailability().message || 'Store is currently closed.'
+        );
         return;
       }
       if (this.scheduleError()) {
@@ -461,7 +706,9 @@ export class CheckoutComponent {
     if (!isCustomerAddressComplete(address as any))
       return 'Update this address before checkout. Required details are missing.';
     const state = this.addressPreviews()[address.id];
+    if (state?.loading) return 'Checking this address and delivery charge.';
     if (state?.error) return state.error;
+    if (!state?.preview) return 'Confirm a delivery quote for this address.';
     const preview = state?.preview;
     const blockingQuote = this.blockingDeliveryQuote(preview);
     if (blockingQuote)
@@ -481,54 +728,37 @@ export class CheckoutComponent {
     const quote = this.primaryDeliveryQuote(preview);
     if (quote?.requires_far_delivery_confirmation)
       return 'Changing to this address may change delivery fee and ETA.';
-    const fee = this.previewFee(address.id);
-    return fee > 0
-      ? `Delivery fee ${this.currency.format(fee)}`
-      : 'Serviceable for this order';
+    return 'Serviceable for this order';
   }
 
-  previewFee(addressId: string): number {
+  previewFee(addressId: string): number | null {
     const preview = this.addressPreviews()[addressId]?.preview;
-    const raw = preview?.total_delivery_fee ?? preview?.delivery_fee ?? 0;
+    const raw = preview?.total_delivery_fee ?? preview?.delivery_fee;
+    if (raw === null || raw === undefined) return null;
     const value = Number(raw);
-    return Number.isFinite(value) ? value : 0;
+    return Number.isFinite(value) ? value : null;
   }
 
-  private applyAddressSelection(id: string, dropdown?: HTMLDetailsElement): void {
+  private applyAddressSelection(
+    id: string,
+    dropdown?: HTMLDetailsElement
+  ): void {
     this.selectedAddress.set(id);
     this.state.selectAddress(id);
     if (dropdown) dropdown.open = false;
-  }
-
-  private addressTitle(address: Address | null | undefined): string {
-    if (!address) return 'Current address';
-    return [address.label, address.line, address.city, address.pincode]
-      .filter(Boolean)
-      .join(', ');
   }
 
   defaultScheduleDate(): string {
     return this.offsetDateValue(0);
   }
 
-  private defaultScheduleTime(): string {
-    const value = new Date(Date.now() + 60 * 60000);
-    value.setMinutes(Math.ceil(value.getMinutes() / 15) * 15, 0, 0);
-    return value.toTimeString().slice(0, 5);
-  }
-
   private offsetDateValue(days: number): string {
     const value = new Date();
     value.setDate(value.getDate() + days);
-    return value.toISOString().slice(0, 10);
-  }
-
-  private timeToMinutes(value: string): number {
-    const [hours, minutes] = String(value || '00:00')
-      .slice(0, 5)
-      .split(':')
-      .map((part) => Number(part));
-    return hours * 60 + minutes;
+    return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(
+      2,
+      '0'
+    )}-${String(value.getDate()).padStart(2, '0')}`;
   }
 
   private formatClock(value: string): string {
@@ -542,7 +772,11 @@ export class CheckoutComponent {
   }
 
   private blockingDeliveryQuote(preview: any): any | null {
-    return this.deliveryQuotes(preview).find((quote) => quote?.is_serviceable === false) || null;
+    return (
+      this.deliveryQuotes(preview).find(
+        (quote) => quote?.is_serviceable === false
+      ) || null
+    );
   }
 
   private primaryDeliveryQuote(preview: any): any | null {
@@ -565,7 +799,7 @@ export class CheckoutComponent {
   }
 
   private previewErrorState(error: any): AddressPreviewState {
-    const payload = error?.error || {};
+    const payload = error?.error || error?.body || {};
     return {
       error:
         payload.error ||
@@ -577,7 +811,7 @@ export class CheckoutComponent {
   }
 
   private applyCheckoutError(error: any): void {
-    const payload = error?.error || {};
+    const payload = error?.error || error?.body || {};
     const address = this.state.activeAddress();
     if (!address?.id || payload.code !== 'delivery_not_serviceable') return;
     this.addressPreviews.update((current) => ({
@@ -594,16 +828,20 @@ export class CheckoutComponent {
   }
 
   private checkoutErrorMessage(error: any): string {
-    const payload = error?.error || {};
+    const payload = error?.error || error?.body || {};
     return (
       payload.error ||
       payload.detail ||
+      error?.body?.error ||
+      error?.body?.detail ||
       error?.message ||
       'Could not place order'
     );
   }
 
   private refreshAddressPreviews(): void {
+    const request = ++this.addressRequest;
+    const session = this.auth.sessionVersion;
     const addresses = this.state.addresses();
     if (!this.state.itemCount() || !addresses.length) {
       this.addressPreviews.set({});
@@ -624,17 +862,21 @@ export class CheckoutComponent {
         ...current,
         [address.id]: { loading: true },
       }));
-      this.cartApi.getDeliveryFeePreview(address.id).subscribe({
-        next: (preview) =>
+      this.cartApi.getDeliveryFeePreview(address.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: (preview) => {
+          if (request !== this.addressRequest || session !== this.auth.sessionVersion) return;
           this.addressPreviews.update((current) => ({
             ...current,
             [address.id]: { preview },
-          })),
-        error: (error) =>
+          }));
+        },
+        error: (error) => {
+          if (request !== this.addressRequest || session !== this.auth.sessionVersion) return;
           this.addressPreviews.update((current) => ({
             ...current,
             [address.id]: this.previewErrorState(error),
-          })),
+          }));
+        },
       });
     }
   }

@@ -2,7 +2,7 @@
   <header class="page-heading">
     <div>
       <p class="eyebrow">Catalog</p>
-      <h1>Edit product</h1>
+      <h1>Your product, refined.</h1>
       <p>
         Operational changes save directly. Changes to product identity and
         handling require admin review.
@@ -28,40 +28,15 @@
     Retry loading product
   </button>
   } }@if(service.loading()){
-  <p role="status">Loading product…</p>
+  <nc-counter-state kind="loading" title="Loading product…" />
   } @if(service.snapshot();as snapshot){
-  <section class="workspace-card product-summary">
-    <div>
-      <h2>{{ snapshot.name }}</h2>
-      <p>Catalog category: {{ service.product().category }}</p>
-      <span class="status-chip" [attr.data-status]="snapshot.approval_status">{{
-        service.product().approvalStatusLabel
-      }}</span
-      >@if(snapshot.rejection_reason){
-      <p class="row-error">{{ snapshot.rejection_reason }}</p>
-      }
-    </div>
-    <div>
-      <h3>Customer visibility</h3>
-      @if(snapshot.visibility_blockers?.length){
-      <ul>
-        @for(blocker of snapshot.visibility_blockers;track blocker){
-        <li>{{ blocker }}</li>
-        }
-      </ul>
-      }@else{
-      <p>Ready to sell according to the last saved server state.</p>
-      }<small>Unsaved changes are not part of this assessment.</small>
-    </div>
-  </section>
   @if(snapshot.approval_status==='pending_approval'){
   <p class="info-banner">
     Product identity and images are locked while review is pending. Pricing,
     stock and selling controls can still be saved.
   </p>
   }
-  <fieldset [disabled]="service.saving()">
-    <section class="workspace-card">
+<nav class="tabs" aria-label="Product editor sections">@for(item of tabs;track item.key){<button class="tab" type="button" [class.active]="tab()===item.key" [attr.aria-pressed]="tab()===item.key" (click)="tab.set(item.key)">{{ item.label }}</button>}</nav><div class="wizard-layout"><fieldset [disabled]="service.saving()">@if(tab()==='selling'){    <section class="workspace-card">
       <h2>Selling and inventory</h2>
       <div class="flag-grid listing-enable">
         <label
@@ -139,7 +114,7 @@
         >
       </div>
     </section>
-    <section
+}@else if(tab()==='details'){    <section
       class="workspace-card"
       [attr.inert]="snapshot.approval_status === 'pending_approval' ? '' : null"
     >
@@ -182,7 +157,67 @@
       </div>
     </section>
 
-    <section class="workspace-card">
+    <details
+      class="workspace-card advanced-fields"
+      [open]="advancedOpen()"
+      (toggle)="advancedToggled($event)"
+    >
+      <summary>Optional pricing, identifiers and handling</summary>
+      <div class="form-grid">
+        @for(field of optionalNumbers;track field.key){<label
+          [for]="'edit-' + field.key"
+          >{{ field.label
+          }}<input
+            [id]="'edit-' + field.key"
+            [attr.aria-invalid]="service.fieldError(field.key) ? true : null"
+            [attr.aria-describedby]="
+              service.fieldError(field.key) ? 'error-' + field.key : null
+            "
+            (blur)="service.validateField(field.key)"
+            type="number"
+            [min]="field.min"
+            [step]="field.step"
+            [disabled]="service.identityLocked(field.key)"
+            [ngModel]="service.product()[field.key]"
+            (ngModelChange)="update(field.key, $event)"
+          />@if(service.fieldError(field.key)){<small
+            class="field-error"
+            [id]="'error-' + field.key"
+            >{{ service.fieldError(field.key) }}</small
+          >}</label
+        >} @for(field of optionalText;track field.key){<label
+          [for]="'edit-' + field.key"
+          [class.wide]="field.multiline"
+          >{{ field.label }}@if(field.multiline){<textarea
+            [id]="'edit-' + field.key"
+            [attr.aria-invalid]="service.fieldError(field.key) ? true : null"
+            [attr.aria-describedby]="
+              service.fieldError(field.key) ? 'error-' + field.key : null
+            "
+            (blur)="service.validateField(field.key)"
+            [disabled]="service.identityLocked(field.key)"
+            [ngModel]="service.product()[field.key]"
+            (ngModelChange)="update(field.key, $event)"
+          ></textarea
+          >}@else{<input
+            [id]="'edit-' + field.key"
+            [attr.aria-invalid]="service.fieldError(field.key) ? true : null"
+            [attr.aria-describedby]="
+              service.fieldError(field.key) ? 'error-' + field.key : null
+            "
+            (blur)="service.validateField(field.key)"
+            [disabled]="service.identityLocked(field.key)"
+            [ngModel]="service.product()[field.key]"
+            (ngModelChange)="update(field.key, $event)"
+          />}@if(service.fieldError(field.key)){<small
+            class="field-error"
+            [id]="'error-' + field.key"
+            >{{ service.fieldError(field.key) }}</small
+          >}</label
+        >}
+      </div>
+    </details>
+}@else if(tab()==='media'){    <section class="workspace-card">
       <h2>Product images</h2>
       @if(service.imageEditBlocked()){
       <p role="status">
@@ -261,66 +296,7 @@
         triggers review.</small
       >
     </section>
-    <details
-      class="workspace-card advanced-fields"
-      [open]="advancedOpen()"
-      (toggle)="advancedToggled($event)"
-    >
-      <summary>Optional pricing, identifiers and handling</summary>
-      <div class="form-grid">
-        @for(field of optionalNumbers;track field.key){<label
-          [for]="'edit-' + field.key"
-          >{{ field.label
-          }}<input
-            [id]="'edit-' + field.key"
-            [attr.aria-invalid]="service.fieldError(field.key) ? true : null"
-            [attr.aria-describedby]="
-              service.fieldError(field.key) ? 'error-' + field.key : null
-            "
-            (blur)="service.validateField(field.key)"
-            type="number"
-            [min]="field.min"
-            [step]="field.step"
-            [disabled]="service.identityLocked(field.key)"
-            [ngModel]="service.product()[field.key]"
-            (ngModelChange)="update(field.key, $event)"
-          />@if(service.fieldError(field.key)){<small
-            class="field-error"
-            [id]="'error-' + field.key"
-            >{{ service.fieldError(field.key) }}</small
-          >}</label
-        >} @for(field of optionalText;track field.key){<label
-          [for]="'edit-' + field.key"
-          [class.wide]="field.multiline"
-          >{{ field.label }}@if(field.multiline){<textarea
-            [id]="'edit-' + field.key"
-            [attr.aria-invalid]="service.fieldError(field.key) ? true : null"
-            [attr.aria-describedby]="
-              service.fieldError(field.key) ? 'error-' + field.key : null
-            "
-            (blur)="service.validateField(field.key)"
-            [disabled]="service.identityLocked(field.key)"
-            [ngModel]="service.product()[field.key]"
-            (ngModelChange)="update(field.key, $event)"
-          ></textarea
-          >}@else{<input
-            [id]="'edit-' + field.key"
-            [attr.aria-invalid]="service.fieldError(field.key) ? true : null"
-            [attr.aria-describedby]="
-              service.fieldError(field.key) ? 'error-' + field.key : null
-            "
-            (blur)="service.validateField(field.key)"
-            [disabled]="service.identityLocked(field.key)"
-            [ngModel]="service.product()[field.key]"
-            (ngModelChange)="update(field.key, $event)"
-          />}@if(service.fieldError(field.key)){<small
-            class="field-error"
-            [id]="'error-' + field.key"
-            >{{ service.fieldError(field.key) }}</small
-          >}</label
-        >}
-      </div>
-      <div class="flag-grid">
+<section class="rule-section"><h2>Fulfillment and handling</h2>      <div class="flag-grid">
         @for(flag of deliveryFlags;track flag.key){<label
           ><input
             type="checkbox"
@@ -336,9 +312,31 @@
       @if(service.fieldError('instantDelivery')) {
       <p class="field-error" id="error-delivery-options">{{ service.fieldError("instantDelivery") }}</p>
       }
-    </details>
-  </fieldset>
-  <footer class="editor-actions">
+</section>}@else{  <section class="workspace-card product-summary">
+    <div>
+      <h2>{{ snapshot.name }}</h2>
+      <p>Catalog category: {{ service.product().category }}</p>
+      <span class="status-chip" [attr.data-status]="snapshot.approval_status">{{
+        service.product().approvalStatusLabel
+      }}</span
+      >@if(snapshot.rejection_reason){
+      <p class="row-error">{{ snapshot.rejection_reason }}</p>
+      }
+    </div>
+    <div>
+      <h3>Customer visibility</h3>
+      @if(snapshot.visibility_blockers?.length){
+      <ul>
+        @for(blocker of snapshot.visibility_blockers;track blocker){
+        <li>{{ blocker }}</li>
+        }
+      </ul>
+      }@else{
+      <p>Ready to sell according to the last saved server state.</p>
+      }<small>Unsaved changes are not part of this assessment.</small>
+    </div>
+  </section>
+<p class="notice neutral">Approval and customer visibility reflect the last saved server state. Text changes and media uploads have separate save behavior.</p>}</fieldset><aside class="aside-note"><div class="big-no">n</div><h3>Make it yours.</h3><p>Your selling details stay with this form as you switch sections. Save changes before leaving.</p></aside></div>  <footer class="editor-actions">
     <div class="save-status">
       <span
         >{{ service.dirty() ? "Unsaved changes" : "Saved state" }} · Updated

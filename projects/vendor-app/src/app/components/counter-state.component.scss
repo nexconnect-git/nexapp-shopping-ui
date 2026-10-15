@@ -1,0 +1,5 @@
+:host { display: block; }
+.loading-state { display: grid; gap: 16px; padding: 20px 0; }
+.skeleton-row { display: flex; gap: 16px; }
+.thumbnail { width: 46px; height: 46px; flex: none; }
+.line { height: 46px; flex: 1; }

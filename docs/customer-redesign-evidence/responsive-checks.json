@@ -1,0 +1,266 @@
+[
+  {
+    "size": {
+      "width": 360,
+      "height": 844
+    },
+    "route": "/",
+    "documentWidth": 345,
+    "heading": "Good things.Close to home.",
+    "overflowingControls": [],
+    "width": 345
+  },
+  {
+    "size": {
+      "width": 360,
+      "height": 844
+    },
+    "route": "/product/c5ac1019-95d8-4a8d-8bcf-bbb32191d594",
+    "documentWidth": 345,
+    "heading": "E2E Demo Apples",
+    "overflowingControls": [],
+    "width": 345
+  },
+  {
+    "size": {
+      "width": 360,
+      "height": 844
+    },
+    "route": "/account",
+    "documentWidth": 345,
+    "heading": "Make yourself at home.",
+    "overflowingControls": [],
+    "width": 345
+  },
+  {
+    "size": {
+      "width": 390,
+      "height": 844
+    },
+    "route": "/",
+    "documentWidth": 375,
+    "heading": "Good things.Close to home.",
+    "overflowingControls": [],
+    "width": 375
+  },
+  {
+    "size": {
+      "width": 390,
+      "height": 844
+    },
+    "route": "/product/c5ac1019-95d8-4a8d-8bcf-bbb32191d594",
+    "documentWidth": 375,
+    "heading": "E2E Demo Apples",
+    "overflowingControls": [],
+    "width": 375
+  },
+  {
+    "size": {
+      "width": 390,
+      "height": 844
+    },
+    "route": "/account",
+    "documentWidth": 375,
+    "heading": "Make yourself at home.",
+    "overflowingControls": [],
+    "width": 375
+  },
+  {
+    "size": {
+      "width": 768,
+      "height": 1024
+    },
+    "route": "/",
+    "documentWidth": 753,
+    "heading": "Good things.Close to home.",
+    "overflowingControls": [],
+    "width": 753
+  },
+  {
+    "size": {
+      "width": 768,
+      "height": 1024
+    },
+    "route": "/product/c5ac1019-95d8-4a8d-8bcf-bbb32191d594",
+    "documentWidth": 753,
+    "heading": "E2E Demo Apples",
+    "overflowingControls": [],
+    "width": 753
+  },
+  {
+    "size": {
+      "width": 768,
+      "height": 1024
+    },
+    "route": "/account",
+    "documentWidth": 753,
+    "heading": "Make yourself at home.",
+    "overflowingControls": [],
+    "width": 753
+  },
+  {
+    "size": {
+      "width": 834,
+      "height": 1112
+    },
+    "route": "/",
+    "documentWidth": 819,
+    "heading": "Good things.Close to home.",
+    "overflowingControls": [],
+    "width": 819
+  },
+  {
+    "size": {
+      "width": 834,
+      "height": 1112
+    },
+    "route": "/product/c5ac1019-95d8-4a8d-8bcf-bbb32191d594",
+    "documentWidth": 819,
+    "heading": "E2E Demo Apples",
+    "overflowingControls": [],
+    "width": 819
+  },
+  {
+    "size": {
+      "width": 834,
+      "height": 1112
+    },
+    "route": "/account",
+    "documentWidth": 819,
+    "heading": "Make yourself at home.",
+    "overflowingControls": [],
+    "width": 819
+  },
+  {
+    "size": {
+      "width": 1024,
+      "height": 960
+    },
+    "route": "/",
+    "documentWidth": 1009,
+    "heading": "Good things.Close to home.",
+    "overflowingControls": [],
+    "width": 1009
+  },
+  {
+    "size": {
+      "width": 1024,
+      "height": 960
+    },
+    "route": "/product/c5ac1019-95d8-4a8d-8bcf-bbb32191d594",
+    "documentWidth": 1009,
+    "heading": "E2E Demo Apples",
+    "overflowingControls": [],
+    "width": 1009
+  },
+  {
+    "size": {
+      "width": 1024,
+      "height": 960
+    },
+    "route": "/account",
+    "documentWidth": 1009,
+    "heading": "Make yourself at home.",
+    "overflowingControls": [],
+    "width": 1009
+  },
+  {
+    "size": {
+      "width": 1366,
+      "height": 960
+    },
+    "route": "/",
+    "documentWidth": 1351,
+    "heading": "Good things.Close to home.",
+    "overflowingControls": [],
+    "width": 1351
+  },
+  {
+    "size": {
+      "width": 1366,
+      "height": 960
+    },
+    "route": "/product/c5ac1019-95d8-4a8d-8bcf-bbb32191d594",
+    "documentWidth": 1351,
+    "heading": "E2E Demo Apples",
+    "overflowingControls": [],
+    "width": 1351
+  },
+  {
+    "size": {
+      "width": 1366,
+      "height": 960
+    },
+    "route": "/account",
+    "documentWidth": 1351,
+    "heading": "Make yourself at home.",
+    "overflowingControls": [],
+    "width": 1351
+  },
+  {
+    "size": {
+      "width": 1440,
+      "height": 960
+    },
+    "route": "/",
+    "documentWidth": 1425,
+    "heading": "Good things.Close to home.",
+    "overflowingControls": [],
+    "width": 1425
+  },
+  {
+    "size": {
+      "width": 1440,
+      "height": 960
+    },
+    "route": "/product/c5ac1019-95d8-4a8d-8bcf-bbb32191d594",
+    "documentWidth": 1425,
+    "heading": "E2E Demo Apples",
+    "overflowingControls": [],
+    "width": 1425
+  },
+  {
+    "size": {
+      "width": 1440,
+      "height": 960
+    },
+    "route": "/account",
+    "documentWidth": 1425,
+    "heading": "Make yourself at home.",
+    "overflowingControls": [],
+    "width": 1425
+  },
+  {
+    "size": {
+      "width": 1920,
+      "height": 1080
+    },
+    "route": "/",
+    "documentWidth": 1905,
+    "heading": "Good things.Close to home.",
+    "overflowingControls": [],
+    "width": 1905
+  },
+  {
+    "size": {
+      "width": 1920,
+      "height": 1080
+    },
+    "route": "/product/c5ac1019-95d8-4a8d-8bcf-bbb32191d594",
+    "documentWidth": 1905,
+    "heading": "E2E Demo Apples",
+    "overflowingControls": [],
+    "width": 1905
+  },
+  {
+    "size": {
+      "width": 1920,
+      "height": 1080
+    },
+    "route": "/account",
+    "documentWidth": 1905,
+    "heading": "Make yourself at home.",
+    "overflowingControls": [],
+    "width": 1905
+  }
+]

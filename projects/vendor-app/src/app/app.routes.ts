@@ -64,8 +64,8 @@ export const routes: Routes = [
   {
     path: 'feature-unavailable',
     loadComponent: () =>
-      import('@shared/public-api').then(
-        (m) => m.PageFeatureUnavailableComponent
+      import('./pages/feature-unavailable/feature-unavailable.component').then(
+        (m) => m.FeatureUnavailableComponent
       ),
     canActivate: vendorGuard,
   },

@@ -1,321 +1,80 @@
+<app-toast />
 @if (auth.isLoggedIn() && !isAuthRoute()) {
-<app-toast></app-toast>
-<div class="app-shell" [class.sidebar-open]="!sidebarCollapsed()">
-  @if (!isPendingRoute()) {
-  <button
-    class="mobile-scrim"
-    type="button"
-    aria-label="Close navigation"
-    (click)="closeMobileSidebar()"
-  ></button>
-
-  <aside
-    class="sidebar"
-    tabindex="-1"
-    aria-label="Vendor navigation"
-    [attr.inert]="drawerViewport() && sidebarCollapsed() ? '' : null"
-    (keydown)="trapDrawerFocus($event)"
-  >
-    <button
-      type="button"
-      class="sidebar-close"
-      aria-label="Close navigation"
-      (click)="closeMobileSidebar()"
-    >
-      <span class="material-icons-outlined" aria-hidden="true">close</span>
-    </button>
-    <div class="sidebar-brand">
-      <img
-        class="brand-mark"
-        src="assets/brand/nextou-logo-single.png"
-        alt="Nextou logo"
-      />
-      <div class="brand-copy">
-        <img
-          src="assets/brand/nextou-brand-logo.png"
-          alt="Nextou"
-          class="brand-wordmark"
-        />
-        <span class="brand-sub">Vendor workspace</span>
-      </div>
-    </div>
-
-    <div class="sidebar-status">
-      <span class="status-dot"></span>
-      <div>
-        <strong>{{ storeName() }}</strong>
-        <nc-vendor-operating-status [compact]="true" />
-      </div>
-    </div>
-
-    <nav class="sidebar-nav">
-      @for (group of visibleNavGroups(); track group.label) {
-      <section class="nav-group">
-        <p class="nav-section-label">{{ group.label }}</p>
-        @for (item of group.items; track item.route) {
-        <a
-          [routerLink]="item.route"
-          routerLinkActive="active"
-          [routerLinkActiveOptions]="{ exact: item.exact === true }"
-          (click)="closeMobileSidebar()"
-          class="menu-item"
-        >
-          <span class="material-icons-outlined">{{ item.icon }}</span>
-          <span class="nav-label">{{ item.label }}</span>
-        </a>
-        }
-      </section>
+<div class="counter-shell">
+  <header class="masthead">
+    <a class="wordmark" routerLink="/" aria-label="Nextou Counter home"><span class="brand-mark">n</span><span><strong>nextou</strong><small>at your counter</small></span></a>
+    <nav class="main-nav" aria-label="Main navigation">
+      @for (item of visibleCounterNav(); track item.route) {
+        <a class="nav-link" [class.active]="navActive(item.route)" [routerLink]="item.route" [attr.aria-current]="navActive(item.route) ? 'page' : null">{{ item.label }}</a>
       }
     </nav>
-
-    <div class="sidebar-footer">
-      <div class="sidebar-user">
-        <div class="user-avatar">{{ userInitials() }}</div>
-        <div class="user-meta">
-          <span class="user-name">{{ auth.user()?.username }}</span>
-          <span class="user-role">Vendor account</span>
-        </div>
-      </div>
-      <button class="logout-btn" type="button" (click)="logout()">
-        <span class="material-icons-outlined">logout</span>
-        <span>Sign Out</span>
-      </button>
+    <div class="top-actions">
+      <button class="btn icon-btn phone-hide" type="button" aria-label="Explore all destinations" (click)="exploreOpen.set(true)"><span class="material-icons-outlined">apps</span></button>
+      <button class="operating-trigger phone-hide" type="button" (click)="operatingOpen.set(true)" [title]="store.operatingReason()"><span class="dot"></span>{{ store.operatingLabel() }}</button>
+      <span class="bell-wrap"><button class="btn icon-btn" type="button" aria-label="Open inbox preview" (click)="toggleNotif($event)"><span class="material-icons-outlined">notifications_none</span></button>@if (unreadCount() > 0) { <span class="badge">{{ unreadCount() > 99 ? '99+' : unreadCount() }}</span> }</span>
+      <button class="avatar" type="button" aria-label="Account menu" (click)="toggleProfile($event)">{{ userInitials() }}</button>
+      <button class="btn icon-btn explore-btn" type="button" aria-label="More destinations" (click)="exploreOpen.set(true)"><span class="material-icons-outlined">menu</span></button>
     </div>
-  </aside>
-  }
-
-  <div
-    class="main-area"
-    [attr.inert]="drawerViewport() && !sidebarCollapsed() ? '' : null"
-  >
-    <header class="topbar">
-      <div class="topbar-left">
-        @if (showBackButton()) {
-        <button
-          class="back-btn"
-          type="button"
-          aria-label="Go back"
-          (click)="goBack()"
-        >
-          <span class="material-icons-outlined">arrow_back</span>
-        </button>
-        } @if (!isPendingRoute()) {
-        <button
-          class="mobile-menu-btn"
-          type="button"
-          aria-label="Open navigation"
-          [attr.aria-expanded]="!sidebarCollapsed()"
-          (click)="toggleSidebar()"
-        >
-          <span class="material-icons-outlined">menu</span>
-        </button>
-        <div class="page-context">
-          <nav aria-label="Breadcrumb" class="breadcrumbs">
-            @for (crumb of breadcrumbs(); track $index) { @if (crumb.url) {
-            <a [routerLink]="crumb.url">{{ crumb.label }}</a>
-            } @else {
-            <span>{{ crumb.label }}</span>
-            } @if ($index < breadcrumbs().length - 1) {
-            <span class="material-icons-outlined crumb-separator"
-              >chevron_right</span
-            >
-            } }
-          </nav>
-        </div>
-        }
-      </div>
-
-      <div class="topbar-right">
-        @if (!isPendingRoute()) {
-        <div class="notif-wrapper">
-          <button
-            class="topbar-icon-btn notif-btn"
-            type="button"
-            (click)="toggleNotif($event)"
-            title="Notifications"
-            aria-label="Notifications"
-            [attr.aria-expanded]="notifOpen()"
-          >
-            <span class="material-icons-outlined">notifications_none</span>
-            @if (unreadCount() > 0) {
-            <span class="notif-badge">{{
-              unreadCount() > 9 ? "9+" : unreadCount()
-            }}</span>
-            }
-          </button>
-          @if (notifOpen()) {
-          <div class="notif-dropdown">
-            <div class="notif-header">
-              <div>
-                <span class="notif-title">Notifications</span>
-                <small
-                  >{{ unreadCount() }} unread update{{
-                    unreadCount() === 1 ? "" : "s"
-                  }}</small
-                >
-              </div>
-              @if (unreadCount() > 0) {
-              <button
-                class="notif-mark-read"
-                type="button"
-                (click)="markAllRead()"
-              >
-                Mark all read
-              </button>
-              }
-            </div>
-            @if (inbox.error()) {
-            <p class="workspace-error" role="alert">{{ inbox.error() }}</p>
-            } @if (notifLoading()) {
-            <div class="notif-loading">
-              <div class="notif-spinner"></div>
-            </div>
-            } @else if (notifications().length === 0) {
-            <div class="notif-empty">
-              <span class="material-icons-outlined">notifications_none</span>
-              <strong>No notifications</strong>
-              <span>Your order and store alerts will appear here.</span>
-            </div>
-            } @else {
-            <div class="notif-list">
-              @for (n of notifications(); track n.id) {
-              <button
-                class="notif-item"
-                type="button"
-                [class.unread]="!n.is_read"
-                (click)="handleNotificationClick(n)"
-              >
-                <span class="material-icons-outlined notif-icon">{{
-                  n.notification_type === "order"
-                    ? "receipt_long"
-                    : n.notification_type === "delivery"
-                    ? "local_shipping"
-                    : n.notification_type === "payout"
-                    ? "payments"
-                    : n.notification_type === "promo"
-                    ? "local_offer"
-                    : "notifications"
-                }}</span>
-                <span class="notif-body">
-                  <span class="notif-msg">{{ n.title }}</span>
-                  <span class="notif-sub">{{ n.message }}</span>
-                </span>
-              </button>
-              }
-            </div>
-            }
-            <a
-              class="notif-footer"
-              routerLink="/notifications"
-              (click)="notifOpen.set(false)"
-              >View all notifications<span
-                class="material-icons-outlined"
-                aria-hidden="true"
-                >arrow_forward</span
-              ></a
-            >
-          </div>
-          }
-        </div>
-        }
-
-        <div class="profile-menu-wrapper">
-          <button
-            class="topbar-avatar"
-            type="button"
-            (click)="toggleProfile($event)"
-            aria-label="Open profile menu"
-            [attr.aria-expanded]="profileOpen()"
-          >
-            @if (userInitials() && userInitials() !== "?") {
-            <span class="avatar-initials">{{ userInitials() }}</span>
-            } @else {
-            <span class="material-icons-outlined">person</span>
-            }
-          </button>
-          @if (profileOpen()) {
-          <div class="profile-dropdown">
-            <div class="pd-header">
-              <div class="pd-avatar-lg">{{ userInitials() }}</div>
-              <div>
-                <p class="pd-name">
-                  {{ auth.user()?.first_name || auth.user()?.username }}
-                  {{ auth.user()?.last_name }}
-                </p>
-                <p class="pd-email">{{ auth.user()?.email }}</p>
-              </div>
-            </div>
-            <a
-              routerLink="/store-settings"
-              class="pd-item"
-              (click)="closeProfile()"
-            >
-              <span class="material-icons-outlined">manage_accounts</span>
-              Store Profile
-            </a>
-            <a
-              routerLink="/change-password"
-              class="pd-item"
-              (click)="closeProfile()"
-              ><span class="material-icons-outlined">lock</span>Security</a
-            >
-            <button
-              class="pd-item danger"
-              type="button"
-              (click)="logout(); closeProfile()"
-            >
-              <span class="material-icons-outlined">logout</span>
-              Sign Out
-            </button>
-          </div>
-          }
-        </div>
-      </div>
-    </header>
-
-    <main class="page-content">
-      <router-outlet />
-    </main>
-
-    @if (!isPendingRoute()) {
-    <nav class="mobile-bottom-nav" aria-label="Primary mobile navigation">
-      @for (item of visibleMobileNavItems(); track item.route) {
-      <a
-        [routerLink]="item.route"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: item.exact === true }"
-      >
-        <span class="material-icons-outlined">{{ item.icon }}</span>
-        <small>{{ item.label }}</small>
-      </a>
-      }
-    </nav>
+  </header>
+  <div class="context-line"><span class="crumb"><button class="context-store" type="button" (click)="operatingOpen.set(true)">{{ storeName() }}</button><span aria-hidden="true">›</span><span>{{ breadcrumbs().at(-1)?.label }}</span></span>@if (store.stale()) { <span class="tag orange">Last known state · refresh needed</span> }</div>
+  <main class="workspace screen-enter"><router-outlet /></main>
+  <nav class="bottom-dock" aria-label="Phone navigation">
+    @for (item of visibleMobileNavItems(); track item.route) {
+      <a [routerLink]="item.route" routerLinkActive="active" [routerLinkActiveOptions]="{exact: item.exact === true}"><span class="material-icons-outlined">{{ item.icon }}</span><span>{{ item.label }}</span></a>
     }
-  </div>
+    <button type="button" [class.active]="exploreOpen()" (click)="exploreOpen.set(true)"><span class="material-icons-outlined">apps</span><span>More</span></button>
+  </nav>
 </div>
-} @else {
-<app-toast></app-toast>
-<router-outlet />
+@defer (when exploreOpen() || notifOpen() || profileOpen() || operatingOpen()) {
+@if (exploreOpen()) {
+  <nc-vendor-dialog title="Where next?" (dismissed)="exploreOpen.set(false)">
+    <p>Everything you need to run your store.</p>
+    <div class="nav-grid">
+      @for (group of visibleNavGroups(); track group.label) { <section><h3>{{ group.label }}</h3>@for (item of group.items; track item.route) { <a class="btn ghost" [routerLink]="item.route" (click)="exploreOpen.set(false)"><span class="material-icons-outlined">{{ item.icon }}</span>{{ item.label }}</a> }</section> }
+    </div>
+    <div class="dialog-actions"><a class="btn" routerLink="/change-password" (click)="exploreOpen.set(false)">Account security</a><button class="btn" type="button" (click)="logout(); exploreOpen.set(false)">Sign out</button></div>
+  </nc-vendor-dialog>
 }
-
-<app-global-loading />
+@if (notifOpen()) {
+  <nc-vendor-dialog title="Your inbox" mode="drawer" (dismissed)="notifOpen.set(false)">
+    <div class="section-title"><span class="muted small">{{ unreadCount() }} unread</span>@if (unreadCount() > 0) { <button class="btn text" type="button" (click)="markAllRead()">Mark all read</button> }</div>
+    @if (inbox.error()) { <p class="workspace-error" role="alert">{{ inbox.error() }}</p><button class="btn" type="button" (click)="fetchNotifications()">Retry</button> }
+    @if (notifLoading()) { <p role="status">Refreshing your inbox…</p> }
+    @for (n of notifications(); track n.id) { <button class="inbox-preview" [class.unread]="!n.is_read" type="button" (click)="handleNotificationClick(n)"><span class="letter-avatar"><span class="material-icons-outlined">notifications</span></span><span><strong>{{ n.title }}</strong><small>{{ n.message }}</small></span></button> } @empty { @if (!notifLoading() && !inbox.error()) { <div class="empty"><h2>All caught up.</h2><p>Order and store updates will appear here.</p></div> } }
+    <a class="btn" routerLink="/notifications" (click)="notifOpen.set(false)">Open full inbox <span aria-hidden="true">→</span></a>
+  </nc-vendor-dialog>
+}
+@if (profileOpen()) {
+  <nc-vendor-dialog title="Your account" (dismissed)="profileOpen.set(false)">
+    <div class="account-identity"><span class="avatar">{{ userInitials() }}</span><div><strong>{{ auth.user()?.username }}</strong><p>{{ auth.user()?.email }}</p></div></div>
+    <a class="btn" routerLink="/store-settings" (click)="closeProfile()">Store settings</a><a class="btn" routerLink="/change-password" (click)="closeProfile()">Account security</a><button class="btn" type="button" (click)="logout(); closeProfile()">Sign out</button>
+  </nc-vendor-dialog>
+}
+@if (operatingOpen()) {
+  <nc-vendor-dialog [title]="closingStore() ? 'Close your store?' : 'Your storefront'" [busy]="store.busy()" (dismissed)="operatingOpen.set(false); closingStore.set(false)">
+    <h3>{{ storeName() }}</h3><nc-vendor-operating-status />
+    @if (store.error()) { <p class="workspace-error" role="alert">{{ store.error() }}</p> }
+    @if (closingStore()) {
+      <p>New customers will see the store as closed. Existing orders still need your attention.</p>
+      <div class="dialog-actions"><button class="btn" [disabled]="store.busy()" type="button" (click)="closingStore.set(false)">Keep open</button><button class="btn danger" [disabled]="store.busy()" type="button" (click)="store.operate({is_open:false}); closingStore.set(false)">Close store</button></div>
+    } @else if (store.context(); as context) {
+      @if (context.readiness.blockers.length) { <section class="notice warning"><div><strong>Before you open</strong>@for (blocker of context.readiness.blockers; track blocker.code) { <p>{{ blocker.message }} <a [routerLink]="blocker.route" (click)="operatingOpen.set(false)">Resolve</a></p> }</div></section> }
+      <div class="dialog-actions">
+        @if (store.stale()) { <button class="btn" type="button" (click)="store.refresh()">Refresh state</button> }
+        <button class="btn" type="button" [disabled]="store.stale() || store.busy() || (!context.operating.is_open && !context.readiness.can_open)" (click)="context.operating.is_open ? closingStore.set(true) : store.operate({is_open:true})">{{ context.operating.is_open ? 'Close store' : 'Open store' }}</button>
+        <button class="btn primary" type="button" [disabled]="store.stale() || store.busy() || (!context.operating.is_accepting_orders && !context.readiness.can_enable_intake)" (click)="store.operate({is_accepting_orders:!context.operating.is_accepting_orders})">{{ context.operating.is_accepting_orders ? 'Pause intake' : 'Resume intake' }}</button>
+      </div>
+    }
+  </nc-vendor-dialog>
+}
+}
+} @else { <router-outlet /> }
 <app-page-feature-loading />
-
-@if(leave.open()){<nc-vendor-dialog
-  [title]="leave.saving() ? 'Save in progress' : 'Unsaved changes'"
-  (dismissed)="leave.answer(false)"
-  >@if(leave.saving()){
-  <p>Wait for the current save to finish before leaving this page.</p>
-  <button class="btn-primary" (click)="leave.answer(false)">Stay on page</button
-  >}@else{
-  <p>
-    Unsaved form edits may be lost when you leave. Persisted product drafts
-    remain available to resume.
-  </p>
-  <div class="dialog-actions">
-    <button class="btn-secondary" (click)="leave.answer(false)">
-      Stay and save</button
-    ><button class="btn-danger" (click)="leave.answer(true)">Leave page</button>
-  </div>
-  }</nc-vendor-dialog
->}
+@defer (when leave.open()) {
+@if (leave.open()) {
+  <nc-vendor-dialog [title]="leave.saving() ? 'Save in progress' : 'Unsaved changes'" (dismissed)="leave.answer(false)">
+    @if (leave.saving()) { <p>Wait for the current save to finish before leaving this page.</p><button class="btn primary" type="button" (click)="leave.answer(false)">Stay on page</button> }
+    @else { <p>Unsaved form edits may be lost when you leave. Persisted product drafts remain available to resume.</p><div class="dialog-actions"><button class="btn" type="button" (click)="leave.answer(false)">Stay and save</button><button class="btn danger" type="button" (click)="leave.answer(true)">Leave page</button></div> }
+  </nc-vendor-dialog>
+}
+}

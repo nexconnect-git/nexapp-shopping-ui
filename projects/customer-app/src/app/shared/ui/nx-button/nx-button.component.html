@@ -1,4 +1,5 @@
 <button
+  pButton
   [type]="type"
   class="nx-btn"
   [class.primary]="variant === 'primary'"
@@ -17,9 +18,9 @@
   (click)="emitClick()"
 >
   @if (loading) {
-    <span class="nx-spinner" aria-hidden="true"></span>
+  <span class="nx-spinner" aria-hidden="true"></span>
   } @else if (icon) {
-    <span class="material-symbols-rounded" aria-hidden="true">{{ icon }}</span>
+  <span class="material-symbols-rounded" aria-hidden="true">{{ icon }}</span>
   }
   <ng-content />
 </button>

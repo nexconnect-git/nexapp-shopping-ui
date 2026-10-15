@@ -2,7 +2,7 @@
   <header class="page-heading">
     <div>
       <p class="eyebrow">Growth</p>
-      <h1>Analytics</h1>
+      <h1>See how you’re growing.</h1>
       <p>
         Delivered sales performance and a separate, all-time settlement summary.
       </p>
@@ -23,19 +23,17 @@
       </button>
     </div>
   </header>
+  <nav class="workspace-tabs" aria-label="Analytics sections">
+    <button type="button" [class.active]="section()==='sales'" [attr.aria-pressed]="section()==='sales'" (click)="section.set('sales')">Sales</button>
+    <button type="button" [class.active]="section()==='settlements'" [attr.aria-pressed]="section()==='settlements'" (click)="section.set('settlements')">Settlements</button>
+  </nav>
+  @if(section()==='sales'){
   <div class="workspace-toolbar">
-    <label for="analytics-period"
-      >Sales period<select
-        id="analytics-period"
-        [ngModel]="days()"
-        (ngModelChange)="range($event)"
-      >
-        <option value="7">Last 7 days</option>
-        <option value="30">Last 30 days</option>
-        <option value="90">Last 90 days</option>
-        <option value="all">All time</option>
-      </select></label
-    >
+    <div class="filter-chips" aria-label="Sales period">
+      @for(period of ['7','30','90','all'];track period){
+      <button type="button" class="chip" [class.active]="days()===period" [attr.aria-pressed]="days()===period" (click)="range(period)">{{ period==='all' ? 'All time' : period+' days' }}</button>
+      }
+    </div>
     <p>
       Sales revenue includes delivered orders. Placed-order counts include all
       statuses.
@@ -49,54 +47,49 @@
   }@if(loading()){
   <p role="status">Loading sales period…</p>
   } @if(stats();as sales){
-  <section class="metric-grid" aria-label="Sales metrics">
-    <article class="workspace-card">
+  <section class="metric-strip" aria-label="Sales metrics">
+    <article class="metric">
       <span>Delivered revenue</span
       ><strong>{{ sales.total_revenue | appCurrency }}</strong
       ><small>{{ sales.period_label }}</small>
     </article>
-    <article class="workspace-card">
+    <article class="metric">
       <span>Orders placed</span><strong>{{ sales.total_orders }}</strong
       ><small>{{ sales.delivered_orders }} delivered</small>
     </article>
-    <article class="workspace-card">
+    <article class="metric">
       <span>Average delivered order</span
       ><strong>{{ sales.average_order_value | appCurrency }}</strong>
     </article>
-    <article class="workspace-card">
+    <article class="metric">
       <span>Repeat customers</span><strong>{{ sales.repeat_customers }}</strong
       ><small>More than one order in the selected period</small>
     </article>
   </section>
-  <div class="analytics-grid">
-    <section class="workspace-card">
-      <h2>Delivered revenue by month</h2>
+  <div class="analytics-grid two-col">
+    <section class="rule-section">
+      <div class="section-title"><h2>Delivered revenue by month</h2><button type="button" class="btn text" (click)="chartView.set(chartView()==='chart' ? 'table' : 'chart')">{{ chartView()==='chart' ? 'Table view' : 'Chart view' }}</button></div>
       <p>Only months with delivered orders are shown.</p>
-      <div class="chart-list">
+      @if(chartView()==='table'){
+      <table class="table"><thead><tr><th>Month</th><th>Delivered revenue</th><th>Orders</th></tr></thead><tbody>
+        @for(month of sales.monthly_data;track month.month){<tr><td>{{ month.month | date:'MMM yyyy' }}</td><td>{{ month.revenue | appCurrency }}</td><td>{{ month.orders }}</td></tr>}
+        @empty{<tr><td colspan="3">No delivered revenue in this period.</td></tr>}
+      </tbody></table>
+      }@else{
+      <div class="monthly-chart" aria-label="Delivered revenue by month">
         @for(month of sales.monthly_data;track month.month){
-        <div class="chart-row">
-          <div>
-            <strong>{{ month.month | date : "MMM yyyy" }}</strong
-            ><span
-              >{{ month.revenue | appCurrency }} ·
-              {{ month.orders }} order{{ month.orders === 1 ? '' : 's' }}</span
-            >
-          </div>
-          <meter
-            min="0"
-            [max]="maximumMonthly()"
-            [value]="month.revenue"
-            [attr.aria-label]="
-              'Revenue for ' + (month.month | date : 'MMM yyyy')
-            "
-          ></meter>
+        <div class="bar-group">
+          <strong class="bar-value">{{ month.revenue | appCurrency }}</strong>
+          <div class="bar-track"><div class="bar" [style.height.%]="(+month.revenue / maximumMonthly()) * 100" aria-hidden="true"></div></div>
+          <span>{{ month.month | date:'MMM yyyy' }}</span><small>{{ month.orders }} {{ month.orders===1 ? 'order' : 'orders' }}</small>
         </div>
         }@empty{
         <p>No delivered revenue in this period.</p>
         }
       </div>
+      }
     </section>
-    <section class="workspace-card">
+    <section class="rule-section">
       <h2>Top delivered products</h2>
       <p>
         The ten products with the highest delivered line revenue in this period.
@@ -123,7 +116,7 @@
         }
       </div>
     </section>
-    <section class="workspace-card">
+    <section class="rule-section">
       <h2>Coupon contribution</h2>
       <p>
         {{ sales.coupon_contribution.usage_count }} use{{ sales.coupon_contribution.usage_count === 1 ? '' : 's' }} on delivered orders
@@ -140,7 +133,7 @@
       </dl>
       <a routerLink="/promotions">Manage promotions</a>
     </section>
-    <section class="workspace-card">
+    <section class="rule-section">
       <h2>Current stock risk</h2>
       <strong class="big-number">{{
         sales.low_stock_impact.low_stock_count
@@ -155,6 +148,9 @@
     </section>
   </div>
   }
+  }
+  @if(section()==='sales' && financeError()){<p class="notice warning" role="alert">Sales and settlements load independently. {{ financeError() }} <button type="button" class="btn text" (click)="loadFinance()">Retry settlements</button></p>}
+  @if(section()==='settlements'){
   <section class="workspace-card finance-region" aria-label="All-time settlements">
     @if(financeError()){
     <p class="error-banner" role="alert">
@@ -162,8 +158,6 @@
       <button class="btn-secondary" (click)="loadFinance()">Retry settlements</button>
     </p>
     }
-    <details>
-      <summary>All-time settlement totals</summary>
     <div class="section-header">
       <div>
         <h2>All-time settlements</h2>
@@ -197,6 +191,6 @@
     </div>
     }
     <a routerLink="/payouts">Manage settlements</a>
-    </details>
   </section>
+  }
 </div>

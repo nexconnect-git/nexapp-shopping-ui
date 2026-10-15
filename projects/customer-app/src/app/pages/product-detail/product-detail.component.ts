@@ -1,13 +1,18 @@
+import { CustomerIconComponent } from '../../shared/customer-icon/customer-icon.component';
+import { RouterLink } from '@angular/router';
+import { CustomerStateComponent } from '../../shared/customer-state/customer-state.component';
+import { NxModalShellComponent } from '../../shared/ui/nx-modal-shell/nx-modal-shell.component';
 import { Location } from '@angular/common';
 import { Component, computed, effect, signal } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AppCurrencyPipe } from '@shared/lib/pipes/currency.pipe';
+import { CustomerCurrencyPipe as AppCurrencyPipe } from '../../shared/customer-currency/customer-currency.pipe';
 import { CatalogService } from '../../services/catalog.service';
 import { AppStateService } from '../../services/app-state.service';
 import { UiService } from '../../services/ui.service';
 import { ProductCardComponent } from '../../components/product-card/product-card.component';
 
-type DetailPanelId = 'details' | 'nutrition' | 'handling' | 'reviews';
+type DetailPanelId = 'details' | 'nutrition' | 'reviews';
 
 type DetailItem = {
   label: string;
@@ -23,14 +28,21 @@ type DetailPanel = {
 
 @Component({
   standalone: true,
-  imports: [ProductCardComponent, AppCurrencyPipe],
+  imports: [CustomerIconComponent,
+    ProductCardComponent,
+    AppCurrencyPipe,
+    RouterLink,
+    CustomerStateComponent,
+    NxModalShellComponent,
+  ],
   templateUrl: './product-detail.component.html',
   styleUrls: ['./product-detail.component.scss'],
 })
 export class ProductDetailComponent {
+  private readonly routeParams = toSignal(this.route.paramMap);
+  readonly imageOpen = signal(false);
   qty = signal(1);
   selectedSize = signal('');
-  activePanel = signal<DetailPanelId>('details');
   activeImage = signal(1);
 
   constructor(
@@ -39,38 +51,48 @@ export class ProductDetailComponent {
     private location: Location,
     public catalog: CatalogService,
     public state: AppStateService,
-    public ui: UiService,
+    public ui: UiService
   ) {
-    const productId = this.route.snapshot.paramMap.get('id');
-    this.catalog.ensureProductLoaded(productId, this.state.customerLocationQuery());
+    this.route.paramMap.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.qty.set(1);
+      this.activeImage.set(1);
+      this.imageOpen.set(false);
+    });
+    effect(() => {
+      this.catalog.ensureProductLoaded(
+        this.routeParams()?.get('id') || null,
+        this.state.customerLocationQuery(),
+        true
+      );
+    });
     effect(() => {
       const storeId = this.product().storeId;
       if (storeId)
         this.catalog.ensureStoreProductsLoaded(
           storeId,
-          this.state.customerLocationQuery(),
+          this.state.customerLocationQuery()
         );
     });
   }
   Math = Math;
 
   product = computed(() =>
-    this.catalog.getProduct(this.route.snapshot.paramMap.get('id')),
+    this.catalog.getProduct(this.routeParams()?.get('id') || null)
   );
   store = computed(() =>
     this.product().storeId
       ? this.catalog.getStore(this.product().storeId)
-      : null,
+      : null
   );
   deliveryLabel = computed(
     () =>
       this.store()?.eta ||
       (this.product().raw as any)?.vendor?.estimated_delivery_label ||
-      'Delivery estimate confirmed at checkout',
+      'Delivery estimate confirmed at checkout'
   );
   deliveryMode = computed(
     () =>
-      this.store()?.delivery || 'Delivery availability updates from the store',
+      this.store()?.delivery || 'Delivery availability updates from the store'
   );
   deliveryPromise = computed(() => {
     const raw = (this.product().raw as any) || {};
@@ -117,6 +139,7 @@ export class ProductDetailComponent {
           'This store is not serviceable for your selected location.',
       };
     }
+    if (vendor?.is_open !== false && vendor?.is_accepting_orders === false) return { canOrder:false, message:'This store is temporarily not accepting orders.' };
     if ((vendor?.is_open_now ?? vendor?.is_open) === false) {
       return { canOrder: false, message: 'This store is currently closed.' };
     }
@@ -129,29 +152,40 @@ export class ProductDetailComponent {
     return { canOrder: true, message: '' };
   });
   canPurchase = computed(
-    () => this.stockState().canBuy && this.storeOrderState().canOrder,
+    () => this.stockState().canBuy && this.storeOrderState().canOrder && !this.catalog.productErrors()[this.detailId] && !this.catalog.productDetailLoading()[this.detailId]
   );
-  sizes = computed(() => {
-    const product = this.product();
-    const variants =
-      (product.raw as any)?.variants ||
-      (product.raw as any)?.available_units ||
-      [];
-    if (Array.isArray(variants) && variants.length) {
-      return variants.map((variant: any) => ({
-        label: variant.unit || variant.label || variant.name || product.unit,
-        price: Number(variant.price || product.price || 0),
-        mrp: Number(
-          variant.compare_price ||
-            variant.mrp ||
-            variant.price ||
-            product.mrp ||
-            0,
-        ),
-      }));
-    }
-    return [{ label: product.unit, price: product.price, mrp: product.mrp }];
+  sizes = computed(() => [
+    {
+      label: this.product().unit,
+      price: this.product().price,
+      mrp: this.product().mrp,
+    },
+  ]);
+  readonly gallery = computed(() => {
+    const raw = this.product().raw as any;
+    const urls = [
+      this.product().image,
+      ...(Array.isArray(raw?.images)
+        ? raw.images.map((image: any) => image.image || image.url)
+        : []),
+    ].filter(Boolean);
+    return [...new Set<string>(urls)];
   });
+  get detailId(): string {
+    return this.routeParams()?.get('id') || '';
+  }
+  retry(): void {
+    this.catalog.ensureProductLoaded(
+      this.detailId,
+      this.state.customerLocationQuery(),
+      true
+    );
+  }
+  increase(): void {
+    const stock = Number(this.product().raw?.stock);
+    if (!Number.isFinite(stock) || this.qty() < stock)
+      this.qty.update((q) => q + 1);
+  }
   highlights = computed<string[]>(() => {
     const highlights = this.product().highlights ?? [];
     return highlights.length
@@ -168,12 +202,12 @@ export class ProductDetailComponent {
         (item) =>
           item.id !== product.id &&
           this.isSuggestedProduct(item) &&
-          item.category === product.category,
+          item.category === product.category
       )
       .sort(
         (a, b) =>
           this.recommendationScore(b, product) -
-          this.recommendationScore(a, product),
+          this.recommendationScore(a, product)
       )
       .slice(0, 6);
   });
@@ -185,19 +219,18 @@ export class ProductDetailComponent {
         (item) =>
           item.id !== product.id &&
           item.storeId !== product.storeId &&
-          this.isSuggestedProduct(item),
+          this.isSuggestedProduct(item)
       )
       .sort(
         (a, b) =>
           this.recommendationScore(b, product) -
-          this.recommendationScore(a, product),
+          this.recommendationScore(a, product)
       )
       .slice(0, 6);
   });
   detailPanels = computed<DetailPanel[]>(() => {
     const product = this.product();
     const raw = (product.raw || {}) as any;
-    const template = this.categoryTemplate();
     const panels: DetailPanel[] = [
       {
         id: 'details',
@@ -207,7 +240,6 @@ export class ProductDetailComponent {
           'Product details update when the store provides them.',
         items: this.compactItems([
           ['Category', product.category],
-          ['Detail template', this.categoryTemplateLabel(template)],
           ['Brand', raw.brand],
           ['Unit', product.unit],
           ['Pack size', raw.weight],
@@ -218,45 +250,33 @@ export class ProductDetailComponent {
       },
     ];
 
-    const nutritionItems = this.compactItems([
+    const informationItems = this.compactItems([
+      ['Pack', product.unit],
       ['Ingredients', raw.ingredients],
-      ['Allergens', raw.allergens || 'Not specified by vendor'],
+      ['Allergens', raw.allergens],
       ['Shelf life', raw.shelf_life],
-      ['Storage', raw.requires_cold_storage ? 'Keep refrigerated' : 'Standard storage'],
+      ['Packaging', raw.packaging_instructions],
+      ['Perishable', raw.is_perishable == null ? '' : raw.is_perishable ? 'Yes' : 'No'],
+      ['Storage', raw.requires_cold_storage == null ? '' : raw.requires_cold_storage ? 'Keep refrigerated' : 'Cold storage not required'],
+      ['Fragile', raw.is_fragile == null ? '' : raw.is_fragile ? 'Handle carefully' : 'No'],
+      ['Age restricted', raw.is_age_restricted == null ? '' : raw.is_age_restricted ? 'Yes' : 'No'],
+      ['Returnable', raw.is_returnable == null ? '' : raw.is_returnable ? 'Yes' : 'No'],
     ]);
-    if (this.usesNutritionPanel(template, raw)) {
+    if (informationItems.length) {
       panels.push({
         id: 'nutrition',
-        title: this.nutritionPanelTitle(template),
-        intro:
-          raw.ingredients || raw.allergens || raw.shelf_life
-            ? 'Vendor-provided product information. Check packaging for complete details.'
-            : 'Nutrition details appear when the vendor provides them.',
-        items: nutritionItems,
-      });
-    }
-
-    const handlingItems = this.compactItems([
-      ['Packaging', raw.packaging_instructions],
-      ['Perishable', raw.is_perishable ? 'Yes' : 'No'],
-      ['Cold storage', raw.requires_cold_storage ? 'Required' : 'Not required'],
-      ['Fragile', raw.is_fragile ? 'Handle carefully' : 'No'],
-      ['Age restricted', raw.is_age_restricted ? 'Yes' : 'No'],
-      ['Returnable', raw.is_returnable === false ? 'No' : 'Yes'],
-    ]);
-    if (handlingItems.length) {
-      panels.push({
-        id: 'handling',
-        title: this.handlingPanelTitle(template),
-        intro: 'Handling and care notes configured by the vendor.',
-        items: handlingItems,
+        title: 'Ingredients, storage & other details',
+        intro: 'Vendor-provided product information. Check packaging for complete details.',
+        items: informationItems,
       });
     }
 
     panels.push({
       id: 'reviews',
       title: 'Reviews',
-      intro: `${product.rating || 'New'} rating. Reviews from verified Nextou orders appear here.`,
+      intro: `${
+        product.rating || 'New'
+      } rating. Reviews from verified Nextou orders appear here.`,
       items: this.compactItems([
         ['Average rating', product.rating ? String(product.rating) : 'New'],
         ['Total ratings', String(raw.total_ratings || 0)],
@@ -265,46 +285,18 @@ export class ProductDetailComponent {
 
     return panels;
   });
-  selectedPanel = computed(
-    () =>
-      this.detailPanels().find((panel) => panel.id === this.activePanel()) ||
-      this.detailPanels()[0],
-  );
-
   buyNow(): void {
-    if (this.addToCart())
-      this.router.navigate(['/checkout']);
+    this.addToCart(true);
   }
-
-  addToCart(): boolean {
-    if (!this.canPurchase()) {
-      this.state.showToast(
-        this.storeOrderState().message || 'This product is not available right now.',
-      );
-      return false;
-    }
-    const product = this.product();
-    const resolvedId = this.resolveProductId(product);
-    if (!resolvedId || resolvedId === 'loading' || resolvedId === 'product') {
-      this.state.showToast(
-        'This item is still loading. Please try again in a moment.',
-      );
-      this.catalog.ensureProductLoaded(
-        this.route.snapshot.paramMap.get('id'),
-        this.state.customerLocationQuery(),
-      );
-      return false;
-    }
-    return this.state.addToCart(
-      {
-        ...product,
-        id: resolvedId,
-        apiId: resolvedId,
-      },
-      this.qty(),
-    );
+  addToCart(checkout = false): boolean {
+    if (!this.canPurchase()) return false;
+    return this.state.addToCart(this.product(), this.qty(), (success) => {
+      if (success && checkout) {
+        this.state.closeMiniCart();
+        this.router.navigate(['/checkout']);
+      }
+    });
   }
-
   goBack(): void {
     if (history.length > 1) {
       this.location.back();
@@ -315,7 +307,7 @@ export class ProductDetailComponent {
   }
 
   zoomImage(): void {
-    this.state.showToast('Image preview opened');
+    this.imageOpen.set(true);
   }
 
   private resolveProductId(product: any): string {
@@ -326,7 +318,7 @@ export class ProductDetailComponent {
         product?.raw?.product_id ||
         product?.raw?.uuid ||
         product?.raw?.catalog_product_id ||
-        '',
+        ''
     ).trim();
   }
 
@@ -340,19 +332,26 @@ export class ProductDetailComponent {
   }
 
   private recommendationScore(item: any, baseProduct: any): number {
-    const itemEta = this.deliveryEtaMinutes(item?.store?.eta || item?.raw?.vendor?.estimated_delivery_label);
+    const itemEta = this.deliveryEtaMinutes(
+      item?.store?.eta || item?.raw?.vendor?.estimated_delivery_label
+    );
     const baseEta = this.deliveryEtaMinutes(
-      this.store()?.eta || (baseProduct?.raw as any)?.vendor?.estimated_delivery_label,
+      this.store()?.eta ||
+        (baseProduct?.raw as any)?.vendor?.estimated_delivery_label
     );
     const rating = Number(item?.rating || item?.raw?.rating || 0);
-    const sameUnit = String(item?.unit || '').toLowerCase() === String(baseProduct?.unit || '').toLowerCase();
-    const priceGap = Math.abs(Number(item?.price || 0) - Number(baseProduct?.price || 0));
-    const etaBoost = Number.isFinite(itemEta) && Number.isFinite(baseEta) ? Math.max(0, 12 - Math.abs(itemEta - baseEta)) : 0;
+    const sameUnit =
+      String(item?.unit || '').toLowerCase() ===
+      String(baseProduct?.unit || '').toLowerCase();
+    const priceGap = Math.abs(
+      Number(item?.price || 0) - Number(baseProduct?.price || 0)
+    );
+    const etaBoost =
+      Number.isFinite(itemEta) && Number.isFinite(baseEta)
+        ? Math.max(0, 12 - Math.abs(itemEta - baseEta))
+        : 0;
     return (
-      rating * 4 +
-      (sameUnit ? 6 : 0) +
-      etaBoost -
-      Math.min(12, priceGap / 25)
+      rating * 4 + (sameUnit ? 6 : 0) + etaBoost - Math.min(12, priceGap / 25)
     );
   }
 
@@ -361,53 +360,6 @@ export class ProductDetailComponent {
     const match = text.match(/(\d+)\s*(min|mins|minute|minutes)/);
     if (!match) return NaN;
     return Number(match[1]);
-  }
-
-  private categoryTemplate(): string {
-    const product = this.product();
-    const key = `${product.category} ${product.name}`.toLowerCase();
-    if (key.includes('beverage') || key.includes('drink')) return 'beverage';
-    if (key.includes('bakery') || key.includes('food')) return 'food';
-    if (key.includes('fruit') || key.includes('vegetable')) return 'grocery';
-    if (key.includes('personal') || key.includes('care')) return 'personal_care';
-    if (key.includes('home') || key.includes('clean')) return 'home_care';
-    if (key.includes('medicine') || key.includes('health')) return 'medicine';
-    return 'general';
-  }
-
-  private usesNutritionPanel(type: string, raw: any): boolean {
-    return (
-      ['grocery', 'food', 'beverage', 'personal_care', 'medicine'].includes(
-        type,
-      ) ||
-      Boolean(raw.ingredients || raw.allergens || raw.shelf_life)
-    );
-  }
-
-  private nutritionPanelTitle(type: string): string {
-    if (type === 'personal_care' || type === 'medicine')
-      return 'Ingredients & Safety';
-    if (type === 'home_care') return 'Composition';
-    return 'Nutritional Info';
-  }
-
-  private handlingPanelTitle(type: string): string {
-    if (type === 'home_care') return 'Use & Care';
-    if (type === 'medicine') return 'Safety & Storage';
-    return 'Handling & Care';
-  }
-
-  private categoryTemplateLabel(type: string): string {
-    const labels: Record<string, string> = {
-      grocery: 'Grocery / Fresh produce',
-      food: 'Prepared food / Bakery',
-      beverage: 'Beverage',
-      personal_care: 'Personal care',
-      home_care: 'Home care',
-      medicine: 'Medicine / Health',
-      general: 'General merchandise',
-    };
-    return labels[type] || labels['general'];
   }
 
   private compactItems(items: Array<[string, unknown]>): DetailItem[] {
@@ -419,10 +371,4 @@ export class ProductDetailComponent {
       .filter((item) => item.value);
   }
 
-  resolvePanelLabel(panelId: DetailPanelId): string {
-    if (panelId === 'details') return 'Product Details';
-    if (panelId === 'nutrition') return 'Nutritional Info';
-    if (panelId === 'handling') return 'Handling & Care';
-    return 'Reviews';
-  }
 }

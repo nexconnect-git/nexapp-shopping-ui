@@ -1,8 +1,8 @@
 <div class="workspace-page">
   <header class="page-heading">
     <div>
-      <p class="eyebrow">Orders</p><h1>Live orders</h1>
-      <p>Accept, prepare, and hand off active orders.</p>
+      <p class="eyebrow">Daily work / Live orders</p><h1>Keep the day moving.</h1>
+      <p>Accept, prepare, and hand off. One clear next action at a time.</p>
     </div>
     <div class="workspace-actions">
       <span
@@ -34,7 +34,7 @@
       [attr.aria-pressed]="lane() === 'all'"
       (click)="lane.set('all')"
     >
-      All {{ orders().length }}</button
+      All {{ store.lastUpdated() ? orders().length : '—' }}</button
     >}
     @for(item of lanes;track item.key){<button
       type="button"
@@ -42,11 +42,11 @@
       [attr.aria-pressed]="selectedLane() === item.key"
       (click)="lane.set(item.key)"
     >
-      {{ item.label }} {{ count(item.key) }}</button
+      {{ item.label }} {{ store.lastUpdated() ? count(item.key) : '—' }}</button
     >}
   </div>
   @if(store.loading() && !orders().length){
-  <div class="workspace-state" role="status">Loading active orders…</div>
+  <nc-counter-state kind="loading" title="Loading active orders…" />
   }@else if(!store.feedError()&&!orders().length){
   <div class="workspace-state">
     <h3>No active orders</h3>
@@ -57,7 +57,7 @@
     <a routerLink="/orders">Open order history</a>
   </div>
   }@else{
-  <div class="workspace-order-board">
+  <div class="workspace-order-board" [class.single-lane]="selectedLane() !== 'all'">
     @for(column of columns();track column.key){
     <section class="workspace-order-lane">
       <header>

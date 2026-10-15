@@ -1,66 +1,123 @@
 :host {
-  display: block;
-}
+  display:block}
 .coupon-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
-}
+  display:block;
+  border-top:1px solid var(--ink)}
+.promotion-record {
+  display:grid;
+  grid-template-columns:200px minmax(0,1fr) auto;
+  gap:12px 26px;
+  padding:24px 0;
+  border-bottom:1px solid var(--line);
+  align-items:start}
 .coupon-title {
-  display: flex;
-  gap: 12px;
-  justify-content: space-between;
-}
+  grid-column:1}
+.coupon-title h3 {
+  font-size:14px;
+  margin:0 0 10px}
 .coupon-code {
-  display: inline-flex;
-  padding: 8px 14px;
-  letter-spacing: 0.04em;
-  background: #f2eff9;
-  color: #38268e;
-  border: 1px dashed #b6a9e0;
-  border-radius: 6px;
-}
-dl {
-  font-size: 14px;
-  display: grid;
-  gap: 10px;
-}
-dl div {
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
-}
-dt {
-  color: #626779;
-}
-dd {
-  margin: 0;
-  text-align: right;
-}
+  grid-column:1;
+  font-size:18px;
+  color:var(--purple)}
+.promotion-record>p {
+  grid-column:2;
+  grid-row:1;
+  font-size:13px;
+  margin:0;
+  color:var(--muted)}
+.promotion-record>dl {
+  grid-column:2;
+  grid-row:2/5;
+  margin:0;
+  display:grid;
+  gap:8px}
+.promotion-record>dl>div {
+  display:flex;
+  justify-content:space-between;
+  gap:14px;
+  font-size:12px}
+.promotion-record>dl dt {
+  color:var(--muted)}
+.promotion-record>dl dd {
+  margin:0}
+.promotion-record>.workspace-actions {
+  grid-column:3;
+  grid-row:1/5;
+  flex-direction:column}
 .coupon-fields {
-  border: 0;
-  padding: 0;
-  min-width: 0;
-  display: grid;
-  gap: 16px;
-}
+  border:0;
+  margin:0;
+  padding:0}
+.optional-limits {
+  margin:20px 0}
+.optional-limits summary {
+  cursor:pointer;
+  font-size:13px;
+  margin-bottom:18px}
 .coupon-preview {
-  background: #f6f7fa;
-  padding: 16px;
-  border-radius: 8px;
+  background:var(--lime);
+  border-radius:14px;
+  padding:20px;
+  margin:24px 0}
+.coupon-preview summary {
+  font-weight:600;
+  cursor:pointer;
+  margin-bottom:16px}
+.coupon-preview p {
+  font-size:13px}
+.workspace-check {
+  display:flex;
+  gap:12px;
+  align-items:center}
+@media(max-width:900px) {
+  .promotion-record {
+  grid-template-columns:160px minmax(0,1fr)}
+.promotion-record>.workspace-actions {
+  grid-column:1/-1;
+  grid-row:auto;
+  flex-direction:row}
 }
-.coupon-fields summary {
-  cursor: pointer;
-  min-height: 44px;
-  align-content: center;
-  font-weight: 700;
+@media(max-width:650px) {
+  .promotion-record {
+  grid-template-columns:1fr;
+  gap:12px}
+.promotion-record>*,.promotion-record>dl,.promotion-record>p,.promotion-record>.workspace-actions {
+  grid-column:1;
+  grid-row:auto}
+.promotion-record>dl>div {
+  flex-direction:column;
+  gap:3px}
+.promotion-record>.workspace-actions {
+  flex-wrap:wrap}
+.promotion-record>.workspace-actions button {
+  flex:1}
 }
-.optional-limits[open] > label,
-.optional-limits[open] > div {
-  margin-top: 12px;
+.promotion-record {
+  grid-template-columns:200px minmax(0,1fr) auto}
+.promotion-record>.offer-line {
+  grid-column:2;
+  grid-row:2;
+  font-size:13px}
+.promotion-record>button {
+  grid-column:3;
+  grid-row:1/3;
+  align-self:center}
+.workspace-dialog-body dl {
+  display:grid;
+  gap:15px}
+.workspace-dialog-body dd {
+  margin:5px 0;
+  color:var(--muted)}
+@media(max-width:900px) {
+  .promotion-record>button {
+  grid-column:1/-1;
+  grid-row:auto;
+  justify-self:start}
 }
-@media (max-width: 800px) {
-  .coupon-grid {
-    grid-template-columns: 1fr;
-  }
+@media(max-width:650px) {
+  .promotion-record {
+  grid-template-columns:1fr}
+.promotion-record>.offer-line,.promotion-record>button {
+  grid-column:1;
+  grid-row:auto}
 }

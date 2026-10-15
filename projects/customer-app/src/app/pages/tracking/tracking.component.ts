@@ -1,46 +1,200 @@
-﻿import {
+import { CustomerIconComponent } from '../../shared/customer-icon/customer-icon.component';
+import {
   AfterViewInit,
   Component,
+  DestroyRef,
   computed,
   effect,
   ElementRef,
   Inject,
+  inject,
   OnDestroy,
   QueryList,
   signal,
   ViewChildren,
 } from '@angular/core';
+import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { shouldShowDeliveryPartner } from '@nexconnect/customer-checkout';
-import { AppCurrencyPipe } from '@shared/lib/pipes/currency.pipe';
+import { CustomerCurrencyPipe as AppCurrencyPipe } from '../../shared/customer-currency/customer-currency.pipe';
 import { GoogleMapsService } from '@shared/lib/services/google-maps.service';
 import { openAuthenticatedWebSocket } from '@shared/lib/services/websocket-auth';
 import { SessionStore } from '@shared/lib/services/session-store.service';
 import { API_BASE_URL } from '@shared/lib/tokens/api-url.token';
 import { normalizeOrderStatus } from '@shared/lib/models/adapters';
 import { Subscription } from 'rxjs';
+import { FormsModule } from '@angular/forms';
+import { CustomerPageHeaderComponent } from '../../shared/customer-page-header/customer-page-header.component';
+import { CustomerStateComponent } from '../../shared/customer-state/customer-state.component';
+import { NxModalShellComponent } from '../../shared/ui/nx-modal-shell/nx-modal-shell.component';
 import { OrderService } from '../../services/order.service';
 import { AppStateService } from '../../services/app-state.service';
 import { DisplayOrderIdPipe } from '../../shared/display-order-id.pipe';
 import { CustomerOrderApiService } from '../../services/customer-order-api.service';
+import { AuthService } from '../../services/auth.service';
+import { CustomerReceiptComponent } from '../../shared/customer-receipt/customer-receipt.component';
+import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
 
 declare const google: any;
 
 @Component({
   standalone: true,
-  imports: [RouterLink, AppCurrencyPipe, DisplayOrderIdPipe],
+  imports: [CustomerIconComponent, BreadcrumbsComponent, CustomerReceiptComponent,
+    RouterLink,
+    AppCurrencyPipe,
+    DisplayOrderIdPipe,
+    FormsModule,
+    CustomerPageHeaderComponent,
+    CustomerStateComponent,
+    NxModalShellComponent,
+  ],
   templateUrl: './tracking.component.html',
   styleUrls: ['./tracking.component.scss'],
 })
 export class TrackingComponent implements AfterViewInit, OnDestroy {
-  @ViewChildren('trackingMap') trackingMaps?: QueryList<ElementRef<HTMLElement>>;
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly auth = inject(AuthService);
+  private authSession = this.auth.sessionVersion;
+  readonly showDetails = signal(false);
+  readonly cancellationBlocked = signal(false);
+  readonly knownInvoiceId = computed(() => String((this.order().raw as any)?.invoice_id || ''));
+  readonly terminal = computed(() => ['delivered','cancelled','refunded'].includes(this.currentStatus()));
+  readonly gpsStale = computed(() => {
+    const stamp = Date.parse(this.gpsUpdate()?.timestamp || '');
+    return !!this.gpsUpdate() && (!Number.isFinite(stamp) || this.clock()-stamp>120000);
+  });
+  readonly stageDescription = computed(() => {
+    const status=this.currentStatus();
+    if(!this.terminal() && this.connection().includes('interrupted'))return 'Reconnecting to delivery updates. Status remains visible.';
+    if(status==='placed')return 'Waiting for '+this.storeName()+' to accept.';
+    if(status==='confirmed'||status==='vendor_accepted')return 'The store has accepted your order.';
+    if(status==='preparing'||status==='packed')return 'Your items are being prepared and packed.';
+    if(status==='ready'||status==='ready_for_pickup')return ['searching','notified'].includes(this.order().raw?.assignment_status||'') ? 'The store has started partner search.' : this.partner() ? 'Partner assigned. Pickup has not been confirmed.' : 'Ready at the store. No partner is assigned yet.';
+    if(status==='delivery_assigned')return 'Partner assigned. Pickup has not been confirmed.';
+    if(this.hasPickedUp())return this.gpsStale() ? 'The last location update is older than expected.' : 'Your partner has picked up the order.';
+    return this.statusLabel();
+  });
+  readonly journeySteps = computed(() => {
+    const status=this.currentStatus();
+    const stage=status==='delivered'?4:this.hasPickedUp()?3:['preparing','packed','ready','ready_for_pickup','delivery_assigned'].includes(status)?2:['confirmed','vendor_accepted'].includes(status)?1:0;
+    const events=this.steps();
+    return [
+      {name:'Order placed',statuses:['placed','created'],pending:'Pending'},
+      {name:'Store confirmed',statuses:['confirmed','vendor_accepted'],pending:'Waiting for the store'},
+      {name:'Preparing your order',statuses:['preparing','packed','ready','ready_for_pickup'],pending:'Waiting for the store'},
+      {name:'On the way',statuses:['picked_up','on_the_way','out_for_delivery','arrived_at_customer'],pending:'After confirmed pickup'},
+      {name:'Delivered',statuses:['delivered'],pending:'We will update you here'},
+    ].map((step,index)=>({name:step.name,done:index<stage,current:index===stage,time:events.find(event=>step.statuses.includes(event.status)&&event.time)?.time || (index>stage ? step.pending : 'Time unavailable')}));
+  });
+  @ViewChildren('trackingMap') trackingMaps?: QueryList<
+    ElementRef<HTMLElement>
+  >;
+  private readonly routeParams = toSignal(this.route.paramMap);
   tracking = signal<any[]>([]);
+  connection = signal('Connecting to live updates');
+  private trackingRequest = 0;
+  cancellationPolicy = signal<any>(null);
+  cancelOpen = signal(false);
+  cancelReason = signal('');
+  cancelling = signal(false);
+  cancelError = signal('');
+  clock = signal(Date.now());
+  gpsUpdate = signal<any>(null);
+  detailError = computed(
+    () => this.orders.detailErrors()[this.routeParams()?.get('id') || ''] || ''
+  );
+  canCancel = computed(() => {
+    const policy = this.cancellationPolicy();
+    const raw = this.order().raw;
+    const placed = Date.parse(raw?.placed_at || '');
+    return (
+      !!policy &&
+      !!raw &&
+      policy.allowed_statuses?.includes(raw.status) &&
+      (Number(policy.window_minutes) <= 0 ||
+        (Number.isFinite(placed) &&
+          this.clock() - placed < Number(policy.window_minutes) * 60000))
+    );
+  });
+  stageCopy = computed(() => {
+    const status = this.currentStatus();
+    if (!this.terminal() && this.connection().includes('interrupted')) return 'Your order is still here.';
+    if (['picked_up', 'on_the_way', 'out_for_delivery'].includes(status) && this.gpsStale()) return 'On the way. Location delayed.';
+    const assignment = this.order().raw?.assignment_status;
+    const messages: Record<string, string> = {
+      placed: 'Your order is with the store.',
+      confirmed: 'Accepted, with care.',
+      preparing: 'Good things are coming together.',
+      ready:
+        assignment === 'searching' || assignment === 'notified'
+          ? 'Finding a delivery partner.'
+          : this.partner() ? 'Your partner is on the way to the store.' : 'Packed and ready.',
+      delivery_assigned: 'Your partner is heading to the store.',
+      picked_up: 'A little closer to your door.',
+      on_the_way: 'A little closer to your door.',
+      out_for_delivery: 'A little closer to your door.',
+      arrived_at_customer: 'Your partner has arrived.',
+      delivered: 'Good things, delivered.',
+      cancelled: 'This order was cancelled.',
+      refunded: 'This order was refunded.',
+    };
+    return messages[status] || this.statusLabel();
+  });
+  gpsLabel = computed(() => {
+    this.clock();
+    const gps = this.gpsUpdate();
+    if (!gps) return 'Waiting for a delivery partner location.';
+    const timestamp = Date.parse(gps.timestamp || '');
+    return Number.isFinite(timestamp)
+      ? (this.clock() - timestamp > 120000
+          ? 'Last known location · '
+          : 'Location updated · ') +
+          new Date(timestamp).toLocaleTimeString([], {
+            hour: 'numeric',
+            minute: '2-digit',
+          })
+      : 'Last known location · update time unavailable';
+  });
+  cancel(): void {
+    if (this.cancelling() || !this.canCancel()) return;
+    if (!this.cancelReason().trim()) {
+      this.cancelError.set('Choose a reason for cancelling.');
+      requestAnimationFrame(() =>
+        document.getElementById('cancel-reason')?.focus()
+      );
+      return;
+    }
+    this.cancelling.set(true);
+    this.cancelError.set('');
+    const session=this.auth.sessionVersion;
+    const id=this.order().id;
+    this.orders.cancelOrder(this.order(), this.cancelReason()).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        if(session!==this.auth.sessionVersion || id!==this.routeParams()?.get('id'))return;
+        this.cancelling.set(false);
+        this.cancelOpen.set(false);
+        this.loadTracking(this.order().id);
+      },
+      error: (error) => {
+        if(session!==this.auth.sessionVersion || id!==this.routeParams()?.get('id'))return;
+        this.cancelling.set(false);
+        this.cancelError.set(
+          error.body?.error ||
+            error.error?.error ||
+            'Cancellation could not be confirmed. Refresh the order before trying again.'
+        );
+        this.orders.refreshOrder(this.order().id);
+      },
+    });
+  }
+
   mapReady = signal(false);
   mapUnavailable = signal(false);
   trackingError = signal('');
   lastTrackingRefresh = signal<Date | null>(null);
   liveEtaMinutes = signal<number | null>(null);
-  invoiceDownloading = signal(false);
+  receiptOpen = signal(false);
+  receiptError = signal('');
   private map: any = null;
   private currentMarker: any = null;
   private mapHost: HTMLElement | null = null;
@@ -78,14 +232,44 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
     private state: AppStateService,
     private googleMaps: GoogleMapsService,
     private session: SessionStore,
-    @Inject(API_BASE_URL) private apiBaseUrl: string,
+    @Inject(API_BASE_URL) private apiBaseUrl: string
   ) {
-    const id = this.route.snapshot.paramMap.get('id');
-    if (id) {
-      this.loadTracking(id);
-      this.connectTrackingSocket(id);
-      this.startAutoRefresh(id);
-    }
+    this.orderApi
+      .cancellationPolicy().pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (policy) => this.cancellationPolicy.set(policy),
+        error: () => this.cancellationPolicy.set(null),
+      });
+    this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      const id = params.get('id');
+      this.stopAutoRefresh();
+      this.closeTrackingSocket();
+      this.tracking.set([]);
+      this.gpsUpdate.set(null);
+      this.lastTrackingRefresh.set(null);
+      this.liveEtaMinutes.set(null);
+      this.trackingError.set('');
+      this.cancelOpen.set(false);
+      this.cancellationBlocked.set(false);
+      this.receiptOpen.set(false);
+      this.receiptError.set('');
+      this.showDetails.set(false);
+      if (id) {
+        this.orders.refreshOrder(id);
+        this.loadTracking(id);
+        this.connectTrackingSocket(id);
+        this.startAutoRefresh(id);
+      }
+    });
+    effect(() => {
+      this.auth.currentUser();
+      if(this.authSession===this.auth.sessionVersion)return;
+      this.authSession=this.auth.sessionVersion;
+      ++this.trackingRequest;
+      this.stopAutoRefresh();this.closeTrackingSocket();
+      this.tracking.set([]);this.gpsUpdate.set(null);this.cancelOpen.set(false);this.cancellationBlocked.set(false);
+      if(!this.auth.isLoggedIn())this.router.navigate(['/']);
+    });
     effect(() => {
       this.currentCoordinate();
       window.setTimeout(() => this.refreshMapMarker(), 0);
@@ -94,12 +278,13 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     this.mapHostChanges = this.trackingMaps?.changes.subscribe(() =>
-      this.initGoogleMap(),
+      this.initGoogleMap()
     );
     window.setTimeout(() => this.initGoogleMap(), 0);
   }
 
   ngOnDestroy(): void {
+    this.trackingRequest++;
     this.mapHostChanges?.unsubscribe();
     this.stopAutoRefresh();
     this.closeTrackingSocket();
@@ -109,14 +294,14 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
   }
 
   order = computed(() =>
-    this.orders.getOrder(this.route.snapshot.paramMap.get('id')),
+    this.orders.getOrder(this.routeParams()?.get('id') || null)
   );
   partner = computed(() => {
     const partner = this.order().raw?.delivery_partner_info;
     return shouldShowDeliveryPartner(partner) ? partner : null;
   });
   currentStatus = computed(() =>
-    this.normalizeStatusKey(this.order().raw?.status || this.order().status),
+    this.normalizeStatusKey(this.order().raw?.status || this.order().status)
   );
   statusLabel = computed(() => this.labelFor(this.currentStatus()));
   isLoadingOrder = computed(() => this.order().id === 'loading');
@@ -135,17 +320,25 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
         timestamp: entry?.timestamp || null,
       }))
       .filter((entry: any) => !!entry.status);
-    const orderStatus = this.normalizeStatusKey(order.raw?.status || order.status);
-    if (orderStatus && !normalized.some((entry: any) => entry.status === orderStatus)) {
+    const orderStatus = this.normalizeStatusKey(
+      order.raw?.status || order.status
+    );
+    if (
+      orderStatus &&
+      !normalized.some((entry: any) => entry.status === orderStatus)
+    ) {
       normalized.push({ status: orderStatus, timestamp: null });
     }
     if (!normalized.some((entry: any) => entry.status === 'placed')) {
       normalized.unshift({ status: 'placed', timestamp: null });
     }
     const deduped = normalized.filter(
-      (entry, index, list) => list.findIndex((item) => item.status === entry.status) === index,
+      (entry, index, list) =>
+        list.findIndex((item) => item.status === entry.status) === index
     );
-    deduped.sort((a, b) => this.statusWeight(a.status) - this.statusWeight(b.status));
+    deduped.sort(
+      (a, b) => this.statusWeight(a.status) - this.statusWeight(b.status)
+    );
 
     const cancelledFlow = orderStatus === 'cancelled';
     return deduped.map((entry) => {
@@ -168,15 +361,19 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
               minute: '2-digit',
             })
           : entry.status === 'placed'
-            ? order.time || ''
-            : '',
+          ? order.time || ''
+          : '',
       };
     });
   });
   progressSteps = computed(() => {
-    const status = this.normalizeStatusKey(this.order().raw?.status || this.order().status);
+    const status = this.normalizeStatusKey(
+      this.order().raw?.status || this.order().status
+    );
     const currentWeight = this.statusWeight(status);
-    const timelineMap = new Map(this.steps().map((step: any) => [step.status, step.time]));
+    const timelineMap = new Map(
+      this.steps().map((step: any) => [step.status, step.time])
+    );
     const display = [
       { status: 'placed', label: 'Placed' },
       { status: 'confirmed', label: 'Confirmed' },
@@ -196,21 +393,29 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
   });
   estimatedArrivalLabel = computed(() => {
     const liveEta = this.liveEtaMinutes();
-    if (typeof liveEta === 'number' && Number.isFinite(liveEta) && liveEta > 0) {
+    if (
+      typeof liveEta === 'number' &&
+      Number.isFinite(liveEta) &&
+      liveEta > 0
+    ) {
       return `${Math.round(liveEta)} mins`;
     }
     const raw = this.order().raw?.estimated_delivery_time;
-    if (raw === null || raw === undefined) return 'Soon';
+    if (raw === null || raw === undefined) return 'Estimate pending';
     const rawText = String(raw).trim();
-    if (!rawText) return 'Soon';
+    if (!rawText) return 'Estimate pending';
     const numeric = Number(rawText);
     if (Number.isFinite(numeric) && numeric > 0) return `${numeric} mins`;
     return rawText;
   });
   hasPickedUp = computed(() => {
-    const status = String(this.order().raw?.status || this.order().status || '').toLowerCase();
+    const status = String(
+      this.order().raw?.status || this.order().status || ''
+    ).toLowerCase();
     const hasPickupTracking = this.tracking().some((entry) =>
-      String(entry?.status || '').toLowerCase().includes('pick'),
+      String(entry?.status || '')
+        .toLowerCase()
+        .includes('pick')
     );
     return (
       hasPickupTracking ||
@@ -220,9 +425,7 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
     );
   });
   mapStageLabel = computed(() =>
-    this.hasPickedUp()
-      ? 'Delivery route is active'
-      : 'Pickup is at the store',
+    this.hasPickedUp() ? 'Delivery route is active' : 'Pickup is at the store'
   );
   storeName = computed(() => {
     const order = this.order() as any;
@@ -244,16 +447,11 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
       'Nextou partner store'
     );
   });
-  currentCoordinate = computed(() => {
-    if (!this.hasPickedUp()) {
-      return this.vendorCoordinate() || this.driverCoordinate();
-    }
-    return (
+  currentCoordinate = computed(
+    () =>
       this.driverCoordinate() ||
-      this.destinationCoordinate() ||
-      this.vendorCoordinate()
-    );
-  });
+      (!this.hasPickedUp() ? this.vendorCoordinate() : null)
+  );
   directionsUrl = computed(() => {
     if (!this.hasPickedUp()) return '';
     const origin = this.currentCoordinate();
@@ -272,28 +470,39 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
   });
 
   private loadTracking(id: string): void {
+    const request = ++this.trackingRequest;
+    const session=this.auth.sessionVersion;
     this.trackingError.set('');
-    this.orderApi.getOrderTracking(id).subscribe({
+    this.orderApi.getOrderTracking(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
+        if (
+          request !== this.trackingRequest || session!==this.auth.sessionVersion ||
+          id !== this.routeParams()?.get('id')
+        )
+          return;
         this.tracking.set(
           Array.isArray(response)
             ? response
-            : response.results || response.tracking || [],
+            : response.results || response.tracking || []
         );
         this.lastTrackingRefresh.set(new Date());
         this.refreshMapMarker();
       },
       error: () => {
-        this.tracking.set([]);
+        if (
+          request !== this.trackingRequest || session!==this.auth.sessionVersion ||
+          id !== this.routeParams()?.get('id')
+        )
+          return;
         this.trackingError.set('Could not refresh live tracking updates.');
       },
     });
   }
 
   retryTracking(): void {
-    const id = this.route.snapshot.paramMap.get('id');
+    const id = this.routeParams()?.get('id');
     if (!id) return;
-    this.orders.loadOrders();
+    this.orders.refreshOrder(id);
     this.loadTracking(id);
     this.connectTrackingSocket(id);
   }
@@ -312,7 +521,7 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
     if (url) window.open(url, '_blank', 'noopener');
     else
       this.state.showToast(
-        action === 'zoom-in' ? 'Map loading' : 'Map loading',
+        action === 'zoom-in' ? 'Map loading' : 'Map loading'
       );
   }
 
@@ -328,10 +537,12 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
     this.googleMaps
       .loadJavaScriptApi()
       .then(() => {
-        const coordinate = this.currentCoordinate() || {
-          lat: 12.9716,
-          lng: 77.5946,
-        };
+        if(this.destroyRef.destroyed)return;
+        const coordinate = this.currentCoordinate();
+        if (!coordinate) {
+          this.mapUnavailable.set(true);
+          return;
+        }
         const element = this.visibleMapElement();
         if (!element) return;
         if (this.mapInitialized && this.mapHost === element) {
@@ -400,7 +611,9 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
     this.currentMarker = new google.maps.Marker({
       position: coordinate,
       map: this.map,
-      title: this.hasPickedUp() ? 'Current delivery location' : 'Store pickup location',
+      title: this.hasPickedUp()
+        ? 'Current delivery location'
+        : 'Store pickup location',
       icon: {
         path: google.maps.SymbolPath.CIRCLE,
         scale: 9,
@@ -434,59 +647,14 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
   }
 
   downloadInvoice(): void {
-    if (this.invoiceDownloading()) return;
-    const order = this.order();
-    const orderId = String(order?.id || '');
-    if (!orderId || orderId === 'loading') {
-      this.state.showToast('Order details are still loading', 'info');
-      return;
-    }
-
-    const knownInvoiceId = String((order.raw as any)?.invoice_id || '').trim();
-    this.invoiceDownloading.set(true);
-    this.state.showToast('Preparing your receipt', 'info');
-
-    const downloadById = (invoiceId: string): void => {
-      this.orderApi.downloadInvoice(invoiceId).subscribe({
-        next: (blob) => {
-          this.triggerFileDownload(
-            blob,
-            `receipt-${order.raw?.order_number || orderId}.pdf`,
-          );
-          this.state.showToast('Receipt downloaded', 'success');
-          this.invoiceDownloading.set(false);
-        },
-        error: () => {
-          this.state.showToast('Could not download receipt right now', 'error');
-          this.invoiceDownloading.set(false);
-        },
-      });
-    };
-
-    if (knownInvoiceId) {
-      downloadById(knownInvoiceId);
-      return;
-    }
-
-    this.orderApi
-      .generateInvoice({ order: orderId, invoice_type: 'customer_receipt' })
-      .subscribe({
-        next: (invoice: any) => {
-          const invoiceId = String(invoice?.id || '').trim();
-          if (!invoiceId) {
-            this.state.showToast('Receipt is not ready yet', 'warning');
-            this.invoiceDownloading.set(false);
-            return;
-          }
-          downloadById(invoiceId);
-        },
-        error: () => {
-          this.state.showToast('Could not prepare receipt right now', 'error');
-          this.invoiceDownloading.set(false);
-        },
-      });
+    if(this.order().id==='loading' || !this.auth.isLoggedIn())return;
+    this.receiptError.set('');this.receiptOpen.set(true);
   }
+  receiptDownloaded():void {this.state.showToast('Receipt downloaded','success');}
 
+  itemUnit(item: any): string {
+    return item.raw?.product_unit || item.raw?.unit || 'item';
+  }
   itemQuantity(item: any): number {
     const value = Number(item?.raw?.quantity ?? item?.quantity ?? 1);
     return Number.isFinite(value) && value > 0 ? value : 1;
@@ -510,7 +678,8 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
     const key = String(status || '').toLowerCase();
     if (key.includes('deliver')) return 'task_alt';
     if (key.includes('way') || key.includes('pick')) return 'two_wheeler';
-    if (key.includes('ready') || key.includes('assign')) return 'local_shipping';
+    if (key.includes('ready') || key.includes('assign'))
+      return 'local_shipping';
     if (key.includes('prepar') || key.includes('pack')) return 'inventory_2';
     if (key.includes('confirm')) return 'verified';
     return 'task_alt';
@@ -535,7 +704,8 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
         this.closeTrackingSocket();
         return;
       }
-      this.orders.loadOrders();
+      this.clock.set(Date.now());
+      this.orders.refreshOrder(id);
       this.loadTracking(id);
     }, 30000);
   }
@@ -549,14 +719,19 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
 
   private isTerminalStatus(status: string): boolean {
     return ['delivered', 'cancelled', 'refunded'].includes(
-      this.normalizeStatusKey(status),
+      this.normalizeStatusKey(status)
     );
   }
 
   private connectTrackingSocket(id: string): void {
-    if (typeof window === 'undefined' || typeof WebSocket === 'undefined') return;
-    if (this.isTerminalStatus(this.currentStatus())) return;
+    if (typeof window === 'undefined' || typeof WebSocket === 'undefined')
+      return;
+    if (this.isTerminalStatus(this.currentStatus())) {
+      this.connection.set('Order complete');
+      return;
+    }
 
+    this.connection.set('Connecting to live updates');
     this.closeTrackingSocket(false);
     this.websocketClosedByComponent = false;
 
@@ -564,17 +739,28 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
       const socket = openAuthenticatedWebSocket(
         `/ws/delivery/${id}/tracking/`,
         this.session.getAccessToken(),
-        this.apiBaseUrl,
+        this.apiBaseUrl
       );
       this.trackingSocket = socket;
       socket.onopen = () => {
-        this.trackingError.set('');
+        this.connection.set('Live connection open');
         this.clearWebsocketReconnect();
       };
       socket.onmessage = (event) => this.applySocketTrackingMessage(event.data);
-      socket.onerror = () => this.scheduleWebsocketReconnect(id);
+      socket.onerror = () => {
+        this.connection.set(
+          'Live connection interrupted · status refresh continues'
+        );
+        this.scheduleWebsocketReconnect(id);
+      };
       socket.onclose = () => {
-        if (!this.websocketClosedByComponent && !this.isTerminalStatus(this.currentStatus())) {
+        this.connection.set(
+          'Live connection interrupted · status refresh continues'
+        );
+        if (
+          !this.websocketClosedByComponent &&
+          !this.isTerminalStatus(this.currentStatus())
+        ) {
           this.scheduleWebsocketReconnect(id);
         }
       };
@@ -603,22 +789,28 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
     if (payload?.type !== 'location_update') return;
     const lat = Number(payload.lat ?? payload.latitude);
     const lng = Number(payload.lng ?? payload.longitude);
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+    if (
+      (payload.lat == null && payload.latitude == null) ||
+      (payload.lng == null && payload.longitude == null) ||
+      !Number.isFinite(lat) ||
+      !Number.isFinite(lng) ||
+      Math.abs(lat) > 90 ||
+      Math.abs(lng) > 180
+    )
+      return;
 
-    const entry = {
-      status: this.hasPickedUp() ? 'on_the_way' : 'delivery_assigned',
+    this.gpsUpdate.set({
       latitude: lat,
       longitude: lng,
-      partner_id: payload.partner_id || null,
-      timestamp: new Date().toISOString(),
-    };
-    this.tracking.update((items) => [...items.slice(-49), entry]);
+      timestamp: payload.timestamp || null,
+    });
     this.lastTrackingRefresh.set(new Date());
     this.refreshMapMarker();
   }
 
   private scheduleWebsocketReconnect(id: string): void {
-    if (typeof window === 'undefined' || this.websocketReconnectTimer !== null) return;
+    if (typeof window === 'undefined' || this.websocketReconnectTimer !== null)
+      return;
     this.websocketReconnectTimer = window.setTimeout(() => {
       this.websocketReconnectTimer = null;
       this.connectTrackingSocket(id);
@@ -626,7 +818,10 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
   }
 
   private clearWebsocketReconnect(): void {
-    if (this.websocketReconnectTimer !== null && typeof window !== 'undefined') {
+    if (
+      this.websocketReconnectTimer !== null &&
+      typeof window !== 'undefined'
+    ) {
       window.clearTimeout(this.websocketReconnectTimer);
     }
     this.websocketReconnectTimer = null;
@@ -664,32 +859,26 @@ export class TrackingComponent implements AfterViewInit, OnDestroy {
   }
 
   private driverCoordinate(): { lat: number; lng: number } | null {
-    const tracking = this.tracking().length
-      ? this.tracking()
-      : this.order().raw?.tracking || [];
-    const latest = [...tracking]
-      .reverse()
-      .find((entry: any) => entry?.latitude && entry?.longitude);
-    return this.coordinateFrom(latest);
+    return this.coordinateFrom(this.gpsUpdate());
   }
-
   private coordinateFrom(value: any): { lat: number; lng: number } | null {
-    const lat = Number(value?.lat ?? value?.latitude);
-    const lng = Number(value?.lng ?? value?.longitude);
-    return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
+    const latitude = value?.lat ?? value?.latitude;
+    const longitude = value?.lng ?? value?.longitude;
+    if (
+      latitude == null ||
+      longitude == null ||
+      latitude === '' ||
+      longitude === ''
+    )
+      return null;
+    const lat = Number(latitude),
+      lng = Number(longitude);
+    return Number.isFinite(lat) &&
+      Number.isFinite(lng) &&
+      Math.abs(lat) <= 90 &&
+      Math.abs(lng) <= 180
+      ? { lat, lng }
+      : null;
   }
 
-  private triggerFileDownload(blob: Blob, fileName: string): void {
-    const safeName = String(fileName || 'receipt.pdf').replace(/[^\w.-]+/g, '_');
-    const link = document.createElement('a');
-    const objectUrl = window.URL.createObjectURL(blob);
-    link.href = objectUrl;
-    link.download = safeName;
-    link.style.display = 'none';
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(objectUrl);
-  }
 }
-

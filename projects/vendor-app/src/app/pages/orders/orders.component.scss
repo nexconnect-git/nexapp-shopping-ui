@@ -1,63 +1,17 @@
-.history-list {
-  display: grid;
-  gap: 12px;
-}
-.order-row {
-  display: grid;
-  grid-template-columns: minmax(180px, 1.5fr) 1fr auto;
-  gap: 18px;
-  align-items: center;
-}
-.order-row p {
-  margin: 6px 0;
-}
-.row-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.row-error {
-  grid-column: 1/-1;
-  color: var(--danger);
-}
-.list-meta {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  margin: 18px 0;
-  flex-wrap: wrap;
-}
-.check-field {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.check-field input {
-  width: auto;
-}
-@media (max-width: 768px) {
-  .order-row {
-    grid-template-columns: 1fr;
-  }
-  .row-actions > * {
-    flex: 1;
-    text-align: center;
-  }
-  .workspace-toolbar {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-  }
-  .workspace-toolbar label:first-child {
-    grid-column: 1/-1;
-  }
-}
-:host .date-filters summary {
-  cursor: pointer;
-  min-height: 44px;
-  align-content: center;
-  font-size: 14px;
-}
-:host .date-filters[open] {
-  display: grid;
-  gap: 12px;
+:host { display: block; }
+.list-meta { display: flex; gap: 16px; justify-content: space-between; align-items: center; margin: 16px 0; color: var(--muted); font-size: 12px; }
+.order-date { display: block; color: var(--muted); margin-top: 5px; font-size: 11px; }
+.record-actions .row-actions { justify-content: flex-end; }
+@media (max-width:900px) { .history-table td,.history-table th { padding: 14px 12px; } }
+@media (max-width:650px) {
+  .table-wrap { background: none; border: 0; overflow: visible; }
+  .history-table,.history-table tbody { display: block; }
+  .history-table thead { display: none; }
+  .history-table tr { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); padding: 18px; margin-bottom: 14px; }
+  .history-table td { display: block; padding: 0; border: 0; }
+  .history-table td::before { content: attr(data-label); display: block; color: var(--muted); font-size: 10px; margin-bottom: 5px; }
+  .history-table td.money { text-align: left; }
+  .history-table td:first-child,.record-actions { grid-column: 1/-1; }
+  .record-actions .row-actions { justify-content: flex-start; }
+  .list-meta { align-items: start; font-size: 11px; }
 }

@@ -14,7 +14,7 @@ export const VENDOR_NAV_GROUPS: VendorNavGroup[] = [
   {
     label: 'Operate',
     items: [
-      { label: 'Dashboard', icon: 'space_dashboard', route: '/', exact: true },
+      { label: 'Today', icon: 'space_dashboard', route: '/', exact: true },
       { label: 'Live Orders', icon: 'view_kanban', route: '/live-orders' },
       { label: 'Inventory', icon: 'inventory', route: '/inventory' },
       { label: 'Order History', icon: 'receipt_long', route: '/orders' },
@@ -75,7 +75,6 @@ export const VENDOR_NAV_GROUPS: VendorNavGroup[] = [
 export const VENDOR_MOBILE_NAV_ITEMS: VendorNavItem[] = [
   { label: 'Home', icon: 'space_dashboard', route: '/', exact: true },
   { label: 'Orders', icon: 'view_kanban', route: '/live-orders' },
-  { label: 'Stock', icon: 'inventory', route: '/inventory' },
+  { label: 'Inventory', icon: 'inventory', route: '/inventory' },
   { label: 'Inbox', icon: 'notifications', route: '/notifications' },
-  { label: 'Store', icon: 'settings', route: '/store-settings' },
 ];

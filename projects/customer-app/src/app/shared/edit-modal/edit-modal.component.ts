@@ -1,8 +1,10 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, HostListener, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { UiService } from '../../services/ui.service';
 import { AuthService } from '../../services/auth.service';
 import { AppStateService } from '../../services/app-state.service';
+import { NxModalShellComponent } from '../ui/nx-modal-shell/nx-modal-shell.component';
+import { CustomerIconComponent } from '../customer-icon/customer-icon.component';
 import {
   isValidEmail,
   isValidIndianPhone,
@@ -14,7 +16,7 @@ import {
 @Component({
   selector: 'fd-edit-modal',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, NxModalShellComponent, CustomerIconComponent],
   templateUrl: './edit-modal.component.html',
   styleUrls: ['./edit-modal.component.scss'],
 })
@@ -22,7 +24,9 @@ export class EditModalComponent {
   private auth = inject(AuthService);
   private state = inject(AppStateService);
 
-  name = this.auth.currentUser()?.name || '';
+  firstName = this.auth.currentUser()?.name?.trim().split(/\s+/)[0] || '';
+  lastName = this.auth.currentUser()?.name?.trim().split(/\s+/).slice(1).join(' ') || '';
+  get name():string {return [this.firstName,this.lastName].filter(Boolean).join(' ');}
   email = this.auth.currentUser()?.email || '';
   phone = this.auth.currentUser()?.phone || '';
   addressLabel = this.state.activeAddress()?.label || '';
@@ -33,7 +37,39 @@ export class EditModalComponent {
   formError = signal('');
   fieldErrors = signal<Record<string, string>>({});
 
-  constructor(public ui: UiService) {}
+  private original = JSON.stringify([this.name, this.email, this.phone]);
+  constructor(public ui: UiService) {
+    effect(() => {
+      if (this.ui.editModal() !== 'profile') return;
+      untracked(() => {
+        this.saving.set(false);
+        const user = this.auth.currentUser();
+        this.firstName = user?.name?.trim().split(/\s+/)[0] || '';
+        this.lastName = user?.name?.trim().split(/\s+/).slice(1).join(' ') || '';
+        this.email = user?.email || '';
+        this.phone = user?.phone || '';
+        this.original = JSON.stringify([this.name, this.email, this.phone]);
+        this.formError.set('');
+        this.fieldErrors.set({});
+      });
+    });
+  }
+  @HostListener('window:beforeunload', ['$event'])
+  warnBeforeUnload(event: BeforeUnloadEvent): void {
+    if (!(this.ui.editModal() === 'profile' && (this.saving() || this.original !== JSON.stringify([this.name, this.email, this.phone])))) return;
+    event.preventDefault();
+    event.returnValue = '';
+  }
+
+  async close(): Promise<void> {
+    if (this.saving()) return;
+    if (
+      this.original !== JSON.stringify([this.name, this.email, this.phone]) &&
+      !(await this.ui.confirmDiscardDraft())
+    )
+      return;
+    this.ui.closeEdit();
+  }
 
   title(): string {
     if (this.ui.editModal() === 'profile') return 'Edit Profile';
@@ -56,8 +92,14 @@ export class EditModalComponent {
       this.fieldErrors.set(errors);
       if (Object.keys(errors).length) {
         this.formError.set('Please fix the highlighted profile fields.');
+        requestAnimationFrame(() =>
+          document.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus()
+        );
         return;
       }
+      const session = this.auth.sessionVersion;
+      const retryTrigger = event.currentTarget instanceof HTMLButtonElement
+        ? event.currentTarget : document.querySelector<HTMLElement>('#profile-save');
       this.saving.set(true);
       this.formError.set('');
       this.auth.updateProfile(
@@ -74,13 +116,16 @@ export class EditModalComponent {
         (message) => {
           this.saving.set(false);
           this.formError.set(message);
-          this.state.showToast(message);
-        },
+          requestAnimationFrame(() => {
+            if (session === this.auth.sessionVersion && this.ui.editModal() === 'profile' && retryTrigger?.isConnected) retryTrigger.focus();
+          });
+        }
       );
       return;
     }
-    this.state.showToast('Changes saved successfully');
-    this.ui.closeEdit();
+    this.formError.set(
+      'Manage addresses from the Addresses page. Payment choices are made at checkout.'
+    );
   }
 
   onEmailInput(value: string): void {
@@ -116,8 +161,8 @@ export class EditModalComponent {
 
   private validateProfile(): Record<string, string> {
     const errors: Record<string, string> = {};
-    if (!stripControlCharacters(this.name))
-      errors['name'] = 'Full name is required.';
+    if (!stripControlCharacters(this.firstName))
+      errors['firstName'] = 'First name is required.';
     if (!sanitizeEmail(this.email)) errors['email'] = 'Email is required.';
     else if (!isValidEmail(this.email))
       errors['email'] = 'Enter a valid email address, e.g. name@example.com.';

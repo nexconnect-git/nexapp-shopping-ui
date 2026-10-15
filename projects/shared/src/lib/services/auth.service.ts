@@ -24,6 +24,8 @@ export class AuthService {
   private sessionGeneration=0;
 
   get sessionVersion():number{return this.sessionGeneration;}
+  readonly sessionRenewalError=signal('');
+  readonly sessionRenewalLoading=signal(false);
   readonly user = this.currentUser.asReadonly();
   readonly isLoggedIn = computed(
     () => !!this.currentUser() && !!this.accessToken(),
@@ -161,6 +163,8 @@ export class AuthService {
     }
 
     this.sessionGeneration++;
+    this.refreshRequest$=undefined;
+    this.sessionRenewalError.set('');this.sessionRenewalLoading.set(false);
     this.setAccessToken(response.tokens.access);
     this.session.setUser(response.user);
     this.session.markRefreshSession();
@@ -175,11 +179,13 @@ export class AuthService {
       return this.refreshRequest$;
     }
 
+    this.sessionRenewalLoading.set(true);
     const generation=this.sessionGeneration;
     const tokenAtStart = this.getToken();
     const refresh = () => this.api.refreshToken().pipe(
       tap((response) => {
         if(generation!==this.sessionGeneration)throw new Error('Session changed during refresh.');
+        this.sessionRenewalError.set('');
         const tokens = response.tokens || response;
         this.setAccessToken(tokens.access);
         this.session.setRefreshToken(tokens.refresh || null);
@@ -206,6 +212,7 @@ export class AuthService {
         const shared = this.session.getSharedSession();
         const user = shared?.user as User | undefined;
         if (shared && shared.access !== tokenAtStart && user?.id === this.user()?.id && this.isPortalUser(user) && this.tokenIsCurrent(shared.access)) {
+          this.sessionRenewalError.set('');
           this.setAccessToken(shared.access);
           return true;
         }
@@ -213,12 +220,15 @@ export class AuthService {
       })));
     }).pipe(
       catchError((error) => {
-        if (error?.status !== 400 && error?.status !== 401) return throwError(() => error);
+        if (error?.status !== 400 && error?.status !== 401){
+          if(generation===this.sessionGeneration)this.sessionRenewalError.set('Your session could not be renewed right now. Your saved session is retained for retry.');
+          return throwError(() => error);
+        }
         if (generation === this.sessionGeneration) this.clearSession();
         return of(false);
       }),
       finalize(() => {
-        if (generation === this.sessionGeneration) this.refreshRequest$ = undefined;
+        if (generation === this.sessionGeneration){this.refreshRequest$ = undefined;this.sessionRenewalLoading.set(false);}
       }),
       shareReplay(1),
     );
@@ -246,6 +256,7 @@ export class AuthService {
 
   private clearSession() {
     this.sessionGeneration++;
+    this.sessionRenewalError.set('');this.sessionRenewalLoading.set(false);
     this.refreshRequest$=undefined;
     this.session.clear();
     this.accessToken.set(null);

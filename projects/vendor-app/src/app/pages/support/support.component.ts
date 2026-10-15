@@ -1,3 +1,4 @@
+import { CounterStateComponent } from '../../components/counter-state.component';
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
@@ -14,7 +15,7 @@ import { WorkspaceDialogComponent } from '../../components/workspace-dialog.comp
 @Component({
   selector: 'app-support',
   standalone: true,
-  imports: [
+  imports: [CounterStateComponent,
     CommonModule,
     FormsModule,
     WorkspacePagerComponent,

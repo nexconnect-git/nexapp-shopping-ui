@@ -1,155 +1,44 @@
 <div class="workspace-page">
-  <header class="page-heading">
-    <div>
-      <p class="eyebrow">Store operations</p>
-      <h1>Today at your store</h1>
-      <p>Keep orders moving and inventory ready.</p>
-    </div>
-    <button
-      class="btn btn-secondary"
-      type="button"
-      (click)="refresh(); store.refresh()"
-      [disabled]="loading()"
-    >
-      Refresh
-    </button>
-  </header>
-  @if (store.error()) {
-  <p class="workspace-error" role="alert">{{ store.error() }}</p>
-  } @if (store.context(); as context) {
-  <section class="workspace-card operating-card">
-    <div>
-      <h3>{{ context.vendor.store_name }}</h3>
-      <nc-vendor-operating-status />
-    </div>
-    <div class="workspace-actions">
-      <button
-        type="button"
-        class="btn btn-secondary"
-        (click)="store.operate({ is_open: !context.operating.is_open })"
-        [disabled]="
-          store.busy() ||
-          (!context.operating.is_open && !context.readiness.can_open)
-        "
-      >
-        {{ context.operating.is_open ? "Close store" : "Open store" }}</button
-      ><button
-        type="button"
-        [class]="
-          context.readiness.blockers.length
-            ? 'btn btn-secondary'
-            : 'btn btn-primary'
-        "
-        (click)="
-          store.operate({
-            is_accepting_orders: !context.operating.is_accepting_orders
-          })
-        "
-        [disabled]="
-          store.busy() ||
-          (!context.operating.is_accepting_orders &&
-            !context.readiness.can_enable_intake)
-        "
-      >
-        {{
-          context.operating.is_accepting_orders
-            ? "Pause new orders"
-            : "Enable order intake"
-        }}
-      </button>
-    </div>
-  </section>
-  @if (context.readiness.blockers.length) {
-  <section class="workspace-card">
-    <h3>Before you open</h3>
-    <ul class="workspace-checklist">
-      @for (blocker of context.readiness.blockers; track blocker.code) {
-      <li>
-        <span class="material-icons-outlined">info</span
-        ><span>{{ blocker.message }}</span
-        ><a class="btn btn-primary" [routerLink]="blocker.route">Resolve</a>
-      </li>
-      }
-    </ul>
-  </section>
-  } } @else {
-  <div class="workspace-state" role="status">Loading store readiness…</div>
-  } @if (error()) {
-  <p class="workspace-error" role="alert">
-    {{ error() }} @if (ops()) {Last successful data remains below.}
-  </p>
-  } @if (ops(); as summary) {
-  <section class="workspace-metrics" aria-label="Today’s totals">
-    <article class="workspace-card">
-      <span>Delivered revenue today</span
-      ><strong>{{ summary.today.revenue | appCurrency }}</strong
-      ><small
-        >{{ summary.today.delivered_orders }} delivered order{{
-          summary.today.delivered_orders === 1 ? "" : "s"
-        }}</small
-      >
-    </article>
-    <article class="workspace-card">
-      <span>Orders placed today</span><strong>{{ summary.today.orders }}</strong
-      ><small>Includes all statuses</small>
-    </article>
-    <article class="workspace-card">
-      <span>Active orders</span
-      ><strong>{{ summary.orders.active_total }}</strong
-      ><a routerLink="/live-orders">Open live orders</a>
-    </article>
-    <article class="workspace-card">
-      <span>Stock alerts</span><strong>{{ summary.alerts.low_stock }}</strong
-      ><a routerLink="/inventory" [queryParams]="{ health: 'low' }"
-        >Review stock</a
-      >
-    </article>
-  </section>
-  <div class="workspace-two-column">
-    <section class="workspace-card">
-      <header class="workspace-section-heading">
-        <h3>Orders needing attention</h3>
-        <a routerLink="/live-orders">View board</a>
-      </header>
-      <div class="workspace-link-list">
-        <a routerLink="/live-orders"
-          ><span>New orders</span><strong>{{ summary.orders.new }}</strong></a
-        ><a routerLink="/live-orders"
-          ><span>Preparing</span
-          ><strong>{{ summary.orders.preparing }}</strong></a
-        ><a routerLink="/live-orders"
-          ><span>Ready for pickup</span
-          ><strong>{{ summary.orders.ready }}</strong></a
-        ><a routerLink="/live-orders"
-          ><span>Searching for a driver</span
-          ><strong>{{ summary.delivery.searching }}</strong></a
-        ><a routerLink="/live-orders"
-          ><span>Search timed out</span
-          ><strong>{{ summary.delivery.timed_out }}</strong></a
-        >
-      </div>
-    </section>
-    <section class="workspace-card">
-      <h3>Store follow-ups</h3>
-      <div class="workspace-link-list">
-        <a routerLink="/payouts"
-          ><span>Settlements needing your response</span
-          ><strong>{{ summary.alerts.pending_payouts }}</strong></a
-        ><a routerLink="/support"
-          ><span>Open support tickets</span
-          ><strong>{{ summary.alerts.support_open }}</strong></a
-        ><a routerLink="/notifications"
-          ><span>Unread notifications</span
-          ><strong>{{ summary.alerts.unread_notifications }}</strong></a
-        >
-      </div>
-    </section>
+  <div class="intro-block">
+    <div><p class="eyebrow">{{ today | date:'EEEE, d MMMM' }} · {{ store.context()?.vendor?.store_name || 'Your store' }}</p><h1>A good day<br>starts here.</h1><p class="muted">Your store, your rhythm. Here is what needs you today.</p></div>
+    <section class="store-seal"><p class="eyebrow">Your storefront</p><h3>{{ store.operatingLabel() }}</h3><p class="small">{{ store.operatingReason() }}</p><button class="btn" type="button" (click)="manage.set(true)"><span class="material-icons-outlined">tune</span>Manage</button></section>
   </div>
-  <p class="workspace-muted">
-    Updated {{ summary.updated_at | date : "medium" }} · Store timezone
-    {{ store.context()?.timezone }}
-  </p>
-  } @else if (loading()) {
-  <div class="workspace-state" role="status">Loading operations…</div>
-  }
+  @if (store.error()) { <p class="workspace-error" role="alert">{{ store.error() }} <button class="btn text" type="button" (click)="store.refresh()">Refresh store state</button></p> }
+  @if (error()) { <p class="workspace-error" role="alert">{{ error() }} @if (ops()) { Last successful data remains below. } <button class="btn text" type="button" (click)="refresh()">Retry summary</button></p> }
+  @if (ops(); as summary) {
+    <section class="metric-strip" aria-label="Today's totals">
+      <a class="metric" routerLink="/orders"><span class="metric-label">Delivered revenue today</span><strong>{{ summary.today.revenue | appCurrency }}</strong><small>{{ summary.today.delivered_orders }} delivered {{ summary.today.delivered_orders===1?'order':'orders' }}</small></a>
+      <a class="metric" routerLink="/orders"><span class="metric-label">Orders placed today</span><strong>{{ summary.today.orders }}</strong><small>All current statuses</small></a>
+      <a class="metric" routerLink="/live-orders"><span class="metric-label">Active orders</span><strong>{{ summary.orders.active_total }}</strong><small>Across all operational stages</small></a>
+      <a class="metric" routerLink="/inventory" [queryParams]="{health:'low'}"><span class="metric-label">Stock alerts</span><strong>{{ summary.alerts.low_stock }}</strong><small>Products needing a stock review</small></a>
+    </section>
+    <div class="grid two-col">
+      <section class="rule-section"><header class="section-title"><h2>On the counter</h2><a class="btn text" routerLink="/live-orders">All live orders →</a></header>
+        @if (orders.feedError()) { <p class="workspace-error" role="alert">{{ orders.feedError() }}</p><button class="btn" type="button" (click)="orders.refresh()">Retry orders</button> }
+        @for (id of orders.active().slice(0,4); track id) { @if (orders.records().get(id); as order) {
+          <article class="list-row"><span class="order-square"><span class="material-icons-outlined">receipt_long</span></span><div class="grow"><strong>#{{ order.order_number }} <span class="muted small">· {{ order.customer_name }}</span></strong><p>{{ order.items.length }} {{ order.items.length===1?'line':'lines' }} · {{ order.total | appCurrency }} · {{ order.status.replaceAll('_',' ') | titlecase }}</p></div><a class="btn sm" [routerLink]="['/orders',order.id]">View</a></article>
+        } } @empty { @if (orders.loading()) { <nc-counter-state kind="loading" title="Loading active orders" /> } @else if (!orders.feedError()) { <div class="empty"><h2>The counter is ready.</h2><p>New orders will appear here when customers place them.</p><a class="btn" routerLink="/products/new">Add a product</a></div> } }
+      </section>
+      <section class="rule-section"><header class="section-title"><h2>A little attention</h2><button class="btn text" type="button" [disabled]="loading()" (click)="refresh(); store.refresh()">{{ loading() ? 'Refreshing…' : 'Refresh' }}</button></header>
+        <a class="task-row" routerLink="/inventory" [queryParams]="{health:'low'}"><span class="num">{{ summary.alerts.low_stock }}</span><div><h3>Products need stock</h3><small>Review quantities before your next rush.</small></div><span aria-hidden="true">→</span></a>
+        <a class="task-row" routerLink="/payouts"><span class="num">{{ summary.alerts.pending_payouts }}</span><div><h3>Settlements await a response</h3><small>Review the recorded breakdown.</small></div><span aria-hidden="true">→</span></a>
+        <a class="task-row" routerLink="/live-orders"><span class="num">{{ summary.delivery.timed_out }}</span><div><h3>Driver searches need a retry</h3><small>Review ready orders and dispatch status.</small></div><span aria-hidden="true">→</span></a>
+        <a class="task-row" routerLink="/support"><span class="num">{{ summary.alerts.support_open }}</span><div><h3>Open support tickets</h3><small>Check your platform requests.</small></div><span aria-hidden="true">→</span></a>
+      </section>
+    </div>
+    <footer class="workspace-muted">Updated {{ summary.updated_at | date:'medium' }} · Store timezone {{ store.context()?.timezone }}</footer>
+  } @else if (loading()) { <nc-counter-state kind="loading" title="Preparing your day" [rows]="4" /> }
 </div>
+@if (manage()) {
+  <nc-vendor-dialog [title]="closing() ? 'Close your store?' : 'Your storefront'" [busy]="store.busy()" (dismissed)="manage.set(false); closing.set(false)">
+    <nc-vendor-operating-status />
+    @if (store.error()) { <p class="workspace-error" role="alert">{{ store.error() }}</p> }
+    @if (store.context(); as context) {
+      @if (closing()) { <p>Closing pauses your storefront for customers. Existing orders still need your attention.</p><div class="dialog-actions"><button class="btn" [disabled]="store.busy()" type="button" (click)="closing.set(false)">Keep open</button><button class="btn danger" [disabled]="store.busy()" type="button" (click)="store.operate({is_open:false}); closing.set(false)">Close store</button></div> }
+      @else {
+        @if (context.readiness.blockers.length) { <div class="notice warning"><div><strong>Before you open</strong>@for (blocker of context.readiness.blockers; track blocker.code) { <p>{{ blocker.message }} <a [routerLink]="blocker.route" (click)="manage.set(false)">Resolve</a></p> }</div></div> }
+        <div class="dialog-actions"><button class="btn" type="button" [disabled]="store.stale() || store.busy() || (!context.operating.is_open && !context.readiness.can_open)" (click)="context.operating.is_open ? closing.set(true) : store.operate({is_open:true})">{{ context.operating.is_open ? 'Close store' : 'Open store' }}</button><button class="btn primary" type="button" [disabled]="store.stale() || store.busy() || (!context.operating.is_accepting_orders && !context.readiness.can_enable_intake)" (click)="store.operate({is_accepting_orders:!context.operating.is_accepting_orders})">{{ context.operating.is_accepting_orders ? 'Pause intake' : 'Resume intake' }}</button></div>
+      }
+    }
+  </nc-vendor-dialog>
+}

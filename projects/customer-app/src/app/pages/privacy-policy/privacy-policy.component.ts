@@ -1,5 +1,7 @@
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { BreadcrumbsComponent } from '../../shared/breadcrumbs/breadcrumbs.component';
+import { CustomerPageHeaderComponent } from '../../shared/customer-page-header/customer-page-header.component';
 
 type PolicySection = {
   icon: string;
@@ -10,7 +12,7 @@ type PolicySection = {
 
 @Component({
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, BreadcrumbsComponent, CustomerPageHeaderComponent],
   templateUrl: './privacy-policy.component.html',
   styleUrls: ['./privacy-policy.component.scss'],
 })

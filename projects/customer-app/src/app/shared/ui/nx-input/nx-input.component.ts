@@ -1,3 +1,4 @@
+import { CustomerIconComponent } from '../../customer-icon/customer-icon.component';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 @Component({

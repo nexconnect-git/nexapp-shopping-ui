@@ -15,6 +15,7 @@ import {
   VendorProductEdit,
 } from './vendor-product-edit.models';
 import { WorkspaceDialogComponent } from '../../components/workspace-dialog.component';
+import { CounterStateComponent } from '../../components/counter-state.component';
 import { VendorProductEditService } from './vendor-product-edit.service';
 type TextKey =
   | 'productName'
@@ -46,11 +47,16 @@ type FlagKey =
 @Component({
   selector: 'nc-vendor-product-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule, WorkspaceDialogComponent],
+  imports: [CommonModule, FormsModule, WorkspaceDialogComponent, CounterStateComponent],
   templateUrl: './vendor-product-edit.component.html',
   styleUrl: './vendor-product-edit.component.scss',
 })
 export class VendorProductEditComponent {
+  readonly tab = signal<'selling' | 'details' | 'media' | 'review'>('selling');
+  readonly tabs = [
+    {key:'selling',label:'Selling'}, {key:'details',label:'Product details'},
+    {key:'media',label:'Images & fulfillment'}, {key:'review',label:'Review status'},
+  ] as const;
   private readonly host: ElementRef<HTMLElement> = inject(ElementRef);
   private readonly injector = inject(Injector);
   readonly removeImage = signal<string | null>(null);
@@ -171,6 +177,10 @@ export class VendorProductEditComponent {
     try {
       this.saved.emit(await this.service.save(mode));
     } catch {
+      const errors = this.service.fieldErrors();
+      if (this.sellingFields.some(field => !!errors[field.key]) || errors['status'] || errors['unit']) this.tab.set('selling');
+      else if ([...this.textFields, ...this.optionalNumbers].some(field => !!errors[field.key])) this.tab.set('details');
+      else if (Object.keys(errors).length) this.tab.set('media');
       if (this.optionalHasErrors()) this.advancedOpen.set(true);
       afterNextRender(
         () => {

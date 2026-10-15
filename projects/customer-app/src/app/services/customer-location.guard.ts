@@ -2,7 +2,7 @@ import { inject } from '@angular/core';
 import { type CanActivateFn, Router } from '@angular/router';
 import { buildCustomerLocationQuery } from '@nexconnect/customer-location';
 import { LocationService } from '@shared/lib/services/location.service';
-import { catchError, firstValueFrom, of, timeout } from 'rxjs';
+import { firstValueFrom, timeout } from 'rxjs';
 import { CustomerCatalogApiService } from './customer-catalog-api.service';
 import { CatalogService } from './catalog.service';
 import { AppStateService } from './app-state.service';
@@ -18,7 +18,8 @@ export const customerLocationGuard: CanActivateFn = async (_route, state) => {
       queryParams: { returnUrl: state.url || '/' },
     });
 
-  const location = locations.location() || (await locations.initializeLocation(false));
+  const location =
+    locations.location() || (await locations.initializeLocation(false));
   const params = buildCustomerLocationQuery({
     lat: location?.lat,
     lng: location?.lng,
@@ -31,13 +32,12 @@ export const customerLocationGuard: CanActivateFn = async (_route, state) => {
 
   try {
     const serviceability = await firstValueFrom(
-      catalogApi.checkServiceability(params).pipe(
-        timeout({ first: 1800 }),
-        catchError(() => of({ is_serviceable: true })),
-      ),
+      catalogApi.checkServiceability(params).pipe(timeout({ first: 1800 }))
     );
     appState.serviceability.set(serviceability as any);
-    const message = String((serviceability as any)?.message || '').toLowerCase();
+    const message = String(
+      (serviceability as any)?.message || ''
+    ).toLowerCase();
     const deliveryUnavailable =
       serviceability?.is_serviceable === false ||
       message.includes('delivery is no longer available') ||
@@ -46,6 +46,10 @@ export const customerLocationGuard: CanActivateFn = async (_route, state) => {
     if (deliveryUnavailable) catalog.clearDeliverableCatalog();
     return true;
   } catch {
+    appState.serviceability.set(null);
+    appState.serviceabilityError.set(
+      'Delivery availability could not be checked. Please retry.'
+    );
     return true;
   }
 };

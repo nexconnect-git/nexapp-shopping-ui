@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { afterNextRender, Component, ElementRef, inject, Injector, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { apiErrorMessage, AuthService, VendorApi } from '@shared/public-api';
@@ -11,6 +11,8 @@ import { apiErrorMessage, AuthService, VendorApi } from '@shared/public-api';
   styleUrl: './login.component.scss',
 })
 export class LoginComponent {
+  private readonly host: ElementRef<HTMLElement> = inject(ElementRef);
+  private readonly injector = inject(Injector);
   private auth = inject(AuthService);
   private api = inject(VendorApi);
   private router = inject(Router);
@@ -64,6 +66,9 @@ export class LoginComponent {
     const errors = this.validate();
     this.fieldErrors.set(errors);
     if (Object.keys(errors).length) {
+      afterNextRender(() => {
+        this.host.nativeElement.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+      }, { injector: this.injector });
       return;
     }
 

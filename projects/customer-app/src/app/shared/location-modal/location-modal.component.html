@@ -1,118 +1,30 @@
-﻿@if (ui.locationModalOpen()) {
-  <button
-    type="button"
-    class="overlay"
-    aria-label="Close location selector"
-    (click)="ui.closeLocation()"
-  ></button>
-  <section class="location-modal animate-scale">
-    <span class="sheet-handle" aria-hidden="true"></span>
-    <header>
-      <div>
-        <span class="eyebrow">
-          <span class="material-symbols-rounded" aria-hidden="true">location_on</span>
-          Delivery address
-        </span>
-        <h2>Choose location</h2>
-        <p>
-          Pick where we should show nearby stores and accurate fees.
-        </p>
+<fd-nx-modal-shell eyebrow="Delivery location" [open]="ui.locationModalOpen()"
+  title="Your neighbourhood, your choice." width="490px" [footer]="true"
+  subtitle="Choose a saved place or find another delivery point. A different fulfilment area may need a new basket."
+  (closed)="ui.closeLocation()">
+  <div class="search-field wide">
+    <svg customerIcon="search"></svg>
+    <input id="saved-address-search" type="search" aria-label="Search saved area or PIN"
+      placeholder="Search area or PIN" [value]="query()" (input)="query.set($any($event.target).value)" />
+    <button type="button" aria-label="Find another delivery area" (click)="openDeliveryArea()"><svg customerIcon="arrow"></svg></button>
+  </div>
+  <div class="space"><button class="btn soft wide" type="button" (click)="useCurrentLocation()"><svg customerIcon="pin"></svg>Use current location</button></div>
+  <div class="divider-label">YOUR SAVED PLACES</div>
+  @if(state.addressLoading()){<p role="status">Loading saved addresses…</p>}
+  @if(state.addressError()){
+    <div class="notice error space" role="alert"><div class="grow">{{ state.addressError() }}</div><button class="btn sm" type="button" (click)="state.loadAddresses()">Retry addresses</button></div>
+  }
+  @for(address of filteredAddresses();track address.id){
+    <label class="choice-card" [class.selected]="isAddressSelected(address)">
+      <input type="radio" name="delivery-location" [value]="address.id" [checked]="isAddressSelected(address)" (change)="chooseSaved(address)" />
+      <div class="grow">
+        <div class="row"><strong>{{ address.label }}</strong>@if(address.isDefault){<span class="tag neutral">Default</span>}</div>
+        <p>{{ address.name }} · {{ address.phone }}<br>{{ address.line }}<br>{{ address.city }}, {{ address.state }} {{ address.pincode }}</p>
+        @if(state.activeAddress()?.id===address.id && !state.serviceabilityLoading() && !state.serviceabilityError() && state.serviceability()?.is_serviceable){<p><span class="tag green">Serviceable address</span></p>}
       </div>
-      <button
-        type="button"
-        aria-label="Close location selector"
-        (click)="ui.closeLocation()"
-      >
-        <span class="material-symbols-rounded">close</span>
-      </button>
-    </header>
-
-    <label class="search-box">
-      <span class="material-symbols-rounded">search</span>
-      <input
-        type="search"
-        placeholder="Search saved addresses"
-        [value]="query()"
-        (input)="query.set($any($event.target).value)"
-        autocomplete="off"
-      />
-      @if (query()) {
-        <button
-          type="button"
-          aria-label="Clear location search"
-          (click)="query.set('')"
-        >
-          <span class="material-symbols-rounded">close</span>
-        </button>
-      }
     </label>
-
-    <div class="quick-actions" aria-label="Location quick actions">
-      <button type="button" class="current" (click)="useCurrentLocation()">
-        <span class="material-symbols-rounded">my_location</span>
-        <b>Use current</b>
-        <small>GPS location</small>
-      </button>
-
-      <button type="button" class="add-address" (click)="addAddress()">
-        <span class="material-symbols-rounded">add_location_alt</span>
-        <b>Add address</b>
-        <small>New saved address</small>
-      </button>
-    </div>
-
-    <div class="saved-head">
-      <h3>Saved Addresses</h3>
-      @if (savedAddresses().length) {
-        <small>{{ savedAddresses().length }} saved</small>
-      }
-    </div>
-    <div class="saved-list">
-      @for (address of filteredAddresses(); track address.id) {
-        <button
-          type="button"
-          [class.active]="isAddressSelected(address)"
-          (click)="chooseSaved(address)"
-        >
-          <span class="material-symbols-rounded">{{
-            address.label === "Home"
-              ? "home"
-              : address.label === "Office"
-                ? "business"
-                : "location_on"
-          }}</span>
-          <span class="address-copy">
-            <b
-              >{{ address.label }}
-              @if (address.isDefault) {
-                <em>Default</em>
-              }
-            </b>
-            <small>{{ address.line }}</small>
-            <strong>{{ address.phone }}</strong>
-          </span>
-          <i class="material-symbols-rounded">{{
-            isAddressSelected(address) ? "check_circle" : "radio_button_unchecked"
-          }}</i>
-        </button>
-      } @empty {
-        <p class="empty">
-          {{
-            query().trim()
-              ? "No saved addresses match your search."
-              : "No saved addresses yet. Add a delivery address or use your current location."
-          }}
-        </p>
-      }
-    </div>
-
-    <footer>
-      <fd-nx-button variant="outline" (clicked)="ui.closeLocation()"
-        >Cancel</fd-nx-button
-      >
-      <fd-nx-button variant="primary" (clicked)="save()"
-        >Save Location</fd-nx-button
-      >
-    </footer>
-  </section>
-}
+  }@empty{@if(!state.addressLoading()&&!state.addressError()){<p class="small muted">No saved address matches this view.</p>}}
+  <button class="btn text" type="button" (click)="openDeliveryArea()"><svg customerIcon="pin"></svg>Choose on a map</button><br>
+  <button class="btn text" type="button" (click)="addAddress()"><svg customerIcon="plus"></svg>Add a saved address</button>
+  <button dialogFooter class="btn primary" type="button" [disabled]="!selectedAddressId() && !state.activeAddress()?.id" (click)="save()"><svg customerIcon="arrow"></svg>Confirm delivery location</button>
+</fd-nx-modal-shell>

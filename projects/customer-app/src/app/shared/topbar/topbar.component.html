@@ -1,261 +1,87 @@
-<header class="topbar">
-  <div class="lead-controls">
-    @if (showBackButton()) {
-      <button
-        type="button"
-        class="back-btn"
-        (click)="goBack()"
-        aria-label="Go back"
-      >
-        <span class="material-symbols-rounded">arrow_back</span>
-      </button>
-    } @else {
-      <button
-        type="button"
-        class="mobile-menu"
-        (click)="ui.toggleMobileSidebar()"
-        aria-label="Open navigation"
-      >
-        <span class="material-symbols-rounded">menu</span>
-      </button>
-    }
-  </div>
-  <a
-    routerLink="/"
-    class="brand"
-    (click)="ui.closeMenus()"
-    aria-label="Nextou home"
+<div class="service-ribbon">
+  <svg customerIcon="leaf"></svg>Your
+  neighbourhood, brought a little closer.
+</div>
+<header class="masthead">
+  <a class="brand" routerLink="/" aria-label="Nextou home"
+    ><span class="brand-seal" aria-hidden="true">n</span
+    ><span
+      ><b class="brand-name">nextou</b
+      ><small class="brand-note">YOUR EVERYDAY, NEARBY.</small></span
+    ></a
   >
-    <img
-      class="logo"
-      src="nextou-logo-single.png"
-      alt="Nextou logo"
-    />
-    <span class="brand-wordmark brand-wordmark-text">Nextou</span>
-  </a>
-
   <button
     type="button"
-    class="location"
+    class="delivery-address"
     aria-label="Choose delivery location"
     (click)="openLocation()"
   >
-    <span class="material-symbols-rounded">location_on</span>
-    <b [title]="state.location()">{{ state.location().split(",")[0] }}</b>
-    <span class="material-symbols-rounded">keyboard_arrow_down</span>
+    <svg customerIcon="pin"></svg><span class="grow"
+      ><small>Delivering to</small><strong>{{ state.location() }}</strong></span
+    ><svg customerIcon="down"
+      ></svg>
   </button>
-
-  <form class="global-search" (submit)="goSearch($event)">
-    <span class="material-symbols-rounded">search</span>
-    <input
+  <form class="header-search" (submit)="goSearch($event)">
+    <svg customerIcon="search"></svg><input
+      type="search"
+      name="header-search"
+      aria-label="Search Nextou"
+      placeholder="Search products, stores and more"
       [value]="query()"
-      (input)="onSearch($any($event.target).value)"
-      (focus)="searchOpen.set(true)"
-      placeholder="Search live products, stores, and categories"
-    />
-    @if (query()) {
-      <button
-        type="button"
-        class="clear"
-        aria-label="Clear search"
-        (click)="clearSearch()"
-      >
-        <span class="material-symbols-rounded">close</span>
-      </button>
-    }
-
-    @if (searchOpen()) {
-      <section class="live-search animate-up">
-        <div class="head">
-          <b>Live Search</b><small>{{ totalResults() }} results</small>
-        </div>
-
-        @if (!query()) {
-          <div class="quick">
-            @for (item of quickSuggestions(); track item) {
-              <button type="button" (click)="onSearch(item)">
-                <span class="material-symbols-rounded">search</span>{{ item }}
-              </button>
-            }
-          </div>
-        } @else {
-          <div class="columns">
-            <div>
-              <h4>Stores</h4>
-              @for (
-                store of searchResults().stores.slice(0, 3);
-                track store.id
-              ) {
-                <a
-                  [routerLink]="['/store', store.id]"
-                  (click)="selectStore($event, store)"
-                >
-                  <img [src]="store.image" alt="" />
-                  <span
-                    ><b>{{ store.name }}</b
-                    ><small
-                      >{{ store.eta }} - {{ store.rating }} rating</small
-                    ></span
-                  >
-                </a>
-              } @empty {
-                <p class="empty">No stores found</p>
-              }
-            </div>
-            <div>
-              <h4>Products</h4>
-              @for (
-                product of searchResults().products.slice(0, 4);
-                track product.id
-              ) {
-                <a
-                  [routerLink]="['/product', product.id]"
-                  (click)="closeSearch()"
-                >
-                  <img [src]="product.image" alt="" />
-                  <span
-                    ><b>{{ product.name }}</b
-                    ><small
-                      >{{ product.price | appCurrency }} -
-                      {{ product.unit }}</small
-                    ></span
-                  >
-                </a>
-              } @empty {
-                <p class="empty">No products found</p>
-              }
-            </div>
-          </div>
-          <button type="submit" class="view-all">
-            View all results for "{{ query() }}"
-          </button>
-        }
-      </section>
-    }
+      (input)="query.set($any($event.target).value)"
+    /><button type="submit" aria-label="Submit search">
+      <svg customerIcon="arrow"
+        ></svg>
+    </button>
   </form>
-
-  <nav>
-    @if (canUseRoute("/explore")) {
-      <a
-        routerLink="/explore"
-        class="tone-primary"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: true }"
-        (click)="ui.closeMenus()"
-        >Explore</a
-      >
-    }
-  </nav>
-
-  <button
-    type="button"
-    class="cart"
-    aria-label="Open cart"
-    (click)="openCart()"
-  >
-    <span class="material-symbols-rounded">shopping_cart</span>
-    @if (state.itemCount()) {
-      <i>{{ state.itemCount() }}</i>
-    }
-  </button>
-
-  <div class="menu-wrap user-wrap">
+  <div class="top-actions">
+    <a
+      routerLink="/notifications"
+      class="btn icon-btn relative"
+      aria-label="Notifications"
+      ><svg customerIcon="bell"
+        ></svg>@if (notifications.unreadNotifications()) {
+      <span class="badge">{{ notifications.unreadNotifications() }}</span> }</a
+    >
+    @if (auth.isLoggedIn()) {
     <button
       type="button"
       class="avatar"
-      aria-label="Open account menu"
-      (click)="ui.toggleUserMenu()"
+      aria-label="Open customer navigation"
+      (click)="ui.toggleMobileSidebar()"
     >
-      {{ (auth.currentUser()?.name || "NT").slice(0, 2).toUpperCase() }}
+      {{ auth.currentUser()?.name?.slice(0, 2)?.toUpperCase() || "ME" }}
     </button>
-    @if (ui.userMenuOpen()) {
-      <section class="dropdown user-menu animate-scale">
-        <header>
-          <b>{{ auth.currentUser()?.name || "Guest customer" }}</b>
-          <small>{{
-            auth.currentUser()?.phone || "Sign in for checkout"
-          }}</small>
-        </header>
-        @if (auth.isLoggedIn()) {
-          @if (canUseRoute("/account")) {
-            <a routerLink="/account" (click)="ui.closeMenus()"
-              ><span class="material-symbols-rounded">person</span>Profile /
-              Account</a
-            >
-          }
-          @if (canUseRoute("/orders")) {
-            <a routerLink="/orders" (click)="ui.closeMenus()"
-              ><span class="material-symbols-rounded">receipt_long</span
-              >Orders</a
-            >
-          }
-          @if (canUseRoute("/addresses")) {
-            <a routerLink="/addresses" (click)="ui.closeMenus()"
-              ><span class="material-symbols-rounded">location_on</span
-              >Addresses</a
-            >
-          }
-          <button type="button" class="danger" (click)="logout()">
-            <span class="material-symbols-rounded">logout</span>Logout
-          </button>
-        } @else {
-          <button type="button" (click)="ui.openLogin()">
-            <span class="material-symbols-rounded">lock_open</span>Login
-          </button>
-        }
-      </section>
+    } @else {
+    <button type="button" class="btn text account-text sign-in" (click)="ui.openLogin()">
+      <svg customerIcon="user"></svg>Sign in
+    </button>
     }
-  </div>
-
-  <section class="mobile-discovery" aria-label="Mobile search and location">
     <button
       type="button"
-      class="mobile-location"
-      aria-label="Choose mobile delivery location"
-      (click)="openLocation()"
+      class="btn bag-btn"
+      aria-label="Open basket"
+      (click)="openCart()"
     >
-      <span class="material-symbols-rounded">location_on</span>
-      <span
-        ><small>Delivering to</small
-        ><b [title]="state.location()">{{ state.location().split(",")[0] }}</b></span
-      >
-      <span class="material-symbols-rounded">keyboard_arrow_down</span>
+      <svg customerIcon="bag"
+        ></svg>{{ state.itemCount() }} items
     </button>
-    <form class="mobile-search" (submit)="goSearch($event)">
-      <span class="material-symbols-rounded">search</span>
-      <input
-        [value]="query()"
-        (input)="onSearch($any($event.target).value)"
-        (focus)="searchOpen.set(false)"
-        placeholder="Search items"
-        aria-label="Search products or stores"
-      />
-      @if (query()) {
-        <button
-          type="button"
-          aria-label="Clear mobile search"
-          (click)="clearSearch()"
-        >
-          <span class="material-symbols-rounded">close</span>
-        </button>
-      }
-    </form>
-  </section>
+  </div>
 </header>
-
-@if (searchOpen()) {
-  <button
-    class="search-backdrop"
-    (click)="closeSearch()"
-    type="button"
-    aria-label="Close search"
-  ></button>
-}
-@if (ui.userMenuOpen()) {
-  <button
-    class="menu-backdrop"
-    (click)="ui.closeMenus()"
-    type="button"
-    aria-label="Close menu"
-  ></button>
-}
+<nav class="shopping-nav" aria-label="Shopping navigation">
+  @for (item of shoppingLinks; track item.route) { @if (canUseRoute(item.route))
+  {
+  <a
+    class="nav-btn"
+    [class.active]="isShoppingLinkActive(item.route)"
+    [routerLink]="item.route"
+    routerLinkActive="active"
+    [routerLinkActiveOptions]="{ exact: item.route === '/' }"
+    >{{ item.label }}</a
+  >
+  } }<a class="btn text" routerLink="/explore" [queryParams]="{offers:true}"><svg customerIcon="tag"></svg>A little more for less</a><span class="nav-note"
+    ><svg customerIcon="pin"></svg>{{ state.location() }}
+      @if(!state.serviceabilityLoading() && !state.serviceabilityError() && state.serviceability()?.is_serviceable && state.serviceability()?.eta_label){<svg customerIcon="clock"></svg>ETA {{ state.serviceability()?.eta_label }}}
+    </span
+  >
+</nav>

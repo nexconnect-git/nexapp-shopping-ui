@@ -1,66 +1,20 @@
-:host {
-  display: block;
-}
-.workspace-finance-list {
-  display: grid;
-  gap: 16px;
-}
-.settlement-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(230px, 1fr);
-  gap: 18px;
-}
-.settlement-row h3 {
-  font-size: 16px;
-}
-.settlement-row dl {
-  margin: 0;
-  display: grid;
-  gap: 8px;
-}
-.settlement-row dl div {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  font-size: 14px;
-}
-.settlement-row dt {
-  color: #626779;
-}
-.settlement-row dd {
-  margin: 0;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-.settlement-row .workspace-actions,
-.settlement-row > .workspace-error {
-  grid-column: 1/-1;
-}
-.settlement-summary summary,
-.settlement-amount summary {
-  cursor: pointer;
-  min-height: 44px;
-  align-content: center;
-  font-size: 14px;
-}
-.settlement-summary > summary {
-  font-size: 18px;
-  font-weight: 700;
-}
-.settlement-amount {
-  min-width: 0;
-}
-.settlement-amount > span {
-  font-size: 14px;
-  color: var(--text-secondary);
-}
-.settlement-amount > strong {
-  display: block;
-  font-size: 24px;
-  font-variant-numeric: tabular-nums;
-}
-@media (max-width: 768px) {
-  .settlement-row {
-    grid-template-columns: 1fr;
-  }
+
+:host { display:block; }
+.settlement-summary { margin:24px 0; }
+.settlement-summary>details { margin-bottom:20px; }
+.settlement-summary summary { cursor:pointer; font-size:12px; color:var(--muted); }
+.operating-card { display:flex; justify-content:space-between; align-items:center; padding:20px 0; background:none; border:0; }
+.settlement-period { display:block; color:var(--muted); font-size:11px; margin-top:5px; }
+.settlement-table td { font-size:13px; }
+.settlement-table .net { font-weight:600; }
+@media(max-width:900px) { .settlement-table td,.settlement-table th { padding:14px 10px; } }
+@media(max-width:650px) {
+ .table-wrap { overflow:visible; border:0; background:none; }
+ .settlement-table,.settlement-table tbody { display:block; }
+ .settlement-table thead { display:none; }
+ .settlement-table tr { display:grid; grid-template-columns:1fr 1fr; gap:14px; padding:18px; margin-bottom:14px; border:1px solid var(--line); border-radius:14px; background:var(--surface); }
+ .settlement-table td { display:block; padding:0; border:0; text-align:left; }
+ .settlement-table td:before { content:attr(data-label); display:block; font-size:10px; color:var(--muted); margin-bottom:5px; }
+ .settlement-table td:first-child,.settlement-table td:last-child { grid-column:1/-1; }
+ .operating-card { align-items:flex-start; gap:16px; flex-direction:column; }
 }

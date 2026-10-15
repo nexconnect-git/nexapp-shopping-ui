@@ -1,133 +1,20 @@
 <div class="workspace-page">
-  <header class="page-heading">
-    <div>
-      <p class="eyebrow">Fulfilment</p>
-      <h1>Order history</h1>
-      <p>
-        Find a customer order, review its timeline, and continue eligible work.
-      </p>
-    </div>
-    <div class="heading-actions">
-      <a class="btn-primary" routerLink="/live-orders">Live operations</a
-      ><button
-        class="btn-secondary"
-        (click)="load()"
-        [disabled]="list.loading()"
-      >
-        Refresh
-      </button>
-    </div>
-  </header>
-  <form class="workspace-toolbar" (ngSubmit)="query()">
-    <label
-      >Search<input
-        name="search"
-        placeholder="Order number or customer"
-        [ngModel]="search()"
-        (ngModelChange)="search.set($event)" /></label
-    ><label
-      >Status<select
-        name="status"
-        [ngModel]="status()"
-        (ngModelChange)="status.set($event)"
-      >
-        <option value="">All statuses</option>
-        @for(value of statuses;track value){
-        <option [value]="value">
-          {{ value.replaceAll("_", " ") | titlecase }}
-        </option>
-        }
-      </select></label
-    ><details class="date-filters" [open]="!!from() || !!to()">
-      <summary>Date range</summary>
-      <label
-      >From<input
-        name="from"
-        type="date"
-        [ngModel]="from()"
-        (ngModelChange)="from.set($event)" /></label
-    ><label
-      >To<input
-        name="to"
-        type="date"
-        [ngModel]="to()"
-        (ngModelChange)="to.set($event)" /></label
-    ></details><button class="btn-secondary" type="submit">Apply</button>
-  </form>
-  @if(filterError()){
-  <p class="error-banner" role="alert">{{ filterError() }}</p>
+  <header class="page-heading"><div><p class="eyebrow">Daily work / History</p><h1>Every order, accounted for.</h1><p>Find the detail without losing your place.</p></div><div class="heading-actions"><a class="btn" routerLink="/live-orders">Live orders →</a><button class="btn" type="button" [disabled]="list.loading()" (click)="load()">Refresh</button></div></header>
+  <form class="workspace-toolbar" (ngSubmit)="query()"><label>Search orders<input name="search" placeholder="Order number or customer" [ngModel]="search()" (ngModelChange)="search.set($event)" /></label><button class="btn" type="submit">Search</button><button class="btn" type="button" (click)="filtersOpen.set(true)"><span class="material-icons-outlined">filter_list</span>Filters</button></form>
+  @if (status() || from() || to()) { <div class="filter-chips"><span class="tag">{{ status() ? (status().replaceAll('_',' ') | titlecase) : 'All statuses' }}</span>@if (from() || to()) { <span class="tag">{{ from() || 'Any date' }} – {{ to() || 'Today' }}</span> }<button class="btn text" type="button" (click)="status.set(''); from.set(''); to.set(''); query()">Clear filters</button></div> }
+  <div class="list-meta"><span>{{ list.count() }} matching orders</span><label class="inline-check"><input type="checkbox" [ngModel]="auto()" (ngModelChange)="auto.set($event)" />Refresh while visible</label></div>
+  @if (list.error()) { <nc-counter-state kind="error" title="History could not load." [message]="list.error()" action="Try again" (retry)="load()" /> }
+  @if (list.loading() && !rows().length) { <nc-counter-state kind="loading" title="Loading order history" /> } @else if (list.loading()) { <p class="workspace-muted" role="status">Refreshing…</p> }
+  @if (!list.loading() && !list.error() && !rows().length) { <nc-counter-state title="No orders match this view." message="Try a different date range or remove a filter." /> }
+  @if (rows().length) {
+    <div class="table-wrap"><table class="data-table history-table"><thead><tr><th>Order</th><th>Customer</th><th class="money">Total</th><th>Status</th><th>Action</th></tr></thead><tbody>
+      @for (order of rows(); track order.id) { <tr><td data-label="Order"><a class="btn text" [routerLink]="['/orders',order.id]"><strong>#{{ order.order_number }}</strong></a><small class="order-date">{{ order.placed_at | date:'medium' }}</small></td><td data-label="Customer">{{ order.customer_name }}</td><td data-label="Total" class="money">{{ order.total | appCurrency }}<small class="order-date">{{ order.items.length }} lines</small></td><td data-label="Status"><span class="tag" [class.green]="order.status === 'delivered'" [class.orange]="['placed','ready'].includes(order.status)">{{ order.status.replaceAll('_',' ') | titlecase }}</span></td><td class="record-actions"><div class="row-actions">
+        @if (store.can(order,'accept')) { <button class="btn primary sm" [disabled]="store.pending().has(order.id)" type="button" (click)="command(order,'accept')">Accept</button> }
+        @if (store.can(order,'start_preparing')) { <button class="btn primary sm" [disabled]="store.pending().has(order.id)" type="button" (click)="command(order,'start_preparing')">Start preparation</button> }
+        @if (store.can(order,'mark_ready')) { <a class="btn sm" [routerLink]="['/orders',order.id,'prep']">Preparation</a> }
+        <a class="btn sm" [routerLink]="['/orders',order.id]">View order →</a></div>@if (store.errors().get(order.id)) { <p class="row-error" role="alert">{{ store.errors().get(order.id) }}</p> }</td></tr> }
+    </tbody></table></div>
   }
-  <div class="list-meta">
-    <span>{{ list.count() }} matching orders</span
-    ><label class="check-field"
-      ><input
-        type="checkbox"
-        [ngModel]="auto()"
-        (ngModelChange)="auto.set($event)"
-      />Refresh every 30 seconds while visible</label
-    >
-  </div>
-  @if(list.error()){
-  <div class="error-banner" role="alert">
-    {{ list.error()
-    }}<button class="btn-secondary" (click)="load()">Retry</button>
-  </div>
-  } @if(list.loading()){
-  <p role="status">Loading order history…</p>
-  } @if(!list.loading()&&!list.error()&&!rows().length){
-  <section class="workspace-card empty-state">
-    <span class="material-icons-outlined">receipt_long</span>
-    <h2>No matching orders</h2>
-    <p>Adjust your search, dates, or status.</p>
-  </section>
-  }
-  <div class="history-list">
-    @for(order of rows();track order.id){
-    <article class="workspace-card order-row">
-      <div>
-        <a [routerLink]="['/orders', order.id]"
-          ><strong>#{{ order.order_number }}</strong></a
-        >
-        <p>{{ order.customer_name }}</p>
-        <small>{{ order.placed_at | date : "medium" }}</small>
-      </div>
-      <div>
-        <span class="status-chip" [attr.data-status]="order.status">{{
-          order.status.replaceAll("_", " ") | titlecase
-        }}</span>
-        <p>{{ order.items.length }} lines · {{ order.total | appCurrency }}</p>
-      </div>
-      <div class="row-actions">
-        @if(store.can(order,'accept')){<button
-          class="btn-primary"
-          [disabled]="store.pending().has(order.id)"
-          (click)="command(order, 'accept')"
-        >
-          Accept</button
-        >}@if(store.can(order,'start_preparing')){<button
-          class="btn-primary"
-          [disabled]="store.pending().has(order.id)"
-          (click)="command(order, 'start_preparing')"
-        >
-          Start preparation</button
-        >}@if(store.can(order,'mark_ready')){<a
-          class="btn-secondary"
-          [routerLink]="['/orders', order.id, 'prep']"
-          >Preparation checklist</a
-        >}<a class="btn-secondary" [routerLink]="['/orders', order.id]"
-          >Details</a
-        >
-      </div>
-      @if(store.errors().get(order.id)){
-      <p class="row-error" role="alert">{{ store.errors().get(order.id) }}</p>
-      }
-    </article>
-    }
-  </div>
-  <nc-vendor-pager
-    [page]="list.page()"
-    [count]="list.count()"
-    [busy]="list.loading()"
-    (pageChange)="query($event)"
-  />
+  @if(list.response()){<nc-vendor-pager [page]="list.page()" [count]="list.count()" [busy]="list.loading()" (pageChange)="query($event)" />}
 </div>
+@if (filtersOpen()) { <nc-vendor-dialog title="Find an order" (dismissed)="filtersOpen.set(false)"><form (ngSubmit)="query()"><div class="fields one"><label class="workspace-field">Status<select name="status" [ngModel]="status()" (ngModelChange)="status.set($event)"><option value="">All statuses</option>@for (value of statuses; track value) { <option [value]="value">{{ value.replaceAll('_',' ') | titlecase }}</option> }</select></label><label class="workspace-field">From<input name="from" type="date" [ngModel]="from()" (ngModelChange)="from.set($event)" /></label><label class="workspace-field">To<input name="to" type="date" [ngModel]="to()" (ngModelChange)="to.set($event)" /></label></div>@if (filterError()) { <p class="workspace-error" role="alert">{{ filterError() }}</p> }<div class="dialog-actions"><button class="btn" type="button" (click)="filtersOpen.set(false)">Cancel</button><button class="btn primary" type="submit">Apply filters</button></div></form></nc-vendor-dialog> }

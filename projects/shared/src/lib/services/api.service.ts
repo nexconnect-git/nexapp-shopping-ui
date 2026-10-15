@@ -939,6 +939,11 @@ export class ApiService {
     );
   }
 
+  uploadIssueAttachment(issueId:string,file:File):Observable<any>{
+    const data=new FormData();data.append('file',file);
+    return this.http.post(`${this.baseUrl}/orders/issues/${issueId}/attachments/`,data);
+  }
+
   // Admin Issues
   getAdminIssues(params?: any): Observable<any> {
     let httpParams = new HttpParams();

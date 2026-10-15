@@ -7,8 +7,10 @@ export class CustomerOrderApiService {
   private readonly invoices = inject(InvoiceApi);
   private readonly api = inject(CustomerApiClientService);
 
-  getOrders(status?: string) {
-    return this.api.toObservable<any>(this.api.client.orders.orders(status));
+  getOrders(status?: string, query?: Record<string, string | number>) {
+    return this.api.toObservable<any>(
+      this.api.client.orders.orders(status, query)
+    );
   }
 
   getOrder(orderId: string) {
@@ -17,23 +19,31 @@ export class CustomerOrderApiService {
 
   getOrderTracking(orderId: string) {
     return this.api.toObservable<any>(
-      this.api.client.orders.orderTracking(orderId),
+      this.api.client.orders.orderTracking(orderId)
     );
   }
 
-  reorder(orderId: string) {
-    return this.api.toObservable<any>(this.api.client.orders.reorder(orderId));
+  reorder(orderId: string, preview = false) {
+    return this.api.toObservable<any>(
+      this.api.client.orders.reorder(orderId, preview)
+    );
   }
 
-  cancelOrder(orderId: string) {
+  cancelOrder(orderId: string, reason = '') {
     return this.api.toObservable<any>(
-      this.api.client.orders.cancelOrder(orderId),
+      this.api.client.orders.cancelOrder(orderId, reason)
     );
   }
 
   submitOrderRating(orderId: string, payload: Record<string, any>) {
     return this.api.toObservable<any>(
-      this.api.client.orders.submitOrderRating(orderId, payload),
+      this.api.client.orders.submitOrderRating(orderId, payload)
+    );
+  }
+
+  cancellationPolicy() {
+    return this.api.toObservable<any>(
+      this.api.client.checkout.cancellationPolicy()
     );
   }
 

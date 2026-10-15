@@ -8,8 +8,8 @@ export class NotificationApi {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
 
-  getNotifications(): Observable<any> {
-    return this.http.get(`${this.baseUrl}/notifications/list/`);
+  getNotifications(params: Record<string,string|number> = {}): Observable<any> {
+    return this.http.get(`${this.baseUrl}/notifications/list/`, {params});
   }
 
   markNotificationRead(id: string): Observable<any> {

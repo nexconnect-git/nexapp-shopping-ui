@@ -1,0 +1,13 @@
+@if (kind() === 'loading') {
+  <section class="loading-state" role="status" aria-live="polite" [attr.aria-label]="title()">
+    <span class="sr-only">{{ title() }}</span>
+    @for (row of [].constructor(rows()); track $index) {
+      <div class="skeleton-row" aria-hidden="true"><span class="skeleton thumbnail"></span><span class="skeleton line"></span></div>
+    }
+  </section>
+} @else {
+  <section class="empty" [class.notice]="kind() === 'error' || kind() === 'stale'" [class.error]="kind() === 'error'" [attr.role]="kind() === 'error' ? 'alert' : 'status'">
+    <h2>{{ title() }}</h2><p>{{ message() }}</p>
+    @if (action()) { <button type="button" class="btn" (click)="retry.emit()">{{ action() }}</button> }
+  </section>
+}

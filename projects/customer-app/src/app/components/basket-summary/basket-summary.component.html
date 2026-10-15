@@ -1,0 +1,57 @@
+<aside class="summary-card">
+  <p class="eyebrow">Nothing hidden</p>
+  <h2>Bill details</h2>
+  <div class="kv">
+    <span>Item total</span><strong>{{ (state.checkoutPriceBreakup()?.['item_subtotal'] ?? state.subtotal()) | appCurrency }}</strong>
+  </div>
+  <div class="kv">
+    <span>Delivery fee</span><strong>{{ state.checkoutPriceBreakup() ? (state.deliveryFee() | appCurrency) : (state.checkoutPreviewLoading() ? 'Checking…' : 'Not confirmed') }}</strong>
+  </div>
+  <div class="kv">
+    <span>Packaging</span
+    ><strong>{{ state.checkoutPriceBreakup() ? (state.handlingFee() | appCurrency) : 'Not confirmed' }}</strong>
+  </div>
+  @if(state.checkoutPriceBreakup()){
+  <div class="kv">
+    <span>Platform fee</span
+    ><strong>{{ state.platformFee() | appCurrency }}</strong>
+  </div>
+  <div class="kv">
+    <span>Taxes</span><strong>{{ state.taxAmount() | appCurrency }}</strong>
+  </div>
+  @if(state.smallCartFee()){
+  <div class="kv">
+    <span>Small basket fee</span
+    ><strong>{{ state.smallCartFee() | appCurrency }}</strong>
+  </div>
+  }@if(state.surgeFee()){
+  <div class="kv">
+    <span>Surge fee</span><strong>{{ state.surgeFee() | appCurrency }}</strong>
+  </div>
+  }} @if(state.coupon()){
+  <div class="kv">
+    <span>{{ state.coupon() }}</span
+    ><strong class="savings"
+      >−{{ state.couponDiscount() | appCurrency }}</strong
+    >
+  </div>
+  }
+  <div class="summary-total">
+    <span>{{
+      state.checkoutPriceBreakup() ? "To pay" : "Final total"
+    }}</span
+    ><strong>{{ state.checkoutPriceBreakup() ? (state.total() | appCurrency) : (state.checkoutPreviewLoading() ? 'Checking…' : 'Not confirmed') }}</strong>
+  </div>
+  <p class="summary-note">
+    {{
+      state.checkoutPriceBreakup()
+        ? "Prices, stock and charges are checked again before placing your order."
+        : state.checkoutPreviewLoading()
+          ? "Checking current prices, stock and delivery charges."
+          : state.checkoutPreviewError()
+            ? "Retry the current quote to confirm delivery charges and the final total."
+            : "Choose a delivery address at checkout to confirm the delivery fee and final total."
+    }}
+  </p>
+  <ng-content />
+</aside>

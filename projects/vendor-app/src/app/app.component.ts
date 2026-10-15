@@ -1,7 +1,6 @@
 import {
   Component,
   DestroyRef,
-  ElementRef,
   HostListener,
   inject,
   OnInit,
@@ -18,14 +17,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { VendorContextService } from './services/vendor-context.service';
 import { VendorInboxService } from './services/vendor-inbox.service';
 import { Notification } from '@shared/public-api';
-import { CommonModule, Location } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import {
   AuthService,
-  GlobalLoadingComponent,
   PageFeatureAccessService,
   PageFeatureLoadingComponent,
   ToastComponent,
-  VendorApi,
 } from '@shared/public-api';
 import {
   VENDOR_MOBILE_NAV_ITEMS,
@@ -47,7 +44,6 @@ import { VendorAppStartupService } from './services/vendor-app-startup.service';
     RouterLinkActive,
     CommonModule,
     ToastComponent,
-    GlobalLoadingComponent,
     PageFeatureLoadingComponent,
   ],
   templateUrl: './app.component.html',
@@ -56,20 +52,36 @@ import { VendorAppStartupService } from './services/vendor-app-startup.service';
 export class AppComponent implements OnInit {
   readonly leave = inject(VendorLeaveService);
   auth = inject(AuthService);
-  api = inject(VendorApi);
   private router = inject(Router);
-  private location = inject(Location);
   private featureAccess = inject(PageFeatureAccessService);
   private startup = inject(VendorAppStartupService);
   readonly store = inject(VendorContextService);
   readonly inbox = inject(VendorInboxService);
   private destroy = inject(DestroyRef);
-  private readonly element: ElementRef<HTMLElement> = inject(ElementRef);
-  readonly drawerViewport = signal(
-    window.matchMedia('(max-width: 1100px)').matches
-  );
-  private drawerReturnFocus: HTMLElement | null = null;
-  sidebarCollapsed = signal(true);
+  readonly exploreOpen = signal(false);
+  readonly operatingOpen = signal(false);
+  readonly closingStore = signal(false);
+  readonly counterNav = [
+    { label: 'Today', route: '/', prefix: '/', exact: true },
+    { label: 'Orders', route: '/live-orders', prefix: '/orders' },
+    { label: 'Catalog', route: '/products', prefix: '/products' },
+    { label: 'Money', route: '/payouts', prefix: '/payouts' },
+    { label: 'Growth', route: '/analytics', prefix: '/analytics' },
+    { label: 'Store', route: '/store-settings', prefix: '/store-settings' },
+  ];
+  visibleCounterNav() {
+    return this.counterNav.filter(item => this.featureAccess.isRouteEnabled('vendor-app', item.route));
+  }
+  navActive(route: string): boolean {
+    const path = this.currentUrl().split('?')[0];
+    const families: Record<string, string[]> = {
+      '/': ['/'], '/live-orders': ['/live-orders', '/orders'],
+      '/products': ['/products', '/inventory', '/catalog-requests'],
+      '/payouts': ['/payouts', '/transactions'], '/analytics': ['/analytics', '/promotions', '/reviews'],
+      '/store-settings': ['/store-settings', '/support', '/notifications'],
+    };
+    return (families[route] || [route]).some(prefix => prefix === '/' ? path === '/' : path.startsWith(prefix));
+  }
   profileOpen = signal(false);
   notifOpen = signal(false);
   notifications = this.inbox.preview;
@@ -86,8 +98,8 @@ export class AppComponent implements OnInit {
       .subscribe((event) => {
         if (event instanceof NavigationEnd) {
           this.currentUrl.set(event.urlAfterRedirects || event.url || '/');
-          this.closeMobileSidebar();
           this.closeDropdowns();
+          this.exploreOpen.set(false);
         }
       });
   }
@@ -117,7 +129,6 @@ export class AppComponent implements OnInit {
     this.inbox.markAllRead();
   }
 
-  @HostListener('document:click', ['$event'])
   closeDropdowns(event?: MouseEvent) {
     if (
       (event?.target as HTMLElement | null)?.closest(
@@ -150,56 +161,6 @@ export class AppComponent implements OnInit {
     return this.router.url.includes('/pending-approval');
   }
 
-  toggleSidebar() {
-    if (!this.sidebarCollapsed()) {
-      this.closeMobileSidebar();
-      return;
-    }
-    this.drawerReturnFocus = document.activeElement as HTMLElement | null;
-    this.closeDropdowns();
-    this.sidebarCollapsed.set(false);
-    requestAnimationFrame(() =>
-      this.element.nativeElement
-        .querySelector<HTMLElement>('.sidebar-close')
-        ?.focus()
-    );
-  }
-
-  closeMobileSidebar() {
-    const wasOpen = !this.sidebarCollapsed();
-    this.sidebarCollapsed.set(true);
-    if (wasOpen) requestAnimationFrame(() => this.drawerReturnFocus?.focus());
-  }
-
-  @HostListener('window:resize')
-  updateDrawerViewport(): void {
-    this.drawerViewport.set(window.matchMedia('(max-width: 1100px)').matches);
-    if (!this.drawerViewport()) this.closeMobileSidebar();
-  }
-
-  trapDrawerFocus(event: KeyboardEvent): void {
-    if (
-      event.key !== 'Tab' ||
-      !this.drawerViewport() ||
-      this.sidebarCollapsed()
-    )
-      return;
-    const controls = [
-      ...this.element.nativeElement.querySelectorAll<HTMLElement>(
-        '.sidebar button:not(:disabled),.sidebar a[href]'
-      ),
-    ].filter((control) => control.offsetParent !== null);
-    const first = controls[0],
-      last = controls.at(-1);
-    if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault();
-      last?.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first?.focus();
-    }
-  }
-
   visibleNavGroups() {
     return this.navGroups
       .map((group) => ({
@@ -229,41 +190,27 @@ export class AppComponent implements OnInit {
     return initials || user?.username?.[0]?.toUpperCase() || '?';
   }
 
-  showBackButton(): boolean {
-    const path = this.currentUrl().split('?')[0].split('#')[0];
-    return !this.isAuthRoute() && path !== '/' && path !== '';
-  }
-
-  goBack(): void {
-    if (!this.showBackButton()) return;
-    if (typeof window !== 'undefined' && window.history.length > 1) {
-      this.location.back();
-      return;
-    }
-    this.router.navigate(['/']);
-  }
-
   breadcrumbs(): Array<{ label: string; url?: string }> {
     const cleanUrl = this.router.url.split('?')[0].split('#')[0];
-    if (!cleanUrl || cleanUrl === '/') return [{ label: 'Dashboard' }];
+    if (!cleanUrl || cleanUrl === '/') return [{ label: 'Today' }];
 
     const segments = cleanUrl.split('/').filter(Boolean);
     if (segments[0] === 'products' && segments[2] === 'edit') {
       return [
-        { label: 'Dashboard', url: '/' },
+        { label: 'Today', url: '/' },
         { label: 'Products', url: '/products' },
         { label: this.productBreadcrumbName(segments[1]) },
       ];
     }
     if (segments[0] === 'products' && segments[1] === 'edit' && segments[2]) {
       return [
-        { label: 'Dashboard', url: '/' },
+        { label: 'Today', url: '/' },
         { label: 'Products', url: '/products' },
         { label: this.productBreadcrumbName(segments[2]) },
       ];
     }
     const crumbs: Array<{ label: string; url?: string }> = [
-      { label: 'Dashboard', url: '/' },
+      { label: 'Today', url: '/' },
     ];
 
     const labelMap: Record<string, string> = {
@@ -328,7 +275,6 @@ export class AppComponent implements OnInit {
   @HostListener('document:keydown.escape')
   closeOverlays(): void {
     this.closeDropdowns();
-    this.closeMobileSidebar();
   }
 
   logout() {

@@ -1,3 +1,5 @@
+import { CustomerIconComponent } from '../customer-icon/customer-icon.component';
+import { NotificationStateService } from '@shared/lib/services/notification-state.service';
 import { Location } from '@angular/common';
 import { Component, computed, Input, signal } from '@angular/core';
 import {
@@ -7,7 +9,6 @@ import {
   RouterLinkActive,
 } from '@angular/router';
 import { filter } from 'rxjs/operators';
-import { AppCurrencyPipe } from '@shared/lib/pipes/currency.pipe';
 import { PageFeatureAccessService } from '@shared/lib/services/page-feature-access.service';
 import { buildStoreSelectionTarget } from '@nexconnect/customer-search';
 import { CatalogService } from '../../services/catalog.service';
@@ -18,12 +19,18 @@ import { AuthService } from '../../services/auth.service';
 @Component({
   selector: 'fd-topbar',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, AppCurrencyPipe],
+  imports: [CustomerIconComponent,RouterLink, RouterLinkActive],
   templateUrl: './topbar.component.html',
   styleUrls: ['./topbar.component.scss'],
 })
 export class TopbarComponent {
   @Input() homeMode = false;
+  readonly shoppingLinks = [
+    { route: '/', label: 'Home' },
+    { route: '/stores', label: 'Stores' },
+    { route: '/categories', label: 'Categories' },
+    { route: '/explore', label: 'Explore' },
+  ];
   query = signal('');
   searchOpen = signal(false);
   currentUrl = signal('');
@@ -34,12 +41,13 @@ export class TopbarComponent {
 
   constructor(
     public state: AppStateService,
+    public notifications: NotificationStateService,
     public ui: UiService,
     public auth: AuthService,
     public features: PageFeatureAccessService,
     private catalog: CatalogService,
     private router: Router,
-    private location: Location,
+    private location: Location
   ) {
     this.currentUrl.set(this.router.url || '/');
     this.router.events
@@ -69,7 +77,7 @@ export class TopbarComponent {
     this.catalog
       .categories()
       .filter((category) => category.id !== 'all')
-      .slice(0, 3),
+      .slice(0, 3)
   );
   totalResults = computed(() => {
     const r = this.searchResults();
@@ -78,7 +86,7 @@ export class TopbarComponent {
 
   onSearch(value: string): void {
     this.query.set(value);
-    this.catalog.refreshSearch(value);
+    this.catalog.refreshSearch(value, this.state.customerLocationQuery());
     this.searchOpen.set(true);
   }
   clearSearch(): void {
@@ -122,7 +130,7 @@ export class TopbarComponent {
     event.preventDefault();
     const q = this.query().trim();
     if (!q) {
-      this.searchOpen.set(true);
+      this.router.navigate(['/explore']);
       return;
     }
     this.closeSearch();
@@ -134,6 +142,14 @@ export class TopbarComponent {
       return this.features.isRouteEnabled('customer-app', '/explore');
     }
     return this.features.isRouteEnabled('customer-app', route);
+  }
+
+  isShoppingLinkActive(route: string): boolean {
+    const path = this.currentUrl().split('?')[0];
+    if(route === '/stores') return path === route || path.startsWith('/store/');
+    if(route === '/categories') return path === route || path.startsWith('/category/') || path.startsWith('/product/');
+    if(route === '/explore') return path.startsWith(route);
+    return path === route;
   }
 
   goBack(): void {

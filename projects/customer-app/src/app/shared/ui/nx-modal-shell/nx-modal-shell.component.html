@@ -1,24 +1,11 @@
 @if (open) {
-  <button
-    type="button"
-    class="overlay"
-    aria-label="Close modal"
-    (click)="close()"
-  ></button>
-  <section class="modal" [style.width]="width" role="dialog" aria-modal="true" [attr.aria-label]="title">
-    <header>
-      <div>
-        <h2>{{ title }}</h2>
-        @if (subtitle) {
-          <p>{{ subtitle }}</p>
-        }
-      </div>
-      @if (dismissible) {
-      <button type="button" aria-label="Close modal" (click)="close()">
-        <span class="material-symbols-rounded">close</span>
-      </button>
-      }
+<div class="overlay-backdrop" (click)="onBackdropClick($event)">
+  <section class="dialog" [class.center-dialog]="variant === 'center'" customerDialog [dialogBusy]="!dismissible" (dialogDismiss)="close()" [style.--dialog-width]="width" role="dialog" aria-modal="true" [attr.aria-label]="title">
+    <header class="dialog-head"><div class="grow">@if(eyebrow){<div class="eyebrow">{{ eyebrow }}</div>}<h2>{{ title }}</h2></div>
+      @if(dismissible){<button class="btn icon-btn" type="button" aria-label="Close modal" (click)="close()"><svg customerIcon="close"></svg></button>}
     </header>
-    <ng-content />
+    <div class="dialog-body">@if(subtitle){<p>{{ subtitle }}</p>}<ng-content /></div>
+    @if(footer){<footer class="dialog-footer"><ng-content select="[dialogFooter]" /></footer>}
   </section>
+</div>
 }

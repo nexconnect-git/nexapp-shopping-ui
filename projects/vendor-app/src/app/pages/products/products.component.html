@@ -2,13 +2,12 @@
   <header class="page-heading">
     <div>
       <p class="eyebrow">Catalog</p>
-      <h1>Products</h1>
+      <h1>Your product collection.</h1>
       <p>
-        Manage variants, approval, and the blockers that affect customer
-        visibility.
+        Selling details, catalog identity and visibility in one place.
       </p>
     </div>
-    <div class="heading-actions">
+    <div class="heading-actions"><a class="btn-secondary" routerLink="/products/new">Saved drafts</a>
       <button
         class="btn-secondary"
         [disabled]="list.loading()"
@@ -27,46 +26,19 @@
         placeholder="Name, SKU, brand, or category"
         [ngModel]="search()"
         (ngModelChange)="search.set($event)" /></label
-    ><label
-      >Approval<select
-        name="approval"
-        [ngModel]="approval()"
-        (ngModelChange)="approval.set($event)"
-      >
-        <option value="">All approvals</option>
-        @for(value of approvalOptions;track value){
-        <option [value]="value">
-          {{ value.replaceAll("_", " ") | titlecase }}
-        </option>
-        }
-      </select></label
-    ><label
-      >Product health<select
-        name="health"
-        [ngModel]="health()"
-        (ngModelChange)="health.set($event)"
-      >
-        <option value="">All products</option>
-        <option value="ready">Ready to sell</option>
-        <option value="low">Low stock</option>
-        <option value="out">Out of stock</option>
-        <option value="paused">Unavailable</option>
-        <option value="missing_photo">Missing photos</option>
-        <option value="category_pending">Category pending</option>
-      </select></label
-    ><button class="btn-secondary" type="submit">Apply</button>
+    ><button class="btn-secondary" type="submit">Search</button><button class="btn-secondary" type="button" (click)="filtersOpen.set(true)">Filters</button>
   </form>
   @if(list.error()){
   <div class="error-banner" role="alert">
     {{ list.error()
     }}<button class="btn-secondary" (click)="load()">Retry</button>
   </div>
-  }@if(list.loading()){
-  <p role="status">Loading products…</p>
+  }@if(list.loading() && !list.response()){
+  <nc-counter-state kind="loading" title="Loading products…" />
   }
-  <div class="product-list">
+  <div class="product-list"><div class="product-column-headings"><span>Product</span><span>Price / stock</span><span>Approval / visibility</span><span>Actions</span></div>
     @for(product of list.rows();track product.id){
-    <article class="workspace-card product-row">
+    <article class="product-row">
       <img
         [src]="image(product)"
         [alt]="product.name"
@@ -87,7 +59,7 @@
         <p>{{ product.stock }} stock</p>
 
       </div>
-      <div class="product-state">
+      <div class="product-state"><span class="listing-state">{{ product.is_available ? "Listing enabled" : "Listing paused" }}</span>
         <span
           class="status-chip"
           [attr.data-status]="product.approval_status"
@@ -100,7 +72,7 @@
           (click)="open(product, 'fixes')"
         >
           Why hidden ({{ product.visibility_blockers!.length }})</button
-        >}@else{<small>Ready to sell</small>}@if(product.rejection_reason){
+        >}@else{<small>{{ product.visibility_status === "ready_to_sell" ? "Visible to customers" : "Review saved visibility" }}</small>}@if(product.rejection_reason){
         <p class="row-error">{{ product.rejection_reason }}</p>
         }
       </div>
@@ -137,14 +109,14 @@
     </section>
     }}
   </div>
-  <nc-vendor-pager
+  @if(list.response()){<nc-vendor-pager
     [page]="list.page()"
     [count]="list.count()"
     [busy]="list.loading()"
     (pageChange)="query($event)"
-  />
+  />}
   @if(dialog()&&target();as product){<nc-vendor-dialog
-    [title]="dialog() === 'delete' ? 'Remove product' : 'Customer visibility'"
+    [title]="dialog() === 'delete' ? 'Remove product' : 'Customer visibility'" [mode]="dialog() === 'fixes' ? 'drawer' : 'dialog'"
     [busy]="pending().has(product.id)"
     (dismissed)="close()"
     ><h3>{{ product.name }}</h3>
@@ -193,3 +165,32 @@
     }</nc-vendor-dialog
   >}
 </div>
+
+@if(filtersOpen()){<nc-vendor-dialog title="Product filters" (dismissed)="filtersOpen.set(false)"><form class="workspace-form" (ngSubmit)="query()"><label
+      >Approval<select
+        name="approval"
+        [ngModel]="approval()"
+        (ngModelChange)="approval.set($event)"
+      >
+        <option value="">All approvals</option>
+        @for(value of approvalOptions;track value){
+        <option [value]="value">
+          {{ value.replaceAll("_", " ") | titlecase }}
+        </option>
+        }
+      </select></label
+    ><label
+      >Product health<select
+        name="health"
+        [ngModel]="health()"
+        (ngModelChange)="health.set($event)"
+      >
+        <option value="">All products</option>
+        <option value="ready">Ready to sell</option>
+        <option value="low">Low stock</option>
+        <option value="out">Out of stock</option>
+        <option value="paused">Unavailable</option>
+        <option value="missing_photo">Missing photos</option>
+        <option value="category_pending">Category pending</option>
+      </select></label
+    ><button class="btn-secondary" type="submit">Apply</button></form></nc-vendor-dialog>}

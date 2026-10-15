@@ -1,5 +1,4 @@
-:host {
-  display: block;
-}
-.operating-details summary { cursor: pointer; padding: 10px 0; min-height: 44px; font-size: 14px; }
-.operating-details p { margin: 8px 0; }
+:host { display: block; }
+.metric,.task-row { color: var(--ink); text-decoration: none; }
+.task-row h3 { margin-bottom: 0; }
+.metric label { cursor: pointer; }

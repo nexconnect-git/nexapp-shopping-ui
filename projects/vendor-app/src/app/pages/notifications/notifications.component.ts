@@ -1,3 +1,4 @@
+import { CounterStateComponent } from '../../components/counter-state.component';
 import {
   Component,
   DestroyRef,
@@ -20,7 +21,7 @@ import { WorkspacePagerComponent } from '../../components/workspace-pager.compon
 @Component({
   selector: 'app-notifications',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, WorkspacePagerComponent],
+  imports: [CounterStateComponent,CommonModule, FormsModule, RouterLink, WorkspacePagerComponent],
   templateUrl: './notifications.component.html',
   styleUrl: './notifications.component.scss',
 })
@@ -31,6 +32,7 @@ export class NotificationsComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly destroy = inject(DestroyRef);
   readonly notifications = signal<Notification[]>([]);
+  readonly loaded = signal(false);
   readonly loading = signal(false);
   readonly error = signal('');
   readonly page = signal(1);
@@ -87,6 +89,7 @@ export class NotificationsComponent implements OnInit {
       .subscribe({
         next: (response) => {
           if (generation !== this.generation) return;
+          this.loaded.set(true);
           this.notifications.set(response.results);
           this.count.set(response.count);
           this.inbox.unread.set(response.unread_count ?? this.inbox.unread());

@@ -1,3 +1,4 @@
+import { CustomerIconComponent } from '../../shared/customer-icon/customer-icon.component';
 import { Component, Input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Store } from '../../models';
@@ -5,6 +6,8 @@ import { Store } from '../../models';
 type StoreMeta = Record<string, unknown> & {
   is_open_now?: boolean;
   is_open?: boolean;
+  is_accepting_orders?: boolean;
+  is_serviceable?: boolean;
   opening_time?: string;
   closing_time?: string;
 };
@@ -12,7 +15,7 @@ type StoreMeta = Record<string, unknown> & {
 @Component({
   selector: 'fd-store-card',
   standalone: true,
-  imports: [RouterLink],
+  imports: [CustomerIconComponent,RouterLink],
   templateUrl: './store-card.component.html',
   styleUrls: ['./store-card.component.scss'],
 })
@@ -45,7 +48,11 @@ export class StoreCardComponent {
 
   storeStatusText(): string {
     const raw = this.store?.raw as StoreMeta | undefined;
-    if (this.isStoreOpen()) return 'Open now';
+    if (raw?.is_serviceable === false) return 'Outside delivery area';
+    if (raw?.is_accepting_orders === false) return 'Orders paused';
+    if ((raw?.is_open_now ?? raw?.is_open) === true) return 'Open now';
+    if ((raw?.is_open_now ?? raw?.is_open) == null)
+      return 'View store availability';
     if (raw?.opening_time && raw?.closing_time) {
       return `Closed - Opens ${raw.opening_time}`;
     }

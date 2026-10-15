@@ -1,4 +1,4 @@
-export type CreateProductStep = 'catalog' | 'variants' | 'review';
+export type CreateProductStep = 'catalog' | 'variants' | 'fulfillment' | 'review';
 export interface ApprovedCatalogItem {
   id: string;
   name: string;

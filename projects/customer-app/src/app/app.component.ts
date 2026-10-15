@@ -1,4 +1,12 @@
-import { Component, computed, effect, OnInit, signal } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { CustomerStateComponent } from './shared/customer-state/customer-state.component';
+import { AuthService as SharedAuthService } from '@shared/lib/services/auth.service';
+import { PageFeatureAccessService } from '@shared/lib/services/page-feature-access.service';
+import { CustomerIconComponent } from './shared/customer-icon/customer-icon.component';
+import { HostListener } from '@angular/core';
+import { NxModalShellComponent } from './shared/ui/nx-modal-shell/nx-modal-shell.component';
+import { CustomerCurrencyPipe } from './shared/customer-currency/customer-currency.pipe';
+import { Component, computed, effect, inject, OnInit, signal } from '@angular/core';
 import {
   NavigationCancel,
   NavigationEnd,
@@ -15,16 +23,9 @@ import { MiniCartComponent } from './shared/mini-cart/mini-cart.component';
 import { EditModalComponent } from './shared/edit-modal/edit-modal.component';
 import { LocationModalComponent } from './shared/location-modal/location-modal.component';
 import { FilterSliderComponent } from './shared/filter-slider/filter-slider.component';
-import { AppLoaderComponent } from './shared/app-loader/app-loader.component';
 import { ConfirmDialogComponent } from './shared/confirm-dialog/confirm-dialog.component';
-import { MobileStickyCartBarComponent } from './shared/mobile-sticky-cart-bar/mobile-sticky-cart-bar.component';
-import { MobileTopbarComponent } from './mobile-ui/mobile-topbar/mobile-topbar.component';
 import { MobileBottomNavComponent } from './mobile-ui/mobile-bottom-nav/mobile-bottom-nav.component';
-import { MobileLoaderComponent } from './mobile-ui/mobile-loader/mobile-loader.component';
-import { MobileToastComponent } from './mobile-ui/mobile-toast/mobile-toast.component';
-import { GlobalLoadingComponent } from '@shared/lib/components/global-loading/global-loading.component';
-import { ToastComponent } from '@shared/lib/components/toast/toast.component';
-import { PageFeatureLoadingComponent } from '@shared/lib/components/page-feature-loading/page-feature-loading.component';
+import { CustomerToastComponent } from './shared/customer-toast/customer-toast.component';
 import { UiService } from './services/ui.service';
 import { CatalogService } from './services/catalog.service';
 import { OrderService } from './services/order.service';
@@ -33,31 +34,60 @@ import { CustomerAppStartupService } from './services/customer-app-startup.servi
 @Component({
   selector: 'fd-root',
   standalone: true,
-  imports: [
+  imports: [CustomerIconComponent,
     RouterOutlet,
+    NxModalShellComponent,
+    CustomerCurrencyPipe,
     RouterLink,
     TopbarComponent,
-    MobileTopbarComponent,
     LoginSliderComponent,
     MiniCartComponent,
     EditModalComponent,
     LocationModalComponent,
     FilterSliderComponent,
-    AppLoaderComponent,
     ConfirmDialogComponent,
     MobileBottomNavComponent,
-    MobileLoaderComponent,
-    MobileToastComponent,
-    MobileStickyCartBarComponent,
-    GlobalLoadingComponent,
-    ToastComponent,
-    PageFeatureLoadingComponent,
+    CustomerToastComponent,
+    CustomerStateComponent,
   ],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
   providers: [CustomerAppStartupService],
 })
 export class AppComponent implements OnInit {
+  private readonly document = inject(DOCUMENT);
+  skipToContent(event: Event): void {
+    event.preventDefault();
+    const content = this.document.getElementById('customer-main');
+    content?.focus();
+    content?.scrollIntoView({block: 'start'});
+  }
+  readonly auth=inject(SharedAuthService);
+  readonly features=inject(PageFeatureAccessService);
+  readonly bootstrapLoading=computed(()=>this.features.isLoading()&&!this.features.hasResolved());
+  readonly systemVisible=computed(()=>this.offline()||!!this.auth.sessionRenewalError()||this.bootstrapLoading());
+  retrySession():void {this.auth.refreshAccessToken().subscribe({error:()=>undefined});}
+  retryOnline():void {this.offline.set(!navigator.onLine);if(!this.offline())this.state.retryCheckoutPreview();}
+  offline = signal(!navigator.onLine);
+  readonly customerDestinations = [
+    { route: '/', label: 'Home', icon: 'home' },
+    { route: '/stores', label: 'Stores', icon: 'store' },
+    { route: '/categories', label: 'Categories', icon: 'grid' },
+    { route: '/explore', label: 'Explore', icon: 'search' },
+    { route: '/cart', label: 'Basket', icon: 'bag' },
+    { route: '/orders', label: 'Your orders', icon: 'orders' },
+    { route: '/account', label: 'Account', icon: 'user' },
+    { route: '/addresses', label: 'Addresses', icon: 'pin' },
+    { route: '/notifications', label: 'Notifications', icon: 'bell' },
+    { route: '/privacy-policy', label: 'Privacy policy', icon: 'file' },
+    { route: '/help', label: 'Help', icon: 'help' },
+  ];
+  @HostListener('window:online') onOnline(): void {
+    this.offline.set(false);
+  }
+  @HostListener('window:offline') onOffline(): void {
+    this.offline.set(true);
+  }
   loading = signal(false);
   private routeLoading = signal(false);
   private currentUrl = signal('/');
@@ -75,7 +105,7 @@ export class AppComponent implements OnInit {
     return (
       url.startsWith('/store/') ||
       url.startsWith('/product/') ||
-      url.startsWith('/categories')
+      url.startsWith('/categories') || url.startsWith('/category/')
     );
   });
   hasUsableLocation = computed(() => {
@@ -105,6 +135,7 @@ export class AppComponent implements OnInit {
   });
   hasBlockingOverlay = computed(
     () =>
+      this.ui.mobileSidebarOpen() ||
       this.ui.loginSliderOpen() ||
       this.state.miniCartOpen() ||
       this.ui.miniCartOpen() ||
@@ -131,7 +162,10 @@ export class AppComponent implements OnInit {
         this.currentUrl.set(event.urlAfterRedirects || event.url || '/');
         window.setTimeout(() => this.routeLoading.set(false), 150);
       }
-      if (event instanceof NavigationCancel || event instanceof NavigationError) {
+      if (
+        event instanceof NavigationCancel ||
+        event instanceof NavigationError
+      ) {
         this.routeLoading.set(false);
       }
     });
@@ -139,6 +173,15 @@ export class AppComponent implements OnInit {
       this.loading.set(this.routeLoading() || this.isCurrentRouteDataLoading());
     });
   }
+
+  private readonly scrollLock = effect((onCleanup) => {
+    if (!this.hasBlockingOverlay()) return;
+    const old = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    onCleanup(() => {
+      document.body.style.overflow = old;
+    });
+  });
 
   ngOnInit(): void {
     this.startup.start();

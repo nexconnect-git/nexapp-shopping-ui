@@ -1,7 +1,7 @@
 <div class="workspace-page">
   <header class="page-heading">
     <div>
-      <p class="eyebrow">Account</p><h1>Support tickets</h1>
+      <p class="eyebrow">Account</p><h1>Help, with a clear next step.</h1>
       <p>Track store issues and read the platform’s response.</p>
     </div>
     <button
@@ -60,8 +60,8 @@
       Retry
     </button>
   </p>
-  }@if(list.loading()){
-  <div class="workspace-state" role="status">Loading support tickets…</div>
+  }@if(list.loading() && !list.response()){
+  <nc-counter-state kind="loading" title="Loading support tickets…" />
   }@else if(!list.error()&&!list.rows().length){
   <div class="workspace-state">
     <h3>No matching tickets</h3>
@@ -90,19 +90,19 @@
     </article>
     }
   </div>
-  }<nc-vendor-pager
+  }@if(list.response()){<nc-vendor-pager
     [page]="list.page()"
     [count]="list.count()"
     [busy]="list.loading()"
     (pageChange)="query($event)"
-  />
+  />}
 </div>
 @if(detailId()){<nc-vendor-dialog
-  title="Support ticket detail"
+  title="Support ticket detail" mode="drawer"
   [restoreFocusTarget]="dialogReturnFocus()"
   (dismissed)="close()"
   >@if(detailLoading()){
-  <p role="status">Loading ticket…</p>
+  <nc-counter-state kind="loading" title="Loading ticket…" />
   }@if(detailError()){
   <p class="workspace-error" role="alert">{{ detailError() }}</p>
   <button type="button" class="btn btn-secondary" (click)="loadDetail()">

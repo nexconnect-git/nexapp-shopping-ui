@@ -1,8 +1,8 @@
-<main class="vendor-auth-page">
-  <section class="vendor-auth-card">
+<main class="auth-layout"><div class="auth-art"><div class="graphic-disc"></div><p class="eyebrow">Nextou / Merchant workspace</p><h1>Less admin.<br><em>More store.</em></h1><p>Your orders, shelves and next steps, brought into focus.</p></div>
+  <section class="auth-form vendor-auth-card">
     <header class="form-card-header">
       <span class="workspace-eyebrow">Nextou Vendor</span>
-      <h1>Sign in</h1>
+      <h2>Welcome to your counter.</h2>
       <p>Use your vendor account to manage your store.</p>
     </header>
     @if (error()) {
@@ -91,7 +91,7 @@
         }}</small>
         }
       </div>
-      <button type="submit" class="signin-btn" [disabled]="!canSubmit()">
+      <button type="submit" class="btn-primary full-width" [disabled]="!canSubmit()">
         @if (loading()) {
         <span class="btn-spinner"></span>
         Signing in... } @else {
